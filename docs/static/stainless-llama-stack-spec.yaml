@@ -3179,41 +3179,6 @@ paths:
         schema:
           type: string
         description: 'Path parameter: model_id'
-    delete:
-      tags:
-      - Models
-      summary: Unregister Model
-      description: |-
-        Unregister model.
-
-        Unregister a model.
-      operationId: unregister_model_v1_models__model_id__delete
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
-      parameters:
-      - name: model_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: model_id'
   /v1/models:
     get:
       tags:
@@ -3240,41 +3205,6 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
-    post:
-      tags:
-      - Models
-      summary: Register Model
-      description: |-
-        Register model.
-
-        Register a model.
-      operationId: register_model_v1_models_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_models_Request'
-        required: true
-      responses:
-        '200':
-          description: A Model.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Model'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
   /v1/moderations:
     post:
       tags:
@@ -3378,38 +3308,6 @@ paths:
         schema:
           type: string
         description: 'Path parameter: identifier'
-    delete:
-      tags:
-      - Shields
-      summary: Unregister Shield
-      description: Unregister a shield.
-      operationId: unregister_shield_v1_shields__identifier__delete
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
-      parameters:
-      - name: identifier
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: identifier'
   /v1/shields:
     get:
       tags:
@@ -3436,38 +3334,6 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
-    post:
-      tags:
-      - Shields
-      summary: Register Shield
-      description: Register a shield.
-      operationId: register_shield_v1_shields_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_shields_Request'
-        required: true
-      responses:
-        '200':
-          description: A Shield.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Shield'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
   /v1beta/datasetio/append-rows/{dataset_id}:
     post:
       tags:
@@ -3601,38 +3467,6 @@ paths:
         schema:
           type: string
         description: 'Path parameter: dataset_id'
-    delete:
-      tags:
-      - Datasets
-      summary: Unregister Dataset
-      description: Unregister a dataset by its ID.
-      operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
-      parameters:
-      - name: dataset_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: dataset_id'
   /v1beta/datasets:
     get:
       tags:
@@ -3659,38 +3493,6 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
-    post:
-      tags:
-      - Datasets
-      summary: Register Dataset
-      description: Register a new dataset.
-      operationId: register_dataset_v1beta_datasets_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/_datasets_Request'
-        required: true
-      responses:
-        '200':
-          description: A Dataset.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Dataset'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
   /v1/scoring/score:
     post:
       tags:
@@ -3788,38 +3590,6 @@ paths:
         schema:
           type: string
         description: 'Path parameter: scoring_fn_id'
-    delete:
-      tags:
-      - Scoring Functions
-      summary: Unregister Scoring Function
-      description: Unregister a scoring function.
-      operationId: unregister_scoring_function_v1_scoring_functions__scoring_fn_id__delete
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
-      parameters:
-      - name: scoring_fn_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: scoring_fn_id'
   /v1/scoring-functions:
     get:
       tags:
@@ -3834,37 +3604,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListScoringFunctionsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-    post:
-      tags:
-      - Scoring Functions
-      summary: Register Scoring Function
-      description: Register a scoring function.
-      operationId: register_scoring_function_v1_scoring_functions_post
-      deprecated: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Body_register_scoring_function_v1_scoring_functions_post'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -4103,38 +3842,6 @@ paths:
         schema:
           type: string
         description: 'Path parameter: benchmark_id'
-    delete:
-      tags:
-      - Benchmarks
-      summary: Unregister Benchmark
-      description: Unregister a benchmark.
-      operationId: unregister_benchmark_v1alpha_eval_benchmarks__benchmark_id__delete
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
-      parameters:
-      - name: benchmark_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: benchmark_id'
   /v1alpha/eval/benchmarks:
     get:
       tags:
@@ -4149,37 +3856,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListBenchmarksResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-    post:
-      tags:
-      - Benchmarks
-      summary: Register Benchmark
-      description: Register a benchmark.
-      operationId: register_benchmark_v1alpha_eval_benchmarks_post
-      deprecated: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Body_register_benchmark_v1alpha_eval_benchmarks_post'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -4446,38 +4122,6 @@ paths:
         schema:
           type: string
         description: 'Path parameter: toolgroup_id'
-    delete:
-      tags:
-      - Tool Groups
-      summary: Unregister Toolgroup
-      description: Unregister a tool group.
-      operationId: unregister_toolgroup_v1_toolgroups__toolgroup_id__delete
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      deprecated: true
-      parameters:
-      - name: toolgroup_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: toolgroup_id'
   /v1/toolgroups:
     get:
       tags:
@@ -4492,36 +4136,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListToolGroupsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-    post:
-      tags:
-      - Tool Groups
-      summary: Register Tool Group
-      description: Register a tool group.
-      operationId: register_tool_group_v1_toolgroups_post
-      deprecated: true
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Body_register_tool_group_v1_toolgroups_post'
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -5785,82 +5399,6 @@ components:
       - file
       - purpose
       title: Body_openai_upload_file_v1_files_post
-    Body_register_benchmark_v1alpha_eval_benchmarks_post:
-      properties:
-        scoring_functions:
-          items:
-            type: string
-          type: array
-          title: Scoring Functions
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - scoring_functions
-      title: Body_register_benchmark_v1alpha_eval_benchmarks_post
-    Body_register_scoring_function_v1_scoring_functions_post:
-      properties:
-        return_type:
-          anyOf:
-          - $ref: '#/components/schemas/StringType'
-            title: StringType
-          - $ref: '#/components/schemas/NumberType'
-            title: NumberType
-          - $ref: '#/components/schemas/BooleanType'
-            title: BooleanType
-          - $ref: '#/components/schemas/ArrayType'
-            title: ArrayType
-          - $ref: '#/components/schemas/ObjectType'
-            title: ObjectType
-          - $ref: '#/components/schemas/JsonType'
-            title: JsonType
-          - $ref: '#/components/schemas/UnionType'
-            title: UnionType
-          - $ref: '#/components/schemas/ChatCompletionInputType'
-            title: ChatCompletionInputType
-          - $ref: '#/components/schemas/CompletionInputType'
-            title: CompletionInputType
-          title: StringType | ... (9 variants)
-        params:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-              title: LLMAsJudgeScoringFnParams
-            - $ref: '#/components/schemas/RegexParserScoringFnParams'
-              title: RegexParserScoringFnParams
-            - $ref: '#/components/schemas/BasicScoringFnParams'
-              title: BasicScoringFnParams
-            discriminator:
-              propertyName: type
-              mapping:
-                basic: '#/components/schemas/BasicScoringFnParams'
-                llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-          - type: 'null'
-          title: Params
-      type: object
-      required:
-      - return_type
-      title: Body_register_scoring_function_v1_scoring_functions_post
-    Body_register_tool_group_v1_toolgroups_post:
-      properties:
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          title: URL
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      title: Body_register_tool_group_v1_toolgroups_post
     BooleanType:
       properties:
         type:
@@ -10963,21 +10501,6 @@ components:
       required:
       - items
       title: _conversations_conversation_id_items_Request
-    _datasets_Request:
-      properties:
-        purpose:
-          title: Purpose
-        source:
-          title: Source
-        metadata:
-          title: Metadata
-        dataset_id:
-          title: Dataset Id
-      type: object
-      required:
-      - purpose
-      - source
-      title: _datasets_Request
     _eval_benchmarks_benchmark_id_evaluations_Request:
       properties:
         input_rows:
@@ -11033,34 +10556,6 @@ components:
       - query
       - items
       title: _inference_rerank_Request
-    _models_Request:
-      properties:
-        model_id:
-          type: string
-          title: Model Id
-        provider_model_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        provider_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        model_type:
-          anyOf:
-          - $ref: '#/components/schemas/ModelType'
-            title: ModelType
-          - type: 'null'
-          title: ModelType
-      type: object
-      required:
-      - model_id
-      title: _models_Request
     _moderations_Request:
       properties:
         input:
@@ -11366,28 +10861,6 @@ components:
       - dataset_id
       - scoring_functions
       title: _scoring_score_batch_Request
-    _shields_Request:
-      properties:
-        shield_id:
-          type: string
-          title: Shield Id
-        provider_shield_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        provider_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        params:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - shield_id
-      title: _shields_Request
     _tool_runtime_invoke_Request:
       properties:
         tool_name:

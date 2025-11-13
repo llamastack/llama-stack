@@ -1895,21 +1895,21 @@ def _filter_deprecated_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 def _filter_combined_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """
     Filter OpenAPI schema to include both stable (v1) and experimental (v1alpha, v1beta) APIs.
-    Includes deprecated endpoints. This is used for the combined "stainless" spec.
+    Excludes deprecated endpoints. This is used for the combined "stainless" spec.
     """
     filtered_schema = openapi_schema.copy()
 
     if "paths" not in filtered_schema:
         return filtered_schema
 
-    # Filter paths to include stable (v1) and experimental (v1alpha, v1beta), including deprecated
+    # Filter paths to include stable (v1) and experimental (v1alpha, v1beta), excluding deprecated
     filtered_paths = {}
     for path, path_item in filtered_schema["paths"].items():
         if not isinstance(path_item, dict):
             continue
 
-        # Include all operations (both deprecated and non-deprecated) for the combined spec
-        # Filter at operation level to preserve the structure
+        # Filter at operation level, not path level
+        # This allows paths with both deprecated and non-deprecated operations
         filtered_path_item = {}
         for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
             if method not in path_item:
@@ -1918,10 +1918,13 @@ def _filter_combined_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
             if not isinstance(operation, dict):
                 continue
 
-            # Include all operations, including deprecated ones
+            # Skip deprecated operations
+            if operation.get("deprecated", False):
+                continue
+
             filtered_path_item[method] = operation
 
-        # Only include path if it has at least one operation
+        # Only include path if it has at least one operation after filtering
         if filtered_path_item:
             # Check if path matches version filter (stable or experimental)
             if _is_stable_path(path) or _is_experimental_path(path):
