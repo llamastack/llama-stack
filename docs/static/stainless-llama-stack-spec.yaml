@@ -6596,9 +6596,10 @@ components:
             List of generated output items (messages, tool calls, etc.)
         parallel_tool_calls:
           type: boolean
-          default: false
+          default: true
           description: >-
-            Whether tool calls can be executed in parallel
+            (Optional) Whether to allow more than one function tool call generated
+            per turn.
         previous_response_id:
           type: string
           description: >-
@@ -6659,7 +6660,6 @@ components:
         - model
         - object
         - output
-        - parallel_tool_calls
         - status
         - text
         - input
@@ -6972,6 +6972,8 @@ components:
             (Optional) Prompt object with ID, version, and variables.
         instructions:
           type: string
+        parallel_tool_calls:
+          type: boolean
         previous_response_id:
           type: string
           description: >-
@@ -7045,9 +7047,10 @@ components:
             List of generated output items (messages, tool calls, etc.)
         parallel_tool_calls:
           type: boolean
-          default: false
+          default: true
           description: >-
-            Whether tool calls can be executed in parallel
+            (Optional) Whether to allow more than one function tool call generated
+            per turn.
         previous_response_id:
           type: string
           description: >-
@@ -7102,7 +7105,6 @@ components:
         - model
         - object
         - output
-        - parallel_tool_calls
         - status
         - text
       title: OpenAIResponseObject
