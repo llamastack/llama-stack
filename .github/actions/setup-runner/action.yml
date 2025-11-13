@@ -28,7 +28,6 @@ runs:
       shell: bash
       env:
         UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
-        PYTHONDONTWRITEBYTECODE: 1
       run: |
         # Export UV env vars for current step and persist to GITHUB_ENV for subsequent steps
         if [ -n "$UV_EXTRA_INDEX_URL" ]; then
@@ -38,33 +37,8 @@ runs:
           echo "Exported UV environment variables for current and subsequent steps"
         fi
 
-        echo "Clearing cached virtual environment to ensure fresh install"
-        # Remove cached venv that may contain old code
-        if [ -d ".venv" ]; then
-          echo "Removing cached .venv directory"
-          rm -rf .venv
-        fi
-
-        # Clear Python bytecode cache
-        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-        find . -name "*.pyc" -delete 2>/dev/null || true
-
-        # Clear uv's cache directory to force rebuilding wheels from source
-        if [ -n "$UV_CACHE_DIR" ] && [ -d "$UV_CACHE_DIR" ]; then
-          echo "Clearing UV cache at $UV_CACHE_DIR"
-          rm -rf "$UV_CACHE_DIR"/*
-        fi
-
-        echo "Syncing dependencies with uv (will create fresh venv)"
-        # Use --no-install-project to avoid installing llama-stack yet (we'll do it later with -e)
-        # This prevents Python from importing old code during sync
-        uv sync --all-groups --no-install-project
-
-        echo "Force reinstalling llama-stack from source to ensure latest changes"
-        uv pip install --force-reinstall --no-deps -e .
-
-        echo "Installing ci-tests distribution dependencies"
-        uv run llama stack list-deps ci-tests | xargs -L1 uv pip install
+        echo "Updating project dependencies via uv sync"
+        uv sync --all-groups
 
         echo "Installing ad-hoc dependencies"
         uv pip install faiss-cpu
@@ -74,10 +48,6 @@ runs:
           echo "Installing llama-stack-client from: ${{ steps.client-config.outputs.install-source }}"
           uv pip install ${{ steps.client-config.outputs.install-source }}
         fi
-
-        echo "Final cleanup: removing all bytecode cache after installations"
-        find . -name "*.pyc" -type f -delete 2>/dev/null || true
-        find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
         echo "Installed llama packages"
         uv pip list | grep llama
