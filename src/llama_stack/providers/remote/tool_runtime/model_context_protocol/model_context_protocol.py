@@ -25,9 +25,7 @@ from .config import MCPProviderConfig
 logger = get_logger(__name__, category="tools")
 
 
-class ModelContextProtocolToolRuntimeImpl(
-    ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData
-):
+class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRequestProviderData):
     def __init__(self, config: MCPProviderConfig, _deps: dict[Api, Any]):
         self.config = config
 
@@ -52,9 +50,7 @@ class ModelContextProtocolToolRuntimeImpl(
 
         # Use authorization parameter for MCP servers that require auth
         headers = {}
-        return await list_mcp_tools(
-            endpoint=mcp_endpoint.uri, headers=headers, authorization=authorization
-        )
+        return await list_mcp_tools(endpoint=mcp_endpoint.uri, headers=headers, authorization=authorization)
 
     async def invoke_tool(
         self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
@@ -76,9 +72,7 @@ class ModelContextProtocolToolRuntimeImpl(
             authorization=authorization,
         )
 
-    async def get_headers_from_request(
-        self, mcp_endpoint_uri: str
-    ) -> tuple[dict[str, str], str | None]:
+    async def get_headers_from_request(self, mcp_endpoint_uri: str) -> tuple[dict[str, str], str | None]:
         """
         Placeholder method for extracting headers and authorization.
 

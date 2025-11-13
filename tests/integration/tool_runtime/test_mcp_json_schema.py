@@ -9,8 +9,6 @@ Integration tests for MCP tools with complex JSON Schema support.
 Tests $ref, $defs, and other JSON Schema features through MCP integration.
 """
 
-import json
-
 import pytest
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
@@ -123,8 +121,6 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        
-
         # List runtime tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
@@ -163,7 +159,6 @@ class TestMCPSchemaPreservation:
             provider_id="model-context-protocol",
             mcp_endpoint=dict(uri=uri),
         )
-        
 
         # List tools
         response = llama_stack_client.tool_runtime.list_tools(
@@ -210,8 +205,6 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        
-
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             authorization=AUTH_TOKEN,
@@ -254,8 +247,6 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        
-
         # List tools to populate the tool index
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
@@ -296,8 +287,6 @@ class TestMCPToolInvocation:
             provider_id="model-context-protocol",
             mcp_endpoint=dict(uri=uri),
         )
-
-        
 
         # List tools to populate the tool index
         llama_stack_client.tool_runtime.list_tools(
@@ -349,8 +338,6 @@ class TestAgentWithMCPTools:
             provider_id="model-context-protocol",
             mcp_endpoint=dict(uri=uri),
         )
-
-        
 
         tools_list = llama_stack_client.tools.list(
             toolgroup_id=test_toolgroup_id,

@@ -9,8 +9,6 @@ Integration tests for inference/chat completion with JSON Schema-based tools.
 Tests that tools pass through correctly to various LLM providers.
 """
 
-import json
-
 import pytest
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient

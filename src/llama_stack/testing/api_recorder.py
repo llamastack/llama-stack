@@ -885,7 +885,9 @@ def patch_inference_clients():
     OllamaAsyncClient.list = patched_ollama_list
 
     # Create patched methods for tool runtimes
-    async def patched_tavily_invoke_tool(self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None):
+    async def patched_tavily_invoke_tool(
+        self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
+    ):
         return await _patched_tool_invoke_method(
             _original_methods["tavily_invoke_tool"], "tavily", self, tool_name, kwargs, authorization=authorization
         )

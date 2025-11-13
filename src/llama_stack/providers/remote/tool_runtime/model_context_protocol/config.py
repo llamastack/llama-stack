@@ -19,6 +19,7 @@ class MCPProviderDataValidator(BaseModel):
 
     This validator is kept for future provider-data extensions if needed.
     """
+
     pass
 
 
