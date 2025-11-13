@@ -138,11 +138,6 @@ resources:
         endpoint: get /v1/tool-runtime/list-tools
         paginated: false
       invoke_tool: post /v1/tool-runtime/invoke
-    subresources:
-      rag_tool:
-        methods:
-          insert: post /v1/tool-runtime/rag-tool/insert
-          query: post /v1/tool-runtime/rag-tool/query
 
   responses:
     models:
