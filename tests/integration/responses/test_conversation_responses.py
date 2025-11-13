@@ -131,18 +131,18 @@ class TestConversationResponses:
         assert len(response.output_text.strip()) > 0
 
     # this is not ready yet
-    # def test_conversation_compat_client(self, compat_client, text_model_id):
+    # def test_conversation_compat_client(self, responses_client, text_model_id):
     #     """Test conversation parameter works with compatibility client."""
-    #     if not hasattr(compat_client, "conversations"):
-    #         pytest.skip("compat_client does not support conversations API")
+    #     if not hasattr(responses_client, "conversations"):
+    #         pytest.skip("responses_client does not support conversations API")
     #
-    #     conversation = compat_client.conversations.create()
-    #     response = compat_client.responses.create(
+    #     conversation = responses_client.conversations.create()
+    #     response = responses_client.responses.create(
     #         model=text_model_id, input="Tell me a joke", conversation=conversation.id
     #     )
     #
     #     assert response is not None
     #     assert len(response.output_text.strip()) > 0
     #
-    #     conversation_items = compat_client.conversations.items.list(conversation.id)
+    #     conversation_items = responses_client.conversations.items.list(conversation.id)
     #     assert len(conversation_items.data) >= 2
