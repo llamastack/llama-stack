@@ -69,7 +69,7 @@ dev = [
     "black",
     "ruff",
     "mypy",
-    "pre-commit",
+    "pre-commit>=4.4.0",
     "ruamel.yaml", # needed for openapi generator
 ]
 # Type checking dependencies - includes type stubs and optional runtime dependencies
