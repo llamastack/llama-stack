@@ -190,6 +190,8 @@ class InferenceRouter(Inference):
 
         response = await provider.openai_completion(params)
         response.model = request_model_id
+        # Copy metadata from request to response
+        response.metadata = params.metadata
         if self.telemetry_enabled and response.usage is not None:
             metrics = self._construct_metrics(
                 prompt_tokens=response.usage.prompt_tokens,
@@ -244,10 +246,13 @@ class InferenceRouter(Inference):
                 fully_qualified_model_id=request_model_id,
                 provider_id=provider.__provider_id__,
                 messages=params.messages,
+                metadata=params.metadata,
             )
 
         response = await self._nonstream_openai_chat_completion(provider, params)
         response.model = request_model_id
+        # Copy metadata from request to response
+        response.metadata = params.metadata
 
         # Store the response with the ID that will be returned to the client
         if self.store:
@@ -282,6 +287,8 @@ class InferenceRouter(Inference):
 
         response = await provider.openai_embeddings(params)
         response.model = request_model_id
+        # Copy metadata from request to response
+        response.metadata = params.metadata
         return response
 
     async def list_chat_completions(
@@ -340,6 +347,7 @@ class InferenceRouter(Inference):
         fully_qualified_model_id: str,
         provider_id: str,
         messages: list[OpenAIMessageParam] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> AsyncIterator[OpenAIChatCompletionChunk]:
         """Stream OpenAI chat completion chunks, compute metrics, and store the final completion."""
         id = None
@@ -359,6 +367,8 @@ class InferenceRouter(Inference):
                     created = chunk.created
 
                 chunk.model = fully_qualified_model_id
+                # Copy metadata from request to each chunk
+                chunk.metadata = metadata
 
                 # Accumulate choice data for final assembly
                 if chunk.choices:
@@ -467,6 +477,7 @@ class InferenceRouter(Inference):
                     created=created or int(time.time()),
                     model=fully_qualified_model_id,
                     object="chat.completion",
+                    metadata=metadata,
                 )
                 logger.debug(f"InferenceRouter.completion_response: {final_response}")
                 asyncio.create_task(self.store.store_chat_completion(final_response, messages))
