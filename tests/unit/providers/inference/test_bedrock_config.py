@@ -9,7 +9,7 @@ from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
 
 def test_bedrock_config_defaults_no_env(monkeypatch):
     """Test BedrockConfig defaults when env vars are not set"""
-    monkeypatch.delenv("AWS_BEDROCK_API_KEY", raising=False)
+    monkeypatch.delenv("AWS_BEARER_TOKEN_BEDROCK", raising=False)
     monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
     config = BedrockConfig()
     assert config.auth_credential is None
@@ -35,5 +35,5 @@ def test_bedrock_config_sample():
     sample = BedrockConfig.sample_run_config()
     assert "api_key" in sample
     assert "region_name" in sample
-    assert sample["api_key"] == "${env.AWS_BEDROCK_API_KEY:=}"
+    assert sample["api_key"] == "${env.AWS_BEARER_TOKEN_BEDROCK:=}"
     assert sample["region_name"] == "${env.AWS_DEFAULT_REGION:=us-east-2}"
