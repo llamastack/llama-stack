@@ -247,6 +247,13 @@ class VectorIORouter(VectorIO):
         metadata: dict[str, Any] | None = None,
     ) -> VectorStoreObject:
         logger.debug(f"VectorIORouter.openai_update_vector_store: {vector_store_id}")
+
+        # Check if provider_id is being changed (not supported)
+        if metadata and "provider_id" in metadata:
+            current_store = await self.routing_table.get_object_by_identifier("vector_store", vector_store_id)
+            if current_store and current_store.provider_id != metadata["provider_id"]:
+                raise ValueError("provider_id cannot be changed after vector store creation")
+
         provider = await self.routing_table.get_provider_impl(vector_store_id)
         return await provider.openai_update_vector_store(
             vector_store_id=vector_store_id,
@@ -338,12 +345,19 @@ class VectorIORouter(VectorIO):
         self,
         vector_store_id: str,
         file_id: str,
+        include_embeddings: bool | None = False,
+        include_metadata: bool | None = False,
     ) -> VectorStoreFileContentResponse:
-        logger.debug(f"VectorIORouter.openai_retrieve_vector_store_file_contents: {vector_store_id}, {file_id}")
-        provider = await self.routing_table.get_provider_impl(vector_store_id)
-        return await provider.openai_retrieve_vector_store_file_contents(
+        logger.debug(
+            f"VectorIORouter.openai_retrieve_vector_store_file_contents: {vector_store_id}, {file_id}, "
+            f"include_embeddings={include_embeddings}, include_metadata={include_metadata}"
+        )
+
+        return await self.routing_table.openai_retrieve_vector_store_file_contents(
             vector_store_id=vector_store_id,
             file_id=file_id,
+            include_embeddings=include_embeddings,
+            include_metadata=include_metadata,
         )
 
     async def openai_update_vector_store_file(

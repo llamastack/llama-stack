@@ -115,7 +115,15 @@ def openai_client(base_url, api_key, provider):
         client = LlamaStackAsLibraryClient(config, skip_logger_removal=True)
         return client
 
-    return OpenAI(
+    client = OpenAI(
         base_url=base_url,
         api_key=api_key,
+        max_retries=0,
+        timeout=30.0,
     )
+    yield client
+    # Cleanup: close HTTP connections
+    try:
+        client.close()
+    except Exception:
+        pass

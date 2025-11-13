@@ -104,11 +104,17 @@ async def test_paginated_response_url_setting():
 
     route_handler = create_dynamic_typed_route(mock_api_method, "get", "/test/route")
 
-    # Mock minimal request
+    # Mock minimal request with proper state object
     request = MagicMock()
     request.scope = {"user_attributes": {}, "principal": ""}
     request.headers = {}
     request.body = AsyncMock(return_value=b"")
+
+    # Create a simple state object without auto-generating attributes
+    class MockState:
+        pass
+
+    request.state = MockState()
 
     result = await route_handler(request)
 

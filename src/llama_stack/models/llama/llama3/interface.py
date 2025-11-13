@@ -15,13 +15,10 @@ from pathlib import Path
 
 from termcolor import colored
 
+from llama_stack.models.llama.datatypes import BuiltinTool, StopReason, ToolCall, ToolDefinition, ToolPromptFormat
+
 from ..datatypes import (
-    BuiltinTool,
     RawMessage,
-    StopReason,
-    ToolCall,
-    ToolDefinition,
-    ToolPromptFormat,
 )
 from . import template_data
 from .chat_format import ChatFormat

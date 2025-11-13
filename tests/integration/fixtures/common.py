@@ -233,10 +233,21 @@ def instantiate_llama_stack_client(session):
         raise ValueError("You must specify either --stack-config or LLAMA_STACK_CONFIG")
 
     # Handle server:<config_name> format or server:<config_name>:<port>
+    # Also handles server:<distro>::<run_file.yaml> format
     if config.startswith("server:"):
-        parts = config.split(":")
-        config_name = parts[1]
-        port = int(parts[2]) if len(parts) > 2 else int(os.environ.get("LLAMA_STACK_PORT", DEFAULT_PORT))
+        # Strip the "server:" prefix first
+        config_part = config[7:]  # len("server:") == 7
+
+        # Check for :: (distro::runfile format)
+        if "::" in config_part:
+            config_name = config_part
+            port = int(os.environ.get("LLAMA_STACK_PORT", DEFAULT_PORT))
+        else:
+            # Single colon format: either <name> or <name>:<port>
+            parts = config_part.split(":")
+            config_name = parts[0]
+            port = int(parts[1]) if len(parts) > 1 else int(os.environ.get("LLAMA_STACK_PORT", DEFAULT_PORT))
+
         base_url = f"http://localhost:{port}"
 
         force_restart = os.environ.get("LLAMA_STACK_TEST_FORCE_SERVER_RESTART") == "1"
@@ -323,7 +334,13 @@ def require_server(llama_stack_client):
 @pytest.fixture(scope="session")
 def openai_client(llama_stack_client, require_server):
     base_url = f"{llama_stack_client.base_url}/v1"
-    return OpenAI(base_url=base_url, api_key="fake")
+    client = OpenAI(base_url=base_url, api_key="fake", max_retries=0, timeout=30.0)
+    yield client
+    # Cleanup: close HTTP connections
+    try:
+        client.close()
+    except Exception:
+        pass
 
 
 @pytest.fixture(params=["openai_client", "client_with_models"])

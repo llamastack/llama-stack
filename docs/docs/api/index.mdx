@@ -1,0 +1,144 @@
+---
+title: API Reference
+description: Complete reference for Llama Stack APIs
+sidebar_label: Overview
+sidebar_position: 1
+---
+
+# API Reference
+
+Llama Stack provides a comprehensive set of APIs for building generative AI applications. All APIs follow OpenAI-compatible standards and can be used interchangeably across different providers.
+
+## Core APIs
+
+### Inference API
+Run inference with Large Language Models (LLMs) and embedding models.
+
+**Supported Providers:**
+- Meta Reference (Single Node)
+- Ollama (Single Node)
+- Fireworks (Hosted)
+- Together (Hosted)
+- NVIDIA NIM (Hosted and Single Node)
+- vLLM (Hosted and Single Node)
+- TGI (Hosted and Single Node)
+- AWS Bedrock (Hosted)
+- Cerebras (Hosted)
+- Groq (Hosted)
+- SambaNova (Hosted)
+- PyTorch ExecuTorch (On-device iOS, Android)
+- OpenAI (Hosted)
+- Anthropic (Hosted)
+- Gemini (Hosted)
+- WatsonX (Hosted)
+
+### Agents API
+Run multi-step agentic workflows with LLMs, including tool usage, memory (RAG), and complex reasoning.
+
+**Supported Providers:**
+- Meta Reference (Single Node)
+- Fireworks (Hosted)
+- Together (Hosted)
+- PyTorch ExecuTorch (On-device iOS)
+
+### Vector IO API
+Perform operations on vector stores, including adding documents, searching, and deleting documents.
+
+**Supported Providers:**
+- FAISS (Single Node)
+- SQLite-Vec (Single Node)
+- Chroma (Hosted and Single Node)
+- Milvus (Hosted and Single Node)
+- Postgres (PGVector) (Hosted and Single Node)
+- Weaviate (Hosted)
+- Qdrant (Hosted and Single Node)
+
+### Files API (OpenAI-compatible)
+Manage file uploads, storage, and retrieval with OpenAI-compatible endpoints.
+
+**Supported Providers:**
+- Local Filesystem (Single Node)
+- S3 (Hosted)
+
+### Vector Store Files API (OpenAI-compatible)
+Integrate file operations with vector stores for automatic document processing and search.
+
+**Supported Providers:**
+- FAISS (Single Node)
+- SQLite-vec (Single Node)
+- Milvus (Single Node)
+- ChromaDB (Hosted and Single Node)
+- Qdrant (Hosted and Single Node)
+- Weaviate (Hosted)
+- Postgres (PGVector) (Hosted and Single Node)
+
+### Safety API
+Apply safety policies to outputs at a systems level, not just model level.
+
+**Supported Providers:**
+- Llama Guard (Depends on Inference Provider)
+- Prompt Guard (Single Node)
+- Code Scanner (Single Node)
+- AWS Bedrock (Hosted)
+
+### Post Training API
+Fine-tune models for specific use cases and domains.
+
+**Supported Providers:**
+- Meta Reference (Single Node)
+- HuggingFace (Single Node)
+- TorchTune (Single Node)
+- NVIDIA NEMO (Hosted)
+
+### Eval API
+Generate outputs and perform scoring to evaluate system performance.
+
+**Supported Providers:**
+- Meta Reference (Single Node)
+- NVIDIA NEMO (Hosted)
+
+### Telemetry API
+Collect telemetry data from the system for monitoring and observability.
+
+**Supported Providers:**
+- Meta Reference (Single Node)
+
+### Tool Runtime API
+Interact with various tools and protocols to extend LLM capabilities.
+
+**Supported Providers:**
+- Brave Search (Hosted)
+- RAG Runtime (Single Node)
+
+## API Compatibility
+
+All Llama Stack APIs are designed to be OpenAI-compatible, allowing you to:
+- Use existing OpenAI API clients and tools
+- Migrate from OpenAI to other providers seamlessly
+- Maintain consistent API contracts across different environments
+
+## Getting Started
+
+To get started with Llama Stack APIs:
+
+1. **Choose a Distribution**: Select a pre-configured distribution that matches your environment
+2. **Configure Providers**: Set up the providers you want to use for each API
+3. **Start the Server**: Launch the Llama Stack server with your configuration
+4. **Use the APIs**: Make requests to the API endpoints using your preferred client
+
+For detailed setup instructions, see our [Getting Started Guide](../getting_started/quickstart).
+
+## Provider Details
+
+For complete provider compatibility and setup instructions, see our [Providers Documentation](../providers/).
+
+## API Stability
+
+Llama Stack APIs are organized by stability level:
+- **[Stable APIs](./index.mdx)** - Production-ready APIs with full support
+- **[Experimental APIs](../api-experimental/)** - APIs in development with limited support
+- **[Deprecated APIs](../api-deprecated/)** - Legacy APIs being phased out
+
+## OpenAI Integration
+
+For specific OpenAI API compatibility features, see our [OpenAI Compatibility Guide](../api-openai/).

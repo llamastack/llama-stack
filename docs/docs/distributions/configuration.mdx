@@ -221,7 +221,15 @@ models:
 ```
 A Model is an instance of a "Resource" (see [Concepts](../concepts/)) and is associated with a specific inference provider (in this case, the provider with identifier `ollama`). This is an instance of a "pre-registered" model. While we always encourage the clients to register models before using them, some Stack servers may come up a list of "already known and available" models.
 
-What's with the `provider_model_id` field? This is an identifier for the model inside the provider's model catalog. Contrast it with `model_id` which is the identifier for the same model for Llama Stack's purposes. For example, you may want to name "llama3.2:vision-11b" as "image_captioning_model" when you use it in your Stack interactions. When omitted, the server will set `provider_model_id` to be the same as `model_id`.
+What's with the `provider_model_id` field? This is an identifier for the model inside the provider's model catalog. The `model_id` field is provided for configuration purposes but is not used as part of the model identifier.
+
+**Important:** Models are identified as `provider_id/provider_model_id` in the system and when making API calls. When `provider_model_id` is omitted, the server will set it to be the same as `model_id`.
+
+Examples:
+- Config: `model_id: llama3.2`, `provider_id: ollama`, `provider_model_id: null`
+  → Access as: `ollama/llama3.2`
+- Config: `model_id: my-llama`, `provider_id: vllm-inference`, `provider_model_id: llama-3-2-3b`
+  → Access as: `vllm-inference/llama-3-2-3b` (the `model_id` is not used in the identifier)
 
 If you need to conditionally register a model in the configuration, such as only when specific environment variable(s) are set, this can be accomplished by utilizing a special `__disabled__` string as the default value of an environment variable substitution, as shown below:
 

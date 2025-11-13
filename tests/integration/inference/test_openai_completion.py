@@ -54,6 +54,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         # {"error":{"message":"Unknown request URL: GET /openai/v1/completions. Please check the URL for typos,
         # or see the docs at https://console.groq.com/docs/","type":"invalid_request_error","code":"unknown_url"}}
         "remote::groq",
+        "remote::oci",
         "remote::gemini",  # https://generativelanguage.googleapis.com/v1beta/openai/completions -> 404
         "remote::anthropic",  # at least claude-3-{5,7}-{haiku,sonnet}-* / claude-{sonnet,opus}-4-* are not supported
         "remote::azure",  # {'error': {'code': 'OperationNotSupported', 'message': 'The completion operation

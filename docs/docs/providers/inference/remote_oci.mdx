@@ -1,0 +1,41 @@
+---
+description: |
+  Oracle Cloud Infrastructure (OCI) Generative AI inference provider for accessing OCI's Generative AI Platform-as-a-Service models.
+  Provider documentation
+  https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
+sidebar_label: Remote - Oci
+title: remote::oci
+---
+
+# remote::oci
+
+## Description
+
+
+Oracle Cloud Infrastructure (OCI) Generative AI inference provider for accessing OCI's Generative AI Platform-as-a-Service models.
+Provider documentation
+https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
+| `oci_auth_type` | `<class 'str'>` | No | instance_principal | OCI authentication type (must be one of: instance_principal, config_file) |
+| `oci_region` | `<class 'str'>` | No | us-ashburn-1 | OCI region (e.g., us-ashburn-1) |
+| `oci_compartment_id` | `<class 'str'>` | No |  | OCI compartment ID for the Generative AI service |
+| `oci_config_file_path` | `<class 'str'>` | No | ~/.oci/config | OCI config file path (required if oci_auth_type is config_file) |
+| `oci_config_profile` | `<class 'str'>` | No | DEFAULT | OCI config profile (required if oci_auth_type is config_file) |
+
+## Sample Configuration
+
+```yaml
+oci_auth_type: ${env.OCI_AUTH_TYPE:=instance_principal}
+oci_config_file_path: ${env.OCI_CONFIG_FILE_PATH:=~/.oci/config}
+oci_config_profile: ${env.OCI_CLI_PROFILE:=DEFAULT}
+oci_region: ${env.OCI_REGION:=us-ashburn-1}
+oci_compartment_id: ${env.OCI_COMPARTMENT_OCID:=}
+```

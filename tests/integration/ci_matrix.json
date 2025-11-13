@@ -1,6 +1,7 @@
 {
   "default": [
     {"suite": "base", "setup": "ollama"},
+    {"suite": "base", "setup": "ollama-postgres", "allowed_clients": ["server"], "stack_config": "server:ci-tests::run-with-postgres-store.yaml"},
     {"suite": "vision", "setup": "ollama-vision"},
     {"suite": "responses", "setup": "gpt"},
     {"suite": "base-vllm-subset", "setup": "vllm"}

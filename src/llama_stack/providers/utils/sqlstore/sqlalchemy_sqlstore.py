@@ -72,13 +72,14 @@ def _build_where_expr(column: ColumnElement, value: Any) -> ColumnElement:
 class SqlAlchemySqlStoreImpl(SqlStore):
     def __init__(self, config: SqlAlchemySqlStoreConfig):
         self.config = config
+        self._is_sqlite_backend = "sqlite" in self.config.engine_str
         self.async_session = async_sessionmaker(self.create_engine())
         self.metadata = MetaData()
 
     def create_engine(self) -> AsyncEngine:
         # Configure connection args for better concurrency support
         connect_args = {}
-        if "sqlite" in self.config.engine_str:
+        if self._is_sqlite_backend:
             # SQLite-specific optimizations for concurrent access
             # With WAL mode, most locks resolve in milliseconds, but allow up to 5s for edge cases
             connect_args["timeout"] = 5.0
@@ -91,7 +92,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         )
 
         # Enable WAL mode for SQLite to support concurrent readers and writers
-        if "sqlite" in self.config.engine_str:
+        if self._is_sqlite_backend:
 
             @event.listens_for(engine.sync_engine, "connect")
             def set_sqlite_pragma(dbapi_conn, connection_record):
@@ -149,6 +150,29 @@ class SqlAlchemySqlStoreImpl(SqlStore):
     async def insert(self, table: str, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> None:
         async with self.async_session() as session:
             await session.execute(self.metadata.tables[table].insert(), data)
+            await session.commit()
+
+    async def upsert(
+        self,
+        table: str,
+        data: Mapping[str, Any],
+        conflict_columns: list[str],
+        update_columns: list[str] | None = None,
+    ) -> None:
+        table_obj = self.metadata.tables[table]
+        dialect_insert = self._get_dialect_insert(table_obj)
+        insert_stmt = dialect_insert.values(**data)
+
+        if update_columns is None:
+            update_columns = [col for col in data.keys() if col not in conflict_columns]
+
+        update_mapping = {col: getattr(insert_stmt.excluded, col) for col in update_columns}
+        conflict_cols = [table_obj.c[col] for col in conflict_columns]
+
+        stmt = insert_stmt.on_conflict_do_update(index_elements=conflict_cols, set_=update_mapping)
+
+        async with self.async_session() as session:
+            await session.execute(stmt)
             await session.commit()
 
     async def fetch_all(
@@ -333,9 +357,18 @@ class SqlAlchemySqlStoreImpl(SqlStore):
                 add_column_sql = text(f"ALTER TABLE {table} ADD COLUMN {column_name} {compiled_type}{nullable_clause}")
 
                 await conn.execute(add_column_sql)
-
         except Exception as e:
             # If any error occurs during migration, log it but don't fail
             # The table creation will handle adding the column
             logger.error(f"Error adding column {column_name} to table {table}: {e}")
             pass
+
+    def _get_dialect_insert(self, table: Table):
+        if self._is_sqlite_backend:
+            from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+
+            return sqlite_insert(table)
+        else:
+            from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+            return pg_insert(table)

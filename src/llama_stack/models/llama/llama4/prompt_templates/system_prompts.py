@@ -13,7 +13,7 @@
 
 import textwrap
 
-from llama_stack.apis.inference import ToolDefinition
+from llama_stack.models.llama.datatypes import ToolDefinition
 from llama_stack.models.llama.llama3.prompt_templates.base import (
     PromptTemplate,
     PromptTemplateGeneratorBase,

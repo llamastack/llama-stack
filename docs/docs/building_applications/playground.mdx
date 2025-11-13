@@ -1,0 +1,87 @@
+---
+title: Admin UI & Chat Playground
+description: Web-based admin interface and chat playground for Llama Stack
+sidebar_label: Playground
+sidebar_position: 10
+---
+
+# Admin UI & Chat Playground
+
+The Llama Stack UI provides a comprehensive web-based admin interface for managing your Llama Stack server, with an integrated chat playground for interactive testing. This admin interface is the primary way to monitor, manage, and debug your Llama Stack applications.
+
+## Quick Start
+
+Launch the admin UI with:
+
+```bash
+npx llama-stack-ui
+```
+
+Then visit `http://localhost:8322` to access the interface.
+
+## Admin Interface Features
+
+The Llama Stack UI is organized into three main sections:
+
+### 🎯 Create
+**Chat Playground** - Interactive testing environment
+- Real-time chat interface for testing agents and models
+- Multi-turn conversations with tool calling support
+- Agent SDK integration (will be migrated to Responses API)
+- Custom system prompts and model parameter adjustment
+
+### 📊 Manage
+**Logs & Resource Management** - Monitor and manage your stack
+- **Responses Logs**: View and analyze agent responses and interactions
+- **Chat Completions Logs**: Monitor chat completion requests and responses
+- **Vector Stores**: Create, manage, and monitor vector databases for RAG workflows
+- **Prompts**: Full CRUD operations for prompt templates and management
+- **Files**: Forthcoming file management capabilities
+
+## Key Capabilities for Application Development
+
+### Real-time Monitoring
+- **Response Tracking**: Monitor all agent responses and tool calls
+- **Completion Analysis**: View chat completion performance and patterns
+- **Vector Store Activity**: Track RAG operations and document processing
+- **Prompt Usage**: Analyze prompt template performance
+
+### Resource Management
+- **Vector Store CRUD**: Create, update, and delete vector databases
+- **Prompt Library**: Organize and version control your prompts
+- **File Operations**: Manage documents and assets (forthcoming)
+
+### Interactive Testing
+- **Chat Playground**: Test conversational flows before production deployment
+- **Agent Prototyping**: Validate agent behaviors and tool integrations
+
+## Development Workflow Integration
+
+The admin UI supports your development lifecycle:
+
+1. **Development**: Use chat playground to prototype and test features
+2. **Monitoring**: Track system performance through logs and metrics
+3. **Management**: Organize prompts, vector stores, and other resources
+4. **Debugging**: Analyze logs to identify and resolve issues
+
+## Architecture Notes
+
+- **Current**: Chat playground uses Agents SDK
+- **Future**: Migration to Responses API for improved performance and consistency
+- **Admin Focus**: Primary emphasis on monitoring, logging, and resource management
+
+## Getting Started
+
+1. **Launch the UI**: Run `npx llama-stack-ui`
+2. **Explore Logs**: Start with Responses and Chat Completions logs to understand your system activity
+3. **Test in Playground**: Use the chat interface to validate your agent configurations
+4. **Manage Resources**: Create vector stores and organize prompts through the UI
+
+For detailed setup and configuration, see the [Llama Stack UI documentation](/docs/distributions/llama_stack_ui).
+
+## Next Steps
+
+- Set up your [first agent](/docs/building_applications/agent)
+- Implement [RAG functionality](/docs/building_applications/rag)
+- Add [evaluation metrics](/docs/building_applications/evals)
+- Configure [safety measures](/docs/building_applications/safety)

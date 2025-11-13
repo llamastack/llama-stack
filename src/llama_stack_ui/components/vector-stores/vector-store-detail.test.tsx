@@ -12,6 +12,20 @@ jest.mock("next/navigation", () => ({
   }),
 }));
 
+// Mock NextAuth
+jest.mock("next-auth/react", () => ({
+  useSession: () => ({
+    data: {
+      accessToken: "mock-access-token",
+      user: {
+        id: "mock-user-id",
+        email: "test@example.com",
+      },
+    },
+    status: "authenticated",
+  }),
+}));
+
 describe("VectorStoreDetailView", () => {
   const defaultProps = {
     store: null,

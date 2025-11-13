@@ -12,7 +12,7 @@ from pydantic import ValidationError
 
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import AuthenticationRequiredError
-from llama_stack.core.server.server import translate_exception
+from llama_stack.core.server.server import remove_disabled_providers, translate_exception
 
 
 class TestTranslateException:
@@ -194,3 +194,70 @@ class TestTranslateException:
         assert isinstance(result3, HTTPException)
         assert result3.status_code == 403
         assert result3.detail == "Permission denied: Access denied"
+
+
+class TestRemoveDisabledProviders:
+    """Test cases for the remove_disabled_providers function."""
+
+    def test_remove_explicitly_disabled_provider(self):
+        """Test that providers with provider_id='__disabled__' are removed."""
+        config = {
+            "providers": {
+                "inference": [
+                    {"provider_id": "openai", "provider_type": "remote::openai", "config": {}},
+                    {"provider_id": "__disabled__", "provider_type": "remote::vllm", "config": {}},
+                ]
+            }
+        }
+        result = remove_disabled_providers(config)
+        assert len(result["providers"]["inference"]) == 1
+        assert result["providers"]["inference"][0]["provider_id"] == "openai"
+
+    def test_remove_empty_provider_id(self):
+        """Test that providers with empty provider_id are removed."""
+        config = {
+            "providers": {
+                "inference": [
+                    {"provider_id": "openai", "provider_type": "remote::openai", "config": {}},
+                    {"provider_id": "", "provider_type": "remote::vllm", "config": {}},
+                ]
+            }
+        }
+        result = remove_disabled_providers(config)
+        assert len(result["providers"]["inference"]) == 1
+        assert result["providers"]["inference"][0]["provider_id"] == "openai"
+
+    def test_keep_models_with_none_provider_model_id(self):
+        """Test that models with None provider_model_id are NOT removed."""
+        config = {
+            "registered_resources": {
+                "models": [
+                    {
+                        "model_id": "llama-3-2-3b",
+                        "provider_id": "vllm-inference",
+                        "model_type": "llm",
+                        "provider_model_id": None,
+                        "metadata": {},
+                    },
+                    {
+                        "model_id": "gpt-4o-mini",
+                        "provider_id": "openai",
+                        "model_type": "llm",
+                        "provider_model_id": None,
+                        "metadata": {},
+                    },
+                    {
+                        "model_id": "granite-embedding-125m",
+                        "provider_id": "sentence-transformers",
+                        "model_type": "embedding",
+                        "provider_model_id": "ibm-granite/granite-embedding-125m-english",
+                        "metadata": {"embedding_dimension": 768},
+                    },
+                ]
+            }
+        }
+        result = remove_disabled_providers(config)
+        assert len(result["registered_resources"]["models"]) == 3
+        assert result["registered_resources"]["models"][0]["model_id"] == "llama-3-2-3b"
+        assert result["registered_resources"]["models"][1]["model_id"] == "gpt-4o-mini"
+        assert result["registered_resources"]["models"][2]["model_id"] == "granite-embedding-125m"

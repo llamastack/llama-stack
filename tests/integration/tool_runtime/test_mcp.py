@@ -10,8 +10,6 @@ import pytest
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
 
-from llama_stack.core.library_client import LlamaStackAsLibraryClient
-
 AUTH_TOKEN = "test-token"
 
 from tests.common.mcp import MCP_TOOLGROUP_ID, make_mcp_server
@@ -24,9 +22,6 @@ def mcp_server():
 
 
 def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
-    if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-        pytest.skip("The local MCP server only reliably reachable from library client.")
-
     test_toolgroup_id = MCP_TOOLGROUP_ID
     uri = mcp_server["server_url"]
 

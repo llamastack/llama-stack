@@ -244,8 +244,14 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
     timeout = 2
     start_time = time.time()
 
-    server_url = f"http://localhost:{port}/sse"
-    logger.debug(f"Waiting for MCP server thread to start on port {port}")
+    # Determine the appropriate host for the server URL based on test environment
+    # - For library client and server mode: use localhost (both on same host)
+    # - For docker mode: use host.docker.internal (container needs to reach host)
+    import os
+
+    mcp_host = os.environ.get("LLAMA_STACK_TEST_MCP_HOST", "localhost")
+    server_url = f"http://{mcp_host}:{port}/sse"
+    logger.debug(f"Waiting for MCP server thread to start on port {port} (accessible via {mcp_host})")
 
     while time.time() - start_time < timeout:
         if server_thread.is_alive():

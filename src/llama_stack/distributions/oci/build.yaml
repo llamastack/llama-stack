@@ -1,0 +1,35 @@
+version: 2
+distribution_spec:
+  description: Use Oracle Cloud Infrastructure (OCI) Generative AI for running LLM
+    inference with scalable cloud services
+  providers:
+    inference:
+    - provider_type: remote::oci
+    vector_io:
+    - provider_type: inline::faiss
+    - provider_type: remote::chromadb
+    - provider_type: remote::pgvector
+    safety:
+    - provider_type: inline::llama-guard
+    agents:
+    - provider_type: inline::meta-reference
+    eval:
+    - provider_type: inline::meta-reference
+    datasetio:
+    - provider_type: remote::huggingface
+    - provider_type: inline::localfs
+    scoring:
+    - provider_type: inline::basic
+    - provider_type: inline::llm-as-judge
+    - provider_type: inline::braintrust
+    tool_runtime:
+    - provider_type: remote::brave-search
+    - provider_type: remote::tavily-search
+    - provider_type: inline::rag-runtime
+    - provider_type: remote::model-context-protocol
+    files:
+    - provider_type: inline::localfs
+image_type: venv
+additional_pip_packages:
+- aiosqlite
+- sqlalchemy[asyncio]

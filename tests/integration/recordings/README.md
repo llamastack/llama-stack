@@ -2,6 +2,10 @@
 
 This directory contains recorded inference API responses used for deterministic testing without requiring live API access.
 
+For more information, see the
+[docs](https://llamastack.github.io/docs/contributing/testing/record-replay).
+This README provides more technical information.
+
 ## Structure
 
 - `responses/` - JSON files containing request/response pairs for inference operations

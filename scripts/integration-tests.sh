@@ -162,6 +162,17 @@ if [[ "$COLLECT_ONLY" == false ]]; then
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
         echo "Setting stack config type: library_client"
     fi
+
+    # Set MCP host for in-process MCP server tests
+    # - For library client and server mode: localhost (both on same host)
+    # - For docker mode: host.docker.internal (container needs to reach host)
+    if [[ "$STACK_CONFIG" == docker:* ]]; then
+        export LLAMA_STACK_TEST_MCP_HOST="host.docker.internal"
+        echo "Setting MCP host: host.docker.internal (docker mode)"
+    else
+        export LLAMA_STACK_TEST_MCP_HOST="localhost"
+        echo "Setting MCP host: localhost (library/server mode)"
+    fi
 fi
 
 SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
@@ -338,6 +349,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     DOCKER_ENV_VARS=""
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_INFERENCE_MODE=$INFERENCE_MODE"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_STACK_CONFIG_TYPE=server"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_MCP_HOST=${LLAMA_STACK_TEST_MCP_HOST:-host.docker.internal}"
     # Disabled: https://github.com/llamastack/llama-stack/issues/4089
     #DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${COLLECTOR_PORT}"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_METRIC_EXPORT_INTERVAL=200"
@@ -371,8 +383,11 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     # Use regular port mapping instead
     NETWORK_MODE=""
     PORT_MAPPINGS=""
+    ADD_HOST_FLAG=""
     if [[ "$(uname)" != "Darwin" ]] && [[ "$(uname)" != *"MINGW"* ]]; then
         NETWORK_MODE="--network host"
+        # On Linux with host network, also add host.docker.internal mapping for consistency
+        ADD_HOST_FLAG="--add-host=host.docker.internal:host-gateway"
     else
         # On non-Linux (macOS, Windows), need explicit port mappings for both app and telemetry
         PORT_MAPPINGS="-p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT -p $COLLECTOR_PORT:$COLLECTOR_PORT"
@@ -381,6 +396,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
 
     docker run -d $NETWORK_MODE --name "$container_name" \
         $PORT_MAPPINGS \
+        $ADD_HOST_FLAG \
         $DOCKER_ENV_VARS \
         "$IMAGE_NAME" \
         --port $LLAMA_STACK_PORT

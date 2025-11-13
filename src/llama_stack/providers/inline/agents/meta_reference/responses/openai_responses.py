@@ -257,6 +257,7 @@ class OpenAIResponsesImpl:
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
         guardrails: list[str | ResponseGuardrailSpec] | None = None,
+        max_tool_calls: int | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -272,6 +273,9 @@ class OpenAIResponsesImpl:
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)
 
+        if max_tool_calls is not None and max_tool_calls < 1:
+            raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
+
         stream_gen = self._create_streaming_response(
             input=input,
             conversation=conversation,
@@ -285,6 +289,7 @@ class OpenAIResponsesImpl:
             tool_choice=tool_choice,
             max_infer_iters=max_infer_iters,
             guardrail_ids=guardrail_ids,
+            max_tool_calls=max_tool_calls,
         )
 
         if stream:
@@ -335,6 +340,7 @@ class OpenAIResponsesImpl:
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         max_infer_iters: int | None = 10,
         guardrail_ids: list[str] | None = None,
+        max_tool_calls: int | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -378,6 +384,7 @@ class OpenAIResponsesImpl:
             safety_api=self.safety_api,
             guardrail_ids=guardrail_ids,
             instructions=instructions,
+            max_tool_calls=max_tool_calls,
         )
 
         # Stream the response

@@ -17,11 +17,6 @@ from llama_stack.core.datatypes import (
     ToolGroupInput,
     VectorStoresConfig,
 )
-from llama_stack.core.storage.datatypes import (
-    InferenceStoreReference,
-    KVStoreReference,
-    SqlStoreReference,
-)
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.datatypes import RemoteProviderSpec
@@ -154,10 +149,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::reference"),
         ],
     }
+    files_config = LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}")
     files_provider = Provider(
         provider_id="meta-reference-files",
         provider_type="inline::localfs",
-        config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+        config=files_config,
     )
     embedding_provider = Provider(
         provider_id="sentence-transformers",
@@ -187,7 +183,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             provider_shield_id="${env.CODE_SCANNER_MODEL:=}",
         ),
     ]
-    postgres_config = PostgresSqlStoreConfig.sample_run_config()
+    postgres_sql_config = PostgresSqlStoreConfig.sample_run_config()
+    postgres_kv_config = PostgresKVStoreConfig.sample_run_config()
     default_overrides = {
         "inference": remote_inference_providers + [embedding_provider],
         "vector_io": [
@@ -244,6 +241,33 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         "files": [files_provider],
     }
 
+    base_run_settings = RunConfigSettings(
+        provider_overrides=default_overrides,
+        default_models=[],
+        default_tool_groups=default_tool_groups,
+        default_shields=default_shields,
+        vector_stores_config=VectorStoresConfig(
+            default_provider_id="faiss",
+            default_embedding_model=QualifiedModel(
+                provider_id="sentence-transformers",
+                model_id="nomic-ai/nomic-embed-text-v1.5",
+            ),
+        ),
+        safety_config=SafetyConfig(
+            default_shield_id="llama-guard",
+        ),
+    )
+
+    postgres_run_settings = base_run_settings.model_copy(
+        update={
+            "storage_backends": {
+                "kv_default": postgres_kv_config,
+                "sql_default": postgres_sql_config,
+            }
+        },
+        deep=True,
+    )
+
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -253,71 +277,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         providers=providers,
         additional_pip_packages=list(set(PostgresSqlStoreConfig.pip_packages() + PostgresKVStoreConfig.pip_packages())),
         run_configs={
-            "run.yaml": RunConfigSettings(
-                provider_overrides=default_overrides,
-                default_models=[],
-                default_tool_groups=default_tool_groups,
-                default_shields=default_shields,
-                vector_stores_config=VectorStoresConfig(
-                    default_provider_id="faiss",
-                    default_embedding_model=QualifiedModel(
-                        provider_id="sentence-transformers",
-                        model_id="nomic-ai/nomic-embed-text-v1.5",
-                    ),
-                ),
-                safety_config=SafetyConfig(
-                    default_shield_id="llama-guard",
-                ),
-            ),
-            "run-with-postgres-store.yaml": RunConfigSettings(
-                provider_overrides={
-                    **default_overrides,
-                    "agents": [
-                        Provider(
-                            provider_id="meta-reference",
-                            provider_type="inline::meta-reference",
-                            config=dict(
-                                persistence_store=postgres_config,
-                                responses_store=postgres_config,
-                            ),
-                        )
-                    ],
-                    "batches": [
-                        Provider(
-                            provider_id="reference",
-                            provider_type="inline::reference",
-                            config=dict(
-                                kvstore=KVStoreReference(
-                                    backend="kv_postgres",
-                                    namespace="batches",
-                                ).model_dump(exclude_none=True),
-                            ),
-                        )
-                    ],
-                },
-                storage_backends={
-                    "kv_postgres": PostgresKVStoreConfig.sample_run_config(),
-                    "sql_postgres": postgres_config,
-                },
-                storage_stores={
-                    "metadata": KVStoreReference(
-                        backend="kv_postgres",
-                        namespace="registry",
-                    ).model_dump(exclude_none=True),
-                    "inference": InferenceStoreReference(
-                        backend="sql_postgres",
-                        table_name="inference_store",
-                    ).model_dump(exclude_none=True),
-                    "conversations": SqlStoreReference(
-                        backend="sql_postgres",
-                        table_name="openai_conversations",
-                    ).model_dump(exclude_none=True),
-                    "prompts": KVStoreReference(
-                        backend="kv_postgres",
-                        namespace="prompts",
-                    ).model_dump(exclude_none=True),
-                },
-            ),
+            "run.yaml": base_run_settings,
+            "run-with-postgres-store.yaml": postgres_run_settings,
         },
         run_config_env_vars={
             "LLAMA_STACK_PORT": (

@@ -2,7 +2,7 @@ import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { PromptEditor } from "./prompt-editor";
-import type { Prompt, PromptFormData } from "./types";
+import type { Prompt } from "./types";
 
 describe("PromptEditor", () => {
   const mockOnSave = jest.fn();
