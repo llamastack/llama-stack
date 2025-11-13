@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 from dataclasses import dataclass
-from typing import cast
+from typing import Any, cast
 
 from openai.types.chat import ChatCompletionToolParam
 from pydantic import BaseModel
@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolFunction,
     OpenAIResponseInputToolMCP,
@@ -158,6 +159,8 @@ class ChatCompletionContext(BaseModel):
     temperature: float | None
     response_format: OpenAIResponseFormatParam
     tool_context: ToolContext | None
+    responses_tool_choice: OpenAIResponseInputToolChoice | None = None
+    chat_tool_choice: str | dict[str, Any] | None = None
     approval_requests: list[OpenAIResponseMCPApprovalRequest] = []
     approval_responses: dict[str, OpenAIResponseMCPApprovalResponse] = {}
 
@@ -170,6 +173,7 @@ class ChatCompletionContext(BaseModel):
         response_format: OpenAIResponseFormatParam,
         tool_context: ToolContext,
         inputs: list[OpenAIResponseInput] | str,
+        responses_tool_choice: OpenAIResponseInputToolChoice | None = None,
     ):
         super().__init__(
             model=model,
@@ -178,6 +182,7 @@ class ChatCompletionContext(BaseModel):
             temperature=temperature,
             response_format=response_format,
             tool_context=tool_context,
+            responses_tool_choice=responses_tool_choice,
         )
         if not isinstance(inputs, str):
             self.approval_requests = [input for input in inputs if input.type == "mcp_approval_request"]

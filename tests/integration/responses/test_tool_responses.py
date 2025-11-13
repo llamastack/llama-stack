@@ -12,6 +12,7 @@ import httpx
 import llama_stack_client
 import openai
 import pytest
+from openai import OpenAI
 
 from llama_stack.core.datatypes import AuthenticationRequiredError
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
@@ -600,3 +601,458 @@ def test_response_streaming_multi_turn_tool_execution(responses_client, text_mod
             assert expected_output.lower() in final_response.output_text.lower(), (
                 f"Expected '{expected_output}' to appear in response: {final_response.output_text}"
             )
+
+
+@pytest.fixture
+def simple_function_tools():
+    """Fixture providing simple function tools for testing."""
+    return [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get the weather in a given city",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {"type": "string", "description": "The city to get the weather for"},
+                },
+                "required": ["city"],
+            },
+        },
+        {
+            "type": "function",
+            "name": "get_time",
+            "description": "Get the current time",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "timezone": {"type": "string", "description": "The timezone to get the time for"},
+                },
+            },
+        },
+    ]
+
+
+class TestToolChoiceModes:
+    """Test basic tool_choice functionality with different modes and tool types."""
+
+    @pytest.mark.parametrize(
+        "tool_choice,expected_has_function_call",
+        [
+            ("required", True),  # required mode should force tool call
+            ("auto", None),  # auto mode lets model decide
+            ("none", False),  # none mode should prevent tool calls
+        ],
+    )
+    def test_tool_choice_modes(
+        self, compat_client, text_model_id, simple_function_tools, tool_choice, expected_has_function_call
+    ):
+        """Test different tool_choice modes (required, auto, none)."""
+        if not isinstance(compat_client, OpenAI):
+            pytest.skip("OpenAI client is required for tool_choice testing")
+
+        response = compat_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "What's the weather in Tokyo?",
+                }
+            ],
+            tools=simple_function_tools,
+            tool_choice=tool_choice,
+            stream=False,
+        )
+
+        function_calls = [output for output in response.output if output.type == "function_call"]
+
+        if expected_has_function_call is True:
+            assert len(function_calls) > 0, f"Expected function call with tool_choice='{tool_choice}'"
+        elif expected_has_function_call is False:
+            assert len(function_calls) == 0, f"Expected no function calls with tool_choice='{tool_choice}'"
+        else:  # None means auto - just verify it completes
+            assert response.status == "completed"
+
+
+class TestToolChoiceBuiltinTools:
+    """Test tool_choice with built-in tools (web_search, file_search)."""
+
+    def test_tool_choice_web_search(self, compat_client, text_model_id):
+        """Test tool_choice with web_search tool."""
+        if not isinstance(compat_client, OpenAI):
+            pytest.skip("OpenAI client is required for tool_choice testing")
+
+        response = compat_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "What's the latest news about AI?",
+                }
+            ],
+            tools=[{"type": "web_search"}],
+            tool_choice={"type": "web_search_preview"},
+            stream=False,
+        )
+
+        web_search_calls = [output for output in response.output if output.type == "web_search_call"]
+        assert len(web_search_calls) > 0, "Expected web_search_call with tool_choice='web_search'"
+
+
+class TestToolChoiceMCP:
+    """Test tool_choice with MCP (Model Context Protocol) tools."""
+
+    # Expected tools available on the MCP server
+    EXPECTED_MCP_TOOLS = {"get_boiling_point", "greet_everyone"}
+
+    @pytest.mark.parametrize(
+        "tool_choice_config,expected_tool_name",
+        [
+            ({"type": "mcp", "server_label": "localmcp"}, None),  # Server-level selection
+            (
+                {"type": "mcp", "server_label": "localmcp", "name": "get_boiling_point"},
+                "get_boiling_point",
+            ),  # Specific tool
+        ],
+    )
+    def test_tool_choice_mcp(self, compat_client, text_model_id, tool_choice_config, expected_tool_name):
+        """Test tool_choice with MCP tools (server-level and specific tool)."""
+        # if not isinstance(compat_client, LlamaStackAsLibraryClient):
+        #     pytest.skip("in-process MCP server is only supported in library client")
+
+        with make_mcp_server() as mcp_server_info:
+            tools = [
+                {
+                    "type": "mcp",
+                    "server_label": "localmcp",
+                    "server_url": mcp_server_info["server_url"],
+                }
+            ]
+
+            response = compat_client.responses.create(
+                model=text_model_id,
+                input=[
+                    {
+                        "role": "user",
+                        "content": "What is the boiling point of myawesomeliquid? You MUST call the tool.",
+                    }
+                ],
+                tools=tools,
+                tool_choice=tool_choice_config,
+                stream=False,
+            )
+
+            # Verify MCP list tools output contains expected tools
+            mcp_list_tools = [output for output in response.output if output.type == "mcp_list_tools"]
+            assert len(mcp_list_tools) == 1, "Expected exactly one mcp_list_tools output"
+            assert mcp_list_tools[0].server_label == "localmcp"
+
+            # Verify the tools listed match our expected tools
+            actual_tool_names = {tool.name for tool in mcp_list_tools[0].tools}
+            assert actual_tool_names == self.EXPECTED_MCP_TOOLS, (
+                f"MCP server tools mismatch. Expected {self.EXPECTED_MCP_TOOLS}, got {actual_tool_names}"
+            )
+
+            # Verify MCP calls were made
+            mcp_calls = [output for output in response.output if output.type == "mcp_call"]
+            assert len(mcp_calls) > 0, f"Expected MCP call with tool_choice={tool_choice_config}"
+
+            # Verify all MCP calls come from the server's tool list
+            for mcp_call in mcp_calls:
+                assert mcp_call.name in self.EXPECTED_MCP_TOOLS, (
+                    f"MCP call '{mcp_call.name}' is not in the server's tool list: {self.EXPECTED_MCP_TOOLS}"
+                )
+
+            # If a specific tool was requested, verify it was called
+            if expected_tool_name:
+                assert mcp_calls[0].name == expected_tool_name, (
+                    f"Expected {expected_tool_name}, got {mcp_calls[0].name}"
+                )
+
+
+class TestToolChoiceAllowedTools:
+    """Test tool_choice with allowed_tools filtering."""
+
+    @pytest.mark.parametrize(
+        "allowed_tools_config",
+        [
+            # Single function tool
+            {
+                "type": "allowed_tools",
+                "tools": [{"type": "function", "name": "get_weather"}],
+                "mode": "required",
+            },
+            # Multiple function tools
+            {
+                "type": "allowed_tools",
+                "tools": [{"type": "function", "name": "get_weather"}, {"type": "function", "name": "get_time"}],
+                "mode": "auto",
+            },
+        ],
+    )
+    def test_tool_choice_allowed_tools_function(
+        self, compat_client, text_model_id, simple_function_tools, allowed_tools_config
+    ):
+        """Test tool_choice with allowed_tools filtering."""
+        if not isinstance(compat_client, OpenAI):
+            pytest.skip("OpenAI client is required for tool_choice testing")
+
+        response = compat_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Get some information",
+                }
+            ],
+            tools=simple_function_tools,
+            tool_choice=allowed_tools_config,
+            stream=False,
+        )
+
+        # Verify response completes
+        assert response.status == "completed"
+
+        function_calls = [output for output in response.output if output.type == "function_call"]
+        # If mode is required, verify we got a function call
+        if allowed_tools_config["mode"] == "required":
+            assert len(function_calls) > 0, "Expected function call with mode='required'"
+
+        if len(function_calls) > 0:
+            # Verify it's one of the allowed tools
+            allowed_names = [tool["name"] for tool in allowed_tools_config["tools"]]
+            assert function_calls[0].name in allowed_names
+
+    def test_tool_choice_allowed_tools_mixed(self, compat_client, text_model_id):
+        """Test tool_choice with mixed tool types in allowed_tools."""
+        if not isinstance(compat_client, OpenAI):
+            pytest.skip("OpenAI client is required for tool_choice testing")
+
+        tools = [
+            {
+                "type": "function",
+                "name": "get_weather",
+                "description": "Get the weather",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "city": {"type": "string"},
+                    },
+                },
+            },
+            {"type": "web_search"},
+        ]
+
+        response = compat_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Find information",
+                }
+            ],
+            tools=tools,
+            tool_choice={
+                "type": "allowed_tools",
+                "tools": [{"type": "function", "name": "get_weather"}, {"type": "web_search_preview"}],
+                "mode": "auto",
+            },
+            stream=False,
+        )
+
+        assert response.status == "completed"
+
+    def test_tool_choice_allowed_tools_mcp(self, compat_client, text_model_id):
+        """Test tool_choice with MCP tools in allowed_tools."""
+        # if not isinstance(compat_client, LlamaStackAsLibraryClient):
+        #     pytest.skip("in-process MCP server is only supported in library client")
+
+        with make_mcp_server() as mcp_server_info:
+            tools = [
+                {
+                    "type": "mcp",
+                    "server_label": "localmcp",
+                    "server_url": mcp_server_info["server_url"],
+                }
+            ]
+
+            response = compat_client.responses.create(
+                model=text_model_id,
+                input=[
+                    {
+                        "role": "user",
+                        "content": "What is the boiling point of myawesomeliquid?",
+                    }
+                ],
+                tools=tools,
+                tool_choice={
+                    "type": "allowed_tools",
+                    "tools": [{"type": "mcp", "server_label": "localmcp"}],
+                    "mode": "required",
+                },
+                stream=False,
+            )
+
+            mcp_calls = [output for output in response.output if output.type == "mcp_call"]
+            assert len(mcp_calls) > 0, "Expected MCP call with allowed_tools MCP server"
+
+
+class TestToolChoiceEdgeCases:
+    """Test edge cases and error conditions."""
+
+    @pytest.mark.parametrize(
+        "tools,tool_choice",
+        [
+            ([], "required"),  # No tools with required mode
+            ([], "auto"),  # No tools with auto mode
+        ],
+    )
+    def test_tool_choice_without_tools(self, compat_client, text_model_id, tools, tool_choice):
+        """Test tool_choice when no tools are provided."""
+        if not isinstance(compat_client, OpenAI):
+            pytest.skip("OpenAI client is required for tool_choice testing")
+
+        response = compat_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Hello!",
+                }
+            ],
+            tools=tools,
+            tool_choice=tool_choice,
+            stream=False,
+        )
+
+        # Should complete (tool_choice should be ignored when no tools available)
+        assert response.status in ["completed", "incomplete"]
+        function_calls = [output for output in response.output if output.type == "function_call"]
+        assert len(function_calls) == 0
+
+    def test_tool_choice_invalid_tool_name(self, compat_client, text_model_id, simple_function_tools):
+        """Test tool_choice with invalid tool name (should be handled gracefully)."""
+        if not isinstance(compat_client, OpenAI):
+            pytest.skip("OpenAI client is required for tool_choice testing")
+
+        response = compat_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "What's the weather?",
+                }
+            ],
+            tools=simple_function_tools,
+            tool_choice={"type": "function", "name": "nonexistent_tool"},
+            stream=False,
+        )
+
+        # Should still complete (invalid tool_choice should be ignored with warning)
+        assert response.status in ["completed", "incomplete"]
+        function_calls = [output for output in response.output if output.type == "function_call"]
+        assert len(function_calls) == 0
+
+
+class TestToolChoiceMultipleTools:
+    """Test tool_choice with multiple tools of different types."""
+
+    @pytest.mark.parametrize(
+        "tool_choice,expected_type",
+        [
+            ({"type": "function", "name": "calculate"}, "function_call"),
+            ({"type": "web_search_preview"}, "web_search_call"),
+        ],
+    )
+    def test_tool_choice_mixed_tools(self, compat_client, text_model_id, tool_choice, expected_type):
+        """Test tool_choice when both function and web_search tools are available."""
+        if not isinstance(compat_client, OpenAI):
+            pytest.skip("OpenAI client is required for tool_choice testing")
+
+        tools = [
+            {
+                "type": "function",
+                "name": "calculate",
+                "description": "Perform calculations",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "expression": {"type": "string"},
+                    },
+                },
+            },
+            {"type": "web_search"},
+        ]
+
+        content = "Calculate 2 + 2" if expected_type == "function_call" else "Search for AI news"
+
+        response = compat_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": content,
+                }
+            ],
+            tools=tools,
+            tool_choice=tool_choice,
+            stream=False,
+        )
+
+        # Should call the expected tool type
+        matching_calls = [output for output in response.output if output.type == expected_type]
+        assert len(matching_calls) > 0, f"Expected {expected_type} with tool_choice={tool_choice}"
+
+    def test_tool_choice_required_multiple_functions(self, compat_client, text_model_id):
+        """Test tool_choice='required' with multiple function tools."""
+        if not isinstance(compat_client, OpenAI):
+            pytest.skip("OpenAI client is required for tool_choice testing")
+
+        tools = [
+            {
+                "type": "function",
+                "name": "get_weather",
+                "description": "Get weather",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"city": {"type": "string"}},
+                },
+            },
+            {
+                "type": "function",
+                "name": "get_time",
+                "description": "Get time",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"timezone": {"type": "string"}},
+                },
+            },
+            {
+                "type": "function",
+                "name": "calculate",
+                "description": "Calculate",
+                "parameters": {
+                    "type": "object",
+                    "properties": {"expr": {"type": "string"}},
+                },
+            },
+        ]
+
+        response = compat_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Help me with something",
+                }
+            ],
+            tools=tools,
+            tool_choice="required",
+            stream=False,
+        )
+
+        # Should call one of the available functions
+        function_calls = [output for output in response.output if output.type == "function_call"]
+        assert len(function_calls) > 0
+        # Verify it's one of the available functions
+        assert function_calls[0].name in ["get_weather", "get_time", "calculate"]

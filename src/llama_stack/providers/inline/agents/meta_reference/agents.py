@@ -12,6 +12,7 @@ from llama_stack.apis.agents import (
     OpenAIDeleteResponseObject,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
     OpenAIResponseObject,
     Order,
 )
@@ -98,6 +99,7 @@ class MetaReferenceAgentsImpl(Agents):
         stream: bool | None = False,
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
@@ -116,6 +118,7 @@ class MetaReferenceAgentsImpl(Agents):
             stream,
             temperature,
             text,
+            tool_choice,
             tools,
             include,
             max_infer_iters,

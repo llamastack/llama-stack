@@ -8,6 +8,7 @@ import asyncio
 import re
 import uuid
 from collections.abc import Sequence
+from typing import Any
 
 from llama_stack.apis.agents.agents import ResponseGuardrailSpec
 from llama_stack.apis.agents.openai_responses import (
@@ -378,3 +379,65 @@ def extract_guardrail_ids(guardrails: list | None) -> list[str]:
             raise ValueError(f"Unknown guardrail format: {guardrail}, expected str or ResponseGuardrailSpec")
 
     return guardrail_ids
+
+
+def convert_file_search_tool_choice(chat_tool_names: list[str]) -> dict[str, Any]:
+    """Convert a responses tool choice of type file_search to a chat completions compatible function tool choice."""
+    tool_name = "knowledge_search"
+    if tool_name not in chat_tool_names:
+        raise ValueError("Knowledge search tool not found in chat tools")
+    return {"type": "function", "function": {"name": "knowledge_search"}}
+
+
+def convert_web_search_tool_choice(chat_tool_names: list[str]) -> dict[str, Any]:
+    """Convert a responses tool choice of type web_search to a chat completions compatible function tool choice."""
+    tool_name = "web_search_preview"
+    if tool_name not in chat_tool_names:
+        raise ValueError("Web search tool not found in chat tools")
+    return {"type": "function", "function": {"name": "web_search"}}
+
+
+def convert_function_tool_choice(chat_tool_names: list[str], tool_name: str) -> dict[str, Any]:
+    """Convert a responses tool choice of type function to a chat completions compatible function tool choice."""
+    if tool_name not in chat_tool_names:
+        raise ValueError(f"Function tool {tool_name} not found in chat tools")
+    return {"type": "function", "function": {"name": tool_name}}
+
+
+def convert_custom_tool_choice(chat_tool_names: list[str], tool_name: str) -> dict[str, Any]:
+    """Convert a responses tool choice of type custom to a chat completions compatible custom tool choice."""
+    if tool_name not in chat_tool_names:
+        raise ValueError(f"Custom tool {tool_name} not found in chat tools")
+    return {"type": "custom", "custom": {"name": tool_name}}
+
+
+def convert_mcp_tool_choice(
+    chat_tool_names: list[str],
+    server_label: str | None = None,
+    server_label_to_tools: dict[str, list[str]] | None = None,
+    tool_name: str | None = None,
+) -> dict[str, Any] | list[dict[str, Any]]:
+    """Convert a responses tool choice of type mcp to a chat completions compatible function tool choice."""
+    if tool_name:
+        # check if the tool name is in the chat tools, this covers allowed_tools at server level since that is
+        # converted to function tools in the chat tools list
+        if tool_name not in chat_tool_names:
+            raise ValueError(f"MCP tool {tool_name} not found in chat tools")
+
+        return {
+            "type": "function",
+            "function": {
+                "name": tool_name,
+            },
+        }
+
+    elif server_label and server_label_to_tools:
+        # no tool name specified, so we need to enforce an allowed_tools with the function tools derived only from the given server label
+        # Use reverse mapping for lookup by server_label
+        # This already accounts for allowed_tools restrictions applied during _process_mcp_tool
+        tool_names = server_label_to_tools.get(server_label, [])
+        if not tool_names:
+            raise ValueError(f"No tools found for server label {server_label}")
+        matching_tools = [{"type": "function", "function": {"name": tool_name}} for tool_name in tool_names]
+        return matching_tools
+    return []
