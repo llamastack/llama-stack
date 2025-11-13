@@ -163,6 +163,7 @@ resources:
           list:
             type: http
             endpoint: get /v1/responses/{response_id}/input_items
+            paginated: false
 
   prompts:
     models:
@@ -515,5 +516,5 @@ readme:
       params: *ref_0
     pagination:
       type: request
-      endpoint: post /v1/chat/completions
+      endpoint: get /v1/chat/completions
       params: {}
