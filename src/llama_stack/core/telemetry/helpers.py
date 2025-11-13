@@ -17,20 +17,26 @@ from .constants import (
     SAFETY_RESPONSE_METADATA_ATTRIBUTE,
     SAFETY_RESPONSE_USER_MESSAGE_ATTRIBUTE,
     SAFETY_RESPONSE_VIOLATION_LEVEL_ATTRIBUTE,
+    SAFETY_SPAN_NAME,
 )
 
 
-def guardrail_request_span_attributes(shield_id: str, messages: list[Message], response: RunShieldResponse) -> None:
-    span = trace.get_current_span()
-    if span is not None:
-        span.set_attribute(SAFETY_REQUEST_SHIELD_ID_ATTRIBUTE, shield_id)
-        messages_json = json.dumps([msg.model_dump() for msg in messages])
-        span.set_attribute(SAFETY_REQUEST_MESSAGES_ATTRIBUTE, messages_json)
+def safety_span_name(shield_id: str) -> str:
+    return f"{SAFETY_SPAN_NAME} {shield_id}"
 
-        if response.violation:
-            if response.violation.metadata:
-                metadata_json = json.dumps(response.violation.metadata)
-                span.set_attribute(SAFETY_RESPONSE_METADATA_ATTRIBUTE, metadata_json)
-            if response.violation.user_message:
-                span.set_attribute(SAFETY_RESPONSE_USER_MESSAGE_ATTRIBUTE, response.violation.user_message)
-            span.set_attribute(SAFETY_RESPONSE_VIOLATION_LEVEL_ATTRIBUTE, response.violation.violation_level.value)
+
+# TODO: Consider using Wrapt to automatically instrument code
+# This is the industry standard way to package automatically instrumentation in python.
+def safety_request_span_attributes(shield_id: str, messages: list[Message], response: RunShieldResponse) -> None:
+    span = trace.get_current_span()
+    span.set_attribute(SAFETY_REQUEST_SHIELD_ID_ATTRIBUTE, shield_id)
+    messages_json = json.dumps([msg.model_dump() for msg in messages])
+    span.set_attribute(SAFETY_REQUEST_MESSAGES_ATTRIBUTE, messages_json)
+
+    if response.violation:
+        if response.violation.metadata:
+            metadata_json = json.dumps(response.violation.metadata)
+            span.set_attribute(SAFETY_RESPONSE_METADATA_ATTRIBUTE, metadata_json)
+        if response.violation.user_message:
+            span.set_attribute(SAFETY_RESPONSE_USER_MESSAGE_ATTRIBUTE, response.violation.user_message)
+        span.set_attribute(SAFETY_RESPONSE_VIOLATION_LEVEL_ATTRIBUTE, response.violation.violation_level.value)
