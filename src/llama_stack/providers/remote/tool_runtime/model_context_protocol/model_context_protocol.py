@@ -44,14 +44,16 @@ class ModelContextProtocolToolRuntimeImpl(
         self,
         tool_group_id: str | None = None,
         mcp_endpoint: URL | None = None,
+        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         # this endpoint should be retrieved by getting the tool group right?
         if mcp_endpoint is None:
             raise ValueError("mcp_endpoint is required")
-        # MCP tool listing typically doesn't require authorization
+
+        # Use authorization parameter for MCP servers that require auth
         headers = {}
         return await list_mcp_tools(
-            endpoint=mcp_endpoint.uri, headers=headers, authorization=None
+            endpoint=mcp_endpoint.uri, headers=headers, authorization=authorization
         )
 
     async def invoke_tool(
