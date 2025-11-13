@@ -71,6 +71,7 @@ from llama_stack_api import (
     Safety,
     WebSearchToolTypes,
 )
+from opentelemetry import trace
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
