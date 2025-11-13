@@ -30,6 +30,8 @@ distribution_spec:
     - provider_type: remote::weaviate
     files:
     - provider_type: inline::localfs
+    file_processor:
+    - provider_type: inline::reference
     safety:
     - provider_type: inline::llama-guard
     - provider_type: inline::code-scanner
