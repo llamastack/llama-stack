@@ -115,18 +115,13 @@ resources:
       sampling_params: SamplingParams
       scoring_result: ScoringResult
       system_message: SystemMessage
-      query_result: RAGQueryResult
-      document: RAGDocument
-      query_config: RAGQueryConfig
   toolgroups:
     models:
       tool_group: ToolGroup
       list_tool_groups_response: ListToolGroupsResponse
     methods:
-      register: post /v1/toolgroups
       get: get /v1/toolgroups/{toolgroup_id}
       list: get /v1/toolgroups
-      unregister: delete /v1/toolgroups/{toolgroup_id}
   tools:
     methods:
       get: get /v1/tools/{tool_name}
@@ -314,8 +309,6 @@ resources:
         endpoint: get /v1/models
         paginated: false
       retrieve: get /v1/models/{model_id}
-      register: post /v1/models
-      unregister: delete /v1/models/{model_id}
     subresources:
       openai:
         methods:
@@ -361,7 +354,6 @@ resources:
       list:
         endpoint: get /v1/shields
         paginated: false
-      register: post /v1/shields
       delete: delete /v1/shields/{identifier}
 
   scoring:
@@ -374,7 +366,6 @@ resources:
       list:
         endpoint: get /v1/scoring-functions
         paginated: false
-      register: post /v1/scoring-functions
     models:
       scoring_fn: ScoringFn
       scoring_fn_params: ScoringFnParams
