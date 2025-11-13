@@ -22,7 +22,6 @@ from llama_stack_api import (
     OpenAIEmbeddingsResponse,
 )
 
-from llama_stack.core.telemetry.tracing import get_current_span
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
@@ -59,7 +58,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
 
         # Add usage tracking for streaming when telemetry is active
         stream_options = params.stream_options
-        if params.stream and get_current_span() is not None:
+        if params.stream:
             if stream_options is None:
                 stream_options = {"include_usage": True}
             elif "include_usage" not in stream_options:
