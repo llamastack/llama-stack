@@ -6,8 +6,6 @@
 import textwrap
 from typing import Any
 
-from llama_stack_api import Api, ProviderSpec
-
 from llama_stack.core.datatypes import (
     LLAMA_STACK_RUN_CONFIG_VERSION,
     DistributionSpec,
@@ -22,6 +20,7 @@ from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.prompt_for_config import prompt_for_config
 from llama_stack.log import get_logger
+from llama_stack_api import Api, ProviderSpec
 
 logger = get_logger(name=__name__, category="core")
 

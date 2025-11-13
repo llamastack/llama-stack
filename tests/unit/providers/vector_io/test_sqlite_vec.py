@@ -8,13 +8,13 @@ import asyncio
 
 import numpy as np
 import pytest
-from llama_stack_api import Chunk, QueryChunksResponse
 
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import (
     SQLiteVecIndex,
     SQLiteVecVectorIOAdapter,
     _create_sqlite_connection,
 )
+from llama_stack_api import Chunk, QueryChunksResponse
 
 # This test is a unit test for the SQLiteVecVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in

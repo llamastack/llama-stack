@@ -11,6 +11,16 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import Body
+from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
+from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
+from pydantic import TypeAdapter
+
+from llama_stack.core.telemetry.telemetry import MetricEvent
+from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
+from llama_stack.log import get_logger
+from llama_stack.models.llama.llama3.chat_format import ChatFormat
+from llama_stack.models.llama.llama3.tokenizer import Tokenizer
+from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import (
     HealthResponse,
     HealthStatus,
@@ -39,16 +49,6 @@ from llama_stack_api import (
     RerankResponse,
     RoutingTable,
 )
-from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
-from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
-from pydantic import TypeAdapter
-
-from llama_stack.core.telemetry.telemetry import MetricEvent
-from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
-from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.chat_format import ChatFormat
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
-from llama_stack.providers.utils.inference.inference_store import InferenceStore
 
 logger = get_logger(name=__name__, category="core::routers")
 

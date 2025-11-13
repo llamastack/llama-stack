@@ -14,11 +14,11 @@ import os
 from pathlib import Path
 
 import fire
-from llama_stack_api import ModelNotFoundError
 
 from llama_stack.models.llama.llama3.generation import Llama3
 from llama_stack.models.llama.llama4.generation import Llama4
 from llama_stack.models.llama.sku_list import resolve_model
+from llama_stack_api import ModelNotFoundError
 
 THIS_DIR = Path(__file__).parent.resolve()
 

@@ -9,6 +9,9 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+
+from llama_stack.providers.remote.safety.nvidia.config import NVIDIASafetyConfig
+from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter
 from llama_stack_api import (
     OpenAIAssistantMessageParam,
     OpenAIUserMessageParam,
@@ -17,9 +20,6 @@ from llama_stack_api import (
     Shield,
     ViolationLevel,
 )
-
-from llama_stack.providers.remote.safety.nvidia.config import NVIDIASafetyConfig
-from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter
 
 
 class FakeNVIDIASafetyAdapter(NVIDIASafetyAdapter):

@@ -9,6 +9,13 @@ import uuid
 from string import Template
 from typing import Any
 
+from llama_stack.core.datatypes import Api
+from llama_stack.log import get_logger
+from llama_stack.models.llama.datatypes import Role
+from llama_stack.models.llama.sku_types import CoreModelId
+from llama_stack.providers.utils.inference.prompt_adapter import (
+    interleaved_content_as_str,
+)
 from llama_stack_api import (
     ImageContentItem,
     Inference,
@@ -24,14 +31,6 @@ from llama_stack_api import (
     ShieldsProtocolPrivate,
     TextContentItem,
     ViolationLevel,
-)
-
-from llama_stack.core.datatypes import Api
-from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import Role
-from llama_stack.models.llama.sku_types import CoreModelId
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
 )
 
 from .config import LlamaGuardConfig

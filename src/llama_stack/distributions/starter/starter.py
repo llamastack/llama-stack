@@ -7,8 +7,6 @@
 
 from typing import Any
 
-from llama_stack_api import RemoteProviderSpec
-
 from llama_stack.core.datatypes import (
     BuildProvider,
     Provider,
@@ -39,6 +37,7 @@ from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOC
 from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
 from llama_stack.providers.utils.kvstore.config import PostgresKVStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
+from llama_stack_api import RemoteProviderSpec
 
 
 def _get_config_for_provider(provider_spec: ProviderSpec) -> dict[str, Any]:

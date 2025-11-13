@@ -9,23 +9,6 @@ import time
 import uuid
 from collections.abc import AsyncIterator
 
-from llama_stack_api import (
-    InferenceProvider,
-    Model,
-    ModelsProtocolPrivate,
-    ModelType,
-    OpenAIAssistantMessageParam,
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIChatCompletionUsage,
-    OpenAIChoice,
-    OpenAICompletion,
-    OpenAICompletionRequestWithExtraBody,
-    OpenAIUserMessageParam,
-    ToolChoice,
-)
-
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import RawMessage, RawTextItem, ToolDefinition
 from llama_stack.models.llama.llama3.chat_format import ChatFormat as Llama3ChatFormat
@@ -47,6 +30,22 @@ from llama_stack.providers.utils.inference.embedding_mixin import (
 from llama_stack.providers.utils.inference.model_registry import (
     ModelRegistryHelper,
     build_hf_repo_model_entry,
+)
+from llama_stack_api import (
+    InferenceProvider,
+    Model,
+    ModelsProtocolPrivate,
+    ModelType,
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionUsage,
+    OpenAIChoice,
+    OpenAICompletion,
+    OpenAICompletionRequestWithExtraBody,
+    OpenAIUserMessageParam,
+    ToolChoice,
 )
 
 from .config import MetaReferenceInferenceConfig
@@ -441,6 +440,8 @@ class MetaReferenceInferenceImpl(
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> AsyncIterator[OpenAIChatCompletionChunk]:
         """Stream chat completion chunks as they're generated."""
+        from llama_stack.models.llama.datatypes import StopReason
+        from llama_stack.providers.utils.inference.prompt_adapter import decode_assistant_message
         from llama_stack_api import (
             OpenAIChatCompletionChunk,
             OpenAIChatCompletionToolCall,
@@ -448,9 +449,6 @@ class MetaReferenceInferenceImpl(
             OpenAIChoiceDelta,
             OpenAIChunkChoice,
         )
-
-        from llama_stack.models.llama.datatypes import StopReason
-        from llama_stack.providers.utils.inference.prompt_adapter import decode_assistant_message
 
         response_id = f"chatcmpl-{uuid.uuid4().hex[:24]}"
         created = int(time.time())

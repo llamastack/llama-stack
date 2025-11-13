@@ -9,6 +9,14 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from openai import AsyncOpenAI
+
+from llama_stack.testing.api_recorder import (
+    APIRecordingMode,
+    ResponseStorage,
+    api_recording,
+    normalize_inference_request,
+)
 
 # Import the real Pydantic response types instead of using Mocks
 from llama_stack_api import (
@@ -18,14 +26,6 @@ from llama_stack_api import (
     OpenAIEmbeddingData,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
-)
-from openai import AsyncOpenAI
-
-from llama_stack.testing.api_recorder import (
-    APIRecordingMode,
-    ResponseStorage,
-    api_recording,
-    normalize_inference_request,
 )
 
 

@@ -9,7 +9,6 @@ import sys
 from typing import Any, Protocol
 from unittest.mock import AsyncMock, MagicMock
 
-from llama_stack_api import Inference, InlineProviderSpec, ProviderSpec
 from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import Api, Provider, StackRunConfig
@@ -27,6 +26,7 @@ from llama_stack.core.storage.datatypes import (
 )
 from llama_stack.providers.utils.kvstore import register_kvstore_backends
 from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+from llama_stack_api import Inference, InlineProviderSpec, ProviderSpec
 
 
 def add_protocol_methods(cls: type, protocol: type[Protocol]) -> None:

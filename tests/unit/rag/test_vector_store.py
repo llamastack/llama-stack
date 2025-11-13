@@ -12,7 +12,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 import pytest
-from llama_stack_api import Chunk, OpenAIEmbeddingData, OpenAIEmbeddingsRequestWithExtraBody, RAGDocument
 
 from llama_stack.providers.utils.memory.vector_store import (
     URL,
@@ -22,6 +21,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     make_overlapped_chunks,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+from llama_stack_api import Chunk, OpenAIEmbeddingData, OpenAIEmbeddingsRequestWithExtraBody, RAGDocument
 
 DUMMY_PDF_PATH = Path(os.path.abspath(__file__)).parent / "fixtures" / "dummy.pdf"
 # Depending on the machine, this can get parsed a couple of ways

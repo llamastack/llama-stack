@@ -12,9 +12,10 @@ from enum import Enum
 from typing import Any, Union, get_args, get_origin
 
 import httpx
-from llama_stack_api import RemoteProviderConfig
 from pydantic import BaseModel, parse_obj_as
 from termcolor import cprint
+
+from llama_stack_api import RemoteProviderConfig
 
 _CLIENT_CLASSES = {}
 

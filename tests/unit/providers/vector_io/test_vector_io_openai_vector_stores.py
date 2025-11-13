@@ -10,6 +10,8 @@ from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import pytest
+
+from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 from llama_stack_api import (
     Chunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
@@ -20,8 +22,6 @@ from llama_stack_api import (
     VectorStoreFileObject,
     VectorStoreNotFoundError,
 )
-
-from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 
 # This test is a unit test for the inline VectorIO providers. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -255,10 +255,9 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
 
 async def test_document_id_with_invalid_type_raises_error():
     """Ensure TypeError is raised when document_id is not a string."""
-    from llama_stack_api import Chunk
-
     # Integer document_id should raise TypeError
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_api import Chunk
 
     chunk = Chunk(content="test", chunk_id=generate_chunk_id("test", "test"), metadata={"document_id": 12345})
     with pytest.raises(TypeError) as exc_info:

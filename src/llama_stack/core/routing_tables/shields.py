@@ -6,12 +6,11 @@
 
 from typing import Any
 
-from llama_stack_api import ListShieldsResponse, ResourceType, Shield, Shields
-
 from llama_stack.core.datatypes import (
     ShieldWithOwner,
 )
 from llama_stack.log import get_logger
+from llama_stack_api import ListShieldsResponse, ResourceType, Shield, Shields
 
 from .common import CommonRoutingTableImpl
 

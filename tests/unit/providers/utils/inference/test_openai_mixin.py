@@ -10,12 +10,12 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
-from llama_stack_api import Model, ModelType, OpenAIChatCompletionRequestWithExtraBody, OpenAIUserMessageParam
 from pydantic import BaseModel, Field
 
 from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import Model, ModelType, OpenAIChatCompletionRequestWithExtraBody, OpenAIUserMessageParam
 
 
 class OpenAIMixinImpl(OpenAIMixin):

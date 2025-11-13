@@ -181,7 +181,7 @@ install-wheel-from-presigned = "llama_stack.cli.scripts.run:install_wheel_from_p
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["llama_stack", "llama_stack.*", "llama-stack-api", "llama-stack-api.*"]
+include = ["llama_stack", "llama_stack.*", "llama_stack_api", "llama_stack_api.*"]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -191,7 +191,7 @@ explicit = true
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
 torchvision = [{ index = "pytorch-cpu" }]
-llama-stack-api = [{ path = "src/llama-stack-api", editable = true }]
+llama-stack-api = [{ path = "src/llama_stack_api", editable = true }]
 
 [tool.ruff]
 line-length = 120
@@ -258,7 +258,7 @@ unfixable = [
 ] # Using import * is acceptable (or at least tolerated) in an __init__.py of a package API
 
 [tool.mypy]
-mypy_path = ["src", "src/llama-stack-api"]
+mypy_path = ["src"]
 packages = ["llama_stack", "llama_stack_api"]
 plugins = ['pydantic.mypy']
 disable_error_code = []
@@ -281,14 +281,12 @@ exclude = [
     "^src/llama_stack/core/store/registry\\.py$",
     "^src/llama_stack/core/utils/exec\\.py$",
     "^src/llama_stack/core/utils/prompt_for_config\\.py$",
-    # Moved to llama-stack-api but still excluded
     "^src/llama_stack/models/llama/llama3/interface\\.py$",
     "^src/llama_stack/models/llama/llama3/tokenizer\\.py$",
     "^src/llama_stack/models/llama/llama3/tool_utils\\.py$",
     "^src/llama_stack/models/llama/llama3/generation\\.py$",
     "^src/llama_stack/models/llama/llama3/multimodal/model\\.py$",
     "^src/llama_stack/models/llama/llama4/",
-    "^src/llama-stack-api/llama_stack_api/core/telemetry/telemetry\\.py$",
     "^src/llama_stack/providers/inline/agents/meta_reference/",
     "^src/llama_stack/providers/inline/datasetio/localfs/",
     "^src/llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
@@ -342,9 +340,7 @@ exclude = [
     "^src/llama_stack/providers/utils/telemetry/dataset_mixin\\.py$",
     "^src/llama_stack/providers/utils/telemetry/trace_protocol\\.py$",
     "^src/llama_stack/providers/utils/telemetry/tracing\\.py$",
-    "^src/llama-stack-api/llama_stack_api/core/telemetry/trace_protocol\\.py$",
-    "^src/llama-stack-api/llama_stack_api/core/telemetry/tracing\\.py$",
-    "^src/llama-stack-api/llama_stack_api/strong_typing/auxiliary\\.py$",
+    "^src/llama_stack_api/strong_typing/auxiliary\\.py$",
     "^src/llama_stack/distributions/template\\.py$",
 ]
 

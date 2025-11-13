@@ -6,6 +6,8 @@
 
 from typing import Any
 
+from llama_stack.core.datatypes import AuthenticationRequiredError, ToolGroupWithOwner
+from llama_stack.log import get_logger
 from llama_stack_api import (
     URL,
     ListToolDefsResponse,
@@ -15,9 +17,6 @@ from llama_stack_api import (
     ToolGroupNotFoundError,
     ToolGroups,
 )
-
-from llama_stack.core.datatypes import AuthenticationRequiredError, ToolGroupWithOwner
-from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl
 

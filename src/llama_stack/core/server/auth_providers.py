@@ -11,7 +11,6 @@ from urllib.parse import parse_qs, urljoin, urlparse
 
 import httpx
 import jwt
-from llama_stack_api import TokenValidationError
 from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import (
@@ -23,6 +22,7 @@ from llama_stack.core.datatypes import (
     User,
 )
 from llama_stack.log import get_logger
+from llama_stack_api import TokenValidationError
 
 logger = get_logger(name=__name__, category="core::auth")
 

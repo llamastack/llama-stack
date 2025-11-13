@@ -8,10 +8,10 @@ import os
 from unittest.mock import patch
 
 import pytest
-from llama_stack_api import Dataset, DatasetPurpose, ResourceType, URIDataSource
 
 from llama_stack.providers.remote.datasetio.nvidia.config import NvidiaDatasetIOConfig
 from llama_stack.providers.remote.datasetio.nvidia.datasetio import NvidiaDatasetIOAdapter
+from llama_stack_api import Dataset, DatasetPurpose, ResourceType, URIDataSource
 
 
 @pytest.fixture

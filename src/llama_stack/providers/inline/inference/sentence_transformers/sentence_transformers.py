@@ -6,6 +6,10 @@
 
 from collections.abc import AsyncIterator
 
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.embedding_mixin import (
+    SentenceTransformerEmbeddingMixin,
+)
 from llama_stack_api import (
     InferenceProvider,
     Model,
@@ -16,11 +20,6 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
-)
-
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.embedding_mixin import (
-    SentenceTransformerEmbeddingMixin,
 )
 
 from .config import SentenceTransformersInferenceConfig

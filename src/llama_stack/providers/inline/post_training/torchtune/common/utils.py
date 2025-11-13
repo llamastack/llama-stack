@@ -13,7 +13,6 @@
 from collections.abc import Callable
 
 import torch
-from llama_stack_api import DatasetFormat
 from pydantic import BaseModel
 from torchtune.data._messages import InputOutputToMessages, ShareGPTToMessages
 from torchtune.models.llama3 import llama3_tokenizer
@@ -24,6 +23,7 @@ from torchtune.modules.transforms import Transform
 
 from llama_stack.models.llama.sku_list import resolve_model
 from llama_stack.models.llama.sku_types import Model
+from llama_stack_api import DatasetFormat
 
 BuildLoraModelCallable = Callable[..., torch.nn.Module]
 BuildTokenizerCallable = Callable[..., Llama3Tokenizer]

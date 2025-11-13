@@ -8,14 +8,14 @@
 from collections.abc import Iterable
 
 from huggingface_hub import AsyncInferenceClient, HfApi
-from llama_stack_api import (
-    OpenAIEmbeddingsRequestWithExtraBody,
-    OpenAIEmbeddingsResponse,
-)
 from pydantic import SecretStr
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
+    OpenAIEmbeddingsRequestWithExtraBody,
+    OpenAIEmbeddingsResponse,
+)
 
 from .config import InferenceAPIImplConfig, InferenceEndpointImplConfig, TGIImplConfig
 

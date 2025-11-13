@@ -11,7 +11,6 @@ from functools import lru_cache
 from pathlib import Path
 
 import yaml
-from llama_stack_api import Api
 from termcolor import cprint
 
 from llama_stack.core.datatypes import (
@@ -33,6 +32,7 @@ from llama_stack.core.storage.datatypes import (
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR, EXTERNAL_PROVIDERS_DIR
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.image_types import LlamaStackImageType
+from llama_stack_api import Api
 
 TEMPLATES_PATH = Path(__file__).parent.parent.parent / "distributions"
 

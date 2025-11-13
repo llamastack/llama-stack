@@ -10,6 +10,10 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from codeshield.cs import CodeShieldScanResult
 
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import (
+    interleaved_content_as_str,
+)
 from llama_stack_api import (
     ModerationObject,
     ModerationObjectResults,
@@ -19,11 +23,6 @@ from llama_stack_api import (
     SafetyViolation,
     Shield,
     ViolationLevel,
-)
-
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
 )
 
 from .config import CodeScannerConfig

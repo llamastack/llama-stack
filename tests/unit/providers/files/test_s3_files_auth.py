@@ -7,10 +7,10 @@
 from unittest.mock import patch
 
 import pytest
-from llama_stack_api import OpenAIFilePurpose, ResourceNotFoundError
 
 from llama_stack.core.datatypes import User
 from llama_stack.providers.remote.files.s3.files import S3FilesImpl
+from llama_stack_api import OpenAIFilePurpose, ResourceNotFoundError
 
 
 async def test_listing_hides_other_users_file(s3_provider, sample_text_file):

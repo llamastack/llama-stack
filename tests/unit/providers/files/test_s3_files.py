@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import pytest
 from botocore.exceptions import ClientError
+
 from llama_stack_api import OpenAIFilePurpose, ResourceNotFoundError
 
 

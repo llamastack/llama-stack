@@ -8,12 +8,12 @@ import time
 from io import BytesIO
 
 import pytest
-from llama_stack_api import Chunk, ExpiresAfter
 from llama_stack_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
+from llama_stack_api import Chunk, ExpiresAfter
 
 from ..conftest import vector_provider_wrapper
 

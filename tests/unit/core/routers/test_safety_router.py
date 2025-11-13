@@ -6,10 +6,9 @@
 
 from unittest.mock import AsyncMock
 
-from llama_stack_api import ListShieldsResponse, ModerationObject, ModerationObjectResults, Shield
-
 from llama_stack.core.datatypes import SafetyConfig
 from llama_stack.core.routers.safety import SafetyRouter
+from llama_stack_api import ListShieldsResponse, ModerationObject, ModerationObjectResults, Shield
 
 
 async def test_run_moderation_uses_default_shield_when_model_missing():

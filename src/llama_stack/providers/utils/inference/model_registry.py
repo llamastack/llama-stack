@@ -6,13 +6,13 @@
 
 from typing import Any
 
-from llama_stack_api import Model, ModelsProtocolPrivate, ModelType, UnsupportedModelError
 from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference import (
     ALL_HUGGINGFACE_REPOS_TO_MODEL_DESCRIPTOR,
 )
+from llama_stack_api import Model, ModelsProtocolPrivate, ModelType, UnsupportedModelError
 
 logger = get_logger(name=__name__, category="providers::utils")
 

@@ -6,6 +6,11 @@
 
 from importlib.metadata import version
 
+from pydantic import BaseModel
+
+from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.external import load_external_apis
+from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack_api import (
     HealthInfo,
     HealthStatus,
@@ -14,11 +19,6 @@ from llama_stack_api import (
     RouteInfo,
     VersionInfo,
 )
-from pydantic import BaseModel
-
-from llama_stack.core.datatypes import StackRunConfig
-from llama_stack.core.external import load_external_apis
-from llama_stack.core.server.routes import get_all_api_routes
 
 
 class DistributionInspectConfig(BaseModel):

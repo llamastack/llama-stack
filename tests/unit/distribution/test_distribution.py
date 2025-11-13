@@ -9,7 +9,6 @@ from unittest.mock import patch
 
 import pytest
 import yaml
-from llama_stack_api import ProviderSpec
 from pydantic import BaseModel, Field, ValidationError
 
 from llama_stack.core.datatypes import Api, Provider, StackRunConfig
@@ -23,6 +22,7 @@ from llama_stack.core.storage.datatypes import (
     SqlStoreReference,
     StorageConfig,
 )
+from llama_stack_api import ProviderSpec
 
 
 class SampleConfig(BaseModel):
@@ -395,9 +395,8 @@ pip_packages:
 
     def test_external_provider_from_module_building(self, mock_providers):
         """Test loading an external provider from a module during build (building=True, partial spec)."""
-        from llama_stack_api import Api
-
         from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
+        from llama_stack_api import Api
 
         # No importlib patch needed, should not import module when type of `config` is BuildConfig or DistributionSpec
         build_config = BuildConfig(
@@ -457,9 +456,8 @@ class TestGetExternalProvidersFromModule:
         """Test provider with module containing version spec (e.g., package==1.0.0)."""
         from types import SimpleNamespace
 
-        from llama_stack_api import ProviderSpec
-
         from llama_stack.core.distribution import get_external_providers_from_module
+        from llama_stack_api import ProviderSpec
 
         fake_spec = ProviderSpec(
             api=Api.inference,
@@ -595,9 +593,8 @@ class TestGetExternalProvidersFromModule:
         """Test when get_provider_spec returns a list of specs."""
         from types import SimpleNamespace
 
-        from llama_stack_api import ProviderSpec
-
         from llama_stack.core.distribution import get_external_providers_from_module
+        from llama_stack_api import ProviderSpec
 
         spec1 = ProviderSpec(
             api=Api.inference,
@@ -644,9 +641,8 @@ class TestGetExternalProvidersFromModule:
         """Test that list return filters specs by provider_type."""
         from types import SimpleNamespace
 
-        from llama_stack_api import ProviderSpec
-
         from llama_stack.core.distribution import get_external_providers_from_module
+        from llama_stack_api import ProviderSpec
 
         spec1 = ProviderSpec(
             api=Api.inference,
@@ -693,9 +689,8 @@ class TestGetExternalProvidersFromModule:
         """Test that list return adds multiple different provider_types when config requests them."""
         from types import SimpleNamespace
 
-        from llama_stack_api import ProviderSpec
-
         from llama_stack.core.distribution import get_external_providers_from_module
+        from llama_stack_api import ProviderSpec
 
         # Module returns both inline and remote variants
         spec1 = ProviderSpec(
@@ -833,9 +828,8 @@ class TestGetExternalProvidersFromModule:
         """Test multiple APIs with providers."""
         from types import SimpleNamespace
 
-        from llama_stack_api import ProviderSpec
-
         from llama_stack.core.distribution import get_external_providers_from_module
+        from llama_stack_api import ProviderSpec
 
         inference_spec = ProviderSpec(
             api=Api.inference,

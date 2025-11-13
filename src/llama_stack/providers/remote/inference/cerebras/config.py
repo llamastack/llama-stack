@@ -7,10 +7,10 @@
 import os
 from typing import Any
 
-from llama_stack_api import json_schema_type
 from pydantic import BaseModel, Field
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
+from llama_stack_api import json_schema_type
 
 DEFAULT_BASE_URL = "https://api.cerebras.ai"
 

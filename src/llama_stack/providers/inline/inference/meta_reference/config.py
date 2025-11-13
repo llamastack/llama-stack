@@ -6,10 +6,10 @@
 
 from typing import Any
 
-from llama_stack_api import QuantizationConfig
 from pydantic import BaseModel, field_validator
 
 from llama_stack.providers.utils.inference import supported_inference_models
+from llama_stack_api import QuantizationConfig
 
 
 class MetaReferenceInferenceConfig(BaseModel):

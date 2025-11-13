@@ -6,6 +6,10 @@
 
 
 from jinja2 import Template
+
+from llama_stack.providers.utils.inference.prompt_adapter import (
+    interleaved_content_as_str,
+)
 from llama_stack_api import (
     DefaultRAGQueryGeneratorConfig,
     InterleavedContent,
@@ -14,10 +18,6 @@ from llama_stack_api import (
     OpenAIUserMessageParam,
     RAGQueryGenerator,
     RAGQueryGeneratorConfig,
-)
-
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
 )
 
 

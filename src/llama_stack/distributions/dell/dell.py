@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack_api import ModelType
-
 from llama_stack.core.datatypes import (
     BuildProvider,
     ModelInput,
@@ -18,6 +16,7 @@ from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
 )
 from llama_stack.providers.remote.vector_io.chroma import ChromaVectorIOConfig
+from llama_stack_api import ModelType
 
 
 def get_distribution_template() -> DistributionTemplate:

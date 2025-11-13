@@ -6,10 +6,10 @@
 
 from typing import Any
 
-from llama_stack_api import json_schema_type
 from pydantic import BaseModel, Field
 
 from llama_stack.core.storage.datatypes import KVStoreReference
+from llama_stack_api import json_schema_type
 
 
 @json_schema_type

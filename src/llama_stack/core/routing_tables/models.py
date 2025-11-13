@@ -7,6 +7,13 @@
 import time
 from typing import Any
 
+from llama_stack.core.datatypes import (
+    ModelWithOwner,
+    RegistryEntrySource,
+)
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData
+from llama_stack.core.utils.dynamic import instantiate_class_type
+from llama_stack.log import get_logger
 from llama_stack_api import (
     ListModelsResponse,
     Model,
@@ -16,14 +23,6 @@ from llama_stack_api import (
     OpenAIListModelsResponse,
     OpenAIModel,
 )
-
-from llama_stack.core.datatypes import (
-    ModelWithOwner,
-    RegistryEntrySource,
-)
-from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData
-from llama_stack.core.utils.dynamic import instantiate_class_type
-from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl, lookup_model
 

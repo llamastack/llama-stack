@@ -14,6 +14,15 @@ from urllib.parse import unquote
 
 import httpx
 import numpy as np
+from numpy.typing import NDArray
+from pydantic import BaseModel
+
+from llama_stack.log import get_logger
+from llama_stack.models.llama.llama3.tokenizer import Tokenizer
+from llama_stack.providers.utils.inference.prompt_adapter import (
+    interleaved_content_as_str,
+)
+from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
     URL,
     Api,
@@ -25,15 +34,6 @@ from llama_stack_api import (
     RAGDocument,
     VectorStore,
 )
-from numpy.typing import NDArray
-from pydantic import BaseModel
-
-from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    interleaved_content_as_str,
-)
-from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
 log = get_logger(name=__name__, category="providers::utils")
 
