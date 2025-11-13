@@ -10,13 +10,13 @@
 # the root directory of this source tree.
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
-from fastapi import Body
+from fastapi import Body, Query
 from pydantic import BaseModel, Field
 
+from llama_stack.apis.common.tracing import telemetry_traceable
 from llama_stack.apis.inference import InterleavedContent
 from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.core.telemetry.trace_protocol import trace_protocol
 from llama_stack.schema_utils import json_schema_type, webmethod
 from llama_stack.strong_typing.schema import register_schema
 
@@ -224,10 +224,16 @@ class VectorStoreContent(BaseModel):
 
     :param type: Content type, currently only "text" is supported
     :param text: The actual text content
+    :param embedding: Optional embedding vector for this content chunk
+    :param chunk_metadata: Optional chunk metadata
+    :param metadata: Optional user-defined metadata
     """
 
     type: Literal["text"]
     text: str
+    embedding: list[float] | None = None
+    chunk_metadata: ChunkMetadata | None = None
+    metadata: dict[str, Any] | None = None
 
 
 @json_schema_type
@@ -260,7 +266,7 @@ class VectorStoreSearchResponsePage(BaseModel):
     """
 
     object: str = "vector_store.search_results.page"
-    search_query: str
+    search_query: list[str]
     data: list[VectorStoreSearchResponse]
     has_more: bool = False
     next_page: str | None = None
@@ -278,6 +284,22 @@ class VectorStoreDeleteResponse(BaseModel):
     id: str
     object: str = "vector_store.deleted"
     deleted: bool = True
+
+
+@json_schema_type
+class VectorStoreFileContentResponse(BaseModel):
+    """Represents the parsed content of a vector store file.
+
+    :param object: The object type, which is always `vector_store.file_content.page`
+    :param data: Parsed content of the file
+    :param has_more: Indicates if there are more content pages to fetch
+    :param next_page: The token for the next page, if any
+    """
+
+    object: Literal["vector_store.file_content.page"] = "vector_store.file_content.page"
+    data: list[VectorStoreContent]
+    has_more: bool = False
+    next_page: str | None = None
 
 
 @json_schema_type
@@ -396,22 +418,6 @@ class VectorStoreListFilesResponse(BaseModel):
 
 
 @json_schema_type
-class VectorStoreFileContentsResponse(BaseModel):
-    """Response from retrieving the contents of a vector store file.
-
-    :param file_id: Unique identifier for the file
-    :param filename: Name of the file
-    :param attributes: Key-value attributes associated with the file
-    :param content: List of content items from the file
-    """
-
-    file_id: str
-    filename: str
-    attributes: dict[str, Any]
-    content: list[VectorStoreContent]
-
-
-@json_schema_type
 class VectorStoreFileDeleteResponse(BaseModel):
     """Response from deleting a vector store file.
 
@@ -478,7 +484,7 @@ class OpenAICreateVectorStoreRequestWithExtraBody(BaseModel, extra="allow"):
     name: str | None = None
     file_ids: list[str] | None = None
     expires_after: dict[str, Any] | None = None
-    chunking_strategy: dict[str, Any] | None = None
+    chunking_strategy: VectorStoreChunkingStrategy | None = None
     metadata: dict[str, Any] | None = None
 
 
@@ -502,7 +508,7 @@ class VectorStoreTable(Protocol):
 
 
 @runtime_checkable
-@trace_protocol
+@telemetry_traceable
 class VectorIO(Protocol):
     vector_store_table: VectorStoreTable | None = None
 
@@ -732,12 +738,16 @@ class VectorIO(Protocol):
         self,
         vector_store_id: str,
         file_id: str,
-    ) -> VectorStoreFileContentsResponse:
+        include_embeddings: Annotated[bool | None, Query(default=False)] = False,
+        include_metadata: Annotated[bool | None, Query(default=False)] = False,
+    ) -> VectorStoreFileContentResponse:
         """Retrieves the contents of a vector store file.
 
         :param vector_store_id: The ID of the vector store containing the file to retrieve.
         :param file_id: The ID of the file to retrieve.
-        :returns: A list of InterleavedContent representing the file contents.
+        :param include_embeddings: Whether to include embedding vectors in the response.
+        :param include_metadata: Whether to include chunk metadata in the response.
+        :returns: File contents, optionally with embeddings and metadata based on query parameters.
         """
         ...
 

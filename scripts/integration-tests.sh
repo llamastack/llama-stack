@@ -162,6 +162,17 @@ if [[ "$COLLECT_ONLY" == false ]]; then
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
         echo "Setting stack config type: library_client"
     fi
+
+    # Set MCP host for in-process MCP server tests
+    # - For library client and server mode: localhost (both on same host)
+    # - For docker mode: host.docker.internal (container needs to reach host)
+    if [[ "$STACK_CONFIG" == docker:* ]]; then
+        export LLAMA_STACK_TEST_MCP_HOST="host.docker.internal"
+        echo "Setting MCP host: host.docker.internal (docker mode)"
+    else
+        export LLAMA_STACK_TEST_MCP_HOST="localhost"
+        echo "Setting MCP host: localhost (library/server mode)"
+    fi
 fi
 
 SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
@@ -227,14 +238,16 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     echo "=== Starting Llama Stack Server ==="
     export LLAMA_STACK_LOG_WIDTH=120
 
-    # Configure telemetry collector for server mode
-    # Use a fixed port for the OTEL collector so the server can connect to it
-    COLLECTOR_PORT=4317
-    export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
-    export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
-    export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
-    export OTEL_BSP_SCHEDULE_DELAY="200"
-    export OTEL_BSP_EXPORT_TIMEOUT="2000"
+        # Configure telemetry collector for server mode
+        # Use a fixed port for the OTEL collector so the server can connect to it
+        COLLECTOR_PORT=4317
+        export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
+        # Disabled: https://github.com/llamastack/llama-stack/issues/4089
+        #export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
+        export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+        export OTEL_BSP_SCHEDULE_DELAY="200"
+        export OTEL_BSP_EXPORT_TIMEOUT="2000"
+        export OTEL_METRIC_EXPORT_INTERVAL="200"
 
     # remove "server:" from STACK_CONFIG
     stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
@@ -336,7 +349,12 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     DOCKER_ENV_VARS=""
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_INFERENCE_MODE=$INFERENCE_MODE"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_STACK_CONFIG_TYPE=server"
-    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${COLLECTOR_PORT}"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_MCP_HOST=${LLAMA_STACK_TEST_MCP_HOST:-host.docker.internal}"
+    # Disabled: https://github.com/llamastack/llama-stack/issues/4089
+    #DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${COLLECTOR_PORT}"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_METRIC_EXPORT_INTERVAL=200"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_BSP_SCHEDULE_DELAY=200"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_BSP_EXPORT_TIMEOUT=2000"
 
     # Pass through API keys if they exist
     [ -n "${TOGETHER_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e TOGETHER_API_KEY=$TOGETHER_API_KEY"
@@ -348,6 +366,10 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     [ -n "${GEMINI_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e GEMINI_API_KEY=$GEMINI_API_KEY"
     [ -n "${OLLAMA_URL:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OLLAMA_URL=$OLLAMA_URL"
     [ -n "${SAFETY_MODEL:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e SAFETY_MODEL=$SAFETY_MODEL"
+
+    if [[ "$TEST_SETUP" == "vllm" ]]; then
+        DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e VLLM_URL=http://localhost:8000/v1"
+    fi
 
     # Determine the actual image name (may have localhost/ prefix)
     IMAGE_NAME=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "distribution-$DISTRO:dev$" | head -1)
@@ -361,8 +383,11 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     # Use regular port mapping instead
     NETWORK_MODE=""
     PORT_MAPPINGS=""
+    ADD_HOST_FLAG=""
     if [[ "$(uname)" != "Darwin" ]] && [[ "$(uname)" != *"MINGW"* ]]; then
         NETWORK_MODE="--network host"
+        # On Linux with host network, also add host.docker.internal mapping for consistency
+        ADD_HOST_FLAG="--add-host=host.docker.internal:host-gateway"
     else
         # On non-Linux (macOS, Windows), need explicit port mappings for both app and telemetry
         PORT_MAPPINGS="-p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT -p $COLLECTOR_PORT:$COLLECTOR_PORT"
@@ -371,6 +396,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
 
     docker run -d $NETWORK_MODE --name "$container_name" \
         $PORT_MAPPINGS \
+        $ADD_HOST_FLAG \
         $DOCKER_ENV_VARS \
         "$IMAGE_NAME" \
         --port $LLAMA_STACK_PORT
@@ -400,11 +426,6 @@ fi
 # Run tests
 echo "=== Running Integration Tests ==="
 EXCLUDE_TESTS="builtin_tool or safety_with_image or code_interpreter or test_rag"
-
-# Additional exclusions for vllm setup
-if [[ "$TEST_SETUP" == "vllm" ]]; then
-    EXCLUDE_TESTS="${EXCLUDE_TESTS} or test_inference_store_tool_calls"
-fi
 
 PYTEST_PATTERN="not( $EXCLUDE_TESTS )"
 if [[ -n "$TEST_PATTERN" ]]; then

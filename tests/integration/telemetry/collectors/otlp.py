@@ -9,20 +9,21 @@
 import gzip
 import os
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
-from typing import Any
 
 from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import ExportMetricsServiceRequest
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
 
-from .base import BaseTelemetryCollector, SpanStub, attributes_to_dict, events_to_list
+from .base import BaseTelemetryCollector, MetricStub, SpanStub, attributes_to_dict
 
 
 class OtlpHttpTestCollector(BaseTelemetryCollector):
     def __init__(self) -> None:
+        super().__init__()
         self._spans: list[SpanStub] = []
-        self._metrics: list[Any] = []
+        self._metrics: list[MetricStub] = []
         self._lock = threading.Lock()
 
         class _ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
@@ -47,11 +48,7 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
 
             for scope_spans in resource_spans.scope_spans:
                 for span in scope_spans.spans:
-                    attributes = attributes_to_dict(span.attributes)
-                    events = events_to_list(span.events) if span.events else None
-                    trace_id = span.trace_id.hex() if span.trace_id else None
-                    span_id = span.span_id.hex() if span.span_id else None
-                    new_spans.append(SpanStub(span.name, attributes, resource_attrs or None, events, trace_id, span_id))
+                    new_spans.append(self._create_span_stub_from_protobuf(span, resource_attrs or None))
 
         if not new_spans:
             return
@@ -60,10 +57,13 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
             self._spans.extend(new_spans)
 
     def _handle_metrics(self, request: ExportMetricsServiceRequest) -> None:
-        new_metrics: list[Any] = []
+        new_metrics: list[MetricStub] = []
         for resource_metrics in request.resource_metrics:
             for scope_metrics in resource_metrics.scope_metrics:
-                new_metrics.extend(scope_metrics.metrics)
+                for metric in scope_metrics.metrics:
+                    # Handle multiple data points per metric (e.g., different attribute sets)
+                    metric_stubs = self._create_metric_stubs_from_protobuf(metric)
+                    new_metrics.extend(metric_stubs)
 
         if not new_metrics:
             return
@@ -75,11 +75,40 @@ class OtlpHttpTestCollector(BaseTelemetryCollector):
         with self._lock:
             return tuple(self._spans)
 
-    def _snapshot_metrics(self) -> Any | None:
+    def _snapshot_metrics(self) -> tuple[MetricStub, ...] | None:
         with self._lock:
-            return list(self._metrics) if self._metrics else None
+            return tuple(self._metrics) if self._metrics else None
 
     def _clear_impl(self) -> None:
+        """Clear telemetry over a period of time to prevent race conditions between tests."""
+        with self._lock:
+            self._spans.clear()
+            self._metrics.clear()
+
+        # Prevent race conditions where telemetry arrives after clear() but before
+        # the test starts, causing contamination between tests
+        deadline = time.time() + 2.0  # Maximum wait time
+        last_span_count = 0
+        last_metric_count = 0
+        stable_iterations = 0
+
+        while time.time() < deadline:
+            with self._lock:
+                current_span_count = len(self._spans)
+                current_metric_count = len(self._metrics)
+
+            if current_span_count == last_span_count and current_metric_count == last_metric_count:
+                stable_iterations += 1
+                if stable_iterations >= 4:  # 4 * 50ms = 200ms of stability
+                    break
+            else:
+                stable_iterations = 0
+                last_span_count = current_span_count
+                last_metric_count = current_metric_count
+
+            time.sleep(0.05)
+
+        # Final clear to remove any telemetry that arrived during stabilization
         with self._lock:
             self._spans.clear()
             self._metrics.clear()

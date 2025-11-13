@@ -10,7 +10,7 @@ on:
     branches:
       - main
     paths-ignore:
-        - 'src/llama_stack/ui/**'
+        - 'src/llama_stack_ui/**'
 
 jobs:
   build:

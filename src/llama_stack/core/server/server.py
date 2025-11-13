@@ -526,8 +526,8 @@ def extract_path_params(route: str) -> list[str]:
 
 def remove_disabled_providers(obj):
     if isinstance(obj, dict):
-        keys = ["provider_id", "shield_id", "provider_model_id", "model_id"]
-        if any(k in obj and obj[k] in ("__disabled__", "", None) for k in keys):
+        # Filter out items where provider_id is explicitly disabled or empty
+        if "provider_id" in obj and obj["provider_id"] in ("__disabled__", "", None):
             return None
         return {k: v for k, v in ((k, remove_disabled_providers(v)) for k, v in obj.items()) if v is not None}
     elif isinstance(obj, list):

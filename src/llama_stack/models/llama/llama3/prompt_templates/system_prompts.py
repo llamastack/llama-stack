@@ -15,7 +15,7 @@ import textwrap
 from datetime import datetime
 from typing import Any
 
-from llama_stack.apis.inference import (
+from llama_stack.models.llama.datatypes import (
     BuiltinTool,
     ToolDefinition,
 )

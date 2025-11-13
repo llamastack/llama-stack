@@ -20,9 +20,11 @@ from llama_stack.apis.vector_io import (
     SearchRankingOptions,
     VectorIO,
     VectorStoreChunkingStrategy,
+    VectorStoreChunkingStrategyStatic,
+    VectorStoreChunkingStrategyStaticConfig,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
-    VectorStoreFileContentsResponse,
+    VectorStoreFileContentResponse,
     VectorStoreFileDeleteResponse,
     VectorStoreFileObject,
     VectorStoreFilesListInBatchResponse,
@@ -167,6 +169,13 @@ class VectorIORouter(VectorIO):
         if embedding_dimension is not None:
             params.model_extra["embedding_dimension"] = embedding_dimension
 
+        # Set chunking strategy explicitly if not provided
+        if params.chunking_strategy is None or params.chunking_strategy.type == "auto":
+            # actualize the chunking strategy to static
+            params.chunking_strategy = VectorStoreChunkingStrategyStatic(
+                static=VectorStoreChunkingStrategyStaticConfig()
+            )
+
         return await provider.openai_create_vector_store(params)
 
     async def openai_list_vector_stores(
@@ -238,6 +247,13 @@ class VectorIORouter(VectorIO):
         metadata: dict[str, Any] | None = None,
     ) -> VectorStoreObject:
         logger.debug(f"VectorIORouter.openai_update_vector_store: {vector_store_id}")
+
+        # Check if provider_id is being changed (not supported)
+        if metadata and "provider_id" in metadata:
+            current_store = await self.routing_table.get_object_by_identifier("vector_store", vector_store_id)
+            if current_store and current_store.provider_id != metadata["provider_id"]:
+                raise ValueError("provider_id cannot be changed after vector store creation")
+
         provider = await self.routing_table.get_provider_impl(vector_store_id)
         return await provider.openai_update_vector_store(
             vector_store_id=vector_store_id,
@@ -283,6 +299,8 @@ class VectorIORouter(VectorIO):
         chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> VectorStoreFileObject:
         logger.debug(f"VectorIORouter.openai_attach_file_to_vector_store: {vector_store_id}, {file_id}")
+        if chunking_strategy is None or chunking_strategy.type == "auto":
+            chunking_strategy = VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig())
         provider = await self.routing_table.get_provider_impl(vector_store_id)
         return await provider.openai_attach_file_to_vector_store(
             vector_store_id=vector_store_id,
@@ -327,12 +345,19 @@ class VectorIORouter(VectorIO):
         self,
         vector_store_id: str,
         file_id: str,
-    ) -> VectorStoreFileContentsResponse:
-        logger.debug(f"VectorIORouter.openai_retrieve_vector_store_file_contents: {vector_store_id}, {file_id}")
-        provider = await self.routing_table.get_provider_impl(vector_store_id)
-        return await provider.openai_retrieve_vector_store_file_contents(
+        include_embeddings: bool | None = False,
+        include_metadata: bool | None = False,
+    ) -> VectorStoreFileContentResponse:
+        logger.debug(
+            f"VectorIORouter.openai_retrieve_vector_store_file_contents: {vector_store_id}, {file_id}, "
+            f"include_embeddings={include_embeddings}, include_metadata={include_metadata}"
+        )
+
+        return await self.routing_table.openai_retrieve_vector_store_file_contents(
             vector_store_id=vector_store_id,
             file_id=file_id,
+            include_embeddings=include_embeddings,
+            include_metadata=include_metadata,
         )
 
     async def openai_update_vector_store_file(

@@ -412,6 +412,14 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         return [v.vector_store for v in self.cache.values()]
 
     async def register_vector_store(self, vector_store: VectorStore) -> None:
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before registering vector stores.")
+
+        # Save to kvstore for persistence
+        key = f"{VECTOR_DBS_PREFIX}{vector_store.identifier}"
+        await self.kvstore.set(key=key, value=vector_store.model_dump_json())
+
+        # Create and cache the index
         index = await SQLiteVecIndex.create(
             vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
         )
@@ -421,13 +429,16 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         if vector_store_id in self.cache:
             return self.cache[vector_store_id]
 
-        if self.vector_store_table is None:
+        # Try to load from kvstore
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before using vector stores.")
+
+        key = f"{VECTOR_DBS_PREFIX}{vector_store_id}"
+        vector_store_data = await self.kvstore.get(key)
+        if not vector_store_data:
             raise VectorStoreNotFoundError(vector_store_id)
 
-        vector_store = self.vector_store_table.get_vector_store(vector_store_id)
-        if not vector_store:
-            raise VectorStoreNotFoundError(vector_store_id)
-
+        vector_store = VectorStore.model_validate_json(vector_store_data)
         index = VectorStoreWithIndex(
             vector_store=vector_store,
             index=SQLiteVecIndex(

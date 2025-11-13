@@ -47,6 +47,18 @@ class SqlStore(Protocol):
         """
         pass
 
+    async def upsert(
+        self,
+        table: str,
+        data: Mapping[str, Any],
+        conflict_columns: list[str],
+        update_columns: list[str] | None = None,
+    ) -> None:
+        """
+        Insert a row and update specified columns when conflicts occur.
+        """
+        pass
+
     async def fetch_all(
         self,
         table: str,

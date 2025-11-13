@@ -403,7 +403,7 @@ class OpenAIResponseText(BaseModel):
 
 
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
-WebSearchToolTypes = ["web_search", "web_search_preview", "web_search_preview_2025_03_11"]
+WebSearchToolTypes = ["web_search", "web_search_preview", "web_search_preview_2025_03_11", "web_search_2025_08_26"]
 
 
 @json_schema_type
@@ -415,9 +415,12 @@ class OpenAIResponseInputToolWebSearch(BaseModel):
     """
 
     # Must match values of WebSearchToolTypes above
-    type: Literal["web_search"] | Literal["web_search_preview"] | Literal["web_search_preview_2025_03_11"] = (
-        "web_search"
-    )
+    type: (
+        Literal["web_search"]
+        | Literal["web_search_preview"]
+        | Literal["web_search_preview_2025_03_11"]
+        | Literal["web_search_2025_08_26"]
+    ) = "web_search"
     # TODO: actually use search_context_size somewhere...
     search_context_size: str | None = Field(default="medium", pattern="^low|medium|high$")
     # TODO: add user_location
@@ -591,6 +594,7 @@ class OpenAIResponseObject(BaseModel):
     :param truncation: (Optional) Truncation strategy applied to the response
     :param usage: (Optional) Token usage information for the response
     :param instructions: (Optional) System message inserted into the model's context
+    :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response
     """
 
     created_at: int
@@ -612,6 +616,7 @@ class OpenAIResponseObject(BaseModel):
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
     instructions: str | None = None
+    max_tool_calls: int | None = None
 
 
 @json_schema_type

@@ -56,14 +56,6 @@ class ToolGroupNotFoundError(ResourceNotFoundError):
         super().__init__(toolgroup_name, "Tool Group", "client.toolgroups.list()")
 
 
-class SessionNotFoundError(ValueError):
-    """raised when Llama Stack cannot find a referenced session or access is denied"""
-
-    def __init__(self, session_name: str) -> None:
-        message = f"Session '{session_name}' not found or access denied."
-        super().__init__(message)
-
-
 class ModelTypeError(TypeError):
     """raised when a model is present but not the correct type"""
 

@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 2
 requires-python = ">=3.12"
 resolution-markers = [
     "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
@@ -1945,7 +1945,6 @@ dependencies = [
     { name = "httpx" },
     { name = "jinja2" },
     { name = "jsonschema" },
-    { name = "llama-stack-client" },
     { name = "openai" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
@@ -1955,6 +1954,7 @@ dependencies = [
     { name = "pyjwt", extra = ["crypto"] },
     { name = "python-dotenv" },
     { name = "python-multipart" },
+    { name = "pyyaml" },
     { name = "rich" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "starlette" },
@@ -1964,11 +1964,8 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-ui = [
+client = [
     { name = "llama-stack-client" },
-    { name = "pandas" },
-    { name = "streamlit" },
-    { name = "streamlit-option-menu" },
 ]
 
 [package.dev-dependencies]
@@ -2043,6 +2040,7 @@ type-checking = [
     { name = "datasets" },
     { name = "fairscale" },
     { name = "faiss-cpu" },
+    { name = "llama-stack-client" },
     { name = "lm-format-enforcer" },
     { name = "mcp" },
     { name = "nest-asyncio" },
@@ -2096,28 +2094,25 @@ requires-dist = [
     { name = "httpx" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
-    { name = "llama-stack-client", specifier = ">=0.3.0" },
-    { name = "llama-stack-client", marker = "extra == 'ui'", specifier = ">=0.3.0" },
+    { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.3.0" },
     { name = "openai", specifier = ">=2.5.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
-    { name = "pandas", marker = "extra == 'ui'" },
     { name = "pillow" },
     { name = "prompt-toolkit" },
     { name = "pydantic", specifier = ">=2.11.9" },
     { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10.0" },
     { name = "python-dotenv" },
     { name = "python-multipart", specifier = ">=0.0.20" },
+    { name = "pyyaml", specifier = ">=6.0" },
     { name = "rich" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
     { name = "starlette" },
-    { name = "streamlit", marker = "extra == 'ui'" },
-    { name = "streamlit-option-menu", marker = "extra == 'ui'" },
     { name = "termcolor" },
     { name = "tiktoken" },
     { name = "uvicorn", specifier = ">=0.34.0" },
 ]
-provides-extras = ["ui"]
+provides-extras = ["client"]
 
 [package.metadata.requires-dev]
 benchmark = [{ name = "locust", specifier = ">=2.39.1" }]
@@ -2171,7 +2166,7 @@ test = [
     { name = "milvus-lite", specifier = ">=2.5.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
     { name = "pymilvus", specifier = ">=2.6.1" },
-    { name = "pypdf" },
+    { name = "pypdf", specifier = ">=6.1.3" },
     { name = "qdrant-client" },
     { name = "requests" },
     { name = "sqlalchemy" },
@@ -2188,6 +2183,7 @@ type-checking = [
     { name = "datasets" },
     { name = "fairscale" },
     { name = "faiss-cpu" },
+    { name = "llama-stack-client", specifier = ">=0.3.0" },
     { name = "lm-format-enforcer" },
     { name = "mcp" },
     { name = "nest-asyncio" },
@@ -2223,7 +2219,7 @@ unit = [
     { name = "moto", extras = ["s3"], specifier = ">=5.1.10" },
     { name = "ollama" },
     { name = "psycopg2-binary", specifier = ">=2.9.0" },
-    { name = "pypdf" },
+    { name = "pypdf", specifier = ">=6.1.3" },
     { name = "sqlalchemy" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.41" },
     { name = "sqlite-vec" },
@@ -3977,11 +3973,11 @@ wheels = [
 
 [[package]]
 name = "pypdf"
-version = "5.9.0"
+version = "6.2.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/89/3a/584b97a228950ed85aec97c811c68473d9b8d149e6a8c155668287cf1a28/pypdf-5.9.0.tar.gz", hash = "sha256:30f67a614d558e495e1fbb157ba58c1de91ffc1718f5e0dfeb82a029233890a1", size = 5035118, upload-time = "2025-07-27T14:04:52.364Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4e/2b/8795ec0378384000b0a37a2b5e6d67fa3d84802945aa2c612a78a784d7d4/pypdf-6.2.0.tar.gz", hash = "sha256:46b4d8495d68ae9c818e7964853cd9984e6a04c19fe7112760195395992dce48", size = 5272001, upload-time = "2025-11-09T11:10:41.911Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/48/d9/6cff57c80a6963e7dd183bf09e9f21604a77716644b1e580e97b259f7612/pypdf-5.9.0-py3-none-any.whl", hash = "sha256:be10a4c54202f46d9daceaa8788be07aa8cd5ea8c25c529c50dd509206382c35", size = 313193, upload-time = "2025-07-27T14:04:50.53Z" },
+    { url = "https://files.pythonhosted.org/packages/de/ba/743ddcaf1a8fb439342399645921e2cf2c600464cba5531a11f1cc0822b6/pypdf-6.2.0-py3-none-any.whl", hash = "sha256:4c0f3e62677217a777ab79abe22bf1285442d70efabf552f61c7a03b6f5c569f", size = 326592, upload-time = "2025-11-09T11:10:39.941Z" },
 ]
 
 [[package]]

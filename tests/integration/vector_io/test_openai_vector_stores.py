@@ -11,6 +11,7 @@ import pytest
 from llama_stack_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
 
+from llama_stack.apis.files import ExpiresAfter
 from llama_stack.apis.vector_io import Chunk
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
@@ -350,7 +351,7 @@ def test_openai_vector_store_search_empty(
     assert search_response is not None
     assert hasattr(search_response, "data")
     assert len(search_response.data) == 0  # Empty store should return no results
-    assert search_response.search_query == "test query"
+    assert search_response.search_query == ["test query"]
     assert search_response.has_more is False
 
 
@@ -679,7 +680,7 @@ def test_openai_vector_store_attach_file(
     assert file_attach_response.id == file.id
     assert file_attach_response.vector_store_id == vector_store.id
     assert file_attach_response.status == "completed"
-    assert file_attach_response.chunking_strategy.type == "auto"
+    assert file_attach_response.chunking_strategy.type == "static"
     assert file_attach_response.created_at > 0
     assert not file_attach_response.last_error
 
@@ -815,8 +816,8 @@ def test_openai_vector_store_list_files(
     assert set(file_ids) == {file.id for file in files_list.data}
     assert files_list.data[0].object == "vector_store.file"
     assert files_list.data[0].vector_store_id == vector_store.id
-    assert files_list.data[0].status == "completed"
-    assert files_list.data[0].chunking_strategy.type == "auto"
+    assert files_list.data[0].status in ["completed", "in_progress"]
+    assert files_list.data[0].chunking_strategy.type == "static"
     assert files_list.data[0].created_at > 0
     assert files_list.first_id == files_list.data[0].id
     assert not files_list.data[0].last_error
@@ -825,7 +826,7 @@ def test_openai_vector_store_list_files(
     assert first_page.has_more
     assert len(first_page.data) == 2
     assert first_page.first_id == first_page.data[0].id
-    assert first_page.last_id != first_page.data[-1].id
+    assert first_page.last_id == first_page.data[-1].id
 
     next_page = compat_client.vector_stores.files.list(
         vector_store_id=vector_store.id, limit=2, after=first_page.data[-1].id
@@ -907,16 +908,16 @@ def test_openai_vector_store_retrieve_file_contents(
     )
 
     assert file_contents is not None
-    assert len(file_contents.content) == 1
-    content = file_contents.content[0]
+    assert file_contents.object == "vector_store.file_content.page"
+    assert len(file_contents.data) == 1
+    content = file_contents.data[0]
 
     # llama-stack-client returns a model, openai-python is a badboy and returns a dict
     if not isinstance(content, dict):
         content = content.model_dump()
     assert content["type"] == "text"
     assert content["text"] == test_content.decode("utf-8")
-    assert file_contents.filename == file_name
-    assert file_contents.attributes == attributes
+    assert file_contents.has_more is False
 
 
 @vector_provider_wrapper
@@ -1483,14 +1484,12 @@ def test_openai_vector_store_file_batch_retrieve_contents(
         )
 
         assert file_contents is not None
-        assert file_contents.filename == file_data[i][0]
-        assert len(file_contents.content) > 0
+        assert file_contents.object == "vector_store.file_content.page"
+        assert len(file_contents.data) > 0
 
         # Verify the content matches what we uploaded
         content_text = (
-            file_contents.content[0].text
-            if hasattr(file_contents.content[0], "text")
-            else file_contents.content[0]["text"]
+            file_contents.data[0].text if hasattr(file_contents.data[0], "text") else file_contents.data[0]["text"]
         )
         assert file_data[i][1].decode("utf-8") in content_text
 
@@ -1606,3 +1605,97 @@ def test_openai_vector_store_embedding_config_from_metadata(
 
     assert "metadata_config_store" in store_names
     assert "consistent_config_store" in store_names
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_file_contents_with_extra_query(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    """Test that vector store file contents endpoint supports extra_query parameter."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(
+        name="test_extra_query_store",
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    # Create and attach a file
+    test_content = b"This is test content for extra_query validation."
+    with BytesIO(test_content) as file_buffer:
+        file_buffer.name = "test_extra_query.txt"
+        file = compat_client.files.create(
+            file=file_buffer,
+            purpose="assistants",
+            expires_after=ExpiresAfter(anchor="created_at", seconds=86400),
+        )
+
+    file_attach_response = compat_client.vector_stores.files.create(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+        extra_body={"embedding_model": embedding_model_id},
+    )
+    assert file_attach_response.status == "completed"
+
+    # Wait for processing
+    time.sleep(2)
+
+    # Test that extra_query parameter is accepted and processed
+    content_with_extra_query = compat_client.vector_stores.files.content(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+        extra_query={"include_embeddings": True, "include_metadata": True},
+    )
+
+    # Test without extra_query for comparison
+    content_without_extra_query = compat_client.vector_stores.files.content(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+    )
+
+    # Validate that both calls succeed
+    assert content_with_extra_query is not None
+    assert content_without_extra_query is not None
+    assert len(content_with_extra_query.data) > 0
+    assert len(content_without_extra_query.data) > 0
+
+    # Validate that extra_query parameter is processed correctly
+    # Both should have the embedding/metadata fields available (may be None based on flags)
+    first_chunk_with_flags = content_with_extra_query.data[0]
+    first_chunk_without_flags = content_without_extra_query.data[0]
+
+    # The key validation: extra_query fields are present in the response
+    # Handle both dict and object responses (different clients may return different formats)
+    def has_field(obj, field):
+        if isinstance(obj, dict):
+            return field in obj
+        else:
+            return hasattr(obj, field)
+
+    # Validate that all expected fields are present in both responses
+    expected_fields = ["embedding", "chunk_metadata", "metadata", "text"]
+    for field in expected_fields:
+        assert has_field(first_chunk_with_flags, field), f"Field '{field}' missing from response with extra_query"
+        assert has_field(first_chunk_without_flags, field), f"Field '{field}' missing from response without extra_query"
+
+    # Validate content is the same
+    def get_field(obj, field):
+        if isinstance(obj, dict):
+            return obj[field]
+        else:
+            return getattr(obj, field)
+
+    assert get_field(first_chunk_with_flags, "text") == test_content.decode("utf-8")
+    assert get_field(first_chunk_without_flags, "text") == test_content.decode("utf-8")
+
+    with_flags_embedding = get_field(first_chunk_with_flags, "embedding")
+    without_flags_embedding = get_field(first_chunk_without_flags, "embedding")
+
+    # Validate that embeddings are included when requested and excluded when not requested
+    assert with_flags_embedding is not None, "Embeddings should be included when include_embeddings=True"
+    assert len(with_flags_embedding) > 0, "Embedding should be a non-empty list"
+    assert without_flags_embedding is None, "Embeddings should not be included when include_embeddings=False"

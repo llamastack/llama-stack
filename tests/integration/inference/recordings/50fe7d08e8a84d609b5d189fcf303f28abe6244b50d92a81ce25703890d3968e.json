@@ -61,7 +61,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "{\"first_name\": \"Michael\", \"last_name\": \"Jordan\", \"year_of_birth\": 1963}\n\n   ",
+              "content": "{ \"first_name\": \"Michael\", \"last_name\": \"Jordan\" , \"year_of_birth\": 1963}\n\n      \t\t\t\t\t\t   \t\t\t\t",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -77,9 +77,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 27,
+          "completion_tokens": 31,
           "prompt_tokens": 73,
-          "total_tokens": 100,
+          "total_tokens": 104,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
