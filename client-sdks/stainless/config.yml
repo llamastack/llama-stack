@@ -507,7 +507,7 @@ readme:
       params: &ref_0 {}
     headline:
       type: request
-      endpoint: post /v1/models
+      endpoint: get /v1/models
       params: *ref_0
     pagination:
       type: request
