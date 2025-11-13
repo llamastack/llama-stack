@@ -417,7 +417,7 @@ class InferenceRouter(Inference):
                             prompt_tokens=chunk.usage.prompt_tokens,
                             completion_tokens=chunk.usage.completion_tokens,
                             total_tokens=chunk.usage.total_tokens,
-                            model_id=fully_qualified_model_id,
+                            fully_qualified_model_id=fully_qualified_model_id,
                             provider_id=provider_id,
                         )
                         for metric in metrics:
