@@ -8,6 +8,10 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+from llama_stack.models.llama.sku_types import CoreModelId
+from llama_stack.providers.remote.eval.nvidia.config import NVIDIAEvalConfig
+from llama_stack.providers.remote.eval.nvidia.eval import NVIDIAEvalImpl
 from llama_stack_api import (
     Benchmark,
     BenchmarkConfig,
@@ -19,10 +23,6 @@ from llama_stack_api import (
     SamplingParams,
     TopPSamplingStrategy,
 )
-
-from llama_stack.models.llama.sku_types import CoreModelId
-from llama_stack.providers.remote.eval.nvidia.config import NVIDIAEvalConfig
-from llama_stack.providers.remote.eval.nvidia.eval import NVIDIAEvalImpl
 
 MOCK_DATASET_ID = "default/test-dataset"
 MOCK_BENCHMARK_ID = "test-benchmark"

@@ -9,6 +9,11 @@ import time
 from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
+
+from llama_stack.core.routers.inference import InferenceRouter
+from llama_stack.core.routing_tables.models import ModelsRoutingTable
+from llama_stack.providers.remote.inference.vllm.config import VLLMInferenceAdapterConfig
+from llama_stack.providers.remote.inference.vllm.vllm import VLLMInferenceAdapter
 from llama_stack_api import (
     HealthStatus,
     Model,
@@ -21,11 +26,6 @@ from llama_stack_api import (
     OpenAICompletionRequestWithExtraBody,
     ToolChoice,
 )
-
-from llama_stack.core.routers.inference import InferenceRouter
-from llama_stack.core.routing_tables.models import ModelsRoutingTable
-from llama_stack.providers.remote.inference.vllm.config import VLLMInferenceAdapterConfig
-from llama_stack.providers.remote.inference.vllm.vllm import VLLMInferenceAdapter
 
 # These are unit test for the remote vllm provider
 # implementation. This should only contain tests which are specific to

@@ -20,18 +20,6 @@ except ImportError:
     from openai.types.chat.chat_completion_message_tool_call import (
         ChatCompletionMessageToolCall as OpenAIChatCompletionMessageFunctionToolCall,
     )
-from llama_stack_api import (
-    URL,
-    GreedySamplingStrategy,
-    ImageContentItem,
-    JsonSchemaResponseFormat,
-    OpenAIResponseFormatParam,
-    SamplingParams,
-    TextContentItem,
-    TopKSamplingStrategy,
-    TopPSamplingStrategy,
-    _URLOrData,
-)
 from openai.types.chat import (
     ChatCompletionMessageToolCall,
 )
@@ -43,6 +31,18 @@ from llama_stack.models.llama.datatypes import (
     StopReason,
     ToolCall,
     ToolDefinition,
+)
+from llama_stack_api import (
+    URL,
+    GreedySamplingStrategy,
+    ImageContentItem,
+    JsonSchemaResponseFormat,
+    OpenAIResponseFormatParam,
+    SamplingParams,
+    TextContentItem,
+    TopKSamplingStrategy,
+    TopPSamplingStrategy,
+    _URLOrData,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")

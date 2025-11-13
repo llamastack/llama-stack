@@ -9,6 +9,15 @@ import hashlib
 import uuid
 from typing import Any
 
+from numpy.typing import NDArray
+from qdrant_client import AsyncQdrantClient, models
+from qdrant_client.models import PointStruct
+
+from llama_stack.log import get_logger
+from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
+from llama_stack.providers.utils.kvstore import kvstore_impl
+from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack_api import (
     Chunk,
     Files,
@@ -22,15 +31,6 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
-from numpy.typing import NDArray
-from qdrant_client import AsyncQdrantClient, models
-from qdrant_client.models import PointStruct
-
-from llama_stack.log import get_logger
-from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
-from llama_stack.providers.utils.kvstore import kvstore_impl
-from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 
 from .config import QdrantVectorIOConfig as RemoteQdrantVectorIOConfig
 

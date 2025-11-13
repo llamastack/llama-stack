@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 resolution-markers = [
     "(python_full_version >= '3.13' and platform_machine != 'aarch64' and sys_platform == 'linux') or (python_full_version >= '3.13' and sys_platform != 'darwin' and sys_platform != 'linux')",
@@ -2095,7 +2095,7 @@ requires-dist = [
     { name = "httpx" },
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
-    { name = "llama-stack-api", editable = "src/llama-stack-api" },
+    { name = "llama-stack-api", editable = "src/llama_stack_api" },
     { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.3.0" },
     { name = "openai", specifier = ">=2.5.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
@@ -2230,8 +2230,8 @@ unit = [
 
 [[package]]
 name = "llama-stack-api"
-version = "0.1.0"
-source = { editable = "src/llama-stack-api" }
+version = "0.4.0.dev0"
+source = { editable = "src/llama_stack_api" }
 dependencies = [
     { name = "jsonschema" },
     { name = "opentelemetry-exporter-otlp-proto-http" },

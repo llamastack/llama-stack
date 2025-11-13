@@ -6,9 +6,8 @@
 
 from typing import Any
 
-from llama_stack_api import DatasetIO, DatasetPurpose, DataSource, PaginatedResponse, RoutingTable
-
 from llama_stack.log import get_logger
+from llama_stack_api import DatasetIO, DatasetPurpose, DataSource, PaginatedResponse, RoutingTable
 
 logger = get_logger(name=__name__, category="core::routers")
 

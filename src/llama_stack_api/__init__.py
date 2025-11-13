@@ -19,7 +19,7 @@ Sub-module imports (e.g., from llama_stack_api.agents import Agents) are NOT sup
 and considered a code smell. All exported symbols are explicitly listed in __all__.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.4.0.dev0"
 
 # Import submodules for those who need them
 from . import common, strong_typing  # noqa: F401

@@ -4,6 +4,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from llama_stack.core.datatypes import (
+    ScoringFnWithOwner,
+)
+from llama_stack.log import get_logger
 from llama_stack_api import (
     ListScoringFunctionsResponse,
     ParamType,
@@ -12,11 +16,6 @@ from llama_stack_api import (
     ScoringFnParams,
     ScoringFunctions,
 )
-
-from llama_stack.core.datatypes import (
-    ScoringFnWithOwner,
-)
-from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl
 

@@ -7,6 +7,10 @@
 import time
 
 import pytest
+
+from llama_stack.core.storage.datatypes import InferenceStoreReference, SqliteSqlStoreConfig
+from llama_stack.providers.utils.inference.inference_store import InferenceStore
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
@@ -14,10 +18,6 @@ from llama_stack_api import (
     OpenAIUserMessageParam,
     Order,
 )
-
-from llama_stack.core.storage.datatypes import InferenceStoreReference, SqliteSqlStoreConfig
-from llama_stack.providers.utils.inference.inference_store import InferenceStore
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 
 
 @pytest.fixture(autouse=True)

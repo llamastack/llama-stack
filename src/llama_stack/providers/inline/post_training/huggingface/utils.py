@@ -14,8 +14,9 @@ from typing import TYPE_CHECKING, Any, Protocol
 import psutil
 import torch
 from datasets import Dataset
-from llama_stack_api import Checkpoint, DatasetIO, TrainingConfig
 from transformers import AutoConfig, AutoModelForCausalLM
+
+from llama_stack_api import Checkpoint, DatasetIO, TrainingConfig
 
 if TYPE_CHECKING:
     from transformers import PretrainedConfig

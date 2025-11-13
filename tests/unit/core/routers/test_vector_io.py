@@ -7,14 +7,14 @@
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+
+from llama_stack.core.routers.vector_io import VectorIORouter
 from llama_stack_api import (
     ModelNotFoundError,
     ModelType,
     ModelTypeError,
     OpenAICreateVectorStoreRequestWithExtraBody,
 )
-
-from llama_stack.core.routers.vector_io import VectorIORouter
 
 
 async def test_single_provider_auto_selection():
@@ -127,7 +127,8 @@ async def test_update_vector_store_same_provider_id_succeeds():
 
 
 async def test_create_vector_store_with_unknown_embedding_model_raises_error():
-    """Test that creating a vector store with an unknown embedding model raises ModelNotFoundError."""
+    """Test that creating a vector store with an unknown embedding model raises
+    FoundError."""
     mock_routing_table = Mock(impls_by_provider_id={"provider": "mock"})
     mock_routing_table.get_object_by_identifier = AsyncMock(return_value=None)
 

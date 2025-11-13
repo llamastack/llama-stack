@@ -12,17 +12,6 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from llama_stack_api import (
-    Checkpoint,
-    DataConfig,
-    DatasetIO,
-    Datasets,
-    LoraFinetuningConfig,
-    OptimizerConfig,
-    PostTrainingMetric,
-    QATFinetuningConfig,
-    TrainingConfig,
-)
 from torch import nn
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader, DistributedSampler
@@ -56,6 +45,17 @@ from llama_stack.providers.inline.post_training.torchtune.config import (
     TorchtunePostTrainingConfig,
 )
 from llama_stack.providers.inline.post_training.torchtune.datasets.sft import SFTDataset
+from llama_stack_api import (
+    Checkpoint,
+    DataConfig,
+    DatasetIO,
+    Datasets,
+    LoraFinetuningConfig,
+    OptimizerConfig,
+    PostTrainingMetric,
+    QATFinetuningConfig,
+    TrainingConfig,
+)
 
 log = get_logger(name=__name__, category="post_training")
 

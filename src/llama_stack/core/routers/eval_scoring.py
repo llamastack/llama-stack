@@ -6,6 +6,7 @@
 
 from typing import Any
 
+from llama_stack.log import get_logger
 from llama_stack_api import (
     BenchmarkConfig,
     Eval,
@@ -17,8 +18,6 @@ from llama_stack_api import (
     Scoring,
     ScoringFnParams,
 )
-
-from llama_stack.log import get_logger
 
 logger = get_logger(name=__name__, category="core::routers")
 

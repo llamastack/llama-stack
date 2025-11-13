@@ -7,6 +7,7 @@ import base64
 import mimetypes
 
 import pytest
+
 from llama_stack_api import ViolationLevel
 
 CODE_SCANNER_ENABLED_PROVIDERS = {"ollama", "together", "fireworks"}

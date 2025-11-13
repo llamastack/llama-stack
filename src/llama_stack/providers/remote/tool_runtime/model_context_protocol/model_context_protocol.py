@@ -7,6 +7,9 @@
 from typing import Any
 from urllib.parse import urlparse
 
+from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.tools.mcp import invoke_mcp_tool, list_mcp_tools
 from llama_stack_api import (
     URL,
     Api,
@@ -16,10 +19,6 @@ from llama_stack_api import (
     ToolInvocationResult,
     ToolRuntime,
 )
-
-from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.tools.mcp import invoke_mcp_tool, list_mcp_tools
 
 from .config import MCPProviderConfig
 

@@ -8,6 +8,9 @@
 from collections.abc import Iterable
 
 import aiohttp
+
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
     Model,
     ModelType,
@@ -16,9 +19,6 @@ from llama_stack_api import (
     RerankData,
     RerankResponse,
 )
-
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from . import NVIDIAConfig
 from .utils import _is_nvidia_hosted

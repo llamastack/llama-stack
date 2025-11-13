@@ -9,6 +9,8 @@ import time
 import uuid
 
 import pytest
+
+from llama_stack.log import get_logger
 from llama_stack_api import (
     DataConfig,
     DatasetFormat,
@@ -17,8 +19,6 @@ from llama_stack_api import (
     LoraFinetuningConfig,
     TrainingConfig,
 )
-
-from llama_stack.log import get_logger
 
 # Configure logging
 logger = get_logger(name=__name__, category="post_training")

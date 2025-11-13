@@ -7,9 +7,9 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from llama_stack_api import URL, RAGDocument, TextContentItem
 
 from llama_stack.providers.utils.memory.vector_store import content_from_data_and_mime_type, content_from_doc
+from llama_stack_api import URL, RAGDocument, TextContentItem
 
 
 async def test_content_from_doc_with_url():

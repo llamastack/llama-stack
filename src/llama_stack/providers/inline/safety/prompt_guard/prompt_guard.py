@@ -7,6 +7,11 @@
 from typing import Any
 
 import torch
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+from llama_stack.core.utils.model_utils import model_local_dir
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack_api import (
     ModerationObject,
     OpenAIMessageParam,
@@ -18,11 +23,6 @@ from llama_stack_api import (
     ShieldStore,
     ViolationLevel,
 )
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-
-from llama_stack.core.utils.model_utils import model_local_dir
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 
 from .config import PromptGuardConfig, PromptGuardType
 

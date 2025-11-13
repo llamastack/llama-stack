@@ -8,6 +8,8 @@ import json
 from typing import Any
 
 import httpx
+
+from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack_api import (
     URL,
     ListToolDefsResponse,
@@ -17,8 +19,6 @@ from llama_stack_api import (
     ToolInvocationResult,
     ToolRuntime,
 )
-
-from llama_stack.core.request_headers import NeedsRequestProviderData
 
 from .config import BingSearchToolConfig
 

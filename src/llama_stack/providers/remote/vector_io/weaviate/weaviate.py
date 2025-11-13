@@ -8,17 +8,6 @@ from typing import Any
 
 import weaviate
 import weaviate.classes as wvc
-from llama_stack_api import (
-    Chunk,
-    Files,
-    Inference,
-    InterleavedContent,
-    QueryChunksResponse,
-    VectorIO,
-    VectorStore,
-    VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
-)
 from numpy.typing import NDArray
 from weaviate.classes.init import Auth
 from weaviate.classes.query import Filter, HybridFusion
@@ -35,6 +24,17 @@ from llama_stack.providers.utils.memory.vector_store import (
     VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
+from llama_stack_api import (
+    Chunk,
+    Files,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoreNotFoundError,
+    VectorStoresProtocolPrivate,
+)
 
 from .config import WeaviateVectorIOConfig
 

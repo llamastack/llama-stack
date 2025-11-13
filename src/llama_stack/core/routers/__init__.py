@@ -6,8 +6,6 @@
 
 from typing import Any
 
-from llama_stack_api import Api, RoutingTable
-
 from llama_stack.core.datatypes import (
     AccessRule,
     RoutedProtocol,
@@ -15,6 +13,7 @@ from llama_stack.core.datatypes import (
 from llama_stack.core.stack import StackRunConfig
 from llama_stack.core.store import DistributionRegistry
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
+from llama_stack_api import Api, RoutingTable
 
 
 async def get_routing_table_impl(

@@ -7,6 +7,10 @@ from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
 import httpx
+from pydantic import ConfigDict
+
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
     HealthResponse,
     HealthStatus,
@@ -15,10 +19,6 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     ToolChoice,
 )
-from pydantic import ConfigDict
-
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import VLLMInferenceAdapterConfig
 

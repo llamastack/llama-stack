@@ -6,8 +6,9 @@
 
 from typing import Any
 
-from llama_stack_api import json_schema_type
 from pydantic import BaseModel, Field, SecretStr
+
+from llama_stack_api import json_schema_type
 
 
 class SambaNovaProviderDataValidator(BaseModel):

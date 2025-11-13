@@ -5,10 +5,9 @@
 # the root directory of this source tree.
 
 
-from llama_stack_api import ModelType
-
 from llama_stack.core.datatypes import ModelWithOwner, User
 from llama_stack.core.store.registry import CachedDiskDistributionRegistry
+from llama_stack_api import ModelType
 
 
 async def test_registry_cache_with_acl(cached_disk_dist_registry):

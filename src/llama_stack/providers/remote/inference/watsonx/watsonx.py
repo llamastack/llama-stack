@@ -9,6 +9,12 @@ from typing import Any
 
 import litellm
 import requests
+
+from llama_stack.core.telemetry.tracing import get_current_span
+from llama_stack.log import get_logger
+from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
+from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
+from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 from llama_stack_api import (
     Model,
     ModelType,
@@ -21,12 +27,6 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-
-from llama_stack.core.telemetry.tracing import get_current_span
-from llama_stack.log import get_logger
-from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
-from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
-from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 
 logger = get_logger(name=__name__, category="providers::remote::watsonx")
 
@@ -238,9 +238,8 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         )
 
         # Convert response to OpenAI format
-        from llama_stack_api import OpenAIEmbeddingUsage
-
         from llama_stack.providers.utils.inference.litellm_openai_mixin import b64_encode_openai_embeddings_response
+        from llama_stack_api import OpenAIEmbeddingUsage
 
         data = b64_encode_openai_embeddings_response(response.data, params.encoding_format)
 

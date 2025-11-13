@@ -8,18 +8,18 @@
 from collections.abc import Iterable
 from typing import Any, cast
 
-from llama_stack_api import (
-    Model,
-    OpenAIEmbeddingsRequestWithExtraBody,
-    OpenAIEmbeddingsResponse,
-    OpenAIEmbeddingUsage,
-)
 from together import AsyncTogether  # type: ignore[import-untyped]
 from together.constants import BASE_URL  # type: ignore[import-untyped]
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
+    Model,
+    OpenAIEmbeddingsRequestWithExtraBody,
+    OpenAIEmbeddingsResponse,
+    OpenAIEmbeddingUsage,
+)
 
 from .config import TogetherImplConfig
 

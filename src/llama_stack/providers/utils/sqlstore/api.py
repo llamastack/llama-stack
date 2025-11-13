@@ -8,8 +8,9 @@ from collections.abc import Mapping, Sequence
 from enum import Enum
 from typing import Any, Literal, Protocol
 
-from llama_stack_api import PaginatedResponse
 from pydantic import BaseModel
+
+from llama_stack_api import PaginatedResponse
 
 
 class ColumnType(Enum):

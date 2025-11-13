@@ -7,6 +7,8 @@
 from typing import Any
 
 import requests
+
+from llama_stack.log import get_logger
 from llama_stack_api import (
     ModerationObject,
     OpenAIMessageParam,
@@ -17,8 +19,6 @@ from llama_stack_api import (
     ShieldsProtocolPrivate,
     ViolationLevel,
 )
-
-from llama_stack.log import get_logger
 
 from .config import NVIDIASafetyConfig
 

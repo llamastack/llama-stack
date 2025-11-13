@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from io import BytesIO
 
 import pytest
+
 from llama_stack_api import OpenAIFilePurpose
 
 

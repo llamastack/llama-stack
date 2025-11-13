@@ -6,6 +6,8 @@
 from typing import Any
 
 import requests
+
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack_api import (
     Agents,
     Benchmark,
@@ -21,8 +23,6 @@ from llama_stack_api import (
     Scoring,
     ScoringResult,
 )
-
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 
 from .config import NVIDIAEvalConfig
 

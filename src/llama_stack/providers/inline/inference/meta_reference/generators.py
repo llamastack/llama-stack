@@ -8,6 +8,14 @@ import math
 from typing import Optional
 
 import torch
+from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
+
+from llama_stack.models.llama.datatypes import QuantizationMode, ToolPromptFormat
+from llama_stack.models.llama.llama3.generation import Llama3
+from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
+from llama_stack.models.llama.llama4.generation import Llama4
+from llama_stack.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
+from llama_stack.models.llama.sku_types import Model, ModelFamily
 from llama_stack_api import (
     GreedySamplingStrategy,
     JsonSchemaResponseFormat,
@@ -18,14 +26,6 @@ from llama_stack_api import (
     SamplingParams,
     TopPSamplingStrategy,
 )
-from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
-
-from llama_stack.models.llama.datatypes import QuantizationMode, ToolPromptFormat
-from llama_stack.models.llama.llama3.generation import Llama3
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
-from llama_stack.models.llama.llama4.generation import Llama4
-from llama_stack.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
-from llama_stack.models.llama.sku_types import Model, ModelFamily
 
 from .common import model_checkpoint_dir
 from .config import MetaReferenceInferenceConfig

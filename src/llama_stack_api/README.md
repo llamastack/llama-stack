@@ -53,7 +53,7 @@ This package follows semantic versioning independently from the main `llama-stac
 - **Minor versions** (0.x.0): New APIs, backward-compatible changes
 - **Major versions** (x.0.0): Breaking changes to existing APIs
 
-Current version: **0.1.0**
+Current version: **0.4.0.dev0**
 
 ## Usage Example
 

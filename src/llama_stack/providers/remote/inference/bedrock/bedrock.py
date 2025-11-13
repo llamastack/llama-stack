@@ -6,6 +6,11 @@
 
 from collections.abc import AsyncIterator, Iterable
 
+from openai import AuthenticationError
+
+from llama_stack.core.telemetry.tracing import get_current_span
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -15,11 +20,6 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from openai import AuthenticationError
-
-from llama_stack.core.telemetry.tracing import get_current_span
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import BedrockConfig
 

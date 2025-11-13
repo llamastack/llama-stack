@@ -8,6 +8,9 @@ from typing import Any
 
 import litellm
 import requests
+
+from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.log import get_logger
 from llama_stack_api import (
     OpenAIMessageParam,
     RunShieldResponse,
@@ -17,9 +20,6 @@ from llama_stack_api import (
     ShieldsProtocolPrivate,
     ViolationLevel,
 )
-
-from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.log import get_logger
 
 from .config import SambaNovaSafetyConfig
 

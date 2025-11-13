@@ -12,16 +12,6 @@ from typing import Any
 
 import numpy as np
 import sqlite_vec  # type: ignore[import-untyped]
-from llama_stack_api import (
-    Chunk,
-    Files,
-    Inference,
-    QueryChunksResponse,
-    VectorIO,
-    VectorStore,
-    VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
-)
 from numpy.typing import NDArray
 
 from llama_stack.log import get_logger
@@ -35,6 +25,16 @@ from llama_stack.providers.utils.memory.vector_store import (
     VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+from llama_stack_api import (
+    Chunk,
+    Files,
+    Inference,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoreNotFoundError,
+    VectorStoresProtocolPrivate,
+)
 
 logger = get_logger(name=__name__, category="vector_io")
 

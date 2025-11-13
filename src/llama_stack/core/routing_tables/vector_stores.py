@@ -6,6 +6,11 @@
 
 from typing import Any
 
+from llama_stack.core.datatypes import (
+    VectorStoreWithOwner,
+)
+from llama_stack.log import get_logger
+
 # Removed VectorStores import to avoid exposing public API
 from llama_stack_api import (
     ModelNotFoundError,
@@ -22,11 +27,6 @@ from llama_stack_api import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
-
-from llama_stack.core.datatypes import (
-    VectorStoreWithOwner,
-)
-from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl, lookup_model
 

@@ -7,6 +7,9 @@
 from dataclasses import dataclass
 from typing import cast
 
+from openai.types.chat import ChatCompletionToolParam
+from pydantic import BaseModel
+
 from llama_stack_api import (
     OpenAIChatCompletionToolCall,
     OpenAIMessageParam,
@@ -26,8 +29,6 @@ from llama_stack_api import (
     OpenAIResponseTool,
     OpenAIResponseToolMCP,
 )
-from openai.types.chat import ChatCompletionToolParam
-from pydantic import BaseModel
 
 
 class ToolExecutionResult(BaseModel):

@@ -12,24 +12,6 @@ import re
 from typing import Any
 
 import httpx
-from llama_stack_api import (
-    CompletionRequest,
-    ImageContentItem,
-    InterleavedContent,
-    InterleavedContentItem,
-    OpenAIAssistantMessageParam,
-    OpenAIChatCompletionContentPartImageParam,
-    OpenAIChatCompletionContentPartTextParam,
-    OpenAIFile,
-    OpenAIMessageParam,
-    OpenAISystemMessageParam,
-    OpenAIToolMessageParam,
-    OpenAIUserMessageParam,
-    ResponseFormat,
-    ResponseFormatType,
-    TextContentItem,
-    ToolChoice,
-)
 from PIL import Image as PIL_Image
 
 from llama_stack.log import get_logger
@@ -48,6 +30,24 @@ from llama_stack.models.llama.llama3.chat_format import ChatFormat
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.models.llama.sku_list import resolve_model
 from llama_stack.models.llama.sku_types import ModelFamily, is_multimodal
+from llama_stack_api import (
+    CompletionRequest,
+    ImageContentItem,
+    InterleavedContent,
+    InterleavedContentItem,
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
+    OpenAIFile,
+    OpenAIMessageParam,
+    OpenAISystemMessageParam,
+    OpenAIToolMessageParam,
+    OpenAIUserMessageParam,
+    ResponseFormat,
+    ResponseFormatType,
+    TextContentItem,
+    ToolChoice,
+)
 
 log = get_logger(name=__name__, category="providers::utils")
 

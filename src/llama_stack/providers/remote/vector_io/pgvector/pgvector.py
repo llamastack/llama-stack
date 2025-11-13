@@ -8,17 +8,6 @@ import heapq
 from typing import Any
 
 import psycopg2
-from llama_stack_api import (
-    Chunk,
-    Files,
-    Inference,
-    InterleavedContent,
-    QueryChunksResponse,
-    VectorIO,
-    VectorStore,
-    VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
-)
 from numpy.typing import NDArray
 from psycopg2 import sql
 from psycopg2.extras import Json, execute_values
@@ -31,6 +20,17 @@ from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator, sanitize_collection_name
+from llama_stack_api import (
+    Chunk,
+    Files,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoreNotFoundError,
+    VectorStoresProtocolPrivate,
+)
 
 from .config import PGVectorVectorIOConfig
 
