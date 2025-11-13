@@ -43,7 +43,7 @@ Key Behaviors Tested:
 import asyncio
 
 import pytest
-from llama_stack_api.common.errors import ConflictError
+from llama_stack_api import ConflictError
 
 
 class TestReferenceBatchesIdempotency:

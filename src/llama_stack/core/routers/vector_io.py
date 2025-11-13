@@ -9,14 +9,16 @@ import uuid
 from typing import Annotated, Any
 
 from fastapi import Body
-from llama_stack_api.common.content_types import InterleavedContent
-from llama_stack_api.datatypes import HealthResponse, HealthStatus, RoutingTable
-from llama_stack_api.models import ModelType
-from llama_stack_api.vector_io import (
+from llama_stack_api import (
     Chunk,
+    HealthResponse,
+    HealthStatus,
+    InterleavedContent,
+    ModelType,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
+    RoutingTable,
     SearchRankingOptions,
     VectorIO,
     VectorStoreChunkingStrategy,

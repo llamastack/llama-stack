@@ -9,8 +9,7 @@ import re
 import uuid
 from collections.abc import Sequence
 
-from llama_stack_api.agents import ResponseGuardrailSpec
-from llama_stack_api.inference import (
+from llama_stack_api import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
@@ -22,16 +21,11 @@ from llama_stack_api.inference import (
     OpenAIImageURL,
     OpenAIJSONSchema,
     OpenAIMessageParam,
+    OpenAIResponseAnnotationFileCitation,
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
     OpenAIResponseFormatParam,
     OpenAIResponseFormatText,
-    OpenAISystemMessageParam,
-    OpenAIToolMessageParam,
-    OpenAIUserMessageParam,
-)
-from llama_stack_api.openai_responses import (
-    OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInput,
     OpenAIResponseInputFunctionToolCallOutput,
     OpenAIResponseInputMessageContent,
@@ -47,8 +41,12 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseText,
+    OpenAISystemMessageParam,
+    OpenAIToolMessageParam,
+    OpenAIUserMessageParam,
+    ResponseGuardrailSpec,
+    Safety,
 )
-from llama_stack_api.safety import Safety
 
 
 async def convert_chat_choice_to_response_message(

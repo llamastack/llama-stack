@@ -6,10 +6,7 @@
 
 from typing import Any
 
-from llama_stack_api.datatypes import RoutingTable
-from llama_stack_api.inference import OpenAIMessageParam
-from llama_stack_api.safety import ModerationObject, RunShieldResponse, Safety
-from llama_stack_api.shields import Shield
+from llama_stack_api import ModerationObject, OpenAIMessageParam, RoutingTable, RunShieldResponse, Safety, Shield
 
 from llama_stack.core.datatypes import SafetyConfig
 from llama_stack.log import get_logger

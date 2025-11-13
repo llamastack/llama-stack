@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from llama_stack_api.schema_utils import json_schema_type
+from llama_stack_api import json_schema_type
 from pydantic import Field, SecretStr, field_validator
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig

@@ -6,9 +6,7 @@
 
 from typing import Any
 
-from llama_stack_api.common.errors import UnsupportedModelError
-from llama_stack_api.datatypes import ModelsProtocolPrivate
-from llama_stack_api.models import Model, ModelType
+from llama_stack_api import Model, ModelsProtocolPrivate, ModelType, UnsupportedModelError
 from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.log import get_logger

@@ -17,17 +17,18 @@ from autoevals.ragas import (
     ContextRelevancy,
     Faithfulness,
 )
-from llama_stack_api.datasetio import DatasetIO
-from llama_stack_api.datasets import Datasets
-from llama_stack_api.datatypes import ScoringFunctionsProtocolPrivate
-from llama_stack_api.scoring import (
+from llama_stack_api import (
+    DatasetIO,
+    Datasets,
     ScoreBatchResponse,
     ScoreResponse,
     Scoring,
+    ScoringFn,
+    ScoringFnParams,
+    ScoringFunctionsProtocolPrivate,
     ScoringResult,
     ScoringResultRow,
 )
-from llama_stack_api.scoring_functions import ScoringFn, ScoringFnParams
 from pydantic import BaseModel
 
 from llama_stack.core.datatypes import Api

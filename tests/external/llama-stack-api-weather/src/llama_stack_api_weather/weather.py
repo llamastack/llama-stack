@@ -6,9 +6,7 @@
 
 from typing import Protocol
 
-from llama_stack_api.datatypes import Api, ProviderSpec, RemoteProviderSpec
-from llama_stack_api.schema_utils import webmethod
-from llama_stack_api.version import LLAMA_STACK_API_V1
+from llama_stack_api import LLAMA_STACK_API_V1, Api, ProviderSpec, RemoteProviderSpec, webmethod
 
 
 def available_providers() -> list[ProviderSpec]:

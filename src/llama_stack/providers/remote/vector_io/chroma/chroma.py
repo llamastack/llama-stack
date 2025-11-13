@@ -9,11 +9,16 @@ from typing import Any
 from urllib.parse import urlparse
 
 import chromadb
-from llama_stack_api.datatypes import VectorStoresProtocolPrivate
-from llama_stack_api.files import Files
-from llama_stack_api.inference import Inference, InterleavedContent
-from llama_stack_api.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack_api.vector_stores import VectorStore
+from llama_stack_api import (
+    Chunk,
+    Files,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoresProtocolPrivate,
+)
 from numpy.typing import NDArray
 
 from llama_stack.log import get_logger

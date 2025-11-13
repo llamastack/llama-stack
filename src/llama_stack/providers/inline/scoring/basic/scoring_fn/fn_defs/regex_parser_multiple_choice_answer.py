@@ -4,9 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack_api.common.type_system import NumberType
-from llama_stack_api.scoring_functions import (
+from llama_stack_api import (
     AggregationFunctionType,
+    NumberType,
     RegexParserScoringFnParams,
     ScoringFn,
 )

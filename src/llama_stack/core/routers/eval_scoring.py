@@ -6,9 +6,12 @@
 
 from typing import Any
 
-from llama_stack_api.datatypes import RoutingTable
-from llama_stack_api.eval import BenchmarkConfig, Eval, EvaluateResponse, Job
-from llama_stack_api.scoring import (
+from llama_stack_api import (
+    BenchmarkConfig,
+    Eval,
+    EvaluateResponse,
+    Job,
+    RoutingTable,
     ScoreBatchResponse,
     ScoreResponse,
     Scoring,

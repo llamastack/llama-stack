@@ -10,16 +10,14 @@ from enum import Enum
 from typing import Any, cast
 
 import httpx
-from llama_stack_api.common.content_types import (
+from llama_stack_api import (
     ImageContentItem,
     InterleavedContentItem,
-    TextContentItem,
-    _URLOrData,
-)
-from llama_stack_api.tools import (
     ListToolDefsResponse,
+    TextContentItem,
     ToolDef,
     ToolInvocationResult,
+    _URLOrData,
 )
 from mcp import ClientSession, McpError
 from mcp import types as mcp_types

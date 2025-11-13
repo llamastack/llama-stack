@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack_api.vector_io import Chunk, ChunkMetadata
+from llama_stack_api import Chunk, ChunkMetadata
 
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 

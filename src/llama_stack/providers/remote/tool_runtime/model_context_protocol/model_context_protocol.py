@@ -7,11 +7,12 @@
 from typing import Any
 from urllib.parse import urlparse
 
-from llama_stack_api.common.content_types import URL
-from llama_stack_api.datatypes import Api, ToolGroupsProtocolPrivate
-from llama_stack_api.tools import (
+from llama_stack_api import (
+    URL,
+    Api,
     ListToolDefsResponse,
     ToolGroup,
+    ToolGroupsProtocolPrivate,
     ToolInvocationResult,
     ToolRuntime,
 )

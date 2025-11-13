@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 import requests
-from llama_stack_api.files import OpenAIFilePurpose
+from llama_stack_api import OpenAIFilePurpose
 
 from llama_stack.core.datatypes import User
 

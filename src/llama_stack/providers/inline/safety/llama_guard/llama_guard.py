@@ -9,23 +9,22 @@ import uuid
 from string import Template
 from typing import Any
 
-from llama_stack_api.common.content_types import ImageContentItem, TextContentItem
-from llama_stack_api.datatypes import ShieldsProtocolPrivate
-from llama_stack_api.inference import (
+from llama_stack_api import (
+    ImageContentItem,
     Inference,
+    ModerationObject,
+    ModerationObjectResults,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIMessageParam,
     OpenAIUserMessageParam,
-)
-from llama_stack_api.safety import (
-    ModerationObject,
-    ModerationObjectResults,
     RunShieldResponse,
     Safety,
     SafetyViolation,
+    Shield,
+    ShieldsProtocolPrivate,
+    TextContentItem,
     ViolationLevel,
 )
-from llama_stack_api.shields import Shield
 
 from llama_stack.core.datatypes import Api
 from llama_stack.log import get_logger

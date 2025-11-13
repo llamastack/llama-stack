@@ -9,8 +9,7 @@ import sys
 from typing import Any, Protocol
 from unittest.mock import AsyncMock, MagicMock
 
-from llama_stack_api.datatypes import InlineProviderSpec, ProviderSpec
-from llama_stack_api.inference import Inference
+from llama_stack_api import Inference, InlineProviderSpec, ProviderSpec
 from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import Api, Provider, StackRunConfig

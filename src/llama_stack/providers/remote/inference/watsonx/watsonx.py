@@ -9,7 +9,9 @@ from typing import Any
 
 import litellm
 import requests
-from llama_stack_api.inference import (
+from llama_stack_api import (
+    Model,
+    ModelType,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -19,7 +21,6 @@ from llama_stack_api.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack_api.models import Model, ModelType
 
 from llama_stack.core.telemetry.tracing import get_current_span
 from llama_stack.log import get_logger
@@ -237,7 +238,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         )
 
         # Convert response to OpenAI format
-        from llama_stack_api.inference import OpenAIEmbeddingUsage
+        from llama_stack_api import OpenAIEmbeddingUsage
 
         from llama_stack.providers.utils.inference.litellm_openai_mixin import b64_encode_openai_embeddings_response
 

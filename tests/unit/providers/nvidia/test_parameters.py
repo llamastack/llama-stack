@@ -9,7 +9,7 @@ import warnings
 from unittest.mock import patch
 
 import pytest
-from llama_stack_api.post_training import (
+from llama_stack_api import (
     DataConfig,
     DatasetFormat,
     EfficiencyConfig,

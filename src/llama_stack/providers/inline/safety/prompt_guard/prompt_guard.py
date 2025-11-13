@@ -7,17 +7,17 @@
 from typing import Any
 
 import torch
-from llama_stack_api.datatypes import ShieldsProtocolPrivate
-from llama_stack_api.inference import OpenAIMessageParam
-from llama_stack_api.safety import (
+from llama_stack_api import (
     ModerationObject,
+    OpenAIMessageParam,
     RunShieldResponse,
     Safety,
     SafetyViolation,
+    Shield,
+    ShieldsProtocolPrivate,
     ShieldStore,
     ViolationLevel,
 )
-from llama_stack_api.shields import Shield
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from llama_stack.core.utils.model_utils import model_local_dir

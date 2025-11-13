@@ -8,7 +8,7 @@ import math
 from typing import Optional
 
 import torch
-from llama_stack_api.inference import (
+from llama_stack_api import (
     GreedySamplingStrategy,
     JsonSchemaResponseFormat,
     OpenAIChatCompletionRequestWithExtraBody,

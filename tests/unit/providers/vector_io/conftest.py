@@ -9,8 +9,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
-from llama_stack_api.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
-from llama_stack_api.vector_stores import VectorStore
+from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore
 
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig

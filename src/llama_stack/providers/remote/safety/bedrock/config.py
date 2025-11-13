@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack_api.schema_utils import json_schema_type
+from llama_stack_api import json_schema_type
 
 from llama_stack.providers.utils.bedrock.config import BedrockBaseConfig
 

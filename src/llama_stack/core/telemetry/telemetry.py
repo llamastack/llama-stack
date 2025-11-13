@@ -16,7 +16,7 @@ from typing import (
     cast,
 )
 
-from llama_stack_api.schema_utils import json_schema_type, register_schema
+from llama_stack_api import json_schema_type, register_schema
 from opentelemetry import metrics, trace
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter

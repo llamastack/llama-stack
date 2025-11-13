@@ -6,10 +6,8 @@
 
 from typing import Any
 
-from llama_stack_api.common.content_types import (
+from llama_stack_api import (
     URL,
-)
-from llama_stack_api.tools import (
     ListToolDefsResponse,
     ToolRuntime,
 )

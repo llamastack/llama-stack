@@ -6,10 +6,7 @@
 
 from typing import Any
 
-from llama_stack_api.common.errors import ModelNotFoundError
-from llama_stack_api.datatypes import Api, RoutingTable
-from llama_stack_api.models import Model
-from llama_stack_api.resource import ResourceType
+from llama_stack_api import Api, Model, ModelNotFoundError, ResourceType, RoutingTable
 
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
 from llama_stack.core.access_control.datatypes import Action

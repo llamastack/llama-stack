@@ -28,9 +28,7 @@ from fastapi import Path as FastapiPath
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
-from llama_stack_api.common.errors import ConflictError, ResourceNotFoundError
-from llama_stack_api.common.responses import PaginatedResponse
-from llama_stack_api.datatypes import Api
+from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 from openai import BadRequestError
 from pydantic import BaseModel, ValidationError
 

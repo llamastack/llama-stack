@@ -6,8 +6,7 @@
 import re
 from typing import Any
 
-from llama_stack_api.scoring import ScoringResultRow
-from llama_stack_api.scoring_functions import ScoringFnParams, ScoringFnParamsType
+from llama_stack_api import ScoringFnParams, ScoringFnParamsType, ScoringResultRow
 
 from llama_stack.providers.utils.scoring.base_scoring_fn import RegisteredBaseScoringFn
 

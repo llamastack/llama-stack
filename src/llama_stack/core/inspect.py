@@ -6,9 +6,9 @@
 
 from importlib.metadata import version
 
-from llama_stack_api.datatypes import HealthStatus
-from llama_stack_api.inspect import (
+from llama_stack_api import (
     HealthInfo,
+    HealthStatus,
     Inspect,
     ListRoutesResponse,
     RouteInfo,

@@ -6,8 +6,7 @@
 
 import asyncio
 
-from llama_stack_api.inference import OpenAIMessageParam
-from llama_stack_api.safety import Safety, SafetyViolation, ViolationLevel
+from llama_stack_api import OpenAIMessageParam, Safety, SafetyViolation, ViolationLevel
 
 from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger

@@ -9,7 +9,7 @@ import struct
 from collections.abc import AsyncIterator
 
 import litellm
-from llama_stack_api.inference import (
+from llama_stack_api import (
     InferenceProvider,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,

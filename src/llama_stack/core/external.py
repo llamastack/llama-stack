@@ -6,7 +6,7 @@
 
 
 import yaml
-from llama_stack_api.datatypes import Api, ExternalApiSpec
+from llama_stack_api import Api, ExternalApiSpec
 
 from llama_stack.core.datatypes import BuildConfig, StackRunConfig
 from llama_stack.log import get_logger

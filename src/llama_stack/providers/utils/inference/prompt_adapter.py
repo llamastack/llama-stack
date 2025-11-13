@@ -12,14 +12,11 @@ import re
 from typing import Any
 
 import httpx
-from llama_stack_api.common.content_types import (
+from llama_stack_api import (
+    CompletionRequest,
     ImageContentItem,
     InterleavedContent,
     InterleavedContentItem,
-    TextContentItem,
-)
-from llama_stack_api.inference import (
-    CompletionRequest,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
@@ -30,6 +27,7 @@ from llama_stack_api.inference import (
     OpenAIUserMessageParam,
     ResponseFormat,
     ResponseFormatType,
+    TextContentItem,
     ToolChoice,
 )
 from PIL import Image as PIL_Image

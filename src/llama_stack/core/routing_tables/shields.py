@@ -6,8 +6,7 @@
 
 from typing import Any
 
-from llama_stack_api.resource import ResourceType
-from llama_stack_api.shields import ListShieldsResponse, Shield, Shields
+from llama_stack_api import ListShieldsResponse, ResourceType, Shield, Shields
 
 from llama_stack.core.datatypes import (
     ShieldWithOwner,

@@ -8,7 +8,7 @@ import secrets
 import time
 from typing import Any, Literal
 
-from llama_stack_api.conversations import (
+from llama_stack_api import (
     Conversation,
     ConversationDeletedResource,
     ConversationItem,

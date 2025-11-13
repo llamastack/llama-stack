@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Any, Literal
 
 import aiohttp
-from llama_stack_api.post_training import (
+from llama_stack_api import (
     AlgorithmConfig,
     DPOAlignmentConfig,
     JobStatus,

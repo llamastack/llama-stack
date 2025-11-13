@@ -7,10 +7,10 @@
 import time
 from typing import Any
 
-from llama_stack_api.common.errors import ModelNotFoundError
-from llama_stack_api.models import (
+from llama_stack_api import (
     ListModelsResponse,
     Model,
+    ModelNotFoundError,
     Models,
     ModelType,
     OpenAIListModelsResponse,

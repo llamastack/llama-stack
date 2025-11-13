@@ -7,15 +7,15 @@
 import json
 from typing import Any
 
-from llama_stack_api.datatypes import ShieldsProtocolPrivate
-from llama_stack_api.inference import OpenAIMessageParam
-from llama_stack_api.safety import (
+from llama_stack_api import (
+    OpenAIMessageParam,
     RunShieldResponse,
     Safety,
     SafetyViolation,
+    Shield,
+    ShieldsProtocolPrivate,
     ViolationLevel,
 )
-from llama_stack_api.shields import Shield
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.bedrock.client import create_bedrock_client

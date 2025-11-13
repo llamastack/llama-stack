@@ -7,7 +7,7 @@
 
 from typing import Any
 
-from llama_stack_api.datatypes import RemoteProviderSpec
+from llama_stack_api import RemoteProviderSpec
 
 from llama_stack.core.datatypes import (
     BuildProvider,

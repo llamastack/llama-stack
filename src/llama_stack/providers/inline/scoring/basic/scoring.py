@@ -5,16 +5,17 @@
 # the root directory of this source tree.
 from typing import Any
 
-from llama_stack_api.datasetio import DatasetIO
-from llama_stack_api.datasets import Datasets
-from llama_stack_api.datatypes import ScoringFunctionsProtocolPrivate
-from llama_stack_api.scoring import (
+from llama_stack_api import (
+    DatasetIO,
+    Datasets,
     ScoreBatchResponse,
     ScoreResponse,
     Scoring,
+    ScoringFn,
+    ScoringFnParams,
+    ScoringFunctionsProtocolPrivate,
     ScoringResult,
 )
-from llama_stack_api.scoring_functions import ScoringFn, ScoringFnParams
 
 from llama_stack.core.datatypes import Api
 from llama_stack.providers.utils.common.data_schema_validator import (

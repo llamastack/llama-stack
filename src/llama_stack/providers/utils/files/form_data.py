@@ -7,7 +7,7 @@
 import json
 
 from fastapi import Request
-from llama_stack_api.files import ExpiresAfter
+from llama_stack_api import ExpiresAfter
 from pydantic import BaseModel, ValidationError
 
 

@@ -11,7 +11,7 @@ from unittest.mock import patch
 import pytest
 
 # Import the real Pydantic response types instead of using Mocks
-from llama_stack_api.inference import (
+from llama_stack_api import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChoice,

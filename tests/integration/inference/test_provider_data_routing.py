@@ -15,8 +15,8 @@ that enables routing based on provider_data alone.
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from llama_stack_api.datatypes import Api
-from llama_stack_api.inference import (
+from llama_stack_api import (
+    Api,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionUsage,

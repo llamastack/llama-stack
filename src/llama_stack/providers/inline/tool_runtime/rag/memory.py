@@ -12,25 +12,24 @@ from typing import Any
 
 import httpx
 from fastapi import UploadFile
-from llama_stack_api.common.content_types import (
+from llama_stack_api import (
     URL,
+    Files,
+    Inference,
     InterleavedContent,
     InterleavedContentItem,
-    TextContentItem,
-)
-from llama_stack_api.datatypes import ToolGroupsProtocolPrivate
-from llama_stack_api.files import Files, OpenAIFilePurpose
-from llama_stack_api.inference import Inference
-from llama_stack_api.rag_tool import RAGDocument, RAGQueryConfig, RAGQueryResult
-from llama_stack_api.tools import (
     ListToolDefsResponse,
+    OpenAIFilePurpose,
+    QueryChunksResponse,
+    RAGDocument,
+    RAGQueryConfig,
+    RAGQueryResult,
+    TextContentItem,
     ToolDef,
     ToolGroup,
+    ToolGroupsProtocolPrivate,
     ToolInvocationResult,
     ToolRuntime,
-)
-from llama_stack_api.vector_io import (
-    QueryChunksResponse,
     VectorIO,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,

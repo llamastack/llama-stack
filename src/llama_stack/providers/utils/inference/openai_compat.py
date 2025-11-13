@@ -20,19 +20,17 @@ except ImportError:
     from openai.types.chat.chat_completion_message_tool_call import (
         ChatCompletionMessageToolCall as OpenAIChatCompletionMessageFunctionToolCall,
     )
-from llama_stack_api.common.content_types import (
+from llama_stack_api import (
     URL,
-    ImageContentItem,
-    TextContentItem,
-    _URLOrData,
-)
-from llama_stack_api.inference import (
     GreedySamplingStrategy,
+    ImageContentItem,
     JsonSchemaResponseFormat,
     OpenAIResponseFormatParam,
     SamplingParams,
+    TextContentItem,
     TopKSamplingStrategy,
     TopPSamplingStrategy,
+    _URLOrData,
 )
 from openai.types.chat import (
     ChatCompletionMessageToolCall,

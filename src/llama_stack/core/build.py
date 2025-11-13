@@ -6,7 +6,7 @@
 
 import sys
 
-from llama_stack_api.datatypes import Api
+from llama_stack_api import Api
 from pydantic import BaseModel
 from termcolor import cprint
 

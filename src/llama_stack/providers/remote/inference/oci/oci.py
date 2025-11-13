@@ -10,11 +10,11 @@ from typing import Any
 
 import httpx
 import oci
-from llama_stack_api.inference import (
+from llama_stack_api import (
+    ModelType,
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack_api.models import ModelType
 from oci.generative_ai.generative_ai_client import GenerativeAiClient
 from oci.generative_ai.models import ModelCollection
 from openai._base_client import DefaultAsyncHttpxClient

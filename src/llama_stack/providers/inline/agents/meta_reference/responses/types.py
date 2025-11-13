@@ -7,8 +7,10 @@
 from dataclasses import dataclass
 from typing import cast
 
-from llama_stack_api.inference import OpenAIChatCompletionToolCall, OpenAIMessageParam, OpenAIResponseFormatParam
-from llama_stack_api.openai_responses import (
+from llama_stack_api import (
+    OpenAIChatCompletionToolCall,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolFileSearch,

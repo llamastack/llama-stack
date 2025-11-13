@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from llama_stack_api.datatypes import Api, RoutingTable
+from llama_stack_api import Api, RoutingTable
 
 from llama_stack.core.datatypes import (
     AccessRule,

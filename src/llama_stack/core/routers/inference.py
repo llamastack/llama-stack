@@ -11,11 +11,14 @@ from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import Body
-from llama_stack_api.common.errors import ModelNotFoundError, ModelTypeError
-from llama_stack_api.datatypes import HealthResponse, HealthStatus, RoutingTable
-from llama_stack_api.inference import (
+from llama_stack_api import (
+    HealthResponse,
+    HealthStatus,
     Inference,
     ListOpenAIChatCompletionResponse,
+    ModelNotFoundError,
+    ModelType,
+    ModelTypeError,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -34,8 +37,8 @@ from llama_stack_api.inference import (
     OpenAIMessageParam,
     Order,
     RerankResponse,
+    RoutingTable,
 )
-from llama_stack_api.models import ModelType
 from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
 from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
 from pydantic import TypeAdapter

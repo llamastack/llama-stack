@@ -6,16 +6,17 @@
 
 from collections.abc import AsyncIterator
 
-from llama_stack_api.datatypes import ModelsProtocolPrivate
-from llama_stack_api.inference import (
+from llama_stack_api import (
     InferenceProvider,
+    Model,
+    ModelsProtocolPrivate,
+    ModelType,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
 )
-from llama_stack_api.models import Model, ModelType
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.embedding_mixin import (

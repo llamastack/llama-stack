@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from io import BytesIO
 
 import pytest
-from llama_stack_api.files import OpenAIFilePurpose
+from llama_stack_api import OpenAIFilePurpose
 
 
 class BatchHelper:

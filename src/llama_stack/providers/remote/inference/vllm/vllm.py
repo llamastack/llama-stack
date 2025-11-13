@@ -7,11 +7,9 @@ from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
 import httpx
-from llama_stack_api.datatypes import (
+from llama_stack_api import (
     HealthResponse,
     HealthStatus,
-)
-from llama_stack_api.inference import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,

@@ -9,13 +9,14 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from llama_stack_api.inference import (
+from llama_stack_api import (
     OpenAIAssistantMessageParam,
     OpenAIUserMessageParam,
+    ResourceType,
+    RunShieldResponse,
+    Shield,
+    ViolationLevel,
 )
-from llama_stack_api.resource import ResourceType
-from llama_stack_api.safety import RunShieldResponse, ViolationLevel
-from llama_stack_api.shields import Shield
 
 from llama_stack.providers.remote.safety.nvidia.config import NVIDIASafetyConfig
 from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter

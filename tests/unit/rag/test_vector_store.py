@@ -12,12 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 import pytest
-from llama_stack_api.inference import (
-    OpenAIEmbeddingData,
-    OpenAIEmbeddingsRequestWithExtraBody,
-)
-from llama_stack_api.rag_tool import RAGDocument
-from llama_stack_api.vector_io import Chunk
+from llama_stack_api import Chunk, OpenAIEmbeddingData, OpenAIEmbeddingsRequestWithExtraBody, RAGDocument
 
 from llama_stack.providers.utils.memory.vector_store import (
     URL,

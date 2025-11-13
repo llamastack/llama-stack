@@ -11,10 +11,10 @@ from typing import Any
 
 import torch
 from datasets import Dataset
-from llama_stack_api.datasetio import DatasetIO
-from llama_stack_api.datasets import Datasets
-from llama_stack_api.post_training import (
+from llama_stack_api import (
     Checkpoint,
+    DatasetIO,
+    Datasets,
     DPOAlignmentConfig,
     TrainingConfig,
 )
