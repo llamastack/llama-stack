@@ -259,7 +259,7 @@ class OpenAIResponsesImpl:
 
         # Validate MCP tools: ensure Authorization header is not passed via headers dict
         if tools:
-            from llama_stack.apis.agents.openai_responses import OpenAIResponseInputToolMCP
+            from llama_stack_api.openai_responses import OpenAIResponseInputToolMCP
 
             for tool in tools:
                 if isinstance(tool, OpenAIResponseInputToolMCP) and tool.headers:
