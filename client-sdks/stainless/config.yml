@@ -210,6 +210,9 @@ resources:
           create:
             type: http
             endpoint: post /v1/conversations/{conversation_id}/items
+          delete:
+            type: http
+            endpoint: delete /v1/conversations/{conversation_id}/items/{item_id}
 
   inspect:
     models:
@@ -376,6 +379,13 @@ resources:
       file: OpenAIFileObject
       list_files_response: ListOpenAIFileResponse
       delete_file_response: OpenAIFileDeleteResponse
+
+  batches:
+    methods:
+      create: post /v1/batches
+      list: get /v1/batches
+      retrieve: get /v1/batches/{batch_id}
+      cancel: post /v1/batches/{batch_id}/cancel
 
   alpha:
     subresources:
