@@ -7,7 +7,7 @@
 llama_stack_prefix = "llama_stack"
 
 # Safety Attributes
-SAFETY_SPAN_NAME = "safety.run_shield"
+RUN_SHIELD_OPERATION_NAME = "run_shield"
 
 SAFETY_REQUEST_PREFIX = f"{llama_stack_prefix}.safety.request"
 SAFETY_REQUEST_SHIELD_ID_ATTRIBUTE = f"{SAFETY_REQUEST_PREFIX}.shield_id"

@@ -12,17 +12,17 @@ from llama_stack.apis.inference import Message
 from llama_stack.apis.safety import RunShieldResponse
 
 from .constants import (
+    RUN_SHIELD_OPERATION_NAME,
     SAFETY_REQUEST_MESSAGES_ATTRIBUTE,
     SAFETY_REQUEST_SHIELD_ID_ATTRIBUTE,
     SAFETY_RESPONSE_METADATA_ATTRIBUTE,
     SAFETY_RESPONSE_USER_MESSAGE_ATTRIBUTE,
     SAFETY_RESPONSE_VIOLATION_LEVEL_ATTRIBUTE,
-    SAFETY_SPAN_NAME,
 )
 
 
 def safety_span_name(shield_id: str) -> str:
-    return f"{SAFETY_SPAN_NAME} {shield_id}"
+    return f"{RUN_SHIELD_OPERATION_NAME} {shield_id}"
 
 
 # TODO: Consider using Wrapt to automatically instrument code
