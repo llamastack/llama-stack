@@ -162,7 +162,7 @@ async def list_mcp_tools(
         List of tool definitions from the MCP server
 
     Raises:
-        ValueError: If both headers contains Authorization and authorization parameter is provided
+        ValueError: If Authorization is found in the headers parameter
     """
     # Prepare headers with authorization handling
     final_headers = prepare_mcp_headers(headers, authorization)
@@ -205,7 +205,7 @@ async def invoke_mcp_tool(
         Tool invocation result with content and error information
 
     Raises:
-        ValueError: If both headers contains Authorization and authorization parameter is provided
+        ValueError: If Authorization header is found in the headers parameter
     """
     # Prepare headers with authorization handling
     final_headers = prepare_mcp_headers(headers, authorization)
