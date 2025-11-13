@@ -451,11 +451,6 @@ def check_protocol_compliance(obj: Any, protocol: Any) -> None:
                 obj_params.discard("self")
                 if not (proto_params <= obj_params):
                     logger.error(f"Method {name} incompatible proto: {proto_params} vs. obj: {obj_params}")
-                    logger.error(f"Provider: {obj.__class__.__name__} from module {obj.__class__.__module__}")
-                    logger.error(f"Protocol signature: {proto_sig}")
-                    logger.error(f"Object signature: {obj_sig}")
-                    logger.error(f"Object method: {obj_method}")
-                    logger.error(f"Object method's module: {inspect.getmodule(obj_method)}")
                     missing_methods.append((name, "signature_mismatch"))
                 else:
                     # Check if the method has a concrete implementation (not just a protocol stub)
