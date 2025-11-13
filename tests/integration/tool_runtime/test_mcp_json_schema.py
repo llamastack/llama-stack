@@ -4,10 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""
-Integration tests for MCP tools with complex JSON Schema support.
+"""Integration tests for MCP tools with complex JSON Schema support.
 Tests $ref, $defs, and other JSON Schema features through MCP integration.
 """
+
+import json
 
 import pytest
 
@@ -121,10 +122,22 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
+        # Use old header-based approach for Phase 1 (backward compatibility)
+        provider_data = {
+            "mcp_headers": {
+                uri: {
+                    "Authorization": f"Bearer {AUTH_TOKEN}",
+                },
+            },
+        }
+        auth_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        }
+
         # List runtime tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
 
         tools = response
@@ -160,10 +173,22 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
+        # Use old header-based approach for Phase 1 (backward compatibility)
+        provider_data = {
+            "mcp_headers": {
+                uri: {
+                    "Authorization": f"Bearer {AUTH_TOKEN}",
+                },
+            },
+        }
+        auth_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        }
+
         # List tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
 
         # Find book_flight tool (which should have $ref/$defs)
@@ -205,9 +230,21 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
+        # Use old header-based approach for Phase 1 (backward compatibility)
+        provider_data = {
+            "mcp_headers": {
+                uri: {
+                    "Authorization": f"Bearer {AUTH_TOKEN}",
+                },
+            },
+        }
+        auth_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        }
+
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
 
         # Find get_weather tool
@@ -247,10 +284,22 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
+        # Use old header-based approach for Phase 1 (backward compatibility)
+        provider_data = {
+            "mcp_headers": {
+                uri: {
+                    "Authorization": f"Bearer {AUTH_TOKEN}",
+                },
+            },
+        }
+        auth_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        }
+
         # List tools to populate the tool index
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
 
         # Invoke tool with complex nested data
@@ -262,7 +311,7 @@ class TestMCPToolInvocation:
                     "shipping": {"address": {"street": "123 Main St", "city": "San Francisco", "zipcode": "94102"}},
                 }
             },
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
 
         # Should succeed without schema validation errors
@@ -288,17 +337,29 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
+        # Use old header-based approach for Phase 1 (backward compatibility)
+        provider_data = {
+            "mcp_headers": {
+                uri: {
+                    "Authorization": f"Bearer {AUTH_TOKEN}",
+                },
+            },
+        }
+        auth_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        }
+
         # List tools to populate the tool index
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
 
         # Test with email format
         result_email = llama_stack_client.tool_runtime.invoke_tool(
             tool_name="flexible_contact",
             kwargs={"contact_info": "user@example.com"},
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
 
         assert result_email.error_message is None
@@ -307,7 +368,7 @@ class TestMCPToolInvocation:
         result_phone = llama_stack_client.tool_runtime.invoke_tool(
             tool_name="flexible_contact",
             kwargs={"contact_info": "+15551234567"},
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
 
         assert result_phone.error_message is None
@@ -339,9 +400,21 @@ class TestAgentWithMCPTools:
             mcp_endpoint=dict(uri=uri),
         )
 
+        # Use old header-based approach for Phase 1 (backward compatibility)
+        provider_data = {
+            "mcp_headers": {
+                uri: {
+                    "Authorization": f"Bearer {AUTH_TOKEN}",
+                },
+            },
+        }
+        auth_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
+        }
+
         tools_list = llama_stack_client.tools.list(
             toolgroup_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
+            extra_headers=auth_headers,
         )
         tool_defs = [
             {
@@ -350,6 +423,7 @@ class TestAgentWithMCPTools:
                 "server_label": test_toolgroup_id,
                 "require_approval": "never",
                 "allowed_tools": [tool.name for tool in tools_list],
+                "authorization": AUTH_TOKEN,
             }
         ]
 
@@ -358,7 +432,6 @@ class TestAgentWithMCPTools:
             model=text_model_id,
             instructions="You are a helpful assistant that can process orders and book flights.",
             tools=tool_defs,
-            authorization=AUTH_TOKEN,
         )
 
         session_id = agent.create_session("test-session-complex")
@@ -380,7 +453,6 @@ class TestAgentWithMCPTools:
                     }
                 ],
                 stream=True,
-                authorization=AUTH_TOKEN,
             )
         )
 

@@ -48,9 +48,18 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         if mcp_endpoint is None:
             raise ValueError("mcp_endpoint is required")
 
-        # Use authorization parameter for MCP servers that require auth
-        headers = {}
-        return await list_mcp_tools(endpoint=mcp_endpoint.uri, headers=headers, authorization=authorization)
+        # Phase 1: Support both old header-based auth AND new authorization parameter
+        # Get headers and auth from provider data (old approach)
+        provider_headers, provider_auth = await self.get_headers_from_request(mcp_endpoint.uri)
+
+        # New authorization parameter takes precedence over provider data
+        final_authorization = authorization or provider_auth
+
+        return await list_mcp_tools(
+            endpoint=mcp_endpoint.uri,
+            headers=provider_headers,
+            authorization=final_authorization
+        )
 
     async def invoke_tool(
         self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
@@ -62,30 +71,60 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         if urlparse(endpoint).scheme not in ("http", "https"):
             raise ValueError(f"Endpoint {endpoint} is not a valid HTTP(S) URL")
 
-        # Authorization now comes from request body parameter (not provider-data)
-        headers = {}
+        # Phase 1: Support both old header-based auth AND new authorization parameter
+        # Get headers and auth from provider data (old approach)
+        provider_headers, provider_auth = await self.get_headers_from_request(endpoint)
+
+        # New authorization parameter takes precedence over provider data
+        final_authorization = authorization or provider_auth
+
         return await invoke_mcp_tool(
             endpoint=endpoint,
             tool_name=tool_name,
             kwargs=kwargs,
-            headers=headers,
-            authorization=authorization,
+            headers=provider_headers,
+            authorization=final_authorization,
         )
 
     async def get_headers_from_request(self, mcp_endpoint_uri: str) -> tuple[dict[str, str], str | None]:
         """
-        Placeholder method for extracting headers and authorization.
+        Extract headers and authorization from request provider data (Phase 1 backward compatibility).
 
-        Note: MCP authentication and headers are now configured via the request body
-        (OpenAIResponseInputToolMCP.authorization and .headers fields) and are handled
-        by the responses API layer, not at the provider level.
-
-        This method is kept for interface compatibility but returns empty values
-        as the tool runtime provider no longer extracts per-request configuration.
+        For security, Authorization should not be passed via mcp_headers.
+        Instead, use a dedicated authorization field in the provider data.
 
         Returns:
-            Tuple of (empty_headers_dict, None)
+            Tuple of (headers_dict, authorization_token)
+            - headers_dict: All headers except Authorization
+            - authorization_token: Token from Authorization header (with "Bearer " prefix removed), or None
+
+        Raises:
+            ValueError: If Authorization header is found in mcp_headers (security risk)
         """
-        # Headers and authorization are now handled at the responses API layer
-        # via OpenAIResponseInputToolMCP.headers and .authorization fields
-        return {}, None
+
+        def canonicalize_uri(uri: str) -> str:
+            return f"{urlparse(uri).netloc or ''}/{urlparse(uri).path or ''}"
+
+        headers = {}
+        authorization = None
+
+        provider_data = self.get_request_provider_data()
+        if provider_data and hasattr(provider_data, 'mcp_headers') and provider_data.mcp_headers:
+            for uri, values in provider_data.mcp_headers.items():
+                if canonicalize_uri(uri) != canonicalize_uri(mcp_endpoint_uri):
+                    continue
+
+                # Security check: reject Authorization header in mcp_headers
+                # This prevents accidentally passing inference tokens to MCP servers
+                for key in values.keys():
+                    if key.lower() == "authorization":
+                        # Extract authorization token and strip "Bearer " prefix if present
+                        auth_value = values[key]
+                        if auth_value.startswith("Bearer "):
+                            authorization = auth_value[7:]  # Remove "Bearer " prefix
+                        else:
+                            authorization = auth_value
+                    else:
+                        headers[key] = values[key]
+
+        return headers, authorization
