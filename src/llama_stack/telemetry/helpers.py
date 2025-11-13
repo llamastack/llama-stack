@@ -6,10 +6,8 @@
 
 import json
 
+from llama_stack_api import OpenAIMessageParam, RunShieldResponse
 from opentelemetry import trace
-
-from llama_stack.apis.inference import Message
-from llama_stack.apis.safety import RunShieldResponse
 
 from .constants import (
     RUN_SHIELD_OPERATION_NAME,
@@ -27,7 +25,9 @@ def safety_span_name(shield_id: str) -> str:
 
 # TODO: Consider using Wrapt to automatically instrument code
 # This is the industry standard way to package automatically instrumentation in python.
-def safety_request_span_attributes(shield_id: str, messages: list[Message], response: RunShieldResponse) -> None:
+def safety_request_span_attributes(
+    shield_id: str, messages: list[OpenAIMessageParam], response: RunShieldResponse
+) -> None:
     span = trace.get_current_span()
     span.set_attribute(SAFETY_REQUEST_SHIELD_ID_ATTRIBUTE, shield_id)
     messages_json = json.dumps([msg.model_dump() for msg in messages])
