@@ -354,7 +354,6 @@ resources:
       list:
         endpoint: get /v1/shields
         paginated: false
-      delete: delete /v1/shields/{identifier}
 
   scoring:
     methods:
