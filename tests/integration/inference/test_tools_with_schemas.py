@@ -183,11 +183,11 @@ class TestMCPToolsInChatCompletion:
         uri = mcp_with_schemas["server_url"]
 
         try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
+            llama_stack_client.toolgroups.unregister_toolgroup(toolgroup_id=test_toolgroup_id)
         except Exception:
             pass
 
-        llama_stack_client.toolgroups.register(
+        llama_stack_client.toolgroups.register_tool_group(
             toolgroup_id=test_toolgroup_id,
             provider_id="model-context-protocol",
             mcp_endpoint=dict(uri=uri),
