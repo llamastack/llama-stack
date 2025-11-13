@@ -1463,26 +1463,25 @@ paths:
       summary: Openai Retrieve Vector Store File Contents
       description: Retrieves the contents of a vector store file.
       operationId: openai_retrieve_vector_store_file_contents_v1_vector_stores__vector_store_id__files__file_id__content_get
-      responses:
-        '200':
-          description: A VectorStoreFileContentResponse representing the file contents.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorStoreFileContentResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
       parameters:
+      - name: include_embeddings
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+          title: Include Embeddings
+      - name: include_metadata
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+          title: Include Metadata
       - name: vector_store_id
         in: path
         required: true
@@ -1495,6 +1494,25 @@ paths:
         schema:
           type: string
         description: 'Path parameter: file_id'
+      responses:
+        '200':
+          description: File contents, optionally with embeddings and metadata based on query parameters.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VectorStoreFileContentResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
   /v1/vector_stores/{vector_store_id}/search:
     post:
       tags:
@@ -2352,135 +2370,6 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
   /v1/prompts/{prompt_id}:
-    delete:
-      tags:
-        - VectorIO
-      summary: Delete a vector store file.
-      description: Delete a vector store file.
-      parameters:
-        - name: vector_store_id
-          in: path
-          description: >-
-            The ID of the vector store containing the file to delete.
-          required: true
-          schema:
-            type: string
-        - name: file_id
-          in: path
-          description: The ID of the file to delete.
-          required: true
-          schema:
-            type: string
-      deprecated: false
-  /v1/vector_stores/{vector_store_id}/files/{file_id}/content:
-    get:
-      responses:
-        '200':
-          description: >-
-            File contents, optionally with embeddings and metadata based on query
-            parameters.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorStoreFileContentResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - VectorIO
-      summary: >-
-        Retrieves the contents of a vector store file.
-      description: >-
-        Retrieves the contents of a vector store file.
-      parameters:
-        - name: vector_store_id
-          in: path
-          description: >-
-            The ID of the vector store containing the file to retrieve.
-          required: true
-          schema:
-            type: string
-        - name: file_id
-          in: path
-          description: The ID of the file to retrieve.
-          required: true
-          schema:
-            type: string
-        - name: include_embeddings
-          in: query
-          description: >-
-            Whether to include embedding vectors in the response.
-          required: false
-          schema:
-            $ref: '#/components/schemas/bool'
-        - name: include_metadata
-          in: query
-          description: >-
-            Whether to include chunk metadata in the response.
-          required: false
-          schema:
-            $ref: '#/components/schemas/bool'
-      deprecated: false
-  /v1/vector_stores/{vector_store_id}/search:
-    post:
-      responses:
-        '200':
-          description: >-
-            A VectorStoreSearchResponse containing the search results.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/VectorStoreSearchResponsePage'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          $ref: >-
-            #/components/responses/TooManyRequests429
-        '500':
-          $ref: >-
-            #/components/responses/InternalServerError500
-        default:
-          $ref: '#/components/responses/DefaultError'
-      tags:
-        - VectorIO
-      summary: Search for chunks in a vector store.
-      description: >-
-        Search for chunks in a vector store.
-
-        Delete a prompt.
-      operationId: delete_prompt_v1_prompts__prompt_id__delete
-      responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      parameters:
-      - name: prompt_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: prompt_id'
     get:
       tags:
       - Prompts
@@ -7894,6 +7783,23 @@ components:
         text:
           type: string
           title: Text
+        embedding:
+          anyOf:
+          - items:
+              type: number
+            type: array
+          - type: 'null'
+        chunk_metadata:
+          anyOf:
+          - $ref: '#/components/schemas/ChunkMetadata'
+            title: ChunkMetadata
+          - type: 'null'
+          title: ChunkMetadata
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
       type: object
       required:
       - type
@@ -7970,6 +7876,7 @@ components:
         has_more:
           type: boolean
           title: Has More
+          default: false
         next_page:
           anyOf:
           - type: string
@@ -7977,7 +7884,6 @@ components:
       type: object
       required:
       - data
-      - has_more
       title: VectorStoreFileContentResponse
       description: Represents the parsed content of a vector store file.
     VectorStoreFileCounts:
@@ -8237,7 +8143,7 @@ components:
       - file_counts
       title: VectorStoreObject
       description: OpenAI Vector Store object.
-    VectorStoreSearchResponse:
+    VectorStoreSearchResponse-Output:
       properties:
         file_id:
           type: string
@@ -8284,7 +8190,7 @@ components:
           title: Search Query
         data:
           items:
-            $ref: '#/components/schemas/VectorStoreSearchResponse'
+            $ref: '#/components/schemas/VectorStoreSearchResponse-Output'
           type: array
           title: Data
         has_more:
@@ -11899,453 +11805,12 @@ components:
           - type: 'null'
           nullable: true
         metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            Set of key-value pairs that can be attached to the vector store
-      additionalProperties: false
-      title: >-
-        OpenAICreateVectorStoreRequestWithExtraBody
-      description: >-
-        Request to create a vector store with extra_body support.
-    OpenaiUpdateVectorStoreRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          description: The name of the vector store.
-        expires_after:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            The expiration policy for a vector store.
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            Set of 16 key-value pairs that can be attached to an object.
-      additionalProperties: false
-      title: OpenaiUpdateVectorStoreRequest
-    VectorStoreDeleteResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: >-
-            Unique identifier of the deleted vector store
-        object:
-          type: string
-          default: vector_store.deleted
-          description: >-
-            Object type identifier for the deletion response
-        deleted:
-          type: boolean
-          default: true
-          description: >-
-            Whether the deletion operation was successful
-      additionalProperties: false
-      required:
-        - id
-        - object
-        - deleted
-      title: VectorStoreDeleteResponse
-      description: Response from deleting a vector store.
-    "OpenAICreateVectorStoreFileBatchRequestWithExtraBody":
-      type: object
-      properties:
-        file_ids:
-          type: array
-          items:
-            type: string
-          description: >-
-            A list of File IDs that the vector store should use
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            (Optional) Key-value attributes to store with the files
-        chunking_strategy:
-          $ref: '#/components/schemas/VectorStoreChunkingStrategy'
-          description: >-
-            (Optional) The chunking strategy used to chunk the file(s). Defaults to
-            auto
-      additionalProperties: false
-      required:
-        - file_ids
-      title: >-
-        OpenAICreateVectorStoreFileBatchRequestWithExtraBody
-      description: >-
-        Request to create a vector store file batch with extra_body support.
-    VectorStoreFileBatchObject:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the file batch
-        object:
-          type: string
-          default: vector_store.file_batch
-          description: >-
-            Object type identifier, always "vector_store.file_batch"
-        created_at:
-          type: integer
-          description: >-
-            Timestamp when the file batch was created
-        vector_store_id:
-          type: string
-          description: >-
-            ID of the vector store containing the file batch
-        status:
-          $ref: '#/components/schemas/VectorStoreFileStatus'
-          description: >-
-            Current processing status of the file batch
-        file_counts:
-          $ref: '#/components/schemas/VectorStoreFileCounts'
-          description: >-
-            File processing status counts for the batch
-      additionalProperties: false
-      required:
-        - id
-        - object
-        - created_at
-        - vector_store_id
-        - status
-        - file_counts
-      title: VectorStoreFileBatchObject
-      description: OpenAI Vector Store File Batch object.
-    VectorStoreFileStatus:
-      oneOf:
-        - type: string
-          const: completed
-        - type: string
-          const: in_progress
-        - type: string
-          const: cancelled
-        - type: string
-          const: failed
-    VectorStoreFileLastError:
-      type: object
-      properties:
-        code:
-          oneOf:
-            - type: string
-              const: server_error
-            - type: string
-              const: rate_limit_exceeded
-          description: >-
-            Error code indicating the type of failure
-        message:
-          type: string
-          description: >-
-            Human-readable error message describing the failure
-      additionalProperties: false
-      required:
-        - code
-        - message
-      title: VectorStoreFileLastError
-      description: >-
-        Error information for failed vector store file processing.
-    VectorStoreFileObject:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier for the file
-        object:
-          type: string
-          default: vector_store.file
-          description: >-
-            Object type identifier, always "vector_store.file"
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            Key-value attributes associated with the file
-        chunking_strategy:
-          oneOf:
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-          discriminator:
-            propertyName: type
-            mapping:
-              auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-              static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-          description: >-
-            Strategy used for splitting the file into chunks
-        created_at:
-          type: integer
-          description: >-
-            Timestamp when the file was added to the vector store
-        last_error:
-          $ref: '#/components/schemas/VectorStoreFileLastError'
-          description: >-
-            (Optional) Error information if file processing failed
-        status:
-          $ref: '#/components/schemas/VectorStoreFileStatus'
-          description: Current processing status of the file
-        usage_bytes:
-          type: integer
-          default: 0
-          description: Storage space used by this file in bytes
-        vector_store_id:
-          type: string
-          description: >-
-            ID of the vector store containing this file
-      additionalProperties: false
-      required:
-        - id
-        - object
-        - attributes
-        - chunking_strategy
-        - created_at
-        - status
-        - usage_bytes
-        - vector_store_id
-      title: VectorStoreFileObject
-      description: OpenAI Vector Store File object.
-    VectorStoreFilesListInBatchResponse:
-      type: object
-      properties:
-        object:
-          type: string
-          default: list
-          description: Object type identifier, always "list"
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/VectorStoreFileObject'
-          description: >-
-            List of vector store file objects in the batch
-        first_id:
-          type: string
-          description: >-
-            (Optional) ID of the first file in the list for pagination
-        last_id:
-          type: string
-          description: >-
-            (Optional) ID of the last file in the list for pagination
-        has_more:
-          type: boolean
-          default: false
-          description: >-
-            Whether there are more files available beyond this page
-      additionalProperties: false
-      required:
-        - object
-        - data
-        - has_more
-      title: VectorStoreFilesListInBatchResponse
-      description: >-
-        Response from listing files in a vector store file batch.
-    VectorStoreListFilesResponse:
-      type: object
-      properties:
-        object:
-          type: string
-          default: list
-          description: Object type identifier, always "list"
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/VectorStoreFileObject'
-          description: List of vector store file objects
-        first_id:
-          type: string
-          description: >-
-            (Optional) ID of the first file in the list for pagination
-        last_id:
-          type: string
-          description: >-
-            (Optional) ID of the last file in the list for pagination
-        has_more:
-          type: boolean
-          default: false
-          description: >-
-            Whether there are more files available beyond this page
-      additionalProperties: false
-      required:
-        - object
-        - data
-        - has_more
-      title: VectorStoreListFilesResponse
-      description: >-
-        Response from listing files in a vector store.
-    OpenaiAttachFileToVectorStoreRequest:
-      type: object
-      properties:
-        file_id:
-          type: string
-          description: >-
-            The ID of the file to attach to the vector store.
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            The key-value attributes stored with the file, which can be used for filtering.
-        chunking_strategy:
-          $ref: '#/components/schemas/VectorStoreChunkingStrategy'
-          description: >-
-            The chunking strategy to use for the file.
-      additionalProperties: false
-      required:
-        - file_id
-      title: OpenaiAttachFileToVectorStoreRequest
-    OpenaiUpdateVectorStoreFileRequest:
-      type: object
-      properties:
-        attributes:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: >-
-            The updated key-value attributes to store with the file.
-      additionalProperties: false
-      required:
-        - attributes
-      title: OpenaiUpdateVectorStoreFileRequest
-    VectorStoreFileDeleteResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier of the deleted file
-        object:
-          type: string
-          default: vector_store.file.deleted
-          description: >-
-            Object type identifier for the deletion response
-        deleted:
-          type: boolean
-          default: true
-          description: >-
-            Whether the deletion operation was successful
-      additionalProperties: false
-      required:
-        - id
-        - object
-        - deleted
-      title: VectorStoreFileDeleteResponse
-      description: >-
-        Response from deleting a vector store file.
-    bool:
-      type: boolean
-    VectorStoreContent:
-      type: object
-      properties:
-        type:
-          type: string
-          const: text
-          description: >-
-            Content type, currently only "text" is supported
-        text:
-          type: string
-          description: The actual text content
-        embedding:
-          type: array
-          items:
-            type: number
-          description: >-
-            Optional embedding vector for this content chunk
-        chunk_metadata:
-          $ref: '#/components/schemas/ChunkMetadata'
-          description: Optional chunk metadata
-        metadata:
-          type: object
-          additionalProperties:
-            oneOf:
-              - type: 'null'
-              - type: boolean
-              - type: number
-              - type: string
-              - type: array
-              - type: object
-          description: Optional user-defined metadata
-      additionalProperties: false
-      required:
-        - type
-        - text
-      title: VectorStoreContent
-      description: >-
-        Content item from a vector store file or search result.
-    VectorStoreFileContentResponse:
-      type: object
-      properties:
-        object:
-          type: string
-          const: vector_store.file_content.page
-          default: vector_store.file_content.page
-          description: >-
-            The object type, which is always `vector_store.file_content.page`
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/VectorStoreContent'
-          description: Parsed content of the file
-        has_more:
-          type: boolean
-          default: false
-          description: >-
-            Indicates if there are more content pages to fetch
-        next_page:
-          type: string
-          description: The token for the next page, if any
-      additionalProperties: false
-      required:
-        - object
-        - data
-        - has_more
-      title: VectorStoreFileContentResponse
-      description: >-
-        Represents the parsed content of a vector store file.
-    OpenaiSearchVectorStoreRequest:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+      title: VectorStoreModifyRequest
       type: object
     VectorStoreSearchRequest:
       description: Request to search a vector store.
@@ -12381,6 +11846,41 @@ components:
       required:
       - query
       title: VectorStoreSearchRequest
+      type: object
+    VectorStoreSearchResponse:
+      description: Response from searching a vector store.
+      properties:
+        file_id:
+          title: File Id
+          type: string
+        filename:
+          title: Filename
+          type: string
+        score:
+          title: Score
+          type: number
+        attributes:
+          anyOf:
+          - additionalProperties:
+              anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+              title: string | number | boolean
+            type: object
+          - type: 'null'
+          nullable: true
+        content:
+          items:
+            $ref: '#/components/schemas/VectorStoreContent'
+          title: Content
+          type: array
+      required:
+      - file_id
+      - filename
+      - score
+      - content
+      title: VectorStoreSearchResponse
       type: object
     _safety_run_shield_Request:
       properties:

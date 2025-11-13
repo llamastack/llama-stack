@@ -737,8 +737,8 @@ class VectorIO(Protocol):
         self,
         vector_store_id: str,
         file_id: str,
-        include_embeddings: Annotated[bool | None, Query(default=False)] = False,
-        include_metadata: Annotated[bool | None, Query(default=False)] = False,
+        include_embeddings: Annotated[bool | None, Query()] = False,
+        include_metadata: Annotated[bool | None, Query()] = False,
     ) -> VectorStoreFileContentResponse:
         """Retrieves the contents of a vector store file.
 

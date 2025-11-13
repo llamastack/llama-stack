@@ -6010,6 +6010,23 @@ components:
         text:
           type: string
           title: Text
+        embedding:
+          anyOf:
+          - items:
+              type: number
+            type: array
+          - type: 'null'
+        chunk_metadata:
+          anyOf:
+          - $ref: '#/components/schemas/ChunkMetadata'
+            title: ChunkMetadata
+          - type: 'null'
+          title: ChunkMetadata
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
       type: object
       required:
       - type
@@ -6086,6 +6103,7 @@ components:
         has_more:
           type: boolean
           title: Has More
+          default: false
         next_page:
           anyOf:
           - type: string
@@ -6093,7 +6111,6 @@ components:
       type: object
       required:
       - data
-      - has_more
       title: VectorStoreFileContentResponse
       description: Represents the parsed content of a vector store file.
     VectorStoreFileCounts:
@@ -6353,7 +6370,41 @@ components:
       - file_counts
       title: VectorStoreObject
       description: OpenAI Vector Store object.
-    VectorStoreSearchResponse:
+    VectorStoreSearchResponse-Input:
+      properties:
+        file_id:
+          type: string
+          title: File Id
+        filename:
+          type: string
+          title: Filename
+        score:
+          type: number
+          title: Score
+        attributes:
+          anyOf:
+          - additionalProperties:
+              anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+              title: string | number | boolean
+            type: object
+          - type: 'null'
+        content:
+          items:
+            $ref: '#/components/schemas/VectorStoreContent'
+          type: array
+          title: Content
+      type: object
+      required:
+      - file_id
+      - filename
+      - score
+      - content
+      title: VectorStoreSearchResponse
+      description: Response from searching a vector store.
+    VectorStoreSearchResponse-Output:
       properties:
         file_id:
           type: string
@@ -6400,7 +6451,7 @@ components:
           title: Search Query
         data:
           items:
-            $ref: '#/components/schemas/VectorStoreSearchResponse'
+            $ref: '#/components/schemas/VectorStoreSearchResponse-Output'
           type: array
           title: Data
         has_more:
@@ -10251,6 +10302,41 @@ components:
       required:
       - query
       title: VectorStoreSearchRequest
+      type: object
+    VectorStoreSearchResponse:
+      description: Response from searching a vector store.
+      properties:
+        file_id:
+          title: File Id
+          type: string
+        filename:
+          title: Filename
+          type: string
+        score:
+          title: Score
+          type: number
+        attributes:
+          anyOf:
+          - additionalProperties:
+              anyOf:
+              - type: string
+              - type: number
+              - type: boolean
+              title: string | number | boolean
+            type: object
+          - type: 'null'
+          nullable: true
+        content:
+          items:
+            $ref: '#/components/schemas/VectorStoreContent'
+          title: Content
+          type: array
+      required:
+      - file_id
+      - filename
+      - score
+      - content
+      title: VectorStoreSearchResponse
       type: object
     _safety_run_shield_Request:
       properties:
