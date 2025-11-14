@@ -129,32 +129,12 @@ jobs:
 
           echo "Will compare: ${BASE_SPEC} -> ${CURRENT_SPEC}"
 
-      - name: Write ignore file
-        run: |
-          cat <<EOF > ignore-oasdiff
-          response-property-became-nullable none
-          response-property-list-of-types-widened none
-          request-parameter-default-value-added none
-          request-property-min-items-increased none
-          response-property-became-optional none
-          response-required-property-removed none
-          response-property-one-of-added none
-          response-property-type-changed none
-          request-property-one-of-removed none
-          request-parameter-enum-value-removed none
-          request-property-enum-value-removed none
-          request-property-type-changed none
-          response-body-type-changed none
-          response-media-type-removed none
-          request-body-type-changed none
-          EOF
-
       # Run oasdiff to detect breaking changes in the API specification
       # This step will fail if incompatible changes are detected, preventing breaking changes from being merged
       - name: Run OpenAPI Breaking Change Diff
         if: steps.skip-check.outputs.skip != 'true'
         run: |
-          oasdiff breaking --fail-on ERR --severity-levels ignore-oasdiff $BASE_SPEC $CURRENT_SPEC --match-path '^/v1/'
+          oasdiff breaking --fail-on ERR $BASE_SPEC $CURRENT_SPEC --match-path '^/v1/'
 
       # Report when test is skipped
       - name: Report skip reason
