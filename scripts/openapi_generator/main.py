@@ -16,7 +16,7 @@ from typing import Any
 import yaml
 from fastapi.openapi.utils import get_openapi
 
-from . import app, schema_collection, schema_filtering, schema_transforms
+from . import app, schema_collection, schema_filtering, schema_transforms, state
 
 
 def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
@@ -29,6 +29,7 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
     Returns:
         The generated OpenAPI specification as a dictionary
     """
+    state.reset_generator_state()
     # Create the FastAPI app
     fastapi_app = app.create_llama_stack_app()
 
@@ -143,7 +144,7 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
         schema_transforms._fix_schema_issues(schema)
         schema_transforms._apply_legacy_sorting(schema)
 
-    print("\n🔍 Validating generated schemas...")
+    print("\nValidating generated schemas...")
     failed_schemas = [
         name for schema, name in schemas_to_validate if not schema_transforms.validate_openapi_schema(schema, name)
     ]
@@ -186,20 +187,20 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
         # Write the modified YAML back
         schema_transforms._write_yaml_file(yaml_path, yaml_data)
 
-    print(f"✅ Generated YAML (stable): {yaml_path}")
+    print(f"Generated YAML (stable): {yaml_path}")
 
     experimental_yaml_path = output_path / "experimental-llama-stack-spec.yaml"
     schema_transforms._write_yaml_file(experimental_yaml_path, experimental_schema)
-    print(f"✅ Generated YAML (experimental): {experimental_yaml_path}")
+    print(f"Generated YAML (experimental): {experimental_yaml_path}")
 
     deprecated_yaml_path = output_path / "deprecated-llama-stack-spec.yaml"
     schema_transforms._write_yaml_file(deprecated_yaml_path, deprecated_schema)
-    print(f"✅ Generated YAML (deprecated): {deprecated_yaml_path}")
+    print(f"Generated YAML (deprecated): {deprecated_yaml_path}")
 
     # Generate combined (stainless) spec
     stainless_yaml_path = output_path / "stainless-llama-stack-spec.yaml"
     schema_transforms._write_yaml_file(stainless_yaml_path, combined_schema)
-    print(f"✅ Generated YAML (stainless/combined): {stainless_yaml_path}")
+    print(f"Generated YAML (stainless/combined): {stainless_yaml_path}")
 
     return stable_schema
 
@@ -213,25 +214,25 @@ def main():
 
     args = parser.parse_args()
 
-    print("🚀 Generating OpenAPI specification using FastAPI...")
-    print(f"📁 Output directory: {args.output_dir}")
+    print("Generating OpenAPI specification using FastAPI...")
+    print(f"Output directory: {args.output_dir}")
 
     try:
         openapi_schema = generate_openapi_spec(output_dir=args.output_dir)
 
-        print("\n✅ OpenAPI specification generated successfully!")
-        print(f"📊 Schemas: {len(openapi_schema.get('components', {}).get('schemas', {}))}")
-        print(f"🛣️  Paths: {len(openapi_schema.get('paths', {}))}")
+        print("\nOpenAPI specification generated successfully!")
+        print(f"Schemas: {len(openapi_schema.get('components', {}).get('schemas', {}))}")
+        print(f"Paths: {len(openapi_schema.get('paths', {}))}")
         operation_count = sum(
             1
             for path_info in openapi_schema.get("paths", {}).values()
             for method in ["get", "post", "put", "delete", "patch"]
             if method in path_info
         )
-        print(f"🔧 Operations: {operation_count}")
+        print(f"Operations: {operation_count}")
 
     except Exception as e:
-        print(f"❌ Error generating OpenAPI specification: {e}")
+        print(f"Error generating OpenAPI specification: {e}")
         raise
 
 

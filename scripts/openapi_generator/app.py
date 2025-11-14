@@ -36,7 +36,7 @@ def _get_protocol_method(api: Api, method_name: str) -> Any | None:
     if _protocol_methods_cache is None:
         _protocol_methods_cache = {}
         protocols = api_protocol_map()
-        from llama_stack.apis.tools import SpecialToolGroup, ToolRuntime
+        from llama_stack_api.tools import SpecialToolGroup, ToolRuntime
 
         toolgroup_protocols = {
             SpecialToolGroup.rag_tool: ToolRuntime,

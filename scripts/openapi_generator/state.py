@@ -14,6 +14,7 @@ from llama_stack_api import Api
 
 # Global list to store dynamic models created during endpoint generation
 _dynamic_models: list[Any] = []
+_dynamic_model_registry: dict[str, type] = {}
 
 # Cache for protocol methods to avoid repeated lookups
 _protocol_methods_cache: dict[Api, dict[str, Any]] | None = None
@@ -21,3 +22,20 @@ _protocol_methods_cache: dict[Api, dict[str, Any]] | None = None
 # Global dict to store extra body field information by endpoint
 # Key: (path, method) tuple, Value: list of (param_name, param_type, description) tuples
 _extra_body_fields: dict[tuple[str, str], list[tuple[str, type, str | None]]] = {}
+
+
+def register_dynamic_model(name: str, model: type) -> type:
+    """Register and deduplicate dynamically generated request models."""
+    existing = _dynamic_model_registry.get(name)
+    if existing is not None:
+        return existing
+    _dynamic_model_registry[name] = model
+    _dynamic_models.append(model)
+    return model
+
+
+def reset_generator_state() -> None:
+    """Clear per-run caches so repeated generations stay deterministic."""
+    _dynamic_models.clear()
+    _dynamic_model_registry.clear()
+    _extra_body_fields.clear()

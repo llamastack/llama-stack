@@ -22,6 +22,9 @@ from ._legacy_order import (
     LEGACY_PATH_ORDER,
     LEGACY_RESPONSE_ORDER,
     LEGACY_SCHEMA_ORDER,
+    LEGACY_OPERATION_KEYS,
+    LEGACY_SECURITY,
+    LEGACY_TAGS,
     LEGACY_TAG_GROUPS,
     LEGACY_TAG_ORDER,
 )
@@ -121,13 +124,17 @@ def _add_error_responses(openapi_schema: dict[str, Any]) -> dict[str, Any]:
         openapi_schema["components"]["responses"] = {}
 
     try:
-        from llama_stack.apis.datatypes import Error
+        from llama_stack_api.datatypes import Error
 
         schema_collection._ensure_components_schemas(openapi_schema)
         if "Error" not in openapi_schema["components"]["schemas"]:
             openapi_schema["components"]["schemas"]["Error"] = Error.model_json_schema()
     except ImportError:
         pass
+
+    schema_collection._ensure_components_schemas(openapi_schema)
+    if "Response" not in openapi_schema["components"]["schemas"]:
+        openapi_schema["components"]["schemas"]["Response"] = {"title": "Response", "type": "object"}
 
     # Define standard HTTP error responses
     error_responses = {
@@ -848,6 +855,20 @@ def _apply_legacy_sorting(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     paths = openapi_schema.get("paths")
     if isinstance(paths, dict):
         openapi_schema["paths"] = order_mapping(paths, LEGACY_PATH_ORDER)
+        for path, path_item in openapi_schema["paths"].items():
+            if not isinstance(path_item, dict):
+                continue
+            ordered_path_item = OrderedDict()
+            for method in ["get", "post", "put", "delete", "patch", "head", "options"]:
+                if method in path_item:
+                    ordered_path_item[method] = order_mapping(path_item[method], LEGACY_OPERATION_KEYS)
+            for key, value in path_item.items():
+                if key not in ordered_path_item:
+                    if isinstance(value, dict) and key.lower() in {"get", "post", "put", "delete", "patch", "head", "options"}:
+                        ordered_path_item[key] = order_mapping(value, LEGACY_OPERATION_KEYS)
+                    else:
+                        ordered_path_item[key] = value
+            openapi_schema["paths"][path] = ordered_path_item
 
     components = openapi_schema.setdefault("components", {})
     schemas = components.get("schemas")
@@ -857,30 +878,14 @@ def _apply_legacy_sorting(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     if isinstance(responses, dict):
         components["responses"] = order_mapping(responses, LEGACY_RESPONSE_ORDER)
 
-    tags = openapi_schema.get("tags")
-    if isinstance(tags, list):
-        tag_priority = {name: idx for idx, name in enumerate(LEGACY_TAG_ORDER)}
+    if LEGACY_TAGS:
+        openapi_schema["tags"] = LEGACY_TAGS
 
-        def tag_sort(tag_obj: dict[str, Any]) -> tuple[int, int | str]:
-            name = tag_obj.get("name", "")
-            if name in tag_priority:
-                return (0, tag_priority[name])
-            return (1, name)
+    if LEGACY_TAG_GROUPS:
+        openapi_schema["x-tagGroups"] = LEGACY_TAG_GROUPS
 
-        openapi_schema["tags"] = sorted(tags, key=tag_sort)
-
-    tag_groups = openapi_schema.get("x-tagGroups")
-    if isinstance(tag_groups, list) and LEGACY_TAG_GROUPS:
-        legacy_tags = LEGACY_TAG_GROUPS[0].get("tags", [])
-        tag_priority = {name: idx for idx, name in enumerate(legacy_tags)}
-        for group in tag_groups:
-            group_tags = group.get("tags")
-            if isinstance(group_tags, list):
-                group["tags"] = sorted(
-                    group_tags,
-                    key=lambda name: (0, tag_priority[name]) if name in tag_priority else (1, name),
-                )
-        openapi_schema["x-tagGroups"] = tag_groups
+    if LEGACY_SECURITY:
+        openapi_schema["security"] = LEGACY_SECURITY
 
     return openapi_schema
 
@@ -914,12 +919,11 @@ def validate_openapi_schema(schema: dict[str, Any], schema_name: str = "OpenAPI 
     """
     try:
         validate_spec(schema)
-        print(f"✅ {schema_name} is valid")
+        print(f"{schema_name} is valid")
         return True
     except OpenAPISpecValidatorError as e:
-        print(f"❌ {schema_name} validation failed:")
-        print(f"   {e}")
+        print(f"{schema_name} validation failed: {e}")
         return False
     except Exception as e:
-        print(f"❌ {schema_name} validation error: {e}")
+        print(f"{schema_name} validation error: {e}")
         return False

@@ -12,7 +12,6 @@ These lists help the new generator match the previous ordering so that diffs
 remain readable while we debug schema content regressions. Remove once stable.
 """
 
-# TODO: remove once generator output stabilizes
 LEGACY_PATH_ORDER = ['/v1/batches',
  '/v1/batches/{batch_id}',
  '/v1/batches/{batch_id}/cancel',
@@ -364,6 +363,57 @@ LEGACY_SCHEMA_ORDER = ['Error',
 
 LEGACY_RESPONSE_ORDER = ['BadRequest400', 'TooManyRequests429', 'InternalServerError500', 'DefaultError']
 
+LEGACY_TAGS = [{'description': 'APIs for creating and interacting with agentic systems.',
+  'name': 'Agents',
+  'x-displayName': 'Agents'},
+ {'description': 'The API is designed to allow use of openai client libraries for seamless integration.\n'
+                 '\n'
+                 'This API provides the following extensions:\n'
+                 ' - idempotent batch creation\n'
+                 '\n'
+                 'Note: This API is currently under active development and may undergo changes.',
+  'name': 'Batches',
+  'x-displayName': 'The Batches API enables efficient processing of multiple requests in a single operation, '
+                   'particularly useful for processing large datasets, batch evaluation workflows, and cost-effective '
+                   'inference at scale.'},
+ {'description': '', 'name': 'Benchmarks'},
+ {'description': 'Protocol for conversation management operations.',
+  'name': 'Conversations',
+  'x-displayName': 'Conversations'},
+ {'description': '', 'name': 'DatasetIO'},
+ {'description': '', 'name': 'Datasets'},
+ {'description': 'Llama Stack Evaluation API for running evaluations on model and agent candidates.',
+  'name': 'Eval',
+  'x-displayName': 'Evaluations'},
+ {'description': 'This API is used to upload documents that can be used with other Llama Stack APIs.',
+  'name': 'Files',
+  'x-displayName': 'Files'},
+ {'description': 'Llama Stack Inference API for generating completions, chat completions, and embeddings.\n'
+                 '\n'
+                 'This API provides the raw interface to the underlying models. Three kinds of models are supported:\n'
+                 '- LLM models: these models generate "raw" and "chat" (conversational) completions.\n'
+                 '- Embedding models: these models generate embeddings to be used for semantic search.\n'
+                 '- Rerank models: these models reorder the documents based on their relevance to a query.',
+  'name': 'Inference',
+  'x-displayName': 'Inference'},
+ {'description': 'APIs for inspecting the Llama Stack service, including health status, available API routes with '
+                 'methods and implementing providers.',
+  'name': 'Inspect',
+  'x-displayName': 'Inspect'},
+ {'description': '', 'name': 'Models'},
+ {'description': '', 'name': 'PostTraining (Coming Soon)'},
+ {'description': 'Protocol for prompt management operations.', 'name': 'Prompts', 'x-displayName': 'Prompts'},
+ {'description': 'Providers API for inspecting, listing, and modifying providers and their configurations.',
+  'name': 'Providers',
+  'x-displayName': 'Providers'},
+ {'description': 'OpenAI-compatible Moderations API.', 'name': 'Safety', 'x-displayName': 'Safety'},
+ {'description': '', 'name': 'Scoring'},
+ {'description': '', 'name': 'ScoringFunctions'},
+ {'description': '', 'name': 'Shields'},
+ {'description': '', 'name': 'ToolGroups'},
+ {'description': '', 'name': 'ToolRuntime'},
+ {'description': '', 'name': 'VectorIO'}]
+
 LEGACY_TAG_ORDER = ['Agents',
  'Batches',
  'Benchmarks',
@@ -408,3 +458,16 @@ LEGACY_TAG_GROUPS = [{'name': 'Operations',
            'ToolGroups',
            'ToolRuntime',
            'VectorIO']}]
+
+LEGACY_SECURITY = [{'Default': []}]
+
+LEGACY_OPERATION_KEYS = [
+    'responses',
+    'tags',
+    'summary',
+    'description',
+    'operationId',
+    'parameters',
+    'requestBody',
+    'deprecated',
+]
