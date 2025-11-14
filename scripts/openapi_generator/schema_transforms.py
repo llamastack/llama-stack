@@ -9,6 +9,7 @@ Schema transformations and fixes for OpenAPI generation.
 """
 
 import copy
+from collections import OrderedDict
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,13 @@ from openapi_spec_validator import validate_spec
 from openapi_spec_validator.exceptions import OpenAPISpecValidatorError
 
 from . import endpoints, schema_collection
+from ._legacy_order import (
+    LEGACY_PATH_ORDER,
+    LEGACY_RESPONSE_ORDER,
+    LEGACY_SCHEMA_ORDER,
+    LEGACY_TAG_GROUPS,
+    LEGACY_TAG_ORDER,
+)
 from .state import _extra_body_fields
 
 
@@ -819,6 +827,62 @@ def _write_yaml_file(file_path: Path, schema: dict[str, Any]) -> None:
 
     with open(file_path, "w") as f:
         f.writelines(cleaned_lines)
+
+
+def _apply_legacy_sorting(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """
+    Temporarily match the legacy ordering from origin/main so diffs are easier to read.
+    Remove this once the generator output stabilizes and we no longer need legacy diffs.
+    """
+
+    def order_mapping(data: dict[str, Any], priority: list[str]) -> OrderedDict[str, Any]:
+        ordered: OrderedDict[str, Any] = OrderedDict()
+        for key in priority:
+            if key in data:
+                ordered[key] = data[key]
+        for key, value in data.items():
+            if key not in ordered:
+                ordered[key] = value
+        return ordered
+
+    paths = openapi_schema.get("paths")
+    if isinstance(paths, dict):
+        openapi_schema["paths"] = order_mapping(paths, LEGACY_PATH_ORDER)
+
+    components = openapi_schema.setdefault("components", {})
+    schemas = components.get("schemas")
+    if isinstance(schemas, dict):
+        components["schemas"] = order_mapping(schemas, LEGACY_SCHEMA_ORDER)
+    responses = components.get("responses")
+    if isinstance(responses, dict):
+        components["responses"] = order_mapping(responses, LEGACY_RESPONSE_ORDER)
+
+    tags = openapi_schema.get("tags")
+    if isinstance(tags, list):
+        tag_priority = {name: idx for idx, name in enumerate(LEGACY_TAG_ORDER)}
+
+        def tag_sort(tag_obj: dict[str, Any]) -> tuple[int, int | str]:
+            name = tag_obj.get("name", "")
+            if name in tag_priority:
+                return (0, tag_priority[name])
+            return (1, name)
+
+        openapi_schema["tags"] = sorted(tags, key=tag_sort)
+
+    tag_groups = openapi_schema.get("x-tagGroups")
+    if isinstance(tag_groups, list) and LEGACY_TAG_GROUPS:
+        legacy_tags = LEGACY_TAG_GROUPS[0].get("tags", [])
+        tag_priority = {name: idx for idx, name in enumerate(legacy_tags)}
+        for group in tag_groups:
+            group_tags = group.get("tags")
+            if isinstance(group_tags, list):
+                group["tags"] = sorted(
+                    group_tags,
+                    key=lambda name: (0, tag_priority[name]) if name in tag_priority else (1, name),
+                )
+        openapi_schema["x-tagGroups"] = tag_groups
+
+    return openapi_schema
 
 
 def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:

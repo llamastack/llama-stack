@@ -141,6 +141,7 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
 
     for schema, _ in schemas_to_validate:
         schema_transforms._fix_schema_issues(schema)
+        schema_transforms._apply_legacy_sorting(schema)
 
     print("\n🔍 Validating generated schemas...")
     failed_schemas = [
