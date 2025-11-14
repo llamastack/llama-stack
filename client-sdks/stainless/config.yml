@@ -248,6 +248,7 @@ resources:
           list:
             type: http
             endpoint: get /v1/chat/completions
+            paginated: false
           retrieve:
             type: http
             endpoint: get /v1/chat/completions/{completion_id}
