@@ -521,7 +521,7 @@ readme:
   example_requests:
     default:
       type: request
-      endpoint: get /v1/chat/completions
+      endpoint: post /v1/chat/completions
       params: &ref_0 {}
     headline:
       type: request
