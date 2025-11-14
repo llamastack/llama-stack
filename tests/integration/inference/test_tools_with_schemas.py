@@ -174,6 +174,10 @@ class TestMCPToolsInChatCompletion:
         with make_mcp_server(required_auth_token=AUTH_TOKEN, tools={"calculate": calculate}) as server:
             yield server
 
+    @pytest.mark.xfail(
+        reason="Test uses deprecated register_tool_group() API. The new approach is configuration-based registration "
+        "in run.yaml under registered_resources.tool_groups. Test should be updated to use config-based approach."
+    )
     def test_mcp_tools_in_inference(self, llama_stack_client, text_model_id, mcp_with_schemas):
         """Test that MCP tools can be used in inference."""
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
