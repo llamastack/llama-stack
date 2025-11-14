@@ -115,9 +115,6 @@ resources:
       sampling_params: SamplingParams
       scoring_result: ScoringResult
       system_message: SystemMessage
-      query_result: RAGQueryResult
-      document: RAGDocument
-      query_config: RAGQueryConfig
   toolgroups:
     models:
       tool_group: ToolGroup
