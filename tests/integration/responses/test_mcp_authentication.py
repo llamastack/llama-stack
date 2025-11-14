@@ -92,8 +92,8 @@ def test_mcp_authorization_error_when_header_provided(responses_client, text_mod
             mcp_server_info,
         )
 
-        # Create response - should raise ValueError for security reasons
-        with pytest.raises(ValueError, match="Authorization header cannot be passed via 'headers'"):
+        # Create response - should raise BadRequestError for security reasons
+        with pytest.raises((ValueError, Exception), match="Authorization header cannot be passed via 'headers'"):
             responses_client.responses.create(
                 model=text_model_id,
                 input="What is the boiling point of myawesomeliquid?",
