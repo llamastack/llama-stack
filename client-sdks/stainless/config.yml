@@ -529,5 +529,5 @@ readme:
       params: *ref_0
     pagination:
       type: request
-      endpoint: get /v1/chat/completions
+      endpoint: post /v1/chat/completions
       params: {}
