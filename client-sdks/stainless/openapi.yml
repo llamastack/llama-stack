@@ -4304,6 +4304,11 @@ components:
             type: object
           - type: 'null'
           nullable: true
+        authorization:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
         require_approval:
           anyOf:
           - const: always

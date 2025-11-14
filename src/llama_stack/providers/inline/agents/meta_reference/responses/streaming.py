@@ -1091,10 +1091,12 @@ class StreamingResponseOrchestrator:
                 "server_url": mcp_tool.server_url,
                 "mcp_list_tools_id": list_id,
             }
+            # List MCP tools with authorization from tool config
             async with tracing.span("list_mcp_tools", attributes):
                 tool_defs = await list_mcp_tools(
                     endpoint=mcp_tool.server_url,
-                    headers=mcp_tool.headers or {},
+                    headers=mcp_tool.headers,
+                    authorization=mcp_tool.authorization,
                 )
 
             # Create the MCP list tools message

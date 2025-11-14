@@ -257,6 +257,19 @@ class OpenAIResponsesImpl:
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
 
+        # Validate MCP tools: ensure Authorization header is not passed via headers dict
+        if tools:
+            from llama_stack_api.openai_responses import OpenAIResponseInputToolMCP
+
+            for tool in tools:
+                if isinstance(tool, OpenAIResponseInputToolMCP) and tool.headers:
+                    for key in tool.headers.keys():
+                        if key.lower() == "authorization":
+                            raise ValueError(
+                                "Authorization header cannot be passed via 'headers'. "
+                                "Please use the 'authorization' parameter instead."
+                            )
+
         guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
 
         if conversation is not None:

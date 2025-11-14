@@ -490,6 +490,7 @@ class OpenAIResponseInputToolMCP(BaseModel):
     :param server_label: Label to identify this MCP server
     :param server_url: URL endpoint of the MCP server
     :param headers: (Optional) HTTP headers to include when connecting to the server
+    :param authorization: (Optional) OAuth access token for authenticating with the MCP server
     :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
     :param allowed_tools: (Optional) Restriction on which tools can be used from this server
     """
@@ -498,6 +499,7 @@ class OpenAIResponseInputToolMCP(BaseModel):
     server_label: str
     server_url: str
     headers: dict[str, Any] | None = None
+    authorization: str | None = Field(default=None, exclude=True)
 
     require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"
     allowed_tools: list[str] | AllowedToolsFilter | None = None

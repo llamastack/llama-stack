@@ -276,7 +276,10 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         )
 
     async def list_runtime_tools(
-        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
+        self,
+        tool_group_id: str | None = None,
+        mcp_endpoint: URL | None = None,
+        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         # Parameters are not listed since these methods are not yet invoked automatically
         # by the LLM. The method is only implemented so things like /tools can list without
@@ -304,7 +307,9 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
             ]
         )
 
-    async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
+    async def invoke_tool(
+        self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
+    ) -> ToolInvocationResult:
         vector_store_ids = kwargs.get("vector_store_ids", [])
         query_config = kwargs.get("query_config")
         if query_config:

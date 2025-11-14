@@ -609,14 +609,14 @@ def _combine_model_list_responses(endpoint: str, records: list[dict[str, Any]]) 
 
 
 async def _patched_tool_invoke_method(
-    original_method, provider_name: str, self, tool_name: str, kwargs: dict[str, Any]
+    original_method, provider_name: str, self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
 ):
     """Patched version of tool runtime invoke_tool method for recording/replay."""
     global _current_mode, _current_storage
 
     if _current_mode == APIRecordingMode.LIVE or _current_storage is None:
         # Normal operation
-        return await original_method(self, tool_name, kwargs)
+        return await original_method(self, tool_name, kwargs, authorization=authorization)
 
     request_hash = normalize_tool_request(provider_name, tool_name, kwargs)
 
@@ -634,7 +634,7 @@ async def _patched_tool_invoke_method(
 
     if _current_mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
         # Make the tool call and record it
-        result = await original_method(self, tool_name, kwargs)
+        result = await original_method(self, tool_name, kwargs, authorization=authorization)
 
         request_data = {
             "test_id": get_test_context(),
@@ -885,9 +885,11 @@ def patch_inference_clients():
     OllamaAsyncClient.list = patched_ollama_list
 
     # Create patched methods for tool runtimes
-    async def patched_tavily_invoke_tool(self, tool_name: str, kwargs: dict[str, Any]):
+    async def patched_tavily_invoke_tool(
+        self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
+    ):
         return await _patched_tool_invoke_method(
-            _original_methods["tavily_invoke_tool"], "tavily", self, tool_name, kwargs
+            _original_methods["tavily_invoke_tool"], "tavily", self, tool_name, kwargs, authorization=authorization
         )
 
     # Apply tool runtime patches

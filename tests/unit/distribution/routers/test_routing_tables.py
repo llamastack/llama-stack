@@ -137,7 +137,7 @@ class ToolGroupsImpl(Impl):
     async def unregister_toolgroup(self, toolgroup_id: str):
         return toolgroup_id
 
-    async def list_runtime_tools(self, toolgroup_id, mcp_endpoint):
+    async def list_runtime_tools(self, toolgroup_id, mcp_endpoint, authorization=None):
         return ListToolDefsResponse(
             data=[
                 ToolDef(

@@ -296,12 +296,14 @@ class ToolExecutor:
                     "server_url": mcp_tool.server_url,
                     "tool_name": function_name,
                 }
+                # Invoke MCP tool with authorization from tool config
                 async with tracing.span("invoke_mcp_tool", attributes):
                     result = await invoke_mcp_tool(
                         endpoint=mcp_tool.server_url,
-                        headers=mcp_tool.headers or {},
                         tool_name=function_name,
                         kwargs=tool_kwargs,
+                        headers=mcp_tool.headers,
+                        authorization=mcp_tool.authorization,
                     )
             elif function_name == "knowledge_search":
                 response_file_search_tool = (

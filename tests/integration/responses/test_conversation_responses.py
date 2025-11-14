@@ -88,6 +88,7 @@ class TestConversationResponses:
 
         assert "apple" in response.output_text.lower()
 
+    @pytest.mark.timeout(60, method="thread")
     def test_conversation_error_handling(self, openai_client, text_model_id):
         """Test error handling for invalid and nonexistent conversations."""
         # Invalid conversation ID format

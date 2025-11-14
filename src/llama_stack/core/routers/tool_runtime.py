@@ -34,16 +34,16 @@ class ToolRuntimeRouter(ToolRuntime):
         logger.debug("ToolRuntimeRouter.shutdown")
         pass
 
-    async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> Any:
+    async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None) -> Any:
         logger.debug(f"ToolRuntimeRouter.invoke_tool: {tool_name}")
         provider = await self.routing_table.get_provider_impl(tool_name)
         return await provider.invoke_tool(
             tool_name=tool_name,
             kwargs=kwargs,
+            authorization=authorization,
         )
 
     async def list_runtime_tools(
-        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
+        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None, authorization: str | None = None
     ) -> ListToolDefsResponse:
-        logger.debug(f"ToolRuntimeRouter.list_runtime_tools: {tool_group_id}")
-        return await self.routing_table.list_tools(tool_group_id)
+        return await self.routing_table.list_tools(tool_group_id, authorization=authorization)
