@@ -1026,9 +1026,6 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
 
-            # TODO: Make sure that multi-turn incremental execution works
-            if incremental_function_calling:
-                break
 
     async def _process_new_tools(
         self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
