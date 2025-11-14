@@ -4,7 +4,12 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+#
+# CI can direct the generated artifacts into an alternate checkout by passing
+# --repo-root, allowing the trusted copy of this script to run from a separate
+# worktree.
 
+import argparse
 import concurrent.futures
 import importlib
 import subprocess
@@ -15,7 +20,28 @@ from pathlib import Path
 
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-REPO_ROOT = Path(__file__).parent.parent
+_DEFAULT_REPO_ROOT = Path(__file__).parent.parent
+REPO_ROOT = _DEFAULT_REPO_ROOT
+
+
+def set_repo_root(repo_root: Path) -> None:
+    """Update the global repository root used by helper functions."""
+
+    global REPO_ROOT
+    REPO_ROOT = repo_root
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Generate distribution docs and YAML artifacts."
+    )
+    parser.add_argument(
+        "--repo-root",
+        type=Path,
+        default=_DEFAULT_REPO_ROOT,
+        help="Repository root where generated artifacts should be written.",
+    )
+    return parser.parse_args()
 
 
 class ChangedPathTracker:
@@ -93,6 +119,13 @@ def pre_import_distros(distro_dirs: list[Path]) -> None:
 
 
 def main():
+    args = parse_args()
+    repo_root = args.repo_root
+    if not repo_root.is_absolute():
+        repo_root = (Path.cwd() / repo_root).resolve()
+
+    set_repo_root(repo_root)
+
     distros_dir = REPO_ROOT / "src" / "llama_stack" / "distributions"
     change_tracker = ChangedPathTracker()
 

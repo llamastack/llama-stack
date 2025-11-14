@@ -88,8 +88,87 @@ jobs:
             .pre-commit-config.yaml
             .pre-commit-config.trusted.yaml
 
-      - name: Install pre-commit
-        run: python -m pip install 'pre-commit>=4.4.0'
+      - name: Install pre-commit tooling
+        run: |
+          python -m pip install 'pre-commit>=4.4.0' 'uv>=0.4.27'
+        env:
+          GITHUB_TOKEN: ''
+
+      # Spin up a temporary worktree for the base branch and ask pre-commit to
+      # execute the trusted codegen scripts from there while pointing their
+      # outputs back at the contributor's checkout.
+      - name: Run trusted codegen hooks
+        run: |
+          set -euo pipefail
+
+          pr_info='${{ steps.pr.outputs.result }}'
+          base_ref=$(echo "$pr_info" | jq -r '.baseRef')
+          head_ref=$(echo "$pr_info" | jq -r '.headRef')
+
+          mkdir -p .trusted
+          git worktree add --force --detach .trusted/base "upstream/$base_ref"
+
+          cleanup() {
+            rm -f .trusted-codegen.yaml
+            git worktree remove --force .trusted/base 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          cat <<'YAML' > .trusted-codegen.yaml
+          repos:
+            - repo: local
+              hooks:
+                - id: trusted-uv-lock
+                  name: Trusted uv lock
+                  entry: bash
+                  args:
+                    - -c
+                    - '"$TRUSTED_HOOK_ROOT/scripts/uv-run-with-index.sh" lock'
+                  language: system
+                  pass_filenames: false
+                  always_run: true
+                - id: trusted-distro-codegen
+                  name: Trusted distribution codegen
+                  entry: bash
+                  args:
+                    - -c
+                    - |
+                      "$TRUSTED_HOOK_ROOT/scripts/uv-run-with-index.sh" run --group codegen \
+                        "$TRUSTED_HOOK_ROOT/scripts/distro_codegen.py" --repo-root "$TRUSTED_TARGET_ROOT"
+                  language: system
+                  pass_filenames: false
+                  always_run: true
+                - id: trusted-provider-codegen
+                  name: Trusted provider codegen
+                  entry: bash
+                  args:
+                    - -c
+                    - |
+                      "$TRUSTED_HOOK_ROOT/scripts/uv-run-with-index.sh" run --group codegen \
+                        "$TRUSTED_HOOK_ROOT/scripts/provider_codegen.py" --repo-root "$TRUSTED_TARGET_ROOT"
+                  language: system
+                  pass_filenames: false
+                  always_run: true
+                - id: trusted-openapi-generator
+                  name: Trusted OpenAPI generator
+                  entry: bash
+                  args:
+                    - -c
+                    - |
+                      "$TRUSTED_HOOK_ROOT/scripts/uv-run-with-index.sh" run \
+                        "$TRUSTED_HOOK_ROOT/docs/openapi_generator/run_openapi_generator.sh" --target-root "$TRUSTED_TARGET_ROOT"
+                  language: system
+                  pass_filenames: false
+                  always_run: true
+          YAML
+
+          export TRUSTED_HOOK_ROOT="$PWD/.trusted/base"
+          export TRUSTED_TARGET_ROOT="$PWD"
+          export PYTHONPATH="$TRUSTED_TARGET_ROOT:$TRUSTED_TARGET_ROOT/src:${PYTHONPATH:-}"
+          export GITHUB_BASE_REF="$base_ref"
+          export GITHUB_REF="refs/heads/$head_ref"
+
+          pre-commit run --all-files --config .trusted-codegen.yaml
         env:
           GITHUB_TOKEN: ''
 
