@@ -343,9 +343,11 @@ class TestAgentWithMCPTools:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Use the dedicated authorization parameter
-        tools_list = llama_stack_client.tools.list(
-            toolgroup_id=test_toolgroup_id,
+        # Phase 2: Use the dedicated authorization parameter
+        # Note: tools.list() is the ToolGroups API and doesn't have authorization parameter
+        # Use tool_runtime.list_tools() instead
+        tools_list = llama_stack_client.tool_runtime.list_tools(
+            tool_group_id=test_toolgroup_id,
             authorization=AUTH_TOKEN,
         )
         tool_defs = [

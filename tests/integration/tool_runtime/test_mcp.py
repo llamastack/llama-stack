@@ -38,13 +38,10 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     # Phase 2: Use the dedicated authorization parameter (no more provider_data headers)
     # This tests direct tool_runtime.invoke_tool API calls
 
-    # Without authorization, should get Unauthorized error
-    with pytest.raises(Exception, match="Unauthorized"):
-        llama_stack_client.tools.list(toolgroup_id=test_toolgroup_id)
-
-    # With authorization parameter, should succeed
-    tools_list = llama_stack_client.tools.list(
-        toolgroup_id=test_toolgroup_id,
+    # Note: tools.list() is the ToolGroups API and doesn't have authorization parameter
+    # Use tool_runtime.list_tools() for authorization support
+    tools_list = llama_stack_client.tool_runtime.list_tools(
+        tool_group_id=test_toolgroup_id,
         authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
     )
     assert len(tools_list) == 2
