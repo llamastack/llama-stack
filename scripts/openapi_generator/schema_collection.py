@@ -31,7 +31,7 @@ def _import_all_modules_in_package(package_name: str) -> list[Any]:
     that any register_schema() calls at module level are executed.
 
     Args:
-        package_name: The fully qualified package name (e.g., 'llama_stack.apis')
+        package_name: The fully qualified package name (e.g., 'llama_stack_api')
 
     Returns:
         List of imported module objects
@@ -54,7 +54,7 @@ def _import_all_modules_in_package(package_name: str) -> list[Any]:
                 modules.append(module)
 
                 # If this is a package, also try to import any .py files directly
-                # (e.g., llama_stack.apis.scoring_functions.scoring_functions)
+                # (e.g., llama_stack_api.scoring_functions.scoring_functions)
                 if ispkg:
                     try:
                         # Try importing the module file with the same name as the package
@@ -113,11 +113,11 @@ def _ensure_json_schema_types_included(openapi_schema: dict[str, Any]) -> dict[s
     # Dynamically import all modules in packages that might register schemas
     # This ensures register_schema() calls execute and populate _registered_schemas
     # Also collect the modules for later scanning of @json_schema_type decorated classes
-    apis_modules = _import_all_modules_in_package("llama_stack.apis")
+    apis_modules = _import_all_modules_in_package("llama_stack_api")
     _import_all_modules_in_package("llama_stack.core.telemetry")
 
     # First, handle registered schemas (union types, etc.)
-    from llama_stack.schema_utils import _registered_schemas
+    from llama_stack_api.schema_utils import _registered_schemas
 
     for schema_type, registration_info in _registered_schemas.items():
         schema_name = registration_info["name"]

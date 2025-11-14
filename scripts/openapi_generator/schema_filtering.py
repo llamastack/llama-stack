@@ -10,7 +10,7 @@ Schema filtering and version filtering for OpenAPI generation.
 
 from typing import Any
 
-from llama_stack.apis.version import (
+from llama_stack_api.version import (
     LLAMA_STACK_API_V1,
     LLAMA_STACK_API_V1ALPHA,
     LLAMA_STACK_API_V1BETA,
@@ -25,7 +25,7 @@ def _get_all_json_schema_type_names() -> set[str]:
     This ensures they are included in filtered schemas even if not directly referenced by paths.
     """
     schema_names = set()
-    apis_modules = schema_collection._import_all_modules_in_package("llama_stack.apis")
+    apis_modules = schema_collection._import_all_modules_in_package("llama_stack_api")
     for module in apis_modules:
         for attr_name in dir(module):
             try:
@@ -43,7 +43,7 @@ def _get_all_json_schema_type_names() -> set[str]:
 
 def _get_explicit_schema_names(openapi_schema: dict[str, Any]) -> set[str]:
     """Get all registered schema names and @json_schema_type decorated model names."""
-    from llama_stack.schema_utils import _registered_schemas
+    from llama_stack_api.schema_utils import _registered_schemas
 
     registered_schema_names = {info["name"] for info in _registered_schemas.values()}
     json_schema_type_names = _get_all_json_schema_type_names()

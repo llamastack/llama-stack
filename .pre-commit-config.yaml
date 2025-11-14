@@ -114,7 +114,7 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^src/llama_stack/apis/
+        files: ^src/llama_stack_api/.*$
       - id: check-workflows-use-hashes
         name: Check GitHub Actions use SHA-pinned actions
         entry: ./scripts/check-workflows-use-hashes.sh

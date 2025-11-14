@@ -19,7 +19,7 @@ import httpx
 import yaml
 from fastapi import Response as FastAPIResponse
 
-from llama_stack_api import is_unwrapped_body_param
+from llama_stack.core.utils.type_inspection import is_unwrapped_body_param
 
 try:
     from llama_stack_client import (
@@ -51,7 +51,6 @@ from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace,
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
-from llama_stack.core.utils.type_inspection import is_unwrapped_body_param
 from llama_stack.log import get_logger, setup_logging
 
 logger = get_logger(name=__name__, category="core")

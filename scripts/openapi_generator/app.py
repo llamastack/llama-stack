@@ -13,8 +13,8 @@ from typing import Any
 
 from fastapi import FastAPI
 
-from llama_stack.apis.datatypes import Api
 from llama_stack.core.resolver import api_protocol_map
+from llama_stack_api import Api
 
 from .state import _protocol_methods_cache
 

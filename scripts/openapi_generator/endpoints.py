@@ -18,7 +18,7 @@ from typing import Annotated, Any, get_args, get_origin
 from fastapi import FastAPI
 from pydantic import Field, create_model
 
-from llama_stack.apis.datatypes import Api
+from llama_stack_api import Api
 
 from . import app as app_module
 from .state import _dynamic_models, _extra_body_fields

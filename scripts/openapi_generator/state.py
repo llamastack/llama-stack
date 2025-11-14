@@ -10,7 +10,7 @@ Shared state for the OpenAPI generator module.
 
 from typing import Any
 
-from llama_stack.apis.datatypes import Api
+from llama_stack_api import Api
 
 # Global list to store dynamic models created during endpoint generation
 _dynamic_models: list[Any] = []
