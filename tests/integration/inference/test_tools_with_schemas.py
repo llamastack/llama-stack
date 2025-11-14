@@ -179,19 +179,15 @@ class TestMCPToolsInChatCompletion:
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
             pytest.skip("Library client required for local MCP server")
 
-        # Check if the client has the register_tool_group method (older client versions)
-        if not hasattr(llama_stack_client.toolgroups, 'register_tool_group'):
-            pytest.skip("Client SDK doesn't support dynamic toolgroup registration - toolgroups must be configured in run.yaml")
-
         test_toolgroup_id = "mcp::calc"
         uri = mcp_with_schemas["server_url"]
 
         try:
-            llama_stack_client.toolgroups.unregister_toolgroup(toolgroup_id=test_toolgroup_id)
+            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
         except Exception:
             pass
 
-        llama_stack_client.toolgroups.register_tool_group(
+        llama_stack_client.toolgroups.register(
             toolgroup_id=test_toolgroup_id,
             provider_id="model-context-protocol",
             mcp_endpoint=dict(uri=uri),
