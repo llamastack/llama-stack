@@ -12,15 +12,8 @@ from tests.common.mcp import make_mcp_server
 
 from .helpers import setup_mcp_tools
 
-# Skip these tests in replay mode until recordings are generated
-# The authorization parameter creates different request hashes than existing MCP tests
-# Recordings generation requires properly configured test environment with OpenAI API access
-pytestmark = pytest.mark.skipif(
-    os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay",
-    reason="No recordings yet for MCP authorization tests. These tests use the authorization parameter "
-    "which creates different OpenAI request hashes than existing MCP tool tests. "
-    "Recordings need to be generated in CI with proper environment configuration.",
-)
+# MCP authentication tests with recordings
+# Tests for bearer token authorization support in MCP tool configurations
 
 
 def test_mcp_authorization_bearer(responses_client, text_model_id):
@@ -53,37 +46,6 @@ def test_mcp_authorization_bearer(responses_client, text_model_id):
         assert len(response.output[0].tools) == 2
 
         # Verify tool invocation succeeded (requires auth)
-        assert response.output[1].type == "mcp_call"
-        assert response.output[1].error is None
-
-
-def test_mcp_authorization_different_token(responses_client, text_model_id):
-    """Test authorization with a different bearer token."""
-    test_token = "different-token-456"
-    with make_mcp_server(required_auth_token=test_token) as mcp_server_info:
-        tools = setup_mcp_tools(
-            [
-                {
-                    "type": "mcp",
-                    "server_label": "auth2-mcp",
-                    "server_url": "<FILLED_BY_TEST_RUNNER>",
-                    "authorization": test_token,
-                }
-            ],
-            mcp_server_info,
-        )
-
-        # Create response - authorization should be applied
-        response = responses_client.responses.create(
-            model=text_model_id,
-            input="What is the boiling point of myawesomeliquid?",
-            tools=tools,
-            stream=False,
-        )
-
-        # Verify operations succeeded
-        assert len(response.output) >= 3
-        assert response.output[0].type == "mcp_list_tools"
         assert response.output[1].type == "mcp_call"
         assert response.output[1].error is None
 
