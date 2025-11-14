@@ -6,17 +6,13 @@
 
 import pytest
 
-from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import make_mcp_server
 
 from .helpers import setup_mcp_tools
 
 
-def test_mcp_authorization_bearer(compat_client, text_model_id):
+def test_mcp_authorization_bearer(responses_client, text_model_id):
     """Test that bearer authorization is correctly applied to MCP requests."""
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
     test_token = "test-bearer-token-789"
     with make_mcp_server(required_auth_token=test_token) as mcp_server_info:
         tools = setup_mcp_tools(
@@ -32,7 +28,7 @@ def test_mcp_authorization_bearer(compat_client, text_model_id):
         )
 
         # Create response - authorization should be applied
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input="What is the boiling point of myawesomeliquid?",
             tools=tools,
@@ -49,11 +45,8 @@ def test_mcp_authorization_bearer(compat_client, text_model_id):
         assert response.output[1].error is None
 
 
-def test_mcp_authorization_different_token(compat_client, text_model_id):
+def test_mcp_authorization_different_token(responses_client, text_model_id):
     """Test authorization with a different bearer token."""
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
     test_token = "different-token-456"
     with make_mcp_server(required_auth_token=test_token) as mcp_server_info:
         tools = setup_mcp_tools(
@@ -69,7 +62,7 @@ def test_mcp_authorization_different_token(compat_client, text_model_id):
         )
 
         # Create response - authorization should be applied
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input="What is the boiling point of myawesomeliquid?",
             tools=tools,
@@ -83,11 +76,8 @@ def test_mcp_authorization_different_token(compat_client, text_model_id):
         assert response.output[1].error is None
 
 
-def test_mcp_authorization_error_when_header_provided(compat_client, text_model_id):
+def test_mcp_authorization_error_when_header_provided(responses_client, text_model_id):
     """Test that providing Authorization in headers raises a security error."""
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
     test_token = "test-token-123"
     with make_mcp_server(required_auth_token=test_token) as mcp_server_info:
         tools = setup_mcp_tools(
@@ -104,7 +94,7 @@ def test_mcp_authorization_error_when_header_provided(compat_client, text_model_
 
         # Create response - should raise ValueError for security reasons
         with pytest.raises(ValueError, match="Authorization header cannot be passed via 'headers'"):
-            compat_client.responses.create(
+            responses_client.responses.create(
                 model=text_model_id,
                 input="What is the boiling point of myawesomeliquid?",
                 tools=tools,
@@ -112,11 +102,8 @@ def test_mcp_authorization_error_when_header_provided(compat_client, text_model_
             )
 
 
-def test_mcp_authorization_backward_compatibility(compat_client, text_model_id):
+def test_mcp_authorization_backward_compatibility(responses_client, text_model_id):
     """Test that MCP tools work without authorization (backward compatibility)."""
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
     # No authorization required
     with make_mcp_server(required_auth_token=None) as mcp_server_info:
         tools = setup_mcp_tools(
@@ -131,7 +118,7 @@ def test_mcp_authorization_backward_compatibility(compat_client, text_model_id):
         )
 
         # Create response without authorization
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input="What is the boiling point of myawesomeliquid?",
             tools=tools,
