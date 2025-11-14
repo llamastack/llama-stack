@@ -10,8 +10,6 @@ import pytest
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
 
-from llama_stack.core.library_client import LlamaStackAsLibraryClient
-
 AUTH_TOKEN = "test-token"
 
 from tests.common.mcp import MCP_TOOLGROUP_ID, make_mcp_server
@@ -24,9 +22,6 @@ def mcp_server():
 
 
 def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
-    if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-        pytest.skip("The local MCP server only reliably reachable from library client.")
-
     test_toolgroup_id = MCP_TOOLGROUP_ID
     uri = mcp_server["server_url"]
 
@@ -42,6 +37,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
         mcp_endpoint=dict(uri=uri),
     )
 
+    # Use old header-based approach for Phase 1 (backward compatibility)
     provider_data = {
         "mcp_headers": {
             uri: {
@@ -58,7 +54,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
 
     tools_list = llama_stack_client.tools.list(
         toolgroup_id=test_toolgroup_id,
-        extra_headers=auth_headers,
+        extra_headers=auth_headers,  # Use old header-based approach
     )
     assert len(tools_list) == 2
     assert {t.name for t in tools_list} == {"greet_everyone", "get_boiling_point"}
@@ -66,7 +62,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="greet_everyone",
         kwargs=dict(url="https://www.google.com"),
-        extra_headers=auth_headers,
+        extra_headers=auth_headers,  # Use old header-based approach
     )
     content = response.content
     assert len(content) == 1
@@ -81,9 +77,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
             "server_label": test_toolgroup_id,
             "require_approval": "never",
             "allowed_tools": [tool.name for tool in tools_list],
-            "headers": {
-                "Authorization": f"Bearer {AUTH_TOKEN}",
-            },
+            "authorization": AUTH_TOKEN,
         }
     ]
     agent = Agent(
@@ -109,7 +103,6 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
                 }
             ],
             stream=True,
-            extra_headers=auth_headers,
         )
     )
     events = [chunk.event for chunk in chunks]

@@ -16,24 +16,28 @@ from typing import Any, Literal
 from openai.types.batch import BatchError, Errors
 from pydantic import BaseModel
 
-from llama_stack.apis.batches import Batches, BatchObject, ListBatchesResponse
-from llama_stack.apis.common.errors import ConflictError, ResourceNotFoundError
-from llama_stack.apis.files import Files, OpenAIFilePurpose
-from llama_stack.apis.inference import (
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.kvstore import KVStore
+from llama_stack_api import (
+    Batches,
+    BatchObject,
+    ConflictError,
+    Files,
     Inference,
+    ListBatchesResponse,
+    Models,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletionRequestWithExtraBody,
     OpenAIDeveloperMessageParam,
     OpenAIEmbeddingsRequestWithExtraBody,
+    OpenAIFilePurpose,
     OpenAIMessageParam,
     OpenAISystemMessageParam,
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
+    ResourceNotFoundError,
 )
-from llama_stack.apis.models import Models
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.kvstore import KVStore
 
 from .config import ReferenceBatchesImplConfig
 

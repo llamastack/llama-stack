@@ -59,8 +59,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llama_stack.apis.batches import BatchObject
-from llama_stack.apis.common.errors import ConflictError, ResourceNotFoundError
+from llama_stack_api import BatchObject, ConflictError, ResourceNotFoundError
 
 
 class TestReferenceBatchesImpl:

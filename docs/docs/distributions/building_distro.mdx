@@ -65,7 +65,7 @@ external_providers_dir: /workspace/providers.d
 Inside `providers.d/custom_ollama/provider.py`, define `get_provider_spec()` so the CLI can discover dependencies:
 
 ```python
-from llama_stack.providers.datatypes import ProviderSpec
+from llama_stack_api.providers.datatypes import ProviderSpec
 
 
 def get_provider_spec() -> ProviderSpec:

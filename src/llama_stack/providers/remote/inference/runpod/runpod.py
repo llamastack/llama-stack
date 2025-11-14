@@ -6,12 +6,12 @@
 
 from collections.abc import AsyncIterator
 
-from llama_stack.apis.inference import (
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
 )
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import RunpodImplConfig
 

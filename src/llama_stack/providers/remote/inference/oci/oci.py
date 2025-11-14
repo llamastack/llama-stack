@@ -14,15 +14,15 @@ from oci.generative_ai.generative_ai_client import GenerativeAiClient
 from oci.generative_ai.models import ModelCollection
 from openai._base_client import DefaultAsyncHttpxClient
 
-from llama_stack.apis.inference.inference import (
-    OpenAIEmbeddingsRequestWithExtraBody,
-    OpenAIEmbeddingsResponse,
-)
-from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.oci.auth import OciInstancePrincipalAuth, OciUserPrincipalAuth
 from llama_stack.providers.remote.inference.oci.config import OCIConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
+    ModelType,
+    OpenAIEmbeddingsRequestWithExtraBody,
+    OpenAIEmbeddingsResponse,
+)
 
 logger = get_logger(name=__name__, category="inference::oci")
 

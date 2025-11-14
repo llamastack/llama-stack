@@ -10,7 +10,12 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.apis.conversations.conversations import (
+from llama_stack.core.datatypes import AccessRule, StackRunConfig
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
+from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
+from llama_stack.providers.utils.sqlstore.sqlstore import sqlstore_impl
+from llama_stack_api import (
     Conversation,
     ConversationDeletedResource,
     ConversationItem,
@@ -20,11 +25,6 @@ from llama_stack.apis.conversations.conversations import (
     Conversations,
     Metadata,
 )
-from llama_stack.core.datatypes import AccessRule, StackRunConfig
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
-from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from llama_stack.providers.utils.sqlstore.sqlstore import sqlstore_impl
 
 logger = get_logger(name=__name__, category="openai_conversations")
 

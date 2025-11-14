@@ -30,13 +30,16 @@ jobs:
         activate-environment: true
         version: 0.7.6
 
-    - name: Build Llama Stack package
-      run: |
-        uv build
+    - name: Build Llama Stack API package
+      working-directory: src/llama_stack_api
+      run: uv build
 
-    - name: Install Llama Stack package
+    - name: Build Llama Stack package
+      run: uv build
+
+    - name: Install Llama Stack package (with api stubs from local build)
       run: |
-        uv pip install dist/*.whl
+        uv pip install --find-links src/llama_stack_api/dist dist/*.whl
 
     - name: Verify Llama Stack package
       run: |

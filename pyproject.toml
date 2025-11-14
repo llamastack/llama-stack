@@ -31,6 +31,7 @@ dependencies = [
     "httpx",
     "jinja2>=3.1.6",
     "jsonschema",
+    "llama-stack-api",  # API and provider specifications (local dev via tool.uv.sources)
     "openai>=2.5.0",
     "prompt-toolkit",
     "python-dotenv",
@@ -49,6 +50,7 @@ dependencies = [
     "aiosqlite>=0.21.0",                              # server - for metadata store
     "asyncpg",                                        # for metadata store
     "sqlalchemy[asyncio]>=2.0.41",                    # server - for conversations
+    "starlette>=0.49.1",
 ]
 
 [project.optional-dependencies]
@@ -69,7 +71,7 @@ dev = [
     "black",
     "ruff",
     "mypy",
-    "pre-commit",
+    "pre-commit>=4.4.0",
     "ruamel.yaml", # needed for openapi generator
 ]
 # Type checking dependencies - includes type stubs and optional runtime dependencies
@@ -180,7 +182,7 @@ install-wheel-from-presigned = "llama_stack.cli.scripts.run:install_wheel_from_p
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["llama_stack", "llama_stack.*"]
+include = ["llama_stack", "llama_stack.*", "llama_stack_api", "llama_stack_api.*"]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -190,6 +192,7 @@ explicit = true
 [tool.uv.sources]
 torch = [{ index = "pytorch-cpu" }]
 torchvision = [{ index = "pytorch-cpu" }]
+llama-stack-api = [{ path = "src/llama_stack_api", editable = true }]
 
 [tool.ruff]
 line-length = 120
@@ -257,7 +260,7 @@ unfixable = [
 
 [tool.mypy]
 mypy_path = ["src"]
-packages = ["llama_stack"]
+packages = ["llama_stack", "llama_stack_api"]
 plugins = ['pydantic.mypy']
 disable_error_code = []
 warn_return_any = true
@@ -282,12 +285,13 @@ exclude = [
     "^src/llama_stack/models/llama/llama3/interface\\.py$",
     "^src/llama_stack/models/llama/llama3/tokenizer\\.py$",
     "^src/llama_stack/models/llama/llama3/tool_utils\\.py$",
-    "^src/llama_stack/providers/inline/datasetio/localfs/",
-    "^src/llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
-    "^src/llama_stack/providers/inline/inference/meta_reference/inference\\.py$",
     "^src/llama_stack/models/llama/llama3/generation\\.py$",
     "^src/llama_stack/models/llama/llama3/multimodal/model\\.py$",
     "^src/llama_stack/models/llama/llama4/",
+    "^src/llama_stack/providers/inline/agents/meta_reference/",
+    "^src/llama_stack/providers/inline/datasetio/localfs/",
+    "^src/llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
+    "^src/llama_stack/providers/inline/inference/meta_reference/inference\\.py$",
     "^src/llama_stack/providers/inline/inference/sentence_transformers/sentence_transformers\\.py$",
     "^src/llama_stack/providers/inline/post_training/common/validator\\.py$",
     "^src/llama_stack/providers/inline/safety/code_scanner/",
@@ -337,7 +341,7 @@ exclude = [
     "^src/llama_stack/providers/utils/telemetry/dataset_mixin\\.py$",
     "^src/llama_stack/providers/utils/telemetry/trace_protocol\\.py$",
     "^src/llama_stack/providers/utils/telemetry/tracing\\.py$",
-    "^src/llama_stack/strong_typing/auxiliary\\.py$",
+    "^src/llama_stack_api/strong_typing/auxiliary\\.py$",
     "^src/llama_stack/distributions/template\\.py$",
 ]
 

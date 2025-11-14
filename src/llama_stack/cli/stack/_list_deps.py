@@ -21,7 +21,7 @@ from llama_stack.core.datatypes import (
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.stack import replace_env_vars
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api
+from llama_stack_api import Api
 
 TEMPLATES_PATH = Path(__file__).parent.parent.parent / "templates"
 

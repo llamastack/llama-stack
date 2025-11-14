@@ -10,7 +10,10 @@ from typing import cast
 from openai.types.chat import ChatCompletionToolParam
 from pydantic import BaseModel
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api import (
+    OpenAIChatCompletionToolCall,
+    OpenAIMessageParam,
+    OpenAIResponseFormatParam,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolFileSearch,
@@ -26,7 +29,6 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseTool,
     OpenAIResponseToolMCP,
 )
-from llama_stack.apis.inference import OpenAIChatCompletionToolCall, OpenAIMessageParam, OpenAIResponseFormatParam
 
 
 class ToolExecutionResult(BaseModel):

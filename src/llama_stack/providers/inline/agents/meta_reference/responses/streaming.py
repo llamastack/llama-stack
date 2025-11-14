@@ -8,10 +8,21 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack.core.telemetry import tracing
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
+from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
+    Inference,
     MCPListToolsTool,
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionToolCall,
+    OpenAIChoice,
+    OpenAIMessageParam,
     OpenAIResponseContentPartOutputText,
     OpenAIResponseContentPartReasoningText,
     OpenAIResponseContentPartRefusal,
@@ -56,19 +67,6 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseUsageOutputTokensDetails,
     WebSearchToolTypes,
 )
-from llama_stack.apis.inference import (
-    Inference,
-    OpenAIAssistantMessageParam,
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIChatCompletionToolCall,
-    OpenAIChoice,
-    OpenAIMessageParam,
-)
-from llama_stack.core.telemetry import tracing
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
@@ -1025,9 +1023,9 @@ class StreamingResponseOrchestrator:
         """Process all tools and emit appropriate streaming events."""
         from openai.types.chat import ChatCompletionToolParam
 
-        from llama_stack.apis.tools import ToolDef
         from llama_stack.models.llama.datatypes import ToolDefinition
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
+        from llama_stack_api import ToolDef
 
         def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
             tool_def = ToolDefinition(
@@ -1093,10 +1091,12 @@ class StreamingResponseOrchestrator:
                 "server_url": mcp_tool.server_url,
                 "mcp_list_tools_id": list_id,
             }
+            # List MCP tools with authorization from tool config
             async with tracing.span("list_mcp_tools", attributes):
                 tool_defs = await list_mcp_tools(
                     endpoint=mcp_tool.server_url,
-                    headers=mcp_tool.headers or {},
+                    headers=mcp_tool.headers,
+                    authorization=mcp_tool.authorization,
                 )
 
             # Create the MCP list tools message

@@ -16,6 +16,8 @@ import torch
 from datasets import Dataset
 from transformers import AutoConfig, AutoModelForCausalLM
 
+from llama_stack_api import Checkpoint, DatasetIO, TrainingConfig
+
 if TYPE_CHECKING:
     from transformers import PretrainedConfig
 
@@ -34,8 +36,6 @@ class HFAutoModel(Protocol):
     def save_pretrained(self, save_directory: str | Path) -> None: ...
 
 
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.post_training import Checkpoint, TrainingConfig
 from llama_stack.log import get_logger
 
 from .config import HuggingFacePostTrainingConfig

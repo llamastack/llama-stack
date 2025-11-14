@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+required-version = ">=0.7.0"
+
+[project]
+name = "llama-stack-api"
+version = "0.4.0.dev0"
+authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
+description = "API and Provider specifications for Llama Stack - lightweight package with protocol definitions and provider specs"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { "text" = "MIT" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+]
+dependencies = [
+    "pydantic>=2.11.9",
+    "jsonschema",
+    "opentelemetry-sdk>=1.30.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.30.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/llamastack/llama-stack"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llama_stack_api", "llama_stack_api.*"]
+
+[tool.setuptools.package-data]
+llama_stack_api = ["py.typed"]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "UP",      # pyupgrade
+    "B",       # flake8-bugbear
+    "B9",      # flake8-bugbear subset
+    "C",       # comprehensions
+    "E",       # pycodestyle
+    "F",       # Pyflakes
+    "N",       # Naming
+    "W",       # Warnings
+    "DTZ",     # datetime rules
+    "I",       # isort (imports order)
+    "RUF001",  # Checks for ambiguous Unicode characters in strings
+    "RUF002",  # Checks for ambiguous Unicode characters in docstrings
+    "RUF003",  # Checks for ambiguous Unicode characters in comments
+    "PLC2401", # Checks for the use of non-ASCII characters in variable names
+]
+ignore = [
+    # The following ignores are desired by the project maintainers.
+    "E402",   # Module level import not at top of file
+    "E501",   # Line too long
+    "F405",   # Maybe undefined or defined from star import
+    "C408",   # Ignored because we like the dict keyword argument syntax
+    "N812",   # Ignored because import torch.nn.functional as F is PyTorch convention
+
+    # These are the additional ones we started ignoring after moving to ruff. We should look into each one of them later.
+    "C901",   # Complexity of the function is too high
+]
+unfixable = [
+    "PLE2515",
+] # Do not fix this automatically since ruff will replace the zero-width space with \u200b - let's do it manually
+
+[tool.ruff.lint.per-file-ignores]
+"llama_stack_api/apis/**/__init__.py" = ["F403"]
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = ["classmethod", "pydantic.field_validator"]

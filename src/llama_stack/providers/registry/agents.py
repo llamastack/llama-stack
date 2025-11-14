@@ -5,12 +5,12 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.datatypes import (
+from llama_stack.providers.utils.kvstore import kvstore_dependencies
+from llama_stack_api import (
     Api,
     InlineProviderSpec,
     ProviderSpec,
 )
-from llama_stack.providers.utils.kvstore import kvstore_dependencies
 
 
 def available_providers() -> list[ProviderSpec]:

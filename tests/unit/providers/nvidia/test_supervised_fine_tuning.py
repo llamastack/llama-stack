@@ -10,15 +10,6 @@ from unittest.mock import patch
 
 import pytest
 
-from llama_stack.apis.post_training.post_training import (
-    DataConfig,
-    DatasetFormat,
-    LoraFinetuningConfig,
-    OptimizerConfig,
-    OptimizerType,
-    QATFinetuningConfig,
-    TrainingConfig,
-)
 from llama_stack.core.library_client import convert_pydantic_to_json_value
 from llama_stack.providers.remote.post_training.nvidia.post_training import (
     ListNvidiaPostTrainingJobs,
@@ -26,6 +17,15 @@ from llama_stack.providers.remote.post_training.nvidia.post_training import (
     NvidiaPostTrainingConfig,
     NvidiaPostTrainingJob,
     NvidiaPostTrainingJobStatusResponse,
+)
+from llama_stack_api import (
+    DataConfig,
+    DatasetFormat,
+    LoraFinetuningConfig,
+    OptimizerConfig,
+    OptimizerType,
+    QATFinetuningConfig,
+    TrainingConfig,
 )
 
 

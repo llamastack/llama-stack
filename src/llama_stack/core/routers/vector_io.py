@@ -10,13 +10,20 @@ from typing import Annotated, Any
 
 from fastapi import Body
 
-from llama_stack.apis.common.content_types import InterleavedContent
-from llama_stack.apis.models import ModelType
-from llama_stack.apis.vector_io import (
+from llama_stack.core.datatypes import VectorStoresConfig
+from llama_stack.log import get_logger
+from llama_stack_api import (
     Chunk,
+    HealthResponse,
+    HealthStatus,
+    InterleavedContent,
+    ModelNotFoundError,
+    ModelType,
+    ModelTypeError,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
+    RoutingTable,
     SearchRankingOptions,
     VectorIO,
     VectorStoreChunkingStrategy,
@@ -33,9 +40,6 @@ from llama_stack.apis.vector_io import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
-from llama_stack.core.datatypes import VectorStoresConfig
-from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -121,6 +125,14 @@ class VectorIORouter(VectorIO):
 
         if embedding_model is not None and embedding_dimension is None:
             embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
+
+        # Validate that embedding model exists and is of the correct type
+        if embedding_model is not None:
+            model = await self.routing_table.get_object_by_identifier("model", embedding_model)
+            if model is None:
+                raise ModelNotFoundError(embedding_model)
+            if model.model_type != ModelType.embedding:
+                raise ModelTypeError(embedding_model, model.model_type, ModelType.embedding)
 
         # Auto-select provider if not specified
         if provider_id is None:

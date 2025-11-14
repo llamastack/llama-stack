@@ -10,8 +10,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import numpy as np
 import pytest
 
-from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import FaissIndex, FaissVectorIOAdapter
@@ -20,6 +18,7 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteV
 from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
 from llama_stack.providers.utils.kvstore import register_kvstore_backends
+from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore
 
 EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"

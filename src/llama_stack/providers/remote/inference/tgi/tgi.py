@@ -10,12 +10,12 @@ from collections.abc import Iterable
 from huggingface_hub import AsyncInferenceClient, HfApi
 from pydantic import SecretStr
 
-from llama_stack.apis.inference import (
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import InferenceAPIImplConfig, InferenceEndpointImplConfig, TGIImplConfig
 

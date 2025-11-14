@@ -7,12 +7,8 @@
 from enum import Enum
 from typing import Any
 
-from llama_stack.apis.common.type_system import (
-    ChatCompletionInputType,
-    CompletionInputType,
-    StringType,
-)
 from llama_stack.core.datatypes import Api
+from llama_stack_api import ChatCompletionInputType, CompletionInputType, StringType
 
 
 class ColumnName(Enum):

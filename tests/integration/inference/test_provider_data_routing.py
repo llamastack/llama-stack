@@ -16,15 +16,15 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from llama_stack.apis.datatypes import Api
-from llama_stack.apis.inference.inference import (
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
+from llama_stack.core.telemetry.telemetry import MetricEvent
+from llama_stack_api import (
+    Api,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionUsage,
     OpenAIChoice,
 )
-from llama_stack.core.library_client import LlamaStackAsLibraryClient
-from llama_stack.core.telemetry.telemetry import MetricEvent
 
 
 class OpenAIChatCompletionWithMetrics(OpenAIChatCompletion):

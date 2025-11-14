@@ -9,16 +9,16 @@ from typing import Any
 
 import httpx
 
-from llama_stack.apis.common.content_types import URL
-from llama_stack.apis.tools import (
+from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack_api import (
+    URL,
     ListToolDefsResponse,
     ToolDef,
     ToolGroup,
+    ToolGroupsProtocolPrivate,
     ToolInvocationResult,
     ToolRuntime,
 )
-from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.providers.datatypes import ToolGroupsProtocolPrivate
 
 from .config import WolframAlphaToolConfig
 
@@ -49,7 +49,10 @@ class WolframAlphaToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsR
         return provider_data.wolfram_alpha_api_key
 
     async def list_runtime_tools(
-        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
+        self,
+        tool_group_id: str | None = None,
+        mcp_endpoint: URL | None = None,
+        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         return ListToolDefsResponse(
             data=[
@@ -70,7 +73,9 @@ class WolframAlphaToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsR
             ]
         )
 
-    async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
+    async def invoke_tool(
+        self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
+    ) -> ToolInvocationResult:
         api_key = self._get_api_key()
         params = {
             "input": kwargs["query"],
