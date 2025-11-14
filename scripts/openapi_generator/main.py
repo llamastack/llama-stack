@@ -62,6 +62,7 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
 
     # Clean descriptions in schema definitions by removing docstring metadata
     openapi_schema = schema_transforms._clean_schema_descriptions(openapi_schema)
+    openapi_schema = schema_transforms._normalize_empty_responses(openapi_schema)
 
     # Remove query parameters from POST/PUT/PATCH endpoints that have a request body
     # FastAPI sometimes infers parameters as query params even when they should be in the request body

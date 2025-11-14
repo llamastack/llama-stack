@@ -1079,11 +1079,6 @@ paths:
         description: 'Path parameter: model_id'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -1096,6 +1091,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Models
       summary: Unregister Model
@@ -1294,11 +1291,6 @@ paths:
               $ref: '#/components/schemas/UpdatePromptRequest'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -1311,6 +1303,8 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
+        '204':
+          description: Successful Response
       tags:
       - Prompts
       summary: Delete Prompt
@@ -1793,11 +1787,6 @@ paths:
       operationId: list_scoring_functions_v1_scoring_functions_get
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -1810,6 +1799,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Scoring Functions
       summary: Register Scoring Function
@@ -1857,11 +1848,6 @@ paths:
         description: 'Path parameter: scoring_fn_id'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -1874,6 +1860,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Scoring Functions
       summary: Unregister Scoring Function
@@ -2044,11 +2032,6 @@ paths:
         description: 'Path parameter: identifier'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -2061,6 +2044,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Shields
       summary: Unregister Shield
@@ -2185,11 +2170,6 @@ paths:
       operationId: list_tool_groups_v1_toolgroups_get
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -2202,6 +2182,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Tool Groups
       summary: Register Tool Group
@@ -2249,11 +2231,6 @@ paths:
         description: 'Path parameter: toolgroup_id'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -2266,6 +2243,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Tool Groups
       summary: Unregister Toolgroup
@@ -2350,11 +2329,6 @@ paths:
   /v1/vector-io/insert:
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -2367,6 +2341,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Vector Io
       summary: Insert Chunks
@@ -3179,11 +3155,6 @@ paths:
   /v1beta/datasetio/append-rows/{dataset_id}:
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -3196,6 +3167,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Datasetio
       summary: Append Rows
@@ -3365,11 +3338,6 @@ paths:
         description: 'Path parameter: dataset_id'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -3382,6 +3350,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Datasets
       summary: Unregister Dataset
@@ -3423,11 +3393,6 @@ paths:
       operationId: list_benchmarks_v1alpha_eval_benchmarks_get
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -3440,6 +3405,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Benchmarks
       summary: Register Benchmark
@@ -3487,11 +3454,6 @@ paths:
         description: 'Path parameter: benchmark_id'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -3504,6 +3466,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Benchmarks
       summary: Unregister Benchmark
@@ -3636,11 +3600,6 @@ paths:
         description: 'Path parameter: job_id'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -3653,6 +3612,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Eval
       summary: Job Cancel
@@ -3778,11 +3739,6 @@ paths:
   /v1alpha/post-training/job/cancel:
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -3795,6 +3751,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Post Training
       summary: Cancel Training Job

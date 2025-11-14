@@ -1222,11 +1222,6 @@ paths:
               $ref: '#/components/schemas/UpdatePromptRequest'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -1239,6 +1234,8 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
+        '204':
+          description: Successful Response
       tags:
       - Prompts
       summary: Delete Prompt
@@ -2088,11 +2085,6 @@ paths:
   /v1/vector-io/insert:
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -2105,6 +2097,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Vector Io
       summary: Insert Chunks

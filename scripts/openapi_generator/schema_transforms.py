@@ -51,6 +51,33 @@ def _fix_ref_references(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     return openapi_schema
 
 
+def _normalize_empty_responses(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """Convert empty 200 responses into 204 No Content."""
+
+    for path_item in openapi_schema.get("paths", {}).values():
+        if not isinstance(path_item, dict):
+            continue
+        for method in list(path_item.keys()):
+            operation = path_item.get(method)
+            if not isinstance(operation, dict):
+                continue
+            responses = operation.get("responses")
+            if not isinstance(responses, dict):
+                continue
+            response_200 = responses.get("200") or responses.get(200)
+            if response_200 is None:
+                continue
+            content = response_200.get("content")
+            if content and any(
+                isinstance(media, dict) and media.get("schema") not in ({}, None) for media in content.values()
+            ):
+                continue
+            responses.pop("200", None)
+            responses.pop(200, None)
+            responses["204"] = {"description": response_200.get("description", "No Content")}
+    return openapi_schema
+
+
 def _eliminate_defs_section(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """
     Eliminate $defs section entirely by moving all definitions to components/schemas.

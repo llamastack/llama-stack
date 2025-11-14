@@ -16,11 +16,6 @@ paths:
   /v1beta/datasetio/append-rows/{dataset_id}:
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -33,6 +28,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Datasetio
       summary: Append Rows
@@ -346,11 +343,6 @@ paths:
         description: 'Path parameter: job_id'
     delete:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -363,6 +355,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Eval
       summary: Job Cancel
@@ -488,11 +482,6 @@ paths:
   /v1alpha/post-training/job/cancel:
     post:
       responses:
-        '200':
-          description: Successful Response
-          content:
-            application/json:
-              schema: {}
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -505,6 +494,8 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+        '204':
+          description: Successful Response
       tags:
       - Post Training
       summary: Cancel Training Job
