@@ -14,11 +14,12 @@ from .helpers import setup_mcp_tools
 
 # Skip these tests in replay mode until recordings are generated
 # The authorization parameter creates different request hashes than existing MCP tests
+# Recordings generation requires properly configured test environment with OpenAI API access
 pytestmark = pytest.mark.skipif(
     os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay",
     reason="No recordings yet for MCP authorization tests. These tests use the authorization parameter "
     "which creates different OpenAI request hashes than existing MCP tool tests. "
-    "Recordings can be generated in CI with record mode, or by running locally with OpenAI API key.",
+    "Recordings need to be generated in CI with proper environment configuration.",
 )
 
 
