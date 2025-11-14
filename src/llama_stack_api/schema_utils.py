@@ -4,9 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
 
 class ExtraBodyField[T]:
@@ -46,6 +46,21 @@ class ExtraBodyField[T]:
         self.description = description
 
 
+SchemaSource = Literal["json_schema_type", "registered_schema", "dynamic_schema"]
+
+
+@dataclass(frozen=True)
+class SchemaInfo:
+    """Metadata describing a schema entry exposed to OpenAPI generation."""
+
+    name: str
+    type: Any
+    source: SchemaSource
+
+
+_json_schema_types: dict[type, SchemaInfo] = {}
+
+
 def json_schema_type(cls):
     """
     Decorator to mark a Pydantic model for top-level component registration.
@@ -57,11 +72,15 @@ def json_schema_type(cls):
     for simple one-off types while keeping complex reusable types as components.
     """
     cls._llama_stack_schema_type = True
+    schema_name = getattr(cls, "__name__", f"Anonymous_{id(cls)}")
+    cls._llama_stack_schema_name = schema_name
+    _json_schema_types.setdefault(cls, SchemaInfo(name=schema_name, type=cls, source="json_schema_type"))
     return cls
 
 
-# Global registry for registered schemas
-_registered_schemas = {}
+# Global registries for schemas discoverable by the generator
+_registered_schemas: dict[Any, SchemaInfo] = {}
+_dynamic_schema_types: dict[type, SchemaInfo] = {}
 
 
 def register_schema(schema_type, name: str | None = None):
@@ -82,9 +101,41 @@ def register_schema(schema_type, name: str | None = None):
 
     # Store the registration information in a global registry
     # since union types don't allow setting attributes
-    _registered_schemas[schema_type] = {"name": name, "type": schema_type}
+    _registered_schemas[schema_type] = SchemaInfo(name=name, type=schema_type, source="registered_schema")
 
     return schema_type
+
+
+def get_registered_schema_info(schema_type: Any) -> SchemaInfo | None:
+    """Return the registration metadata for a schema type if present."""
+    return _registered_schemas.get(schema_type)
+
+
+def iter_registered_schema_types() -> Iterable[SchemaInfo]:
+    """Iterate over all explicitly registered schema entries."""
+    return tuple(_registered_schemas.values())
+
+
+def iter_json_schema_types() -> Iterable[type]:
+    """Iterate over all Pydantic models decorated with @json_schema_type."""
+    return tuple(info.type for info in _json_schema_types.values())
+
+
+def iter_dynamic_schema_types() -> Iterable[type]:
+    """Iterate over dynamic models registered at generation time."""
+    return tuple(info.type for info in _dynamic_schema_types.values())
+
+
+def register_dynamic_schema_type(schema_type: type, name: str | None = None) -> type:
+    """Register a dynamic model generated at runtime for schema inclusion."""
+    schema_name = name if name is not None else getattr(schema_type, "__name__", f"Anonymous_{id(schema_type)}")
+    _dynamic_schema_types[schema_type] = SchemaInfo(name=schema_name, type=schema_type, source="dynamic_schema")
+    return schema_type
+
+
+def clear_dynamic_schema_types() -> None:
+    """Clear dynamic schema registrations."""
+    _dynamic_schema_types.clear()
 
 
 @dataclass

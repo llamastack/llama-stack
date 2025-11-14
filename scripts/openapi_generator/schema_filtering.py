@@ -16,39 +16,6 @@ from llama_stack_api.version import (
     LLAMA_STACK_API_V1BETA,
 )
 
-from . import schema_collection
-
-
-def _get_all_json_schema_type_names() -> set[str]:
-    """
-    Get all schema names from @json_schema_type decorated models.
-    This ensures they are included in filtered schemas even if not directly referenced by paths.
-    """
-    schema_names = set()
-    apis_modules = schema_collection._import_all_modules_in_package("llama_stack_api")
-    for module in apis_modules:
-        for attr_name in dir(module):
-            try:
-                attr = getattr(module, attr_name)
-                if (
-                    hasattr(attr, "_llama_stack_schema_type")
-                    and hasattr(attr, "model_json_schema")
-                    and hasattr(attr, "__name__")
-                ):
-                    schema_names.add(attr.__name__)
-            except (AttributeError, TypeError):
-                continue
-    return schema_names
-
-
-def _get_explicit_schema_names(openapi_schema: dict[str, Any]) -> set[str]:
-    """Get all registered schema names and @json_schema_type decorated model names."""
-    from llama_stack_api.schema_utils import _registered_schemas
-
-    registered_schema_names = {info["name"] for info in _registered_schemas.values()}
-    json_schema_type_names = _get_all_json_schema_type_names()
-    return registered_schema_names | json_schema_type_names
-
 
 def _find_schema_refs_in_object(obj: Any) -> set[str]:
     """
@@ -70,21 +37,12 @@ def _find_schema_refs_in_object(obj: Any) -> set[str]:
     return refs
 
 
-def _add_transitive_references(
-    referenced_schemas: set[str], all_schemas: dict[str, Any], initial_schemas: set[str] | None = None
-) -> set[str]:
+def _add_transitive_references(referenced_schemas: set[str], all_schemas: dict[str, Any]) -> set[str]:
     """Add transitive references for given schemas."""
-    if initial_schemas:
-        referenced_schemas.update(initial_schemas)
-        additional_schemas = set()
-        for schema_name in initial_schemas:
-            if schema_name in all_schemas:
-                additional_schemas.update(_find_schema_refs_in_object(all_schemas[schema_name]))
-    else:
-        additional_schemas = set()
-        for schema_name in referenced_schemas:
-            if schema_name in all_schemas:
-                additional_schemas.update(_find_schema_refs_in_object(all_schemas[schema_name]))
+    additional_schemas = set()
+    for schema_name in referenced_schemas:
+        if schema_name in all_schemas:
+            additional_schemas.update(_find_schema_refs_in_object(all_schemas[schema_name]))
 
     while additional_schemas:
         new_schemas = additional_schemas - referenced_schemas
@@ -155,8 +113,7 @@ def _filter_schemas_by_references(
 
     referenced_schemas = _find_schemas_referenced_by_paths(filtered_paths, openapi_schema)
     all_schemas = openapi_schema.get("components", {}).get("schemas", {})
-    explicit_schema_names = _get_explicit_schema_names(openapi_schema)
-    referenced_schemas = _add_transitive_references(referenced_schemas, all_schemas, explicit_schema_names)
+    referenced_schemas = _add_transitive_references(referenced_schemas, all_schemas)
 
     filtered_schemas = {
         name: schema for name, schema in filtered_schema["components"]["schemas"].items() if name in referenced_schemas

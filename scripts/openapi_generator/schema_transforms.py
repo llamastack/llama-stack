@@ -19,14 +19,13 @@ from openapi_spec_validator.exceptions import OpenAPISpecValidatorError
 
 from . import endpoints, schema_collection
 from ._legacy_order import (
+    LEGACY_OPERATION_KEYS,
     LEGACY_PATH_ORDER,
     LEGACY_RESPONSE_ORDER,
     LEGACY_SCHEMA_ORDER,
-    LEGACY_OPERATION_KEYS,
     LEGACY_SECURITY,
-    LEGACY_TAGS,
     LEGACY_TAG_GROUPS,
-    LEGACY_TAG_ORDER,
+    LEGACY_TAGS,
 )
 from .state import _extra_body_fields
 
@@ -864,7 +863,15 @@ def _apply_legacy_sorting(openapi_schema: dict[str, Any]) -> dict[str, Any]:
                     ordered_path_item[method] = order_mapping(path_item[method], LEGACY_OPERATION_KEYS)
             for key, value in path_item.items():
                 if key not in ordered_path_item:
-                    if isinstance(value, dict) and key.lower() in {"get", "post", "put", "delete", "patch", "head", "options"}:
+                    if isinstance(value, dict) and key.lower() in {
+                        "get",
+                        "post",
+                        "put",
+                        "delete",
+                        "patch",
+                        "head",
+                        "options",
+                    }:
                         ordered_path_item[key] = order_mapping(value, LEGACY_OPERATION_KEYS)
                     else:
                         ordered_path_item[key] = value

@@ -71,7 +71,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ModelsPostRequest'
+              $ref: '#/components/schemas/RegisterModelRequest'
         required: true
       deprecated: true
   /v1/models/{model_id}:
@@ -155,17 +155,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListScoringFunctionsResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
       tags:
       - Scoring Functions
       summary: List Scoring Functions
@@ -179,28 +179,28 @@ paths:
             application/json:
               schema: {}
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
       tags:
       - Scoring Functions
       summary: Register Scoring Function
       description: Register a scoring function.
       operationId: register_scoring_function_v1_scoring_functions_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Body_register_scoring_function_v1_scoring_functions_post'
+              $ref: '#/components/schemas/RegisterScoringFunctionRequestLoose'
+        required: true
       deprecated: true
   /v1/scoring-functions/{scoring_fn_id}:
     get:
@@ -322,7 +322,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ShieldsPostRequest'
+              $ref: '#/components/schemas/RegisterShieldRequest'
         required: true
       deprecated: true
   /v1/shields/{identifier}:
@@ -400,17 +400,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListToolGroupsResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
       tags:
       - Tool Groups
       summary: List Tool Groups
@@ -424,17 +424,17 @@ paths:
             application/json:
               schema: {}
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
       tags:
       - Tool Groups
       summary: Register Tool Group
@@ -444,7 +444,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Body_register_tool_group_v1_toolgroups_post'
+              $ref: '#/components/schemas/RegisterToolGroupRequest'
+        required: true
       deprecated: true
   /v1/toolgroups/{toolgroup_id}:
     get:
@@ -566,7 +567,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/V1BetaDatasetsPostRequestLoose'
+              $ref: '#/components/schemas/RegisterDatasetRequestLoose'
         required: true
       deprecated: true
   /v1beta/datasets/{dataset_id}:
@@ -644,17 +645,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListBenchmarksResponse'
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
       tags:
       - Benchmarks
       summary: List Benchmarks
@@ -668,28 +669,28 @@ paths:
             application/json:
               schema: {}
         '400':
-          $ref: '#/components/responses/BadRequest400'
           description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
         '429':
-          $ref: '#/components/responses/TooManyRequests429'
           description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
         '500':
-          $ref: '#/components/responses/InternalServerError500'
           description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
         default:
-          $ref: '#/components/responses/DefaultError'
           description: Default Response
+          $ref: '#/components/responses/DefaultError'
       tags:
       - Benchmarks
       summary: Register Benchmark
       description: Register a benchmark.
       operationId: register_benchmark_v1alpha_eval_benchmarks_post
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Body_register_benchmark_v1alpha_eval_benchmarks_post'
+              $ref: '#/components/schemas/RegisterBenchmarkRequest'
+        required: true
       deprecated: true
   /v1alpha/eval/benchmarks/{benchmark_id}:
     get:
@@ -814,6 +815,34 @@ components:
       - data
       title: ListBatchesResponse
       description: Response containing a list of batch objects.
+    CreateBatchRequest:
+      properties:
+        input_file_id:
+          type: string
+          title: Input File Id
+        endpoint:
+          type: string
+          title: Endpoint
+        completion_window:
+          type: string
+          const: 24h
+          title: Completion Window
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+        idempotency_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - input_file_id
+      - endpoint
+      - completion_window
+      title: CreateBatchRequest
     Batch:
       properties:
         id:
@@ -2560,6 +2589,53 @@ components:
       - status
       title: OpenAIResponseOutputMessageWebSearchToolCall
       description: Web search tool call output message for OpenAI responses.
+    CreateConversationRequest:
+      properties:
+        items:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                title: OpenAIResponseMessage-Input
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                title: OpenAIResponseOutputMessageWebSearchToolCall
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                title: OpenAIResponseOutputMessageFileSearchToolCall
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                title: OpenAIResponseOutputMessageFunctionToolCall
+              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                title: OpenAIResponseInputFunctionToolCallOutput
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                title: OpenAIResponseMCPApprovalRequest
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                title: OpenAIResponseMCPApprovalResponse
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                title: OpenAIResponseOutputMessageMCPCall
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                title: OpenAIResponseOutputMessageMCPListTools
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                  mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                  mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  message: '#/components/schemas/OpenAIResponseMessage-Input'
+                  web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              title: OpenAIResponseMessage-Input | ... (9 variants)
+            type: array
+          - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+      type: object
+      title: CreateConversationRequest
     Conversation:
       properties:
         id:
@@ -2597,6 +2673,17 @@ components:
       - created_at
       title: Conversation
       description: OpenAI-compatible conversation object.
+    UpdateConversationRequest:
+      properties:
+        metadata:
+          additionalProperties:
+            type: string
+          type: object
+          title: Metadata
+      type: object
+      required:
+      - metadata
+      title: UpdateConversationRequest
     ConversationDeletedResource:
       properties:
         id:
@@ -2682,6 +2769,48 @@ components:
       - data
       title: ConversationItemList
       description: List of conversation items with pagination.
+    AddItemsRequest:
+      properties:
+        items:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+              title: OpenAIResponseMessage-Input
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              title: OpenAIResponseOutputMessageWebSearchToolCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+              title: OpenAIResponseOutputMessageFileSearchToolCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+              title: OpenAIResponseOutputMessageFunctionToolCall
+            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+              title: OpenAIResponseInputFunctionToolCallOutput
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+              title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+              title: OpenAIResponseMCPApprovalResponse
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+              title: OpenAIResponseOutputMessageMCPCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              title: OpenAIResponseOutputMessageMCPListTools
+            discriminator:
+              propertyName: type
+              mapping:
+                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                message: '#/components/schemas/OpenAIResponseMessage-Input'
+                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+            title: OpenAIResponseMessage-Input | ... (9 variants)
+          type: array
+          title: Items
+      type: object
+      required:
+      - items
+      title: AddItemsRequest
     ConversationItemDeletedResource:
       properties:
         id:
@@ -3041,6 +3170,24 @@ components:
       - rerank
       title: ModelType
       description: Enumeration of supported model types in Llama Stack.
+    RunModerationRequest:
+      properties:
+        input:
+          anyOf:
+          - type: string
+          - items:
+              type: string
+            type: array
+            title: list[string]
+          title: string | list[string]
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - input
+      title: RunModerationRequest
     ModerationObject:
       properties:
         id:
@@ -3144,6 +3291,53 @@ components:
       - data
       title: ListPromptsResponse
       description: Response model to list prompts.
+    CreatePromptRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+        variables:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+      type: object
+      required:
+      - prompt
+      title: CreatePromptRequest
+    UpdatePromptRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+        version:
+          type: integer
+          title: Version
+        variables:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+        set_as_default:
+          type: boolean
+          title: Set As Default
+          default: true
+      type: object
+      required:
+      - prompt
+      - version
+      title: UpdatePromptRequest
+    SetDefaultVersionRequest:
+      properties:
+        version:
+          type: integer
+          title: Version
+      type: object
+      required:
+      - version
+      title: SetDefaultVersionRequest
     ProviderInfo:
       properties:
         api:
@@ -3745,6 +3939,135 @@ components:
       - server_url
       title: OpenAIResponseInputToolMCP
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
+    CreateOpenaiResponseRequest:
+      properties:
+        input:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - oneOf:
+                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                  title: OpenAIResponseMessage-Input
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                  title: OpenAIResponseOutputMessageWebSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  title: OpenAIResponseOutputMessageFileSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  title: OpenAIResponseOutputMessageFunctionToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  title: OpenAIResponseOutputMessageMCPCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  title: OpenAIResponseOutputMessageMCPListTools
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  title: OpenAIResponseMCPApprovalRequest
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                title: OpenAIResponseMessage-Input | ... (7 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                title: OpenAIResponseInputFunctionToolCallOutput
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                title: OpenAIResponseMCPApprovalResponse
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                title: OpenAIResponseMessage-Input
+              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
+            type: array
+            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+        model:
+          type: string
+          title: Model
+        prompt:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponsePrompt'
+            title: OpenAIResponsePrompt
+          - type: 'null'
+          title: OpenAIResponsePrompt
+        instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+        previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        conversation:
+          anyOf:
+          - type: string
+          - type: 'null'
+        store:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+        temperature:
+          anyOf:
+          - type: number
+          - type: 'null'
+        text:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseText'
+            title: OpenAIResponseText
+          - type: 'null'
+          title: OpenAIResponseText
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                title: OpenAIResponseInputToolWebSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                title: OpenAIResponseInputToolFileSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+                title: OpenAIResponseInputToolFunction
+              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+                title: OpenAIResponseInputToolMCP
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+            type: array
+          - type: 'null'
+        include:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+        max_infer_iters:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 10
+        max_tool_calls:
+          anyOf:
+          - type: integer
+          - type: 'null'
+      type: object
+      required:
+      - input
+      - model
+      title: CreateOpenaiResponseRequest
     OpenAIResponseObject:
       properties:
         created_at:
@@ -5110,6 +5433,45 @@ components:
       - data
       title: ListOpenAIResponseInputItem
       description: List container for OpenAI response input items.
+    RunShieldRequest:
+      properties:
+        shield_id:
+          type: string
+          title: Shield Id
+        messages:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIUserMessageParam-Input'
+              title: OpenAIUserMessageParam-Input
+            - $ref: '#/components/schemas/OpenAISystemMessageParam'
+              title: OpenAISystemMessageParam
+            - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Input'
+              title: OpenAIAssistantMessageParam-Input
+            - $ref: '#/components/schemas/OpenAIToolMessageParam'
+              title: OpenAIToolMessageParam
+            - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
+              title: OpenAIDeveloperMessageParam
+            discriminator:
+              propertyName: role
+              mapping:
+                assistant: '#/components/schemas/OpenAIAssistantMessageParam-Input'
+                developer: '#/components/schemas/OpenAIDeveloperMessageParam'
+                system: '#/components/schemas/OpenAISystemMessageParam'
+                tool: '#/components/schemas/OpenAIToolMessageParam'
+                user: '#/components/schemas/OpenAIUserMessageParam-Input'
+            title: OpenAIUserMessageParam-Input | ... (5 variants)
+          type: array
+          title: Messages
+        params:
+          additionalProperties: true
+          type: object
+          title: Params
+      type: object
+      required:
+      - shield_id
+      - messages
+      - params
+      title: RunShieldRequest
     RunShieldResponse:
       properties:
         violation:
@@ -5399,6 +5761,14 @@ components:
       - $ref: '#/components/schemas/BasicScoringFnParams'
         title: BasicScoringFnParams
       title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
+    ScoringFnParamsType:
+      description: Types of scoring function parameter configurations.
+      enum:
+      - llm_as_judge
+      - regex_parser
+      - basic
+      title: ScoringFnParamsType
+      type: string
     StringType:
       properties:
         type:
@@ -5430,6 +5800,40 @@ components:
       required:
       - data
       title: ListScoringFunctionsResponse
+    ScoreRequest:
+      properties:
+        input_rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Input Rows
+        scoring_functions:
+          additionalProperties:
+            anyOf:
+            - oneOf:
+              - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
+                title: LLMAsJudgeScoringFnParams
+              - $ref: '#/components/schemas/RegexParserScoringFnParams'
+                title: RegexParserScoringFnParams
+              - $ref: '#/components/schemas/BasicScoringFnParams'
+                title: BasicScoringFnParams
+              discriminator:
+                propertyName: type
+                mapping:
+                  basic: '#/components/schemas/BasicScoringFnParams'
+                  llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
+                  regex_parser: '#/components/schemas/RegexParserScoringFnParams'
+              title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
+            - type: 'null'
+            title: AdditionalpropertiesUnion
+          type: object
+          title: Scoring Functions
+      type: object
+      required:
+      - input_rows
+      - scoring_functions
+      title: ScoreRequest
     ScoreResponse:
       properties:
         results:
@@ -5460,6 +5864,41 @@ components:
       - aggregated_results
       title: ScoringResult
       description: A scoring result for a single row.
+    ScoreBatchRequest:
+      properties:
+        dataset_id:
+          type: string
+          title: Dataset Id
+        scoring_functions:
+          additionalProperties:
+            anyOf:
+            - oneOf:
+              - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
+                title: LLMAsJudgeScoringFnParams
+              - $ref: '#/components/schemas/RegexParserScoringFnParams'
+                title: RegexParserScoringFnParams
+              - $ref: '#/components/schemas/BasicScoringFnParams'
+                title: BasicScoringFnParams
+              discriminator:
+                propertyName: type
+                mapping:
+                  basic: '#/components/schemas/BasicScoringFnParams'
+                  llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
+                  regex_parser: '#/components/schemas/RegexParserScoringFnParams'
+              title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
+            - type: 'null'
+            title: AdditionalpropertiesUnion
+          type: object
+          title: Scoring Functions
+        save_results_dataset:
+          type: boolean
+          title: Save Results Dataset
+          default: false
+      type: object
+      required:
+      - dataset_id
+      - scoring_functions
+      title: ScoreBatchRequest
     ScoreBatchResponse:
       properties:
         dataset_id:
@@ -5518,6 +5957,24 @@ components:
       required:
       - data
       title: ListShieldsResponse
+    InvokeToolRequest:
+      properties:
+        tool_name:
+          type: string
+          title: Tool Name
+        kwargs:
+          additionalProperties: true
+          type: object
+          title: Kwargs
+        authorization:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - tool_name
+      - kwargs
+      title: InvokeToolRequest
     ImageContentItem:
       description: A image content item
       properties:
@@ -5851,6 +6308,69 @@ components:
             will not be used in the context during inference, but is required for backend functionality. The `ChunkMetadata`
             is set during chunk creation in `MemoryToolRuntimeImpl().insert()`and is not expected to change after.
             Use `Chunk.metadata` for metadata that will be used in the context during inference.
+    InsertChunksRequest:
+      properties:
+        vector_store_id:
+          type: string
+          title: Vector Store Id
+        chunks:
+          items:
+            $ref: '#/components/schemas/Chunk-Input'
+          type: array
+          title: Chunks
+        ttl_seconds:
+          anyOf:
+          - type: integer
+          - type: 'null'
+      type: object
+      required:
+      - vector_store_id
+      - chunks
+      title: InsertChunksRequest
+    QueryChunksRequest:
+      properties:
+        vector_store_id:
+          type: string
+          title: Vector Store Id
+        query:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Input'
+              title: ImageContentItem-Input
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Input'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Input | TextContentItem
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Input'
+                title: ImageContentItem-Input
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Input'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Input | TextContentItem
+            type: array
+            title: list[ImageContentItem-Input | TextContentItem]
+          title: string | list[ImageContentItem-Input | TextContentItem]
+        params:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+      type: object
+      required:
+      - vector_store_id
+      - query
+      title: QueryChunksRequest
     QueryChunksResponse:
       properties:
         chunks:
@@ -6065,6 +6585,24 @@ components:
       type: object
       title: OpenAICreateVectorStoreRequestWithExtraBody
       description: Request to create a vector store with extra_body support.
+    OpenaiUpdateVectorStoreRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+      type: object
+      title: OpenaiUpdateVectorStoreRequest
     VectorStoreDeleteResponse:
       properties:
         id:
@@ -6292,6 +6830,45 @@ components:
       - data
       title: VectorStoreListFilesResponse
       description: Response from listing files in a vector store.
+    OpenaiAttachFileToVectorStoreRequest:
+      properties:
+        file_id:
+          type: string
+          title: File Id
+        attributes:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        chunking_strategy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              title: VectorStoreChunkingStrategyAuto
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              title: VectorStoreChunkingStrategyStatic
+            discriminator:
+              propertyName: type
+              mapping:
+                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          - type: 'null'
+          title: Chunking Strategy
+      type: object
+      required:
+      - file_id
+      title: OpenaiAttachFileToVectorStoreRequest
+    OpenaiUpdateVectorStoreFileRequest:
+      properties:
+        attributes:
+          additionalProperties: true
+          type: object
+          title: Attributes
+      type: object
+      required:
+      - attributes
+      title: OpenaiUpdateVectorStoreFileRequest
     VectorStoreFileDeleteResponse:
       properties:
         id:
@@ -6367,6 +6944,46 @@ components:
       - data
       title: VectorStoreFileContentResponse
       description: Represents the parsed content of a vector store file.
+    OpenaiSearchVectorStoreRequest:
+      properties:
+        query:
+          anyOf:
+          - type: string
+          - items:
+              type: string
+            type: array
+            title: list[string]
+          title: string | list[string]
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        max_num_results:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 10
+        ranking_options:
+          anyOf:
+          - $ref: '#/components/schemas/SearchRankingOptions'
+            title: SearchRankingOptions
+          - type: 'null'
+          title: SearchRankingOptions
+        rewrite_query:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+        search_mode:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: vector
+      type: object
+      required:
+      - query
+      title: OpenaiSearchVectorStoreRequest
     VectorStoreSearchResponse:
       properties:
         file_id:
@@ -6441,6 +7058,18 @@ components:
       - version
       title: VersionInfo
       description: Version information for the service.
+    AppendRowsRequest:
+      properties:
+        rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Rows
+      type: object
+      required:
+      - rows
+      title: AppendRowsRequest
     PaginatedResponse:
       properties:
         data:
@@ -6787,6 +7416,27 @@ components:
       - temperature
       title: TopPSamplingStrategy
       description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
+    EvaluateRowsRequest:
+      properties:
+        input_rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Input Rows
+        scoring_functions:
+          items:
+            type: string
+          type: array
+          title: Scoring Functions
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+      type: object
+      required:
+      - input_rows
+      - scoring_functions
+      - benchmark_config
+      title: EvaluateRowsRequest
     EvaluateResponse:
       properties:
         generations:
@@ -6819,6 +7469,40 @@ components:
       - status
       title: Job
       description: A job execution instance with status tracking.
+    RerankRequest:
+      properties:
+        model:
+          type: string
+          title: Model
+        query:
+          anyOf:
+          - type: string
+          - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+            title: OpenAIChatCompletionContentPartTextParam
+          - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
+            title: OpenAIChatCompletionContentPartImageParam
+          title: string | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
+        items:
+          items:
+            anyOf:
+            - type: string
+            - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
+              title: OpenAIChatCompletionContentPartTextParam
+            - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
+              title: OpenAIChatCompletionContentPartImageParam
+            title: string | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
+          type: array
+          title: Items
+        max_num_results:
+          anyOf:
+          - type: integer
+          - type: 'null'
+      type: object
+      required:
+      - model
+      - query
+      - items
+      title: RerankRequest
     RerankData:
       properties:
         index:
@@ -6915,6 +7599,15 @@ components:
       - perplexity
       title: PostTrainingMetric
       description: Training metrics captured during post-training jobs.
+    CancelTrainingJobRequest:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+      type: object
+      required:
+      - job_uuid
+      title: CancelTrainingJobRequest
     PostTrainingJobStatusResponse:
       properties:
         job_uuid:
@@ -7127,6 +7820,35 @@ components:
       - n_epochs
       title: TrainingConfig
       description: Comprehensive configuration for the training process.
+    PreferenceOptimizeRequest:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+        finetuned_model:
+          type: string
+          title: Finetuned Model
+        algorithm_config:
+          $ref: '#/components/schemas/DPOAlignmentConfig'
+        training_config:
+          $ref: '#/components/schemas/TrainingConfig'
+        hyperparam_search_config:
+          additionalProperties: true
+          type: object
+          title: Hyperparam Search Config
+        logger_config:
+          additionalProperties: true
+          type: object
+          title: Logger Config
+      type: object
+      required:
+      - job_uuid
+      - finetuned_model
+      - algorithm_config
+      - training_config
+      - hyperparam_search_config
+      - logger_config
+      title: PreferenceOptimizeRequest
     PostTrainingJob:
       properties:
         job_uuid:
@@ -7210,6 +7932,80 @@ components:
       - group_size
       title: QATFinetuningConfig
       description: Configuration for Quantization-Aware Training (QAT) fine-tuning.
+    SupervisedFineTuneRequest:
+      properties:
+        job_uuid:
+          type: string
+          title: Job Uuid
+        training_config:
+          $ref: '#/components/schemas/TrainingConfig'
+        hyperparam_search_config:
+          additionalProperties: true
+          type: object
+          title: Hyperparam Search Config
+        logger_config:
+          additionalProperties: true
+          type: object
+          title: Logger Config
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Model descriptor for training if not in provider config`
+        checkpoint_dir:
+          anyOf:
+          - type: string
+          - type: 'null'
+        algorithm_config:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/LoraFinetuningConfig'
+              title: LoraFinetuningConfig
+            - $ref: '#/components/schemas/QATFinetuningConfig'
+              title: QATFinetuningConfig
+            discriminator:
+              propertyName: type
+              mapping:
+                LoRA: '#/components/schemas/LoraFinetuningConfig'
+                QAT: '#/components/schemas/QATFinetuningConfig'
+            title: LoraFinetuningConfig | QATFinetuningConfig
+          - type: 'null'
+          title: Algorithm Config
+      type: object
+      required:
+      - job_uuid
+      - training_config
+      - hyperparam_search_config
+      - logger_config
+      title: SupervisedFineTuneRequest
+    RegisterModelRequest:
+      properties:
+        model_id:
+          type: string
+          title: Model Id
+        provider_model_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        provider_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        model_type:
+          anyOf:
+          - $ref: '#/components/schemas/ModelType'
+            title: ModelType
+          - type: 'null'
+          title: ModelType
+      type: object
+      required:
+      - model_id
+      title: RegisterModelRequest
     ParamType:
       discriminator:
         mapping:
@@ -7243,6 +8039,52 @@ components:
       - $ref: '#/components/schemas/CompletionInputType'
         title: CompletionInputType
       title: StringType | ... (9 variants)
+    RegisterShieldRequest:
+      properties:
+        shield_id:
+          type: string
+          title: Shield Id
+        provider_shield_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        provider_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        params:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+      type: object
+      required:
+      - shield_id
+      title: RegisterShieldRequest
+    RegisterToolGroupRequest:
+      properties:
+        toolgroup_id:
+          type: string
+          title: Toolgroup Id
+        provider_id:
+          type: string
+          title: Provider Id
+        mcp_endpoint:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+            title: URL
+          - type: 'null'
+          title: URL
+        args:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+      type: object
+      required:
+      - toolgroup_id
+      - provider_id
+      title: RegisterToolGroupRequest
     DataSource:
       discriminator:
         mapping:
@@ -7255,6 +8097,38 @@ components:
       - $ref: '#/components/schemas/RowsDataSource'
         title: RowsDataSource
       title: URIDataSource | RowsDataSource
+    RegisterBenchmarkRequest:
+      properties:
+        benchmark_id:
+          type: string
+          title: Benchmark Id
+        dataset_id:
+          type: string
+          title: Dataset Id
+        scoring_functions:
+          items:
+            type: string
+          type: array
+          title: Scoring Functions
+        provider_benchmark_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        provider_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+      type: object
+      required:
+      - benchmark_id
+      - dataset_id
+      - scoring_functions
+      title: RegisterBenchmarkRequest
     AllowedToolsFilter:
       properties:
         tool_names:
@@ -7346,34 +8220,6 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
-    BatchesPostRequest:
-      properties:
-        input_file_id:
-          type: string
-          title: Input File Id
-        endpoint:
-          type: string
-          title: Endpoint
-        completion_window:
-          type: string
-          const: 24h
-          title: Completion Window
-        metadata:
-          anyOf:
-          - additionalProperties:
-              type: string
-            type: object
-          - type: 'null'
-        idempotency_key:
-          anyOf:
-          - type: string
-          - type: 'null'
-      type: object
-      required:
-      - input_file_id
-      - endpoint
-      - completion_window
-      title: BatchesPostRequest
     Body_openai_upload_file_v1_files_post:
       properties:
         file:
@@ -7393,82 +8239,6 @@ components:
       - file
       - purpose
       title: Body_openai_upload_file_v1_files_post
-    Body_register_benchmark_v1alpha_eval_benchmarks_post:
-      properties:
-        scoring_functions:
-          items:
-            type: string
-          type: array
-          title: Scoring Functions
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - scoring_functions
-      title: Body_register_benchmark_v1alpha_eval_benchmarks_post
-    Body_register_scoring_function_v1_scoring_functions_post:
-      properties:
-        return_type:
-          anyOf:
-          - $ref: '#/components/schemas/StringType'
-            title: StringType
-          - $ref: '#/components/schemas/NumberType'
-            title: NumberType
-          - $ref: '#/components/schemas/BooleanType'
-            title: BooleanType
-          - $ref: '#/components/schemas/ArrayType'
-            title: ArrayType
-          - $ref: '#/components/schemas/ObjectType'
-            title: ObjectType
-          - $ref: '#/components/schemas/JsonType'
-            title: JsonType
-          - $ref: '#/components/schemas/UnionType'
-            title: UnionType
-          - $ref: '#/components/schemas/ChatCompletionInputType'
-            title: ChatCompletionInputType
-          - $ref: '#/components/schemas/CompletionInputType'
-            title: CompletionInputType
-          title: StringType | ... (9 variants)
-        params:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-              title: LLMAsJudgeScoringFnParams
-            - $ref: '#/components/schemas/RegexParserScoringFnParams'
-              title: RegexParserScoringFnParams
-            - $ref: '#/components/schemas/BasicScoringFnParams'
-              title: BasicScoringFnParams
-            discriminator:
-              propertyName: type
-              mapping:
-                basic: '#/components/schemas/BasicScoringFnParams'
-                llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-          - type: 'null'
-          title: Params
-      type: object
-      required:
-      - return_type
-      title: Body_register_scoring_function_v1_scoring_functions_post
-    Body_register_tool_group_v1_toolgroups_post:
-      properties:
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          title: URL
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      title: Body_register_tool_group_v1_toolgroups_post
     Chunk-Input:
       properties:
         content:
@@ -7593,106 +8363,6 @@ components:
       - reasoning.encrypted_content
       title: ConversationItemInclude
       description: Specify additional output data to include in the model response.
-    ConversationsByConversationIdItemsPostRequest:
-      properties:
-        items:
-          items:
-            oneOf:
-            - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-              title: OpenAIResponseMessage-Input
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
-            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
-            discriminator:
-              propertyName: type
-              mapping:
-                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                message: '#/components/schemas/OpenAIResponseMessage-Input'
-                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Input | ... (9 variants)
-          type: array
-          title: Items
-      type: object
-      required:
-      - items
-      title: ConversationsByConversationIdItemsPostRequest
-    ConversationsByConversationIdPostRequest:
-      properties:
-        metadata:
-          additionalProperties:
-            type: string
-          type: object
-          title: Metadata
-      type: object
-      required:
-      - metadata
-      title: ConversationsByConversationIdPostRequest
-    ConversationsPostRequest:
-      properties:
-        items:
-          anyOf:
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseOutputMessageWebSearchToolCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                title: OpenAIResponseOutputMessageFileSearchToolCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                title: OpenAIResponseOutputMessageFunctionToolCall
-              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                title: OpenAIResponseInputFunctionToolCallOutput
-              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                title: OpenAIResponseMCPApprovalRequest
-              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                title: OpenAIResponseMCPApprovalResponse
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                title: OpenAIResponseOutputMessageMCPCall
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                title: OpenAIResponseOutputMessageMCPListTools
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                  function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                  function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                  mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                  mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                  mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                  mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                  message: '#/components/schemas/OpenAIResponseMessage-Input'
-                  web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Input | ... (9 variants)
-            type: array
-          - type: 'null'
-        metadata:
-          anyOf:
-          - additionalProperties:
-              type: string
-            type: object
-          - type: 'null'
-      type: object
-      title: ConversationsPostRequest
     DatasetPurpose:
       type: string
       enum:
@@ -7790,52 +8460,6 @@ components:
       - name
       title: MCPListToolsTool
       description: Tool definition returned by MCP list tools operation.
-    ModelsPostRequest:
-      properties:
-        model_id:
-          type: string
-          title: Model Id
-        provider_model_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        provider_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        model_type:
-          anyOf:
-          - $ref: '#/components/schemas/ModelType'
-            title: ModelType
-          - type: 'null'
-          title: ModelType
-      type: object
-      required:
-      - model_id
-      title: ModelsPostRequest
-    ModerationsPostRequest:
-      properties:
-        input:
-          anyOf:
-          - type: string
-          - items:
-              type: string
-            type: array
-            title: list[string]
-          title: string | list[string]
-        model:
-          anyOf:
-          - type: string
-          - type: 'null'
-      type: object
-      required:
-      - input
-      title: ModerationsPostRequest
     OpenAIAssistantMessageParam-Input:
       properties:
         role:
@@ -8209,290 +8833,41 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
-    PromptsByPromptIdPostRequest:
+    RegisterDatasetRequestLoose:
       properties:
-        prompt:
-          type: string
-          title: Prompt
-        version:
-          type: integer
-          title: Version
-        variables:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-        set_as_default:
-          type: boolean
-          title: Set As Default
-          default: true
+        purpose:
+          title: Purpose
+        source:
+          title: Source
+        metadata:
+          title: Metadata
+        dataset_id:
+          title: Dataset Id
       type: object
       required:
-      - prompt
-      - version
-      title: PromptsByPromptIdPostRequest
-    PromptsByPromptIdSetDefaultVersionPostRequest:
+      - purpose
+      - source
+      title: RegisterDatasetRequestLoose
+    RegisterScoringFunctionRequestLoose:
       properties:
-        version:
-          type: integer
-          title: Version
-      type: object
-      required:
-      - version
-      title: PromptsByPromptIdSetDefaultVersionPostRequest
-    PromptsPostRequest:
-      properties:
-        prompt:
-          type: string
-          title: Prompt
-        variables:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-      type: object
-      required:
-      - prompt
-      title: PromptsPostRequest
-    ResponsesPostRequest:
-      properties:
-        input:
-          anyOf:
-          - type: string
-          - items:
-              anyOf:
-              - oneOf:
-                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                  title: OpenAIResponseMessage-Input
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                  title: OpenAIResponseOutputMessageWebSearchToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                  title: OpenAIResponseOutputMessageFileSearchToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                  title: OpenAIResponseOutputMessageFunctionToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                  title: OpenAIResponseOutputMessageMCPCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                  title: OpenAIResponseOutputMessageMCPListTools
-                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                  title: OpenAIResponseMCPApprovalRequest
-                discriminator:
-                  propertyName: type
-                  mapping:
-                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                    message: '#/components/schemas/OpenAIResponseMessage-Input'
-                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseMessage-Input | ... (7 variants)
-              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                title: OpenAIResponseInputFunctionToolCallOutput
-              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                title: OpenAIResponseMCPApprovalResponse
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
-            type: array
-            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
-          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
-        model:
-          type: string
-          title: Model
-        prompt:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponsePrompt'
-            title: OpenAIResponsePrompt
-          - type: 'null'
-          title: OpenAIResponsePrompt
-        instructions:
-          anyOf:
-          - type: string
-          - type: 'null'
-        previous_response_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        conversation:
-          anyOf:
-          - type: string
-          - type: 'null'
-        store:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: true
-        stream:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: false
-        temperature:
-          anyOf:
-          - type: number
-          - type: 'null'
-        text:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseText'
-            title: OpenAIResponseText
-          - type: 'null'
-          title: OpenAIResponseText
-        tools:
-          anyOf:
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                title: OpenAIResponseInputToolWebSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                title: OpenAIResponseInputToolFileSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-                title: OpenAIResponseInputToolFunction
-              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
-                title: OpenAIResponseInputToolMCP
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
-                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
-                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
-            type: array
-          - type: 'null'
-        include:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-        max_infer_iters:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          default: 10
-        max_tool_calls:
-          anyOf:
-          - type: integer
-          - type: 'null'
-      type: object
-      required:
-      - input
-      - model
-      title: ResponsesPostRequest
-    SafetyRunShieldPostRequest:
-      properties:
-        shield_id:
-          type: string
-          title: Shield Id
-        messages:
-          items:
-            oneOf:
-            - $ref: '#/components/schemas/OpenAIUserMessageParam-Input'
-              title: OpenAIUserMessageParam-Input
-            - $ref: '#/components/schemas/OpenAISystemMessageParam'
-              title: OpenAISystemMessageParam
-            - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Input'
-              title: OpenAIAssistantMessageParam-Input
-            - $ref: '#/components/schemas/OpenAIToolMessageParam'
-              title: OpenAIToolMessageParam
-            - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-              title: OpenAIDeveloperMessageParam
-            discriminator:
-              propertyName: role
-              mapping:
-                assistant: '#/components/schemas/OpenAIAssistantMessageParam-Input'
-                developer: '#/components/schemas/OpenAIDeveloperMessageParam'
-                system: '#/components/schemas/OpenAISystemMessageParam'
-                tool: '#/components/schemas/OpenAIToolMessageParam'
-                user: '#/components/schemas/OpenAIUserMessageParam-Input'
-            title: OpenAIUserMessageParam-Input | ... (5 variants)
-          type: array
-          title: Messages
+        scoring_fn_id:
+          title: Scoring Fn Id
+        description:
+          title: Description
+        return_type:
+          title: Return Type
+        provider_scoring_fn_id:
+          title: Provider Scoring Fn Id
+        provider_id:
+          title: Provider Id
         params:
-          additionalProperties: true
-          type: object
           title: Params
       type: object
       required:
-      - shield_id
-      - messages
-      - params
-      title: SafetyRunShieldPostRequest
-    ScoringScoreBatchPostRequest:
-      properties:
-        dataset_id:
-          type: string
-          title: Dataset Id
-        scoring_functions:
-          additionalProperties:
-            anyOf:
-            - oneOf:
-              - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                title: LLMAsJudgeScoringFnParams
-              - $ref: '#/components/schemas/RegexParserScoringFnParams'
-                title: RegexParserScoringFnParams
-              - $ref: '#/components/schemas/BasicScoringFnParams'
-                title: BasicScoringFnParams
-              discriminator:
-                propertyName: type
-                mapping:
-                  basic: '#/components/schemas/BasicScoringFnParams'
-                  llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                  regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-              title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-            - type: 'null'
-            title: AdditionalpropertiesUnion
-          type: object
-          title: Scoring Functions
-        save_results_dataset:
-          type: boolean
-          title: Save Results Dataset
-          default: false
-      type: object
-      required:
-      - dataset_id
-      - scoring_functions
-      title: ScoringScoreBatchPostRequest
-    ScoringScorePostRequest:
-      properties:
-        input_rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Input Rows
-        scoring_functions:
-          additionalProperties:
-            anyOf:
-            - oneOf:
-              - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                title: LLMAsJudgeScoringFnParams
-              - $ref: '#/components/schemas/RegexParserScoringFnParams'
-                title: RegexParserScoringFnParams
-              - $ref: '#/components/schemas/BasicScoringFnParams'
-                title: BasicScoringFnParams
-              discriminator:
-                propertyName: type
-                mapping:
-                  basic: '#/components/schemas/BasicScoringFnParams'
-                  llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                  regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-              title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
-            - type: 'null'
-            title: AdditionalpropertiesUnion
-          type: object
-          title: Scoring Functions
-      type: object
-      required:
-      - input_rows
-      - scoring_functions
-      title: ScoringScorePostRequest
+      - scoring_fn_id
+      - description
+      - return_type
+      title: RegisterScoringFunctionRequestLoose
     SearchRankingOptions:
       properties:
         ranker:
@@ -8507,332 +8882,6 @@ components:
       type: object
       title: SearchRankingOptions
       description: Options for ranking and filtering search results.
-    ShieldsPostRequest:
-      properties:
-        shield_id:
-          type: string
-          title: Shield Id
-        provider_shield_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        provider_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        params:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - shield_id
-      title: ShieldsPostRequest
-    ToolRuntimeInvokePostRequest:
-      properties:
-        tool_name:
-          type: string
-          title: Tool Name
-        kwargs:
-          additionalProperties: true
-          type: object
-          title: Kwargs
-        authorization:
-          anyOf:
-          - type: string
-          - type: 'null'
-      type: object
-      required:
-      - tool_name
-      - kwargs
-      title: ToolRuntimeInvokePostRequest
-    V1AlphaEvalBenchmarksByBenchmarkIdEvaluationsPostRequest:
-      properties:
-        input_rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Input Rows
-        scoring_functions:
-          items:
-            type: string
-          type: array
-          title: Scoring Functions
-        benchmark_config:
-          $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
-      required:
-      - input_rows
-      - scoring_functions
-      - benchmark_config
-      title: V1AlphaEvalBenchmarksByBenchmarkIdEvaluationsPostRequest
-    V1AlphaInferenceRerankPostRequest:
-      properties:
-        model:
-          type: string
-          title: Model
-        query:
-          anyOf:
-          - type: string
-          - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
-            title: OpenAIChatCompletionContentPartTextParam
-          - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
-            title: OpenAIChatCompletionContentPartImageParam
-          title: string | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
-        items:
-          items:
-            anyOf:
-            - type: string
-            - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
-              title: OpenAIChatCompletionContentPartTextParam
-            - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
-              title: OpenAIChatCompletionContentPartImageParam
-            title: string | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
-          type: array
-          title: Items
-        max_num_results:
-          anyOf:
-          - type: integer
-          - type: 'null'
-      type: object
-      required:
-      - model
-      - query
-      - items
-      title: V1AlphaInferenceRerankPostRequest
-    V1AlphaPostTrainingPreferenceOptimizePostRequest:
-      properties:
-        job_uuid:
-          type: string
-          title: Job Uuid
-        finetuned_model:
-          type: string
-          title: Finetuned Model
-        algorithm_config:
-          $ref: '#/components/schemas/DPOAlignmentConfig'
-        training_config:
-          $ref: '#/components/schemas/TrainingConfig'
-        hyperparam_search_config:
-          additionalProperties: true
-          type: object
-          title: Hyperparam Search Config
-        logger_config:
-          additionalProperties: true
-          type: object
-          title: Logger Config
-      type: object
-      required:
-      - job_uuid
-      - finetuned_model
-      - algorithm_config
-      - training_config
-      - hyperparam_search_config
-      - logger_config
-      title: V1AlphaPostTrainingPreferenceOptimizePostRequest
-    V1AlphaPostTrainingSupervisedFineTunePostRequest:
-      properties:
-        job_uuid:
-          type: string
-          title: Job Uuid
-        training_config:
-          $ref: '#/components/schemas/TrainingConfig'
-        hyperparam_search_config:
-          additionalProperties: true
-          type: object
-          title: Hyperparam Search Config
-        logger_config:
-          additionalProperties: true
-          type: object
-          title: Logger Config
-        model:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Model descriptor for training if not in provider config`
-        checkpoint_dir:
-          anyOf:
-          - type: string
-          - type: 'null'
-        algorithm_config:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/LoraFinetuningConfig'
-              title: LoraFinetuningConfig
-            - $ref: '#/components/schemas/QATFinetuningConfig'
-              title: QATFinetuningConfig
-            discriminator:
-              propertyName: type
-              mapping:
-                LoRA: '#/components/schemas/LoraFinetuningConfig'
-                QAT: '#/components/schemas/QATFinetuningConfig'
-            title: LoraFinetuningConfig | QATFinetuningConfig
-          - type: 'null'
-          title: Algorithm Config
-      type: object
-      required:
-      - job_uuid
-      - training_config
-      - hyperparam_search_config
-      - logger_config
-      title: V1AlphaPostTrainingSupervisedFineTunePostRequest
-    V1BetaDatasetsPostRequestLoose:
-      properties:
-        purpose:
-          title: Purpose
-        source:
-          title: Source
-        metadata:
-          title: Metadata
-        dataset_id:
-          title: Dataset Id
-      type: object
-      required:
-      - purpose
-      - source
-      title: V1BetaDatasetsPostRequestLoose
-    VectorIoQueryPostRequest:
-      properties:
-        vector_store_id:
-          type: string
-          title: Vector Store Id
-        query:
-          anyOf:
-          - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Input'
-              title: ImageContentItem-Input
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Input'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Input | TextContentItem
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Input'
-                title: ImageContentItem-Input
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Input'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Input | TextContentItem
-            type: array
-            title: list[ImageContentItem-Input | TextContentItem]
-          title: string | list[ImageContentItem-Input | TextContentItem]
-        params:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - vector_store_id
-      - query
-      title: VectorIoQueryPostRequest
-    VectorStoresByVectorStoreIdFilesByFileIdPostRequest:
-      properties:
-        attributes:
-          additionalProperties: true
-          type: object
-          title: Attributes
-      type: object
-      required:
-      - attributes
-      title: VectorStoresByVectorStoreIdFilesByFileIdPostRequest
-    VectorStoresByVectorStoreIdFilesPostRequest:
-      properties:
-        file_id:
-          type: string
-          title: File Id
-        attributes:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        chunking_strategy:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-              title: VectorStoreChunkingStrategyAuto
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-              title: VectorStoreChunkingStrategyStatic
-            discriminator:
-              propertyName: type
-              mapping:
-                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
-          - type: 'null'
-          title: Chunking Strategy
-      type: object
-      required:
-      - file_id
-      title: VectorStoresByVectorStoreIdFilesPostRequest
-    VectorStoresByVectorStoreIdPostRequest:
-      properties:
-        name:
-          anyOf:
-          - type: string
-          - type: 'null'
-        expires_after:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      title: VectorStoresByVectorStoreIdPostRequest
-    VectorStoresByVectorStoreIdSearchPostRequest:
-      properties:
-        query:
-          anyOf:
-          - type: string
-          - items:
-              type: string
-            type: array
-            title: list[string]
-          title: string | list[string]
-        filters:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        max_num_results:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          default: 10
-        ranking_options:
-          anyOf:
-          - $ref: '#/components/schemas/SearchRankingOptions'
-            title: SearchRankingOptions
-          - type: 'null'
-          title: SearchRankingOptions
-        rewrite_query:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: false
-        search_mode:
-          anyOf:
-          - type: string
-          - type: 'null'
-          default: vector
-      type: object
-      required:
-      - query
-      title: VectorStoresByVectorStoreIdSearchPostRequest
     _URLOrData:
       properties:
         url:
@@ -9144,37 +9193,6 @@ components:
       - $ref: '#/components/schemas/StructuredLogEvent'
         title: StructuredLogEvent
       title: UnstructuredLogEvent | MetricEvent | StructuredLogEvent
-    ImageDelta:
-      description: An image content delta for streaming responses.
-      properties:
-        type:
-          const: image
-          default: image
-          title: Type
-          type: string
-        image:
-          format: binary
-          title: Image
-          type: string
-      required:
-      - image
-      title: ImageDelta
-      type: object
-    TextDelta:
-      description: A text content delta for streaming responses.
-      properties:
-        type:
-          const: text
-          default: text
-          title: Type
-          type: string
-        text:
-          title: Text
-          type: string
-      required:
-      - text
-      title: TextDelta
-      type: object
     MetricInResponse:
       description: A metric value included in API responses.
       properties:
@@ -9196,6 +9214,344 @@ components:
       - value
       title: MetricInResponse
       type: object
+    TextDelta:
+      description: A text content delta for streaming responses.
+      properties:
+        type:
+          const: text
+          default: text
+          title: Type
+          type: string
+        text:
+          title: Text
+          type: string
+      required:
+      - text
+      title: TextDelta
+      type: object
+    ImageDelta:
+      description: An image content delta for streaming responses.
+      properties:
+        type:
+          const: image
+          default: image
+          title: Type
+          type: string
+        image:
+          format: binary
+          title: Image
+          type: string
+      required:
+      - image
+      title: ImageDelta
+      type: object
+    Fp8QuantizationConfig:
+      description: Configuration for 8-bit floating point quantization.
+      properties:
+        type:
+          const: fp8_mixed
+          default: fp8_mixed
+          title: Type
+          type: string
+      title: Fp8QuantizationConfig
+      type: object
+    Bf16QuantizationConfig:
+      description: Configuration for BFloat16 precision (typically no quantization).
+      properties:
+        type:
+          const: bf16
+          default: bf16
+          title: Type
+          type: string
+      title: Bf16QuantizationConfig
+      type: object
+    Int4QuantizationConfig:
+      description: Configuration for 4-bit integer quantization.
+      properties:
+        type:
+          const: int4_mixed
+          default: int4_mixed
+          title: Type
+          type: string
+        scheme:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: int4_weight_int8_dynamic_activation
+      title: Int4QuantizationConfig
+      type: object
+    UserMessage:
+      description: A message from the user in a chat conversation.
+      properties:
+        role:
+          const: user
+          default: user
+          title: Role
+          type: string
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+        context:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          - type: 'null'
+          title: string | list[ImageContentItem | TextContentItem]
+          nullable: true
+      required:
+      - content
+      title: UserMessage
+      type: object
+    ToolResponseMessage:
+      description: A message representing the result of a tool invocation.
+      properties:
+        role:
+          const: tool
+          default: tool
+          title: Role
+          type: string
+        call_id:
+          title: Call Id
+          type: string
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+      required:
+      - call_id
+      - content
+      title: ToolResponseMessage
+      type: object
+    TokenLogProbs:
+      description: Log probabilities for generated tokens.
+      properties:
+        logprobs_by_token:
+          additionalProperties:
+            type: number
+          title: Logprobs By Token
+          type: object
+      required:
+      - logprobs_by_token
+      title: TokenLogProbs
+      type: object
+    EmbeddingsResponse:
+      description: Response containing generated embeddings.
+      properties:
+        embeddings:
+          items:
+            items:
+              type: number
+            type: array
+          title: Embeddings
+          type: array
+      required:
+      - embeddings
+      title: EmbeddingsResponse
+      type: object
+    OpenAICompletionLogprobs:
+      description: |-
+        The log probabilities for the tokens in the message from an OpenAI-compatible completion response.
+
+        :text_offset: (Optional) The offset of the token in the text
+        :token_logprobs: (Optional) The log probabilities for the tokens
+        :tokens: (Optional) The tokens
+        :top_logprobs: (Optional) The top log probabilities for the tokens
+      properties:
+        text_offset:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          nullable: true
+        token_logprobs:
+          anyOf:
+          - items:
+              type: number
+            type: array
+          - type: 'null'
+          nullable: true
+        tokens:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          nullable: true
+        top_logprobs:
+          anyOf:
+          - items:
+              additionalProperties:
+                type: number
+              type: object
+            type: array
+          - type: 'null'
+          nullable: true
+      title: OpenAICompletionLogprobs
+      type: object
+    VectorStoreCreateRequest:
+      description: Request to create a vector store.
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        file_ids:
+          items:
+            type: string
+          title: File Ids
+          type: array
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        chunking_strategy:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        metadata:
+          additionalProperties: true
+          title: Metadata
+          type: object
+      title: VectorStoreCreateRequest
+      type: object
+    VectorStoreModifyRequest:
+      description: Request to modify a vector store.
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+      title: VectorStoreModifyRequest
+      type: object
+    VectorStoreSearchRequest:
+      description: Request to search a vector store.
+      properties:
+        query:
+          anyOf:
+          - type: string
+          - items:
+              type: string
+            type: array
+            title: list[string]
+          title: string | list[string]
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        max_num_results:
+          default: 10
+          title: Max Num Results
+          type: integer
+        ranking_options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        rewrite_query:
+          default: false
+          title: Rewrite Query
+          type: boolean
+      required:
+      - query
+      title: VectorStoreSearchRequest
+      type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
       properties:
@@ -9205,6 +9561,45 @@ components:
           title: Type
           type: string
       title: DialogType
+      type: object
+    ConversationMessage:
+      description: OpenAI-compatible message item for conversations.
+      properties:
+        id:
+          description: unique identifier for this message
+          title: Id
+          type: string
+        content:
+          description: message content
+          items:
+            additionalProperties: true
+            type: object
+          title: Content
+          type: array
+        role:
+          description: message role
+          title: Role
+          type: string
+        status:
+          description: message status
+          title: Status
+          type: string
+        type:
+          const: message
+          default: message
+          title: Type
+          type: string
+        object:
+          const: message
+          default: message
+          title: Object
+          type: string
+      required:
+      - id
+      - content
+      - role
+      - status
+      title: ConversationMessage
       type: object
     ConversationItemCreateRequest:
       description: Request body for creating conversation items.
@@ -9251,44 +9646,32 @@ components:
       - items
       title: ConversationItemCreateRequest
       type: object
-    ConversationMessage:
-      description: OpenAI-compatible message item for conversations.
+    ToolGroupInput:
+      description: Input data for registering a tool group.
       properties:
-        id:
-          description: unique identifier for this message
-          title: Id
+        toolgroup_id:
+          title: Toolgroup Id
           type: string
-        content:
-          description: message content
-          items:
-            additionalProperties: true
+        provider_id:
+          title: Provider Id
+          type: string
+        args:
+          anyOf:
+          - additionalProperties: true
             type: object
-          title: Content
-          type: array
-        role:
-          description: message role
-          title: Role
-          type: string
-        status:
-          description: message status
-          title: Status
-          type: string
-        type:
-          const: message
-          default: message
-          title: Type
-          type: string
-        object:
-          const: message
-          default: message
-          title: Object
-          type: string
+          - type: 'null'
+          nullable: true
+        mcp_endpoint:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+            title: URL
+          - type: 'null'
+          nullable: true
+          title: URL
       required:
-      - id
-      - content
-      - role
-      - status
-      title: ConversationMessage
+      - toolgroup_id
+      - provider_id
+      title: ToolGroupInput
       type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
@@ -9317,6 +9700,80 @@ components:
       - inspect
       title: Api
       type: string
+    ProviderSpec:
+      properties:
+        api:
+          $ref: '#/components/schemas/Api'
+        provider_type:
+          title: Provider Type
+          type: string
+        config_class:
+          description: Fully-qualified classname of the config for this provider
+          title: Config Class
+          type: string
+        api_dependencies:
+          description: Higher-level API surfaces may depend on other providers to provide their functionality
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Api Dependencies
+          type: array
+        optional_api_dependencies:
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Optional Api Dependencies
+          type: array
+        deprecation_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated, specify the warning message here
+          nullable: true
+        deprecation_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated and does NOT work, specify the error message here
+          nullable: true
+        module:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2-
+
+             Fully-qualified name of the module to import. The module is expected to have:
+
+              - `get_adapter_impl(config, deps)`: returns the adapter implementation
+
+              Example: `module: ramalama_stack`
+
+          nullable: true
+        pip_packages:
+          description: The pip dependencies needed for this implementation
+          items:
+            type: string
+          title: Pip Packages
+          type: array
+        provider_data_validator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        is_external:
+          default: false
+          description: Notes whether this provider is an external provider.
+          title: Is External
+          type: boolean
+        deps__:
+          items:
+            type: string
+          title: Deps
+          type: array
+      required:
+      - api
+      - provider_type
+      - config_class
+      title: ProviderSpec
+      type: object
     InlineProviderSpec:
       properties:
         api:
@@ -9408,80 +9865,6 @@ components:
       - config_class
       title: InlineProviderSpec
       type: object
-    ProviderSpec:
-      properties:
-        api:
-          $ref: '#/components/schemas/Api'
-        provider_type:
-          title: Provider Type
-          type: string
-        config_class:
-          description: Fully-qualified classname of the config for this provider
-          title: Config Class
-          type: string
-        api_dependencies:
-          description: Higher-level API surfaces may depend on other providers to provide their functionality
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Api Dependencies
-          type: array
-        optional_api_dependencies:
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Optional Api Dependencies
-          type: array
-        deprecation_warning:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated, specify the warning message here
-          nullable: true
-        deprecation_error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated and does NOT work, specify the error message here
-          nullable: true
-        module:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2-
-
-             Fully-qualified name of the module to import. The module is expected to have:
-
-              - `get_adapter_impl(config, deps)`: returns the adapter implementation
-
-              Example: `module: ramalama_stack`
-
-          nullable: true
-        pip_packages:
-          description: The pip dependencies needed for this implementation
-          items:
-            type: string
-          title: Pip Packages
-          type: array
-        provider_data_validator:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        is_external:
-          default: false
-          description: Notes whether this provider is an external provider.
-          title: Is External
-          type: boolean
-        deps__:
-          items:
-            type: string
-          title: Deps
-          type: array
-      required:
-      - api
-      - provider_type
-      - config_class
-      title: ProviderSpec
-      type: object
     RemoteProviderSpec:
       properties:
         api:
@@ -9569,225 +9952,6 @@ components:
       - adapter_type
       title: RemoteProviderSpec
       type: object
-    Bf16QuantizationConfig:
-      description: Configuration for BFloat16 precision (typically no quantization).
-      properties:
-        type:
-          const: bf16
-          default: bf16
-          title: Type
-          type: string
-      title: Bf16QuantizationConfig
-      type: object
-    EmbeddingsResponse:
-      description: Response containing generated embeddings.
-      properties:
-        embeddings:
-          items:
-            items:
-              type: number
-            type: array
-          title: Embeddings
-          type: array
-      required:
-      - embeddings
-      title: EmbeddingsResponse
-      type: object
-    Fp8QuantizationConfig:
-      description: Configuration for 8-bit floating point quantization.
-      properties:
-        type:
-          const: fp8_mixed
-          default: fp8_mixed
-          title: Type
-          type: string
-      title: Fp8QuantizationConfig
-      type: object
-    Int4QuantizationConfig:
-      description: Configuration for 4-bit integer quantization.
-      properties:
-        type:
-          const: int4_mixed
-          default: int4_mixed
-          title: Type
-          type: string
-        scheme:
-          anyOf:
-          - type: string
-          - type: 'null'
-          default: int4_weight_int8_dynamic_activation
-      title: Int4QuantizationConfig
-      type: object
-    OpenAICompletionLogprobs:
-      description: |-
-        The log probabilities for the tokens in the message from an OpenAI-compatible completion response.
-
-        :text_offset: (Optional) The offset of the token in the text
-        :token_logprobs: (Optional) The log probabilities for the tokens
-        :tokens: (Optional) The tokens
-        :top_logprobs: (Optional) The top log probabilities for the tokens
-      properties:
-        text_offset:
-          anyOf:
-          - items:
-              type: integer
-            type: array
-          - type: 'null'
-          nullable: true
-        token_logprobs:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-          nullable: true
-        tokens:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          nullable: true
-        top_logprobs:
-          anyOf:
-          - items:
-              additionalProperties:
-                type: number
-              type: object
-            type: array
-          - type: 'null'
-          nullable: true
-      title: OpenAICompletionLogprobs
-      type: object
-    TokenLogProbs:
-      description: Log probabilities for generated tokens.
-      properties:
-        logprobs_by_token:
-          additionalProperties:
-            type: number
-          title: Logprobs By Token
-          type: object
-      required:
-      - logprobs_by_token
-      title: TokenLogProbs
-      type: object
-    ToolResponseMessage:
-      description: A message representing the result of a tool invocation.
-      properties:
-        role:
-          const: tool
-          default: tool
-          title: Role
-          type: string
-        call_id:
-          title: Call Id
-          type: string
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
-      required:
-      - call_id
-      - content
-      title: ToolResponseMessage
-      type: object
-    UserMessage:
-      description: A message from the user in a chat conversation.
-      properties:
-        role:
-          const: user
-          default: user
-          title: Role
-          type: string
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
-        context:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          - type: 'null'
-          title: string | list[ImageContentItem | TextContentItem]
-          nullable: true
-      required:
-      - content
-      title: UserMessage
-      type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.
       properties:
@@ -9853,120 +10017,235 @@ components:
       - logger_config
       title: PostTrainingRLHFRequest
       type: object
-    ToolGroupInput:
-      description: Input data for registering a tool group.
+    Span:
+      description: A span representing a single operation within a trace.
       properties:
-        toolgroup_id:
-          title: Toolgroup Id
+        span_id:
+          title: Span Id
           type: string
-        provider_id:
-          title: Provider Id
+        trace_id:
+          title: Trace Id
           type: string
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          nullable: true
-          title: URL
-      required:
-      - toolgroup_id
-      - provider_id
-      title: ToolGroupInput
-      type: object
-    VectorStoreCreateRequest:
-      description: Request to create a vector store.
-      properties:
-        name:
+        parent_span_id:
           anyOf:
           - type: string
           - type: 'null'
           nullable: true
-        file_ids:
-          items:
+        name:
+          title: Name
+          type: string
+        start_time:
+          format: date-time
+          title: Start Time
+          type: string
+        end_time:
+          anyOf:
+          - format: date-time
             type: string
-          title: File Ids
-          type: array
-        expires_after:
+          - type: 'null'
+          nullable: true
+        attributes:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
-          nullable: true
-        chunking_strategy:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        metadata:
-          additionalProperties: true
-          title: Metadata
-          type: object
-      title: VectorStoreCreateRequest
+      required:
+      - span_id
+      - trace_id
+      - name
+      - start_time
+      title: Span
       type: object
-    VectorStoreModifyRequest:
-      description: Request to modify a vector store.
+    Trace:
+      description: A trace representing the complete execution path of a request across multiple operations.
+      properties:
+        trace_id:
+          title: Trace Id
+          type: string
+        root_span_id:
+          title: Root Span Id
+          type: string
+        start_time:
+          format: date-time
+          title: Start Time
+          type: string
+        end_time:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          nullable: true
+      required:
+      - trace_id
+      - root_span_id
+      - start_time
+      title: Trace
+      type: object
+    EventType:
+      description: The type of telemetry event being logged.
+      enum:
+      - unstructured_log
+      - structured_log
+      - metric
+      title: EventType
+      type: string
+    StructuredLogType:
+      description: The type of structured log event payload.
+      enum:
+      - span_start
+      - span_end
+      title: StructuredLogType
+      type: string
+    EvalTrace:
+      description: A trace record for evaluation purposes.
+      properties:
+        session_id:
+          title: Session Id
+          type: string
+        step:
+          title: Step
+          type: string
+        input:
+          title: Input
+          type: string
+        output:
+          title: Output
+          type: string
+        expected_output:
+          title: Expected Output
+          type: string
+      required:
+      - session_id
+      - step
+      - input
+      - output
+      - expected_output
+      title: EvalTrace
+      type: object
+    SpanWithStatus:
+      description: A span that includes status information.
+      properties:
+        span_id:
+          title: Span Id
+          type: string
+        trace_id:
+          title: Trace Id
+          type: string
+        parent_span_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        name:
+          title: Name
+          type: string
+        start_time:
+          format: date-time
+          title: Start Time
+          type: string
+        end_time:
+          anyOf:
+          - format: date-time
+            type: string
+          - type: 'null'
+          nullable: true
+        attributes:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        status:
+          anyOf:
+          - $ref: '#/components/schemas/SpanStatus'
+            title: SpanStatus
+          - type: 'null'
+          nullable: true
+          title: SpanStatus
+      required:
+      - span_id
+      - trace_id
+      - name
+      - start_time
+      title: SpanWithStatus
+      type: object
+    QueryConditionOp:
+      description: Comparison operators for query conditions.
+      enum:
+      - eq
+      - ne
+      - gt
+      - lt
+      title: QueryConditionOp
+      type: string
+    QueryCondition:
+      description: A condition for filtering query results.
+      properties:
+        key:
+          title: Key
+          type: string
+        op:
+          $ref: '#/components/schemas/QueryConditionOp'
+        value:
+          title: Value
+      required:
+      - key
+      - op
+      - value
+      title: QueryCondition
+      type: object
+    MetricLabel:
+      description: A label associated with a metric.
       properties:
         name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        expires_after:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-      title: VectorStoreModifyRequest
-      type: object
-    VectorStoreSearchRequest:
-      description: Request to search a vector store.
-      properties:
-        query:
-          anyOf:
-          - type: string
-          - items:
-              type: string
-            type: array
-            title: list[string]
-          title: string | list[string]
-        filters:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        max_num_results:
-          default: 10
-          title: Max Num Results
-          type: integer
-        ranking_options:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        rewrite_query:
-          default: false
-          title: Rewrite Query
-          type: boolean
+          title: Name
+          type: string
+        value:
+          title: Value
+          type: string
       required:
-      - query
-      title: VectorStoreSearchRequest
+      - name
+      - value
+      title: MetricLabel
+      type: object
+    MetricDataPoint:
+      description: A single data point in a metric time series.
+      properties:
+        timestamp:
+          title: Timestamp
+          type: integer
+        value:
+          title: Value
+          type: number
+        unit:
+          title: Unit
+          type: string
+      required:
+      - timestamp
+      - value
+      - unit
+      title: MetricDataPoint
+      type: object
+    MetricSeries:
+      description: A time series of metric data points.
+      properties:
+        metric:
+          title: Metric
+          type: string
+        labels:
+          items:
+            $ref: '#/components/schemas/MetricLabel'
+          title: Labels
+          type: array
+        values:
+          items:
+            $ref: '#/components/schemas/MetricDataPoint'
+          title: Values
+          type: array
+      required:
+      - metric
+      - labels
+      - values
+      title: MetricSeries
       type: object
   responses:
     BadRequest400:

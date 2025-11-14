@@ -11,9 +11,8 @@ Shared state for the OpenAPI generator module.
 from typing import Any
 
 from llama_stack_api import Api
+from llama_stack_api.schema_utils import clear_dynamic_schema_types, register_dynamic_schema_type
 
-# Global list to store dynamic models created during endpoint generation
-_dynamic_models: list[Any] = []
 _dynamic_model_registry: dict[str, type] = {}
 
 # Cache for protocol methods to avoid repeated lookups
@@ -28,14 +27,15 @@ def register_dynamic_model(name: str, model: type) -> type:
     """Register and deduplicate dynamically generated request models."""
     existing = _dynamic_model_registry.get(name)
     if existing is not None:
+        register_dynamic_schema_type(existing)
         return existing
     _dynamic_model_registry[name] = model
-    _dynamic_models.append(model)
+    register_dynamic_schema_type(model)
     return model
 
 
 def reset_generator_state() -> None:
     """Clear per-run caches so repeated generations stay deterministic."""
-    _dynamic_models.clear()
     _dynamic_model_registry.clear()
     _extra_body_fields.clear()
+    clear_dynamic_schema_types()
