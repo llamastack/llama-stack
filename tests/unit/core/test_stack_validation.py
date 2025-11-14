@@ -10,11 +10,9 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.apis.models import ListModelsResponse, Model, ModelType
-from llama_stack.apis.shields import ListShieldsResponse, Shield
 from llama_stack.core.datatypes import QualifiedModel, SafetyConfig, StackRunConfig, StorageConfig, VectorStoresConfig
 from llama_stack.core.stack import validate_safety_config, validate_vector_stores_config
-from llama_stack.providers.datatypes import Api
+from llama_stack_api import Api, ListModelsResponse, ListShieldsResponse, Model, ModelType, Shield
 
 
 class TestVectorStoresValidation:

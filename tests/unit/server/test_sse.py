@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.core.server.server import create_dynamic_typed_route, create_sse_event, sse_generator
+from llama_stack_api import PaginatedResponse
 
 
 @pytest.fixture

@@ -12,9 +12,8 @@ from typing import Any
 from aiohttp import hdrs
 from starlette.routing import Route
 
-from llama_stack.apis.datatypes import Api, ExternalApiSpec
 from llama_stack.core.resolver import api_protocol_map
-from llama_stack.schema_utils import WebMethod
+from llama_stack_api import Api, ExternalApiSpec, WebMethod
 
 EndpointFunc = Callable[..., Any]
 PathParams = dict[str, str]

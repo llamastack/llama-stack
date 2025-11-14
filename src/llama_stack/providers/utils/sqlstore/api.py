@@ -10,7 +10,7 @@ from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
 
-from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack_api import PaginatedResponse
 
 
 class ColumnType(Enum):

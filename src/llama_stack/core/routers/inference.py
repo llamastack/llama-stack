@@ -15,13 +15,25 @@ from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatC
 from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
 from pydantic import TypeAdapter
 
-from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
-from llama_stack.apis.inference import (
+from llama_stack.core.telemetry.telemetry import MetricEvent
+from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
+from llama_stack.log import get_logger
+from llama_stack.models.llama.llama3.chat_format import ChatFormat
+from llama_stack.models.llama.llama3.tokenizer import Tokenizer
+from llama_stack.providers.utils.inference.inference_store import InferenceStore
+from llama_stack_api import (
+    HealthResponse,
+    HealthStatus,
     Inference,
     ListOpenAIChatCompletionResponse,
+    ModelNotFoundError,
+    ModelType,
+    ModelTypeError,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
@@ -35,19 +47,8 @@ from llama_stack.apis.inference import (
     OpenAIMessageParam,
     Order,
     RerankResponse,
+    RoutingTable,
 )
-from llama_stack.apis.inference.inference import (
-    OpenAIChatCompletionContentPartImageParam,
-    OpenAIChatCompletionContentPartTextParam,
-)
-from llama_stack.apis.models import ModelType
-from llama_stack.core.telemetry.telemetry import MetricEvent
-from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
-from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.chat_format import ChatFormat
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
-from llama_stack.providers.datatypes import HealthResponse, HealthStatus, RoutingTable
-from llama_stack.providers.utils.inference.inference_store import InferenceStore
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -416,7 +417,7 @@ class InferenceRouter(Inference):
                             prompt_tokens=chunk.usage.prompt_tokens,
                             completion_tokens=chunk.usage.completion_tokens,
                             total_tokens=chunk.usage.total_tokens,
-                            model_id=fully_qualified_model_id,
+                            fully_qualified_model_id=fully_qualified_model_id,
                             provider_id=provider_id,
                         )
                         for metric in metrics:

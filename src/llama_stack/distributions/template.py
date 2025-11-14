@@ -12,8 +12,6 @@ import rich
 import yaml
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.datasets import DatasetPurpose
-from llama_stack.apis.models import ModelType
 from llama_stack.core.datatypes import (
     LLAMA_STACK_RUN_CONFIG_VERSION,
     Api,
@@ -44,6 +42,7 @@ from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
 from llama_stack.providers.utils.kvstore.config import get_pip_packages as get_kv_pip_packages
 from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import get_pip_packages as get_sql_pip_packages
+from llama_stack_api import DatasetPurpose, ModelType
 
 
 def filter_empty_values(obj: Any) -> Any:

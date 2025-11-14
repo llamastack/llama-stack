@@ -12,10 +12,6 @@ from openai.types.conversations.conversation import Conversation as OpenAIConver
 from openai.types.conversations.conversation_item import ConversationItem as OpenAIConversationItem
 from pydantic import TypeAdapter
 
-from llama_stack.apis.agents.openai_responses import (
-    OpenAIResponseInputMessageContentText,
-    OpenAIResponseMessage,
-)
 from llama_stack.core.conversations.conversations import (
     ConversationServiceConfig,
     ConversationServiceImpl,
@@ -28,6 +24,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+from llama_stack_api import OpenAIResponseInputMessageContentText, OpenAIResponseMessage
 
 
 @pytest.fixture

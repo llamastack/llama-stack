@@ -7,8 +7,6 @@
 import time
 from typing import Any
 
-from llama_stack.apis.common.errors import ModelNotFoundError
-from llama_stack.apis.models import ListModelsResponse, Model, Models, ModelType, OpenAIListModelsResponse, OpenAIModel
 from llama_stack.core.datatypes import (
     ModelWithOwner,
     RegistryEntrySource,
@@ -16,6 +14,15 @@ from llama_stack.core.datatypes import (
 from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
+from llama_stack_api import (
+    ListModelsResponse,
+    Model,
+    ModelNotFoundError,
+    Models,
+    ModelType,
+    OpenAIListModelsResponse,
+    OpenAIModel,
+)
 
 from .common import CommonRoutingTableImpl, lookup_model
 

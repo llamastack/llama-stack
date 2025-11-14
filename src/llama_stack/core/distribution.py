@@ -15,7 +15,7 @@ from pydantic import BaseModel
 from llama_stack.core.datatypes import BuildConfig, DistributionSpec
 from llama_stack.core.external import load_external_apis
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import (
+from llama_stack_api import (
     Api,
     InlineProviderSpec,
     ProviderSpec,

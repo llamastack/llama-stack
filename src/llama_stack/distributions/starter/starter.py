@@ -19,7 +19,6 @@ from llama_stack.core.datatypes import (
 )
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
-from llama_stack.providers.datatypes import RemoteProviderSpec
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
@@ -38,6 +37,7 @@ from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOC
 from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
 from llama_stack.providers.utils.kvstore.config import PostgresKVStoreConfig
 from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
+from llama_stack_api import RemoteProviderSpec
 
 
 def _get_config_for_provider(provider_spec: ProviderSpec) -> dict[str, Any]:

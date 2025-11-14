@@ -11,8 +11,7 @@ from pathlib import Path
 from typing import Any, List, Optional, TextIO, Union, get_type_hints, get_origin, get_args
 
 from pydantic import BaseModel
-from llama_stack.strong_typing.schema import object_to_json, StrictJsonType
-from llama_stack.strong_typing.inspection import is_unwrapped_body_param
+from llama_stack_api import StrictJsonType, is_unwrapped_body_param, object_to_json
 from llama_stack.core.resolver import api_protocol_map
 
 from .generator import Generator
@@ -165,12 +164,12 @@ def _validate_api_delete_method_returns_none(method) -> str | None:
         return "has no return type annotation"
 
     return_type = hints['return']
-    
+
     # Allow OpenAI endpoints to return response objects since they follow OpenAI specification
     method_name = getattr(method, '__name__', '')
     if method_name.__contains__('openai_'):
         return None
-    
+
     if return_type is not None and return_type is not type(None):
         return "does not return None where None is mandatory"
 

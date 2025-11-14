@@ -11,20 +11,6 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from llama_stack.apis.benchmarks import Benchmark, BenchmarkInput
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Dataset, DatasetInput
-from llama_stack.apis.eval import Eval
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.models import Model, ModelInput
-from llama_stack.apis.resource import Resource
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.scoring import Scoring
-from llama_stack.apis.scoring_functions import ScoringFn, ScoringFnInput
-from llama_stack.apis.shields import Shield, ShieldInput
-from llama_stack.apis.tools import ToolGroup, ToolGroupInput, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
-from llama_stack.apis.vector_stores import VectorStore, VectorStoreInput
 from llama_stack.core.access_control.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import (
     KVStoreReference,
@@ -32,7 +18,32 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
-from llama_stack.providers.datatypes import Api, ProviderSpec
+from llama_stack_api import (
+    Api,
+    Benchmark,
+    BenchmarkInput,
+    Dataset,
+    DatasetInput,
+    DatasetIO,
+    Eval,
+    Inference,
+    Model,
+    ModelInput,
+    ProviderSpec,
+    Resource,
+    Safety,
+    Scoring,
+    ScoringFn,
+    ScoringFnInput,
+    Shield,
+    ShieldInput,
+    ToolGroup,
+    ToolGroupInput,
+    ToolRuntime,
+    VectorIO,
+    VectorStore,
+    VectorStoreInput,
+)
 
 LLAMA_STACK_BUILD_CONFIG_VERSION = 2
 LLAMA_STACK_RUN_CONFIG_VERSION = 2

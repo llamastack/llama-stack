@@ -6,9 +6,6 @@
 
 from typing import Any
 
-from llama_stack.apis.common.errors import ModelNotFoundError
-from llama_stack.apis.models import Model
-from llama_stack.apis.resource import ResourceType
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
 from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import (
@@ -21,7 +18,7 @@ from llama_stack.core.datatypes import (
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.core.store import DistributionRegistry
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api, RoutingTable
+from llama_stack_api import Api, Model, ModelNotFoundError, ResourceType, RoutingTable
 
 logger = get_logger(name=__name__, category="core::routing_tables")
 

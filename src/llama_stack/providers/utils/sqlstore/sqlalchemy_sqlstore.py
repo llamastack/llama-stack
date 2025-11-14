@@ -26,9 +26,9 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.sql.elements import ColumnElement
 
-from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.core.storage.datatypes import SqlAlchemySqlStoreConfig
 from llama_stack.log import get_logger
+from llama_stack_api import PaginatedResponse
 
 from .api import ColumnDefinition, ColumnType, SqlStore
 
