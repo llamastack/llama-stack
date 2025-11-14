@@ -16,6 +16,7 @@ from llama_stack_api import (
     ApprovalFilter,
     Inference,
     MCPListToolsTool,
+    ModelNotFoundError,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
@@ -323,6 +324,8 @@ class StreamingResponseOrchestrator:
             if last_completion_result and last_completion_result.finish_reason == "length":
                 final_status = "incomplete"
 
+        except ModelNotFoundError:
+            raise
         except Exception as exc:  # noqa: BLE001
             self.final_messages = messages.copy()
             self.sequence_number += 1
