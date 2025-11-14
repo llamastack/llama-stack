@@ -4,11 +4,22 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import os
+
 import pytest
 
 from tests.common.mcp import make_mcp_server
 
 from .helpers import setup_mcp_tools
+
+# Skip these tests in replay mode until recordings are generated
+# The authorization parameter creates different request hashes than existing MCP tests
+pytestmark = pytest.mark.skipif(
+    os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE") == "replay",
+    reason="No recordings yet for MCP authorization tests. These tests use the authorization parameter "
+    "which creates different OpenAI request hashes than existing MCP tool tests. "
+    "Recordings can be generated in CI with record mode, or by running locally with OpenAI API key.",
+)
 
 
 def test_mcp_authorization_bearer(responses_client, text_model_id):
