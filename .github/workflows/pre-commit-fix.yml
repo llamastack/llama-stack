@@ -1,0 +1,166 @@
+name: Apply pre-commit fixes
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: Pull request number to update
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  autofix:
+    name: Run pre-commit and push fixes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve pull request metadata
+        id: pr
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          result-encoding: string
+          script: |
+            const prNumber = Number(core.getInput('pr_number', { required: true }));
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            if (pr.state !== 'open') {
+              core.setFailed(`Pull request #${prNumber} is not open.`);
+              return;
+            }
+
+            return JSON.stringify({
+              number: prNumber,
+              headRef: pr.head.ref,
+              headRepo: pr.head.repo.full_name,
+              baseRef: pr.base.ref,
+              isFork: pr.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`,
+              maintainerCanModify: pr.maintainer_can_modify ? 'true' : 'false',
+              author: pr.user.login,
+            });
+          pr_number: ${{ github.event.inputs.pr-number }}
+
+      - name: Verify push permissions
+        run: |
+          pr_info='${{ steps.pr.outputs.result }}'
+          head_repo=$(echo "$pr_info" | jq -r '.headRepo')
+          maintainer_can_modify=$(echo "$pr_info" | jq -r '.maintainerCanModify')
+          author=$(echo "$pr_info" | jq -r '.author')
+
+          if [ "$head_repo" != "${{ github.repository }}" ] && [ "$maintainer_can_modify" != "true" ] && [ "${{ github.actor }}" != "$author" ]; then
+            echo "::error::This workflow cannot push to $head_repo because 'Allow edits from maintainers' is disabled."
+            echo "Ask the PR author to enable the setting or run the workflow from a fork with sufficient permissions."
+            exit 1
+          fi
+
+      - name: Check out pull request branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ fromJSON(steps.pr.outputs.result).headRepo }}
+          ref: ${{ fromJSON(steps.pr.outputs.result).headRef }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Retrieve trusted pre-commit config
+        id: trusted-config
+        run: |
+          set -euo pipefail
+          pr_info='${{ steps.pr.outputs.result }}'
+          base_ref=$(echo "$pr_info" | jq -r '.baseRef')
+          git fetch "https://github.com/${{ github.repository }}.git" "$base_ref:refs/remotes/upstream/$base_ref"
+          git show "upstream/$base_ref:.pre-commit-config.yaml" > .pre-commit-config.trusted.yaml
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            **/requirements*.txt
+            .pre-commit-config.yaml
+            .pre-commit-config.trusted.yaml
+
+      - name: Install pre-commit
+        run: python -m pip install 'pre-commit>=4.4.0'
+        env:
+          GITHUB_TOKEN: ''
+
+      - name: Run trusted pre-commit subset
+        id: precommit
+        run: |
+          set -euo pipefail
+          echo "Running trusted pre-commit hooks from base branch"
+          hooks=(
+            trailing-whitespace
+            end-of-file-fixer
+            mixed-line-ending
+            insert-license
+            blacken-docs
+            ruff
+            ruff-format
+          )
+          status=0
+          for hook in "${hooks[@]}"; do
+            echo "::group::Running $hook"
+            if ! pre-commit run "$hook" --show-diff-on-failure --color=always --all-files --config .pre-commit-config.trusted.yaml; then
+              status=$?
+            fi
+            echo "::endgroup::"
+          done
+          exit "$status"
+        env:
+          RUFF_OUTPUT_FORMAT: github
+          GITHUB_TOKEN: ''
+
+      # These hooks come from the repository's base branch configuration, so
+      # contributors cannot smuggle new hook definitions or tweak pinned
+      # versions through the pull request. The selected set intentionally
+      # excludes repo-local entries and tooling that would execute scripts from
+      # the PR itself, trading coverage for a safer runner profile. It now
+      # focuses further on hooks that perform automatic fixes so the run only
+      # attempts changes that can be committed back to the branch.
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push changes
+        id: push
+        run: |
+          set -e
+          branch='${{ fromJSON(steps.pr.outputs.result).headRef }}'
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "Apply pre-commit fixes"
+            git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ fromJSON(steps.pr.outputs.result).headRepo }}.git" "HEAD:$branch"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No changes to commit"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment on pull request
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const prNumber = Number(core.getInput('pr_number', { required: true }));
+            const pushed = core.getInput('pushed');
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const messages = {
+              true: `✅ Applied trusted pre-commit fixes in [workflow run](${runUrl}).`,
+              false: `ℹ️ Trusted pre-commit workflow completed with no changes. See [workflow run](${runUrl}) for details.`,
+            };
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: prNumber,
+              body: messages[pushed === 'true' ? 'true' : 'false'],
+            });
+          pr_number: ${{ github.event.inputs.pr-number }}
+          pushed: ${{ steps.push.outputs.pushed }}
