@@ -15,8 +15,8 @@ from openai.types.chat.chat_completion_chunk import (
     ChoiceDeltaToolCallFunction,
 )
 
-from llama_stack.apis.agents import Order
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.agents import Order
+from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputToolFunction,
@@ -31,7 +31,7 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseTextFormat,
     WebSearchToolTypes,
 )
-from llama_stack.apis.inference import (
+from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -41,7 +41,7 @@ from llama_stack.apis.inference import (
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
 )
-from llama_stack.apis.tools.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
+from llama_stack_api.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (

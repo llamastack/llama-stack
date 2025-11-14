@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.openai_responses import (
     MCPListToolsTool,
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolFunction,

@@ -8,8 +8,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.apis.agents.agents import ResponseGuardrailSpec
-from llama_stack.apis.safety import ModerationObject, ModerationObjectResults
+from llama_stack_api.agents import ResponseGuardrailSpec
+from llama_stack_api.safety import ModerationObject, ModerationObjectResults
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
