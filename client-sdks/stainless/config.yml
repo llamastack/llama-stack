@@ -372,6 +372,7 @@ resources:
         endpoint: get /v1/scoring-functions
         paginated: false
       register: post /v1/scoring-functions
+      unregister: delete /v1/scoring-functions/{scoring_fn_id}
     models:
       scoring_fn: ScoringFn
       scoring_fn_params: ScoringFnParams
@@ -427,6 +428,7 @@ resources:
             endpoint: get /v1alpha/eval/benchmarks
             paginated: false
           register: post /v1alpha/eval/benchmarks
+          unregister: delete /v1alpha/eval/benchmarks/{benchmark_id}
         models:
           benchmark: Benchmark
           list_benchmarks_response: ListBenchmarksResponse
