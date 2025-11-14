@@ -15,7 +15,27 @@ from openai.types.chat.chat_completion_chunk import (
     ChoiceDeltaToolCallFunction,
 )
 
+from llama_stack.core.access_control.access_control import default_policy
+from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
+from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
+    OpenAIResponsesImpl,
+)
+from llama_stack.providers.utils.responses.responses_store import (
+    ResponsesStore,
+    _OpenAIResponseObjectWithInputAndMessages,
+)
+from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api.agents import Order
+from llama_stack_api.inference import (
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletionContentPartTextParam,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIDeveloperMessageParam,
+    OpenAIJSONSchema,
+    OpenAIResponseFormatJSONObject,
+    OpenAIResponseFormatJSONSchema,
+    OpenAIUserMessageParam,
+)
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
     OpenAIResponseInputMessageContentText,
@@ -31,27 +51,7 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseTextFormat,
     WebSearchToolTypes,
 )
-from llama_stack_api.inference import (
-    OpenAIAssistantMessageParam,
-    OpenAIChatCompletionContentPartTextParam,
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIDeveloperMessageParam,
-    OpenAIJSONSchema,
-    OpenAIResponseFormatJSONObject,
-    OpenAIResponseFormatJSONSchema,
-    OpenAIUserMessageParam,
-)
 from llama_stack_api.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
-from llama_stack.core.access_control.access_control import default_policy
-from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
-from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
-    OpenAIResponsesImpl,
-)
-from llama_stack.providers.utils.responses.responses_store import (
-    ResponsesStore,
-    _OpenAIResponseObjectWithInputAndMessages,
-)
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
 
 

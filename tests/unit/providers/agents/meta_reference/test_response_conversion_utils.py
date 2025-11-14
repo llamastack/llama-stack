@@ -7,18 +7,14 @@
 
 import pytest
 
-from llama_stack_api.openai_responses import (
-    OpenAIResponseAnnotationFileCitation,
-    OpenAIResponseInputFunctionToolCallOutput,
-    OpenAIResponseInputMessageContentImage,
-    OpenAIResponseInputMessageContentText,
-    OpenAIResponseInputToolFunction,
-    OpenAIResponseInputToolWebSearch,
-    OpenAIResponseMessage,
-    OpenAIResponseOutputMessageContentOutputText,
-    OpenAIResponseOutputMessageFunctionToolCall,
-    OpenAIResponseText,
-    OpenAIResponseTextFormat,
+from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
+    _extract_citations_from_text,
+    convert_chat_choice_to_response_message,
+    convert_response_content_to_chat_content,
+    convert_response_input_to_chat_messages,
+    convert_response_text_to_chat_response_format,
+    get_message_type_by_role,
+    is_function_tool_call,
 )
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
@@ -35,14 +31,18 @@ from llama_stack_api.inference import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
 )
-from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
-    _extract_citations_from_text,
-    convert_chat_choice_to_response_message,
-    convert_response_content_to_chat_content,
-    convert_response_input_to_chat_messages,
-    convert_response_text_to_chat_response_format,
-    get_message_type_by_role,
-    is_function_tool_call,
+from llama_stack_api.openai_responses import (
+    OpenAIResponseAnnotationFileCitation,
+    OpenAIResponseInputFunctionToolCallOutput,
+    OpenAIResponseInputMessageContentImage,
+    OpenAIResponseInputMessageContentText,
+    OpenAIResponseInputToolFunction,
+    OpenAIResponseInputToolWebSearch,
+    OpenAIResponseMessage,
+    OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseOutputMessageFunctionToolCall,
+    OpenAIResponseText,
+    OpenAIResponseTextFormat,
 )
 
 
