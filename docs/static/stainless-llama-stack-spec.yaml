@@ -1136,6 +1136,37 @@ paths:
         schema:
           type: string
         description: 'Path parameter: model_id'
+    delete:
+      tags:
+      - Models
+      summary: Unregister Model
+      operationId: unregister_model_v1_models__model_id__delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
+      parameters:
+      - name: model_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: model_id'
   /v1/models:
     get:
       tags:
@@ -1160,6 +1191,30 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+    post:
+      tags:
+      - Models
+      summary: Register Model
+      operationId: register_model_v1_models_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
   /v1/moderations:
     post:
       tags:
@@ -1239,6 +1294,37 @@ paths:
         schema:
           type: string
         description: 'Path parameter: identifier'
+    delete:
+      tags:
+      - Shields
+      summary: Unregister Shield
+      operationId: unregister_shield_v1_shields__identifier__delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
+      parameters:
+      - name: identifier
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: identifier'
   /v1/shields:
     get:
       tags:
@@ -1263,6 +1349,30 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+    post:
+      tags:
+      - Shields
+      summary: Register Shield
+      operationId: register_shield_v1_shields_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
   /v1beta/datasetio/append-rows/{dataset_id}:
     post:
       tags:
@@ -1356,6 +1466,37 @@ paths:
         schema:
           type: string
         description: 'Path parameter: dataset_id'
+    delete:
+      tags:
+      - Datasets
+      summary: Unregister Dataset
+      operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
+      parameters:
+      - name: dataset_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: dataset_id'
   /v1beta/datasets:
     get:
       tags:
@@ -1380,6 +1521,30 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+    post:
+      tags:
+      - Datasets
+      summary: Register Dataset
+      operationId: register_dataset_v1beta_datasets_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
   /v1/scoring/score:
     post:
       tags:
@@ -1459,6 +1624,37 @@ paths:
         schema:
           type: string
         description: 'Path parameter: scoring_fn_id'
+    delete:
+      tags:
+      - Scoring Functions
+      summary: Unregister Scoring Function
+      operationId: unregister_scoring_function_v1_scoring_functions__scoring_fn_id__delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
+      parameters:
+      - name: scoring_fn_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: scoring_fn_id'
   /v1/scoring-functions:
     get:
       tags:
@@ -1483,6 +1679,30 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+    post:
+      tags:
+      - Scoring Functions
+      summary: Register Scoring Function
+      operationId: register_scoring_function_v1_scoring_functions_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
   /v1alpha/eval/benchmarks/{benchmark_id}/evaluations:
     post:
       tags:
@@ -1686,6 +1906,37 @@ paths:
         schema:
           type: string
         description: 'Path parameter: benchmark_id'
+    delete:
+      tags:
+      - Benchmarks
+      summary: Unregister Benchmark
+      operationId: unregister_benchmark_v1alpha_eval_benchmarks__benchmark_id__delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
+      parameters:
+      - name: benchmark_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: benchmark_id'
   /v1alpha/eval/benchmarks:
     get:
       tags:
@@ -1710,6 +1961,30 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+    post:
+      tags:
+      - Benchmarks
+      summary: Register Benchmark
+      operationId: register_benchmark_v1alpha_eval_benchmarks_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
   /v1alpha/post-training/job/cancel:
     post:
       tags:
@@ -1916,6 +2191,37 @@ paths:
         schema:
           type: string
         description: 'Path parameter: toolgroup_id'
+    delete:
+      tags:
+      - Tool Groups
+      summary: Unregister Toolgroup
+      operationId: unregister_toolgroup_v1_toolgroups__toolgroup_id__delete
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
+      parameters:
+      - name: toolgroup_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: toolgroup_id'
   /v1/toolgroups:
     get:
       tags:
@@ -1940,6 +2246,30 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
+    post:
+      tags:
+      - Tool Groups
+      summary: Register Tool Group
+      operationId: register_tool_group_v1_toolgroups_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      deprecated: true
   /v1/tools:
     get:
       tags:
@@ -7395,7 +7725,7 @@ components:
               - `get_adapter_impl(config, deps)`: returns the adapter implementation
 
               Example: `module: ramalama_stack`
-             
+
           nullable: true
         pip_packages:
           description: The pip dependencies needed for this implementation
@@ -7529,7 +7859,7 @@ components:
               - `get_adapter_impl(config, deps)`: returns the adapter implementation
 
               Example: `module: ramalama_stack`
-             
+
           nullable: true
         pip_packages:
           description: The pip dependencies needed for this implementation
@@ -7603,7 +7933,7 @@ components:
               - `get_adapter_impl(config, deps)`: returns the adapter implementation
 
               Example: `module: ramalama_stack`
-             
+
           nullable: true
         pip_packages:
           description: The pip dependencies needed for this implementation

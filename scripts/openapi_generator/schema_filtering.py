@@ -276,7 +276,7 @@ def _filter_deprecated_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
 def _filter_combined_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """
     Filter OpenAPI schema to include both stable (v1) and experimental (v1alpha, v1beta) APIs.
-    Excludes deprecated endpoints. This is used for the combined "stainless" spec.
+    Includes deprecated endpoints. This is used for the combined "stainless" spec.
     """
     filtered_schema = openapi_schema.copy()
 
@@ -297,10 +297,6 @@ def _filter_combined_schema(openapi_schema: dict[str, Any]) -> dict[str, Any]:
                 continue
             operation = path_item[method]
             if not isinstance(operation, dict):
-                continue
-
-            # Skip deprecated operations
-            if operation.get("deprecated", False):
                 continue
 
             filtered_path_item[method] = operation
