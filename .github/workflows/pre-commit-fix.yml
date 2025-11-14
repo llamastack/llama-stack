@@ -1,0 +1,148 @@
+name: Apply pre-commit fixes
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: Pull request number to update
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  autofix:
+    name: Run pre-commit and push fixes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve pull request metadata
+        id: pr
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          result-encoding: string
+          script: |
+            const prNumber = Number(core.getInput('pr_number', { required: true }));
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            if (pr.state !== 'open') {
+              core.setFailed(`Pull request #${prNumber} is not open.`);
+              return;
+            }
+
+            return JSON.stringify({
+              number: prNumber,
+              headRef: pr.head.ref,
+              headRepo: pr.head.repo.full_name,
+              isFork: pr.head.repo.full_name !== `${context.repo.owner}/${context.repo.repo}`,
+              maintainerCanModify: pr.maintainer_can_modify ? 'true' : 'false',
+              author: pr.user.login,
+            });
+          pr_number: ${{ github.event.inputs.pr-number }}
+
+      - name: Verify push permissions
+        run: |
+          pr_info='${{ steps.pr.outputs.result }}'
+          head_repo=$(echo "$pr_info" | jq -r '.headRepo')
+          maintainer_can_modify=$(echo "$pr_info" | jq -r '.maintainerCanModify')
+          author=$(echo "$pr_info" | jq -r '.author')
+
+          if [ "$head_repo" != "${{ github.repository }}" ] && [ "$maintainer_can_modify" != "true" ] && [ "${{ github.actor }}" != "$author" ]; then
+            echo "::error::This workflow cannot push to $head_repo because 'Allow edits from maintainers' is disabled."
+            echo "Ask the PR author to enable the setting or run the workflow from a fork with sufficient permissions."
+            exit 1
+          fi
+
+      - name: Check out pull request branch
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ fromJSON(steps.pr.outputs.result).headRepo }}
+          ref: ${{ fromJSON(steps.pr.outputs.result).headRef }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Update branch with latest remote commits
+        run: |
+          git fetch origin ${{ fromJSON(steps.pr.outputs.result).headRef }}
+          git checkout ${{ fromJSON(steps.pr.outputs.result).headRef }}
+          git pull --rebase origin ${{ fromJSON(steps.pr.outputs.result).headRef }}
+
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: |
+            **/requirements*.txt
+            .pre-commit-config.yaml
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: 'src/llama_stack_ui/'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@85856786d1ce8acfbcc2f13a5f3fbd6b938f9f41 # v7.1.2
+
+      - name: Install npm dependencies
+        run: npm ci
+        working-directory: src/llama_stack_ui
+
+      - name: Install pre-commit
+        run: python -m pip install 'pre-commit>=4.4.0'
+
+      - name: Run pre-commit (apply fixes)
+        id: precommit
+        run: |
+          set -eo pipefail
+          echo "Running pre-commit"
+          pre-commit run --show-diff-on-failure --color=always --all-files
+        env:
+          SKIP: no-commit-to-branch,mypy
+          RUFF_OUTPUT_FORMAT: github
+
+      - name: Configure git user
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit and push changes
+        id: push
+        run: |
+          set -e
+          branch='${{ fromJSON(steps.pr.outputs.result).headRef }}'
+          if [ -n "$(git status --porcelain)" ]; then
+            git add -A
+            git commit -m "Apply pre-commit fixes"
+            git push origin "HEAD:$branch"
+            echo "pushed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No changes to commit"
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment on pull request
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const prNumber = Number(core.getInput('pr_number', { required: true }));
+            const pushed = core.getInput('pushed');
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const messages = {
+              true: `✅ Applied pre-commit fixes in [workflow run](${runUrl}).`,
+              false: `ℹ️ Pre-commit workflow completed with no changes. See [workflow run](${runUrl}) for details.`,
+            };
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: prNumber,
+              body: messages[pushed === 'true' ? 'true' : 'false'],
+            });
+          pr_number: ${{ github.event.inputs.pr-number }}
+          pushed: ${{ steps.push.outputs.pushed }}
