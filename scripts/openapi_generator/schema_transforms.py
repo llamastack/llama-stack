@@ -810,6 +810,16 @@ def _write_yaml_file(file_path: Path, schema: dict[str, Any]) -> None:
         with open(file_path, "w") as f:
             yaml.dump(schema, f, default_flow_style=False, sort_keys=False)
 
+    # Post-process to remove trailing whitespace from all lines
+    with open(file_path) as f:
+        lines = f.readlines()
+
+    # Strip trailing whitespace from each line, preserving newlines
+    cleaned_lines = [line.rstrip() + "\n" if line.endswith("\n") else line.rstrip() for line in lines]
+
+    with open(file_path, "w") as f:
+        f.writelines(cleaned_lines)
+
 
 def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """Fix common schema issues: exclusiveMinimum, null defaults, and add titles to unions."""
