@@ -6336,6 +6336,17 @@ components:
       - scoring_functions
       title: Benchmark
       type: object
+    ListBenchmarksResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Benchmark'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListBenchmarksResponse
+      type: object
     ImageDelta:
       description: An image content delta for streaming responses.
       properties:
@@ -6785,6 +6796,18 @@ components:
       - purpose
       - source
       title: Dataset
+      type: object
+    ListDatasetsResponse:
+      description: Response from listing datasets.
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Dataset'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListDatasetsResponse
       type: object
     Error:
       description: Error response from the API. Roughly follows RFC 7807.
@@ -8768,6 +8791,17 @@ components:
       - owned_by
       title: OpenAIModel
       type: object
+    OpenAIListModelsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/OpenAIModel'
+          title: Data
+          type: array
+      required:
+      - data
+      title: OpenAIListModelsResponse
+      type: object
     DPOLossType:
       enum:
       - sigmoid
@@ -8856,6 +8890,26 @@ components:
           - type: 'null'
           default: false
       title: EfficiencyConfig
+      type: object
+    PostTrainingJob:
+      properties:
+        job_uuid:
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: PostTrainingJob
+      type: object
+    ListPostTrainingJobsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/PostTrainingJob'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListPostTrainingJobsResponse
       type: object
     OptimizerType:
       description: Available optimizer algorithms for training.
@@ -9091,6 +9145,18 @@ components:
       - prompt_id
       title: Prompt
       type: object
+    ListPromptsResponse:
+      description: Response model to list prompts.
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Prompt'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListPromptsResponse
+      type: object
     ProviderInfo:
       description: Information about a registered provider including its configuration and health status.
       properties:
@@ -9118,6 +9184,18 @@ components:
       - config
       - health
       title: ProviderInfo
+      type: object
+    ListProvidersResponse:
+      description: Response containing a list of all available providers.
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ProviderInfo'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListProvidersResponse
       type: object
     ModerationObjectResults:
       description: A moderation object.
@@ -9248,6 +9326,28 @@ components:
       - results
       title: ScoreResponse
       type: object
+    ListScoringFunctionsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ScoringFn'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListScoringFunctionsResponse
+      type: object
+    ListShieldsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Shield'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListShieldsResponse
+      type: object
     ToolDef:
       description: Tool definition used in runtime contexts.
       properties:
@@ -9297,6 +9397,18 @@ components:
       required:
       - data
       title: ListToolDefsResponse
+      type: object
+    ListToolGroupsResponse:
+      description: Response containing a list of tool groups.
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ToolGroup'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListToolGroupsResponse
       type: object
     ToolGroupInput:
       description: Input data for registering a tool group.

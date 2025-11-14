@@ -155,6 +155,7 @@ class ScoringFnInput(CommonScoringFnFields, BaseModel):
     provider_scoring_fn_id: str | None = None
 
 
+@json_schema_type
 class ListScoringFunctionsResponse(BaseModel):
     data: list[ScoringFn]
 

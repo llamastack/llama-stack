@@ -88,6 +88,7 @@ class ToolStore(Protocol):
     async def get_tool_group(self, toolgroup_id: str) -> ToolGroup: ...
 
 
+@json_schema_type
 class ListToolGroupsResponse(BaseModel):
     """Response containing a list of tool groups.
 
