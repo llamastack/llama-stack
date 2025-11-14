@@ -425,6 +425,7 @@ resources:
           list:
             endpoint: get /v1alpha/eval/benchmarks
             paginated: false
+          register: post /v1alpha/eval/benchmarks
         models:
           benchmark: Benchmark
           list_benchmarks_response: ListBenchmarksResponse
@@ -453,10 +454,12 @@ resources:
         models:
           list_datasets_response: ListDatasetsResponse
         methods:
+          register: post /v1beta/datasets
           retrieve: get /v1beta/datasets/{dataset_id}
           list:
             endpoint: get /v1beta/datasets
             paginated: false
+          unregister: delete /v1beta/datasets/{dataset_id}
           iterrows: get /v1beta/datasetio/iterrows/{dataset_id}
           appendrows: post /v1beta/datasetio/append-rows/{dataset_id}
 
