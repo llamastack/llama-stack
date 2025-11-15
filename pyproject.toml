@@ -26,6 +26,7 @@ classifiers = [
 dependencies = [
     "PyYAML>=6.0",
     "aiohttp",
+    "cachetools>=5.5.0",                              # for prompt caching
     "fastapi>=0.115.0,<1.0",                          # server
     "fire",                                           # for MCP in LLS client
     "httpx",
@@ -37,6 +38,7 @@ dependencies = [
     "python-dotenv",
     "pyjwt[crypto]>=2.10.0",                          # Pull crypto to support RS256 for jwt. Requires 2.10.0+ for ssl_context support.
     "pydantic>=2.11.9",
+    "redis>=5.2.0",                                   # for prompt caching (Redis backend)
     "rich",
     "starlette",
     "termcolor",
