@@ -40,7 +40,7 @@ dependencies = [
     "rich",
     "starlette",
     "termcolor",
-    "tiktoken",
+    "tiktoken>=0.8.0",
     "pillow",
     "h11>=0.16.0",
     "python-multipart>=0.0.20",                       # For fastapi Form
