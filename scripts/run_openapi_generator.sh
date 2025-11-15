@@ -17,3 +17,5 @@ PYTHONPATH=$PYTHONPATH:$stack_dir \
   python3 -m scripts.openapi_generator "$stack_dir"/docs/static
 
 cp "$stack_dir"/docs/static/stainless-llama-stack-spec.yaml "$stack_dir"/client-sdks/stainless/openapi.yml
+PYTHONPATH=$PYTHONPATH:$stack_dir \
+  python3 -m scripts.openapi_generator.stainless_config.generate_config
