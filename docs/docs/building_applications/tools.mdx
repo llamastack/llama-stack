@@ -104,23 +104,19 @@ client.toolgroups.register(
 )
 ```
 
-Note that most of the more useful MCP servers need you to authenticate with them. Many of them use OAuth2.0 for authentication. You can provide authorization headers to send to the MCP server using the "Provider Data" abstraction provided by Llama Stack. When making an agent call,
+Note that most of the more useful MCP servers need you to authenticate with them. Many of them use OAuth2.0 for authentication. You can provide the authorization token when creating the Agent:
 
 ```python
 agent = Agent(
     ...,
-    tools=["mcp::deepwiki"],
-    extra_headers={
-        "X-LlamaStack-Provider-Data": json.dumps(
-            {
-                "mcp_headers": {
-                    "http://mcp.deepwiki.com/sse": {
-                        "Authorization": "Bearer <your_access_token>",
-                    },
-                },
-            }
-        ),
-    },
+    tools=[
+        {
+            "type": "mcp",
+            "server_url": "https://mcp.deepwiki.com/sse",
+            "server_label": "mcp::deepwiki",
+            "authorization": "<your_access_token>",  # OAuth token (without "Bearer " prefix)
+        }
+    ],
 )
 agent.create_turn(...)
 ```
