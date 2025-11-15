@@ -1,0 +1,2725 @@
+openapi: 3.1.0
+info:
+  title: OpenAI API
+  description: The OpenAI REST API. Please see https://platform.openai.com/docs/api-reference for more details.
+  version: 2.3.0
+  termsOfService: https://openai.com/policies/terms-of-use
+  contact:
+    name: OpenAI Support
+    url: https://help.openai.com/
+  license:
+    name: MIT
+    url: https://github.com/openai/openai-openapi/blob/master/LICENSE
+servers:
+  - url: https://api.openai.com/v1
+security:
+  - ApiKeyAuth: []
+tags:
+  - name: Assistants
+    description: Build Assistants that can call models and use tools.
+  - name: Audio
+    description: Turn audio into text or text into audio.
+  - name: Chat
+    description: Given a list of messages comprising a conversation, the model will return a response.
+  - name: Conversations
+    description: Manage conversations and conversation items.
+  - name: Completions
+    description: >-
+      Given a prompt, the model will return one or more predicted completions, and can also return the
+      probabilities of alternative tokens at each position.
+  - name: Embeddings
+    description: >-
+      Get a vector representation of a given input that can be easily consumed by machine learning models and
+      algorithms.
+  - name: Evals
+    description: Manage and run evals in the OpenAI platform.
+  - name: Fine-tuning
+    description: Manage fine-tuning jobs to tailor a model to your specific training data.
+  - name: Graders
+    description: Manage and run graders in the OpenAI platform.
+  - name: Batch
+    description: Create large batches of API requests to run asynchronously.
+  - name: Files
+    description: Files are used to upload documents that can be used with features like Assistants and Fine-tuning.
+  - name: Uploads
+    description: Use Uploads to upload large files in multiple parts.
+  - name: Images
+    description: Given a prompt and/or an input image, the model will generate a new image.
+  - name: Models
+    description: List and describe the various models available in the API.
+  - name: Moderations
+    description: Given text and/or image inputs, classifies if those inputs are potentially harmful.
+  - name: Audit Logs
+    description: List user actions and configuration changes within this organization.
+paths:
+  /assistants:
+    get:
+      operationId: listAssistants
+      tags:
+        - Assistants
+      summary: List assistants
+      parameters:
+        - name: limit
+          in: query
+          description: >
+            A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 20.
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: order
+          in: query
+          description: >
+            Sort order by the `created_at` timestamp of the objects. `asc` for ascending order and `desc` for
+            descending order.
+          schema:
+            type: string
+            default: desc
+            enum:
+              - asc
+              - desc
+        - name: after
+          in: query
+          description: >
+            A cursor for use in pagination. `after` is an object ID that defines your place in the list. For
+            instance, if you make a list request and receive 100 objects, ending with obj_foo, your subsequent
+            call can include after=obj_foo in order to fetch the next page of the list.
+          schema:
+            type: string
+        - name: before
+          in: query
+          description: >
+            A cursor for use in pagination. `before` is an object ID that defines your place in the list. For
+            instance, if you make a list request and receive 100 objects, starting with obj_foo, your
+            subsequent call can include before=obj_foo in order to fetch the previous page of the list.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListAssistantsResponse'
+      x-oaiMeta:
+        name: List assistants
+        group: assistants
+        beta: true
+        returns: A list of [assistant](https://platform.openai.com/docs/api-reference/assistants/object) objects.
+        examples:
+          response: |
+            {
+              "object": "list",
+              "data": [
+                {
+                  "id": "asst_abc123",
+                  "object": "assistant",
+                  "created_at": 1698982736,
+                  "name": "Coding Tutor",
+                  "description": null,
+                  "model": "gpt-4o",
+                  "instructions": "You are a helpful assistant designed to make me better at coding!",
+                  "tools": [],
+                  "tool_resources": {},
+                  "metadata": {},
+                  "top_p": 1.0,
+                  "temperature": 1.0,
+                  "response_format": "auto"
+                },
+                {
+                  "id": "asst_abc456",
+                  "object": "assistant",
+                  "created_at": 1698982718,
+                  "name": "My Assistant",
+                  "description": null,
+                  "model": "gpt-4o",
+                  "instructions": "You are a helpful assistant designed to make me better at coding!",
+                  "tools": [],
+                  "tool_resources": {},
+                  "metadata": {},
+                  "top_p": 1.0,
+                  "temperature": 1.0,
+                  "response_format": "auto"
+                },
+                {
+                  "id": "asst_abc789",
+                  "object": "assistant",
+                  "created_at": 1698982643,
+                  "name": null,
+                  "description": null,
+                  "model": "gpt-4o",
+                  "instructions": null,
+                  "tools": [],
+                  "tool_resources": {},
+                  "metadata": {},
+                  "top_p": 1.0,
+                  "temperature": 1.0,
+                  "response_format": "auto"
+                }
+              ],
+              "first_id": "asst_abc123",
+              "last_id": "asst_abc789",
+              "has_more": false
+            }
+          request:
+            curl: |
+              curl "https://api.openai.com/v1/assistants?order=desc&limit=20" \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $OPENAI_API_KEY" \
+                -H "OpenAI-Beta: assistants=v2"
+            python: |-
+              from openai import OpenAI
+
+              client = OpenAI(
+                  api_key="My API Key",
+              )
+              page = client.beta.assistants.list()
+              page = page.data[0]
+              print(page.id)
+            node.js: |-
+              import OpenAI from 'openai';
+
+              const client = new OpenAI({
+                apiKey: 'My API Key',
+              });
+
+              // Automatically fetches more pages as needed.
+              for await (const assistant of client.beta.assistants.list()) {
+                console.log(assistant.id);
+              }
+            go: |
+              package main
+
+              import (
+                "context"
+                "fmt"
+
+                "github.com/openai/openai-go"
+                "github.com/openai/openai-go/option"
+              )
+
+              func main() {
+                client := openai.NewClient(
+                  option.WithAPIKey("My API Key"),
+                )
+                page, err := client.Beta.Assistants.List(context.TODO(), openai.BetaAssistantListParams{
+
+                })
+                if err != nil {
+                  panic(err.Error())
+                }
+                fmt.Printf("%+v\n", page)
+              }
+            java: |-
+              package com.openai.example;
+
+              import com.openai.client.OpenAIClient;
+              import com.openai.client.okhttp.OpenAIOkHttpClient;
+              import com.openai.models.beta.assistants.AssistantListPage;
+              import com.openai.models.beta.assistants.AssistantListParams;
+
+              public final class Main {
+                  private Main() {}
+
+                  public static void main(String[] args) {
+                      OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                      AssistantListPage page = client.beta().assistants().list();
+                  }
+              }
+            ruby: |-
+              require "openai"
+
+              openai = OpenAI::Client.new(api_key: "My API Key")
+
+              page = openai.beta.assistants.list
+
+              puts(page)
+      description: Returns a list of assistants.
+    post:
+      operationId: createAssistant
+      tags:
+        - Assistants
+      summary: Create assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAssistantRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistantObject'
+      x-oaiMeta:
+        name: Create assistant
+        group: assistants
+        beta: true
+        returns: An [assistant](https://platform.openai.com/docs/api-reference/assistants/object) object.
+        examples:
+          - title: Code Interpreter
+            request:
+              curl: |
+                curl "https://api.openai.com/v1/assistants" \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "OpenAI-Beta: assistants=v2" \
+                  -d '{
+                    "instructions": "You are a personal math tutor. When asked a question, write and run Python code to answer the question.",
+                    "name": "Math Tutor",
+                    "tools": [{"type": "code_interpreter"}],
+                    "model": "gpt-4o"
+                  }'
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                assistant = client.beta.assistants.create(
+                    model="gpt-4o",
+                )
+                print(assistant.id)
+              node.js: |-
+                import OpenAI from 'openai';
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+                const assistant = await client.beta.assistants.create({ model: 'gpt-4o' });
+
+                console.log(assistant.id);
+              go: |
+                package main
+
+                import (
+                  "context"
+                  "fmt"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                  "github.com/openai/openai-go/shared"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  assistant, err := client.Beta.Assistants.New(context.TODO(), openai.BetaAssistantNewParams{
+                    Model: shared.ChatModelGPT5,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", assistant.ID)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.models.ChatModel;
+                import com.openai.models.beta.assistants.Assistant;
+                import com.openai.models.beta.assistants.AssistantCreateParams;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        AssistantCreateParams params = AssistantCreateParams.builder()
+                            .model(ChatModel.GPT_5)
+                            .build();
+                        Assistant assistant = client.beta().assistants().create(params);
+                    }
+                }
+              ruby: |-
+                require "openai"
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+                assistant = openai.beta.assistants.create(model: :"gpt-5")
+
+                puts(assistant)
+            response: |
+              {
+                "id": "asst_abc123",
+                "object": "assistant",
+                "created_at": 1698984975,
+                "name": "Math Tutor",
+                "description": null,
+                "model": "gpt-4o",
+                "instructions": "You are a personal math tutor. When asked a question, write and run Python code to answer the question.",
+                "tools": [
+                  {
+                    "type": "code_interpreter"
+                  }
+                ],
+                "metadata": {},
+                "top_p": 1.0,
+                "temperature": 1.0,
+                "response_format": "auto"
+              }
+          - title: Files
+            request:
+              curl: |
+                curl https://api.openai.com/v1/assistants \
+                  -H "Content-Type: application/json" \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "OpenAI-Beta: assistants=v2" \
+                  -d '{
+                    "instructions": "You are an HR bot, and you have access to files to answer employee questions about company policies.",
+                    "tools": [{"type": "file_search"}],
+                    "tool_resources": {"file_search": {"vector_store_ids": ["vs_123"]}},
+                    "model": "gpt-4o"
+                  }'
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                assistant = client.beta.assistants.create(
+                    model="gpt-4o",
+                )
+                print(assistant.id)
+              node.js: |-
+                import OpenAI from 'openai';
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+                const assistant = await client.beta.assistants.create({ model: 'gpt-4o' });
+
+                console.log(assistant.id);
+              go: |
+                package main
+
+                import (
+                  "context"
+                  "fmt"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                  "github.com/openai/openai-go/shared"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  assistant, err := client.Beta.Assistants.New(context.TODO(), openai.BetaAssistantNewParams{
+                    Model: shared.ChatModelGPT5,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", assistant.ID)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.models.ChatModel;
+                import com.openai.models.beta.assistants.Assistant;
+                import com.openai.models.beta.assistants.AssistantCreateParams;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        AssistantCreateParams params = AssistantCreateParams.builder()
+                            .model(ChatModel.GPT_5)
+                            .build();
+                        Assistant assistant = client.beta().assistants().create(params);
+                    }
+                }
+              ruby: |-
+                require "openai"
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+                assistant = openai.beta.assistants.create(model: :"gpt-5")
+
+                puts(assistant)
+            response: |
+              {
+                "id": "asst_abc123",
+                "object": "assistant",
+                "created_at": 1699009403,
+                "name": "HR Helper",
+                "description": null,
+                "model": "gpt-4o",
+                "instructions": "You are an HR bot, and you have access to files to answer employee questions about company policies.",
+                "tools": [
+                  {
+                    "type": "file_search"
+                  }
+                ],
+                "tool_resources": {
+                  "file_search": {
+                    "vector_store_ids": ["vs_123"]
+                  }
+                },
+                "metadata": {},
+                "top_p": 1.0,
+                "temperature": 1.0,
+                "response_format": "auto"
+              }
+      description: Create an assistant with a model and instructions.
+  /assistants/{assistant_id}:
+    get:
+      operationId: getAssistant
+      tags:
+        - Assistants
+      summary: Retrieve assistant
+      parameters:
+        - in: path
+          name: assistant_id
+          required: true
+          schema:
+            type: string
+          description: The ID of the assistant to retrieve.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistantObject'
+      x-oaiMeta:
+        name: Retrieve assistant
+        group: assistants
+        beta: true
+        returns: >-
+          The [assistant](https://platform.openai.com/docs/api-reference/assistants/object) object matching
+          the specified ID.
+        examples:
+          response: |
+            {
+              "id": "asst_abc123",
+              "object": "assistant",
+              "created_at": 1699009709,
+              "name": "HR Helper",
+              "description": null,
+              "model": "gpt-4o",
+              "instructions": "You are an HR bot, and you have access to files to answer employee questions about company policies.",
+              "tools": [
+                {
+                  "type": "file_search"
+                }
+              ],
+              "metadata": {},
+              "top_p": 1.0,
+              "temperature": 1.0,
+              "response_format": "auto"
+            }
+          request:
+            curl: |
+              curl https://api.openai.com/v1/assistants/asst_abc123 \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $OPENAI_API_KEY" \
+                -H "OpenAI-Beta: assistants=v2"
+            python: |-
+              from openai import OpenAI
+
+              client = OpenAI(
+                  api_key="My API Key",
+              )
+              assistant = client.beta.assistants.retrieve(
+                  "assistant_id",
+              )
+              print(assistant.id)
+            node.js: |-
+              import OpenAI from 'openai';
+
+              const client = new OpenAI({
+                apiKey: 'My API Key',
+              });
+
+              const assistant = await client.beta.assistants.retrieve('assistant_id');
+
+              console.log(assistant.id);
+            go: |
+              package main
+
+              import (
+                "context"
+                "fmt"
+
+                "github.com/openai/openai-go"
+                "github.com/openai/openai-go/option"
+              )
+
+              func main() {
+                client := openai.NewClient(
+                  option.WithAPIKey("My API Key"),
+                )
+                assistant, err := client.Beta.Assistants.Get(context.TODO(), "assistant_id")
+                if err != nil {
+                  panic(err.Error())
+                }
+                fmt.Printf("%+v\n", assistant.ID)
+              }
+            java: |-
+              package com.openai.example;
+
+              import com.openai.client.OpenAIClient;
+              import com.openai.client.okhttp.OpenAIOkHttpClient;
+              import com.openai.models.beta.assistants.Assistant;
+              import com.openai.models.beta.assistants.AssistantRetrieveParams;
+
+              public final class Main {
+                  private Main() {}
+
+                  public static void main(String[] args) {
+                      OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                      Assistant assistant = client.beta().assistants().retrieve("assistant_id");
+                  }
+              }
+            ruby: |-
+              require "openai"
+
+              openai = OpenAI::Client.new(api_key: "My API Key")
+
+              assistant = openai.beta.assistants.retrieve("assistant_id")
+
+              puts(assistant)
+      description: Retrieves an assistant.
+    post:
+      operationId: modifyAssistant
+      tags:
+        - Assistants
+      summary: Modify assistant
+      parameters:
+        - in: path
+          name: assistant_id
+          required: true
+          schema:
+            type: string
+          description: The ID of the assistant to modify.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModifyAssistantRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssistantObject'
+      x-oaiMeta:
+        name: Modify assistant
+        group: assistants
+        beta: true
+        returns: The modified [assistant](https://platform.openai.com/docs/api-reference/assistants/object) object.
+        examples:
+          response: |
+            {
+              "id": "asst_123",
+              "object": "assistant",
+              "created_at": 1699009709,
+              "name": "HR Helper",
+              "description": null,
+              "model": "gpt-4o",
+              "instructions": "You are an HR bot, and you have access to files to answer employee questions about company policies. Always response with info from either of the files.",
+              "tools": [
+                {
+                  "type": "file_search"
+                }
+              ],
+              "tool_resources": {
+                "file_search": {
+                  "vector_store_ids": []
+                }
+              },
+              "metadata": {},
+              "top_p": 1.0,
+              "temperature": 1.0,
+              "response_format": "auto"
+            }
+          request:
+            curl: |
+              curl https://api.openai.com/v1/assistants/asst_abc123 \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $OPENAI_API_KEY" \
+                -H "OpenAI-Beta: assistants=v2" \
+                -d '{
+                    "instructions": "You are an HR bot, and you have access to files to answer employee questions about company policies. Always response with info from either of the files.",
+                    "tools": [{"type": "file_search"}],
+                    "model": "gpt-4o"
+                  }'
+            python: |-
+              from openai import OpenAI
+
+              client = OpenAI(
+                  api_key="My API Key",
+              )
+              assistant = client.beta.assistants.update(
+                  assistant_id="assistant_id",
+              )
+              print(assistant.id)
+            node.js: |-
+              import OpenAI from 'openai';
+
+              const client = new OpenAI({
+                apiKey: 'My API Key',
+              });
+
+              const assistant = await client.beta.assistants.update('assistant_id');
+
+              console.log(assistant.id);
+            go: |
+              package main
+
+              import (
+                "context"
+                "fmt"
+
+                "github.com/openai/openai-go"
+                "github.com/openai/openai-go/option"
+              )
+
+              func main() {
+                client := openai.NewClient(
+                  option.WithAPIKey("My API Key"),
+                )
+                assistant, err := client.Beta.Assistants.Update(
+                  context.TODO(),
+                  "assistant_id",
+                  openai.BetaAssistantUpdateParams{
+
+                  },
+                )
+                if err != nil {
+                  panic(err.Error())
+                }
+                fmt.Printf("%+v\n", assistant.ID)
+              }
+            java: |-
+              package com.openai.example;
+
+              import com.openai.client.OpenAIClient;
+              import com.openai.client.okhttp.OpenAIOkHttpClient;
+              import com.openai.models.beta.assistants.Assistant;
+              import com.openai.models.beta.assistants.AssistantUpdateParams;
+
+              public final class Main {
+                  private Main() {}
+
+                  public static void main(String[] args) {
+                      OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                      Assistant assistant = client.beta().assistants().update("assistant_id");
+                  }
+              }
+            ruby: |-
+              require "openai"
+
+              openai = OpenAI::Client.new(api_key: "My API Key")
+
+              assistant = openai.beta.assistants.update("assistant_id")
+
+              puts(assistant)
+      description: Modifies an assistant.
+    delete:
+      operationId: deleteAssistant
+      tags:
+        - Assistants
+      summary: Delete assistant
+      parameters:
+        - in: path
+          name: assistant_id
+          required: true
+          schema:
+            type: string
+          description: The ID of the assistant to delete.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAssistantResponse'
+      x-oaiMeta:
+        name: Delete assistant
+        group: assistants
+        beta: true
+        returns: Deletion status
+        examples:
+          response: |
+            {
+              "id": "asst_abc123",
+              "object": "assistant.deleted",
+              "deleted": true
+            }
+          request:
+            curl: |
+              curl https://api.openai.com/v1/assistants/asst_abc123 \
+                -H "Content-Type: application/json" \
+                -H "Authorization: Bearer $OPENAI_API_KEY" \
+                -H "OpenAI-Beta: assistants=v2" \
+                -X DELETE
+            python: |-
+              from openai import OpenAI
+
+              client = OpenAI(
+                  api_key="My API Key",
+              )
+              assistant_deleted = client.beta.assistants.delete(
+                  "assistant_id",
+              )
+              print(assistant_deleted.id)
+            node.js: |-
+              import OpenAI from 'openai';
+
+              const client = new OpenAI({
+                apiKey: 'My API Key',
+              });
+
+              const assistantDeleted = await client.beta.assistants.delete('assistant_id');
+
+              console.log(assistantDeleted.id);
+            go: |
+              package main
+
+              import (
+                "context"
+                "fmt"
+
+                "github.com/openai/openai-go"
+                "github.com/openai/openai-go/option"
+              )
+
+              func main() {
+                client := openai.NewClient(
+                  option.WithAPIKey("My API Key"),
+                )
+                assistantDeleted, err := client.Beta.Assistants.Delete(context.TODO(), "assistant_id")
+                if err != nil {
+                  panic(err.Error())
+                }
+                fmt.Printf("%+v\n", assistantDeleted.ID)
+              }
+            java: |-
+              package com.openai.example;
+
+              import com.openai.client.OpenAIClient;
+              import com.openai.client.okhttp.OpenAIOkHttpClient;
+              import com.openai.models.beta.assistants.AssistantDeleteParams;
+              import com.openai.models.beta.assistants.AssistantDeleted;
+
+              public final class Main {
+                  private Main() {}
+
+                  public static void main(String[] args) {
+                      OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                      AssistantDeleted assistantDeleted = client.beta().assistants().delete("assistant_id");
+                  }
+              }
+            ruby: |-
+              require "openai"
+
+              openai = OpenAI::Client.new(api_key: "My API Key")
+
+              assistant_deleted = openai.beta.assistants.delete("assistant_id")
+
+              puts(assistant_deleted)
+      description: Delete an assistant.
+  /audio/speech:
+    post:
+      operationId: createSpeech
+      tags:
+        - Audio
+      summary: Create speech
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSpeechRequest'
+      responses:
+        '200':
+          description: OK
+          headers:
+            Transfer-Encoding:
+              schema:
+                type: string
+              description: chunked
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/CreateSpeechResponseStreamEvent'
+      x-oaiMeta:
+        name: Create speech
+        group: audio
+        returns: >-
+          The audio file content or a [stream of audio
+          events](https://platform.openai.com/docs/api-reference/audio/speech-audio-delta-event).
+        examples:
+          - title: Default
+            request:
+              curl: |
+                curl https://api.openai.com/v1/audio/speech \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "Content-Type: application/json" \
+                  -d '{
+                    "model": "gpt-4o-mini-tts",
+                    "input": "The quick brown fox jumped over the lazy dog.",
+                    "voice": "alloy"
+                  }' \
+                  --output speech.mp3
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                speech = client.audio.speech.create(
+                    input="input",
+                    model="string",
+                    voice="ash",
+                )
+                print(speech)
+                content = speech.read()
+                print(content)
+              javascript: |
+                import fs from "fs";
+                import path from "path";
+                import OpenAI from "openai";
+
+                const openai = new OpenAI();
+
+                const speechFile = path.resolve("./speech.mp3");
+
+                async function main() {
+                  const mp3 = await openai.audio.speech.create({
+                    model: "gpt-4o-mini-tts",
+                    voice: "alloy",
+                    input: "Today is a wonderful day to build something people love!",
+                  });
+                  console.log(speechFile);
+                  const buffer = Buffer.from(await mp3.arrayBuffer());
+                  await fs.promises.writeFile(speechFile, buffer);
+                }
+                main();
+              csharp: |
+                using System;
+                using System.IO;
+
+                using OpenAI.Audio;
+
+                AudioClient client = new(
+                    model: "gpt-4o-mini-tts",
+                    apiKey: Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+                );
+
+                BinaryData speech = client.GenerateSpeech(
+                    text: "The quick brown fox jumped over the lazy dog.",
+                    voice: GeneratedSpeechVoice.Alloy
+                );
+
+                using FileStream stream = File.OpenWrite("speech.mp3");
+                speech.ToStream().CopyTo(stream);
+              node.js: >-
+                import OpenAI from 'openai';
+
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+
+                const speech = await client.audio.speech.create({ input: 'input', model: 'string', voice:
+                'ash' });
+
+
+                console.log(speech);
+
+
+                const content = await speech.blob();
+
+                console.log(content);
+              go: |
+                package main
+
+                import (
+                  "context"
+                  "fmt"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  speech, err := client.Audio.Speech.New(context.TODO(), openai.AudioSpeechNewParams{
+                    Input: "input",
+                    Model: openai.SpeechModelTTS1,
+                    Voice: openai.AudioSpeechNewParamsVoiceAlloy,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", speech)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.core.http.HttpResponse;
+                import com.openai.models.audio.speech.SpeechCreateParams;
+                import com.openai.models.audio.speech.SpeechModel;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        SpeechCreateParams params = SpeechCreateParams.builder()
+                            .input("input")
+                            .model(SpeechModel.TTS_1)
+                            .voice(SpeechCreateParams.Voice.ALLOY)
+                            .build();
+                        HttpResponse speech = client.audio().speech().create(params);
+                    }
+                }
+              ruby: |-
+                require "openai"
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+                speech = openai.audio.speech.create(input: "input", model: :"tts-1", voice: :alloy)
+
+                puts(speech)
+          - title: SSE Stream Format
+            request:
+              curl: |
+                curl https://api.openai.com/v1/audio/speech \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "Content-Type: application/json" \
+                  -d '{
+                    "model": "gpt-4o-mini-tts",
+                    "input": "The quick brown fox jumped over the lazy dog.",
+                    "voice": "alloy",
+                    "stream_format": "sse"
+                  }'
+              node.js: >-
+                import OpenAI from 'openai';
+
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+
+                const speech = await client.audio.speech.create({ input: 'input', model: 'string', voice:
+                'ash' });
+
+
+                console.log(speech);
+
+
+                const content = await speech.blob();
+
+                console.log(content);
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                speech = client.audio.speech.create(
+                    input="input",
+                    model="string",
+                    voice="ash",
+                )
+                print(speech)
+                content = speech.read()
+                print(content)
+              go: |
+                package main
+
+                import (
+                  "context"
+                  "fmt"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  speech, err := client.Audio.Speech.New(context.TODO(), openai.AudioSpeechNewParams{
+                    Input: "input",
+                    Model: openai.SpeechModelTTS1,
+                    Voice: openai.AudioSpeechNewParamsVoiceAlloy,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", speech)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.core.http.HttpResponse;
+                import com.openai.models.audio.speech.SpeechCreateParams;
+                import com.openai.models.audio.speech.SpeechModel;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        SpeechCreateParams params = SpeechCreateParams.builder()
+                            .input("input")
+                            .model(SpeechModel.TTS_1)
+                            .voice(SpeechCreateParams.Voice.ALLOY)
+                            .build();
+                        HttpResponse speech = client.audio().speech().create(params);
+                    }
+                }
+              ruby: |-
+                require "openai"
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+                speech = openai.audio.speech.create(input: "input", model: :"tts-1", voice: :alloy)
+
+                puts(speech)
+      description: Generates audio from the input text.
+  /audio/transcriptions:
+    post:
+      operationId: createTranscription
+      tags:
+        - Audio
+      summary: Create transcription
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateTranscriptionRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/CreateTranscriptionResponseJson'
+                  - $ref: '#/components/schemas/CreateTranscriptionResponseDiarizedJson'
+                    x-stainless-skip:
+                      - go
+                  - $ref: '#/components/schemas/CreateTranscriptionResponseVerboseJson'
+                discriminator:
+                  propertyName: task
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/CreateTranscriptionResponseStreamEvent'
+      x-oaiMeta:
+        name: Create transcription
+        group: audio
+        returns: >-
+          The [transcription object](https://platform.openai.com/docs/api-reference/audio/json-object), a
+          [diarized transcription
+          object](https://platform.openai.com/docs/api-reference/audio/diarized-json-object), a [verbose
+          transcription object](https://platform.openai.com/docs/api-reference/audio/verbose-json-object), or
+          a [stream of transcript
+          events](https://platform.openai.com/docs/api-reference/audio/transcript-text-delta-event).
+        examples:
+          - title: Default
+            request:
+              curl: |
+                curl https://api.openai.com/v1/audio/transcriptions \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "Content-Type: multipart/form-data" \
+                  -F file="@/path/to/file/audio.mp3" \
+                  -F model="gpt-4o-transcribe"
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                transcription = client.audio.transcriptions.create(
+                    file=b"raw file contents",
+                    model="gpt-4o-transcribe",
+                )
+                print(transcription)
+              javascript: |
+                import fs from "fs";
+                import OpenAI from "openai";
+
+                const openai = new OpenAI();
+
+                async function main() {
+                  const transcription = await openai.audio.transcriptions.create({
+                    file: fs.createReadStream("audio.mp3"),
+                    model: "gpt-4o-transcribe",
+                  });
+
+                  console.log(transcription.text);
+                }
+                main();
+              csharp: |
+                using System;
+
+                using OpenAI.Audio;
+                string audioFilePath = "audio.mp3";
+
+                AudioClient client = new(
+                    model: "gpt-4o-transcribe",
+                    apiKey: Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+                );
+
+                AudioTranscription transcription = client.TranscribeAudio(audioFilePath);
+
+                Console.WriteLine($"{transcription.Text}");
+              node.js: |-
+                import OpenAI from 'openai';
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+                const transcription = await client.audio.transcriptions.create({
+                  file: fs.createReadStream('speech.mp3'),
+                  model: 'gpt-4o-transcribe',
+                });
+
+                console.log(transcription);
+              go: |
+                package main
+
+                import (
+                  "bytes"
+                  "context"
+                  "fmt"
+                  "io"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  transcription, err := client.Audio.Transcriptions.New(context.TODO(), openai.AudioTranscriptionNewParams{
+                    File: io.Reader(bytes.NewBuffer([]byte("some file contents"))),
+                    Model: openai.AudioModelWhisper1,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", transcription)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.models.audio.AudioModel;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateParams;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateResponse;
+                import java.io.ByteArrayInputStream;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        TranscriptionCreateParams params = TranscriptionCreateParams.builder()
+                            .file(ByteArrayInputStream("some content".getBytes()))
+                            .model(AudioModel.WHISPER_1)
+                            .build();
+                        TranscriptionCreateResponse transcription = client.audio().transcriptions().create(params);
+                    }
+                }
+              ruby: >-
+                require "openai"
+
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+
+                transcription = openai.audio.transcriptions.create(file: Pathname(__FILE__), model:
+                :"whisper-1")
+
+
+                puts(transcription)
+            response: |
+              {
+                "text": "Imagine the wildest idea that you've ever had, and you're curious about how it might scale to something that's a 100, a 1,000 times bigger. This is a place where you can get to do that.",
+                "usage": {
+                  "type": "tokens",
+                  "input_tokens": 14,
+                  "input_token_details": {
+                    "text_tokens": 0,
+                    "audio_tokens": 14
+                  },
+                  "output_tokens": 45,
+                  "total_tokens": 59
+                }
+              }
+          - title: Diarization
+            request:
+              curl: |
+                curl https://api.openai.com/v1/audio/transcriptions \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "Content-Type: multipart/form-data" \
+                  -F file="@/path/to/file/meeting.wav" \
+                  -F model="gpt-4o-transcribe-diarize" \
+                  -F response_format="diarized_json" \
+                  -F chunking_strategy=auto \
+                  -F 'known_speaker_names[]=agent' \
+                  -F 'known_speaker_references[]=data:audio/wav;base64,AAA...'
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                transcription = client.audio.transcriptions.create(
+                    file=b"raw file contents",
+                    model="gpt-4o-transcribe",
+                )
+                print(transcription)
+              javascript: |
+                import fs from "fs";
+                import OpenAI from "openai";
+
+                const openai = new OpenAI();
+
+                const speakerRef = fs.readFileSync("agent.wav").toString("base64");
+
+                const transcript = await openai.audio.transcriptions.create({
+                  file: fs.createReadStream("meeting.wav"),
+                  model: "gpt-4o-transcribe-diarize",
+                  response_format: "diarized_json",
+                  chunking_strategy: "auto",
+                  extra_body: {
+                    known_speaker_names: ["agent"],
+                    known_speaker_references: [`data:audio/wav;base64,${speakerRef}`],
+                  },
+                });
+
+                console.log(transcript.segments);
+              node.js: |-
+                import OpenAI from 'openai';
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+                const transcription = await client.audio.transcriptions.create({
+                  file: fs.createReadStream('speech.mp3'),
+                  model: 'gpt-4o-transcribe',
+                });
+
+                console.log(transcription);
+              go: |
+                package main
+
+                import (
+                  "bytes"
+                  "context"
+                  "fmt"
+                  "io"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  transcription, err := client.Audio.Transcriptions.New(context.TODO(), openai.AudioTranscriptionNewParams{
+                    File: io.Reader(bytes.NewBuffer([]byte("some file contents"))),
+                    Model: openai.AudioModelWhisper1,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", transcription)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.models.audio.AudioModel;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateParams;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateResponse;
+                import java.io.ByteArrayInputStream;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        TranscriptionCreateParams params = TranscriptionCreateParams.builder()
+                            .file(ByteArrayInputStream("some content".getBytes()))
+                            .model(AudioModel.WHISPER_1)
+                            .build();
+                        TranscriptionCreateResponse transcription = client.audio().transcriptions().create(params);
+                    }
+                }
+              ruby: >-
+                require "openai"
+
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+
+                transcription = openai.audio.transcriptions.create(file: Pathname(__FILE__), model:
+                :"whisper-1")
+
+
+                puts(transcription)
+            response: |
+              {
+                "task": "transcribe",
+                "duration": 27.4,
+                "text": "Agent: Thanks for calling OpenAI support.\nA: Hi, I'm trying to enable diarization.\nAgent: Happy to walk you through the steps.",
+                "segments": [
+                  {
+                    "type": "transcript.text.segment",
+                    "id": "seg_001",
+                    "start": 0.0,
+                    "end": 4.7,
+                    "text": "Thanks for calling OpenAI support.",
+                    "speaker": "agent"
+                  },
+                  {
+                    "type": "transcript.text.segment",
+                    "id": "seg_002",
+                    "start": 4.7,
+                    "end": 11.8,
+                    "text": "Hi, I'm trying to enable diarization.",
+                    "speaker": "A"
+                  },
+                  {
+                    "type": "transcript.text.segment",
+                    "id": "seg_003",
+                    "start": 12.1,
+                    "end": 18.5,
+                    "text": "Happy to walk you through the steps.",
+                    "speaker": "agent"
+                  }
+                ],
+                "usage": {
+                  "type": "duration",
+                  "seconds": 27
+                }
+              }
+          - title: Streaming
+            request:
+              curl: |
+                curl https://api.openai.com/v1/audio/transcriptions \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "Content-Type: multipart/form-data" \
+                  -F file="@/path/to/file/audio.mp3" \
+                  -F model="gpt-4o-mini-transcribe" \
+                  -F stream=true
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                transcription = client.audio.transcriptions.create(
+                    file=b"raw file contents",
+                    model="gpt-4o-transcribe",
+                )
+                print(transcription)
+              javascript: |
+                import fs from "fs";
+                import OpenAI from "openai";
+
+                const openai = new OpenAI();
+
+                const stream = await openai.audio.transcriptions.create({
+                  file: fs.createReadStream("audio.mp3"),
+                  model: "gpt-4o-mini-transcribe",
+                  stream: true,
+                });
+
+                for await (const event of stream) {
+                  console.log(event);
+                }
+              node.js: |-
+                import OpenAI from 'openai';
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+                const transcription = await client.audio.transcriptions.create({
+                  file: fs.createReadStream('speech.mp3'),
+                  model: 'gpt-4o-transcribe',
+                });
+
+                console.log(transcription);
+              go: |
+                package main
+
+                import (
+                  "bytes"
+                  "context"
+                  "fmt"
+                  "io"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  transcription, err := client.Audio.Transcriptions.New(context.TODO(), openai.AudioTranscriptionNewParams{
+                    File: io.Reader(bytes.NewBuffer([]byte("some file contents"))),
+                    Model: openai.AudioModelWhisper1,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", transcription)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.models.audio.AudioModel;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateParams;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateResponse;
+                import java.io.ByteArrayInputStream;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        TranscriptionCreateParams params = TranscriptionCreateParams.builder()
+                            .file(ByteArrayInputStream("some content".getBytes()))
+                            .model(AudioModel.WHISPER_1)
+                            .build();
+                        TranscriptionCreateResponse transcription = client.audio().transcriptions().create(params);
+                    }
+                }
+              ruby: >-
+                require "openai"
+
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+
+                transcription = openai.audio.transcriptions.create(file: Pathname(__FILE__), model:
+                :"whisper-1")
+
+
+                puts(transcription)
+            response: >
+              data:
+              {"type":"transcript.text.delta","delta":"I","logprobs":[{"token":"I","logprob":-0.00007588794,"bytes":[73]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" see","logprobs":[{"token":"
+              see","logprob":-3.1281633e-7,"bytes":[32,115,101,101]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" skies","logprobs":[{"token":"
+              skies","logprob":-2.3392786e-6,"bytes":[32,115,107,105,101,115]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" of","logprobs":[{"token":"
+              of","logprob":-3.1281633e-7,"bytes":[32,111,102]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" blue","logprobs":[{"token":"
+              blue","logprob":-1.0280384e-6,"bytes":[32,98,108,117,101]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" and","logprobs":[{"token":"
+              and","logprob":-0.0005108566,"bytes":[32,97,110,100]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" clouds","logprobs":[{"token":"
+              clouds","logprob":-1.9361265e-7,"bytes":[32,99,108,111,117,100,115]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" of","logprobs":[{"token":"
+              of","logprob":-1.9361265e-7,"bytes":[32,111,102]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" white","logprobs":[{"token":"
+              white","logprob":-7.89631e-7,"bytes":[32,119,104,105,116,101]}]}
+
+
+              data:
+              {"type":"transcript.text.delta","delta":",","logprobs":[{"token":",","logprob":-0.0014890312,"bytes":[44]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" the","logprobs":[{"token":"
+              the","logprob":-0.0110956915,"bytes":[32,116,104,101]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" bright","logprobs":[{"token":"
+              bright","logprob":0.0,"bytes":[32,98,114,105,103,104,116]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" blessed","logprobs":[{"token":"
+              blessed","logprob":-0.000045848617,"bytes":[32,98,108,101,115,115,101,100]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" days","logprobs":[{"token":"
+              days","logprob":-0.000010802739,"bytes":[32,100,97,121,115]}]}
+
+
+              data:
+              {"type":"transcript.text.delta","delta":",","logprobs":[{"token":",","logprob":-0.00001700133,"bytes":[44]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" the","logprobs":[{"token":"
+              the","logprob":-0.0000118755715,"bytes":[32,116,104,101]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" dark","logprobs":[{"token":"
+              dark","logprob":-5.5122365e-7,"bytes":[32,100,97,114,107]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" sacred","logprobs":[{"token":"
+              sacred","logprob":-5.4385737e-6,"bytes":[32,115,97,99,114,101,100]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" nights","logprobs":[{"token":"
+              nights","logprob":-4.00813e-6,"bytes":[32,110,105,103,104,116,115]}]}
+
+
+              data:
+              {"type":"transcript.text.delta","delta":",","logprobs":[{"token":",","logprob":-0.0036910512,"bytes":[44]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" and","logprobs":[{"token":"
+              and","logprob":-0.0031903093,"bytes":[32,97,110,100]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" I","logprobs":[{"token":"
+              I","logprob":-1.504853e-6,"bytes":[32,73]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" think","logprobs":[{"token":"
+              think","logprob":-4.3202e-7,"bytes":[32,116,104,105,110,107]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" to","logprobs":[{"token":"
+              to","logprob":-1.9361265e-7,"bytes":[32,116,111]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" myself","logprobs":[{"token":"
+              myself","logprob":-1.7432603e-6,"bytes":[32,109,121,115,101,108,102]}]}
+
+
+              data:
+              {"type":"transcript.text.delta","delta":",","logprobs":[{"token":",","logprob":-0.29254505,"bytes":[44]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" what","logprobs":[{"token":"
+              what","logprob":-0.016815351,"bytes":[32,119,104,97,116]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" a","logprobs":[{"token":"
+              a","logprob":-3.1281633e-7,"bytes":[32,97]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" wonderful","logprobs":[{"token":"
+              wonderful","logprob":-2.1008714e-6,"bytes":[32,119,111,110,100,101,114,102,117,108]}]}
+
+
+              data: {"type":"transcript.text.delta","delta":" world","logprobs":[{"token":"
+              world","logprob":-8.180258e-6,"bytes":[32,119,111,114,108,100]}]}
+
+
+              data:
+              {"type":"transcript.text.delta","delta":".","logprobs":[{"token":".","logprob":-0.014231676,"bytes":[46]}]}
+
+
+              data: {"type":"transcript.text.done","text":"I see skies of blue and clouds of white, the bright
+              blessed days, the dark sacred nights, and I think to myself, what a wonderful
+              world.","logprobs":[{"token":"I","logprob":-0.00007588794,"bytes":[73]},{"token":"
+              see","logprob":-3.1281633e-7,"bytes":[32,115,101,101]},{"token":"
+              skies","logprob":-2.3392786e-6,"bytes":[32,115,107,105,101,115]},{"token":"
+              of","logprob":-3.1281633e-7,"bytes":[32,111,102]},{"token":"
+              blue","logprob":-1.0280384e-6,"bytes":[32,98,108,117,101]},{"token":"
+              and","logprob":-0.0005108566,"bytes":[32,97,110,100]},{"token":"
+              clouds","logprob":-1.9361265e-7,"bytes":[32,99,108,111,117,100,115]},{"token":"
+              of","logprob":-1.9361265e-7,"bytes":[32,111,102]},{"token":"
+              white","logprob":-7.89631e-7,"bytes":[32,119,104,105,116,101]},{"token":",","logprob":-0.0014890312,"bytes":[44]},{"token":"
+              the","logprob":-0.0110956915,"bytes":[32,116,104,101]},{"token":"
+              bright","logprob":0.0,"bytes":[32,98,114,105,103,104,116]},{"token":"
+              blessed","logprob":-0.000045848617,"bytes":[32,98,108,101,115,115,101,100]},{"token":"
+              days","logprob":-0.000010802739,"bytes":[32,100,97,121,115]},{"token":",","logprob":-0.00001700133,"bytes":[44]},{"token":"
+              the","logprob":-0.0000118755715,"bytes":[32,116,104,101]},{"token":"
+              dark","logprob":-5.5122365e-7,"bytes":[32,100,97,114,107]},{"token":"
+              sacred","logprob":-5.4385737e-6,"bytes":[32,115,97,99,114,101,100]},{"token":"
+              nights","logprob":-4.00813e-6,"bytes":[32,110,105,103,104,116,115]},{"token":",","logprob":-0.0036910512,"bytes":[44]},{"token":"
+              and","logprob":-0.0031903093,"bytes":[32,97,110,100]},{"token":"
+              I","logprob":-1.504853e-6,"bytes":[32,73]},{"token":"
+              think","logprob":-4.3202e-7,"bytes":[32,116,104,105,110,107]},{"token":"
+              to","logprob":-1.9361265e-7,"bytes":[32,116,111]},{"token":"
+              myself","logprob":-1.7432603e-6,"bytes":[32,109,121,115,101,108,102]},{"token":",","logprob":-0.29254505,"bytes":[44]},{"token":"
+              what","logprob":-0.016815351,"bytes":[32,119,104,97,116]},{"token":"
+              a","logprob":-3.1281633e-7,"bytes":[32,97]},{"token":"
+              wonderful","logprob":-2.1008714e-6,"bytes":[32,119,111,110,100,101,114,102,117,108]},{"token":"
+              world","logprob":-8.180258e-6,"bytes":[32,119,111,114,108,100]},{"token":".","logprob":-0.014231676,"bytes":[46]}],"usage":{"input_tokens":14,"input_token_details":{"text_tokens":0,"audio_tokens":14},"output_tokens":45,"total_tokens":59}}
+          - title: Logprobs
+            request:
+              curl: |
+                curl https://api.openai.com/v1/audio/transcriptions \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "Content-Type: multipart/form-data" \
+                  -F file="@/path/to/file/audio.mp3" \
+                  -F "include[]=logprobs" \
+                  -F model="gpt-4o-transcribe" \
+                  -F response_format="json"
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                transcription = client.audio.transcriptions.create(
+                    file=b"raw file contents",
+                    model="gpt-4o-transcribe",
+                )
+                print(transcription)
+              javascript: |
+                import fs from "fs";
+                import OpenAI from "openai";
+
+                const openai = new OpenAI();
+
+                async function main() {
+                  const transcription = await openai.audio.transcriptions.create({
+                    file: fs.createReadStream("audio.mp3"),
+                    model: "gpt-4o-transcribe",
+                    response_format: "json",
+                    include: ["logprobs"]
+                  });
+
+                  console.log(transcription);
+                }
+                main();
+              node.js: |-
+                import OpenAI from 'openai';
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+                const transcription = await client.audio.transcriptions.create({
+                  file: fs.createReadStream('speech.mp3'),
+                  model: 'gpt-4o-transcribe',
+                });
+
+                console.log(transcription);
+              go: |
+                package main
+
+                import (
+                  "bytes"
+                  "context"
+                  "fmt"
+                  "io"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  transcription, err := client.Audio.Transcriptions.New(context.TODO(), openai.AudioTranscriptionNewParams{
+                    File: io.Reader(bytes.NewBuffer([]byte("some file contents"))),
+                    Model: openai.AudioModelWhisper1,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", transcription)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.models.audio.AudioModel;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateParams;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateResponse;
+                import java.io.ByteArrayInputStream;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        TranscriptionCreateParams params = TranscriptionCreateParams.builder()
+                            .file(ByteArrayInputStream("some content".getBytes()))
+                            .model(AudioModel.WHISPER_1)
+                            .build();
+                        TranscriptionCreateResponse transcription = client.audio().transcriptions().create(params);
+                    }
+                }
+              ruby: >-
+                require "openai"
+
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+
+                transcription = openai.audio.transcriptions.create(file: Pathname(__FILE__), model:
+                :"whisper-1")
+
+
+                puts(transcription)
+            response: |
+              {
+                "text": "Hey, my knee is hurting and I want to see the doctor tomorrow ideally.",
+                "logprobs": [
+                  { "token": "Hey", "logprob": -1.0415299, "bytes": [72, 101, 121] },
+                  { "token": ",", "logprob": -9.805982e-5, "bytes": [44] },
+                  { "token": " my", "logprob": -0.00229799, "bytes": [32, 109, 121] },
+                  {
+                    "token": " knee",
+                    "logprob": -4.7159858e-5,
+                    "bytes": [32, 107, 110, 101, 101]
+                  },
+                  { "token": " is", "logprob": -0.043909557, "bytes": [32, 105, 115] },
+                  {
+                    "token": " hurting",
+                    "logprob": -1.1041146e-5,
+                    "bytes": [32, 104, 117, 114, 116, 105, 110, 103]
+                  },
+                  { "token": " and", "logprob": -0.011076359, "bytes": [32, 97, 110, 100] },
+                  { "token": " I", "logprob": -5.3193703e-6, "bytes": [32, 73] },
+                  {
+                    "token": " want",
+                    "logprob": -0.0017156356,
+                    "bytes": [32, 119, 97, 110, 116]
+                  },
+                  { "token": " to", "logprob": -7.89631e-7, "bytes": [32, 116, 111] },
+                  { "token": " see", "logprob": -5.5122365e-7, "bytes": [32, 115, 101, 101] },
+                  { "token": " the", "logprob": -0.0040786397, "bytes": [32, 116, 104, 101] },
+                  {
+                    "token": " doctor",
+                    "logprob": -2.3392786e-6,
+                    "bytes": [32, 100, 111, 99, 116, 111, 114]
+                  },
+                  {
+                    "token": " tomorrow",
+                    "logprob": -7.89631e-7,
+                    "bytes": [32, 116, 111, 109, 111, 114, 114, 111, 119]
+                  },
+                  {
+                    "token": " ideally",
+                    "logprob": -0.5800861,
+                    "bytes": [32, 105, 100, 101, 97, 108, 108, 121]
+                  },
+                  { "token": ".", "logprob": -0.00011093382, "bytes": [46] }
+                ],
+                "usage": {
+                  "type": "tokens",
+                  "input_tokens": 14,
+                  "input_token_details": {
+                    "text_tokens": 0,
+                    "audio_tokens": 14
+                  },
+                  "output_tokens": 45,
+                  "total_tokens": 59
+                }
+              }
+          - title: Word timestamps
+            request:
+              curl: |
+                curl https://api.openai.com/v1/audio/transcriptions \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "Content-Type: multipart/form-data" \
+                  -F file="@/path/to/file/audio.mp3" \
+                  -F "timestamp_granularities[]=word" \
+                  -F model="whisper-1" \
+                  -F response_format="verbose_json"
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                transcription = client.audio.transcriptions.create(
+                    file=b"raw file contents",
+                    model="gpt-4o-transcribe",
+                )
+                print(transcription)
+              javascript: |
+                import fs from "fs";
+                import OpenAI from "openai";
+
+                const openai = new OpenAI();
+
+                async function main() {
+                  const transcription = await openai.audio.transcriptions.create({
+                    file: fs.createReadStream("audio.mp3"),
+                    model: "whisper-1",
+                    response_format: "verbose_json",
+                    timestamp_granularities: ["word"]
+                  });
+
+                  console.log(transcription.text);
+                }
+                main();
+              csharp: |
+                using System;
+
+                using OpenAI.Audio;
+
+                string audioFilePath = "audio.mp3";
+
+                AudioClient client = new(
+                    model: "whisper-1",
+                    apiKey: Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+                );
+
+                AudioTranscriptionOptions options = new()
+                {
+                    ResponseFormat = AudioTranscriptionFormat.Verbose,
+                    TimestampGranularities = AudioTimestampGranularities.Word,
+                };
+
+                AudioTranscription transcription = client.TranscribeAudio(audioFilePath, options);
+
+                Console.WriteLine($"{transcription.Text}");
+              node.js: |-
+                import OpenAI from 'openai';
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+                const transcription = await client.audio.transcriptions.create({
+                  file: fs.createReadStream('speech.mp3'),
+                  model: 'gpt-4o-transcribe',
+                });
+
+                console.log(transcription);
+              go: |
+                package main
+
+                import (
+                  "bytes"
+                  "context"
+                  "fmt"
+                  "io"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  transcription, err := client.Audio.Transcriptions.New(context.TODO(), openai.AudioTranscriptionNewParams{
+                    File: io.Reader(bytes.NewBuffer([]byte("some file contents"))),
+                    Model: openai.AudioModelWhisper1,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", transcription)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.models.audio.AudioModel;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateParams;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateResponse;
+                import java.io.ByteArrayInputStream;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        TranscriptionCreateParams params = TranscriptionCreateParams.builder()
+                            .file(ByteArrayInputStream("some content".getBytes()))
+                            .model(AudioModel.WHISPER_1)
+                            .build();
+                        TranscriptionCreateResponse transcription = client.audio().transcriptions().create(params);
+                    }
+                }
+              ruby: >-
+                require "openai"
+
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+
+                transcription = openai.audio.transcriptions.create(file: Pathname(__FILE__), model:
+                :"whisper-1")
+
+
+                puts(transcription)
+            response: |
+              {
+                "task": "transcribe",
+                "language": "english",
+                "duration": 8.470000267028809,
+                "text": "The beach was a popular spot on a hot summer day. People were swimming in the ocean, building sandcastles, and playing beach volleyball.",
+                "words": [
+                  {
+                    "word": "The",
+                    "start": 0.0,
+                    "end": 0.23999999463558197
+                  },
+                  ...
+                  {
+                    "word": "volleyball",
+                    "start": 7.400000095367432,
+                    "end": 7.900000095367432
+                  }
+                ],
+                "usage": {
+                  "type": "duration",
+                  "seconds": 9
+                }
+              }
+          - title: Segment timestamps
+            request:
+              curl: |
+                curl https://api.openai.com/v1/audio/transcriptions \
+                  -H "Authorization: Bearer $OPENAI_API_KEY" \
+                  -H "Content-Type: multipart/form-data" \
+                  -F file="@/path/to/file/audio.mp3" \
+                  -F "timestamp_granularities[]=segment" \
+                  -F model="whisper-1" \
+                  -F response_format="verbose_json"
+              python: |-
+                from openai import OpenAI
+
+                client = OpenAI(
+                    api_key="My API Key",
+                )
+                transcription = client.audio.transcriptions.create(
+                    file=b"raw file contents",
+                    model="gpt-4o-transcribe",
+                )
+                print(transcription)
+              javascript: |
+                import fs from "fs";
+                import OpenAI from "openai";
+
+                const openai = new OpenAI();
+
+                async function main() {
+                  const transcription = await openai.audio.transcriptions.create({
+                    file: fs.createReadStream("audio.mp3"),
+                    model: "whisper-1",
+                    response_format: "verbose_json",
+                    timestamp_granularities: ["segment"]
+                  });
+
+                  console.log(transcription.text);
+                }
+                main();
+              csharp: |
+                using System;
+
+                using OpenAI.Audio;
+
+                string audioFilePath = "audio.mp3";
+
+                AudioClient client = new(
+                    model: "whisper-1",
+                    apiKey: Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+                );
+
+                AudioTranscriptionOptions options = new()
+                {
+                    ResponseFormat = AudioTranscriptionFormat.Verbose,
+                    TimestampGranularities = AudioTimestampGranularities.Segment,
+                };
+
+                AudioTranscription transcription = client.TranscribeAudio(audioFilePath, options);
+
+                Console.WriteLine($"{transcription.Text}");
+              node.js: |-
+                import OpenAI from 'openai';
+
+                const client = new OpenAI({
+                  apiKey: 'My API Key',
+                });
+
+                const transcription = await client.audio.transcriptions.create({
+                  file: fs.createReadStream('speech.mp3'),
+                  model: 'gpt-4o-transcribe',
+                });
+
+                console.log(transcription);
+              go: |
+                package main
+
+                import (
+                  "bytes"
+                  "context"
+                  "fmt"
+                  "io"
+
+                  "github.com/openai/openai-go"
+                  "github.com/openai/openai-go/option"
+                )
+
+                func main() {
+                  client := openai.NewClient(
+                    option.WithAPIKey("My API Key"),
+                  )
+                  transcription, err := client.Audio.Transcriptions.New(context.TODO(), openai.AudioTranscriptionNewParams{
+                    File: io.Reader(bytes.NewBuffer([]byte("some file contents"))),
+                    Model: openai.AudioModelWhisper1,
+                  })
+                  if err != nil {
+                    panic(err.Error())
+                  }
+                  fmt.Printf("%+v\n", transcription)
+                }
+              java: |-
+                package com.openai.example;
+
+                import com.openai.client.OpenAIClient;
+                import com.openai.client.okhttp.OpenAIOkHttpClient;
+                import com.openai.models.audio.AudioModel;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateParams;
+                import com.openai.models.audio.transcriptions.TranscriptionCreateResponse;
+                import java.io.ByteArrayInputStream;
+
+                public final class Main {
+                    private Main() {}
+
+                    public static void main(String[] args) {
+                        OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                        TranscriptionCreateParams params = TranscriptionCreateParams.builder()
+                            .file(ByteArrayInputStream("some content".getBytes()))
+                            .model(AudioModel.WHISPER_1)
+                            .build();
+                        TranscriptionCreateResponse transcription = client.audio().transcriptions().create(params);
+                    }
+                }
+              ruby: >-
+                require "openai"
+
+
+                openai = OpenAI::Client.new(api_key: "My API Key")
+
+
+                transcription = openai.audio.transcriptions.create(file: Pathname(__FILE__), model:
+                :"whisper-1")
+
+
+                puts(transcription)
+            response: |
+              {
+                "task": "transcribe",
+                "language": "english",
+                "duration": 8.470000267028809,
+                "text": "The beach was a popular spot on a hot summer day. People were swimming in the ocean, building sandcastles, and playing beach volleyball.",
+                "segments": [
+                  {
+                    "id": 0,
+                    "seek": 0,
+                    "start": 0.0,
+                    "end": 3.319999933242798,
+                    "text": " The beach was a popular spot on a hot summer day.",
+                    "tokens": [
+                      50364, 440, 7534, 390, 257, 3743, 4008, 322, 257, 2368, 4266, 786, 13, 50530
+                    ],
+                    "temperature": 0.0,
+                    "avg_logprob": -0.2860786020755768,
+                    "compression_ratio": 1.2363636493682861,
+                    "no_speech_prob": 0.00985979475080967
+                  },
+                  ...
+                ],
+                "usage": {
+                  "type": "duration",
+                  "seconds": 9
+                }
+              }
+      description: Transcribes audio into the input language.
+  /audio/translations:
+    post:
+      operationId: createTranslation
+      tags:
+        - Audio
+      summary: Create translation
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CreateTranslationRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/CreateTranslationResponseJson'
+                  - $ref: '#/components/schemas/CreateTranslationResponseVerboseJson'
+                    x-stainless-skip:
+                      - go
+      x-oaiMeta:
+        name: Create translation
+        group: audio
+        returns: The translated text.
+        examples:
+          response: |
+            {
+              "text": "Hello, my name is Wolfgang and I come from Germany. Where are you heading today?"
+            }
+          request:
+            curl: |
+              curl https://api.openai.com/v1/audio/translations \
+                -H "Authorization: Bearer $OPENAI_API_KEY" \
+                -H "Content-Type: multipart/form-data" \
+                -F file="@/path/to/file/german.m4a" \
+                -F model="whisper-1"
+            python: |-
+              from openai import OpenAI
+
+              client = OpenAI(
+                  api_key="My API Key",
+              )
+              translation = client.audio.translations.create(
+                  file=b"raw file contents",
+                  model="whisper-1",
+              )
+              print(translation)
+            javascript: |
+              import fs from "fs";
+              import OpenAI from "openai";
+
+              const openai = new OpenAI();
+
+              async function main() {
+                  const translation = await openai.audio.translations.create({
+                      file: fs.createReadStream("speech.mp3"),
+                      model: "whisper-1",
+                  });
+
+                  console.log(translation.text);
+              }
+              main();
+            csharp: |
+              using System;
+
+              using OpenAI.Audio;
+
+              string audioFilePath = "audio.mp3";
+
+              AudioClient client = new(
+                  model: "whisper-1",
+                  apiKey: Environment.GetEnvironmentVariable("OPENAI_API_KEY")
+              );
+
+              AudioTranscription transcription = client.TranscribeAudio(audioFilePath);
+
+              Console.WriteLine($"{transcription.Text}");
+            node.js: |-
+              import OpenAI from 'openai';
+
+              const client = new OpenAI({
+                apiKey: 'My API Key',
+              });
+
+              const translation = await client.audio.translations.create({
+                file: fs.createReadStream('speech.mp3'),
+                model: 'whisper-1',
+              });
+
+              console.log(translation);
+            go: |
+              package main
+
+              import (
+                "bytes"
+                "context"
+                "fmt"
+                "io"
+
+                "github.com/openai/openai-go"
+                "github.com/openai/openai-go/option"
+              )
+
+              func main() {
+                client := openai.NewClient(
+                  option.WithAPIKey("My API Key"),
+                )
+                translation, err := client.Audio.Translations.New(context.TODO(), openai.AudioTranslationNewParams{
+                  File: io.Reader(bytes.NewBuffer([]byte("some file contents"))),
+                  Model: openai.AudioModelWhisper1,
+                })
+                if err != nil {
+                  panic(err.Error())
+                }
+                fmt.Printf("%+v\n", translation)
+              }
+            java: |-
+              package com.openai.example;
+
+              import com.openai.client.OpenAIClient;
+              import com.openai.client.okhttp.OpenAIOkHttpClient;
+              import com.openai.models.audio.AudioModel;
+              import com.openai.models.audio.translations.TranslationCreateParams;
+              import com.openai.models.audio.translations.TranslationCreateResponse;
+              import java.io.ByteArrayInputStream;
+
+              public final class Main {
+                  private Main() {}
+
+                  public static void main(String[] args) {
+                      OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                      TranslationCreateParams params = TranslationCreateParams.builder()
+                          .file(ByteArrayInputStream("some content".getBytes()))
+                          .model(AudioModel.WHISPER_1)
+                          .build();
+                      TranslationCreateResponse translation = client.audio().translations().create(params);
+                  }
+              }
+            ruby: |-
+              require "openai"
+
+              openai = OpenAI::Client.new(api_key: "My API Key")
+
+              translation = openai.audio.translations.create(file: Pathname(__FILE__), model: :"whisper-1")
+
+              puts(translation)
+      description: Translates audio into English.
+  /batches:
+    post:
+      summary: Create batch
+      operationId: createBatch
+      tags:
+        - Batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - input_file_id
+                - endpoint
+                - completion_window
+              properties:
+                input_file_id:
+                  type: string
+                  description: >
+                    The ID of an uploaded file that contains requests for the new batch.
+
+
+                    See [upload file](https://platform.openai.com/docs/api-reference/files/create) for how to
+                    upload a file.
+
+
+                    Your input file must be formatted as a [JSONL
+                    file](https://platform.openai.com/docs/api-reference/batch/request-input), and must be
+                    uploaded with the purpose `batch`. The file can contain up to 50,000 requests, and can be
+                    up to 200 MB in size.
+                endpoint:
+                  type: string
+                  enum:
+                    - /v1/responses
+                    - /v1/chat/completions
+                    - /v1/embeddings
+                    - /v1/completions
+                  description: >-
+                    The endpoint to be used for all requests in the batch. Currently `/v1/responses`,
+                    `/v1/chat/completions`, `/v1/embeddings`, and `/v1/completions` are supported. Note that
+                    `/v1/embeddings` batches are also restricted to a maximum of 50,000 embedding inputs
+                    across all requests in the batch.
+                completion_window:
+                  type: string
+                  enum:
+                    - 24h
+                  description: >-
+                    The time frame within which the batch should be processed. Currently only `24h` is
+                    supported.
+                metadata:
+                  $ref: '#/components/schemas/Metadata'
+                output_expires_after:
+                  $ref: '#/components/schemas/BatchFileExpirationAfter'
+      responses:
+        '200':
+          description: Batch created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Batch'
+      x-oaiMeta:
+        name: Create batch
+        group: batch
+        returns: The created [Batch](https://platform.openai.com/docs/api-reference/batch/object) object.
+        examples:
+          response: |
+            {
+              "id": "batch_abc123",
+              "object": "batch",
+              "endpoint": "/v1/chat/completions",
+              "errors": null,
+              "input_file_id": "file-abc123",
+              "completion_window": "24h",
+              "status": "validating",
+              "output_file_id": null,
+              "error_file_id": null,
+              "created_at": 1711471533,
+              "in_progress_at": null,
+              "expires_at": null,
+              "finalizing_at": null,
+              "completed_at": null,
+              "failed_at": null,
+              "expired_at": null,
+              "cancelling_at": null,
+              "cancelled_at": null,
+              "request_counts": {
+                "total": 0,
+                "completed": 0,
+                "failed": 0
+              },
+              "metadata": {
+                "customer_id": "user_123456789",
+                "batch_description": "Nightly eval job",
+              }
+            }
+          request:
+            curl: |
+              curl https://api.openai.com/v1/batches \
+                -H "Authorization: Bearer $OPENAI_API_KEY" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "input_file_id": "file-abc123",
+                  "endpoint": "/v1/chat/completions",
+                  "completion_window": "24h"
+                }'
+            python: |-
+              from openai import OpenAI
+
+              client = OpenAI(
+                  api_key="My API Key",
+              )
+              batch = client.batches.create(
+                  completion_window="24h",
+                  endpoint="/v1/responses",
+                  input_file_id="input_file_id",
+              )
+              print(batch.id)
+            node: |
+              import OpenAI from "openai";
+
+              const openai = new OpenAI();
+
+              async function main() {
+                const batch = await openai.batches.create({
+                  input_file_id: "file-abc123",
+                  endpoint: "/v1/chat/completions",
+                  completion_window: "24h"
+                });
+
+                console.log(batch);
+              }
+
+              main();
+            node.js: |-
+              import OpenAI from 'openai';
+
+              const client = new OpenAI({
+                apiKey: 'My API Key',
+              });
+
+              const batch = await client.batches.create({
+                completion_window: '24h',
+                endpoint: '/v1/responses',
+                input_file_id: 'input_file_id',
+              });
+
+              console.log(batch.id);
+            go: |
+              package main
+
+              import (
+                "context"
+                "fmt"
+
+                "github.com/openai/openai-go"
+                "github.com/openai/openai-go/option"
+              )
+
+              func main() {
+                client := openai.NewClient(
+                  option.WithAPIKey("My API Key"),
+                )
+                batch, err := client.Batches.New(context.TODO(), openai.BatchNewParams{
+                  CompletionWindow: openai.BatchNewParamsCompletionWindow24h,
+                  Endpoint: openai.BatchNewParamsEndpointV1Responses,
+                  InputFileID: "input_file_id",
+                })
+                if err != nil {
+                  panic(err.Error())
+                }
+                fmt.Printf("%+v\n", batch.ID)
+              }
+            java: |-
+              package com.openai.example;
+
+              import com.openai.client.OpenAIClient;
+              import com.openai.client.okhttp.OpenAIOkHttpClient;
+              import com.openai.models.batches.Batch;
+              import com.openai.models.batches.BatchCreateParams;
+
+              public final class Main {
+                  private Main() {}
+
+                  public static void main(String[] args) {
+                      OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                      BatchCreateParams params = BatchCreateParams.builder()
+                          .completionWindow(BatchCreateParams.CompletionWindow._24H)
+                          .endpoint(BatchCreateParams.Endpoint.V1_RESPONSES)
+                          .inputFileId("input_file_id")
+                          .build();
+                      Batch batch = client.batches().create(params);
+                  }
+              }
+            ruby: |-
+              require "openai"
+
+              openai = OpenAI::Client.new(api_key: "My API Key")
+
+              batch = openai.batches.create(
+                completion_window: :"24h",
+                endpoint: :"/v1/responses",
+                input_file_id: "input_file_id"
+              )
+
+              puts(batch)
+      description: Creates and executes a batch from an uploaded file of requests
+    get:
+      operationId: listBatches
+      tags:
+        - Batch
+      summary: List batch
+      parameters:
+        - in: query
+          name: after
+          required: false
+          schema:
+            type: string
+          description: >
+            A cursor for use in pagination. `after` is an object ID that defines your place in the list. For
+            instance, if you make a list request and receive 100 objects, ending with obj_foo, your subsequent
+            call can include after=obj_foo in order to fetch the next page of the list.
+        - name: limit
+          in: query
+          description: >
+            A limit on the number of objects to be returned. Limit can range between 1 and 100, and the
+            default is 20.
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Batch listed successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListBatchesResponse'
+      x-oaiMeta:
+        name: List batch
+        group: batch
+        returns: A list of paginated [Batch](https://platform.openai.com/docs/api-reference/batch/object) objects.
+        examples:
+          response: |
+            {
+              "object": "list",
+              "data": [
+                {
+                  "id": "batch_abc123",
+                  "object": "batch",
+                  "endpoint": "/v1/chat/completions",
+                  "errors": null,
+                  "input_file_id": "file-abc123",
+                  "completion_window": "24h",
+                  "status": "completed",
+                  "output_file_id": "file-cvaTdG",
+                  "error_file_id": "file-HOWS94",
+                  "created_at": 1711471533,
+                  "in_progress_at": 1711471538,
+                  "expires_at": 1711557933,
+                  "finalizing_at": 1711493133,
+                  "completed_at": 1711493163,
+                  "failed_at": null,
+                  "expired_at": null,
+                  "cancelling_at": null,
+                  "cancelled_at": null,
+                  "request_counts": {
+                    "total": 100,
+                    "completed": 95,
+                    "failed": 5
+                  },
+                  "metadata": {
+                    "customer_id": "user_123456789",
+                    "batch_description": "Nightly job",
+                  }
+                },
+                { ... },
+              ],
+              "first_id": "batch_abc123",
+              "last_id": "batch_abc456",
+              "has_more": true
+            }
+          request:
+            curl: |
+              curl https://api.openai.com/v1/batches?limit=2 \
+                -H "Authorization: Bearer $OPENAI_API_KEY" \
+                -H "Content-Type: application/json"
+            python: |-
+              from openai import OpenAI
+
+              client = OpenAI(
+                  api_key="My API Key",
+              )
+              page = client.batches.list()
+              page = page.data[0]
+              print(page.id)
+            node: |
+              import OpenAI from "openai";
+
+              const openai = new OpenAI();
+
+              async function main() {
+                const list = await openai.batches.list();
+
+                for await (const batch of list) {
+                  console.log(batch);
+                }
+              }
+
+              main();
+            node.js: |-
+              import OpenAI from 'openai';
+
+              const client = new OpenAI({
+                apiKey: 'My API Key',
+              });
+
+              // Automatically fetches more pages as needed.
+              for await (const batch of client.batches.list()) {
+                console.log(batch.id);
+              }
+            go: |
+              package main
+
+              import (
+                "context"
+                "fmt"
+
+                "github.com/openai/openai-go"
+                "github.com/openai/openai-go/option"
+              )
+
+              func main() {
+                client := openai.NewClient(
+                  option.WithAPIKey("My API Key"),
+                )
+                page, err := client.Batches.List(context.TODO(), openai.BatchListParams{
+
+                })
+                if err != nil {
+                  panic(err.Error())
+                }
+                fmt.Printf("%+v\n", page)
+              }
+            java: |-
+              package com.openai.example;
+
+              import com.openai.client.OpenAIClient;
+              import com.openai.client.okhttp.OpenAIOkHttpClient;
+              import com.openai.models.batches.BatchListPage;
+              import com.openai.models.batches.BatchListParams;
+
+              public final class Main {
+                  private Main() {}
+
+                  public static void main(String[] args) {
+                      OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+                      BatchListPage page = client.batches().list();
+                  }
+              }
+            ruby: |-
+              require "openai"
+
+              openai = OpenAI::Client.new(api_key: "My API Key")
+
+              page = openai.batches.list
+
+              puts(page)
+      description: List your organization's batches.
+  /batches/{batch_id}:
+    get:
+      operationId: retrieveBatch
+      tags:
+        - Batch
+      summar
