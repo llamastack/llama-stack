@@ -15,8 +15,7 @@ from pydantic import BaseModel, Field
 
 from llama_stack_api.common.tracing import telemetry_traceable
 from llama_stack_api.inference import InterleavedContent
-from llama_stack_api.schema_utils import json_schema_type, webmethod
-from llama_stack_api.strong_typing.schema import register_schema
+from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
 from llama_stack_api.vector_stores import VectorStore
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
@@ -738,8 +737,8 @@ class VectorIO(Protocol):
         self,
         vector_store_id: str,
         file_id: str,
-        include_embeddings: Annotated[bool | None, Query(default=False)] = False,
-        include_metadata: Annotated[bool | None, Query(default=False)] = False,
+        include_embeddings: Annotated[bool | None, Query()] = False,
+        include_metadata: Annotated[bool | None, Query()] = False,
     ) -> VectorStoreFileContentResponse:
         """Retrieves the contents of a vector store file.
 

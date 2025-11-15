@@ -85,6 +85,7 @@ class Prompt(BaseModel):
         return f"pmpt_{hex_string}"
 
 
+@json_schema_type
 class ListPromptsResponse(BaseModel):
     """Response model to list prompts."""
 

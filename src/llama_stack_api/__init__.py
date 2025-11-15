@@ -353,8 +353,15 @@ from .safety import (
 from .schema_utils import (
     CallableT,
     ExtraBodyField,
+    SchemaInfo,
     WebMethod,
+    clear_dynamic_schema_types,
+    get_registered_schema_info,
+    iter_dynamic_schema_types,
+    iter_json_schema_types,
+    iter_registered_schema_types,
     json_schema_type,
+    register_dynamic_schema_type,
     register_schema,
     webmethod,
 )
@@ -388,27 +395,6 @@ from .shields import (
 )
 
 # Import from strong_typing
-from .strong_typing.core import JsonType
-from .strong_typing.docstring import Docstring, parse_type
-from .strong_typing.inspection import (
-    get_signature,
-    is_generic_list,
-    is_type_optional,
-    is_type_union,
-    is_unwrapped_body_param,
-    unwrap_generic_list,
-    unwrap_optional_type,
-    unwrap_union_types,
-)
-from .strong_typing.name import python_type_to_name
-from .strong_typing.schema import (
-    JsonSchemaGenerator,
-    Schema,
-    SchemaOptions,
-    StrictJsonType,
-    get_schema_identifier,
-)
-from .strong_typing.serialization import json_dump_string, object_to_json
 from .tools import (
     ListToolDefsResponse,
     ListToolGroupsResponse,
@@ -537,6 +523,7 @@ __all__ = [
     "ExtraBodyField",
     "Files",
     "Fp8QuantizationConfig",
+    "clear_dynamic_schema_types",
     "get_schema_identifier",
     "get_signature",
     "GrammarResponseFormat",
@@ -557,6 +544,10 @@ __all__ = [
     "is_type_optional",
     "is_type_union",
     "is_unwrapped_body_param",
+    "iter_dynamic_schema_types",
+    "iter_json_schema_types",
+    "iter_registered_schema_types",
+    "get_registered_schema_info",
     "Job",
     "JobStatus",
     "json_dump_string",
@@ -759,6 +750,7 @@ __all__ = [
     "RAGQueryGeneratorConfig",
     "RAGQueryResult",
     "RAGSearchMode",
+    "register_dynamic_schema_type",
     "register_schema",
     "RLHFAlgorithm",
     "RRFRanker",
@@ -796,6 +788,7 @@ __all__ = [
     "ScoringResult",
     "ScoringResultRow",
     "Schema",
+    "SchemaInfo",
     "SchemaOptions",
     "SearchRankingOptions",
     "Shield",

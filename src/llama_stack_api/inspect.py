@@ -54,6 +54,7 @@ class VersionInfo(BaseModel):
     version: str
 
 
+@json_schema_type
 class ListRoutesResponse(BaseModel):
     """Response containing a list of all available API routes.
 

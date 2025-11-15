@@ -48,6 +48,7 @@ class BenchmarkInput(CommonBenchmarkFields, BaseModel):
     provider_benchmark_id: str | None = None
 
 
+@json_schema_type
 class ListBenchmarksResponse(BaseModel):
     data: list[Benchmark]
 

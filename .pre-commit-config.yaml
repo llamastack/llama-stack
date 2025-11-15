@@ -42,7 +42,6 @@ repos:
     hooks:
     -   id: ruff
         args: [ --fix ]
-        exclude: ^(src/llama_stack_api/strong_typing/.*)$
     -   id: ruff-format
 
 -   repo: https://github.com/adamchainz/blacken-docs
@@ -106,16 +105,16 @@ repos:
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^src/llama_stack/providers/.*$
+        files: ^src/llama_stack/providers/.*$|^scripts/run_openapi_generator.sh$
       - id: openapi-codegen
         name: API Spec Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: sh -c './scripts/uv-run-with-index.sh run ./docs/openapi_generator/run_openapi_generator.sh > /dev/null'
+        entry: sh -c './scripts/uv-run-with-index.sh run scripts/run_openapi_generator.sh'
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^src/llama_stack/apis/|^docs/openapi_generator/
+        files: ^src/llama_stack_api/.*$
       - id: check-workflows-use-hashes
         name: Check GitHub Actions use SHA-pinned actions
         entry: ./scripts/check-workflows-use-hashes.sh

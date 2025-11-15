@@ -31,7 +31,7 @@ dependencies = [
     "httpx",
     "jinja2>=3.1.6",
     "jsonschema",
-    "llama-stack-api",  # API and provider specifications (local dev via tool.uv.sources)
+    "llama-stack-api",                                # API and provider specifications (local dev via tool.uv.sources)
     "openai>=2.5.0",
     "prompt-toolkit",
     "python-dotenv",
@@ -50,12 +50,13 @@ dependencies = [
     "aiosqlite>=0.21.0",                              # server - for metadata store
     "asyncpg",                                        # for metadata store
     "sqlalchemy[asyncio]>=2.0.41",                    # server - for conversations
+    "pyyaml>=6.0.2",
     "starlette>=0.49.1",
 ]
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.3.0",  # Optional for library-only usage
+    "llama-stack-client>=0.3.0", # Optional for library-only usage
 ]
 
 [dependency-groups]
@@ -66,13 +67,14 @@ dev = [
     "pytest-cov",
     "pytest-html",
     "pytest-json-report",
-    "pytest-socket", # For blocking network access in unit tests
-    "nbval", # For notebook testing
+    "pytest-socket",                 # For blocking network access in unit tests
+    "nbval",                         # For notebook testing
     "black",
     "ruff",
     "mypy",
     "pre-commit>=4.4.0",
-    "ruamel.yaml", # needed for openapi generator
+    "ruamel.yaml",                   # needed for openapi generator
+    "openapi-spec-validator>=0.7.2",
 ]
 # Type checking dependencies - includes type stubs and optional runtime dependencies
 # needed for complete mypy coverage across all optional features
@@ -182,7 +184,12 @@ install-wheel-from-presigned = "llama_stack.cli.scripts.run:install_wheel_from_p
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["llama_stack", "llama_stack.*", "llama_stack_api", "llama_stack_api.*"]
+include = [
+    "llama_stack",
+    "llama_stack.*",
+    "llama_stack_api",
+    "llama_stack_api.*",
+]
 
 [[tool.uv.index]]
 name = "pytorch-cpu"
@@ -249,7 +256,9 @@ unfixable = [
 # Ignore the following errors for the following files
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["DTZ"] # Ignore datetime rules for tests
-"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_utils.py" = ["RUF001"]
+"src/llama_stack/providers/inline/scoring/basic/utils/ifeval_utils.py" = [
+    "RUF001",
+]
 "src/llama_stack/providers/inline/scoring/basic/scoring_fn/fn_defs/regex_parser_multiple_choice_answer.py" = [
     "RUF001",
     "PLE2515",
@@ -341,7 +350,6 @@ exclude = [
     "^src/llama_stack/providers/utils/telemetry/dataset_mixin\\.py$",
     "^src/llama_stack/providers/utils/telemetry/trace_protocol\\.py$",
     "^src/llama_stack/providers/utils/telemetry/tracing\\.py$",
-    "^src/llama_stack_api/strong_typing/auxiliary\\.py$",
     "^src/llama_stack/distributions/template\\.py$",
 ]
 

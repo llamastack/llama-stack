@@ -115,9 +115,6 @@ resources:
       sampling_params: SamplingParams
       scoring_result: ScoringResult
       system_message: SystemMessage
-      query_result: RAGQueryResult
-      document: RAGDocument
-      query_config: RAGQueryConfig
   toolgroups:
     models:
       tool_group: ToolGroup
@@ -143,11 +140,6 @@ resources:
         endpoint: get /v1/tool-runtime/list-tools
         paginated: false
       invoke_tool: post /v1/tool-runtime/invoke
-    subresources:
-      rag_tool:
-        methods:
-          insert: post /v1/tool-runtime/rag-tool/insert
-          query: post /v1/tool-runtime/rag-tool/query
 
   responses:
     models:
@@ -173,6 +165,7 @@ resources:
           list:
             type: http
             endpoint: get /v1/responses/{response_id}/input_items
+            paginated: false
 
   prompts:
     models:
@@ -220,6 +213,9 @@ resources:
           create:
             type: http
             endpoint: post /v1/conversations/{conversation_id}/items
+          delete:
+            type: http
+            endpoint: delete /v1/conversations/{conversation_id}/items/{item_id}
 
   inspect:
     models:
@@ -252,6 +248,7 @@ resources:
           list:
             type: http
             endpoint: get /v1/chat/completions
+            paginated: false
           retrieve:
             type: http
             endpoint: get /v1/chat/completions/{completion_id}
@@ -375,6 +372,7 @@ resources:
         endpoint: get /v1/scoring-functions
         paginated: false
       register: post /v1/scoring-functions
+      unregister: delete /v1/scoring-functions/{scoring_fn_id}
     models:
       scoring_fn: ScoringFn
       scoring_fn_params: ScoringFnParams
@@ -391,6 +389,13 @@ resources:
       file: OpenAIFileObject
       list_files_response: ListOpenAIFileResponse
       delete_file_response: OpenAIFileDeleteResponse
+
+  batches:
+    methods:
+      create: post /v1/batches
+      list: get /v1/batches
+      retrieve: get /v1/batches/{batch_id}
+      cancel: post /v1/batches/{batch_id}/cancel
 
   alpha:
     subresources:
@@ -423,6 +428,7 @@ resources:
             endpoint: get /v1alpha/eval/benchmarks
             paginated: false
           register: post /v1alpha/eval/benchmarks
+          unregister: delete /v1alpha/eval/benchmarks/{benchmark_id}
         models:
           benchmark: Benchmark
           list_benchmarks_response: ListBenchmarksResponse
@@ -519,7 +525,7 @@ readme:
       params: &ref_0 {}
     headline:
       type: request
-      endpoint: post /v1/models
+      endpoint: get /v1/models
       params: *ref_0
     pagination:
       type: request

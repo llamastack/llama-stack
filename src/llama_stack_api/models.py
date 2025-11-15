@@ -100,6 +100,7 @@ class OpenAIModel(BaseModel):
     custom_metadata: dict[str, Any] | None = None
 
 
+@json_schema_type
 class OpenAIListModelsResponse(BaseModel):
     data: list[OpenAIModel]
 

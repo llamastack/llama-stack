@@ -136,6 +136,7 @@ class DatasetInput(CommonDatasetFields, BaseModel):
     dataset_id: str
 
 
+@json_schema_type
 class ListDatasetsResponse(BaseModel):
     """Response from listing datasets.
 

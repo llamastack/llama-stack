@@ -43,6 +43,7 @@ class ShieldInput(CommonShieldFields):
     provider_shield_id: str | None = None
 
 
+@json_schema_type
 class ListShieldsResponse(BaseModel):
     data: list[Shield]
 

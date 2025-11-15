@@ -1316,6 +1316,7 @@ OpenAIResponseInput = Annotated[
 register_schema(OpenAIResponseInput, name="OpenAIResponseInput")
 
 
+@json_schema_type
 class ListOpenAIResponseInputItem(BaseModel):
     """List container for OpenAI response input items.
 

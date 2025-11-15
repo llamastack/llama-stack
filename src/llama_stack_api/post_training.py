@@ -236,6 +236,7 @@ class PostTrainingRLHFRequest(BaseModel):
     logger_config: dict[str, Any]
 
 
+@json_schema_type
 class PostTrainingJob(BaseModel):
     job_uuid: str
 
@@ -265,6 +266,7 @@ class PostTrainingJobStatusResponse(BaseModel):
     checkpoints: list[Checkpoint] = Field(default_factory=list)
 
 
+@json_schema_type
 class ListPostTrainingJobsResponse(BaseModel):
     data: list[PostTrainingJob]
 

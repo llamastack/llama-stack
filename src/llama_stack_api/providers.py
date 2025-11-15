@@ -31,6 +31,7 @@ class ProviderInfo(BaseModel):
     health: HealthResponse
 
 
+@json_schema_type
 class ListProvidersResponse(BaseModel):
     """Response containing a list of all available providers.
 

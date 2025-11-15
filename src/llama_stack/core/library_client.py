@@ -19,7 +19,7 @@ import httpx
 import yaml
 from fastapi import Response as FastAPIResponse
 
-from llama_stack_api import is_unwrapped_body_param
+from llama_stack.core.utils.type_inspection import is_unwrapped_body_param
 
 try:
     from llama_stack_client import (
@@ -42,17 +42,10 @@ from termcolor import cprint
 from llama_stack.core.build import print_pip_install_help
 from llama_stack.core.configure import parse_and_maybe_upgrade_config
 from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
-from llama_stack.core.request_headers import (
-    PROVIDER_DATA_VAR,
-    request_provider_data_context,
-)
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR, request_provider_data_context
 from llama_stack.core.resolver import ProviderRegistry
 from llama_stack.core.server.routes import RouteImpls, find_matching_route, initialize_route_impls
-from llama_stack.core.stack import (
-    Stack,
-    get_stack_run_config_from_distro,
-    replace_env_vars,
-)
+from llama_stack.core.stack import Stack, get_stack_run_config_from_distro, replace_env_vars
 from llama_stack.core.telemetry import Telemetry
 from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.core.utils.config import redact_sensitive_fields
