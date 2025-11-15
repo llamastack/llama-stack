@@ -1,11 +1,18 @@
 #!/usr/bin/env python3
 
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 import yaml
 
@@ -602,7 +609,7 @@ class Endpoint:
     extra: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
-    def from_config(cls, value: Any) -> "Endpoint":
+    def from_config(cls, value: Any) -> Endpoint:
         if isinstance(value, str):
             method, _, path = value.partition(" ")
             return cls._from_parts(method, path)
@@ -615,7 +622,7 @@ class Endpoint:
         raise ValueError(f"Unsupported endpoint value: {value!r}")
 
     @classmethod
-    def _from_parts(cls, method: str, path: str) -> "Endpoint":
+    def _from_parts(cls, method: str, path: str) -> Endpoint:
         method = method.strip().lower()
         path = path.strip()
         if method not in HTTP_METHODS:
@@ -754,8 +761,7 @@ class StainlessConfig:
                 duplicates[route] = labels
         if duplicates:
             formatted = "\n".join(
-                f"  - {route} defined in: {', '.join(sorted(labels))}"
-                for route, labels in sorted(duplicates.items())
+                f"  - {route} defined in: {', '.join(sorted(labels))}" for route, labels in sorted(duplicates.items())
             )
             raise ValueError("Duplicate endpoints found across resources:\n" + formatted)
 
@@ -763,15 +769,10 @@ class StainlessConfig:
         resource_paths: set[str] = set()
         for resource in self.resources.values():
             resource_paths.update(resource.collect_endpoint_paths())
-        missing = sorted(
-            path for path in self.readme_endpoint_paths() if path not in resource_paths
-        )
+        missing = sorted(path for path in self.readme_endpoint_paths() if path not in resource_paths)
         if missing:
             formatted = "\n".join(f"  - {path}" for path in missing)
-            raise ValueError(
-                "README example endpoints are not present in Stainless resources:\n"
-                + formatted
-            )
+            raise ValueError("README example endpoints are not present in Stainless resources:\n" + formatted)
 
     def to_dict(self) -> dict[str, Any]:
         cfg: dict[str, Any] = {}
