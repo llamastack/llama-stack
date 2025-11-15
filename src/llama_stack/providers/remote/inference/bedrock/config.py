@@ -27,6 +27,6 @@ class BedrockConfig(RemoteInferenceProviderConfig):
     @classmethod
     def sample_run_config(cls, **kwargs):
         return {
-            "api_key": "${env.AWS_BEDROCK_API_KEY:=}",
+            "api_key": "${env.AWS_BEARER_TOKEN_BEDROCK:=}",
             "region_name": "${env.AWS_DEFAULT_REGION:=us-east-2}",
         }
