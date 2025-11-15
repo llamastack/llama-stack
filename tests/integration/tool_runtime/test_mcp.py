@@ -35,11 +35,8 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
         mcp_endpoint=dict(uri=uri),
     )
 
-    # Phase 2: Use the dedicated authorization parameter (no more provider_data headers)
+    # Use the dedicated authorization parameter (no more provider_data headers)
     # This tests direct tool_runtime.invoke_tool API calls
-
-    # Note: tools.list() is the ToolGroups API and doesn't have authorization parameter
-    # Use tool_runtime.list_tools() for authorization support
     tools_list = llama_stack_client.tool_runtime.list_tools(
         tool_group_id=test_toolgroup_id,
         authorization=AUTH_TOKEN,  # Use dedicated authorization parameter

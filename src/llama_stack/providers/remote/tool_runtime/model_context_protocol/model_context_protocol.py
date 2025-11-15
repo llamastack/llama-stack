@@ -48,7 +48,6 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         if mcp_endpoint is None:
             raise ValueError("mcp_endpoint is required")
 
-        # Phase 2: Only use the dedicated authorization parameter
         # Get other headers from provider data (but NOT authorization)
         provider_headers = await self.get_headers_from_request(mcp_endpoint.uri)
 
@@ -64,7 +63,6 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         if urlparse(endpoint).scheme not in ("http", "https"):
             raise ValueError(f"Endpoint {endpoint} is not a valid HTTP(S) URL")
 
-        # Phase 2: Only use the dedicated authorization parameter
         # Get other headers from provider data (but NOT authorization)
         provider_headers = await self.get_headers_from_request(endpoint)
 
@@ -80,7 +78,7 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         """
         Extract headers from request provider data, excluding authorization.
 
-        Phase 2: Authorization must be provided via the dedicated authorization parameter.
+        Authorization must be provided via the dedicated authorization parameter.
         If Authorization is found in mcp_headers, raise an error to guide users to the correct approach.
 
         Args:
@@ -104,7 +102,7 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
                 if canonicalize_uri(uri) != canonicalize_uri(mcp_endpoint_uri):
                     continue
 
-                # Phase 2: Reject Authorization in mcp_headers - must use authorization parameter
+                # Reject Authorization in mcp_headers - must use authorization parameter
                 for key in values.keys():
                     if key.lower() == "authorization":
                         raise ValueError(

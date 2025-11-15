@@ -191,7 +191,7 @@ class TestMCPToolsInChatCompletion:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Phase 2: Use the dedicated authorization parameter
+        # Use the dedicated authorization parameter
         # Get the tools from MCP
         tools_response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,

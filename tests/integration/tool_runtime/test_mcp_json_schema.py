@@ -120,7 +120,7 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Phase 2: Use the dedicated authorization parameter
+        # Use the dedicated authorization parameter
         # List runtime tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
@@ -160,7 +160,7 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Phase 2: Use the dedicated authorization parameter
+        # Use the dedicated authorization parameter
         # List tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
@@ -206,7 +206,7 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Phase 2: Use the dedicated authorization parameter
+        # Use the dedicated authorization parameter
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             authorization=AUTH_TOKEN,
@@ -249,8 +249,7 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Phase 2: Use the dedicated authorization parameter
-        # List tools to populate the tool index
+        # Use the dedicated authorization parameter
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             authorization=AUTH_TOKEN,
@@ -291,8 +290,7 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Phase 2: Use the dedicated authorization parameter
-        # List tools to populate the tool index
+        # Use the dedicated authorization parameter
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             authorization=AUTH_TOKEN,
@@ -343,9 +341,7 @@ class TestAgentWithMCPTools:
             mcp_endpoint=dict(uri=uri),
         )
 
-        # Phase 2: Use the dedicated authorization parameter
-        # Note: tools.list() is the ToolGroups API and doesn't have authorization parameter
-        # Use tool_runtime.list_tools() instead
+        # Use the dedicated authorization parameter
         tools_list = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
             authorization=AUTH_TOKEN,
