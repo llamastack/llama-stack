@@ -320,9 +320,13 @@ def is_function_tool_call(
     return False
 
 
-async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[str]) -> str | None:
+async def run_guardrails(safety_api: Safety | None, messages: str, guardrail_ids: list[str]) -> str | None:
     """Run guardrails against messages and return violation message if blocked."""
     if not messages:
+        return None
+
+    # If safety API is not available, skip guardrails
+    if safety_api is None:
         return None
 
     # Look up shields to get their provider_resource_id (actual model ID)

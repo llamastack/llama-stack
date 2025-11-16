@@ -67,7 +67,7 @@ class OpenAIResponsesImpl:
         tool_runtime_api: ToolRuntime,
         responses_store: ResponsesStore,
         vector_io_api: VectorIO,  # VectorIO
-        safety_api: Safety,
+        safety_api: Safety | None,
         conversations_api: Conversations,
     ):
         self.inference_api = inference_api
@@ -272,6 +272,14 @@ class OpenAIResponsesImpl:
                             )
 
         guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
+
+        # Validate that Safety API is available if guardrails are requested
+        if guardrail_ids and self.safety_api is None:
+            raise ValueError(
+                "Cannot process guardrails: Safety API is not configured.\n\n"
+                "To use guardrails, ensure the Safety API is configured in your stack, or remove "
+                "the 'guardrails' parameter from your request."
+            )
 
         if conversation is not None:
             if previous_response_id is not None:
