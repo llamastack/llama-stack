@@ -6,11 +6,12 @@
 
 from typing import Any
 
+from opentelemetry import trace
+
 from llama_stack.core.datatypes import SafetyConfig
 from llama_stack.log import get_logger
+from llama_stack.telemetry.helpers import safety_request_span_attributes, safety_span_name
 from llama_stack_api import ModerationObject, OpenAIMessageParam, RoutingTable, RunShieldResponse, Safety, Shield
-
-from opentelemetry import trace
 
 logger = get_logger(name=__name__, category="core::routers")
 tracer = trace.get_tracer(__name__)
