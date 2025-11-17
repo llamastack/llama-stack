@@ -51,7 +51,7 @@ def sanitize_metadata_for_attributes(metadata: dict[str, Any]) -> dict[str, str 
     for key, value in metadata.items():
         if isinstance(value, bool):
             sanitized[key] = value
-        elif isinstance(value, (int, float)):
+        elif isinstance(value, int | float):
             sanitized[key] = float(value)
         elif isinstance(value, str):
             sanitized[key] = value
