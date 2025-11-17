@@ -375,6 +375,10 @@ class StackRun(Subcommand):
         logger.info(f"Worker recycling: every {max_requests}±{max_requests_jitter} requests (prevents memory leaks)")
         logger.info(f"Total concurrent capacity: {num_workers * worker_connections} connections")
 
+        # Warn if using SQLite with multiple workers
+        if num_workers > 1 and os.getenv("SQLITE_STORE_DIR"):
+            logger.warning("SQLite detected with multiple GUNICORN workers - writes will be serialized.")
+
         # Execute the Gunicorn command
         # If Gunicorn is not found or fails to start, raise the exception for the caller to handle
         subprocess.run(gunicorn_command, check=True)
