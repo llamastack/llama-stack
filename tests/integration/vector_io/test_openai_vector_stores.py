@@ -1704,3 +1704,49 @@ def test_openai_vector_store_file_contents_with_extra_query(
     assert with_flags_embedding is not None, "Embeddings should be included when include_embeddings=True"
     assert len(with_flags_embedding) > 0, "Embedding should be a non-empty list"
     assert without_flags_embedding is None, "Embeddings should not be included when include_embeddings=False"
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_search_with_rewrite_query(
+    compat_client_with_empty_stores,
+    client_with_models,
+    sample_chunks,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+):
+    """Test that rewrite_query parameter is properly passed through and handled."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+    llama_client = client_with_models
+
+    # Create vector store and insert chunks
+    vector_store = compat_client.vector_stores.create(
+        name="rewrite_test",
+        extra_body={"embedding_model": embedding_model_id, "provider_id": vector_io_provider_id},
+    )
+    llama_client.vector_io.insert(vector_store_id=vector_store.id, chunks=sample_chunks)
+
+    # Test rewrite_query=False (default behavior)
+    response_no_rewrite = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="programming",
+        max_num_results=2,
+        rewrite_query=False,
+    )
+
+    # Test rewrite_query=True (may work if LLM models are available, or gracefully handle if not)
+    response_with_rewrite = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="programming",
+        max_num_results=2,
+        rewrite_query=True,
+    )
+
+    # Both requests should succeed (rewrite_query=True will gracefully fall back if no LLM models)
+    assert response_no_rewrite is not None
+    assert response_with_rewrite is not None
+
+    # Both should return the same data since we have embedding models but may not have LLM models
+    assert len(response_no_rewrite.data) > 0
