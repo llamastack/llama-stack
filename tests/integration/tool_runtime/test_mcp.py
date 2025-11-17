@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import json
-
 import pytest
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
@@ -42,6 +40,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
         mcp_endpoint=dict(uri=uri),
     )
 
+<<<<<<< HEAD
     provider_data = {
         "mcp_headers": {
             uri: {
@@ -59,14 +58,26 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
     tools_list = llama_stack_client.tools.list(
         toolgroup_id=test_toolgroup_id,
         extra_headers=auth_headers,
+=======
+    # Use the dedicated authorization parameter (no more provider_data headers)
+    # This tests direct tool_runtime.invoke_tool API calls
+    tools_list = llama_stack_client.tool_runtime.list_tools(
+        tool_group_id=test_toolgroup_id,
+        authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
+>>>>>>> fe91d331 (fix: Remove authorization from provider data (#4161))
     )
     assert len(tools_list) == 2
     assert {t.name for t in tools_list} == {"greet_everyone", "get_boiling_point"}
 
+    # Invoke tool with authorization parameter
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="greet_everyone",
         kwargs=dict(url="https://www.google.com"),
+<<<<<<< HEAD
         extra_headers=auth_headers,
+=======
+        authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
+>>>>>>> fe91d331 (fix: Remove authorization from provider data (#4161))
     )
     content = response.content
     assert len(content) == 1
