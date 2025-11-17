@@ -300,7 +300,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BenchmarkConfig'
+              $ref: '#/components/schemas/RunEvalRequest'
         required: true
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
     get:
@@ -6711,6 +6711,14 @@ components:
       - scores
       title: EvaluateResponse
       description: The response from an evaluation.
+    RunEvalRequest:
+      properties:
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+      type: object
+      required:
+      - benchmark_config
+      title: RunEvalRequest
     Job:
       properties:
         job_id:
