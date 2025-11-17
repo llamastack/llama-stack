@@ -289,5 +289,13 @@ vector_stores:
   default_embedding_model:
     provider_id: sentence-transformers
     model_id: nomic-ai/nomic-embed-text-v1.5
+  query_expansion_prompt: 'Expand this query with relevant synonyms and related terms.
+    Return only the improved query, no explanations:
+
+
+    {query}
+
+
+    Improved query:'
 safety:
   default_shield_id: llama-guard

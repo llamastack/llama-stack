@@ -360,6 +360,14 @@ class VectorStoresConfig(BaseModel):
         default=None,
         description="Default embedding model configuration for vector stores.",
     )
+    default_query_expansion_model: QualifiedModel | None = Field(
+        default=None,
+        description="Default LLM model for query expansion/rewriting in vector search.",
+    )
+    query_expansion_prompt: str = Field(
+        default="Expand this query with relevant synonyms and related terms. Return only the improved query, no explanations:\n\n{query}\n\nImproved query:",
+        description="Prompt template for query expansion. Use {query} as placeholder for the original query.",
+    )
 
 
 class SafetyConfig(BaseModel):

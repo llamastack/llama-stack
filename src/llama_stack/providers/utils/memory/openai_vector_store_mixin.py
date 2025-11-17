@@ -618,6 +618,7 @@ class OpenAIVectorStoreMixin(ABC):
                 "max_chunks": max_num_results * CHUNK_MULTIPLIER,
                 "score_threshold": score_threshold,
                 "mode": search_mode,
+                "rewrite_query": rewrite_query,
             }
             # TODO: Add support for ranking_options.ranker
 
