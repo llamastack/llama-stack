@@ -22,7 +22,7 @@ and considered a code smell. All exported symbols are explicitly listed in __all
 __version__ = "0.4.0.dev0"
 
 # Import submodules for those who need them
-from . import common, strong_typing  # noqa: F401
+from . import common  # noqa: F401
 
 # Import all public API symbols
 from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec
@@ -393,8 +393,6 @@ from .shields import (
     ShieldInput,
     Shields,
 )
-
-# Import from strong_typing
 from .tools import (
     ListToolDefsResponse,
     ListToolGroupsResponse,
@@ -449,7 +447,6 @@ from .version import (
 __all__ = [
     # Submodules
     "common",
-    "strong_typing",
     # Version constants
     "LLAMA_STACK_API_V1",
     "LLAMA_STACK_API_V1ALPHA",
