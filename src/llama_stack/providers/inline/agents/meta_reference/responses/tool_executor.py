@@ -9,6 +9,9 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
+from opentelemetry import trace
+
+from llama_stack.log import get_logger
 from llama_stack_api import (
     ImageContentItem,
     OpenAIChatCompletionContentPartImageParam,
@@ -36,9 +39,6 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
-from opentelemetry import trace
-
-from llama_stack.log import get_logger
 
 from .types import ChatCompletionContext, ToolExecutionResult
 

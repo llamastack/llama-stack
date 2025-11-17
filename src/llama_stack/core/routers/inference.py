@@ -44,12 +44,6 @@ from llama_stack_api import (
     RerankResponse,
     RoutingTable,
 )
-from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatCompletionToolChoiceOptionParam
-from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
-from pydantic import TypeAdapter
-
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.inference_store import InferenceStore
 
 logger = get_logger(name=__name__, category="core::routers")
 

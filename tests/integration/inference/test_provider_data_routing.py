@@ -25,8 +25,6 @@ from llama_stack_api import (
     OpenAIChoice,
 )
 
-from llama_stack.core.library_client import LlamaStackAsLibraryClient
-
 
 def test_unregistered_model_routing_with_provider_data(client_with_models):
     """

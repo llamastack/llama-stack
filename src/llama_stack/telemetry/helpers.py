@@ -6,8 +6,9 @@
 
 import json
 
-from llama_stack_api import OpenAIMessageParam, RunShieldResponse
 from opentelemetry import trace
+
+from llama_stack_api import OpenAIMessageParam, RunShieldResponse
 
 from .constants import (
     RUN_SHIELD_OPERATION_NAME,
