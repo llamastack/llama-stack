@@ -75,6 +75,32 @@ The following environment variables can be configured:
 ### Server Configuration
 - `LLAMA_STACK_PORT`: Port for the Llama Stack distribution server (default: `8321`)
 
+### Production Server Configuration (Unix/Linux/macOS only)
+
+On Unix-based systems (Linux, macOS), the server automatically uses Gunicorn with Uvicorn workers for production-grade performance. The following environment variables control Gunicorn behavior:
+
+- `GUNICORN_WORKERS` or `WEB_CONCURRENCY`: Number of worker processes (default: `(2 * CPU cores) + 1`)
+- `GUNICORN_WORKER_CONNECTIONS`: Max concurrent connections per worker (default: `1000`)
+- `GUNICORN_TIMEOUT`: Worker timeout in seconds (default: `120`)
+- `GUNICORN_KEEPALIVE`: Connection keepalive in seconds (default: `5`)
+- `GUNICORN_MAX_REQUESTS`: Restart workers after N requests to prevent memory leaks (default: `10000`)
+- `GUNICORN_MAX_REQUESTS_JITTER`: Randomize worker restart timing (default: `1000`)
+- `GUNICORN_PRELOAD`: Preload app before forking workers for memory efficiency (default: `true`)
+
+**Important Notes**:
+
+- On Windows, the server automatically falls back to single-process Uvicorn.
+- **Database Race Condition**: When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions (e.g., "table already exists" errors) as multiple workers simultaneously attempt to create database tables. To avoid this issue in production, set `GUNICORN_PRELOAD=true`.
+- **SQLite with Multiple Workers**: SQLite works with Gunicorn's multi-process mode for development and low-to-moderate traffic scenarios. The system automatically enables WAL (Write-Ahead Logging) mode and sets a 5-second busy timeout. However, **SQLite only allows one writer at a time** - even with WAL mode, write operations from multiple workers are serialized, causing workers to wait for database locks under concurrent write load. **For production deployments with high traffic or multiple workers, we strongly recommend using PostgreSQL or another production-grade database** for true concurrent write performance.
+
+**Example production configuration:**
+```bash
+export GUNICORN_WORKERS=8              # 8 worker processes
+export GUNICORN_WORKER_CONNECTIONS=1500 # 12,000 total concurrent capacity
+export GUNICORN_PRELOAD=true           # Enable for production
+llama stack run starter
+```
+
 ### API Keys for Hosted Providers
 - `OPENAI_API_KEY`: OpenAI API key
 - `FIREWORKS_API_KEY`: Fireworks API key
