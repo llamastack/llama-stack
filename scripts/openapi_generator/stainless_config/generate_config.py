@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 # Copyright (c) Meta Platforms, Inc. and affiliates.
 # All rights reserved.
 #
@@ -8,7 +6,6 @@
 
 from __future__ import annotations
 
-import argparse
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -815,16 +812,8 @@ def write_config(repo_root: Path, openapi_path: Path | None = None) -> Path:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate stainless config and validate it against OpenAPI spec.")
-    parser.add_argument(
-        "--openapi",
-        type=Path,
-        default=None,
-        help="Path to OpenAPI spec used for validation (defaults to client-sdks/stainless/openapi.yml).",
-    )
-    args = parser.parse_args()
     repo_root = Path(__file__).resolve().parents[3]
-    output = write_config(repo_root, args.openapi)
+    output = write_config(repo_root)
     print(f"Wrote Stainless config: {output}")
 
 
