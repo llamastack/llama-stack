@@ -7,7 +7,6 @@
 import hashlib
 import re
 import uuid
-from typing import Any
 
 
 def generate_chunk_id(document_id: str, chunk_text: str, chunk_window: str | None = None) -> str:
@@ -36,28 +35,6 @@ def sanitize_collection_name(name: str, weaviate_format=False) -> str:
     else:
         s = proper_case(re.sub(r"[^a-zA-Z0-9]", "", name))
     return s
-
-
-def sanitize_metadata_for_attributes(metadata: dict[str, Any]) -> dict[str, str | float | bool]:
-    """
-    Filter metadata to primitives for VectorStoreSearchResponse.attributes compatibility.
-
-    Converts dict[str, Any] to dict[str, str | float | bool]:
-    - Preserves: str, bool
-    - Converts: int/float -> float, list -> comma-separated string
-    - Filters: dict, None, other types
-    """
-    sanitized: dict[str, str | float | bool] = {}
-    for key, value in metadata.items():
-        if isinstance(value, bool):
-            sanitized[key] = value
-        elif isinstance(value, int | float):
-            sanitized[key] = float(value)
-        elif isinstance(value, str):
-            sanitized[key] = value
-        elif isinstance(value, list):
-            sanitized[key] = ", ".join(str(item) for item in value)
-    return sanitized
 
 
 class WeightedInMemoryAggregator:

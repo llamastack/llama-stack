@@ -23,9 +23,6 @@ from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import (
-    sanitize_metadata_for_attributes,
-)
 from llama_stack_api import (
     Chunk,
     Files,
@@ -638,7 +635,7 @@ class OpenAIVectorStoreMixin(ABC):
                     file_id=chunk.metadata.get("document_id", ""),
                     filename=chunk.metadata.get("filename", ""),
                     score=score,
-                    attributes=sanitize_metadata_for_attributes(chunk.metadata),
+                    attributes=chunk.metadata,
                     content=content,
                 )
                 data.append(response_data_item)
