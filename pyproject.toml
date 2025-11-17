@@ -38,7 +38,6 @@ dependencies = [
     "pyjwt[crypto]>=2.10.0",                          # Pull crypto to support RS256 for jwt. Requires 2.10.0+ for ssl_context support.
     "pydantic>=2.11.9",
     "rich",
-    "starlette",
     "termcolor",
     "tiktoken",
     "pillow",
