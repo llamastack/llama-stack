@@ -4,7 +4,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+from llama_stack.providers.utils.vector_io.vector_utils import (
+    generate_chunk_id,
+    sanitize_metadata_for_attributes,
+)
 from llama_stack_api import Chunk, ChunkMetadata
 
 # This test is a unit test for the chunk_utils.py helpers. This should only contain
@@ -78,3 +81,27 @@ def test_chunk_serialization():
     serialized_chunk = chunk.model_dump()
     assert serialized_chunk["chunk_id"] == "test-chunk-id"
     assert "chunk_id" in serialized_chunk
+
+
+def test_sanitize_metadata_for_attributes():
+    """Test sanitization of metadata for VectorStoreSearchResponse.attributes."""
+    # metadata with lists should be converted to strings
+    metadata = {
+        "tags": ["transformers", "h100-compatible", "region:us"],
+        "model_name": "granite-3.3-8b",
+        "score": 0.95,
+        "active": True,
+        "count": 42,
+        "nested": {"key": "value"},  # Should be filtered out
+    }
+    result = sanitize_metadata_for_attributes(metadata)
+
+    # Lists converted to comma-separated strings
+    assert result["tags"] == "transformers, h100-compatible, region:us"
+    # Primitives preserved
+    assert result["model_name"] == "granite-3.3-8b"
+    assert result["score"] == 0.95
+    assert result["active"] is True
+    assert result["count"] == 42.0  # int -> float
+    # Complex types filtered out
+    assert "nested" not in result
