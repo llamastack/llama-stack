@@ -10,9 +10,9 @@ import TabItem from '@theme/TabItem';
 
 # Telemetry
 
-The preferred way to instrument llama stack is with OpenTelemetry. Llama Stack enriches the data
+The preferred way to instrument Llama Stack is with OpenTelemetry. Llama Stack enriches the data
 collected by OpenTelemetry to capture helpful information about the performance and behavior of your
-application. Here is an example of how to forward your telemtry to an OTLP collector from llama stack.
+application. Here is an example of how to forward your telemetry to an OTLP collector from Llama Stack:
 
 ```sh
 export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:4318"
@@ -29,8 +29,8 @@ uv run opentelemetry-instrument llama stack run run.yaml
 ### Known issues
 
 Some database instrumentation libraries have a known bug where spans get wrapped twice, or do not get connected to a trace.
-To prevent this, you can disable database specific tracing, and rely just on the sqlalchemy tracing. If you are using
-sqlite3, you can disable it like this.
+To prevent this, you can disable database specific tracing, and rely just on the SQLAlchemy tracing. If you are using
+`sqlite3` as your database, for example, you can disable the additional tracing like this:
 
 ```sh
 export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="sqlite3"
