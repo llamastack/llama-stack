@@ -16,8 +16,7 @@ from llama_stack.core.storage.datatypes import (
     StorageBackendConfig,
     StorageBackendType,
 )
-
-from .api import SqlStore
+from llama_stack_api.internal.sqlstore import SqlStore
 
 sql_store_pip_packages = ["sqlalchemy[asyncio]", "aiosqlite", "asyncpg"]
 

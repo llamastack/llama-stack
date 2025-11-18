@@ -13,8 +13,8 @@ from weaviate.classes.init import Auth
 from weaviate.classes.query import Filter, HybridFusion
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.log import get_logger
 from llama_stack.core.storage.kvstore import kvstore_impl
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_RRF,

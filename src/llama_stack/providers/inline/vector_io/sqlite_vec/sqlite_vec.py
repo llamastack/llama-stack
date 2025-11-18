@@ -14,8 +14,8 @@ import numpy as np
 import sqlite_vec  # type: ignore[import-untyped]
 from numpy.typing import NDArray
 
-from llama_stack.log import get_logger
 from llama_stack.core.storage.kvstore import kvstore_impl
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_RRF,

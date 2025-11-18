@@ -14,8 +14,8 @@ import faiss  # type: ignore[import-untyped]
 import numpy as np
 from numpy.typing import NDArray
 
-from llama_stack.log import get_logger
 from llama_stack.core.storage.kvstore import kvstore_impl
+from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack_api import (
