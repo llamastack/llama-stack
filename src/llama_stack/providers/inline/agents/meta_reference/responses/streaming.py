@@ -902,7 +902,6 @@ class StreamingResponseOrchestrator:
         completion_result_data: ChatCompletionResult,
         output_messages: list[OpenAIResponseOutput],
         next_turn_messages: list,
-        incremental_function_calling: bool,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Coordinate execution of both function and non-function tool calls."""
         # Execute non-function tool calls
