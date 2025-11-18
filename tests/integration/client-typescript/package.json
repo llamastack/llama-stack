@@ -5,7 +5,7 @@
   "description": "TypeScript client integration tests for Llama Stack",
   "type": "module",
   "scripts": {
-    "test": "jest --config jest.integration.config.ts"
+    "test": "jest --config jest.integration.config.js"
   },
   "dependencies": {
     "llama-stack-client": "^0.3.2"

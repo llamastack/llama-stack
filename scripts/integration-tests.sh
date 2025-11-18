@@ -260,7 +260,7 @@ run_client_ts_tests() {
     echo "Installing TypeScript client test dependencies using: $install_cmd"
     $install_cmd
     echo "Running TypeScript tests: ${files[*]}"
-    npx jest --config jest.integration.config.ts "${files[@]}"
+    npx jest --config jest.integration.config.js "${files[@]}"
 
     popd >/dev/null
 }

@@ -4,9 +4,8 @@
 // This source code is licensed under the terms described in the LICENSE file in
 // the root directory of this source tree.
 
-import type { JestConfigWithTsJest } from 'ts-jest';
-
-const config: JestConfigWithTsJest = {
+/** @type {import('ts-jest').JestConfigWithTsJest} */
+module.exports = {
   preset: 'ts-jest/presets/default-esm',
   testEnvironment: 'node',
   extensionsToTreatAsEsm: ['.ts'],
@@ -30,5 +29,3 @@ const config: JestConfigWithTsJest = {
   testTimeout: 60000, // 60 seconds (integration tests can be slow)
   watchman: false, // Disable watchman to avoid permission issues
 };
-
-export default config;
