@@ -517,6 +517,7 @@ can be instantiated multiple times (with different configs) if necessary.
 """,
     )
     storage: StorageConfig = Field(
+        default_factory=StorageConfig,
         description="Catalog of named storage backends and references available to the stack",
     )
 
@@ -532,6 +533,11 @@ can be instantiated multiple times (with different configs) if necessary.
     server: ServerConfig = Field(
         default_factory=ServerConfig,
         description="Configuration for the HTTP(S) server",
+    )
+
+    additional_pip_packages: list[str] = Field(
+        default_factory=list,
+        description="Additional pip packages to install in the distribution. These packages will be installed in the distribution environment.",
     )
 
     external_providers_dir: Path | None = Field(

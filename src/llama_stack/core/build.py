@@ -9,7 +9,7 @@ import sys
 from pydantic import BaseModel
 from termcolor import cprint
 
-from llama_stack.core.datatypes import BuildConfig
+from llama_stack.core.datatypes import BuildConfig, StackRunConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.distributions.template import DistributionTemplate
 from llama_stack.log import get_logger
@@ -36,13 +36,13 @@ class ApiInput(BaseModel):
 
 
 def get_provider_dependencies(
-    config: BuildConfig | DistributionTemplate,
+    config: StackRunConfig,
 ) -> tuple[list[str], list[str], list[str]]:
     """Get normal and special dependencies from provider configuration."""
     if isinstance(config, DistributionTemplate):
         config = config.build_config()
 
-    providers = config.distribution_spec.providers
+    providers = config.providers
     additional_pip_packages = config.additional_pip_packages
 
     deps = []
