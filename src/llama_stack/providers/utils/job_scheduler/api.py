@@ -10,10 +10,13 @@ from typing import Protocol
 
 
 class JobStatus(StrEnum):
-    PENDING = "pending"
-    RUNNING = "running"
-    COMPLETED = "completed"
+    VALIDATING = "validating"
     FAILED = "failed"
+    IN_PROGRESS = "in_progress"
+    FINALIZING = "finalizing"
+    COMPLETED = "completed"
+    EXPIRED = "expired"
+    CANCELLING = "cancelling"
     CANCELLED = "cancelled"
 
 
