@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import json
-
 import pytest
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
@@ -37,32 +35,20 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
         mcp_endpoint=dict(uri=uri),
     )
 
-    # Use old header-based approach for Phase 1 (backward compatibility)
-    provider_data = {
-        "mcp_headers": {
-            uri: {
-                "Authorization": f"Bearer {AUTH_TOKEN}",
-            },
-        },
-    }
-    auth_headers = {
-        "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-    }
-
-    with pytest.raises(Exception, match="Unauthorized"):
-        llama_stack_client.tools.list(toolgroup_id=test_toolgroup_id)
-
-    tools_list = llama_stack_client.tools.list(
-        toolgroup_id=test_toolgroup_id,
-        extra_headers=auth_headers,  # Use old header-based approach
+    # Use the dedicated authorization parameter (no more provider_data headers)
+    # This tests direct tool_runtime.invoke_tool API calls
+    tools_list = llama_stack_client.tool_runtime.list_tools(
+        tool_group_id=test_toolgroup_id,
+        authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
     )
     assert len(tools_list) == 2
     assert {t.name for t in tools_list} == {"greet_everyone", "get_boiling_point"}
 
+    # Invoke tool with authorization parameter
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="greet_everyone",
         kwargs=dict(url="https://www.google.com"),
-        extra_headers=auth_headers,  # Use old header-based approach
+        authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
     )
     content = response.content
     assert len(content) == 1
