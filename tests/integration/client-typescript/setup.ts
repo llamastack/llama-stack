@@ -9,26 +9,68 @@
  * This file mimics pytest's fixture system by providing shared test configuration.
  */
 
+import { execSync } from 'child_process';
+import * as path from 'path';
 import LlamaStackClient from 'llama-stack-client';
 
-// Read configuration from environment variables (set by scripts/integration-test.sh)
-export const TEST_CONFIG = {
-  baseURL: process.env['TEST_API_BASE_URL'],
-  textModel: process.env['LLAMA_STACK_TEST_MODEL'],
-  embeddingModel: process.env['LLAMA_STACK_TEST_EMBEDDING_MODEL'],
-} as const;
+/**
+ * Load test configuration from the Python setup system.
+ * This reads setup definitions from tests/integration/suites.py via get_setup_env.py.
+ */
+function loadTestConfig() {
+  const baseURL = process.env['TEST_API_BASE_URL'];
+  const setupName = process.env['LLAMA_STACK_TEST_SETUP'];
 
-// Validate required configuration
-beforeAll(() => {
-  if (!TEST_CONFIG.baseURL) {
+  if (!baseURL) {
     throw new Error(
       'TEST_API_BASE_URL is required for integration tests. ' +
         'Run tests using: ./scripts/integration-test.sh',
     );
   }
 
+  // If setup is specified, load config from Python
+  let textModel = process.env['LLAMA_STACK_TEST_MODEL'];
+  let embeddingModel = process.env['LLAMA_STACK_TEST_EMBEDDING_MODEL'];
+
+  if (setupName && !textModel) {
+    try {
+      // Call Python script to get setup configuration
+      const rootDir = path.resolve(__dirname, '../../..');
+      const scriptPath = path.join(rootDir, 'scripts/get_setup_env.py');
+
+      const configJson = execSync(
+        `cd ${rootDir} && PYTHONPATH=. python ${scriptPath} --setup ${setupName} --format json --include-defaults`,
+        { encoding: 'utf-8' }
+      );
+
+      const config = JSON.parse(configJson);
+
+      // Map Python defaults to TypeScript env vars
+      if (config.defaults) {
+        textModel = config.defaults.text_model;
+        embeddingModel = config.defaults.embedding_model;
+      }
+    } catch (error) {
+      console.warn(`Warning: Failed to load config for setup "${setupName}":`, error);
+    }
+  }
+
+  return {
+    baseURL,
+    textModel,
+    embeddingModel,
+    setupName,
+  };
+}
+
+// Read configuration from environment variables (set by scripts/integration-test.sh)
+export const TEST_CONFIG = loadTestConfig();
+
+// Validate required configuration
+beforeAll(() => {
   console.log('\n=== Integration Test Configuration ===');
   console.log(`Base URL: ${TEST_CONFIG.baseURL}`);
+  console.log(`Setup: ${TEST_CONFIG.setupName || 'NOT SET'}`);
   console.log(
     `Text Model: ${TEST_CONFIG.textModel || 'NOT SET - tests requiring text model will be skipped'}`,
   );

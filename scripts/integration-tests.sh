@@ -198,36 +198,12 @@ echo "$SETUP_ENV"
 eval "$SETUP_ENV"
 echo ""
 if [[ -n "$RESOLVED_TEST_SETUP" ]]; then
-    SETUP_DEFAULTS=$(PYTHONPATH=$THIS_DIR/.. python - "$RESOLVED_TEST_SETUP" <<'PY'
-import sys
-from tests.integration.suites import SETUP_DEFINITIONS
+    # Export setup name - TypeScript tests will call get_setup_env.py themselves to get model defaults
+    export LLAMA_STACK_TEST_SETUP="$RESOLVED_TEST_SETUP"
 
-setup_name = sys.argv[1]
-if not setup_name:
-    sys.exit(0)
-
-setup = SETUP_DEFINITIONS.get(setup_name)
-if not setup:
-    sys.exit(0)
-
-for key, value in setup.defaults.items():
-    print(f"{key}={value}")
-PY
-)
-
-    while IFS='=' read -r key value; do
-        case "$key" in
-        text_model)
-            export LLAMA_STACK_TEST_MODEL="$value"
-            ;;
-        embedding_model)
-            export LLAMA_STACK_TEST_EMBEDDING_MODEL="$value"
-            ;;
-        vision_model)
-            export LLAMA_STACK_TEST_VISION_MODEL="$value"
-            ;;
-        esac
-    done <<< "$SETUP_DEFAULTS"
+    # Export model env vars for Python tests using get_setup_env.py
+    SETUP_DEFAULTS_ENV=$(PYTHONPATH=$THIS_DIR/.. python $THIS_DIR/get_setup_env.py --setup "$RESOLVED_TEST_SETUP" --format bash --include-defaults)
+    eval "$SETUP_DEFAULTS_ENV"
 fi
 
 ROOT_DIR="$THIS_DIR/.."
