@@ -13,7 +13,7 @@ from llama_stack.providers.inline.files.localfs import (
     LocalfsFilesImpl,
     LocalfsFilesImplConfig,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api import OpenAIFilePurpose, Order, ResourceNotFoundError
 
 

@@ -7,8 +7,8 @@
 import pytest
 
 from llama_stack.core.store.registry import CachedDiskDistributionRegistry, DiskDistributionRegistry
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
-from llama_stack.providers.utils.kvstore.sqlite import SqliteKVStoreImpl
+from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
+from llama_stack.core.storage.kvstore.sqlite import SqliteKVStoreImpl
 
 
 @pytest.fixture(scope="function")

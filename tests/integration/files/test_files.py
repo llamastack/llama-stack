@@ -175,7 +175,7 @@ def test_expires_after_requests(openai_client):
 
 
 @pytest.mark.xfail(message="User isolation broken for current providers, must be fixed.")
-@patch("llama_stack.providers.utils.sqlstore.authorized_sqlstore.get_authenticated_user")
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
 def test_files_authentication_isolation(mock_get_authenticated_user, llama_stack_client):
     """Test that users can only access their own files."""
     from llama_stack_client import NotFoundError
@@ -275,7 +275,7 @@ def test_files_authentication_isolation(mock_get_authenticated_user, llama_stack
         raise e
 
 
-@patch("llama_stack.providers.utils.sqlstore.authorized_sqlstore.get_authenticated_user")
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
 def test_files_authentication_shared_attributes(
     mock_get_authenticated_user, llama_stack_client, provider_type_is_openai
 ):
@@ -335,7 +335,7 @@ def test_files_authentication_shared_attributes(
         raise e
 
 
-@patch("llama_stack.providers.utils.sqlstore.authorized_sqlstore.get_authenticated_user")
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
 def test_files_authentication_anonymous_access(
     mock_get_authenticated_user, llama_stack_client, provider_type_is_openai
 ):

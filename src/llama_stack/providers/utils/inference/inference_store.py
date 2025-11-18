@@ -19,9 +19,9 @@ from llama_stack_api import (
     Order,
 )
 
-from ..sqlstore.api import ColumnDefinition, ColumnType
-from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from ..sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
+from llama_stack.core.storage.sqlstore.api import ColumnDefinition, ColumnType
+from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
+from llama_stack.core.storage.sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
 
 logger = get_logger(name=__name__, category="inference")
 

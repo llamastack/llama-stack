@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.providers.utils.sqlstore.sqlstore import sql_store_pip_packages
+from llama_stack.core.storage.sqlstore.sqlstore import sql_store_pip_packages
 from llama_stack_api import Api, InlineProviderSpec, ProviderSpec, RemoteProviderSpec
 
 

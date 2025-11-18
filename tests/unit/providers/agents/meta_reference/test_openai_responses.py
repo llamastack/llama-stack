@@ -24,7 +24,7 @@ from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api.agents import Order
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,

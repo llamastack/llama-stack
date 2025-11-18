@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.utils.kvstore import kvstore_dependencies
+from llama_stack.core.storage.kvstore import kvstore_dependencies
 from llama_stack_api import (
     Api,
     InlineProviderSpec,

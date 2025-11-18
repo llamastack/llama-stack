@@ -10,7 +10,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from llama_stack.core.datatypes import StackRunConfig
-from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
+from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack_api import ListPromptsResponse, Prompt, Prompts
 
 
