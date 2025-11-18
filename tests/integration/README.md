@@ -211,3 +211,13 @@ def test_asymmetric_embeddings(llama_stack_client, embedding_model_id):
 
     assert query_response.embeddings is not None
 ```
+
+## TypeScript Client Replays
+
+Setting `RUN_CLIENT_TS_TESTS=1` when running `scripts/integration-tests.sh` against a `server:<config>` stack will replay the matching TypeScript SDK suites from `tests/integration/client-typescript/` immediately after the Python run. The mapping between suites/setups and `.test.ts` files lives in `tests/integration/client-typescript/suites.json`. This mode is enabled in CI for the `server` client jobs, and you can exercise it locally with commands such as:
+
+```bash
+RUN_CLIENT_TS_TESTS=1 scripts/integration-tests.sh --stack-config server:ci-tests --suite responses --setup gpt
+```
+
+The script installs the npm project on demand and forwards the server's `TEST_API_BASE_URL` + model defaults so the TypeScript tests can reuse the existing replay fixtures.

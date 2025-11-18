@@ -1,0 +1,20 @@
+[
+  {
+    "suite": "responses",
+    "setup": "gpt",
+    "files": ["__tests__/responses.test.ts"]
+  },
+  {
+    "suite": "responses",
+    "files": ["__tests__/responses.test.ts"]
+  },
+  {
+    "suite": "inference",
+    "setup": "ollama",
+    "files": ["__tests__/inference.test.ts"]
+  },
+  {
+    "suite": "inference",
+    "files": ["__tests__/inference.test.ts"]
+  }
+]

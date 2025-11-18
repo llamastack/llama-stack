@@ -93,11 +93,20 @@ jobs:
           suite: ${{ matrix.config.suite }}
           inference-mode: 'replay'
 
+      - name: Setup Node.js for TypeScript client tests
+        if: ${{ matrix.client == 'server' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: tests/integration/client-typescript/package-lock.json
+
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
         uses: ./.github/actions/run-and-record-tests
         env:
           OPENAI_API_KEY: dummy
+          RUN_CLIENT_TS_TESTS: ${{ matrix.client == 'server' && '1' || '0' }}
         with:
           stack-config: >-
             ${{ matrix.config.stack_config
