@@ -1025,7 +1025,6 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
 
-
     async def _process_new_tools(
         self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:

@@ -6723,12 +6723,10 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          title: Parallel Tool Calls
-          type: boolean
+          anyOf:
+          - type: boolean
+          - type: 'null'
           default: true
-          description: >-
-            (Optional) Whether to allow more than one function tool call generated
-            per turn.
         previous_response_id:
           anyOf:
           - type: string
@@ -6838,14 +6836,12 @@ components:
           title: Input
       type: object
       required:
-        - created_at
-        - id
-        - model
-        - object
-        - output
-        - status
-        - text
-        - input
+      - created_at
+      - id
+      - model
+      - output
+      - status
+      - input
       title: OpenAIResponseObjectWithInput
       description: OpenAI response object extended with input context information.
     OpenAIResponseOutput:
@@ -7127,12 +7123,14 @@ components:
           - type: 'null'
           title: OpenAIResponsePrompt
         instructions:
-          type: string
           anyOf:
           - type: string
           - type: 'null'
         parallel_tool_calls:
-          type: boolean
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
         previous_response_id:
           anyOf:
           - type: string
@@ -7259,12 +7257,10 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          type: boolean
-          title: Parallel Tool Calls
+          anyOf:
+          - type: boolean
+          - type: 'null'
           default: true
-          description: >-
-            (Optional) Whether to allow more than one function tool call generated
-            per turn.
         previous_response_id:
           anyOf:
           - type: string
@@ -7336,11 +7332,11 @@ components:
           - type: 'null'
       type: object
       required:
-        - created_at
-        - id
-        - model
-        - output
-        - status
+      - created_at
+      - id
+      - model
+      - output
+      - status
       title: OpenAIResponseObject
       description: Complete OpenAI response object containing generation results and metadata.
     OpenAIResponseContentPartOutputText:
