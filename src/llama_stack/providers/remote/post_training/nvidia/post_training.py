@@ -216,7 +216,7 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
     ) -> NvidiaPostTrainingJob:
         """
         Fine-tunes a model on a dataset.
-        Currently only supports Lora finetuning for standlone docker container.
+        Currently only supports Lora finetuning for standalone docker container.
         Assumptions:
             - nemo microservice is running and endpoint is set in config.customizer_url
             - dataset is registered separately in nemo datastore
