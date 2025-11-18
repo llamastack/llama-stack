@@ -38,4 +38,23 @@ def available_providers() -> list[ProviderSpec]:
             ],
             description="Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks.",
         ),
+        InlineProviderSpec(
+            api=Api.agents,
+            provider_type="inline::dana",
+            pip_packages=[
+                "dana",
+            ]
+            + kvstore_dependencies(),  # TODO make this dynamic based on the kvstore config
+            module="llama_stack.providers.inline.agents.dana",
+            config_class="llama_stack.providers.inline.agents.dana.DanaAgentsImplConfig",
+            api_dependencies=[
+                Api.inference,
+                Api.safety,
+                Api.vector_io,
+                Api.tool_runtime,
+                Api.tool_groups,
+                Api.conversations,
+            ],
+            description="Dana library implementation of an agent system (stub).",
+        ),
     ]

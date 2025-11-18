@@ -127,7 +127,10 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
         ],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
+        "agents": [
+            BuildProvider(provider_type="inline::meta-reference"),
+            BuildProvider(provider_type="inline::dana"),
+        ],
         "post_training": [BuildProvider(provider_type="inline::torchtune-cpu")],
         "eval": [BuildProvider(provider_type="inline::meta-reference")],
         "datasetio": [

@@ -35,6 +35,7 @@ distribution_spec:
     - provider_type: inline::code-scanner
     agents:
     - provider_type: inline::meta-reference
+    - provider_type: inline::dana
     post_training:
     - provider_type: inline::torchtune-cpu
     eval:
