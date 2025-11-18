@@ -66,6 +66,7 @@ from llama_stack_api import (
     OpenAIResponseUsage,
     OpenAIResponseUsageInputTokensDetails,
     OpenAIResponseUsageOutputTokensDetails,
+    OpenAIToolMessageParam,
     WebSearchToolTypes,
 )
 
@@ -905,10 +906,16 @@ class StreamingResponseOrchestrator:
         """Coordinate execution of both function and non-function tool calls."""
         # Execute non-function tool calls
         for tool_call in non_function_tool_calls:
-            # Check if total calls made to built-in and mcp tools exceed max_tool_calls
+            # if total calls made to built-in and mcp tools exceed max_tool_calls
+            # then create a tool response message indicating the call was skipped
             if self.max_tool_calls is not None and self.accumulated_builtin_tool_calls >= self.max_tool_calls:
                 logger.info(f"Ignoring built-in and mcp tool call since reached the limit of {self.max_tool_calls=}.")
-                break
+                skipped_call_message = OpenAIToolMessageParam(
+                    content=f"Tool call skipped: maximum tool calls limit ({self.max_tool_calls}) reached.",
+                    tool_call_id=tool_call.id,
+                )
+                next_turn_messages.append(skipped_call_message)
+                continue
 
             # Find the item_id for this tool call
             matching_item_id = None
