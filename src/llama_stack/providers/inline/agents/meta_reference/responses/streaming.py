@@ -305,7 +305,6 @@ class StreamingResponseOrchestrator:
                     completion_result_data,
                     output_messages,
                     next_turn_messages,
-                    not self.parallel_tool_calls,
                 ):
                     yield stream_event
 
