@@ -6,7 +6,7 @@
 
 from datetime import datetime
 
-from redis.asyncio import Redis
+from redis.asyncio import Redis  # type: ignore[import-not-found]
 
 from llama_stack_api.internal.kvstore import KVStore
 
