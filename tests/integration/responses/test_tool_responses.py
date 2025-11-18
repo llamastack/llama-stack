@@ -669,7 +669,7 @@ def test_max_tool_calls_invalid(responses_client, text_model_id):
 
     # Create a response with an invalid max_tool_calls value i.e. 0
     # Handle ValueError from LLS and BadRequestError from OpenAI client
-    with pytest.raises((ValueError, openai.BadRequestError)) as excinfo:
+    with pytest.raises((ValueError, llama_stack_client.BadRequestError, openai.BadRequestError)) as excinfo:
         responses_client.responses.create(
             model=text_model_id,
             input=input,
