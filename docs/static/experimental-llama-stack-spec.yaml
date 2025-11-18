@@ -3263,9 +3263,10 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          type: boolean
-          title: Parallel Tool Calls
-          default: false
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
         previous_response_id:
           anyOf:
           - type: string
@@ -3662,9 +3663,10 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          type: boolean
-          title: Parallel Tool Calls
-          default: false
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
         previous_response_id:
           anyOf:
           - type: string
