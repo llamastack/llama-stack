@@ -16,10 +16,10 @@ Ollama inference provider for running local models through the Ollama runtime.
 |-------|------|----------|---------|-------------|
 | `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
-| `url` | `str` | No | http://localhost:11434 |  |
+| `base_url` | `HttpUrl \| None` | No | http://localhost:11434/v1 |  |
 
 ## Sample Configuration
 
 ```yaml
-url: ${env.OLLAMA_URL:=http://localhost:11434}
+base_url: ${env.OLLAMA_URL:=http://localhost:11434/v1}
 ```

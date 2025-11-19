@@ -32,8 +32,9 @@ class AzureProviderDataValidator(BaseModel):
 
 @json_schema_type
 class AzureConfig(RemoteInferenceProviderConfig):
-    api_base: HttpUrl = Field(
-        description="Azure API base for Azure (e.g., https://your-resource-name.openai.azure.com)",
+    base_url: HttpUrl | None = Field(
+        default=None,
+        description="Azure API base for Azure (e.g., https://your-resource-name.openai.azure.com/openai/v1)",
     )
     api_version: str | None = Field(
         default_factory=lambda: os.getenv("AZURE_API_VERSION"),
@@ -48,14 +49,14 @@ class AzureConfig(RemoteInferenceProviderConfig):
     def sample_run_config(
         cls,
         api_key: str = "${env.AZURE_API_KEY:=}",
-        api_base: str = "${env.AZURE_API_BASE:=}",
+        base_url: str = "${env.AZURE_API_BASE:=}",
         api_version: str = "${env.AZURE_API_VERSION:=}",
         api_type: str = "${env.AZURE_API_TYPE:=}",
         **kwargs,
     ) -> dict[str, Any]:
         return {
             "api_key": api_key,
-            "api_base": api_base,
+            "base_url": base_url,
             "api_version": api_version,
             "api_type": api_type,
         }

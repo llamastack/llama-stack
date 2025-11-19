@@ -17,14 +17,14 @@ IBM WatsonX inference provider for accessing AI models on IBM's WatsonX platform
 | `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
 | `api_key` | `SecretStr \| None` | No |  | Authentication credential for the provider |
-| `url` | `str` | No | https://us-south.ml.cloud.ibm.com | A base url for accessing the watsonx.ai |
+| `base_url` | `HttpUrl \| None` | No | https://us-south.ml.cloud.ibm.com | A base url for accessing the watsonx.ai |
 | `project_id` | `str \| None` | No |  | The watsonx.ai project ID |
 | `timeout` | `int` | No | 60 | Timeout for the HTTP requests |
 
 ## Sample Configuration
 
 ```yaml
-url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
+base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
 api_key: ${env.WATSONX_API_KEY:=}
 project_id: ${env.WATSONX_PROJECT_ID:=}
 ```

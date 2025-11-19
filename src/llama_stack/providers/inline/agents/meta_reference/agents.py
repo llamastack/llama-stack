@@ -41,7 +41,7 @@ class MetaReferenceAgentsImpl(Agents):
         config: MetaReferenceAgentsImplConfig,
         inference_api: Inference,
         vector_io_api: VectorIO,
-        safety_api: Safety,
+        safety_api: Safety | None,
         tool_runtime_api: ToolRuntime,
         tool_groups_api: ToolGroups,
         conversations_api: Conversations,
