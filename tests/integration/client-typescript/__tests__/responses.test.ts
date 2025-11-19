@@ -11,8 +11,7 @@
  * IMPORTANT: Test cases and IDs must match EXACTLY with Python tests to use recorded API responses.
  */
 
-import { createTestClient, requireTextModel } from '../setup';
-import { getResponseOutputText } from 'llama-stack-client';
+import { createTestClient, requireTextModel, getResponseOutputText } from '../setup';
 
 describe('Responses API - Basic', () => {
   // Test cases matching llama-stack/tests/integration/responses/fixtures/test_cases.py

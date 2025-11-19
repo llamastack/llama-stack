@@ -149,3 +149,41 @@ export function requireEmbeddingModel(): string {
   }
   return TEST_CONFIG.embeddingModel;
 }
+
+/**
+ * Extracts aggregated text output from a ResponseObject.
+ * This concatenates all text content from the response's output array.
+ *
+ * Copied from llama-stack-client's response-helpers until it's available in published version.
+ */
+export function getResponseOutputText(response: any): string {
+  const pieces: string[] = [];
+
+  for (const output of response.output ?? []) {
+    if (!output || output.type !== 'message') {
+      continue;
+    }
+
+    const content = output.content;
+    if (typeof content === 'string') {
+      pieces.push(content);
+      continue;
+    }
+
+    if (!Array.isArray(content)) {
+      continue;
+    }
+
+    for (const item of content) {
+      if (typeof item === 'string') {
+        pieces.push(item);
+        continue;
+      }
+      if (item && item.type === 'output_text' && 'text' in item && typeof item.text === 'string') {
+        pieces.push(item.text);
+      }
+    }
+  }
+
+  return pieces.join('');
+}
