@@ -214,10 +214,20 @@ def test_asymmetric_embeddings(llama_stack_client, embedding_model_id):
 
 ## TypeScript Client Replays
 
-Setting `RUN_CLIENT_TS_TESTS=1` when running `scripts/integration-tests.sh` against a `server:<config>` stack will replay the matching TypeScript SDK suites from `tests/integration/client-typescript/` immediately after the Python run. The mapping between suites/setups and `.test.ts` files lives in `tests/integration/client-typescript/suites.json`. This mode is enabled in CI for the `server` client jobs, and you can exercise it locally with commands such as:
+TypeScript SDK tests can run alongside Python tests when testing against `server:<config>` stacks. Set `TS_CLIENT_PATH` to the path or version of `llama-stack-client-typescript` to enable:
 
 ```bash
-RUN_CLIENT_TS_TESTS=1 scripts/integration-tests.sh --stack-config server:ci-tests --suite responses --setup gpt
+# Use published npm package
+TS_CLIENT_PATH=^0.3.2 scripts/integration-tests.sh --stack-config server:ci-tests --suite responses --setup gpt
+
+# Use local checkout from ~/.cache (recommended for development)
+git clone https://github.com/llamastack/llama-stack-client-typescript.git ~/.cache/llama-stack-client-typescript
+TS_CLIENT_PATH=~/.cache/llama-stack-client-typescript scripts/integration-tests.sh --stack-config server:ci-tests --suite responses --setup gpt
+
+# Use any local path
+TS_CLIENT_PATH=/path/to/llama-stack-client-typescript scripts/integration-tests.sh --stack-config server:ci-tests --suite responses --setup gpt
 ```
 
-The script installs the npm project on demand and forwards the server's `TEST_API_BASE_URL` + model defaults so the TypeScript tests can reuse the existing replay fixtures.
+TypeScript tests run immediately after Python tests pass, using the same replay fixtures. The mapping between Python suites/setups and TypeScript test files is defined in `tests/integration/client-typescript/suites.json`.
+
+If `TS_CLIENT_PATH` is unset, TypeScript tests are skipped entirely.

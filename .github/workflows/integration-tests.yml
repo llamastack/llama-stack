@@ -101,12 +101,19 @@ jobs:
           cache: 'npm'
           cache-dependency-path: tests/integration/client-typescript/package-lock.json
 
+      - name: Setup TypeScript client
+        if: ${{ matrix.client == 'server' }}
+        id: setup-ts-client
+        uses: ./.github/actions/setup-typescript-client
+        with:
+          client-version: ${{ matrix.client-version }}
+
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
         uses: ./.github/actions/run-and-record-tests
         env:
           OPENAI_API_KEY: dummy
-          RUN_CLIENT_TS_TESTS: ${{ matrix.client == 'server' && '1' || '0' }}
+          TS_CLIENT_PATH: ${{ steps.setup-ts-client.outputs.ts-client-path || '' }}
         with:
           stack-config: >-
             ${{ matrix.config.stack_config

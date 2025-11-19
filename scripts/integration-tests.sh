@@ -20,7 +20,6 @@ TEST_PATTERN=""
 INFERENCE_MODE="replay"
 EXTRA_PARAMS=""
 COLLECT_ONLY=false
-RUN_CLIENT_TS_TESTS="${RUN_CLIENT_TS_TESTS:-0}"
 
 # Function to display usage
 usage() {
@@ -229,13 +228,26 @@ run_client_ts_tests() {
 
     pushd tests/integration/client-typescript >/dev/null
 
-    local install_cmd="npm install"
-    if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
-        install_cmd="npm ci"
+    # Determine if TS_CLIENT_PATH is a directory path or an npm version
+    if [[ -d "$TS_CLIENT_PATH" ]]; then
+        # It's a directory path - use local checkout
+        if [[ ! -f "$TS_CLIENT_PATH/package.json" ]]; then
+            echo "Error: $TS_CLIENT_PATH exists but doesn't look like llama-stack-client-typescript (no package.json)"
+            popd >/dev/null
+            return 1
+        fi
+        echo "Using local llama-stack-client-typescript from: $TS_CLIENT_PATH"
+        npm install --install-links "$TS_CLIENT_PATH"
+    else
+        # It's an npm version specifier - install from npm
+        echo "Installing llama-stack-client@${TS_CLIENT_PATH} from npm"
+        if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+            npm ci
+            npm install "llama-stack-client@${TS_CLIENT_PATH}"
+        else
+            npm install "llama-stack-client@${TS_CLIENT_PATH}"
+        fi
     fi
-
-    echo "Installing TypeScript client test dependencies using: $install_cmd"
-    $install_cmd
 
     # Export env vars for the test runner to read suites.json
     export LLAMA_STACK_TEST_SUITE="$TEST_SUITE"
@@ -543,7 +555,8 @@ else
     exit 1
 fi
 
-if [[ $exit_code -eq 0 && "$RUN_CLIENT_TS_TESTS" == "1" && "${LLAMA_STACK_TEST_STACK_CONFIG_TYPE:-}" == "server" ]]; then
+# Run TypeScript client tests if TS_CLIENT_PATH is set
+if [[ $exit_code -eq 0 && -n "${TS_CLIENT_PATH:-}" && "${LLAMA_STACK_TEST_STACK_CONFIG_TYPE:-}" == "server" ]]; then
     run_client_ts_tests
 fi
 
