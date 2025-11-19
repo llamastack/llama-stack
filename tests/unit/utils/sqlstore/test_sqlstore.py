@@ -9,9 +9,9 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from llama_stack.providers.utils.sqlstore.api import ColumnDefinition, ColumnType
-from llama_stack.providers.utils.sqlstore.sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
+from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
 
 async def test_sqlite_sqlstore():

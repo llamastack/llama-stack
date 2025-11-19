@@ -11,10 +11,9 @@ from urllib.parse import urlparse
 import chromadb
 from numpy.typing import NDArray
 
+from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
-from llama_stack.providers.utils.kvstore import kvstore_impl
-from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack_api import (
@@ -27,6 +26,7 @@ from llama_stack_api import (
     VectorStore,
     VectorStoresProtocolPrivate,
 )
+from llama_stack_api.internal.kvstore import KVStore
 
 from .config import ChromaVectorIOConfig as RemoteChromaVectorIOConfig
 

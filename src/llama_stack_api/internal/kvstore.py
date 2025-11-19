@@ -9,6 +9,8 @@ from typing import Protocol
 
 
 class KVStore(Protocol):
+    """Protocol for simple key/value storage backends."""
+
     # TODO: make the value type bytes instead of str
     async def set(self, key: str, value: str, expiration: datetime | None = None) -> None: ...
 
@@ -19,3 +21,6 @@ class KVStore(Protocol):
     async def values_in_range(self, start_key: str, end_key: str) -> list[str]: ...
 
     async def keys_in_range(self, start_key: str, end_key: str) -> list[str]: ...
+
+
+__all__ = ["KVStore"]

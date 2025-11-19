@@ -29,8 +29,7 @@ from sqlalchemy.sql.elements import ColumnElement
 from llama_stack.core.storage.datatypes import SqlAlchemySqlStoreConfig
 from llama_stack.log import get_logger
 from llama_stack_api import PaginatedResponse
-
-from .api import ColumnDefinition, ColumnType, SqlStore
+from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType, SqlStore
 
 logger = get_logger(name=__name__, category="providers::utils")
 

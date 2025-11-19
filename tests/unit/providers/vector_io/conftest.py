@@ -11,13 +11,13 @@ import numpy as np
 import pytest
 
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
+from llama_stack.core.storage.kvstore import register_kvstore_backends
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import FaissIndex, FaissVectorIOAdapter
 from llama_stack.providers.inline.vector_io.sqlite_vec import SQLiteVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex, SQLiteVecVectorIOAdapter
 from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
-from llama_stack.providers.utils.kvstore import register_kvstore_backends
 from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore
 
 EMBEDDING_DIMENSION = 768
@@ -279,7 +279,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         ) as mock_check_version:
             mock_check_version.return_value = "0.5.1"
 
-            with patch("llama_stack.providers.utils.kvstore.kvstore_impl") as mock_kvstore_impl:
+            with patch("llama_stack.core.storage.kvstore.kvstore_impl") as mock_kvstore_impl:
                 mock_kvstore = AsyncMock()
                 mock_kvstore_impl.return_value = mock_kvstore
 

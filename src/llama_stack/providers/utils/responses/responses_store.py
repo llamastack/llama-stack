@@ -6,6 +6,8 @@
 
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqlStoreReference
+from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
+from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
 from llama_stack_api import (
     ListOpenAIResponseInputItem,
@@ -17,10 +19,7 @@ from llama_stack_api import (
     OpenAIResponseObjectWithInput,
     Order,
 )
-
-from ..sqlstore.api import ColumnDefinition, ColumnType
-from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from ..sqlstore.sqlstore import sqlstore_impl
+from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
 logger = get_logger(name=__name__, category="openai_responses")
 

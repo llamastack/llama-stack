@@ -10,8 +10,8 @@ from datetime import datetime
 import aiosqlite
 
 from llama_stack.log import get_logger
+from llama_stack_api.internal.kvstore import KVStore
 
-from ..api import KVStore
 from ..config import SqliteKVStoreConfig
 
 logger = get_logger(name=__name__, category="providers::utils")
