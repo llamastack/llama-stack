@@ -24,8 +24,8 @@ from llama_stack.core.storage.datatypes import (
     SqlStoreReference,
     StorageConfig,
 )
-from llama_stack.providers.utils.kvstore import register_kvstore_backends
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+from llama_stack.core.storage.kvstore import register_kvstore_backends
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api import Inference, InlineProviderSpec, ProviderSpec
 
 

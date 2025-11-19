@@ -10,6 +10,8 @@ from sqlalchemy.exc import IntegrityError
 
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.datatypes import InferenceStoreReference, StorageBackendType
+from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
+from llama_stack.core.storage.sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
 from llama_stack.log import get_logger
 from llama_stack_api import (
     ListOpenAIChatCompletionResponse,
@@ -18,10 +20,7 @@ from llama_stack_api import (
     OpenAIMessageParam,
     Order,
 )
-
-from ..sqlstore.api import ColumnDefinition, ColumnType
-from ..sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from ..sqlstore.sqlstore import _SQLSTORE_BACKENDS, sqlstore_impl
+from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
 logger = get_logger(name=__name__, category="inference")
 

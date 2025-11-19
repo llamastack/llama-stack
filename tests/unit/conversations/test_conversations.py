@@ -23,7 +23,7 @@ from llama_stack.core.storage.datatypes import (
     SqlStoreReference,
     StorageConfig,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api import OpenAIResponseInputMessageContentText, OpenAIResponseMessage
 
 
@@ -38,6 +38,9 @@ async def service():
             },
             stores=ServerStoresConfig(
                 conversations=SqlStoreReference(backend="sql_test", table_name="openai_conversations"),
+                metadata=None,
+                inference=None,
+                prompts=None,
             ),
         )
         register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
@@ -142,6 +145,9 @@ async def test_policy_configuration():
             },
             stores=ServerStoresConfig(
                 conversations=SqlStoreReference(backend="sql_test", table_name="openai_conversations"),
+                metadata=None,
+                inference=None,
+                prompts=None,
             ),
         )
         register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})

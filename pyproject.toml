@@ -356,6 +356,10 @@ exclude = [
 module = [
     "yaml",
     "fire",
+    "redis.asyncio",
+    "psycopg2",
+    "psycopg2.extras",
+    "psycopg2.extensions",
     "torchtune.*",
     "fairscale.*",
     "torchvision.*",

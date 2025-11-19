@@ -6,12 +6,13 @@
 
 from datetime import datetime
 
-import psycopg2
-from psycopg2.extras import DictCursor
+import psycopg2  # type: ignore[import-not-found]
+from psycopg2.extensions import connection as PGConnection  # type: ignore[import-not-found]
+from psycopg2.extras import DictCursor  # type: ignore[import-not-found]
 
 from llama_stack.log import get_logger
+from llama_stack_api.internal.kvstore import KVStore
 
-from ..api import KVStore
 from ..config import PostgresKVStoreConfig
 
 log = get_logger(name=__name__, category="providers::utils")
@@ -20,12 +21,12 @@ log = get_logger(name=__name__, category="providers::utils")
 class PostgresKVStoreImpl(KVStore):
     def __init__(self, config: PostgresKVStoreConfig):
         self.config = config
-        self.conn = None
-        self.cursor = None
+        self._conn: PGConnection | None = None
+        self._cursor: DictCursor | None = None
 
     async def initialize(self) -> None:
         try:
-            self.conn = psycopg2.connect(
+            self._conn = psycopg2.connect(
                 host=self.config.host,
                 port=self.config.port,
                 database=self.config.db,
@@ -34,11 +35,11 @@ class PostgresKVStoreImpl(KVStore):
                 sslmode=self.config.ssl_mode,
                 sslrootcert=self.config.ca_cert_path,
             )
-            self.conn.autocommit = True
-            self.cursor = self.conn.cursor(cursor_factory=DictCursor)
+            self._conn.autocommit = True
+            self._cursor = self._conn.cursor(cursor_factory=DictCursor)
 
             # Create table if it doesn't exist
-            self.cursor.execute(
+            self._cursor.execute(
                 f"""
                 CREATE TABLE IF NOT EXISTS {self.config.table_name} (
                     key TEXT PRIMARY KEY,
@@ -51,6 +52,11 @@ class PostgresKVStoreImpl(KVStore):
             log.exception("Could not connect to PostgreSQL database server")
             raise RuntimeError("Could not connect to PostgreSQL database server") from e
 
+    def _cursor_or_raise(self) -> DictCursor:
+        if self._cursor is None:
+            raise RuntimeError("Postgres client not initialized")
+        return self._cursor
+
     def _namespaced_key(self, key: str) -> str:
         if not self.config.namespace:
             return key
@@ -58,7 +64,8 @@ class PostgresKVStoreImpl(KVStore):
 
     async def set(self, key: str, value: str, expiration: datetime | None = None) -> None:
         key = self._namespaced_key(key)
-        self.cursor.execute(
+        cursor = self._cursor_or_raise()
+        cursor.execute(
             f"""
             INSERT INTO {self.config.table_name} (key, value, expiration)
             VALUES (%s, %s, %s)
@@ -70,7 +77,8 @@ class PostgresKVStoreImpl(KVStore):
 
     async def get(self, key: str) -> str | None:
         key = self._namespaced_key(key)
-        self.cursor.execute(
+        cursor = self._cursor_or_raise()
+        cursor.execute(
             f"""
             SELECT value FROM {self.config.table_name}
             WHERE key = %s
@@ -78,12 +86,13 @@ class PostgresKVStoreImpl(KVStore):
             """,
             (key,),
         )
-        result = self.cursor.fetchone()
+        result = cursor.fetchone()
         return result[0] if result else None
 
     async def delete(self, key: str) -> None:
         key = self._namespaced_key(key)
-        self.cursor.execute(
+        cursor = self._cursor_or_raise()
+        cursor.execute(
             f"DELETE FROM {self.config.table_name} WHERE key = %s",
             (key,),
         )
@@ -92,7 +101,8 @@ class PostgresKVStoreImpl(KVStore):
         start_key = self._namespaced_key(start_key)
         end_key = self._namespaced_key(end_key)
 
-        self.cursor.execute(
+        cursor = self._cursor_or_raise()
+        cursor.execute(
             f"""
             SELECT value FROM {self.config.table_name}
             WHERE key >= %s AND key < %s
@@ -101,14 +111,15 @@ class PostgresKVStoreImpl(KVStore):
             """,
             (start_key, end_key),
         )
-        return [row[0] for row in self.cursor.fetchall()]
+        return [row[0] for row in cursor.fetchall()]
 
     async def keys_in_range(self, start_key: str, end_key: str) -> list[str]:
         start_key = self._namespaced_key(start_key)
         end_key = self._namespaced_key(end_key)
 
-        self.cursor.execute(
+        cursor = self._cursor_or_raise()
+        cursor.execute(
             f"SELECT key FROM {self.config.table_name} WHERE key >= %s AND key < %s",
             (start_key, end_key),
         )
-        return [row[0] for row in self.cursor.fetchall()]
+        return [row[0] for row in cursor.fetchall()]

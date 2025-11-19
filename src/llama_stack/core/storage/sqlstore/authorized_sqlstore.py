@@ -14,8 +14,8 @@ from llama_stack.core.datatypes import User
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.core.storage.datatypes import StorageBackendType
 from llama_stack.log import get_logger
-
-from .api import ColumnDefinition, ColumnType, PaginatedResponse, SqlStore
+from llama_stack_api import PaginatedResponse
+from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType, SqlStore
 
 logger = get_logger(name=__name__, category="providers::utils")
 

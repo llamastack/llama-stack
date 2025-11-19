@@ -252,6 +252,7 @@ class OpenAIResponsesImpl:
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
         guardrails: list[str | ResponseGuardrailSpec] | None = None,
+        parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
     ):
         stream = bool(stream)
@@ -296,6 +297,7 @@ class OpenAIResponsesImpl:
             tools=tools,
             max_infer_iters=max_infer_iters,
             guardrail_ids=guardrail_ids,
+            parallel_tool_calls=parallel_tool_calls,
             max_tool_calls=max_tool_calls,
         )
 
@@ -346,6 +348,7 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         max_infer_iters: int | None = 10,
         guardrail_ids: list[str] | None = None,
+        parallel_tool_calls: bool | None = True,
         max_tool_calls: int | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
@@ -385,6 +388,7 @@ class OpenAIResponsesImpl:
             created_at=created_at,
             text=text,
             max_infer_iters=max_infer_iters,
+            parallel_tool_calls=parallel_tool_calls,
             tool_executor=self.tool_executor,
             safety_api=self.safety_api,
             guardrail_ids=guardrail_ids,

@@ -6,8 +6,8 @@
 
 
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.storage.kvstore import InmemoryKVStoreImpl, kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.kvstore import InmemoryKVStoreImpl, kvstore_impl
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack_api import (
     Agents,
@@ -92,6 +92,7 @@ class MetaReferenceAgentsImpl(Agents):
         model: str,
         prompt: OpenAIResponsePrompt | None = None,
         instructions: str | None = None,
+        parallel_tool_calls: bool | None = True,
         previous_response_id: str | None = None,
         conversation: str | None = None,
         store: bool | None = True,
@@ -120,6 +121,7 @@ class MetaReferenceAgentsImpl(Agents):
             include,
             max_infer_iters,
             guardrails,
+            parallel_tool_calls,
             max_tool_calls,
         )
         return result  # type: ignore[no-any-return]

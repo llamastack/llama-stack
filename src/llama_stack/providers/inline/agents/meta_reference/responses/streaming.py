@@ -114,6 +114,7 @@ class StreamingResponseOrchestrator:
         safety_api,
         guardrail_ids: list[str] | None = None,
         prompt: OpenAIResponsePrompt | None = None,
+        parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
     ):
         self.inference_api = inference_api
@@ -128,6 +129,8 @@ class StreamingResponseOrchestrator:
         self.prompt = prompt
         # System message that is inserted into the model's context
         self.instructions = instructions
+        # Whether to allow more than one function tool call generated per turn.
+        self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
         self.sequence_number = 0
@@ -190,6 +193,7 @@ class StreamingResponseOrchestrator:
             usage=self.accumulated_usage,
             instructions=self.instructions,
             prompt=self.prompt,
+            parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
         )
 

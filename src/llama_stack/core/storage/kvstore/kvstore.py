@@ -13,11 +13,19 @@ from __future__ import annotations
 
 import asyncio
 from collections import defaultdict
+from datetime import datetime
+from typing import cast
 
-from llama_stack.core.storage.datatypes import KVStoreReference, StorageBackendConfig, StorageBackendType
+from llama_stack.core.storage.datatypes import KVStoreReference, StorageBackendConfig
+from llama_stack_api.internal.kvstore import KVStore
 
-from .api import KVStore
-from .config import KVStoreConfig
+from .config import (
+    KVStoreConfig,
+    MongoDBKVStoreConfig,
+    PostgresKVStoreConfig,
+    RedisKVStoreConfig,
+    SqliteKVStoreConfig,
+)
 
 
 def kvstore_dependencies():
@@ -33,7 +41,7 @@ def kvstore_dependencies():
 
 class InmemoryKVStoreImpl(KVStore):
     def __init__(self):
-        self._store = {}
+        self._store: dict[str, str] = {}
 
     async def initialize(self) -> None:
         pass
@@ -41,7 +49,7 @@ class InmemoryKVStoreImpl(KVStore):
     async def get(self, key: str) -> str | None:
         return self._store.get(key)
 
-    async def set(self, key: str, value: str) -> None:
+    async def set(self, key: str, value: str, expiration: datetime | None = None) -> None:
         self._store[key] = value
 
     async def values_in_range(self, start_key: str, end_key: str) -> list[str]:
@@ -70,7 +78,8 @@ def register_kvstore_backends(backends: dict[str, StorageBackendConfig]) -> None
     _KVSTORE_INSTANCES.clear()
     _KVSTORE_LOCKS.clear()
     for name, cfg in backends.items():
-        _KVSTORE_BACKENDS[name] = cfg
+        typed_cfg = cast(KVStoreConfig, cfg)
+        _KVSTORE_BACKENDS[name] = typed_cfg
 
 
 async def kvstore_impl(reference: KVStoreReference) -> KVStore:
@@ -94,19 +103,20 @@ async def kvstore_impl(reference: KVStoreReference) -> KVStore:
         config = backend_config.model_copy()
         config.namespace = reference.namespace
 
-        if config.type == StorageBackendType.KV_REDIS.value:
+        impl: KVStore
+        if isinstance(config, RedisKVStoreConfig):
             from .redis import RedisKVStoreImpl
 
             impl = RedisKVStoreImpl(config)
-        elif config.type == StorageBackendType.KV_SQLITE.value:
+        elif isinstance(config, SqliteKVStoreConfig):
             from .sqlite import SqliteKVStoreImpl
 
             impl = SqliteKVStoreImpl(config)
-        elif config.type == StorageBackendType.KV_POSTGRES.value:
+        elif isinstance(config, PostgresKVStoreConfig):
             from .postgres import PostgresKVStoreImpl
 
             impl = PostgresKVStoreImpl(config)
-        elif config.type == StorageBackendType.KV_MONGODB.value:
+        elif isinstance(config, MongoDBKVStoreConfig):
             from .mongodb import MongoDBKVStoreImpl
 
             impl = MongoDBKVStoreImpl(config)

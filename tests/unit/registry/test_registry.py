@@ -9,12 +9,12 @@ import pytest
 
 from llama_stack.core.datatypes import VectorStoreWithOwner
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
+from llama_stack.core.storage.kvstore import kvstore_impl, register_kvstore_backends
 from llama_stack.core.store.registry import (
     KEY_FORMAT,
     CachedDiskDistributionRegistry,
     DiskDistributionRegistry,
 )
-from llama_stack.providers.utils.kvstore import kvstore_impl, register_kvstore_backends
 from llama_stack_api import Model, VectorStore
 
 
