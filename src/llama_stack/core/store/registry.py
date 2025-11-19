@@ -12,8 +12,8 @@ import pydantic
 
 from llama_stack.core.datatypes import RoutableObjectWithProvider
 from llama_stack.core.storage.datatypes import KVStoreReference
+from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.kvstore import KVStore, kvstore_impl
 
 logger = get_logger(__name__, category="core::registry")
 

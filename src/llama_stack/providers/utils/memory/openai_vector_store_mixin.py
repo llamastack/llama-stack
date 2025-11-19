@@ -17,7 +17,6 @@ from pydantic import TypeAdapter
 
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
     content_from_data_and_mime_type,
@@ -53,6 +52,7 @@ from llama_stack_api import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
+from llama_stack_api.internal.kvstore import KVStore
 
 EMBEDDING_DIMENSION = 768
 

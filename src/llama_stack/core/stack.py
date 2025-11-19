@@ -385,8 +385,8 @@ def _initialize_storage(run_config: StackRunConfig):
         else:
             raise ValueError(f"Unknown storage backend type: {type}")
 
-    from llama_stack.providers.utils.kvstore.kvstore import register_kvstore_backends
-    from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+    from llama_stack.core.storage.kvstore.kvstore import register_kvstore_backends
+    from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 
     register_kvstore_backends(kv_backends)
     register_sqlstore_backends(sql_backends)

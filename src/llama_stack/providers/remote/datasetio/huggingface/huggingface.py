@@ -6,7 +6,7 @@
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
-from llama_stack.providers.utils.kvstore import kvstore_impl
+from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.providers.utils.pagination import paginate_records
 from llama_stack_api import Dataset, DatasetIO, DatasetsProtocolPrivate, PaginatedResponse
 

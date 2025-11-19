@@ -11,8 +11,8 @@ from uuid import uuid4
 import pytest
 
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api import OpenAIMessageParam, OpenAIResponseInput, OpenAIResponseObject, OpenAIUserMessageParam, Order
 
 

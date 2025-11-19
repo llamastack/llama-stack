@@ -17,6 +17,7 @@ from openai.types.chat.chat_completion_chunk import (
 
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
@@ -24,7 +25,6 @@ from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api.agents import Order
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
