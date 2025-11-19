@@ -180,14 +180,10 @@ echo "Setting up environment variables:"
 echo "$SETUP_ENV"
 eval "$SETUP_ENV"
 echo ""
-if [[ -n "$TEST_SETUP" ]]; then
-    # Export setup name - TypeScript tests will call get_setup_env.py themselves to get model defaults
-    export LLAMA_STACK_TEST_SETUP="$TEST_SETUP"
 
-    # Export model env vars for Python tests using get_setup_env.py
-    SETUP_DEFAULTS_ENV=$(PYTHONPATH=$THIS_DIR/.. python $THIS_DIR/get_setup_env.py --setup "$TEST_SETUP" --format bash --include-defaults)
-    eval "$SETUP_DEFAULTS_ENV"
-fi
+# Export suite and setup names for TypeScript tests
+export LLAMA_STACK_TEST_SUITE="$TEST_SUITE"
+export LLAMA_STACK_TEST_SETUP="$TEST_SETUP"
 
 ROOT_DIR="$THIS_DIR/.."
 cd $ROOT_DIR
@@ -255,18 +251,6 @@ run_client_ts_tests() {
         # Then install the client from local directory
         echo "Installing llama-stack-client from: $TS_CLIENT_PATH"
         npm install "$TS_CLIENT_PATH" --silent
-
-        # Verify installation
-        echo "Verifying llama-stack-client installation..."
-        if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
-            echo "✅ llama-stack-client successfully installed"
-            npm list llama-stack-client
-        else
-            echo "❌ llama-stack-client not found in node_modules"
-            echo "Installed packages:"
-            npm list --depth=0
-            return 1
-        fi
     else
         # It's an npm version specifier - install from npm
         echo "Installing llama-stack-client@${TS_CLIENT_PATH} from npm"
@@ -276,23 +260,20 @@ run_client_ts_tests() {
         else
             npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
         fi
-
-        # Verify installation
-        echo "Verifying llama-stack-client installation..."
-        if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
-            echo "✅ llama-stack-client successfully installed"
-            npm list llama-stack-client
-        else
-            echo "❌ llama-stack-client not found in node_modules"
-            echo "Installed packages:"
-            npm list --depth=0
-            return 1
-        fi
     fi
 
-    # Export env vars for the test runner to read suites.json
-    export LLAMA_STACK_TEST_SUITE="$TEST_SUITE"
-    # LLAMA_STACK_TEST_SETUP already exported earlier
+    # Verify installation
+    echo "Verifying llama-stack-client installation..."
+    if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
+        echo "✅ llama-stack-client successfully installed"
+        npm list llama-stack-client
+    else
+        echo "❌ llama-stack-client not found in node_modules"
+        echo "Installed packages:"
+        npm list --depth=0
+        popd >/dev/null
+        return 1
+    fi
 
     echo "Running TypeScript tests for suite $TEST_SUITE (setup $TEST_SETUP)"
     npm test

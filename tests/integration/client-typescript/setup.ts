@@ -9,8 +9,6 @@
  * This file mimics pytest's fixture system by providing shared test configuration.
  */
 
-import { execSync } from 'child_process';
-import * as path from 'path';
 import LlamaStackClient from 'llama-stack-client';
 
 /**
@@ -20,39 +18,14 @@ import LlamaStackClient from 'llama-stack-client';
 function loadTestConfig() {
   const baseURL = process.env['TEST_API_BASE_URL'];
   const setupName = process.env['LLAMA_STACK_TEST_SETUP'];
+  const textModel = process.env['LLAMA_STACK_TEST_TEXT_MODEL'];
+  const embeddingModel = process.env['LLAMA_STACK_TEST_EMBEDDING_MODEL'];
 
   if (!baseURL) {
     throw new Error(
       'TEST_API_BASE_URL is required for integration tests. ' +
         'Run tests using: ./scripts/integration-test.sh',
     );
-  }
-
-  // If setup is specified, load config from Python
-  let textModel = process.env['LLAMA_STACK_TEST_TEXT_MODEL'];
-  let embeddingModel = process.env['LLAMA_STACK_TEST_EMBEDDING_MODEL'];
-
-  if (setupName && !textModel) {
-    try {
-      // Call Python script to get setup configuration
-      const rootDir = path.resolve(__dirname, '../../..');
-      const scriptPath = path.join(rootDir, 'scripts/get_setup_env.py');
-
-      const configJson = execSync(
-        `cd ${rootDir} && PYTHONPATH=. python ${scriptPath} --setup ${setupName} --format json --include-defaults`,
-        { encoding: 'utf-8' }
-      );
-
-      const config = JSON.parse(configJson);
-
-      // Map Python defaults to TypeScript env vars
-      if (config.defaults) {
-        textModel = config.defaults.text_model;
-        embeddingModel = config.defaults.embedding_model;
-      }
-    } catch (error) {
-      console.warn(`Warning: Failed to load config for setup "${setupName}":`, error);
-    }
   }
 
   return {
