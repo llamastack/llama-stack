@@ -121,22 +121,6 @@ if [[ -z "$TEST_SUITE" && -z "$TEST_SUBDIRS" ]]; then
     exit 1
 fi
 
-RESOLVED_TEST_SETUP=$(python - "$TEST_SUITE" "$TEST_SETUP" <<'PY'
-import sys
-from tests.integration.suites import SUITE_DEFINITIONS
-
-suite = sys.argv[1]
-setup = sys.argv[2]
-
-if not setup:
-    suite_def = SUITE_DEFINITIONS.get(suite)
-    if suite_def:
-        setup = suite_def.default_setup or ""
-
-print(setup or "")
-PY
-)
-
 echo "=== Llama Stack Integration Test Runner ==="
 echo "Stack Config: $STACK_CONFIG"
 echo "Setup: $TEST_SETUP"
@@ -197,12 +181,12 @@ echo "Setting up environment variables:"
 echo "$SETUP_ENV"
 eval "$SETUP_ENV"
 echo ""
-if [[ -n "$RESOLVED_TEST_SETUP" ]]; then
+if [[ -n "$TEST_SETUP" ]]; then
     # Export setup name - TypeScript tests will call get_setup_env.py themselves to get model defaults
-    export LLAMA_STACK_TEST_SETUP="$RESOLVED_TEST_SETUP"
+    export LLAMA_STACK_TEST_SETUP="$TEST_SETUP"
 
     # Export model env vars for Python tests using get_setup_env.py
-    SETUP_DEFAULTS_ENV=$(PYTHONPATH=$THIS_DIR/.. python $THIS_DIR/get_setup_env.py --setup "$RESOLVED_TEST_SETUP" --format bash --include-defaults)
+    SETUP_DEFAULTS_ENV=$(PYTHONPATH=$THIS_DIR/.. python $THIS_DIR/get_setup_env.py --setup "$TEST_SETUP" --format bash --include-defaults)
     eval "$SETUP_DEFAULTS_ENV"
 fi
 
@@ -238,13 +222,6 @@ find_available_port() {
 }
 
 run_client_ts_tests() {
-    local files=("$@")
-
-    if [[ ${#files[@]} -eq 0 ]]; then
-        echo "No TypeScript integration tests mapped for suite $TEST_SUITE (setup $RESOLVED_TEST_SETUP)"
-        return 0
-    fi
-
     if ! command -v npm &>/dev/null; then
         echo "npm could not be found; ensure Node.js is installed"
         return 1
@@ -259,8 +236,13 @@ run_client_ts_tests() {
 
     echo "Installing TypeScript client test dependencies using: $install_cmd"
     $install_cmd
-    echo "Running TypeScript tests: ${files[*]}"
-    npx jest --config jest.integration.config.js "${files[@]}"
+
+    # Export env vars for the test runner to read suites.json
+    export LLAMA_STACK_TEST_SUITE="$TEST_SUITE"
+    # LLAMA_STACK_TEST_SETUP already exported earlier
+
+    echo "Running TypeScript tests for suite $TEST_SUITE (setup $TEST_SETUP)"
+    npm test
 
     popd >/dev/null
 }
@@ -562,43 +544,7 @@ else
 fi
 
 if [[ $exit_code -eq 0 && "$RUN_CLIENT_TS_TESTS" == "1" && "${LLAMA_STACK_TEST_STACK_CONFIG_TYPE:-}" == "server" ]]; then
-    CLIENT_TS_FILES=$(python - "$TEST_SUITE" "$RESOLVED_TEST_SETUP" <<'PY'
-from pathlib import Path
-import json
-import sys
-
-suite = sys.argv[1] or ""
-setup = sys.argv[2] or ""
-
-config_path = Path("tests/integration/client-typescript/suites.json")
-if not config_path.exists():
-    sys.exit(0)
-
-config = json.loads(config_path.read_text())
-
-for entry in config:
-    if entry.get("suite") != suite:
-        continue
-    entry_setup = entry.get("setup") or ""
-    if entry_setup and entry_setup != setup:
-        continue
-    for file_name in entry.get("files", []):
-        print(file_name)
-    break
-PY
-)
-
-    if [[ -n "$CLIENT_TS_FILES" ]]; then
-        echo "Running TypeScript client tests for suite $TEST_SUITE (setup $RESOLVED_TEST_SETUP)"
-        CLIENT_TS_FILE_ARRAY=()
-        while IFS= read -r file; do
-            [[ -z "$file" ]] && continue
-            CLIENT_TS_FILE_ARRAY+=("$file")
-        done <<< "$CLIENT_TS_FILES"
-        run_client_ts_tests "${CLIENT_TS_FILE_ARRAY[@]}"
-    else
-        echo "No TypeScript client tests configured for suite $TEST_SUITE and setup $RESOLVED_TEST_SETUP"
-    fi
+    run_client_ts_tests
 fi
 
 echo ""

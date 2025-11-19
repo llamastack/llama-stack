@@ -3,9 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "description": "TypeScript client integration tests for Llama Stack",
-  "type": "module",
   "scripts": {
-    "test": "jest --config jest.integration.config.js"
+    "test": "node run-tests.js"
   },
   "dependencies": {
     "llama-stack-client": "^0.3.2"
