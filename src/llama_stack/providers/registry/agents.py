@@ -30,11 +30,13 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.inline.agents.meta_reference.MetaReferenceAgentsImplConfig",
             api_dependencies=[
                 Api.inference,
-                Api.safety,
                 Api.vector_io,
                 Api.tool_runtime,
                 Api.tool_groups,
                 Api.conversations,
+            ],
+            optional_api_dependencies=[
+                Api.safety,
             ],
             description="Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks.",
         ),
