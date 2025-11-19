@@ -535,11 +535,6 @@ can be instantiated multiple times (with different configs) if necessary.
         description="Configuration for the HTTP(S) server",
     )
 
-    additional_pip_packages: list[str] = Field(
-        default_factory=list,
-        description="Additional pip packages to install in the distribution. These packages will be installed in the distribution environment.",
-    )
-
     external_providers_dir: Path | None = Field(
         default=None,
         description="Path to directory containing external provider implementations. The providers code and dependencies must be installed on the system.",
@@ -630,10 +625,6 @@ class BuildConfig(BaseModel):
         default=None,
         description="Path to directory containing external provider implementations. The providers packages will be resolved from this directory. "
         "pip_packages MUST contain the provider package name.",
-    )
-    additional_pip_packages: list[str] = Field(
-        default_factory=list,
-        description="Additional pip packages to install in the distribution. These packages will be installed in the distribution environment.",
     )
     external_apis_dir: Path | None = Field(
         default=None,

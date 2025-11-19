@@ -53,8 +53,3 @@ distribution_spec:
     batches:
     - provider_type: inline::reference
 image_type: venv
-additional_pip_packages:
-- aiosqlite
-- asyncpg
-- psycopg2-binary
-- sqlalchemy[asyncio]

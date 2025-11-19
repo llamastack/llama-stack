@@ -43,7 +43,6 @@ def get_provider_dependencies(
         config = config.build_config()
 
     providers = config.providers
-    additional_pip_packages = config.additional_pip_packages
 
     deps = []
     external_provider_deps = []
@@ -80,8 +79,6 @@ def get_provider_dependencies(
             special_deps.append(package)
         else:
             normal_deps.append(package)
-
-    normal_deps.extend(additional_pip_packages or [])
 
     return list(set(normal_deps)), list(set(special_deps)), list(set(external_provider_deps))
 

@@ -8,6 +8,3 @@ distribution_spec:
       module: ramalama_stack==0.3.0a0
 image_type: venv
 image_name: ramalama-stack-test
-additional_pip_packages:
-- aiosqlite
-- sqlalchemy[asyncio]
