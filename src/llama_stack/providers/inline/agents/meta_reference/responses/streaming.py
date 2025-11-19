@@ -66,6 +66,7 @@ from llama_stack_api import (
     OpenAIResponseUsage,
     OpenAIResponseUsageInputTokensDetails,
     OpenAIResponseUsageOutputTokensDetails,
+    Safety,
     WebSearchToolTypes,
 )
 
@@ -111,7 +112,7 @@ class StreamingResponseOrchestrator:
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
         instructions: str | None,
-        safety_api,
+        safety_api: Safety | None,
         guardrail_ids: list[str] | None = None,
         prompt: OpenAIResponsePrompt | None = None,
         parallel_tool_calls: bool | None = None,

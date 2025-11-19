@@ -181,6 +181,10 @@ echo "$SETUP_ENV"
 eval "$SETUP_ENV"
 echo ""
 
+# Export suite and setup names for TypeScript tests
+export LLAMA_STACK_TEST_SUITE="$TEST_SUITE"
+export LLAMA_STACK_TEST_SETUP="$TEST_SETUP"
+
 ROOT_DIR="$THIS_DIR/.."
 cd $ROOT_DIR
 
@@ -212,6 +216,71 @@ find_available_port() {
     return 1
 }
 
+run_client_ts_tests() {
+    if ! command -v npm &>/dev/null; then
+        echo "npm could not be found; ensure Node.js is installed"
+        return 1
+    fi
+
+    pushd tests/integration/client-typescript >/dev/null
+
+    # Determine if TS_CLIENT_PATH is a directory path or an npm version
+    if [[ -d "$TS_CLIENT_PATH" ]]; then
+        # It's a directory path - use local checkout
+        if [[ ! -f "$TS_CLIENT_PATH/package.json" ]]; then
+            echo "Error: $TS_CLIENT_PATH exists but doesn't look like llama-stack-client-typescript (no package.json)"
+            popd >/dev/null
+            return 1
+        fi
+        echo "Using local llama-stack-client-typescript from: $TS_CLIENT_PATH"
+
+        # Build the TypeScript client first
+        echo "Building TypeScript client..."
+        pushd "$TS_CLIENT_PATH" >/dev/null
+        npm install --silent
+        npm run build --silent
+        popd >/dev/null
+
+        # Install other dependencies first
+        if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+            npm ci --silent
+        else
+            npm install --silent
+        fi
+
+        # Then install the client from local directory
+        echo "Installing llama-stack-client from: $TS_CLIENT_PATH"
+        npm install "$TS_CLIENT_PATH" --silent
+    else
+        # It's an npm version specifier - install from npm
+        echo "Installing llama-stack-client@${TS_CLIENT_PATH} from npm"
+        if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+            npm ci --silent
+            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+        else
+            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+        fi
+    fi
+
+    # Verify installation
+    echo "Verifying llama-stack-client installation..."
+    if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
+        echo "✅ llama-stack-client successfully installed"
+        npm list llama-stack-client
+    else
+        echo "❌ llama-stack-client not found in node_modules"
+        echo "Installed packages:"
+        npm list --depth=0
+        popd >/dev/null
+        return 1
+    fi
+
+    echo "Running TypeScript tests for suite $TEST_SUITE (setup $TEST_SETUP)"
+    npm test
+
+    popd >/dev/null
+}
+
 # Start Llama Stack Server if needed
 if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     # Find an available port for the server
@@ -221,6 +290,7 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         exit 1
     fi
     export LLAMA_STACK_PORT
+    export TEST_API_BASE_URL="http://localhost:$LLAMA_STACK_PORT"
     echo "Will use port: $LLAMA_STACK_PORT"
 
     stop_server() {
@@ -298,6 +368,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
         exit 1
     fi
     export LLAMA_STACK_PORT
+    export TEST_API_BASE_URL="http://localhost:$LLAMA_STACK_PORT"
     echo "Will use port: $LLAMA_STACK_PORT"
 
     echo "=== Building Docker Image for distribution: $DISTRO ==="
@@ -504,6 +575,11 @@ else
     fi
 
     exit 1
+fi
+
+# Run TypeScript client tests if TS_CLIENT_PATH is set
+if [[ $exit_code -eq 0 && -n "${TS_CLIENT_PATH:-}" && "${LLAMA_STACK_TEST_STACK_CONFIG_TYPE:-}" == "server" ]]; then
+    run_client_ts_tests
 fi
 
 echo ""

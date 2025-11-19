@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from urllib.parse import urljoin
-
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import AzureConfig
@@ -22,4 +20,4 @@ class AzureInferenceAdapter(OpenAIMixin):
 
         Returns the Azure API base URL from the configuration.
         """
-        return urljoin(str(self.config.api_base), "/openai/v1")
+        return str(self.config.base_url)
