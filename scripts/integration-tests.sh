@@ -20,6 +20,7 @@ TEST_PATTERN=""
 INFERENCE_MODE="replay"
 EXTRA_PARAMS=""
 COLLECT_ONLY=false
+TYPESCRIPT_ONLY=false
 
 # Function to display usage
 usage() {
@@ -34,6 +35,7 @@ Options:
     --subdirs STRING         Comma-separated list of test subdirectories to run (overrides suite)
     --pattern STRING         Regex pattern to pass to pytest -k
     --collect-only           Collect tests only without running them (skips server startup)
+    --typescript-only        Skip Python tests and run only TypeScript client tests
     --help                   Show this help message
 
 Suites are defined in tests/integration/suites.py and define which tests to run.
@@ -88,6 +90,10 @@ while [[ $# -gt 0 ]]; do
         ;;
     --collect-only)
         COLLECT_ONLY=true
+        shift
+        ;;
+    --typescript-only)
+        TYPESCRIPT_ONLY=true
         shift
         ;;
     --help)
@@ -544,16 +550,23 @@ if [[ -n "$STACK_CONFIG" ]]; then
     STACK_CONFIG_ARG="--stack-config=$STACK_CONFIG"
 fi
 
-pytest -s -v $PYTEST_TARGET \
-    $STACK_CONFIG_ARG \
-    --inference-mode="$INFERENCE_MODE" \
-    -k "$PYTEST_PATTERN" \
-    $EXTRA_PARAMS \
-    --color=yes \
-    --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
-    --color=yes $EXTRA_PARAMS \
-    --capture=tee-sys
-exit_code=$?
+# Run Python tests unless typescript-only mode
+if [[ "$TYPESCRIPT_ONLY" == "false" ]]; then
+    pytest -s -v $PYTEST_TARGET \
+        $STACK_CONFIG_ARG \
+        --inference-mode="$INFERENCE_MODE" \
+        -k "$PYTEST_PATTERN" \
+        $EXTRA_PARAMS \
+        --color=yes \
+        --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
+        --color=yes $EXTRA_PARAMS \
+        --capture=tee-sys
+    exit_code=$?
+else
+    echo "Skipping Python tests (--typescript-only mode)"
+    exit_code=0
+fi
+
 set +x
 set -e
 
