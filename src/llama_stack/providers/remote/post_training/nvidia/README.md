@@ -128,7 +128,7 @@ client.post_training.job.cancel(job_uuid="your-job-id")
 #### 1. Register the model
 
 ```python
-from llama_stack.apis.models import Model, ModelType
+from llama_stack_api.models import Model, ModelType
 
 client.models.register(
     model_id="test-example-model@v1",

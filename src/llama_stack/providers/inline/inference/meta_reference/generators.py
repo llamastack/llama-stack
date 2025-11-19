@@ -5,29 +5,26 @@
 # the root directory of this source tree.
 
 import math
-from collections.abc import Generator
 from typing import Optional
 
 import torch
 from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
 
-from llama_stack.apis.inference import (
-    GreedySamplingStrategy,
-    JsonSchemaResponseFormat,
-    ResponseFormat,
-    SamplingParams,
-    TopPSamplingStrategy,
-)
-from llama_stack.models.llama.datatypes import QuantizationMode
+from llama_stack.models.llama.datatypes import QuantizationMode, ToolPromptFormat
 from llama_stack.models.llama.llama3.generation import Llama3
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
 from llama_stack.models.llama.llama4.generation import Llama4
 from llama_stack.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
 from llama_stack.models.llama.sku_types import Model, ModelFamily
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    ChatCompletionRequestWithRawContent,
-    CompletionRequestWithRawContent,
-    get_default_tool_prompt_format,
+from llama_stack_api import (
+    GreedySamplingStrategy,
+    JsonSchemaResponseFormat,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIResponseFormatJSONSchema,
+    ResponseFormat,
+    ResponseFormatType,
+    SamplingParams,
+    TopPSamplingStrategy,
 )
 
 from .common import model_checkpoint_dir
@@ -106,14 +103,6 @@ def _infer_sampling_params(sampling_params: SamplingParams):
     return temperature, top_p
 
 
-def _infer_tool_prompt_format(request: ChatCompletionRequestWithRawContent):
-    tool_config = request.tool_config
-    if tool_config is not None and tool_config.tool_prompt_format is not None:
-        return tool_config.tool_prompt_format
-    else:
-        return get_default_tool_prompt_format(request.model)
-
-
 class LlamaGenerator:
     def __init__(
         self,
@@ -157,55 +146,56 @@ class LlamaGenerator:
         self.args = self.inner_generator.args
         self.formatter = self.inner_generator.formatter
 
-    def completion(
-        self,
-        request_batch: list[CompletionRequestWithRawContent],
-    ) -> Generator:
-        first_request = request_batch[0]
-        sampling_params = first_request.sampling_params or SamplingParams()
-        max_gen_len = sampling_params.max_tokens
-        if max_gen_len is None or max_gen_len == 0 or max_gen_len >= self.args.max_seq_len:
-            max_gen_len = self.args.max_seq_len - 1
-
-        temperature, top_p = _infer_sampling_params(sampling_params)
-        yield from self.inner_generator.generate(
-            llm_inputs=[self.formatter.encode_content(request.content) for request in request_batch],
-            max_gen_len=max_gen_len,
-            temperature=temperature,
-            top_p=top_p,
-            logprobs=bool(first_request.logprobs),
-            echo=False,
-            logits_processor=get_logits_processor(
-                self.tokenizer,
-                self.args.vocab_size,
-                first_request.response_format,
-            ),
-        )
-
     def chat_completion(
         self,
-        request_batch: list[ChatCompletionRequestWithRawContent],
-    ) -> Generator:
-        first_request = request_batch[0]
-        sampling_params = first_request.sampling_params or SamplingParams()
+        request: OpenAIChatCompletionRequestWithExtraBody,
+        raw_messages: list,
+    ):
+        """Generate chat completion using OpenAI request format.
+
+        Args:
+            request: OpenAI chat completion request
+            raw_messages: Pre-converted list of RawMessage objects
+        """
+
+        # Determine tool prompt format
+        tool_prompt_format = ToolPromptFormat.json if request.tools else ToolPromptFormat.json
+
+        # Prepare sampling params
+        sampling_params = SamplingParams()
+        if request.temperature is not None or request.top_p is not None:
+            sampling_params.strategy = TopPSamplingStrategy(
+                temperature=request.temperature if request.temperature is not None else 1.0,
+                top_p=request.top_p if request.top_p is not None else 1.0,
+            )
+        if request.max_tokens:
+            sampling_params.max_tokens = request.max_tokens
+
         max_gen_len = sampling_params.max_tokens
         if max_gen_len is None or max_gen_len == 0 or max_gen_len >= self.args.max_seq_len:
             max_gen_len = self.args.max_seq_len - 1
 
         temperature, top_p = _infer_sampling_params(sampling_params)
+
+        # Get logits processor for response format
+        logits_processor = None
+        if request.response_format:
+            if isinstance(request.response_format, OpenAIResponseFormatJSONSchema):
+                # Extract the actual schema from OpenAIJSONSchema TypedDict
+                schema_dict = request.response_format.json_schema.get("schema") or {}
+                json_schema_format = JsonSchemaResponseFormat(
+                    type=ResponseFormatType.json_schema,
+                    json_schema=schema_dict,
+                )
+                logits_processor = get_logits_processor(self.tokenizer, self.args.vocab_size, json_schema_format)
+
+        # Generate
         yield from self.inner_generator.generate(
-            llm_inputs=[
-                self.formatter.encode_dialog_prompt(request.messages, _infer_tool_prompt_format(request))
-                for request in request_batch
-            ],
+            llm_inputs=[self.formatter.encode_dialog_prompt(raw_messages, tool_prompt_format)],
             max_gen_len=max_gen_len,
             temperature=temperature,
             top_p=top_p,
-            logprobs=bool(first_request.logprobs),
+            logprobs=False,
             echo=False,
-            logits_processor=get_logits_processor(
-                self.tokenizer,
-                self.args.vocab_size,
-                first_request.response_format,
-            ),
+            logits_processor=logits_processor,
         )

@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.datatypes import (
+from llama_stack_api import (
     Api,
     InlineProviderSpec,
     ProviderSpec,
@@ -297,6 +297,20 @@ Available Models:
 Azure OpenAI inference provider for accessing GPT models and other Azure services.
 Provider documentation
 https://learn.microsoft.com/en-us/azure/ai-foundry/openai/overview
+""",
+        ),
+        RemoteProviderSpec(
+            api=Api.inference,
+            provider_type="remote::oci",
+            adapter_type="oci",
+            pip_packages=["oci"],
+            module="llama_stack.providers.remote.inference.oci",
+            config_class="llama_stack.providers.remote.inference.oci.config.OCIConfig",
+            provider_data_validator="llama_stack.providers.remote.inference.oci.config.OCIProviderDataValidator",
+            description="""
+Oracle Cloud Infrastructure (OCI) Generative AI inference provider for accessing OCI's Generative AI Platform-as-a-Service models.
+Provider documentation
+https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
 """,
         ),
     ]

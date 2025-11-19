@@ -15,14 +15,22 @@ from typing import Annotated, Any
 from fastapi import Body
 from pydantic import TypeAdapter
 
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files import Files, OpenAIFileObject
-from llama_stack.apis.vector_io import (
+from llama_stack.core.id_generation import generate_object_id
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.memory.vector_store import (
+    ChunkForDeletion,
+    content_from_data_and_mime_type,
+    make_overlapped_chunks,
+)
+from llama_stack_api import (
     Chunk,
+    Files,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAIFileObject,
     QueryChunksResponse,
     SearchRankingOptions,
+    VectorStore,
     VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyAuto,
     VectorStoreChunkingStrategyStatic,
@@ -30,7 +38,7 @@ from llama_stack.apis.vector_io import (
     VectorStoreContent,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
-    VectorStoreFileContentsResponse,
+    VectorStoreFileContentResponse,
     VectorStoreFileCounts,
     VectorStoreFileDeleteResponse,
     VectorStoreFileLastError,
@@ -39,19 +47,12 @@ from llama_stack.apis.vector_io import (
     VectorStoreFileStatus,
     VectorStoreListFilesResponse,
     VectorStoreListResponse,
+    VectorStoreNotFoundError,
     VectorStoreObject,
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
-from llama_stack.apis.vector_stores import VectorStore
-from llama_stack.core.id_generation import generate_object_id
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.kvstore.api import KVStore
-from llama_stack.providers.utils.memory.vector_store import (
-    ChunkForDeletion,
-    content_from_data_and_mime_type,
-    make_overlapped_chunks,
-)
+from llama_stack_api.internal.kvstore import KVStore
 
 EMBEDDING_DIMENSION = 768
 
@@ -704,34 +705,35 @@ class OpenAIVectorStoreMixin(ABC):
             # Unknown filter type, default to no match
             raise ValueError(f"Unsupported filter type: {filter_type}")
 
-    def _chunk_to_vector_store_content(self, chunk: Chunk) -> list[VectorStoreContent]:
-        # content is InterleavedContent
+    def _chunk_to_vector_store_content(
+        self, chunk: Chunk, include_embeddings: bool = False, include_metadata: bool = False
+    ) -> list[VectorStoreContent]:
+        def extract_fields() -> dict:
+            """Extract embedding and metadata fields from chunk based on include flags."""
+            return {
+                "embedding": chunk.embedding if include_embeddings else None,
+                "chunk_metadata": chunk.chunk_metadata if include_metadata else None,
+                "metadata": chunk.metadata if include_metadata else None,
+            }
+
+        fields = extract_fields()
+
         if isinstance(chunk.content, str):
-            content = [
-                VectorStoreContent(
-                    type="text",
-                    text=chunk.content,
-                )
-            ]
+            content_item = VectorStoreContent(type="text", text=chunk.content, **fields)
+            content = [content_item]
         elif isinstance(chunk.content, list):
             # TODO: Add support for other types of content
-            content = [
-                VectorStoreContent(
-                    type="text",
-                    text=item.text,
-                )
-                for item in chunk.content
-                if item.type == "text"
-            ]
+            content = []
+            for item in chunk.content:
+                if item.type == "text":
+                    content_item = VectorStoreContent(type="text", text=item.text, **fields)
+                    content.append(content_item)
         else:
             if chunk.content.type != "text":
                 raise ValueError(f"Unsupported content type: {chunk.content.type}")
-            content = [
-                VectorStoreContent(
-                    type="text",
-                    text=chunk.content.text,
-                )
-            ]
+
+            content_item = VectorStoreContent(type="text", text=chunk.content.text, **fields)
+            content = [content_item]
         return content
 
     async def openai_attach_file_to_vector_store(
@@ -820,13 +822,12 @@ class OpenAIVectorStoreMixin(ABC):
                 message=str(e),
             )
 
-        # Create OpenAI vector store file metadata
+        # Save vector store file to persistent storage AFTER insert_chunks
+        # so that chunks include the embeddings that were generated
         file_info = vector_store_file_object.model_dump(exclude={"last_error"})
         file_info["filename"] = file_response.filename if file_response else ""
 
-        # Save vector store file to persistent storage (provider-specific)
         dict_chunks = [c.model_dump() for c in chunks]
-        # This should be updated to include chunk_id
         await self._save_openai_vector_store_file(vector_store_id, file_id, file_info, dict_chunks)
 
         # Update file_ids and file_counts in vector store metadata
@@ -921,22 +922,27 @@ class OpenAIVectorStoreMixin(ABC):
         self,
         vector_store_id: str,
         file_id: str,
-    ) -> VectorStoreFileContentsResponse:
+        include_embeddings: bool | None = False,
+        include_metadata: bool | None = False,
+    ) -> VectorStoreFileContentResponse:
         """Retrieves the contents of a vector store file."""
         if vector_store_id not in self.openai_vector_stores:
             raise VectorStoreNotFoundError(vector_store_id)
 
-        file_info = await self._load_openai_vector_store_file(vector_store_id, file_id)
+        # Parameters are already provided directly
+        # include_embeddings and include_metadata are now function parameters
+
         dict_chunks = await self._load_openai_vector_store_file_contents(vector_store_id, file_id)
         chunks = [Chunk.model_validate(c) for c in dict_chunks]
         content = []
         for chunk in chunks:
-            content.extend(self._chunk_to_vector_store_content(chunk))
-        return VectorStoreFileContentsResponse(
-            file_id=file_id,
-            filename=file_info.get("filename", ""),
-            attributes=file_info.get("attributes", {}),
-            content=content,
+            content.extend(
+                self._chunk_to_vector_store_content(
+                    chunk, include_embeddings=include_embeddings or False, include_metadata=include_metadata or False
+                )
+            )
+        return VectorStoreFileContentResponse(
+            data=content,
         )
 
     async def openai_update_vector_store_file(

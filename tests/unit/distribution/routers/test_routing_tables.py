@@ -10,14 +10,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.apis.common.content_types import URL
-from llama_stack.apis.common.errors import ModelNotFoundError
-from llama_stack.apis.common.type_system import NumberType
-from llama_stack.apis.datasets.datasets import Dataset, DatasetPurpose, URIDataSource
-from llama_stack.apis.datatypes import Api
-from llama_stack.apis.models import Model, ModelType
-from llama_stack.apis.shields.shields import Shield
-from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroup
 from llama_stack.core.datatypes import RegistryEntrySource
 from llama_stack.core.routing_tables.benchmarks import BenchmarksRoutingTable
 from llama_stack.core.routing_tables.datasets import DatasetsRoutingTable
@@ -25,6 +17,21 @@ from llama_stack.core.routing_tables.models import ModelsRoutingTable
 from llama_stack.core.routing_tables.scoring_functions import ScoringFunctionsRoutingTable
 from llama_stack.core.routing_tables.shields import ShieldsRoutingTable
 from llama_stack.core.routing_tables.toolgroups import ToolGroupsRoutingTable
+from llama_stack_api import (
+    URL,
+    Api,
+    Dataset,
+    DatasetPurpose,
+    ListToolDefsResponse,
+    Model,
+    ModelNotFoundError,
+    ModelType,
+    NumberType,
+    Shield,
+    ToolDef,
+    ToolGroup,
+    URIDataSource,
+)
 
 
 class Impl:
@@ -130,7 +137,7 @@ class ToolGroupsImpl(Impl):
     async def unregister_toolgroup(self, toolgroup_id: str):
         return toolgroup_id
 
-    async def list_runtime_tools(self, toolgroup_id, mcp_endpoint):
+    async def list_runtime_tools(self, toolgroup_id, mcp_endpoint, authorization=None):
         return ListToolDefsResponse(
             data=[
                 ToolDef(

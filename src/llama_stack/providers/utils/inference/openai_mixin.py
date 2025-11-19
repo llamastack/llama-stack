@@ -13,8 +13,14 @@ from typing import Any
 from openai import AsyncOpenAI
 from pydantic import BaseModel, ConfigDict
 
-from llama_stack.apis.inference import (
+from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
+from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
+from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
+from llama_stack_api import (
     Model,
+    ModelType,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -26,12 +32,6 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
 )
-from llama_stack.apis.models import ModelType
-from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
-from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 
 logger = get_logger(name=__name__, category="providers::utils")
 

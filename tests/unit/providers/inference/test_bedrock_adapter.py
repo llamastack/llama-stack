@@ -10,9 +10,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from openai import AuthenticationError
 
-from llama_stack.apis.inference import OpenAIChatCompletionRequestWithExtraBody
 from llama_stack.providers.remote.inference.bedrock.bedrock import BedrockInferenceAdapter
 from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
+from llama_stack_api import OpenAIChatCompletionRequestWithExtraBody
 
 
 def test_adapter_initialization():

@@ -65,8 +65,14 @@ class TestConversationResponses:
         conversation_items = openai_client.conversations.items.list(conversation.id)
         assert len(conversation_items.data) >= 4  # 2 user + 2 assistant messages
 
+    @pytest.mark.timeout(60, method="thread")
     def test_conversation_context_loading(self, openai_client, text_model_id):
-        """Test that conversation context is properly loaded for responses."""
+        """Test that conversation context is properly loaded for responses.
+
+        Note: 60s timeout added due to CI-specific deadlock in pytest/OpenAI client/httpx
+        after running 25+ tests. Hangs before first HTTP request is made. Works fine locally.
+        Investigation needed: connection pool exhaustion or event loop state issue.
+        """
         conversation = openai_client.conversations.create(
             items=[
                 {"type": "message", "role": "user", "content": "My name is Alice. I like to eat apples."},
@@ -82,6 +88,7 @@ class TestConversationResponses:
 
         assert "apple" in response.output_text.lower()
 
+    @pytest.mark.timeout(60, method="thread")
     def test_conversation_error_handling(self, openai_client, text_model_id):
         """Test error handling for invalid and nonexistent conversations."""
         # Invalid conversation ID format
@@ -125,18 +132,18 @@ class TestConversationResponses:
         assert len(response.output_text.strip()) > 0
 
     # this is not ready yet
-    # def test_conversation_compat_client(self, compat_client, text_model_id):
+    # def test_conversation_compat_client(self, responses_client, text_model_id):
     #     """Test conversation parameter works with compatibility client."""
-    #     if not hasattr(compat_client, "conversations"):
-    #         pytest.skip("compat_client does not support conversations API")
+    #     if not hasattr(responses_client, "conversations"):
+    #         pytest.skip("responses_client does not support conversations API")
     #
-    #     conversation = compat_client.conversations.create()
-    #     response = compat_client.responses.create(
+    #     conversation = responses_client.conversations.create()
+    #     response = responses_client.responses.create(
     #         model=text_model_id, input="Tell me a joke", conversation=conversation.id
     #     )
     #
     #     assert response is not None
     #     assert len(response.output_text.strip()) > 0
     #
-    #     conversation_items = compat_client.conversations.items.list(conversation.id)
+    #     conversation_items = responses_client.conversations.items.list(conversation.id)
     #     assert len(conversation_items.data) >= 2

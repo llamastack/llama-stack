@@ -58,7 +58,7 @@ External APIs must expose a `available_providers()` function in their module tha
 
 ```python
 # llama_stack_api_weather/api.py
-from llama_stack.providers.datatypes import Api, InlineProviderSpec, ProviderSpec
+from llama_stack_api import Api, InlineProviderSpec, ProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:
@@ -79,7 +79,7 @@ A Protocol class like so:
 # llama_stack_api_weather/api.py
 from typing import Protocol
 
-from llama_stack.schema_utils import webmethod
+from llama_stack_api import webmethod
 
 
 class WeatherAPI(Protocol):
@@ -151,13 +151,12 @@ __all__ = ["WeatherAPI", "available_providers"]
 # llama-stack-api-weather/src/llama_stack_api_weather/weather.py
 from typing import Protocol
 
-from llama_stack.providers.datatypes import (
+from llama_stack_api import (
     Api,
     ProviderSpec,
     RemoteProviderSpec,
+    webmethod,
 )
-from llama_stack.schema_utils import webmethod
-
 
 def available_providers() -> list[ProviderSpec]:
     return [

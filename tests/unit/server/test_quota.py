@@ -15,7 +15,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from llama_stack.core.datatypes import QuotaConfig, QuotaPeriod
 from llama_stack.core.server.quota import QuotaMiddleware
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
-from llama_stack.providers.utils.kvstore import register_kvstore_backends
+from llama_stack.core.storage.kvstore import register_kvstore_backends
 
 
 @pytest.fixture

@@ -10,10 +10,14 @@ from collections.abc import AsyncIterator
 
 import litellm
 
-from llama_stack.apis.inference import (
-    ChatCompletionRequest,
+from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
+from llama_stack.providers.utils.inference.openai_compat import (
+    prepare_openai_completion_params,
+)
+from llama_stack_api import (
     InferenceProvider,
-    JsonSchemaResponseFormat,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -23,16 +27,6 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
-    ToolChoice,
-)
-from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
-from llama_stack.providers.utils.inference.openai_compat import (
-    convert_message_to_openai_dict_new,
-    convert_tooldef_to_openai_tool,
-    get_sampling_options,
-    prepare_openai_completion_params,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
@@ -126,51 +120,6 @@ class LiteLLMOpenAIMixin(
                     self._add_additional_properties_recursive(def_schema)
 
         return schema
-
-    async def _get_params(self, request: ChatCompletionRequest) -> dict:
-        from typing import Any
-
-        input_dict: dict[str, Any] = {}
-
-        input_dict["messages"] = [
-            await convert_message_to_openai_dict_new(m, download_images=self.download_images) for m in request.messages
-        ]
-        if fmt := request.response_format:
-            if not isinstance(fmt, JsonSchemaResponseFormat):
-                raise ValueError(
-                    f"Unsupported response format: {type(fmt)}. Only JsonSchemaResponseFormat is supported."
-                )
-
-            # Convert to dict for manipulation
-            fmt_dict = dict(fmt.json_schema)
-            name = fmt_dict["title"]
-            del fmt_dict["title"]
-            fmt_dict["additionalProperties"] = False
-
-            # Apply additionalProperties: False recursively to all objects
-            fmt_dict = self._add_additional_properties_recursive(fmt_dict)
-
-            input_dict["response_format"] = {
-                "type": "json_schema",
-                "json_schema": {
-                    "name": name,
-                    "schema": fmt_dict,
-                    "strict": self.json_schema_strict,
-                },
-            }
-        if request.tools:
-            input_dict["tools"] = [convert_tooldef_to_openai_tool(tool) for tool in request.tools]
-            if request.tool_config and (tool_choice := request.tool_config.tool_choice):
-                input_dict["tool_choice"] = tool_choice.value if isinstance(tool_choice, ToolChoice) else tool_choice
-
-        return {
-            "model": request.model,
-            "api_key": self.get_api_key(),
-            "api_base": self.api_base,
-            **input_dict,
-            "stream": request.stream,
-            **get_sampling_options(request.sampling_params),
-        }
 
     def get_api_key(self) -> str:
         provider_data = self.get_request_provider_data()

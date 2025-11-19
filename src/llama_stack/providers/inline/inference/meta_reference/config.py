@@ -8,8 +8,8 @@ from typing import Any
 
 from pydantic import BaseModel, field_validator
 
-from llama_stack.apis.inference import QuantizationConfig
 from llama_stack.providers.utils.inference import supported_inference_models
+from llama_stack_api import QuantizationConfig
 
 
 class MetaReferenceInferenceConfig(BaseModel):

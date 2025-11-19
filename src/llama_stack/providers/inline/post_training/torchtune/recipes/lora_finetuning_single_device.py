@@ -32,17 +32,6 @@ from torchtune.training.lr_schedulers import get_cosine_schedule_with_warmup
 from torchtune.training.metric_logging import DiskLogger
 from tqdm import tqdm
 
-from llama_stack.apis.common.training_types import PostTrainingMetric
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.post_training import (
-    Checkpoint,
-    DataConfig,
-    LoraFinetuningConfig,
-    OptimizerConfig,
-    QATFinetuningConfig,
-    TrainingConfig,
-)
 from llama_stack.core.utils.config_dirs import DEFAULT_CHECKPOINT_DIR
 from llama_stack.core.utils.model_utils import model_local_dir
 from llama_stack.log import get_logger
@@ -56,6 +45,17 @@ from llama_stack.providers.inline.post_training.torchtune.config import (
     TorchtunePostTrainingConfig,
 )
 from llama_stack.providers.inline.post_training.torchtune.datasets.sft import SFTDataset
+from llama_stack_api import (
+    Checkpoint,
+    DataConfig,
+    DatasetIO,
+    Datasets,
+    LoraFinetuningConfig,
+    OptimizerConfig,
+    PostTrainingMetric,
+    QATFinetuningConfig,
+    TrainingConfig,
+)
 
 log = get_logger(name=__name__, category="post_training")
 

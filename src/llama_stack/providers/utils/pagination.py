@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from llama_stack.apis.common.responses import PaginatedResponse
+from llama_stack_api import PaginatedResponse
 
 
 def paginate_records(

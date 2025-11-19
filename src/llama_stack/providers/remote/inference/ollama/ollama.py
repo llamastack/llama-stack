@@ -9,15 +9,15 @@ import asyncio
 
 from ollama import AsyncClient as AsyncOllamaClient
 
-from llama_stack.apis.common.errors import UnsupportedModelError
-from llama_stack.apis.models import Model
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import (
-    HealthResponse,
-    HealthStatus,
-)
 from llama_stack.providers.remote.inference.ollama.config import OllamaImplConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
+    HealthResponse,
+    HealthStatus,
+    Model,
+    UnsupportedModelError,
+)
 
 logger = get_logger(name=__name__, category="inference::ollama")
 

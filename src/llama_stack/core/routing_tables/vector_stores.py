@@ -6,26 +6,27 @@
 
 from typing import Any
 
-from llama_stack.apis.common.errors import ModelNotFoundError, ModelTypeError
-from llama_stack.apis.models import ModelType
-from llama_stack.apis.resource import ResourceType
+from llama_stack.core.datatypes import (
+    VectorStoreWithOwner,
+)
+from llama_stack.log import get_logger
 
 # Removed VectorStores import to avoid exposing public API
-from llama_stack.apis.vector_io.vector_io import (
+from llama_stack_api import (
+    ModelNotFoundError,
+    ModelType,
+    ModelTypeError,
+    ResourceType,
     SearchRankingOptions,
     VectorStoreChunkingStrategy,
     VectorStoreDeleteResponse,
-    VectorStoreFileContentsResponse,
+    VectorStoreFileContentResponse,
     VectorStoreFileDeleteResponse,
     VectorStoreFileObject,
     VectorStoreFileStatus,
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
-from llama_stack.core.datatypes import (
-    VectorStoreWithOwner,
-)
-from llama_stack.log import get_logger
 
 from .common import CommonRoutingTableImpl, lookup_model
 
@@ -195,12 +196,17 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         self,
         vector_store_id: str,
         file_id: str,
-    ) -> VectorStoreFileContentsResponse:
+        include_embeddings: bool | None = False,
+        include_metadata: bool | None = False,
+    ) -> VectorStoreFileContentResponse:
         await self.assert_action_allowed("read", "vector_store", vector_store_id)
+
         provider = await self.get_provider_impl(vector_store_id)
         return await provider.openai_retrieve_vector_store_file_contents(
             vector_store_id=vector_store_id,
             file_id=file_id,
+            include_embeddings=include_embeddings,
+            include_metadata=include_metadata,
         )
 
     async def openai_update_vector_store_file(

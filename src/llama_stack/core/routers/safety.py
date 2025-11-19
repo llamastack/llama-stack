@@ -6,13 +6,9 @@
 
 from typing import Any
 
-from llama_stack.apis.inference import Message
-from llama_stack.apis.safety import RunShieldResponse, Safety
-from llama_stack.apis.safety.safety import ModerationObject
-from llama_stack.apis.shields import Shield
 from llama_stack.core.datatypes import SafetyConfig
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import RoutingTable
+from llama_stack_api import ModerationObject, OpenAIMessageParam, RoutingTable, RunShieldResponse, Safety, Shield
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -52,7 +48,7 @@ class SafetyRouter(Safety):
     async def run_shield(
         self,
         shield_id: str,
-        messages: list[Message],
+        messages: list[OpenAIMessageParam],
         params: dict[str, Any] = None,
     ) -> RunShieldResponse:
         logger.debug(f"SafetyRouter.run_shield: {shield_id}")

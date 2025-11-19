@@ -4,18 +4,18 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.apis.common.type_system import ParamType
-from llama_stack.apis.resource import ResourceType
-from llama_stack.apis.scoring_functions import (
-    ListScoringFunctionsResponse,
-    ScoringFn,
-    ScoringFnParams,
-    ScoringFunctions,
-)
 from llama_stack.core.datatypes import (
     ScoringFnWithOwner,
 )
 from llama_stack.log import get_logger
+from llama_stack_api import (
+    ListScoringFunctionsResponse,
+    ParamType,
+    ResourceType,
+    ScoringFn,
+    ScoringFnParams,
+    ScoringFunctions,
+)
 
 from .common import CommonRoutingTableImpl
 

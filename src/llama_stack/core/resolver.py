@@ -8,29 +8,6 @@ import importlib.metadata
 import inspect
 from typing import Any
 
-from llama_stack.apis.agents import Agents
-from llama_stack.apis.batches import Batches
-from llama_stack.apis.benchmarks import Benchmarks
-from llama_stack.apis.conversations import Conversations
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.datatypes import ExternalApiSpec
-from llama_stack.apis.eval import Eval
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference, InferenceProvider
-from llama_stack.apis.inspect import Inspect
-from llama_stack.apis.models import Models
-from llama_stack.apis.post_training import PostTraining
-from llama_stack.apis.prompts import Prompts
-from llama_stack.apis.providers import Providers as ProvidersAPI
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.scoring import Scoring
-from llama_stack.apis.scoring_functions import ScoringFunctions
-from llama_stack.apis.shields import Shields
-from llama_stack.apis.tools import ToolGroups, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
-from llama_stack.apis.vector_stores import VectorStore
-from llama_stack.apis.version import LLAMA_STACK_API_V1ALPHA
 from llama_stack.core.client import get_client_impl
 from llama_stack.core.datatypes import (
     AccessRule,
@@ -44,17 +21,44 @@ from llama_stack.core.external import load_external_apis
 from llama_stack.core.store import DistributionRegistry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import (
+from llama_stack_api import (
+    LLAMA_STACK_API_V1ALPHA,
+    Agents,
     Api,
+    Batches,
+    Benchmarks,
     BenchmarksProtocolPrivate,
+    Conversations,
+    DatasetIO,
+    Datasets,
     DatasetsProtocolPrivate,
+    Eval,
+    ExternalApiSpec,
+    Files,
+    Inference,
+    InferenceProvider,
+    Inspect,
+    Models,
     ModelsProtocolPrivate,
+    PostTraining,
+    Prompts,
     ProviderSpec,
     RemoteProviderConfig,
     RemoteProviderSpec,
+    Safety,
+    Scoring,
+    ScoringFunctions,
     ScoringFunctionsProtocolPrivate,
+    Shields,
     ShieldsProtocolPrivate,
+    ToolGroups,
     ToolGroupsProtocolPrivate,
+    ToolRuntime,
+    VectorIO,
+    VectorStore,
+)
+from llama_stack_api import (
+    Providers as ProvidersAPI,
 )
 
 logger = get_logger(name=__name__, category="core")

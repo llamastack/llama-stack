@@ -6,24 +6,20 @@
 
 from collections.abc import AsyncIterator
 
-from llama_stack.apis.inference import (
-    InferenceProvider,
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAICompletionRequestWithExtraBody,
-)
-from llama_stack.apis.inference.inference import (
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAICompletion,
-)
-from llama_stack.apis.models import ModelType
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Model, ModelsProtocolPrivate
 from llama_stack.providers.utils.inference.embedding_mixin import (
     SentenceTransformerEmbeddingMixin,
 )
-from llama_stack.providers.utils.inference.openai_compat import (
-    OpenAIChatCompletionToLlamaStackMixin,
+from llama_stack_api import (
+    InferenceProvider,
+    Model,
+    ModelsProtocolPrivate,
+    ModelType,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAICompletion,
+    OpenAICompletionRequestWithExtraBody,
 )
 
 from .config import SentenceTransformersInferenceConfig
@@ -32,7 +28,6 @@ log = get_logger(name=__name__, category="inference")
 
 
 class SentenceTransformersInferenceImpl(
-    OpenAIChatCompletionToLlamaStackMixin,
     SentenceTransformerEmbeddingMixin,
     InferenceProvider,
     ModelsProtocolPrivate,

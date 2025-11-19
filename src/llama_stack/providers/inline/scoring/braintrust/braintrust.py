@@ -19,25 +19,26 @@ from autoevals.ragas import (
 )
 from pydantic import BaseModel
 
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.scoring import (
-    ScoreBatchResponse,
-    ScoreResponse,
-    Scoring,
-    ScoringResult,
-    ScoringResultRow,
-)
-from llama_stack.apis.scoring_functions import ScoringFn, ScoringFnParams
 from llama_stack.core.datatypes import Api
 from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.providers.datatypes import ScoringFunctionsProtocolPrivate
 from llama_stack.providers.utils.common.data_schema_validator import (
     get_valid_schemas,
     validate_dataset_schema,
     validate_row_schema,
 )
 from llama_stack.providers.utils.scoring.aggregation_utils import aggregate_metrics
+from llama_stack_api import (
+    DatasetIO,
+    Datasets,
+    ScoreBatchResponse,
+    ScoreResponse,
+    Scoring,
+    ScoringFn,
+    ScoringFnParams,
+    ScoringFunctionsProtocolPrivate,
+    ScoringResult,
+    ScoringResultRow,
+)
 
 from .config import BraintrustScoringConfig
 from .scoring_fn.fn_defs.answer_correctness import answer_correctness_fn_def

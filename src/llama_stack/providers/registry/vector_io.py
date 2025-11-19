@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.datatypes import (
+from llama_stack_api import (
     Api,
     InlineProviderSpec,
     ProviderSpec,
@@ -244,7 +244,7 @@ Two ranker types are supported:
 Example using RAGQueryConfig with different search modes:
 
 ```python
-from llama_stack.apis.tools import RAGQueryConfig, RRFRanker, WeightedRanker
+from llama_stack_api import RAGQueryConfig, RRFRanker, WeightedRanker
 
 # Vector search
 config = RAGQueryConfig(mode="vector", max_chunks=5)

@@ -14,34 +14,31 @@ import httpx
 from fastapi import UploadFile
 from pydantic import TypeAdapter
 
-from llama_stack.apis.common.content_types import (
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
+from llama_stack.providers.utils.memory.vector_store import parse_data_url
+from llama_stack_api import (
     URL,
+    Files,
+    Inference,
     InterleavedContent,
     InterleavedContentItem,
-    TextContentItem,
-)
-from llama_stack.apis.files import Files, OpenAIFilePurpose
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.tools import (
     ListToolDefsResponse,
+    OpenAIFilePurpose,
+    QueryChunksResponse,
     RAGDocument,
     RAGQueryConfig,
     RAGQueryResult,
+    TextContentItem,
     ToolDef,
     ToolGroup,
+    ToolGroupsProtocolPrivate,
     ToolInvocationResult,
     ToolRuntime,
-)
-from llama_stack.apis.vector_io import (
-    QueryChunksResponse,
     VectorIO,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
 )
-from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import ToolGroupsProtocolPrivate
-from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
-from llama_stack.providers.utils.memory.vector_store import parse_data_url
 
 from .config import RagToolRuntimeConfig
 from .context_retriever import generate_rag_query
@@ -279,7 +276,10 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         )
 
     async def list_runtime_tools(
-        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
+        self,
+        tool_group_id: str | None = None,
+        mcp_endpoint: URL | None = None,
+        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         # Parameters are not listed since these methods are not yet invoked automatically
         # by the LLM. The method is only implemented so things like /tools can list without
@@ -307,7 +307,9 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
             ]
         )
 
-    async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
+    async def invoke_tool(
+        self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
+    ) -> ToolInvocationResult:
         vector_store_ids = kwargs.get("vector_store_ids", [])
         query_config = kwargs.get("query_config")
         if query_config:

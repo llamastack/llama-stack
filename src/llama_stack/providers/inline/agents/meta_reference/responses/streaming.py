@@ -8,10 +8,22 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack.core.telemetry import tracing
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
+from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
+    Inference,
     MCPListToolsTool,
+    ModelNotFoundError,
+    OpenAIAssistantMessageParam,
+    OpenAIChatCompletion,
+    OpenAIChatCompletionChunk,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionToolCall,
+    OpenAIChoice,
+    OpenAIMessageParam,
     OpenAIResponseContentPartOutputText,
     OpenAIResponseContentPartReasoningText,
     OpenAIResponseContentPartRefusal,
@@ -56,19 +68,6 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseUsageOutputTokensDetails,
     WebSearchToolTypes,
 )
-from llama_stack.apis.inference import (
-    Inference,
-    OpenAIAssistantMessageParam,
-    OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIChatCompletionToolCall,
-    OpenAIChoice,
-    OpenAIMessageParam,
-)
-from llama_stack.core.telemetry import tracing
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
@@ -115,6 +114,8 @@ class StreamingResponseOrchestrator:
         safety_api,
         guardrail_ids: list[str] | None = None,
         prompt: OpenAIResponsePrompt | None = None,
+        parallel_tool_calls: bool | None = None,
+        max_tool_calls: int | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -126,6 +127,12 @@ class StreamingResponseOrchestrator:
         self.safety_api = safety_api
         self.guardrail_ids = guardrail_ids or []
         self.prompt = prompt
+        # System message that is inserted into the model's context
+        self.instructions = instructions
+        # Whether to allow more than one function tool call generated per turn.
+        self.parallel_tool_calls = parallel_tool_calls
+        # Max number of total calls to built-in tools that can be processed in a response
+        self.max_tool_calls = max_tool_calls
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -139,8 +146,8 @@ class StreamingResponseOrchestrator:
         self.accumulated_usage: OpenAIResponseUsage | None = None
         # Track if we've sent a refusal response
         self.violation_detected = False
-        # system message that is inserted into the model's context
-        self.instructions = instructions
+        # Track total calls made to built-in tools
+        self.accumulated_builtin_tool_calls = 0
 
     async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
         """Create a refusal response to replace streaming content."""
@@ -186,6 +193,8 @@ class StreamingResponseOrchestrator:
             usage=self.accumulated_usage,
             instructions=self.instructions,
             prompt=self.prompt,
+            parallel_tool_calls=self.parallel_tool_calls,
+            max_tool_calls=self.max_tool_calls,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -319,6 +328,8 @@ class StreamingResponseOrchestrator:
             if last_completion_result and last_completion_result.finish_reason == "length":
                 final_status = "incomplete"
 
+        except ModelNotFoundError:
+            raise
         except Exception as exc:  # noqa: BLE001
             self.final_messages = messages.copy()
             self.sequence_number += 1
@@ -894,6 +905,11 @@ class StreamingResponseOrchestrator:
         """Coordinate execution of both function and non-function tool calls."""
         # Execute non-function tool calls
         for tool_call in non_function_tool_calls:
+            # Check if total calls made to built-in and mcp tools exceed max_tool_calls
+            if self.max_tool_calls is not None and self.accumulated_builtin_tool_calls >= self.max_tool_calls:
+                logger.info(f"Ignoring built-in and mcp tool call since reached the limit of {self.max_tool_calls=}.")
+                break
+
             # Find the item_id for this tool call
             matching_item_id = None
             for index, item_id in completion_result_data.tool_call_item_ids.items():
@@ -974,6 +990,9 @@ class StreamingResponseOrchestrator:
             if tool_response_message:
                 next_turn_messages.append(tool_response_message)
 
+            # Track number of calls made to built-in and mcp tools
+            self.accumulated_builtin_tool_calls += 1
+
         # Execute function tool calls (client-side)
         for tool_call in function_tool_calls:
             # Find the item_id for this tool call from our tracking dictionary
@@ -1011,9 +1030,9 @@ class StreamingResponseOrchestrator:
         """Process all tools and emit appropriate streaming events."""
         from openai.types.chat import ChatCompletionToolParam
 
-        from llama_stack.apis.tools import ToolDef
         from llama_stack.models.llama.datatypes import ToolDefinition
         from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
+        from llama_stack_api import ToolDef
 
         def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
             tool_def = ToolDefinition(
@@ -1079,10 +1098,12 @@ class StreamingResponseOrchestrator:
                 "server_url": mcp_tool.server_url,
                 "mcp_list_tools_id": list_id,
             }
+            # List MCP tools with authorization from tool config
             async with tracing.span("list_mcp_tools", attributes):
                 tool_defs = await list_mcp_tools(
                     endpoint=mcp_tool.server_url,
-                    headers=mcp_tool.headers or {},
+                    headers=mcp_tool.headers,
+                    authorization=mcp_tool.authorization,
                 )
 
             # Create the MCP list tools message

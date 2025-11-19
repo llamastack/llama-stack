@@ -10,12 +10,20 @@ from collections.abc import AsyncIterator
 
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.apis.agents import Order
-from llama_stack.apis.agents.agents import ResponseGuardrailSpec
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.responses.responses_store import (
+    ResponsesStore,
+    _OpenAIResponseObjectWithInputAndMessages,
+)
+from llama_stack_api import (
+    ConversationItem,
+    Conversations,
+    Inference,
+    InvalidConversationIdError,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
+    OpenAIMessageParam,
     OpenAIResponseInput,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
@@ -25,24 +33,13 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponsePrompt,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
-)
-from llama_stack.apis.common.errors import (
-    InvalidConversationIdError,
-)
-from llama_stack.apis.conversations import Conversations
-from llama_stack.apis.conversations.conversations import ConversationItem
-from llama_stack.apis.inference import (
-    Inference,
-    OpenAIMessageParam,
     OpenAISystemMessageParam,
-)
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.tools import ToolGroups, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.responses.responses_store import (
-    ResponsesStore,
-    _OpenAIResponseObjectWithInputAndMessages,
+    Order,
+    ResponseGuardrailSpec,
+    Safety,
+    ToolGroups,
+    ToolRuntime,
+    VectorIO,
 )
 
 from .streaming import StreamingResponseOrchestrator
@@ -255,9 +252,24 @@ class OpenAIResponsesImpl:
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
         guardrails: list[str | ResponseGuardrailSpec] | None = None,
+        parallel_tool_calls: bool | None = None,
+        max_tool_calls: int | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
+
+        # Validate MCP tools: ensure Authorization header is not passed via headers dict
+        if tools:
+            from llama_stack_api.openai_responses import OpenAIResponseInputToolMCP
+
+            for tool in tools:
+                if isinstance(tool, OpenAIResponseInputToolMCP) and tool.headers:
+                    for key in tool.headers.keys():
+                        if key.lower() == "authorization":
+                            raise ValueError(
+                                "Authorization header cannot be passed via 'headers'. "
+                                "Please use the 'authorization' parameter instead."
+                            )
 
         guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
 
@@ -269,6 +281,9 @@ class OpenAIResponsesImpl:
 
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)
+
+        if max_tool_calls is not None and max_tool_calls < 1:
+            raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
 
         stream_gen = self._create_streaming_response(
             input=input,
@@ -282,6 +297,8 @@ class OpenAIResponsesImpl:
             tools=tools,
             max_infer_iters=max_infer_iters,
             guardrail_ids=guardrail_ids,
+            parallel_tool_calls=parallel_tool_calls,
+            max_tool_calls=max_tool_calls,
         )
 
         if stream:
@@ -331,6 +348,8 @@ class OpenAIResponsesImpl:
         tools: list[OpenAIResponseInputTool] | None = None,
         max_infer_iters: int | None = 10,
         guardrail_ids: list[str] | None = None,
+        parallel_tool_calls: bool | None = True,
+        max_tool_calls: int | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -369,10 +388,12 @@ class OpenAIResponsesImpl:
             created_at=created_at,
             text=text,
             max_infer_iters=max_infer_iters,
+            parallel_tool_calls=parallel_tool_calls,
             tool_executor=self.tool_executor,
             safety_api=self.safety_api,
             guardrail_ids=guardrail_ids,
             instructions=instructions,
+            max_tool_calls=max_tool_calls,
         )
 
         # Stream the response
