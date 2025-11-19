@@ -242,6 +242,7 @@ class StreamingResponseOrchestrator:
                     messages=messages,
                     # Pydantic models are dict-compatible but mypy treats them as distinct types
                     tools=self.ctx.chat_tools,  # type: ignore[arg-type]
+                    parallel_tool_calls=self.parallel_tool_calls,
                     stream=True,
                     temperature=self.ctx.temperature,
                     response_format=response_format,
