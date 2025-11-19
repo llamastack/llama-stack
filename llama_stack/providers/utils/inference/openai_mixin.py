@@ -191,6 +191,19 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
         return api_key
 
+    def _validate_model_allowed(self, provider_model_id: str) -> None:
+        """
+        Validate that the model is in the allowed_models list if configured.
+
+        :param provider_model_id: The provider-specific model ID to validate
+        :raises ValueError: If the model is not in the allowed_models list
+        """
+        if self.config.allowed_models is not None and provider_model_id not in self.config.allowed_models:
+            raise ValueError(
+                f"Model '{provider_model_id}' is not in the allowed models list. "
+                f"Allowed models: {self.config.allowed_models}"
+            )
+
     async def _get_provider_model_id(self, model: str) -> str:
         """
         Get the provider-specific model ID from the model store.
@@ -237,8 +250,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         Direct OpenAI completion API call.
         """
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
+        provider_model_id = await self._get_provider_model_id(params.model)
+        self._validate_model_allowed(provider_model_id)
+
         completion_kwargs = await prepare_openai_completion_params(
-            model=await self._get_provider_model_id(params.model),
+            model=provider_model_id,
             prompt=params.prompt,
             best_of=params.best_of,
             echo=params.echo,
@@ -270,6 +286,9 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI chat completion API call.
         """
+        provider_model_id = await self._get_provider_model_id(params.model)
+        self._validate_model_allowed(provider_model_id)
+
         messages = params.messages
 
         if self.download_images:
@@ -291,7 +310,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             messages = [await _localize_image_url(m) for m in messages]
 
         request_params = await prepare_openai_completion_params(
-            model=await self._get_provider_model_id(params.model),
+            model=provider_model_id,
             messages=messages,
             frequency_penalty=params.frequency_penalty,
             function_call=params.function_call,
@@ -329,9 +348,13 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI embeddings API call.
         """
-        # Prepare request parameters
-        request_params = {
-            "model": await self._get_provider_model_id(params.model),
+        provider_model_id = await self._get_provider_model_id(params.model)
+        self._validate_model_allowed(provider_model_id)
+
+        # Build request params conditionally to avoid NotGiven/Omit type mismatch
+        # The OpenAI SDK uses Omit in signatures but NOT_GIVEN has type NotGiven
+        request_params: dict[str, Any] = {
+            "model": provider_model_id,
             "input": params.input,
             "encoding_format": params.encoding_format if params.encoding_format is not None else NOT_GIVEN,
             "dimensions": params.dimensions if params.dimensions is not None else NOT_GIVEN,
