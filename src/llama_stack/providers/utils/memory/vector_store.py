@@ -333,6 +333,15 @@ class VectorStoreWithIndex:
 
         # Apply query rewriting if enabled
         if params.get("rewrite_query", False):
+            if self.vector_stores_config:
+                log.debug(f"VectorStoreWithIndex received config: {self.vector_stores_config}")
+                if hasattr(self.vector_stores_config, "default_query_expansion_model"):
+                    log.debug(
+                        f"Config has default_query_expansion_model: {self.vector_stores_config.default_query_expansion_model}"
+                    )
+            else:
+                log.debug("No vector_stores_config found - cannot perform query rewriting")
+
             query_string = await self._rewrite_query_for_search(query_string)
 
         if mode == "keyword":
@@ -358,8 +367,14 @@ class VectorStoreWithIndex:
         :returns: The rewritten query optimized for vector search
         """
         # Check if query expansion model is configured
-        if not self.vector_stores_config or not self.vector_stores_config.default_query_expansion_model:
-            raise ValueError("No default_query_expansion_model configured for query rewriting")
+        if not self.vector_stores_config:
+            raise ValueError(
+                f"No vector_stores_config found! self.vector_stores_config is: {self.vector_stores_config}"
+            )
+        if not self.vector_stores_config.default_query_expansion_model:
+            raise ValueError(
+                f"No default_query_expansion_model configured! vector_stores_config: {self.vector_stores_config}, default_query_expansion_model: {self.vector_stores_config.default_query_expansion_model}"
+            )
 
         # Use the configured model
         expansion_model = self.vector_stores_config.default_query_expansion_model

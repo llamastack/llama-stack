@@ -6,16 +6,19 @@
 
 from typing import Any
 
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack_api import Api
 
 from .config import FaissVectorIOConfig
 
 
-async def get_provider_impl(config: FaissVectorIOConfig, deps: dict[Api, Any]):
+async def get_provider_impl(
+    config: FaissVectorIOConfig, deps: dict[Api, Any], vector_stores_config: VectorStoresConfig | None = None
+):
     from .faiss import FaissVectorIOAdapter
 
     assert isinstance(config, FaissVectorIOConfig), f"Unexpected config type: {type(config)}"
 
-    impl = FaissVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
+    impl = FaissVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files), vector_stores_config)
     await impl.initialize()
     return impl

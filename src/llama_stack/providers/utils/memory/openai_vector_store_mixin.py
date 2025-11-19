@@ -620,6 +620,9 @@ class OpenAIVectorStoreMixin(ABC):
                 "mode": search_mode,
                 "rewrite_query": rewrite_query,
             }
+            # Add vector_stores_config if available (for query rewriting)
+            if hasattr(self, "vector_stores_config"):
+                params["vector_stores_config"] = self.vector_stores_config
             # TODO: Add support for ranking_options.ranker
 
             response = await self.query_chunks(
