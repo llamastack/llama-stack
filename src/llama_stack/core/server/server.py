@@ -44,6 +44,7 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
+from llama_stack.core.server.router_registry import create_router, has_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
@@ -87,7 +88,7 @@ def create_sse_event(data: Any) -> str:
 
 
 async def global_exception_handler(request: Request, exc: Exception):
-    traceback.print_exception(exc)
+    traceback.print_exception(type(exc), exc, exc.__traceback__)
     http_exc = translate_exception(exc)
 
     return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
@@ -448,6 +449,14 @@ def create_app() -> StackApp:
     external_apis = load_external_apis(config)
     all_routes = get_all_api_routes(external_apis)
 
+    # Import batches router to trigger router registration
+    # This ensures the router is registered before we try to use it
+    # We will make this code better once the migration is complete
+    try:
+        from llama_stack.core.server.routers import batches  # noqa: F401
+    except ImportError:
+        pass
+
     if config.apis:
         apis_to_serve = set(config.apis)
     else:
@@ -463,41 +472,68 @@ def create_app() -> StackApp:
     apis_to_serve.add("providers")
     apis_to_serve.add("prompts")
     apis_to_serve.add("conversations")
-    for api_str in apis_to_serve:
-        api = Api(api_str)
 
-        routes = all_routes[api]
+    def impl_getter(api: Api) -> Any:
+        """Get the implementation for a given API."""
         try:
-            impl = impls[api]
+            return impls[api]
         except KeyError as e:
             raise ValueError(f"Could not find provider implementation for {api} API") from e
 
-        for route, _ in routes:
-            if not hasattr(impl, route.name):
-                # ideally this should be a typing violation already
-                raise ValueError(f"Could not find method {route.name} on {impl}!")
+    for api_str in apis_to_serve:
+        api = Api(api_str)
 
-            impl_method = getattr(impl, route.name)
-            # Filter out HEAD method since it's automatically handled by FastAPI for GET routes
-            available_methods = [m for m in route.methods if m != "HEAD"]
-            if not available_methods:
-                raise ValueError(f"No methods found for {route.name} on {impl}")
-            method = available_methods[0]
-            logger.debug(f"{method} {route.path}")
-
-            with warnings.catch_warnings():
-                warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
-                getattr(app, method.lower())(route.path, response_model=None)(
-                    create_dynamic_typed_route(
-                        impl_method,
-                        method.lower(),
-                        route.path,
-                    )
+        if has_router(api):
+            router = create_router(api, impl_getter)
+            if router:
+                app.include_router(router)
+                logger.debug(f"Registered router for {api} API")
+            else:
+                logger.warning(
+                    f"API '{api.value}' has a registered router factory but it returned None. Skipping this API."
                 )
+        else:
+            # Fall back to old webmethod-based route discovery until the migration is complete
+            routes = all_routes[api]
+            try:
+                impl = impls[api]
+            except KeyError as e:
+                raise ValueError(f"Could not find provider implementation for {api} API") from e
+
+            for route, _ in routes:
+                if not hasattr(impl, route.name):
+                    # ideally this should be a typing violation already
+                    raise ValueError(f"Could not find method {route.name} on {impl}!")
+
+                impl_method = getattr(impl, route.name)
+                # Filter out HEAD method since it's automatically handled by FastAPI for GET routes
+                available_methods = [m for m in route.methods if m != "HEAD"]
+                if not available_methods:
+                    raise ValueError(f"No methods found for {route.name} on {impl}")
+                method = available_methods[0]
+                logger.debug(f"{method} {route.path}")
+
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
+                    getattr(app, method.lower())(route.path, response_model=None)(
+                        create_dynamic_typed_route(
+                            impl_method,
+                            method.lower(),
+                            route.path,
+                        )
+                    )
 
     logger.debug(f"serving APIs: {apis_to_serve}")
 
+    # Register specific exception handlers before the generic Exception handler
+    # This prevents the re-raising behavior that causes connection resets
     app.exception_handler(RequestValidationError)(global_exception_handler)
+    app.exception_handler(ConflictError)(global_exception_handler)
+    app.exception_handler(ResourceNotFoundError)(global_exception_handler)
+    app.exception_handler(AuthenticationRequiredError)(global_exception_handler)
+    app.exception_handler(AccessDeniedError)(global_exception_handler)
+    app.exception_handler(BadRequestError)(global_exception_handler)
+    # Generic Exception handler should be last
     app.exception_handler(Exception)(global_exception_handler)
 
     if config.telemetry.enabled:

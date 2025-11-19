@@ -35,7 +35,7 @@ paths:
           description: Default Response
       tags:
       - Batches
-      summary: List Batches
+      summary: List all batches for the current user.
       description: List all batches for the current user.
       operationId: list_batches_v1_batches_get
       parameters:
@@ -74,9 +74,11 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
+        '409':
+          description: 'Conflict: The idempotency key was previously used with different parameters.'
       tags:
       - Batches
-      summary: Create Batch
+      summary: Create a new batch for processing multiple API requests.
       description: Create a new batch for processing multiple API requests.
       operationId: create_batch_v1_batches_post
       requestBody:
@@ -95,20 +97,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Batch'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Batches
-      summary: Retrieve Batch
+      summary: Retrieve information about a specific batch.
       description: Retrieve information about a specific batch.
       operationId: retrieve_batch_v1_batches__batch_id__get
       parameters:
@@ -117,7 +119,7 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: batch_id'
+          title: Batch Id
   /v1/batches/{batch_id}/cancel:
     post:
       responses:
@@ -128,20 +130,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Batch'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Batches
-      summary: Cancel Batch
+      summary: Cancel a batch that is in progress.
       description: Cancel a batch that is in progress.
       operationId: cancel_batch_v1_batches__batch_id__cancel_post
       parameters:
@@ -150,7 +152,7 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: batch_id'
+          title: Batch Id
   /v1/chat/completions:
     get:
       responses:
@@ -2971,29 +2973,35 @@ components:
         input_file_id:
           type: string
           title: Input File Id
+          description: The ID of an uploaded file containing requests for the batch.
         endpoint:
           type: string
           title: Endpoint
+          description: The endpoint to be used for all requests in the batch.
         completion_window:
           type: string
           const: 24h
           title: Completion Window
+          description: The time window within which the batch should be processed.
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+          description: Optional metadata for the batch.
         idempotency_key:
           anyOf:
           - type: string
           - type: 'null'
+          description: Optional idempotency key. When provided, enables idempotent behavior.
       type: object
       required:
       - input_file_id
       - endpoint
       - completion_window
       title: CreateBatchRequest
+      description: Request model for creating a batch.
     Batch:
       properties:
         id:

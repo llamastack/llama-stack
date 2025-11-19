@@ -688,6 +688,40 @@ components:
       - data
       title: ListBatchesResponse
       description: Response containing a list of batch objects.
+    CreateBatchRequest:
+      properties:
+        input_file_id:
+          type: string
+          title: Input File Id
+          description: The ID of an uploaded file containing requests for the batch.
+        endpoint:
+          type: string
+          title: Endpoint
+          description: The endpoint to be used for all requests in the batch.
+        completion_window:
+          type: string
+          const: 24h
+          title: Completion Window
+          description: The time window within which the batch should be processed.
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          description: Optional metadata for the batch.
+        idempotency_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional idempotency key. When provided, enables idempotent behavior.
+      type: object
+      required:
+      - input_file_id
+      - endpoint
+      - completion_window
+      title: CreateBatchRequest
+      description: Request model for creating a batch.
     Batch:
       properties:
         id:

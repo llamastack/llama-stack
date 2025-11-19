@@ -64,7 +64,8 @@ def _get_protocol_method(api: Api, method_name: str) -> Any | None:
 def create_llama_stack_app() -> FastAPI:
     """
     Create a FastAPI app that represents the Llama Stack API.
-    This uses the existing route discovery system to automatically find all routes.
+    This uses both router-based routes (for migrated APIs) and the existing
+    route discovery system for legacy webmethod-based routes.
     """
     app = FastAPI(
         title="Llama Stack API",
@@ -75,15 +76,42 @@ def create_llama_stack_app() -> FastAPI:
         ],
     )
 
-    # Get all API routes
+    # Import batches router to trigger router registration
+    try:
+        from llama_stack.core.server.routers import batches  # noqa: F401
+    except ImportError:
+        pass
+
+    # Include routers for APIs that have them registered
+    from llama_stack.core.server.router_registry import create_router, has_router
+
+    def dummy_impl_getter(api: Api) -> Any:
+        """Dummy implementation getter for OpenAPI generation."""
+        return None
+
+    # Get all APIs that might have routers
+    from llama_stack.core.resolver import api_protocol_map
+
+    protocols = api_protocol_map()
+    for api in protocols.keys():
+        if has_router(api):
+            router = create_router(api, dummy_impl_getter)
+            if router:
+                app.include_router(router)
+
+    # Get all API routes (for legacy webmethod-based routes)
     from llama_stack.core.server.routes import get_all_api_routes
 
     api_routes = get_all_api_routes()
 
-    # Create FastAPI routes from the discovered routes
+    # Create FastAPI routes from the discovered routes (skip APIs that have routers)
     from . import endpoints
 
     for api, routes in api_routes.items():
+        # Skip APIs that have routers - they're already included above
+        if has_router(api):
+            continue
+
         for route, webmethod in routes:
             # Convert the route to a FastAPI endpoint
             endpoints._create_fastapi_endpoint(app, route, webmethod, api)

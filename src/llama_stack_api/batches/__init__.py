@@ -4,12 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+"""Batches API protocol and models.
+
+This module contains the Batches protocol definition and related models.
+The router implementation is in llama_stack.core.server.routers.batches.
+"""
+
 from typing import Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
-from llama_stack_api.schema_utils import json_schema_type, webmethod
-from llama_stack_api.version import LLAMA_STACK_API_V1
+from llama_stack_api.schema_utils import json_schema_type
 
 try:
     from openai.types import Batch as BatchObject
@@ -43,7 +48,6 @@ class Batches(Protocol):
     Note: This API is currently under active development and may undergo changes.
     """
 
-    @webmethod(route="/batches", method="POST", level=LLAMA_STACK_API_V1)
     async def create_batch(
         self,
         input_file_id: str,
@@ -51,46 +55,17 @@ class Batches(Protocol):
         completion_window: Literal["24h"],
         metadata: dict[str, str] | None = None,
         idempotency_key: str | None = None,
-    ) -> BatchObject:
-        """Create a new batch for processing multiple API requests.
+    ) -> BatchObject: ...
 
-        :param input_file_id: The ID of an uploaded file containing requests for the batch.
-        :param endpoint: The endpoint to be used for all requests in the batch.
-        :param completion_window: The time window within which the batch should be processed.
-        :param metadata: Optional metadata for the batch.
-        :param idempotency_key: Optional idempotency key. When provided, enables idempotent behavior.
-        :returns: The created batch object.
-        """
-        ...
+    async def retrieve_batch(self, batch_id: str) -> BatchObject: ...
 
-    @webmethod(route="/batches/{batch_id}", method="GET", level=LLAMA_STACK_API_V1)
-    async def retrieve_batch(self, batch_id: str) -> BatchObject:
-        """Retrieve information about a specific batch.
+    async def cancel_batch(self, batch_id: str) -> BatchObject: ...
 
-        :param batch_id: The ID of the batch to retrieve.
-        :returns: The batch object.
-        """
-        ...
-
-    @webmethod(route="/batches/{batch_id}/cancel", method="POST", level=LLAMA_STACK_API_V1)
-    async def cancel_batch(self, batch_id: str) -> BatchObject:
-        """Cancel a batch that is in progress.
-
-        :param batch_id: The ID of the batch to cancel.
-        :returns: The updated batch object.
-        """
-        ...
-
-    @webmethod(route="/batches", method="GET", level=LLAMA_STACK_API_V1)
     async def list_batches(
         self,
         after: str | None = None,
         limit: int = 20,
-    ) -> ListBatchesResponse:
-        """List all batches for the current user.
+    ) -> ListBatchesResponse: ...
 
-        :param after: A cursor for pagination; returns batches after this batch ID.
-        :param limit: Number of batches to return (default 20, max 100).
-        :returns: A list of batch objects.
-        """
-        ...
+
+__all__ = ["Batches", "BatchObject", "ListBatchesResponse"]
