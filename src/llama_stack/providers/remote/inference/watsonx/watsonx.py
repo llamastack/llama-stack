@@ -10,7 +10,6 @@ from typing import Any
 import litellm
 import requests
 
-from llama_stack.core.telemetry.tracing import get_current_span
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
@@ -56,15 +55,6 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         Override parent method to add timeout and inject usage object when missing.
         This works around a LiteLLM defect where usage block is sometimes dropped.
         """
-
-        # Add usage tracking for streaming when telemetry is active
-        stream_options = params.stream_options
-        if params.stream and get_current_span() is not None:
-            if stream_options is None:
-                stream_options = {"include_usage": True}
-            elif "include_usage" not in stream_options:
-                stream_options = {**stream_options, "include_usage": True}
-
         model_obj = await self.model_store.get_model(params.model)
 
         request_params = await prepare_openai_completion_params(
@@ -84,7 +74,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
             seed=params.seed,
             stop=params.stop,
             stream=params.stream,
-            stream_options=stream_options,
+            stream_options=params.stream_options,
             temperature=params.temperature,
             tool_choice=params.tool_choice,
             tools=params.tools,
