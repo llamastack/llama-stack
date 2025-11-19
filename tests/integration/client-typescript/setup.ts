@@ -29,7 +29,7 @@ function loadTestConfig() {
   }
 
   // If setup is specified, load config from Python
-  let textModel = process.env['LLAMA_STACK_TEST_MODEL'];
+  let textModel = process.env['LLAMA_STACK_TEST_TEXT_MODEL'];
   let embeddingModel = process.env['LLAMA_STACK_TEST_EMBEDDING_MODEL'];
 
   if (setupName && !textModel) {
@@ -114,7 +114,8 @@ export function skipIfNoModel(modelType: 'text' | 'embedding'): typeof test {
   const model = modelType === 'text' ? TEST_CONFIG.textModel : TEST_CONFIG.embeddingModel;
 
   if (!model) {
-    const message = `Skipping: ${modelType} model not configured (set LLAMA_STACK_TEST_${modelType.toUpperCase()}_MODEL)`;
+    const envVar = modelType === 'text' ? 'LLAMA_STACK_TEST_TEXT_MODEL' : 'LLAMA_STACK_TEST_EMBEDDING_MODEL';
+    const message = `Skipping: ${modelType} model not configured (set ${envVar})`;
     return test.skip.bind(test) as typeof test;
   }
 
@@ -128,7 +129,7 @@ export function skipIfNoModel(modelType: 'text' | 'embedding'): typeof test {
 export function requireTextModel(): string {
   if (!TEST_CONFIG.textModel) {
     throw new Error(
-      'LLAMA_STACK_TEST_MODEL environment variable is required. ' +
+      'LLAMA_STACK_TEST_TEXT_MODEL environment variable is required. ' +
         'Run tests using: ./scripts/integration-test.sh',
     );
   }

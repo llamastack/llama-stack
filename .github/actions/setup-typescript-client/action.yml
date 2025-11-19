@@ -33,4 +33,3 @@ runs:
           echo "::error::Invalid client-version: ${{ inputs.client-version }}"
           exit 1
         fi
-

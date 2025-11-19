@@ -237,15 +237,56 @@ run_client_ts_tests() {
             return 1
         fi
         echo "Using local llama-stack-client-typescript from: $TS_CLIENT_PATH"
-        npm install --install-links "$TS_CLIENT_PATH"
+
+        # Build the TypeScript client first
+        echo "Building TypeScript client..."
+        pushd "$TS_CLIENT_PATH" >/dev/null
+        npm install --silent
+        npm run build --silent
+        popd >/dev/null
+
+        # Install other dependencies first
+        if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+            npm ci --silent
+        else
+            npm install --silent
+        fi
+
+        # Then install the client from local directory
+        echo "Installing llama-stack-client from: $TS_CLIENT_PATH"
+        npm install "$TS_CLIENT_PATH" --silent
+
+        # Verify installation
+        echo "Verifying llama-stack-client installation..."
+        if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
+            echo "✅ llama-stack-client successfully installed"
+            npm list llama-stack-client
+        else
+            echo "❌ llama-stack-client not found in node_modules"
+            echo "Installed packages:"
+            npm list --depth=0
+            return 1
+        fi
     else
         # It's an npm version specifier - install from npm
         echo "Installing llama-stack-client@${TS_CLIENT_PATH} from npm"
         if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
-            npm ci
-            npm install "llama-stack-client@${TS_CLIENT_PATH}"
+            npm ci --silent
+            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
         else
-            npm install "llama-stack-client@${TS_CLIENT_PATH}"
+            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+        fi
+
+        # Verify installation
+        echo "Verifying llama-stack-client installation..."
+        if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
+            echo "✅ llama-stack-client successfully installed"
+            npm list llama-stack-client
+        else
+            echo "❌ llama-stack-client not found in node_modules"
+            echo "Installed packages:"
+            npm list --depth=0
+            return 1
         fi
     fi
 

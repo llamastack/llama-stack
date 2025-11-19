@@ -12,6 +12,7 @@
  */
 
 import { createTestClient, requireTextModel } from '../setup';
+import { getResponseOutputText } from 'llama-stack-client';
 
 describe('Responses API - Basic', () => {
   // Test cases matching llama-stack/tests/integration/responses/fixtures/test_cases.py
@@ -46,7 +47,7 @@ describe('Responses API - Basic', () => {
     });
 
     // Verify response has content
-    const outputText = response.output_text.toLowerCase().trim();
+    const outputText = getResponseOutputText(response).toLowerCase().trim();
     expect(outputText.length).toBeGreaterThan(0);
     expect(outputText).toContain(expected.toLowerCase());
 
@@ -58,7 +59,7 @@ describe('Responses API - Basic', () => {
 
     // Verify stored response matches
     const retrievedResponse = await client.responses.retrieve(response.id);
-    expect(retrievedResponse.output_text).toBe(response.output_text);
+    expect(getResponseOutputText(retrievedResponse)).toBe(getResponseOutputText(response));
 
     // Test follow-up with previous_response_id
     const nextResponse = await client.responses.create({
@@ -66,7 +67,7 @@ describe('Responses API - Basic', () => {
       input: 'Repeat your previous response in all caps.',
       previous_response_id: response.id,
     });
-    const nextOutputText = nextResponse.output_text.trim();
+    const nextOutputText = getResponseOutputText(nextResponse).trim();
     expect(nextOutputText).toContain(expected.toUpperCase());
   });
 
@@ -104,7 +105,7 @@ describe('Responses API - Basic', () => {
         expect(chunk.response.id).toBe(responseId);
 
         // Verify content quality
-        const outputText = chunk.response.output_text.toLowerCase().trim();
+        const outputText = getResponseOutputText(chunk.response).toLowerCase().trim();
         expect(outputText.length).toBeGreaterThan(0);
         expect(outputText).toContain(expected.toLowerCase());
 
@@ -127,6 +128,6 @@ describe('Responses API - Basic', () => {
 
     // Verify stored response matches streamed response
     const retrievedResponse = await client.responses.retrieve(responseId);
-    expect(retrievedResponse.output_text).toBe(lastEvent.response.output_text);
+    expect(getResponseOutputText(retrievedResponse)).toBe(getResponseOutputText(lastEvent.response));
   });
 });
