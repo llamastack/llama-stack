@@ -48,6 +48,20 @@ class ListBatchesRequest(BaseModel):
 
 
 @json_schema_type
+class RetrieveBatchRequest(BaseModel):
+    """Request model for retrieving a batch."""
+
+    batch_id: str = Field(..., description="The ID of the batch to retrieve.")
+
+
+@json_schema_type
+class CancelBatchRequest(BaseModel):
+    """Request model for canceling a batch."""
+
+    batch_id: str = Field(..., description="The ID of the batch to cancel.")
+
+
+@json_schema_type
 class ListBatchesResponse(BaseModel):
     """Response containing a list of batch objects."""
 
@@ -58,4 +72,11 @@ class ListBatchesResponse(BaseModel):
     has_more: bool = Field(default=False, description="Whether there are more batches available")
 
 
-__all__ = ["CreateBatchRequest", "ListBatchesRequest", "ListBatchesResponse", "BatchObject"]
+__all__ = [
+    "CreateBatchRequest",
+    "ListBatchesRequest",
+    "RetrieveBatchRequest",
+    "CancelBatchRequest",
+    "ListBatchesResponse",
+    "BatchObject",
+]

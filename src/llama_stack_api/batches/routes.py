@@ -14,10 +14,15 @@ all API-related code together.
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Query
+from fastapi import APIRouter, Body, Depends, Path, Query
 
 from llama_stack_api.batches import Batches, BatchObject, ListBatchesResponse
-from llama_stack_api.batches.models import CreateBatchRequest, ListBatchesRequest
+from llama_stack_api.batches.models import (
+    CancelBatchRequest,
+    CreateBatchRequest,
+    ListBatchesRequest,
+    RetrieveBatchRequest,
+)
 from llama_stack_api.datatypes import Api
 from llama_stack_api.router_utils import standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
@@ -58,6 +63,12 @@ def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
     ) -> BatchObject:
         return await svc.create_batch(request)
 
+    def get_retrieve_batch_request(
+        batch_id: Annotated[str, Path(description="The ID of the batch to retrieve.")],
+    ) -> RetrieveBatchRequest:
+        """Dependency function to create RetrieveBatchRequest from path parameter."""
+        return RetrieveBatchRequest(batch_id=batch_id)
+
     @router.get(
         "/batches/{batch_id}",
         response_model=BatchObject,
@@ -68,10 +79,16 @@ def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         },
     )
     async def retrieve_batch(
-        batch_id: str,
+        request: Annotated[RetrieveBatchRequest, Depends(get_retrieve_batch_request)],
         svc: Annotated[Batches, Depends(get_batch_service)],
     ) -> BatchObject:
-        return await svc.retrieve_batch(batch_id)
+        return await svc.retrieve_batch(request)
+
+    def get_cancel_batch_request(
+        batch_id: Annotated[str, Path(description="The ID of the batch to cancel.")],
+    ) -> CancelBatchRequest:
+        """Dependency function to create CancelBatchRequest from path parameter."""
+        return CancelBatchRequest(batch_id=batch_id)
 
     @router.post(
         "/batches/{batch_id}/cancel",
@@ -83,10 +100,10 @@ def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         },
     )
     async def cancel_batch(
-        batch_id: str,
+        request: Annotated[CancelBatchRequest, Depends(get_cancel_batch_request)],
         svc: Annotated[Batches, Depends(get_batch_service)],
     ) -> BatchObject:
-        return await svc.cancel_batch(batch_id)
+        return await svc.cancel_batch(request)
 
     def get_list_batches_request(
         after: Annotated[

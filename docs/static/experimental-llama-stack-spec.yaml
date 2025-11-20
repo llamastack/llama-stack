@@ -8560,6 +8560,28 @@ components:
           type: integer
       title: ListBatchesRequest
       type: object
+    RetrieveBatchRequest:
+      description: Request model for retrieving a batch.
+      properties:
+        batch_id:
+          description: The ID of the batch to retrieve.
+          title: Batch Id
+          type: string
+      required:
+      - batch_id
+      title: RetrieveBatchRequest
+      type: object
+    CancelBatchRequest:
+      description: Request model for canceling a batch.
+      properties:
+        batch_id:
+          description: The ID of the batch to cancel.
+          title: Batch Id
+          type: string
+      required:
+      - batch_id
+      title: CancelBatchRequest
+      type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
       properties:

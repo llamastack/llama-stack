@@ -19,7 +19,13 @@ except ImportError as e:
     raise ImportError("OpenAI package is required for batches API. Please install it with: pip install openai") from e
 
 # Import models for re-export
-from llama_stack_api.batches.models import CreateBatchRequest, ListBatchesRequest, ListBatchesResponse
+from llama_stack_api.batches.models import (
+    CancelBatchRequest,
+    CreateBatchRequest,
+    ListBatchesRequest,
+    ListBatchesResponse,
+    RetrieveBatchRequest,
+)
 
 
 @runtime_checkable
@@ -42,9 +48,15 @@ class Batches(Protocol):
         request: CreateBatchRequest,
     ) -> BatchObject: ...
 
-    async def retrieve_batch(self, batch_id: str) -> BatchObject: ...
+    async def retrieve_batch(
+        self,
+        request: RetrieveBatchRequest,
+    ) -> BatchObject: ...
 
-    async def cancel_batch(self, batch_id: str) -> BatchObject: ...
+    async def cancel_batch(
+        self,
+        request: CancelBatchRequest,
+    ) -> BatchObject: ...
 
     async def list_batches(
         self,
@@ -52,4 +64,12 @@ class Batches(Protocol):
     ) -> ListBatchesResponse: ...
 
 
-__all__ = ["Batches", "BatchObject", "CreateBatchRequest", "ListBatchesRequest", "ListBatchesResponse"]
+__all__ = [
+    "Batches",
+    "BatchObject",
+    "CreateBatchRequest",
+    "ListBatchesRequest",
+    "RetrieveBatchRequest",
+    "CancelBatchRequest",
+    "ListBatchesResponse",
+]

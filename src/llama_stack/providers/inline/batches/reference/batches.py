@@ -38,7 +38,12 @@ from llama_stack_api import (
     OpenAIUserMessageParam,
     ResourceNotFoundError,
 )
-from llama_stack_api.batches.models import CreateBatchRequest, ListBatchesRequest
+from llama_stack_api.batches.models import (
+    CancelBatchRequest,
+    CreateBatchRequest,
+    ListBatchesRequest,
+    RetrieveBatchRequest,
+)
 
 from .config import ReferenceBatchesImplConfig
 
@@ -203,7 +208,7 @@ class ReferenceBatchesImpl(Batches):
             batch_id = f"batch_{hash_digest}"
 
             try:
-                existing_batch = await self.retrieve_batch(batch_id)
+                existing_batch = await self.retrieve_batch(RetrieveBatchRequest(batch_id=batch_id))
 
                 if (
                     existing_batch.input_file_id != request.input_file_id
@@ -244,23 +249,23 @@ class ReferenceBatchesImpl(Batches):
 
         return batch
 
-    async def cancel_batch(self, batch_id: str) -> BatchObject:
+    async def cancel_batch(self, request: CancelBatchRequest) -> BatchObject:
         """Cancel a batch that is in progress."""
-        batch = await self.retrieve_batch(batch_id)
+        batch = await self.retrieve_batch(RetrieveBatchRequest(batch_id=request.batch_id))
 
         if batch.status in ["cancelled", "cancelling"]:
             return batch
 
         if batch.status in ["completed", "failed", "expired"]:
-            raise ConflictError(f"Cannot cancel batch '{batch_id}' with status '{batch.status}'")
+            raise ConflictError(f"Cannot cancel batch '{request.batch_id}' with status '{batch.status}'")
 
-        await self._update_batch(batch_id, status="cancelling", cancelling_at=int(time.time()))
+        await self._update_batch(request.batch_id, status="cancelling", cancelling_at=int(time.time()))
 
-        if batch_id in self._processing_tasks:
-            self._processing_tasks[batch_id].cancel()
+        if request.batch_id in self._processing_tasks:
+            self._processing_tasks[request.batch_id].cancel()
             # note: task removal and status="cancelled" handled in finally block of _process_batch
 
-        return await self.retrieve_batch(batch_id)
+        return await self.retrieve_batch(RetrieveBatchRequest(batch_id=request.batch_id))
 
     async def list_batches(
         self,
@@ -300,11 +305,11 @@ class ReferenceBatchesImpl(Batches):
             has_more=has_more,
         )
 
-    async def retrieve_batch(self, batch_id: str) -> BatchObject:
+    async def retrieve_batch(self, request: RetrieveBatchRequest) -> BatchObject:
         """Retrieve information about a specific batch."""
-        batch_data = await self.kvstore.get(f"batch:{batch_id}")
+        batch_data = await self.kvstore.get(f"batch:{request.batch_id}")
         if not batch_data:
-            raise ResourceNotFoundError(batch_id, "Batch", "batches.list()")
+            raise ResourceNotFoundError(request.batch_id, "Batch", "batches.list()")
 
         return BatchObject.model_validate_json(batch_data)
 
@@ -312,7 +317,7 @@ class ReferenceBatchesImpl(Batches):
         """Update batch fields in kvstore."""
         async with self._update_batch_lock:
             try:
-                batch = await self.retrieve_batch(batch_id)
+                batch = await self.retrieve_batch(RetrieveBatchRequest(batch_id=batch_id))
 
                 # batch processing is async. once cancelling, only allow "cancelled" status updates
                 if batch.status == "cancelling" and updates.get("status") != "cancelled":
@@ -532,7 +537,7 @@ class ReferenceBatchesImpl(Batches):
     async def _process_batch_impl(self, batch_id: str) -> None:
         """Implementation of batch processing logic."""
         errors: list[BatchError] = []
-        batch = await self.retrieve_batch(batch_id)
+        batch = await self.retrieve_batch(RetrieveBatchRequest(batch_id=batch_id))
 
         errors, requests = await self._validate_input(batch)
         if errors:
