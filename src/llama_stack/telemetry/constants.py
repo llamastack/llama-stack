@@ -4,6 +4,14 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+"""
+This file contains constants used for naming data captured for telemetry.
+
+This is used to ensure that the data captured for telemetry is consistent and can be used to
+identify and correlate data. If custom telemetry data is added to llama stack, please add
+constants for it here.
+"""
+
 llama_stack_prefix = "llama_stack"
 
 # Safety Attributes
