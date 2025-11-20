@@ -152,22 +152,13 @@ async def test_run_shield_allowed(nvidia_adapter, mock_guardrails_post):
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(
-        path="/v1/guardrail/checks",
+        path="/v1/chat/completions",
         data={
-            "model": shield_id,
+            "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
                 {"role": "assistant", "content": "I'm doing well, thank you for asking!"},
             ],
-            "temperature": 1.0,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "max_tokens": 160,
-            "stream": False,
-            "guardrails": {
-                "config_id": "self-check",
-            },
         },
     )
 
@@ -206,22 +197,13 @@ async def test_run_shield_blocked(nvidia_adapter, mock_guardrails_post):
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(
-        path="/v1/guardrail/checks",
+        path="/v1/chat/completions",
         data={
-            "model": shield_id,
+            "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
                 {"role": "assistant", "content": "I'm doing well, thank you for asking!"},
             ],
-            "temperature": 1.0,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "max_tokens": 160,
-            "stream": False,
-            "guardrails": {
-                "config_id": "self-check",
-            },
         },
     )
 
@@ -286,22 +268,13 @@ async def test_run_shield_http_error(nvidia_adapter, mock_guardrails_post):
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(
-        path="/v1/guardrail/checks",
+        path="/v1/chat/completions",
         data={
-            "model": shield_id,
+            "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
                 {"role": "assistant", "content": "I'm doing well, thank you for asking!"},
             ],
-            "temperature": 1.0,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "max_tokens": 160,
-            "stream": False,
-            "guardrails": {
-                "config_id": "self-check",
-            },
         },
     )
     # Verify the exception message
