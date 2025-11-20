@@ -56,7 +56,6 @@ def create_batches_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         request: Annotated[CreateBatchRequest, Body(...)],
         svc: Annotated[Batches, Depends(get_batch_service)],
     ) -> BatchObject:
-        """Create a new batch."""
         return await svc.create_batch(
             input_file_id=request.input_file_id,
             endpoint=request.endpoint,
@@ -78,7 +77,6 @@ def create_batches_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         batch_id: str,
         svc: Annotated[Batches, Depends(get_batch_service)],
     ) -> BatchObject:
-        """Retrieve information about a specific batch."""
         return await svc.retrieve_batch(batch_id)
 
     @router.post(
@@ -94,7 +92,6 @@ def create_batches_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         batch_id: str,
         svc: Annotated[Batches, Depends(get_batch_service)],
     ) -> BatchObject:
-        """Cancel a batch that is in progress."""
         return await svc.cancel_batch(batch_id)
 
     @router.get(
@@ -111,7 +108,6 @@ def create_batches_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         after: str | None = None,
         limit: int = 20,
     ) -> ListBatchesResponse:
-        """List all batches for the current user."""
         return await svc.list_batches(after=after, limit=limit)
 
     return router

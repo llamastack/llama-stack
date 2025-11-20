@@ -6,31 +6,20 @@
 
 """Batches API protocol and models.
 
-This module contains the Batches protocol definition and related models.
+This module contains the Batches protocol definition.
+Pydantic models are defined in llama_stack_api.batches.models.
 The router implementation is in llama_stack.core.server.routers.batches.
 """
 
 from typing import Literal, Protocol, runtime_checkable
-
-from pydantic import BaseModel, Field
-
-from llama_stack_api.schema_utils import json_schema_type
 
 try:
     from openai.types import Batch as BatchObject
 except ImportError as e:
     raise ImportError("OpenAI package is required for batches API. Please install it with: pip install openai") from e
 
-
-@json_schema_type
-class ListBatchesResponse(BaseModel):
-    """Response containing a list of batch objects."""
-
-    object: Literal["list"] = "list"
-    data: list[BatchObject] = Field(..., description="List of batch objects")
-    first_id: str | None = Field(default=None, description="ID of the first batch in the list")
-    last_id: str | None = Field(default=None, description="ID of the last batch in the list")
-    has_more: bool = Field(default=False, description="Whether there are more batches available")
+# Import models for re-export
+from llama_stack_api.batches.models import ListBatchesResponse
 
 
 @runtime_checkable
