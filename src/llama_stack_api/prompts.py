@@ -10,6 +10,7 @@ from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
+from llama_stack_api.common.tracing import telemetry_traceable
 from llama_stack_api.schema_utils import json_schema_type, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
@@ -92,6 +93,7 @@ class ListPromptsResponse(BaseModel):
 
 
 @runtime_checkable
+@telemetry_traceable
 class Prompts(Protocol):
     """Prompts
 

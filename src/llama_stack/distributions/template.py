@@ -24,6 +24,7 @@ from llama_stack.core.datatypes import (
     Provider,
     SafetyConfig,
     ShieldInput,
+    TelemetryConfig,
     ToolGroupInput,
     VectorStoresConfig,
 )
@@ -188,6 +189,7 @@ class RunConfigSettings(BaseModel):
     default_benchmarks: list[BenchmarkInput] | None = None
     vector_stores_config: VectorStoresConfig | None = None
     safety_config: SafetyConfig | None = None
+    telemetry: TelemetryConfig = Field(default_factory=lambda: TelemetryConfig(enabled=True))
     storage_backends: dict[str, Any] | None = None
     storage_stores: dict[str, Any] | None = None
 
@@ -287,6 +289,7 @@ class RunConfigSettings(BaseModel):
             "server": {
                 "port": 8321,
             },
+            "telemetry": self.telemetry.model_dump(exclude_none=True) if self.telemetry else None,
         }
 
         if self.vector_stores_config:
