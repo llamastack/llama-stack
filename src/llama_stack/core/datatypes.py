@@ -371,12 +371,6 @@ class SafetyConfig(BaseModel):
     )
 
 
-class TelemetryConfig(BaseModel):
-    """Configuration for telemetry collection."""
-
-    enabled: bool = Field(default=False, description="Whether telemetry collection is enabled")
-
-
 class QuotaPeriod(StrEnum):
     DAY = "day"
 
@@ -540,11 +534,6 @@ can be instantiated multiple times (with different configs) if necessary.
     safety: SafetyConfig | None = Field(
         default=None,
         description="Configuration for default moderations model",
-    )
-
-    telemetry: TelemetryConfig | None = Field(
-        default=None,
-        description="Configuration for telemetry collection",
     )
 
     @field_validator("external_providers_dir")
