@@ -287,9 +287,9 @@ start_container() {
     # On macOS/Windows, use host.docker.internal to reach host from container
     # On Linux with --network host, use localhost
     if [[ "$(uname)" == "Darwin" ]] || [[ "$(uname)" == *"MINGW"* ]]; then
-        OLLAMA_URL="${OLLAMA_URL:-http://host.docker.internal:11434}"
+        OLLAMA_URL="${OLLAMA_URL:-http://host.docker.internal:11434/v1}"
     else
-        OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434}"
+        OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434/v1}"
     fi
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OLLAMA_URL=$OLLAMA_URL"
 

@@ -50,7 +50,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="ollama",
         description="Local Ollama provider with text + safety models",
         env={
-            "OLLAMA_URL": "http://0.0.0.0:11434",
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
             "SAFETY_MODEL": "ollama/llama-guard3:1b",
         },
         defaults={
@@ -64,7 +64,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="ollama",
         description="Local Ollama provider with a vision model",
         env={
-            "OLLAMA_URL": "http://0.0.0.0:11434",
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
         },
         defaults={
             "vision_model": "ollama/llama3.2-vision:11b",
@@ -75,7 +75,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="ollama-postgres",
         description="Server-mode tests with Postgres-backed persistence",
         env={
-            "OLLAMA_URL": "http://0.0.0.0:11434",
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
             "SAFETY_MODEL": "ollama/llama-guard3:1b",
             "POSTGRES_HOST": "127.0.0.1",
             "POSTGRES_PORT": "5432",

@@ -11,7 +11,7 @@
 from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 
 from fastapi import Body, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from llama_stack_api.common.tracing import telemetry_traceable
 from llama_stack_api.inference import InterleavedContent
@@ -372,6 +372,65 @@ VectorStoreFileStatus = Literal["completed"] | Literal["in_progress"] | Literal[
 register_schema(VectorStoreFileStatus, name="VectorStoreFileStatus")
 
 
+# VectorStoreFileAttributes type with OpenAPI constraints
+VectorStoreFileAttributes = Annotated[
+    dict[str, Annotated[str, Field(max_length=512)] | float | bool],
+    Field(
+        max_length=16,
+        json_schema_extra={
+            "propertyNames": {"type": "string", "maxLength": 64},
+            "x-oaiTypeLabel": "map",
+        },
+        description=(
+            "Set of 16 key-value pairs that can be attached to an object. This can be "
+            "useful for storing additional information about the object in a structured "
+            "format, and querying for objects via API or the dashboard. Keys are strings "
+            "with a maximum length of 64 characters. Values are strings with a maximum "
+            "length of 512 characters, booleans, or numbers."
+        ),
+    ),
+]
+
+
+def _sanitize_vector_store_attributes(metadata: dict[str, Any] | None) -> dict[str, str | float | bool]:
+    """
+    Sanitize metadata to VectorStoreFileAttributes spec (max 16 properties, primitives only).
+
+    Converts dict[str, Any] to dict[str, str | float | bool]:
+    - Preserves: str (truncated to 512 chars), bool, int/float (as float)
+    - Converts: list -> comma-separated string
+    - Filters: dict, None, other types
+    - Enforces: max 16 properties, max 64 char keys, max 512 char string values
+    """
+    if not metadata:
+        return {}
+
+    sanitized: dict[str, str | float | bool] = {}
+    for key, value in metadata.items():
+        # Enforce max 16 properties
+        if len(sanitized) >= 16:
+            break
+
+        # Enforce max 64 char keys
+        if len(key) > 64:
+            continue
+
+        # Convert to supported primitive types
+        if isinstance(value, bool):
+            sanitized[key] = value
+        elif isinstance(value, int | float):
+            sanitized[key] = float(value)
+        elif isinstance(value, str):
+            # Enforce max 512 char string values
+            sanitized[key] = value[:512] if len(value) > 512 else value
+        elif isinstance(value, list):
+            # Convert lists to comma-separated strings (max 512 chars)
+            list_str = ", ".join(str(item) for item in value)
+            sanitized[key] = list_str[:512] if len(list_str) > 512 else list_str
+
+    return sanitized
+
+
 @json_schema_type
 class VectorStoreFileObject(BaseModel):
     """OpenAI Vector Store File object.
@@ -389,13 +448,19 @@ class VectorStoreFileObject(BaseModel):
 
     id: str
     object: str = "vector_store.file"
-    attributes: dict[str, Any] = Field(default_factory=dict)
+    attributes: VectorStoreFileAttributes = Field(default_factory=dict)
     chunking_strategy: VectorStoreChunkingStrategy
     created_at: int
     last_error: VectorStoreFileLastError | None = None
     status: VectorStoreFileStatus
     usage_bytes: int = 0
     vector_store_id: str
+
+    @field_validator("attributes", mode="before")
+    @classmethod
+    def _validate_attributes(cls, v: dict[str, Any] | None) -> dict[str, str | float | bool]:
+        """Sanitize attributes to match VectorStoreFileAttributes OpenAPI spec."""
+        return _sanitize_vector_store_attributes(v)
 
 
 @json_schema_type

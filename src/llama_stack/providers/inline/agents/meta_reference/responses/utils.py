@@ -5,11 +5,14 @@
 # the root directory of this source tree.
 
 import asyncio
+import base64
+import mimetypes
 import re
 import uuid
 from collections.abc import Sequence
 
 from llama_stack_api import (
+    Files,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartParam,
@@ -18,6 +21,8 @@ from llama_stack_api import (
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
     OpenAIDeveloperMessageParam,
+    OpenAIFile,
+    OpenAIFileFile,
     OpenAIImageURL,
     OpenAIJSONSchema,
     OpenAIMessageParam,
@@ -29,6 +34,7 @@ from llama_stack_api import (
     OpenAIResponseInput,
     OpenAIResponseInputFunctionToolCallOutput,
     OpenAIResponseInputMessageContent,
+    OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
@@ -37,9 +43,11 @@ from llama_stack_api import (
     OpenAIResponseMessage,
     OpenAIResponseOutputMessageContent,
     OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseOutputMessageFileSearchToolCall,
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponseText,
     OpenAISystemMessageParam,
     OpenAIToolMessageParam,
@@ -47,6 +55,46 @@ from llama_stack_api import (
     ResponseGuardrailSpec,
     Safety,
 )
+
+
+async def extract_bytes_from_file(file_id: str, files_api: Files) -> bytes:
+    """
+    Extract raw bytes from file using the Files API.
+
+    :param file_id: The file identifier (e.g., "file-abc123")
+    :param files_api: Files API instance
+    :returns: Raw file content as bytes
+    :raises: ValueError if file cannot be retrieved
+    """
+    try:
+        response = await files_api.openai_retrieve_file_content(file_id)
+        return bytes(response.body)
+    except Exception as e:
+        raise ValueError(f"Failed to retrieve file content for file_id '{file_id}': {str(e)}") from e
+
+
+def generate_base64_ascii_text_from_bytes(raw_bytes: bytes) -> str:
+    """
+    Converts raw binary bytes into a safe ASCII text representation for URLs
+
+    :param raw_bytes: the actual bytes that represents file content
+    :returns: string of utf-8 characters
+    """
+    return base64.b64encode(raw_bytes).decode("utf-8")
+
+
+def construct_data_url(ascii_text: str, mime_type: str | None) -> str:
+    """
+    Construct data url with decoded data inside
+
+    :param ascii_text: ASCII content
+    :param mime_type: MIME type of file
+    :returns: data url string (eg. data:image/png,base64,%3Ch1%3EHello%2C%20World%21%3C%2Fh1%3E)
+    """
+    if not mime_type:
+        mime_type = "application/octet-stream"
+
+    return f"data:{mime_type};base64,{ascii_text}"
 
 
 async def convert_chat_choice_to_response_message(
@@ -78,11 +126,15 @@ async def convert_chat_choice_to_response_message(
 
 async def convert_response_content_to_chat_content(
     content: str | Sequence[OpenAIResponseInputMessageContent | OpenAIResponseOutputMessageContent],
+    files_api: Files | None,
 ) -> str | list[OpenAIChatCompletionContentPartParam]:
     """
     Convert the content parts from an OpenAI Response API request into OpenAI Chat Completion content parts.
 
     The content schemas of each API look similar, but are not exactly the same.
+
+    :param content: The content to convert
+    :param files_api: Files API for resolving file_id to raw file content (required if content contains files/images)
     """
     if isinstance(content, str):
         return content
@@ -95,9 +147,68 @@ async def convert_response_content_to_chat_content(
         elif isinstance(content_part, OpenAIResponseOutputMessageContentOutputText):
             converted_parts.append(OpenAIChatCompletionContentPartTextParam(text=content_part.text))
         elif isinstance(content_part, OpenAIResponseInputMessageContentImage):
+            detail = content_part.detail
+            image_mime_type = None
             if content_part.image_url:
-                image_url = OpenAIImageURL(url=content_part.image_url, detail=content_part.detail)
+                image_url = OpenAIImageURL(url=content_part.image_url, detail=detail)
                 converted_parts.append(OpenAIChatCompletionContentPartImageParam(image_url=image_url))
+            elif content_part.file_id:
+                if files_api is None:
+                    raise ValueError("file_ids are not supported by this implementation of the Stack")
+                image_file_response = await files_api.openai_retrieve_file(content_part.file_id)
+                if image_file_response.filename:
+                    image_mime_type, _ = mimetypes.guess_type(image_file_response.filename)
+                raw_image_bytes = await extract_bytes_from_file(content_part.file_id, files_api)
+                ascii_text = generate_base64_ascii_text_from_bytes(raw_image_bytes)
+                image_data_url = construct_data_url(ascii_text, image_mime_type)
+                image_url = OpenAIImageURL(url=image_data_url, detail=detail)
+                converted_parts.append(OpenAIChatCompletionContentPartImageParam(image_url=image_url))
+            else:
+                raise ValueError(
+                    f"Image content must have either 'image_url' or 'file_id'. "
+                    f"Got image_url={content_part.image_url}, file_id={content_part.file_id}"
+                )
+        elif isinstance(content_part, OpenAIResponseInputMessageContentFile):
+            resolved_file_data = None
+            file_data = content_part.file_data
+            file_id = content_part.file_id
+            file_url = content_part.file_url
+            filename = content_part.filename
+            file_mime_type = None
+            if not any([file_data, file_id, file_url]):
+                raise ValueError(
+                    f"File content must have at least one of 'file_data', 'file_id', or 'file_url'. "
+                    f"Got file_data={file_data}, file_id={file_id}, file_url={file_url}"
+                )
+            if file_id:
+                if files_api is None:
+                    raise ValueError("file_ids are not supported by this implementation of the Stack")
+
+                file_response = await files_api.openai_retrieve_file(file_id)
+                if not filename:
+                    filename = file_response.filename
+                file_mime_type, _ = mimetypes.guess_type(file_response.filename)
+                raw_file_bytes = await extract_bytes_from_file(file_id, files_api)
+                ascii_text = generate_base64_ascii_text_from_bytes(raw_file_bytes)
+                resolved_file_data = construct_data_url(ascii_text, file_mime_type)
+            elif file_data:
+                if file_data.startswith("data:"):
+                    resolved_file_data = file_data
+                else:
+                    # Raw base64 data, wrap in data URL format
+                    if filename:
+                        file_mime_type, _ = mimetypes.guess_type(filename)
+                    resolved_file_data = construct_data_url(file_data, file_mime_type)
+            elif file_url:
+                resolved_file_data = file_url
+            converted_parts.append(
+                OpenAIFile(
+                    file=OpenAIFileFile(
+                        file_data=resolved_file_data,
+                        filename=filename,
+                    )
+                )
+            )
         elif isinstance(content_part, str):
             converted_parts.append(OpenAIChatCompletionContentPartTextParam(text=content_part))
         else:
@@ -110,12 +221,14 @@ async def convert_response_content_to_chat_content(
 async def convert_response_input_to_chat_messages(
     input: str | list[OpenAIResponseInput],
     previous_messages: list[OpenAIMessageParam] | None = None,
+    files_api: Files | None = None,
 ) -> list[OpenAIMessageParam]:
     """
     Convert the input from an OpenAI Response API request into OpenAI Chat Completion messages.
 
     :param input: The input to convert
     :param previous_messages: Optional previous messages to check for function_call references
+    :param files_api: Files API for resolving file_id to raw file content (optional, required for file/image content)
     """
     messages: list[OpenAIMessageParam] = []
     if isinstance(input, list):
@@ -169,6 +282,12 @@ async def convert_response_input_to_chat_messages(
             elif isinstance(input_item, OpenAIResponseOutputMessageMCPListTools):
                 # the tool list will be handled separately
                 pass
+            elif isinstance(
+                input_item,
+                OpenAIResponseOutputMessageWebSearchToolCall | OpenAIResponseOutputMessageFileSearchToolCall,
+            ):
+                # these tool calls are tracked internally but not converted to chat messages
+                pass
             elif isinstance(input_item, OpenAIResponseMCPApprovalRequest) or isinstance(
                 input_item, OpenAIResponseMCPApprovalResponse
             ):
@@ -176,7 +295,7 @@ async def convert_response_input_to_chat_messages(
                 pass
             elif isinstance(input_item, OpenAIResponseMessage):
                 # Narrow type to OpenAIResponseMessage which has content and role attributes
-                content = await convert_response_content_to_chat_content(input_item.content)
+                content = await convert_response_content_to_chat_content(input_item.content, files_api)
                 message_type = await get_message_type_by_role(input_item.role)
                 if message_type is None:
                     raise ValueError(
@@ -320,9 +439,13 @@ def is_function_tool_call(
     return False
 
 
-async def run_guardrails(safety_api: Safety, messages: str, guardrail_ids: list[str]) -> str | None:
+async def run_guardrails(safety_api: Safety | None, messages: str, guardrail_ids: list[str]) -> str | None:
     """Run guardrails against messages and return violation message if blocked."""
     if not messages:
+        return None
+
+    # If safety API is not available, skip guardrails
+    if safety_api is None:
         return None
 
     # Look up shields to get their provider_resource_id (actual model ID)

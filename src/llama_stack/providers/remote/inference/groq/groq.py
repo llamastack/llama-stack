@@ -15,4 +15,4 @@ class GroqInferenceAdapter(OpenAIMixin):
     provider_data_api_key_field: str = "groq_api_key"
 
     def get_base_url(self) -> str:
-        return f"{self.config.url}/openai/v1"
+        return str(self.config.base_url)

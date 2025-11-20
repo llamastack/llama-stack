@@ -9,7 +9,6 @@ from collections.abc import Iterable
 from typing import Any, cast
 
 from together import AsyncTogether  # type: ignore[import-untyped]
-from together.constants import BASE_URL  # type: ignore[import-untyped]
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -42,7 +41,7 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
     provider_data_api_key_field: str = "together_api_key"
 
     def get_base_url(self):
-        return BASE_URL
+        return str(self.config.base_url)
 
     def _get_client(self) -> AsyncTogether:
         together_api_key = None

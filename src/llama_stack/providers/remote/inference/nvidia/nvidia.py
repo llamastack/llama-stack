@@ -44,7 +44,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
     }
 
     async def initialize(self) -> None:
-        logger.info(f"Initializing NVIDIAInferenceAdapter({self.config.url})...")
+        logger.info(f"Initializing NVIDIAInferenceAdapter({self.config.base_url})...")
 
         if _is_nvidia_hosted(self.config):
             if not self.config.auth_credential:
@@ -72,7 +72,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
         :return: The NVIDIA API base URL
         """
-        return f"{self.config.url}/v1" if self.config.append_api_version else self.config.url
+        return str(self.config.base_url)
 
     async def list_provider_model_ids(self) -> Iterable[str]:
         """

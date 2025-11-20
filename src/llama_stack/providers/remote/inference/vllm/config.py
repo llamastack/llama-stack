@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, HttpUrl, SecretStr, field_validator
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
@@ -14,7 +14,7 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class VLLMInferenceAdapterConfig(RemoteInferenceProviderConfig):
-    url: str | None = Field(
+    base_url: HttpUrl | None = Field(
         default=None,
         description="The URL for the vLLM model serving endpoint",
     )
@@ -48,11 +48,11 @@ class VLLMInferenceAdapterConfig(RemoteInferenceProviderConfig):
     @classmethod
     def sample_run_config(
         cls,
-        url: str = "${env.VLLM_URL:=}",
+        base_url: str = "${env.VLLM_URL:=}",
         **kwargs,
     ):
         return {
-            "url": url,
+            "base_url": base_url,
             "max_tokens": "${env.VLLM_MAX_TOKENS:=4096}",
             "api_token": "${env.VLLM_API_TOKEN:=fake}",
             "tls_verify": "${env.VLLM_TLS_VERIFY:=true}",

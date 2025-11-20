@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
@@ -21,7 +21,7 @@ class RunpodProviderDataValidator(BaseModel):
 
 @json_schema_type
 class RunpodImplConfig(RemoteInferenceProviderConfig):
-    url: str | None = Field(
+    base_url: HttpUrl | None = Field(
         default=None,
         description="The URL for the Runpod model serving endpoint",
     )
@@ -34,6 +34,6 @@ class RunpodImplConfig(RemoteInferenceProviderConfig):
     @classmethod
     def sample_run_config(cls, **kwargs: Any) -> dict[str, Any]:
         return {
-            "url": "${env.RUNPOD_URL:=}",
+            "base_url": "${env.RUNPOD_URL:=}",
             "api_token": "${env.RUNPOD_API_TOKEN}",
         }

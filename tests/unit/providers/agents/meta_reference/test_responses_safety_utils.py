@@ -30,6 +30,8 @@ def mock_apis():
         "vector_io_api": AsyncMock(),
         "conversations_api": AsyncMock(),
         "safety_api": AsyncMock(),
+        "prompts_api": AsyncMock(),
+        "files_api": AsyncMock(),
     }
 
 

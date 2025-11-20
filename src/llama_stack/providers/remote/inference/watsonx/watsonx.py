@@ -255,7 +255,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         )
 
     def get_base_url(self) -> str:
-        return self.config.url
+        return str(self.config.base_url)
 
     # Copied from OpenAIMixin
     async def check_model_availability(self, model: str) -> bool:
@@ -316,7 +316,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         """
         Retrieves foundation model specifications from the watsonx.ai API.
         """
-        url = f"{self.config.url}/ml/v1/foundation_model_specs?version=2023-10-25"
+        url = f"{str(self.config.base_url)}/ml/v1/foundation_model_specs?version=2023-10-25"
         headers = {
             # Note that there is no authorization header.  Listing models does not require authentication.
             "Content-Type": "application/json",

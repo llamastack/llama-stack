@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, HttpUrl
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
@@ -14,16 +14,16 @@ from llama_stack_api import json_schema_type
 
 @json_schema_type
 class PassthroughImplConfig(RemoteInferenceProviderConfig):
-    url: str = Field(
+    base_url: HttpUrl | None = Field(
         default=None,
         description="The URL for the passthrough endpoint",
     )
 
     @classmethod
     def sample_run_config(
-        cls, url: str = "${env.PASSTHROUGH_URL}", api_key: str = "${env.PASSTHROUGH_API_KEY}", **kwargs
+        cls, base_url: HttpUrl | None = "${env.PASSTHROUGH_URL}", api_key: str = "${env.PASSTHROUGH_API_KEY}", **kwargs
     ) -> dict[str, Any]:
         return {
-            "url": url,
+            "base_url": base_url,
             "api_key": api_key,
         }

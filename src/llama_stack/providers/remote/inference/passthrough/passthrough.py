@@ -82,8 +82,8 @@ class PassthroughInferenceAdapter(NeedsRequestProviderData, Inference):
 
     def _get_passthrough_url(self) -> str:
         """Get the passthrough URL from config or provider data."""
-        if self.config.url is not None:
-            return self.config.url
+        if self.config.base_url is not None:
+            return str(self.config.base_url)
 
         provider_data = self.get_request_provider_data()
         if provider_data is None:
