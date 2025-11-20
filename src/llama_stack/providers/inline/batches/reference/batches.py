@@ -11,7 +11,7 @@ import json
 import time
 import uuid
 from io import BytesIO
-from typing import Any, Literal
+from typing import Any
 
 from openai.types.batch import BatchError, Errors
 from pydantic import BaseModel
@@ -38,6 +38,7 @@ from llama_stack_api import (
     OpenAIUserMessageParam,
     ResourceNotFoundError,
 )
+from llama_stack_api.batches.models import CreateBatchRequest, ListBatchesRequest
 
 from .config import ReferenceBatchesImplConfig
 
@@ -140,11 +141,7 @@ class ReferenceBatchesImpl(Batches):
     # TODO (SECURITY): this currently works w/ configured api keys, not with x-llamastack-provider-data or with user policy restrictions
     async def create_batch(
         self,
-        input_file_id: str,
-        endpoint: str,
-        completion_window: Literal["24h"],
-        metadata: dict[str, str] | None = None,
-        idempotency_key: str | None = None,
+        request: CreateBatchRequest,
     ) -> BatchObject:
         """
         Create a new batch for processing multiple API requests.
@@ -185,14 +182,14 @@ class ReferenceBatchesImpl(Batches):
 
         # TODO: set expiration time for garbage collection
 
-        if endpoint not in ["/v1/chat/completions", "/v1/completions", "/v1/embeddings"]:
+        if request.endpoint not in ["/v1/chat/completions", "/v1/completions", "/v1/embeddings"]:
             raise ValueError(
-                f"Invalid endpoint: {endpoint}. Supported values: /v1/chat/completions, /v1/completions, /v1/embeddings. Code: invalid_value. Param: endpoint",
+                f"Invalid endpoint: {request.endpoint}. Supported values: /v1/chat/completions, /v1/completions, /v1/embeddings. Code: invalid_value. Param: endpoint",
             )
 
-        if completion_window != "24h":
+        if request.completion_window != "24h":
             raise ValueError(
-                f"Invalid completion_window: {completion_window}. Supported values are: 24h. Code: invalid_value. Param: completion_window",
+                f"Invalid completion_window: {request.completion_window}. Supported values are: 24h. Code: invalid_value. Param: completion_window",
             )
 
         batch_id = f"batch_{uuid.uuid4().hex[:16]}"
@@ -200,8 +197,8 @@ class ReferenceBatchesImpl(Batches):
         # For idempotent requests, use the idempotency key for the batch ID
         # This ensures the same key always maps to the same batch ID,
         # allowing us to detect parameter conflicts
-        if idempotency_key is not None:
-            hash_input = idempotency_key.encode("utf-8")
+        if request.idempotency_key is not None:
+            hash_input = request.idempotency_key.encode("utf-8")
             hash_digest = hashlib.sha256(hash_input).hexdigest()[:24]
             batch_id = f"batch_{hash_digest}"
 
@@ -209,13 +206,13 @@ class ReferenceBatchesImpl(Batches):
                 existing_batch = await self.retrieve_batch(batch_id)
 
                 if (
-                    existing_batch.input_file_id != input_file_id
-                    or existing_batch.endpoint != endpoint
-                    or existing_batch.completion_window != completion_window
-                    or existing_batch.metadata != metadata
+                    existing_batch.input_file_id != request.input_file_id
+                    or existing_batch.endpoint != request.endpoint
+                    or existing_batch.completion_window != request.completion_window
+                    or existing_batch.metadata != request.metadata
                 ):
                     raise ConflictError(
-                        f"Idempotency key '{idempotency_key}' was previously used with different parameters. "
+                        f"Idempotency key '{request.idempotency_key}' was previously used with different parameters. "
                         "Either use a new idempotency key or ensure all parameters match the original request."
                     )
 
@@ -230,12 +227,12 @@ class ReferenceBatchesImpl(Batches):
         batch = BatchObject(
             id=batch_id,
             object="batch",
-            endpoint=endpoint,
-            input_file_id=input_file_id,
-            completion_window=completion_window,
+            endpoint=request.endpoint,
+            input_file_id=request.input_file_id,
+            completion_window=request.completion_window,
             status="validating",
             created_at=current_time,
-            metadata=metadata,
+            metadata=request.metadata,
         )
 
         await self.kvstore.set(f"batch:{batch_id}", batch.to_json())
@@ -267,8 +264,7 @@ class ReferenceBatchesImpl(Batches):
 
     async def list_batches(
         self,
-        after: str | None = None,
-        limit: int = 20,
+        request: ListBatchesRequest,
     ) -> ListBatchesResponse:
         """
         List all batches, eventually only for the current user.
@@ -285,14 +281,14 @@ class ReferenceBatchesImpl(Batches):
         batches.sort(key=lambda b: b.created_at, reverse=True)
 
         start_idx = 0
-        if after:
+        if request.after:
             for i, batch in enumerate(batches):
-                if batch.id == after:
+                if batch.id == request.after:
                     start_idx = i + 1
                     break
 
-        page_batches = batches[start_idx : start_idx + limit]
-        has_more = (start_idx + limit) < len(batches)
+        page_batches = batches[start_idx : start_idx + request.limit]
+        has_more = (start_idx + request.limit) < len(batches)
 
         first_id = page_batches[0].id if page_batches else None
         last_id = page_batches[-1].id if page_batches else None

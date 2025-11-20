@@ -14,10 +14,10 @@ all API-related code together.
 from collections.abc import Callable
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, Query
 
 from llama_stack_api.batches import Batches, BatchObject, ListBatchesResponse
-from llama_stack_api.batches.models import CreateBatchRequest
+from llama_stack_api.batches.models import CreateBatchRequest, ListBatchesRequest
 from llama_stack_api.datatypes import Api
 from llama_stack_api.router_utils import standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
@@ -56,13 +56,7 @@ def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         request: Annotated[CreateBatchRequest, Body(...)],
         svc: Annotated[Batches, Depends(get_batch_service)],
     ) -> BatchObject:
-        return await svc.create_batch(
-            input_file_id=request.input_file_id,
-            endpoint=request.endpoint,
-            completion_window=request.completion_window,
-            metadata=request.metadata,
-            idempotency_key=request.idempotency_key,
-        )
+        return await svc.create_batch(request)
 
     @router.get(
         "/batches/{batch_id}",
@@ -94,6 +88,15 @@ def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
     ) -> BatchObject:
         return await svc.cancel_batch(batch_id)
 
+    def get_list_batches_request(
+        after: Annotated[
+            str | None, Query(description="Optional cursor for pagination. Returns batches after this ID.")
+        ] = None,
+        limit: Annotated[int, Query(description="Maximum number of batches to return. Defaults to 20.")] = 20,
+    ) -> ListBatchesRequest:
+        """Dependency function to create ListBatchesRequest from query parameters."""
+        return ListBatchesRequest(after=after, limit=limit)
+
     @router.get(
         "/batches",
         response_model=ListBatchesResponse,
@@ -104,10 +107,9 @@ def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         },
     )
     async def list_batches(
+        request: Annotated[ListBatchesRequest, Depends(get_list_batches_request)],
         svc: Annotated[Batches, Depends(get_batch_service)],
-        after: str | None = None,
-        limit: int = 20,
     ) -> ListBatchesResponse:
-        return await svc.list_batches(after=after, limit=limit)
+        return await svc.list_batches(request)
 
     return router

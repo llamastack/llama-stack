@@ -11,7 +11,7 @@ Pydantic models are defined in llama_stack_api.batches.models.
 The FastAPI router is defined in llama_stack_api.batches.routes.
 """
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 try:
     from openai.types import Batch as BatchObject
@@ -19,7 +19,7 @@ except ImportError as e:
     raise ImportError("OpenAI package is required for batches API. Please install it with: pip install openai") from e
 
 # Import models for re-export
-from llama_stack_api.batches.models import ListBatchesResponse
+from llama_stack_api.batches.models import CreateBatchRequest, ListBatchesRequest, ListBatchesResponse
 
 
 @runtime_checkable
@@ -39,11 +39,7 @@ class Batches(Protocol):
 
     async def create_batch(
         self,
-        input_file_id: str,
-        endpoint: str,
-        completion_window: Literal["24h"],
-        metadata: dict[str, str] | None = None,
-        idempotency_key: str | None = None,
+        request: CreateBatchRequest,
     ) -> BatchObject: ...
 
     async def retrieve_batch(self, batch_id: str) -> BatchObject: ...
@@ -52,9 +48,8 @@ class Batches(Protocol):
 
     async def list_batches(
         self,
-        after: str | None = None,
-        limit: int = 20,
+        request: ListBatchesRequest,
     ) -> ListBatchesResponse: ...
 
 
-__all__ = ["Batches", "BatchObject", "ListBatchesResponse"]
+__all__ = ["Batches", "BatchObject", "CreateBatchRequest", "ListBatchesRequest", "ListBatchesResponse"]

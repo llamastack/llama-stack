@@ -38,6 +38,16 @@ class CreateBatchRequest(BaseModel):
 
 
 @json_schema_type
+class ListBatchesRequest(BaseModel):
+    """Request model for listing batches."""
+
+    after: str | None = Field(
+        default=None, description="Optional cursor for pagination. Returns batches after this ID."
+    )
+    limit: int = Field(default=20, description="Maximum number of batches to return. Defaults to 20.")
+
+
+@json_schema_type
 class ListBatchesResponse(BaseModel):
     """Response containing a list of batch objects."""
 
@@ -48,4 +58,4 @@ class ListBatchesResponse(BaseModel):
     has_more: bool = Field(default=False, description="Whether there are more batches available")
 
 
-__all__ = ["CreateBatchRequest", "ListBatchesResponse", "BatchObject"]
+__all__ = ["CreateBatchRequest", "ListBatchesRequest", "ListBatchesResponse", "BatchObject"]

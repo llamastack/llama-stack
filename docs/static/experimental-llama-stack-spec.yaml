@@ -8544,6 +8544,22 @@ components:
       - query
       title: VectorStoreSearchRequest
       type: object
+    ListBatchesRequest:
+      description: Request model for listing batches.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional cursor for pagination. Returns batches after this ID.
+          nullable: true
+        limit:
+          default: 20
+          description: Maximum number of batches to return. Defaults to 20.
+          title: Limit
+          type: integer
+      title: ListBatchesRequest
+      type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
       properties:
