@@ -17,7 +17,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
-from llama_stack.core.datatypes import VectorStoresConfig
+from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -366,18 +366,33 @@ class VectorStoreWithIndex:
         :param query: The original user query
         :returns: The rewritten query optimized for vector search
         """
-        # Check if query expansion model is configured
-        if not self.vector_stores_config:
-            raise ValueError(
-                f"No vector_stores_config found! self.vector_stores_config is: {self.vector_stores_config}"
-            )
-        if not self.vector_stores_config.default_query_expansion_model:
-            raise ValueError(
-                f"No default_query_expansion_model configured! vector_stores_config: {self.vector_stores_config}, default_query_expansion_model: {self.vector_stores_config.default_query_expansion_model}"
-            )
+        expansion_model = None
 
-        # Use the configured model
-        expansion_model = self.vector_stores_config.default_query_expansion_model
+        # Check for per-store query expansion model first
+        if self.vector_store.query_expansion_model:
+            # Parse the model string into provider_id and model_id
+            model_parts = self.vector_store.query_expansion_model.split("/", 1)
+            if len(model_parts) == 2:
+                expansion_model = QualifiedModel(provider_id=model_parts[0], model_id=model_parts[1])
+                log.debug(f"Using per-store query expansion model: {expansion_model}")
+            else:
+                log.warning(
+                    f"Invalid query_expansion_model format: {self.vector_store.query_expansion_model}. Expected 'provider_id/model_id'"
+                )
+
+        # Fall back to global default if no per-store model
+        if not expansion_model:
+            if not self.vector_stores_config:
+                raise ValueError(
+                    f"No vector_stores_config found and no per-store query_expansion_model! self.vector_stores_config is: {self.vector_stores_config}"
+                )
+            if not self.vector_stores_config.default_query_expansion_model:
+                raise ValueError(
+                    f"No default_query_expansion_model configured and no per-store query_expansion_model! vector_stores_config: {self.vector_stores_config}, default_query_expansion_model: {self.vector_stores_config.default_query_expansion_model}"
+                )
+            expansion_model = self.vector_stores_config.default_query_expansion_model
+            log.debug(f"Using global default query expansion model: {expansion_model}")
+
         chat_model = f"{expansion_model.provider_id}/{expansion_model.model_id}"
 
         # Validate that the model is available and is an LLM
