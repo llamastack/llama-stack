@@ -8,7 +8,7 @@
 
 This module contains the Batches protocol definition.
 Pydantic models are defined in llama_stack_api.batches.models.
-The router implementation is in llama_stack.core.server.routers.batches.
+The FastAPI router is defined in llama_stack_api.batches.routes.
 """
 
 from typing import Literal, Protocol, runtime_checkable

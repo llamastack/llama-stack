@@ -30,7 +30,7 @@ def get_all_api_routes(
 
     This function only returns routes from APIs that use the legacy @webmethod
     decorator system. For APIs that have been migrated to FastAPI routers,
-    use the router registry (router_registry.has_router() and router_registry.create_router()).
+    use the router registry (router_registry.has_router() and router_registry.build_router()).
 
     Args:
         external_apis: Optional dictionary of external API specifications

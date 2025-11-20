@@ -7,7 +7,8 @@
 """FastAPI router for the Batches API.
 
 This module defines the FastAPI router for the Batches API using standard
-FastAPI route decorators instead of Protocol-based route discovery.
+FastAPI route decorators. The router is defined in the API package to keep
+all API-related code together.
 """
 
 from collections.abc import Callable
@@ -15,15 +16,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends
 
-from llama_stack.core.server.router_registry import register_router
-from llama_stack.core.server.router_utils import standard_responses
 from llama_stack_api.batches import Batches, BatchObject, ListBatchesResponse
 from llama_stack_api.batches.models import CreateBatchRequest
 from llama_stack_api.datatypes import Api
+from llama_stack_api.router_utils import standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
 
-def create_batches_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
+def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
     """Create a FastAPI router for the Batches API.
 
     Args:
@@ -111,7 +111,3 @@ def create_batches_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
         return await svc.list_batches(after=after, limit=limit)
 
     return router
-
-
-# Register the router factory
-register_router(Api.batches, create_batches_router)

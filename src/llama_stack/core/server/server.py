@@ -44,7 +44,7 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
-from llama_stack.core.server.router_registry import create_router, has_router
+from llama_stack.core.server.router_registry import build_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
@@ -449,14 +449,6 @@ def create_app() -> StackApp:
     external_apis = load_external_apis(config)
     all_routes = get_all_api_routes(external_apis)
 
-    # Import batches router to trigger router registration
-    # This ensures the router is registered before we try to use it
-    # We will make this code better once the migration is complete
-    try:
-        from llama_stack.core.server.routers import batches  # noqa: F401
-    except ImportError:
-        pass
-
     if config.apis:
         apis_to_serve = set(config.apis)
     else:
@@ -483,15 +475,11 @@ def create_app() -> StackApp:
     for api_str in apis_to_serve:
         api = Api(api_str)
 
-        if has_router(api):
-            router = create_router(api, impl_getter)
-            if router:
-                app.include_router(router)
-                logger.debug(f"Registered router for {api} API")
-            else:
-                logger.warning(
-                    f"API '{api.value}' has a registered router factory but it returned None. Skipping this API."
-                )
+        # Try to discover and use a router factory from the API package
+        router = build_router(api, impl_getter)
+        if router:
+            app.include_router(router)
+            logger.debug(f"Registered router for {api} API")
         else:
             # Fall back to old webmethod-based route discovery until the migration is complete
             routes = all_routes[api]

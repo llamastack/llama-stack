@@ -76,14 +76,8 @@ def create_llama_stack_app() -> FastAPI:
         ],
     )
 
-    # Import batches router to trigger router registration
-    try:
-        from llama_stack.core.server.routers import batches  # noqa: F401
-    except ImportError:
-        pass
-
-    # Include routers for APIs that have them registered
-    from llama_stack.core.server.router_registry import create_router, has_router
+    # Include routers for APIs that have them (automatic discovery)
+    from llama_stack.core.server.router_registry import build_router, has_router
 
     def dummy_impl_getter(api: Api) -> Any:
         """Dummy implementation getter for OpenAPI generation."""
@@ -95,7 +89,7 @@ def create_llama_stack_app() -> FastAPI:
     protocols = api_protocol_map()
     for api in protocols.keys():
         if has_router(api):
-            router = create_router(api, dummy_impl_getter)
+            router = build_router(api, dummy_impl_getter)
             if router:
                 app.include_router(router)
 
