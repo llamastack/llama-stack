@@ -401,7 +401,9 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         for db_json in stored_vector_stores:
             vector_store = VectorStore.model_validate_json(db_json)
             index = await SQLiteVecIndex.create(
-                vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
+                vector_store.embedding_dimension,
+                self.config.db_path,
+                vector_store.provider_resource_id or vector_store.identifier,
             )
             self.cache[vector_store.identifier] = VectorStoreWithIndex(vector_store, index, self.inference_api)
 
@@ -425,7 +427,9 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
 
         # Create and cache the index
         index = await SQLiteVecIndex.create(
-            vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
+            vector_store.embedding_dimension,
+            self.config.db_path,
+            vector_store.provider_resource_id or vector_store.identifier,
         )
         self.cache[vector_store.identifier] = VectorStoreWithIndex(vector_store, index, self.inference_api)
 
@@ -448,7 +452,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
             index=SQLiteVecIndex(
                 dimension=vector_store.embedding_dimension,
                 db_path=self.config.db_path,
-                bank_id=vector_store.identifier,
+                bank_id=vector_store.provider_resource_id or vector_store.identifier,
                 kvstore=self.kvstore,
             ),
             inference_api=self.inference_api,
