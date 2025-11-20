@@ -8,4 +8,4 @@ from . import NVIDIAConfig
 
 
 def _is_nvidia_hosted(config: NVIDIAConfig) -> bool:
-    return "integrate.api.nvidia.com" in config.url
+    return "integrate.api.nvidia.com" in str(config.base_url)

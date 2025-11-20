@@ -1,0 +1,35 @@
+name: Setup TypeScript client
+description: Conditionally checkout and link llama-stack-client-typescript based on client-version
+inputs:
+  client-version:
+    description: 'Client version (latest or published)'
+    required: true
+
+outputs:
+  ts-client-path:
+    description: 'Path or version to use for TypeScript client'
+    value: ${{ steps.set-path.outputs.ts-client-path }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout TypeScript client (latest)
+      if: ${{ inputs.client-version == 'latest' }}
+      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      with:
+        repository: llamastack/llama-stack-client-typescript
+        ref: main
+        path: .ts-client-checkout
+
+    - name: Set TS_CLIENT_PATH
+      id: set-path
+      shell: bash
+      run: |
+        if [ "${{ inputs.client-version }}" = "latest" ]; then
+          echo "ts-client-path=${{ github.workspace }}/.ts-client-checkout" >> $GITHUB_OUTPUT
+        elif [ "${{ inputs.client-version }}" = "published" ]; then
+          echo "ts-client-path=^0.3.2" >> $GITHUB_OUTPUT
+        else
+          echo "::error::Invalid client-version: ${{ inputs.client-version }}"
+          exit 1
+        fi

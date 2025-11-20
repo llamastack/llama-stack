@@ -146,7 +146,7 @@ async def test_hosted_model_not_in_endpoint_mapping():
 
 async def test_self_hosted_ignores_endpoint():
     adapter = create_adapter(
-        config=NVIDIAConfig(url="http://localhost:8000", api_key=None),
+        config=NVIDIAConfig(base_url="http://localhost:8000", api_key=None),
         rerank_endpoints={"test-model": "https://model.endpoint/rerank"},  # This should be ignored for self-hosted.
     )
     mock_session = MockSession(MockResponse())
