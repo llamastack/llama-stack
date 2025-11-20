@@ -149,8 +149,8 @@ providers:
   - provider_id: ${env.ELASTICSEARCH_URL:+elasticsearch}
     provider_type: remote::elasticsearch
     config:
-      elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
       elasticsearch_url: ${env.ELASTICSEARCH_URL:=localhost:9200}
+      elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
       persistence:
         namespace: vector_io::elasticsearch
         backend: kv_default

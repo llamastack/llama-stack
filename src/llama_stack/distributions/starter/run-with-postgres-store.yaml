@@ -149,11 +149,11 @@ providers:
   - provider_id: ${env.ELASTICSEARCH_URL:+elasticsearch}
     provider_type: remote::elasticsearch
     config:
-      elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
       elasticsearch_url: ${env.ELASTICSEARCH_URL:=localhost:9200}
+      elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
       persistence:
         namespace: vector_io::elasticsearch
-        backend: kv_default        
+        backend: kv_default
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs

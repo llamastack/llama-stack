@@ -229,6 +229,7 @@ class ElasticsearchIndex(EmbeddingIndex):
             log.error(f"Error deleting Elasticsearch index {self.collection_name}: {e}")
             raise
 
+
 class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     def __init__(
         self,
@@ -244,10 +245,7 @@ class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStore
         self.vector_store_table = None
 
     async def initialize(self) -> None:
-        self.client = AsyncElasticsearch(
-            hosts=self.config.elasticsearch_url, 
-            api_key=self.config.elasticsearch_api_key
-        )
+        self.client = AsyncElasticsearch(hosts=self.config.elasticsearch_url, api_key=self.config.elasticsearch_api_key)
         self.kvstore = await kvstore_impl(self.config.persistence)
 
         start_key = VECTOR_DBS_PREFIX
