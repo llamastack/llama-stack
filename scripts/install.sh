@@ -640,7 +640,7 @@ cmd=( run -d "${PLATFORM_OPTS[@]}" --name llama-stack \
       --network llama-net \
       -p "${PORT}:${PORT}" \
       "${server_env_opts[@]}" \
-      -e OLLAMA_URL="http://ollama-server:${OLLAMA_PORT}" \
+      -e OLLAMA_URL="http://ollama-server:${OLLAMA_PORT}/v1" \
       "${SERVER_IMAGE}" --port "${PORT}")
 
 log "🦙 Starting Llama Stack..."
