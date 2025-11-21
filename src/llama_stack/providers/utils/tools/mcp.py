@@ -89,6 +89,7 @@ async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerat
                 # sse_client and streamablehttp_client have different signatures, but both
                 # are called the same way here, so we cast to Any to avoid type errors
                 client = cast(Any, sse_client)
+
             async with client(endpoint, headers=headers) as client_streams:
                 async with ClientSession(read_stream=client_streams[0], write_stream=client_streams[1]) as session:
                     await session.initialize()

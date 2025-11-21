@@ -191,22 +191,6 @@ class DistributionSpec(BaseModel):
     )
 
 
-class TelemetryConfig(BaseModel):
-    """
-    Configuration for telemetry.
-
-    Llama Stack uses OpenTelemetry for telemetry. Please refer to https://opentelemetry.io/docs/languages/sdk-configuration/
-    for env variables to configure the OpenTelemetry SDK.
-
-    Example:
-    ```bash
-    OTEL_SERVICE_NAME=llama-stack OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run llama stack run starter
-    ```
-    """
-
-    enabled: bool = Field(default=False, description="enable or disable telemetry")
-
-
 class OAuth2JWKSConfig(BaseModel):
     # The JWKS URI for collecting public keys
     uri: str
@@ -387,6 +371,12 @@ class SafetyConfig(BaseModel):
     )
 
 
+class TelemetryConfig(BaseModel):
+    """Configuration for telemetry collection."""
+
+    enabled: bool = Field(default=False, description="Whether telemetry collection is enabled")
+
+
 class QuotaPeriod(StrEnum):
     DAY = "day"
 
@@ -527,8 +517,6 @@ can be instantiated multiple times (with different configs) if necessary.
 
     logging: LoggingConfig | None = Field(default=None, description="Configuration for Llama Stack Logging")
 
-    telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig, description="Configuration for telemetry")
-
     server: ServerConfig = Field(
         default_factory=ServerConfig,
         description="Configuration for the HTTP(S) server",
@@ -552,6 +540,11 @@ can be instantiated multiple times (with different configs) if necessary.
     safety: SafetyConfig | None = Field(
         default=None,
         description="Configuration for default moderations model",
+    )
+
+    telemetry: TelemetryConfig | None = Field(
+        default=None,
+        description="Configuration for telemetry collection",
     )
 
     @field_validator("external_providers_dir")

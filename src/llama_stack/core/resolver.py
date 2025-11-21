@@ -392,26 +392,12 @@ async def instantiate_provider(
         args = [config, deps]
         if "policy" in inspect.signature(getattr(module, method)).parameters:
             args.append(policy)
-        if "telemetry_enabled" in inspect.signature(getattr(module, method)).parameters and run_config.telemetry:
-            args.append(run_config.telemetry.enabled)
 
     fn = getattr(module, method)
     impl = await fn(*args)
     impl.__provider_id__ = provider.provider_id
     impl.__provider_spec__ = provider_spec
     impl.__provider_config__ = config
-
-    # Apply tracing if telemetry is enabled and any base class has __marked_for_tracing__ marker
-    if run_config.telemetry.enabled:
-        traced_classes = [
-            base for base in reversed(impl.__class__.__mro__) if getattr(base, "__marked_for_tracing__", False)
-        ]
-
-        if traced_classes:
-            from llama_stack.core.telemetry.trace_protocol import trace_protocol
-
-            for cls in traced_classes:
-                trace_protocol(cls)
 
     protocols = api_protocol_map_for_compliance_check(run_config)
     additional_protocols = additional_protocols_map()

@@ -6,7 +6,6 @@
 
 import asyncio
 
-from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
 from llama_stack_api import OpenAIMessageParam, Safety, SafetyViolation, ViolationLevel
 
@@ -31,15 +30,12 @@ class ShieldRunnerMixin:
         self.output_shields = output_shields
 
     async def run_multiple_shields(self, messages: list[OpenAIMessageParam], identifiers: list[str]) -> None:
-        async def run_shield_with_span(identifier: str):
-            async with tracing.span(f"run_shield_{identifier}"):
-                return await self.safety_api.run_shield(
-                    shield_id=identifier,
-                    messages=messages,
-                    params={},
-                )
-
-        responses = await asyncio.gather(*[run_shield_with_span(identifier) for identifier in identifiers])
+        responses = await asyncio.gather(
+            *[
+                self.safety_api.run_shield(shield_id=identifier, messages=messages, params={})
+                for identifier in identifiers
+            ]
+        )
         for identifier, response in zip(identifiers, responses, strict=False):
             if not response.violation:
                 continue

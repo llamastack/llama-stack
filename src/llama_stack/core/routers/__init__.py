@@ -85,8 +85,6 @@ async def get_auto_router_impl(
         )
         await inference_store.initialize()
         api_to_dep_impl["store"] = inference_store
-        api_to_dep_impl["telemetry_enabled"] = run_config.telemetry.enabled
-
     elif api == Api.vector_io:
         api_to_dep_impl["vector_stores_config"] = run_config.vector_stores
     elif api == Api.safety:
