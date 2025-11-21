@@ -934,3 +934,146 @@ class TestOpenAIMixinAllowedModelsInference:
                         model="gpt-4", messages=[OpenAIUserMessageParam(role="user", content="Hello")]
                     )
                 )
+
+
+class TestOpenAIMixinStreamingMetrics:
+    """Test cases for streaming metrics injection in OpenAIMixin"""
+
+    async def test_openai_chat_completion_streaming_metrics_injection(self, mixin, mock_client_context):
+        """Test that stream_options={"include_usage": True} is injected when streaming and telemetry is enabled"""
+
+        params = OpenAIChatCompletionRequestWithExtraBody(
+            model="test-model",
+            messages=[{"role": "user", "content": "hello"}],
+            stream=True,
+            stream_options=None,
+        )
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            with patch("llama_stack.core.telemetry.tracing.get_current_span") as mock_get_span:
+                mock_get_span.return_value = MagicMock()
+
+                with patch(
+                    "llama_stack.providers.utils.inference.openai_mixin.prepare_openai_completion_params"
+                ) as mock_prepare:
+                    mock_prepare.return_value = {"model": "test-model"}
+
+                    await mixin.openai_chat_completion(params)
+
+                    call_kwargs = mock_prepare.call_args.kwargs
+                    assert call_kwargs["stream_options"] == {"include_usage": True}
+
+                    assert params.stream_options is None
+
+    async def test_openai_chat_completion_streaming_no_telemetry(self, mixin, mock_client_context):
+        """Test that stream_options is NOT injected when telemetry is disabled"""
+
+        params = OpenAIChatCompletionRequestWithExtraBody(
+            model="test-model",
+            messages=[{"role": "user", "content": "hello"}],
+            stream=True,
+            stream_options=None,
+        )
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            with patch("llama_stack.core.telemetry.tracing.get_current_span") as mock_get_span:
+                mock_get_span.return_value = None
+
+                with patch(
+                    "llama_stack.providers.utils.inference.openai_mixin.prepare_openai_completion_params"
+                ) as mock_prepare:
+                    mock_prepare.return_value = {"model": "test-model"}
+
+                    await mixin.openai_chat_completion(params)
+
+                    call_kwargs = mock_prepare.call_args.kwargs
+                    assert call_kwargs["stream_options"] is None
+
+    async def test_openai_completion_streaming_metrics_injection(self, mixin, mock_client_context):
+        """Test that stream_options={"include_usage": True} is injected for legacy completion"""
+
+        params = OpenAICompletionRequestWithExtraBody(
+            model="test-model",
+            prompt="hello",
+            stream=True,
+            stream_options=None,
+        )
+
+        mock_client = MagicMock()
+        mock_client.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            with patch("llama_stack.core.telemetry.tracing.get_current_span") as mock_get_span:
+                mock_get_span.return_value = MagicMock()
+
+                with patch(
+                    "llama_stack.providers.utils.inference.openai_mixin.prepare_openai_completion_params"
+                ) as mock_prepare:
+                    mock_prepare.return_value = {"model": "test-model"}
+
+                    await mixin.openai_completion(params)
+
+                    call_kwargs = mock_prepare.call_args.kwargs
+                    assert call_kwargs["stream_options"] == {"include_usage": True}
+                    assert params.stream_options is None
+
+    async def test_preserves_existing_stream_options(self, mixin, mock_client_context):
+        """Test that existing stream_options are preserved and merged"""
+
+        params = OpenAIChatCompletionRequestWithExtraBody(
+            model="test-model",
+            messages=[{"role": "user", "content": "hello"}],
+            stream=True,
+            stream_options={"include_usage": False},
+        )
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            with patch("llama_stack.core.telemetry.tracing.get_current_span") as mock_get_span:
+                mock_get_span.return_value = MagicMock()
+
+                with patch(
+                    "llama_stack.providers.utils.inference.openai_mixin.prepare_openai_completion_params"
+                ) as mock_prepare:
+                    mock_prepare.return_value = {"model": "test-model"}
+
+                    await mixin.openai_chat_completion(params)
+
+                    call_kwargs = mock_prepare.call_args.kwargs
+                    # It should stay False because it was present
+                    assert call_kwargs["stream_options"] == {"include_usage": False}
+
+    async def test_merges_existing_stream_options(self, mixin, mock_client_context):
+        """Test that existing stream_options are merged"""
+
+        params = OpenAIChatCompletionRequestWithExtraBody(
+            model="test-model",
+            messages=[{"role": "user", "content": "hello"}],
+            stream=True,
+            stream_options={"other_option": True},
+        )
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            with patch("llama_stack.core.telemetry.tracing.get_current_span") as mock_get_span:
+                mock_get_span.return_value = MagicMock()
+
+                with patch(
+                    "llama_stack.providers.utils.inference.openai_mixin.prepare_openai_completion_params"
+                ) as mock_prepare:
+                    mock_prepare.return_value = {"model": "test-model"}
+
+                    await mixin.openai_chat_completion(params)
+
+                    call_kwargs = mock_prepare.call_args.kwargs
+                    assert call_kwargs["stream_options"] == {"other_option": True, "include_usage": True}

@@ -271,6 +271,16 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI completion API call.
         """
+        from llama_stack.core.telemetry.tracing import get_current_span
+
+        # inject if streaming AND telemetry active
+        if params.stream and get_current_span() is not None:
+            params = params.model_copy()
+            if params.stream_options is None:
+                params.stream_options = {"include_usage": True}
+            elif "include_usage" not in params.stream_options:
+                params.stream_options = {**params.stream_options, "include_usage": True}
+
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
@@ -308,6 +318,16 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI chat completion API call.
         """
+        from llama_stack.core.telemetry.tracing import get_current_span
+
+        # inject if streaming AND telemetry active
+        if params.stream and get_current_span() is not None:
+            params = params.model_copy()
+            if params.stream_options is None:
+                params.stream_options = {"include_usage": True}
+            elif "include_usage" not in params.stream_options:
+                params.stream_options = {**params.stream_options, "include_usage": True}
+
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
 
