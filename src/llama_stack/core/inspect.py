@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.external import load_external_apis
-from llama_stack.core.server.router_registry import build_router, has_router
+from llama_stack.core.server.fastapi_router_registry import build_router, has_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack_api import (
     Api,

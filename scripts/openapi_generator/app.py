@@ -77,7 +77,7 @@ def create_llama_stack_app() -> FastAPI:
     )
 
     # Include routers for APIs that have them (automatic discovery)
-    from llama_stack.core.server.router_registry import build_router, has_router
+    from llama_stack.core.server.fastapi_router_registry import build_router, has_router
 
     def dummy_impl_getter(api: Api) -> Any:
         """Dummy implementation getter for OpenAPI generation."""
