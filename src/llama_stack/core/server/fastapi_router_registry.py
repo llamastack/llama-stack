@@ -7,11 +7,11 @@
 """Router utilities for FastAPI routers.
 
 This module provides utilities to discover and create FastAPI routers from API packages.
-Routers are automatically discovered by checking for routes modules in each API package.
+Routers are automatically discovered by checking for fastapi_routes modules in each API package.
 """
 
 import importlib
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from fastapi import APIRouter
 
@@ -20,13 +20,13 @@ if TYPE_CHECKING:
 
 
 def has_router(api: "Api") -> bool:
-    """Check if an API has a router factory in its routes module.
+    """Check if an API has a router factory in its fastapi_routes module.
 
     Args:
         api: The API enum value
 
     Returns:
-        True if the API has a routes module with a create_router function
+        True if the API has a fastapi_routes module with a create_router function
     """
     try:
         routes_module = importlib.import_module(f"llama_stack_api.{api.value}.fastapi_routes")
@@ -46,13 +46,17 @@ def build_router(api: "Api", impl: Any) -> APIRouter | None:
         impl: The implementation instance for the API
 
     Returns:
-        APIRouter if the API has a routes module with create_router, None otherwise
+        APIRouter if the API has a fastapi_routes module with create_router, None otherwise
     """
     try:
         routes_module = importlib.import_module(f"llama_stack_api.{api.value}.fastapi_routes")
         if hasattr(routes_module, "create_router"):
             router_factory = routes_module.create_router
-            return router_factory(impl)
+            # cast is safe here: mypy can't verify the return type statically because
+            # we're dynamically importing the module. However, all router factories in
+            # API packages are required to return APIRouter. If a router factory returns the wrong
+            # type, it will fail at runtime when app.include_router(router) is called
+            return cast(APIRouter, router_factory(impl))
     except (ImportError, AttributeError):
         pass
 

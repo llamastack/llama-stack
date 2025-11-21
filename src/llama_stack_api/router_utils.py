@@ -11,7 +11,9 @@ These responses use OpenAPI $ref references to component responses defined
 in the OpenAPI specification.
 """
 
-standard_responses = {
+from typing import Any
+
+standard_responses: dict[int | str, dict[str, Any]] = {
     400: {"$ref": "#/components/responses/BadRequest400"},
     429: {"$ref": "#/components/responses/TooManyRequests429"},
     500: {"$ref": "#/components/responses/InternalServerError500"},

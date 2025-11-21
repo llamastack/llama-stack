@@ -132,7 +132,10 @@ class DistributionInspectImpl(Inspect):
                         methods = {m for m in route.methods if m != "HEAD"}
                         if methods and should_include_router_route(route, router_prefix):
                             # FastAPI already combines router prefix with route path
-                            path = route.path
+                            # Only APIRoute has a path attribute, use getattr to safely access it
+                            path = getattr(route, "path", None)
+                            if path is None:
+                                continue
 
                             ret.append(
                                 RouteInfo(
