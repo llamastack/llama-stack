@@ -14,7 +14,6 @@ import numpy as np
 import sqlite_vec  # type: ignore[import-untyped]
 from numpy.typing import NDArray
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
@@ -391,12 +390,10 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         config,
         inference_api: Inference,
         files_api: Files | None,
-        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.vector_stores_config = vector_stores_config
         self.cache: dict[str, VectorStoreWithIndex] = {}
         self.vector_store_table = None
 
@@ -411,9 +408,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
             index = await SQLiteVecIndex.create(
                 vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
             )
-            self.cache[vector_store.identifier] = VectorStoreWithIndex(
-                vector_store, index, self.inference_api, self.vector_stores_config
-            )
+            self.cache[vector_store.identifier] = VectorStoreWithIndex(vector_store, index, self.inference_api)
 
         # Load existing OpenAI vector stores into the in-memory cache
         await self.initialize_openai_vector_stores()
@@ -437,9 +432,7 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         index = await SQLiteVecIndex.create(
             vector_store.embedding_dimension, self.config.db_path, vector_store.identifier
         )
-        self.cache[vector_store.identifier] = VectorStoreWithIndex(
-            vector_store, index, self.inference_api, self.vector_stores_config
-        )
+        self.cache[vector_store.identifier] = VectorStoreWithIndex(vector_store, index, self.inference_api)
 
     async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex | None:
         if vector_store_id in self.cache:
@@ -464,7 +457,6 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
                 kvstore=self.kvstore,
             ),
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
         self.cache[vector_store_id] = index
         return index
