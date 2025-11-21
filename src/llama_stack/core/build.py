@@ -9,7 +9,7 @@ import sys
 from pydantic import BaseModel
 from termcolor import cprint
 
-from llama_stack.core.datatypes import BuildConfig, StackRunConfig
+from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.distributions.template import DistributionTemplate
 from llama_stack.log import get_logger
@@ -83,7 +83,7 @@ def get_provider_dependencies(
     return list(set(normal_deps)), list(set(special_deps)), list(set(external_provider_deps))
 
 
-def print_pip_install_help(config: BuildConfig):
+def print_pip_install_help(config: StackRunConfig):
     normal_deps, special_deps, _ = get_provider_dependencies(config)
 
     cprint(
