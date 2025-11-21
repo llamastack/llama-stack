@@ -379,6 +379,7 @@ def vector_provider_wrapper(func):
             "pgvector",
             "weaviate",
             "qdrant",
+            "elasticsearch",
         ]
     else:
         # For CI tests (replay/record), only use providers that are available in ci-tests environment
