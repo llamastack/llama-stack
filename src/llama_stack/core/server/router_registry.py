@@ -30,7 +30,7 @@ def has_router(api: "Api") -> bool:
         True if the API has a routes module with a create_router function
     """
     try:
-        routes_module = importlib.import_module(f"llama_stack_api.{api.value}.routes")
+        routes_module = importlib.import_module(f"llama_stack_api.{api.value}.fastapi_routes")
         return hasattr(routes_module, "create_router")
     except (ImportError, AttributeError):
         return False
@@ -50,7 +50,7 @@ def build_router(api: "Api", impl_getter: Callable[["Api"], Any]) -> APIRouter |
         APIRouter if the API has a routes module with create_router, None otherwise
     """
     try:
-        routes_module = importlib.import_module(f"llama_stack_api.{api.value}.routes")
+        routes_module = importlib.import_module(f"llama_stack_api.{api.value}.fastapi_routes")
         if hasattr(routes_module, "create_router"):
             router_factory = routes_module.create_router
             return router_factory(impl_getter)
