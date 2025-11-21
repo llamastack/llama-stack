@@ -52,6 +52,8 @@ def mock_deps():
     tool_runtime_api = AsyncMock()
     tool_groups_api = AsyncMock()
     conversations_api = AsyncMock()
+    prompts_api = AsyncMock()
+    files_api = AsyncMock()
 
     return {
         Api.inference: inference_api,
@@ -59,6 +61,8 @@ def mock_deps():
         Api.tool_runtime: tool_runtime_api,
         Api.tool_groups: tool_groups_api,
         Api.conversations: conversations_api,
+        Api.prompts: prompts_api,
+        Api.files: files_api,
     }
 
 
@@ -144,6 +148,8 @@ class TestGuardrailsFunctionality:
                 vector_io_api=mock_deps[Api.vector_io],
                 safety_api=None,  # No Safety API
                 conversations_api=mock_deps[Api.conversations],
+                prompts_api=mock_deps[Api.prompts],
+                files_api=mock_deps[Api.files],
             )
 
             # Test with string guardrail
@@ -191,6 +197,8 @@ class TestGuardrailsFunctionality:
                 vector_io_api=mock_deps[Api.vector_io],
                 safety_api=None,  # No Safety API
                 conversations_api=mock_deps[Api.conversations],
+                prompts_api=mock_deps[Api.prompts],
+                files_api=mock_deps[Api.files],
             )
 
             # Should not raise when no guardrails requested

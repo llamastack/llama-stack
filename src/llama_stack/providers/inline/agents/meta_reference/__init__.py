@@ -27,8 +27,10 @@ async def get_provider_impl(
         deps[Api.tool_runtime],
         deps[Api.tool_groups],
         deps[Api.conversations],
-        policy,
+        deps[Api.prompts],
+        deps[Api.files],
         telemetry_enabled,
+        policy,
     )
     await impl.initialize()
     return impl

@@ -34,6 +34,8 @@ def available_providers() -> list[ProviderSpec]:
                 Api.tool_runtime,
                 Api.tool_groups,
                 Api.conversations,
+                Api.prompts,
+                Api.files,
             ],
             optional_api_dependencies=[
                 Api.safety,

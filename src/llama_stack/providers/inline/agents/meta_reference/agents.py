@@ -12,6 +12,7 @@ from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack_api import (
     Agents,
     Conversations,
+    Files,
     Inference,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -22,6 +23,7 @@ from llama_stack_api import (
     OpenAIResponsePrompt,
     OpenAIResponseText,
     Order,
+    Prompts,
     ResponseGuardrail,
     Safety,
     ToolGroups,
@@ -45,6 +47,8 @@ class MetaReferenceAgentsImpl(Agents):
         tool_runtime_api: ToolRuntime,
         tool_groups_api: ToolGroups,
         conversations_api: Conversations,
+        prompts_api: Prompts,
+        files_api: Files,
         policy: list[AccessRule],
         telemetry_enabled: bool = False,
     ):
@@ -56,7 +60,8 @@ class MetaReferenceAgentsImpl(Agents):
         self.tool_groups_api = tool_groups_api
         self.conversations_api = conversations_api
         self.telemetry_enabled = telemetry_enabled
-
+        self.prompts_api = prompts_api
+        self.files_api = files_api
         self.in_memory_store = InmemoryKVStoreImpl()
         self.openai_responses_impl: OpenAIResponsesImpl | None = None
         self.policy = policy
@@ -73,6 +78,8 @@ class MetaReferenceAgentsImpl(Agents):
             vector_io_api=self.vector_io_api,
             safety_api=self.safety_api,
             conversations_api=self.conversations_api,
+            prompts_api=self.prompts_api,
+            files_api=self.files_api,
         )
 
     async def shutdown(self) -> None:
