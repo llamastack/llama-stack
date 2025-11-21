@@ -12,7 +12,6 @@ from numpy.typing import NDArray
 from weaviate.classes.init import Auth
 from weaviate.classes.query import Filter, HybridFusion
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
@@ -268,12 +267,10 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
         config: WeaviateVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
-        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.vector_stores_config = vector_stores_config
         self.client_cache = {}
         self.cache = {}
         self.vector_store_table = None
@@ -319,7 +316,6 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
                     vector_store=vector_store,
                     index=idx,
                     inference_api=self.inference_api,
-                    vector_stores_config=self.vector_stores_config,
                 )
 
             # Load OpenAI vector stores metadata into cache
@@ -348,7 +344,6 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
             vector_store,
             WeaviateIndex(client=client, collection_name=sanitized_collection_name),
             self.inference_api,
-            self.vector_stores_config,
         )
 
     async def unregister_vector_store(self, vector_store_id: str) -> None:
@@ -383,7 +378,6 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
             vector_store=vector_store,
             index=WeaviateIndex(client=client, collection_name=vector_store.identifier),
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
         self.cache[vector_store_id] = index
         return index

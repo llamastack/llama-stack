@@ -386,11 +386,6 @@ class OpenAIVectorStoreMixin(ABC):
                 f"Using embedding config from extra_body: model='{embedding_model}', dimension={embedding_dimension}"
             )
 
-        # Extract query expansion model from extra_body if provided
-        query_expansion_model = extra_body.get("query_expansion_model")
-        if query_expansion_model:
-            logger.debug(f"Using per-store query expansion model: {query_expansion_model}")
-
         # use provider_id set by router; fallback to provider's own ID when used directly via --stack-config
         provider_id = extra_body.get("provider_id") or getattr(self, "__provider_id__", None)
         # Derive the canonical vector_store_id (allow override, else generate)
@@ -414,7 +409,6 @@ class OpenAIVectorStoreMixin(ABC):
             provider_id=provider_id,
             provider_resource_id=vector_store_id,
             vector_store_name=params.name,
-            query_expansion_model=query_expansion_model,
         )
         await self.register_vector_store(vector_store)
 
@@ -628,9 +622,6 @@ class OpenAIVectorStoreMixin(ABC):
                 "rewrite_query": rewrite_query,
             }
 
-            # Add vector_stores_config if available (for query rewriting)
-            if hasattr(self, "vector_stores_config"):
-                params["vector_stores_config"] = self.vector_stores_config
             # TODO: Add support for ranking_options.ranker
 
             response = await self.query_chunks(
