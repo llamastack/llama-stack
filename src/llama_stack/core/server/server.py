@@ -44,6 +44,7 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
+from llama_stack.core.server.fastapi_router_registry import build_router, has_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
@@ -87,7 +88,7 @@ def create_sse_event(data: Any) -> str:
 
 
 async def global_exception_handler(request: Request, exc: Exception):
-    traceback.print_exception(exc)
+    traceback.print_exception(type(exc), exc, exc.__traceback__)
     http_exc = translate_exception(exc)
 
     return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
@@ -463,15 +464,23 @@ def create_app() -> StackApp:
     apis_to_serve.add("providers")
     apis_to_serve.add("prompts")
     apis_to_serve.add("conversations")
+
     for api_str in apis_to_serve:
         api = Api(api_str)
 
-        routes = all_routes[api]
-        try:
+        # Try to discover and use a router factory from the API package
+        if has_router(api):
             impl = impls[api]
-        except KeyError as e:
-            raise ValueError(f"Could not find provider implementation for {api} API") from e
+            router = build_router(api, impl)
+            if router:
+                app.include_router(router)
+                logger.debug(f"Registered router for {api} API")
+                continue
 
+        # Fall back to old webmethod-based route discovery until the migration is complete
+        impl = impls[api]
+
+        routes = all_routes[api]
         for route, _ in routes:
             if not hasattr(impl, route.name):
                 # ideally this should be a typing violation already
@@ -497,7 +506,15 @@ def create_app() -> StackApp:
 
     logger.debug(f"serving APIs: {apis_to_serve}")
 
+    # Register specific exception handlers before the generic Exception handler
+    # This prevents the re-raising behavior that causes connection resets
     app.exception_handler(RequestValidationError)(global_exception_handler)
+    app.exception_handler(ConflictError)(global_exception_handler)
+    app.exception_handler(ResourceNotFoundError)(global_exception_handler)
+    app.exception_handler(AuthenticationRequiredError)(global_exception_handler)
+    app.exception_handler(AccessDeniedError)(global_exception_handler)
+    app.exception_handler(BadRequestError)(global_exception_handler)
+    # Generic Exception handler should be last
     app.exception_handler(Exception)(global_exception_handler)
 
     if config.telemetry.enabled:
