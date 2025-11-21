@@ -36,9 +36,7 @@ from llama_stack.core.storage.datatypes import (
     StorageBackendType,
 )
 from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
-from llama_stack.core.storage.kvstore.config import get_pip_packages as get_kv_pip_packages
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
-from llama_stack.core.storage.sqlstore.sqlstore import get_pip_packages as get_sql_pip_packages
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.image_types import LlamaStackImageType
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
@@ -322,33 +320,7 @@ class DistributionTemplate(BaseModel):
 
     available_models_by_provider: dict[str, list[ProviderModelEntry]] | None = None
 
-    # we may want to specify additional pip packages without necessarily indicating a
-    # specific "default" inference store (which is what typically used to dictate additional
-    # pip packages)
-    additional_pip_packages: list[str] | None = None
-
     def build_config(self) -> BuildConfig:
-        additional_pip_packages: list[str] = []
-        for run_config in self.run_configs.values():
-            run_config_ = run_config.run_config(self.name, self.providers, self.container_image)
-
-            # TODO: This is a hack to get the dependencies for internal APIs into build
-            # We should have a better way to do this by formalizing the concept of "internal" APIs
-            # and providers, with a way to specify dependencies for them.
-
-            storage_cfg = run_config_.get("storage", {})
-            for backend_cfg in storage_cfg.get("backends", {}).values():
-                store_type = backend_cfg.get("type")
-                if not store_type:
-                    continue
-                if str(store_type).startswith("kv_"):
-                    additional_pip_packages.extend(get_kv_pip_packages(backend_cfg))
-                elif str(store_type).startswith("sql_"):
-                    additional_pip_packages.extend(get_sql_pip_packages(backend_cfg))
-
-        if self.additional_pip_packages:
-            additional_pip_packages.extend(self.additional_pip_packages)
-
         # Create minimal providers for build config (without runtime configs)
         build_providers = {}
         for api, providers in self.providers.items():
@@ -368,7 +340,6 @@ class DistributionTemplate(BaseModel):
                 providers=build_providers,
             ),
             image_type=LlamaStackImageType.VENV.value,  # default to venv
-            additional_pip_packages=sorted(set(additional_pip_packages)),
         )
 
     def generate_markdown_docs(self) -> str:
