@@ -109,10 +109,6 @@ class DistributionInspectImpl(Inspect):
                 return not route_deprecated
 
         # Process router-based routes
-        def dummy_impl_getter(api: Api) -> None:
-            """Dummy implementation getter for route inspection."""
-            return None
-
         from llama_stack.core.resolver import api_protocol_map
 
         protocols = api_protocol_map(external_apis)
@@ -120,7 +116,8 @@ class DistributionInspectImpl(Inspect):
             if not has_router(api):
                 continue
 
-            router = build_router(api, dummy_impl_getter)
+            # For route inspection, we don't need a real implementation
+            router = build_router(api, None)
             if not router:
                 continue
 

@@ -11,7 +11,6 @@ FastAPI route decorators. The router is defined in the API package to keep
 all API-related code together.
 """
 
-from collections.abc import Callable
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends, Path, Query
@@ -23,16 +22,15 @@ from llama_stack_api.batches.models import (
     ListBatchesRequest,
     RetrieveBatchRequest,
 )
-from llama_stack_api.datatypes import Api
 from llama_stack_api.router_utils import standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
 
-def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
+def create_router(impl: Batches) -> APIRouter:
     """Create a FastAPI router for the Batches API.
 
     Args:
-        impl_getter: Function that returns the Batches implementation for the batches API
+        impl: The Batches implementation instance
 
     Returns:
         APIRouter configured for the Batches API
@@ -45,7 +43,7 @@ def create_router(impl_getter: Callable[[Api], Batches]) -> APIRouter:
 
     def get_batch_service() -> Batches:
         """Dependency function to get the batch service implementation."""
-        return impl_getter(Api.batches)
+        return impl
 
     @router.post(
         "/batches",

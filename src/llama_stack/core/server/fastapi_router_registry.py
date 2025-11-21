@@ -11,7 +11,6 @@ Routers are automatically discovered by checking for routes modules in each API 
 """
 
 import importlib
-from collections.abc import Callable
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter
@@ -36,15 +35,15 @@ def has_router(api: "Api") -> bool:
         return False
 
 
-def build_router(api: "Api", impl_getter: Callable[["Api"], Any]) -> APIRouter | None:
+def build_router(api: "Api", impl: Any) -> APIRouter | None:
     """Build a router for an API by combining its router factory with the implementation.
 
     This function discovers the router factory from the API package's routes module
-    and calls it with the impl_getter to create the final router instance.
+    and calls it with the implementation to create the final router instance.
 
     Args:
         api: The API enum value
-        impl_getter: Function that returns the implementation for a given API
+        impl: The implementation instance for the API
 
     Returns:
         APIRouter if the API has a routes module with create_router, None otherwise
@@ -53,7 +52,7 @@ def build_router(api: "Api", impl_getter: Callable[["Api"], Any]) -> APIRouter |
         routes_module = importlib.import_module(f"llama_stack_api.{api.value}.fastapi_routes")
         if hasattr(routes_module, "create_router"):
             router_factory = routes_module.create_router
-            return router_factory(impl_getter)
+            return router_factory(impl)
     except (ImportError, AttributeError):
         pass
 
