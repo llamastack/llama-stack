@@ -5,6 +5,8 @@
 # the root directory of this source tree.
 
 
+from unittest.mock import AsyncMock
+
 import pytest
 
 from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
@@ -46,6 +48,12 @@ from llama_stack_api.openai_responses import (
 )
 
 
+@pytest.fixture
+def mock_files_api():
+    """Mock files API for testing."""
+    return AsyncMock()
+
+
 class TestConvertChatChoiceToResponseMessage:
     async def test_convert_string_content(self):
         choice = OpenAIChoice(
@@ -78,17 +86,17 @@ class TestConvertChatChoiceToResponseMessage:
 
 
 class TestConvertResponseContentToChatContent:
-    async def test_convert_string_content(self):
-        result = await convert_response_content_to_chat_content("Simple string")
+    async def test_convert_string_content(self, mock_files_api):
+        result = await convert_response_content_to_chat_content("Simple string", mock_files_api)
         assert result == "Simple string"
 
-    async def test_convert_text_content_parts(self):
+    async def test_convert_text_content_parts(self, mock_files_api):
         content = [
             OpenAIResponseInputMessageContentText(text="First part"),
             OpenAIResponseOutputMessageContentOutputText(text="Second part"),
         ]
 
-        result = await convert_response_content_to_chat_content(content)
+        result = await convert_response_content_to_chat_content(content, mock_files_api)
 
         assert len(result) == 2
         assert isinstance(result[0], OpenAIChatCompletionContentPartTextParam)
@@ -96,10 +104,10 @@ class TestConvertResponseContentToChatContent:
         assert isinstance(result[1], OpenAIChatCompletionContentPartTextParam)
         assert result[1].text == "Second part"
 
-    async def test_convert_image_content(self):
+    async def test_convert_image_content(self, mock_files_api):
         content = [OpenAIResponseInputMessageContentImage(image_url="https://example.com/image.jpg", detail="high")]
 
-        result = await convert_response_content_to_chat_content(content)
+        result = await convert_response_content_to_chat_content(content, mock_files_api)
 
         assert len(result) == 1
         assert isinstance(result[0], OpenAIChatCompletionContentPartImageParam)

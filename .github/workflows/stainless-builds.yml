@@ -43,7 +43,41 @@ env:
   #   Stainless organization dashboard
 
 jobs:
+  compute-branch:
+    runs-on: ubuntu-latest
+    outputs:
+      preview_branch: ${{ steps.compute.outputs.preview_branch }}
+      base_branch: ${{ steps.compute.outputs.base_branch }}
+      merge_branch: ${{ steps.compute.outputs.merge_branch }}
+    steps:
+      - name: Compute branch names
+        id: compute
+        run: |
+          HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
+          BASE_REPO="${{ github.repository }}"
+          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+          FORK_OWNER="${{ github.event.pull_request.head.repo.owner.login }}"
+
+          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            # Fork PR: prefix with fork owner for isolation
+            if [ -z "$FORK_OWNER" ]; then
+              echo "Error: Fork PR detected but fork owner is empty" >&2
+              exit 1
+            fi
+            PREVIEW_BRANCH="preview/${FORK_OWNER}/${BRANCH_NAME}"
+            BASE_BRANCH="preview/base/${FORK_OWNER}/${BRANCH_NAME}"
+          else
+            # Same-repo PR
+            PREVIEW_BRANCH="preview/${BRANCH_NAME}"
+            BASE_BRANCH="preview/base/${BRANCH_NAME}"
+          fi
+
+          echo "preview_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
+          echo "base_branch=${BASE_BRANCH}" >> $GITHUB_OUTPUT
+          echo "merge_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
+
   preview:
+    needs: compute-branch
     if: github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
@@ -59,8 +93,6 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
 
-      # This action builds preview SDKs from the OpenAPI spec changes and
-      # posts/updates a comment on the PR with build results and links to the preview.
       - name: Run preview builds
         uses: stainless-api/upload-openapi-spec-action/preview@32823b096b4319c53ee948d702d9052873af485f # 1.6.0
         with:
@@ -73,8 +105,11 @@ jobs:
           base_sha: ${{ github.event.pull_request.base.sha }}
           base_ref: ${{ github.event.pull_request.base.ref }}
           head_sha: ${{ github.event.pull_request.head.sha }}
+          branch: ${{ needs.compute-branch.outputs.preview_branch }}
+          base_branch: ${{ needs.compute-branch.outputs.base_branch }}
 
   merge:
+    needs: compute-branch
     if: github.event.action == 'closed' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
@@ -91,11 +126,11 @@ jobs:
           fetch-depth: 2
 
       # Note that this only merges in changes that happened on the last build on
-      # preview/${{ github.head_ref }}. It's possible that there are OAS/config
-      # changes that haven't been built, if the preview-sdk job didn't finish
+      # the computed preview branch. It's possible that there are OAS/config
+      # changes that haven't been built, if the preview job didn't finish
       # before this step starts. In theory we want to wait for all builds
-      # against preview/${{ github.head_ref }} to complete, but assuming that
-      # the preview-sdk job happens before the PR merge, it should be fine.
+      # against the preview branch to complete, but assuming that
+      # the preview job happens before the PR merge, it should be fine.
       - name: Run merge build
         uses: stainless-api/upload-openapi-spec-action/merge@32823b096b4319c53ee948d702d9052873af485f # 1.6.0
         with:
@@ -108,3 +143,4 @@ jobs:
           base_sha: ${{ github.event.pull_request.base.sha }}
           base_ref: ${{ github.event.pull_request.base.ref }}
           head_sha: ${{ github.event.pull_request.head.sha }}
+          merge_branch: ${{ needs.compute-branch.outputs.merge_branch }}

@@ -3,23 +3,10 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-from collections.abc import Iterable
 from typing import (
     Any,
 )
 
-from openai.types.chat import (
-    ChatCompletionContentPartParam as OpenAIChatCompletionContentPartParam,
-)
-
-try:
-    from openai.types.chat import (
-        ChatCompletionMessageFunctionToolCall as OpenAIChatCompletionMessageFunctionToolCall,
-    )
-except ImportError:
-    from openai.types.chat.chat_completion_message_tool_call import (
-        ChatCompletionMessageToolCall as OpenAIChatCompletionMessageFunctionToolCall,
-    )
 from openai.types.chat import (
     ChatCompletionMessageToolCall,
 )
@@ -31,18 +18,6 @@ from llama_stack.models.llama.datatypes import (
     StopReason,
     ToolCall,
     ToolDefinition,
-)
-from llama_stack_api import (
-    URL,
-    GreedySamplingStrategy,
-    ImageContentItem,
-    JsonSchemaResponseFormat,
-    OpenAIResponseFormatParam,
-    SamplingParams,
-    TextContentItem,
-    TopKSamplingStrategy,
-    TopPSamplingStrategy,
-    _URLOrData,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
@@ -71,42 +46,6 @@ class OpenAICompatCompletionChoice(BaseModel):
 
 class OpenAICompatCompletionResponse(BaseModel):
     choices: list[OpenAICompatCompletionChoice]
-
-
-def get_sampling_strategy_options(params: SamplingParams) -> dict:
-    options = {}
-    if isinstance(params.strategy, GreedySamplingStrategy):
-        options["temperature"] = 0.0
-    elif isinstance(params.strategy, TopPSamplingStrategy):
-        if params.strategy.temperature is not None:
-            options["temperature"] = params.strategy.temperature
-        if params.strategy.top_p is not None:
-            options["top_p"] = params.strategy.top_p
-    elif isinstance(params.strategy, TopKSamplingStrategy):
-        options["top_k"] = params.strategy.top_k
-    else:
-        raise ValueError(f"Unsupported sampling strategy: {params.strategy}")
-
-    return options
-
-
-def get_sampling_options(params: SamplingParams | None) -> dict:
-    if not params:
-        return {}
-
-    options = {}
-    if params:
-        options.update(get_sampling_strategy_options(params))
-        if params.max_tokens:
-            options["max_tokens"] = params.max_tokens
-
-        if params.repetition_penalty is not None and params.repetition_penalty != 1.0:
-            options["repeat_penalty"] = params.repetition_penalty
-
-        if params.stop is not None:
-            options["stop"] = params.stop
-
-    return options
 
 
 def text_from_choice(choice) -> str:
@@ -251,154 +190,6 @@ def convert_tooldef_to_openai_tool(tool: ToolDefinition) -> dict:
     # It's stored in LlamaStack for validation and other provider usage
 
     return out
-
-
-def _convert_stop_reason_to_openai_finish_reason(stop_reason: StopReason) -> str:
-    """
-    Convert a StopReason to an OpenAI chat completion finish_reason.
-    """
-    return {
-        StopReason.end_of_turn: "stop",
-        StopReason.end_of_message: "tool_calls",
-        StopReason.out_of_tokens: "length",
-    }.get(stop_reason, "stop")
-
-
-def _convert_openai_finish_reason(finish_reason: str) -> StopReason:
-    """
-    Convert an OpenAI chat completion finish_reason to a StopReason.
-
-    finish_reason: Literal["stop", "length", "tool_calls", ...]
-        - stop: model hit a natural stop point or a provided stop sequence
-        - length: maximum number of tokens specified in the request was reached
-        - tool_calls: model called a tool
-
-    ->
-
-    class StopReason(Enum):
-        end_of_turn = "end_of_turn"
-        end_of_message = "end_of_message"
-        out_of_tokens = "out_of_tokens"
-    """
-
-    # TODO(mf): are end_of_turn and end_of_message semantics correct?
-    return {
-        "stop": StopReason.end_of_turn,
-        "length": StopReason.out_of_tokens,
-        "tool_calls": StopReason.end_of_message,
-    }.get(finish_reason, StopReason.end_of_turn)
-
-
-def _convert_openai_request_tools(tools: list[dict[str, Any]] | None = None) -> list[ToolDefinition]:
-    lls_tools: list[ToolDefinition] = []
-    if not tools:
-        return lls_tools
-
-    for tool in tools:
-        tool_fn = tool.get("function", {})
-        tool_name = tool_fn.get("name", None)
-        tool_desc = tool_fn.get("description", None)
-        tool_params = tool_fn.get("parameters", None)
-
-        lls_tool = ToolDefinition(
-            tool_name=tool_name,
-            description=tool_desc,
-            input_schema=tool_params,  # Pass through entire JSON Schema
-        )
-        lls_tools.append(lls_tool)
-    return lls_tools
-
-
-def _convert_openai_request_response_format(
-    response_format: OpenAIResponseFormatParam | None = None,
-):
-    if not response_format:
-        return None
-    # response_format can be a dict or a pydantic model
-    response_format_dict = dict(response_format)  # type: ignore[arg-type]  # OpenAIResponseFormatParam union needs dict conversion
-    if response_format_dict.get("type", "") == "json_schema":
-        return JsonSchemaResponseFormat(
-            type="json_schema",  # type: ignore[arg-type]  # Literal["json_schema"] incompatible with expected type
-            json_schema=response_format_dict.get("json_schema", {}).get("schema", ""),
-        )
-    return None
-
-
-def _convert_openai_tool_calls(
-    tool_calls: list[OpenAIChatCompletionMessageFunctionToolCall],
-) -> list[ToolCall]:
-    """
-    Convert an OpenAI ChatCompletionMessageToolCall list into a list of ToolCall.
-
-    OpenAI ChatCompletionMessageToolCall:
-        id: str
-        function: Function
-        type: Literal["function"]
-
-    OpenAI Function:
-        arguments: str
-        name: str
-
-    ->
-
-    ToolCall:
-        call_id: str
-        tool_name: str
-        arguments: Dict[str, ...]
-    """
-    if not tool_calls:
-        return []  # CompletionMessage tool_calls is not optional
-
-    return [
-        ToolCall(
-            call_id=call.id,
-            tool_name=call.function.name,
-            arguments=call.function.arguments,
-        )
-        for call in tool_calls
-    ]
-
-
-def _convert_openai_sampling_params(
-    max_tokens: int | None = None,
-    temperature: float | None = None,
-    top_p: float | None = None,
-) -> SamplingParams:
-    sampling_params = SamplingParams()
-
-    if max_tokens:
-        sampling_params.max_tokens = max_tokens
-
-    # Map an explicit temperature of 0 to greedy sampling
-    if temperature == 0:
-        sampling_params.strategy = GreedySamplingStrategy()
-    else:
-        # OpenAI defaults to 1.0 for temperature and top_p if unset
-        if temperature is None:
-            temperature = 1.0
-        if top_p is None:
-            top_p = 1.0
-        sampling_params.strategy = TopPSamplingStrategy(temperature=temperature, top_p=top_p)  # type: ignore[assignment]  # SamplingParams.strategy union accepts this type
-
-    return sampling_params
-
-
-def openai_content_to_content(content: str | Iterable[OpenAIChatCompletionContentPartParam] | None):
-    if content is None:
-        return ""
-    if isinstance(content, str):
-        return content
-    elif isinstance(content, list):
-        return [openai_content_to_content(c) for c in content]
-    elif hasattr(content, "type"):
-        if content.type == "text":
-            return TextContentItem(type="text", text=content.text)  # type: ignore[attr-defined]  # Iterable narrowed by hasattr check but mypy doesn't track
-        elif content.type == "image_url":
-            return ImageContentItem(type="image", image=_URLOrData(url=URL(uri=content.image_url.url)))  # type: ignore[attr-defined]  # Iterable narrowed by hasattr check but mypy doesn't track
-        else:
-            raise ValueError(f"Unknown content type: {content.type}")
-    else:
-        raise ValueError(f"Unknown content type: {content}")
 
 
 async def prepare_openai_completion_params(**params):
