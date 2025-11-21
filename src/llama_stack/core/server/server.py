@@ -44,7 +44,7 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
-from llama_stack.core.server.fastapi_router_registry import build_router
+from llama_stack.core.server.fastapi_router_registry import build_router, has_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
@@ -465,51 +465,44 @@ def create_app() -> StackApp:
     apis_to_serve.add("prompts")
     apis_to_serve.add("conversations")
 
-    def impl_getter(api: Api) -> Any:
-        """Get the implementation for a given API."""
-        try:
-            return impls[api]
-        except KeyError as e:
-            raise ValueError(f"Could not find provider implementation for {api} API") from e
-
     for api_str in apis_to_serve:
         api = Api(api_str)
 
         # Try to discover and use a router factory from the API package
-        router = build_router(api, impl_getter)
-        if router:
-            app.include_router(router)
-            logger.debug(f"Registered router for {api} API")
-        else:
-            # Fall back to old webmethod-based route discovery until the migration is complete
-            routes = all_routes[api]
-            try:
-                impl = impls[api]
-            except KeyError as e:
-                raise ValueError(f"Could not find provider implementation for {api} API") from e
+        if has_router(api):
+            impl = impls[api]
+            router = build_router(api, impl)
+            if router:
+                app.include_router(router)
+                logger.debug(f"Registered router for {api} API")
+                continue
 
-            for route, _ in routes:
-                if not hasattr(impl, route.name):
-                    # ideally this should be a typing violation already
-                    raise ValueError(f"Could not find method {route.name} on {impl}!")
+        # Fall back to old webmethod-based route discovery until the migration is complete
+        impl = impls[api]
 
-                impl_method = getattr(impl, route.name)
-                # Filter out HEAD method since it's automatically handled by FastAPI for GET routes
-                available_methods = [m for m in route.methods if m != "HEAD"]
-                if not available_methods:
-                    raise ValueError(f"No methods found for {route.name} on {impl}")
-                method = available_methods[0]
-                logger.debug(f"{method} {route.path}")
+        routes = all_routes[api]
+        for route, _ in routes:
+            if not hasattr(impl, route.name):
+                # ideally this should be a typing violation already
+                raise ValueError(f"Could not find method {route.name} on {impl}!")
 
-                with warnings.catch_warnings():
-                    warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
-                    getattr(app, method.lower())(route.path, response_model=None)(
-                        create_dynamic_typed_route(
-                            impl_method,
-                            method.lower(),
-                            route.path,
-                        )
+            impl_method = getattr(impl, route.name)
+            # Filter out HEAD method since it's automatically handled by FastAPI for GET routes
+            available_methods = [m for m in route.methods if m != "HEAD"]
+            if not available_methods:
+                raise ValueError(f"No methods found for {route.name} on {impl}")
+            method = available_methods[0]
+            logger.debug(f"{method} {route.path}")
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")
+                getattr(app, method.lower())(route.path, response_model=None)(
+                    create_dynamic_typed_route(
+                        impl_method,
+                        method.lower(),
+                        route.path,
                     )
+                )
 
     logger.debug(f"serving APIs: {apis_to_serve}")
 
