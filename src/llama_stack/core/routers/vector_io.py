@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import re
 import uuid
 from typing import Annotated, Any
 
@@ -42,6 +43,17 @@ from llama_stack_api import (
 )
 
 logger = get_logger(name=__name__, category="core::routers")
+
+
+def validate_collection_name(collection_name: str) -> None:
+    if not collection_name:
+        raise ValueError("collection_name cannot be empty")
+
+    if not re.match(r"^[a-zA-Z0-9_-]+$", collection_name):
+        raise ValueError(
+            f"collection_name '{collection_name}' contains invalid characters. "
+            "Only alphanumeric characters, hyphens, and underscores are allowed."
+        )
 
 
 class VectorIORouter(VectorIO):
@@ -160,13 +172,25 @@ class VectorIORouter(VectorIO):
             else:
                 provider_id = list(self.routing_table.impls_by_provider_id.keys())[0]
 
+        # Extract and validate collection_name if provided
+        collection_name = extra.get("collection_name")
+        if collection_name:
+            validate_collection_name(collection_name)
+            provider_vector_store_id = collection_name
+            logger.debug(f"Using custom collection name: {collection_name}")
+        else:
+            # Fall back to auto-generated UUID for backward compatibility
+            provider_vector_store_id = f"vs_{uuid.uuid4()}"
+
+        # Always generate a unique vector_store_id for internal routing
         vector_store_id = f"vs_{uuid.uuid4()}"
+
         registered_vector_store = await self.routing_table.register_vector_store(
             vector_store_id=vector_store_id,
             embedding_model=embedding_model,
             embedding_dimension=embedding_dimension,
             provider_id=provider_id,
-            provider_vector_store_id=vector_store_id,
+            provider_vector_store_id=provider_vector_store_id,
             vector_store_name=params.name,
         )
         provider = await self.routing_table.get_provider_impl(registered_vector_store.identifier)
@@ -174,8 +198,14 @@ class VectorIORouter(VectorIO):
         # Update model_extra with registered values so provider uses the already-registered vector_store
         if params.model_extra is None:
             params.model_extra = {}
+        params.model_extra["vector_store_id"] = vector_store_id  # Pass canonical UUID to Provider
         params.model_extra["provider_vector_store_id"] = registered_vector_store.provider_resource_id
         params.model_extra["provider_id"] = registered_vector_store.provider_id
+
+        # Add collection_name to metadata so users can see what was used
+        if params.metadata is None:
+            params.metadata = {}
+        params.metadata["provider_vector_store_id"] = provider_vector_store_id
         if embedding_model is not None:
             params.model_extra["embedding_model"] = embedding_model
         if embedding_dimension is not None:
