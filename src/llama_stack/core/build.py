@@ -46,7 +46,7 @@ def get_provider_dependencies(
 
     deps = []
     external_provider_deps = []
-    registry = get_provider_registry(config)
+    registry = get_provider_registry(config, True)
     for api_str, provider_or_providers in providers.items():
         providers_for_api = registry[Api(api_str)]
 

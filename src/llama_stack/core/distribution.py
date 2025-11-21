@@ -12,7 +12,7 @@ from typing import Any
 import yaml
 from pydantic import BaseModel
 
-from llama_stack.core.datatypes import BuildConfig, DistributionSpec
+from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.external import load_external_apis
 from llama_stack.log import get_logger
 from llama_stack_api import (
@@ -85,7 +85,9 @@ def _load_inline_provider_spec(spec_data: dict[str, Any], api: Api, provider_nam
     return spec
 
 
-def get_provider_registry(config=None) -> dict[Api, dict[str, ProviderSpec]]:
+def get_provider_registry(
+    config: StackConfig | None = None, building: bool = False
+) -> dict[Api, dict[str, ProviderSpec]]:
     """Get the provider registry, optionally including external providers.
 
     This function loads both built-in providers and external providers from YAML files or from their provided modules.
@@ -161,7 +163,7 @@ def get_provider_registry(config=None) -> dict[Api, dict[str, ProviderSpec]]:
         registry = get_external_providers_from_module(
             registry=registry,
             config=config,
-            building=(isinstance(config, BuildConfig) or isinstance(config, DistributionSpec)),
+            building=building,
         )
 
     return registry
@@ -223,10 +225,7 @@ def get_external_providers_from_module(
     registry: dict[Api, dict[str, ProviderSpec]], config, building: bool
 ) -> dict[Api, dict[str, ProviderSpec]]:
     provider_list = None
-    if isinstance(config, BuildConfig):
-        provider_list = config.distribution_spec.providers.items()
-    else:
-        provider_list = config.providers.items()
+    provider_list = config.providers.items()
     if provider_list is None:
         logger.warning("Could not get list of providers from config")
         return registry
