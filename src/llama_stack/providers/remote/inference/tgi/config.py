@@ -5,28 +5,29 @@
 # the root directory of this source tree.
 
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.schema_utils import json_schema_type
+from llama_stack_api import json_schema_type
 
 
 @json_schema_type
 class TGIImplConfig(RemoteInferenceProviderConfig):
     auth_credential: SecretStr | None = Field(default=None, exclude=True)
 
-    url: str = Field(
-        description="The URL for the TGI serving endpoint",
+    base_url: HttpUrl | None = Field(
+        default=None,
+        description="The URL for the TGI serving endpoint (should include /v1 path)",
     )
 
     @classmethod
     def sample_run_config(
         cls,
-        url: str = "${env.TGI_URL:=}",
+        base_url: str = "${env.TGI_URL:=}",
         **kwargs,
     ):
         return {
-            "url": url,
+            "base_url": base_url,
         }
 
 

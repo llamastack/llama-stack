@@ -8,18 +8,17 @@ from importlib.metadata import version
 
 from pydantic import BaseModel
 
-from llama_stack.apis.inspect import (
+from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.external import load_external_apis
+from llama_stack.core.server.routes import get_all_api_routes
+from llama_stack_api import (
     HealthInfo,
+    HealthStatus,
     Inspect,
     ListRoutesResponse,
     RouteInfo,
     VersionInfo,
 )
-from llama_stack.apis.version import LLAMA_STACK_API_V1
-from llama_stack.core.datatypes import StackRunConfig
-from llama_stack.core.external import load_external_apis
-from llama_stack.core.server.routes import get_all_api_routes
-from llama_stack.providers.datatypes import HealthStatus
 
 
 class DistributionInspectConfig(BaseModel):
@@ -46,8 +45,8 @@ class DistributionInspectImpl(Inspect):
         # Helper function to determine if a route should be included based on api_filter
         def should_include_route(webmethod) -> bool:
             if api_filter is None:
-                # Default: only non-deprecated v1 APIs
-                return not webmethod.deprecated and webmethod.level == LLAMA_STACK_API_V1
+                # Default: only non-deprecated APIs
+                return not webmethod.deprecated
             elif api_filter == "deprecated":
                 # Special filter: show deprecated routes regardless of their actual level
                 return bool(webmethod.deprecated)

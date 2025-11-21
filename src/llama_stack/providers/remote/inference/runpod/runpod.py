@@ -6,12 +6,12 @@
 
 from collections.abc import AsyncIterator
 
-from llama_stack.apis.inference import (
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
 )
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import RunpodImplConfig
 
@@ -28,7 +28,7 @@ class RunpodInferenceAdapter(OpenAIMixin):
 
     def get_base_url(self) -> str:
         """Get base URL for OpenAI client."""
-        return self.config.url
+        return str(self.config.base_url)
 
     async def openai_chat_completion(
         self,

@@ -17,32 +17,32 @@ providers:
   - provider_id: ${env.CEREBRAS_API_KEY:+cerebras}
     provider_type: remote::cerebras
     config:
-      base_url: https://api.cerebras.ai
+      base_url: https://api.cerebras.ai/v1
       api_key: ${env.CEREBRAS_API_KEY:=}
   - provider_id: ${env.OLLAMA_URL:+ollama}
     provider_type: remote::ollama
     config:
-      url: ${env.OLLAMA_URL:=http://localhost:11434}
+      base_url: ${env.OLLAMA_URL:=http://localhost:11434/v1}
   - provider_id: ${env.VLLM_URL:+vllm}
     provider_type: remote::vllm
     config:
-      url: ${env.VLLM_URL:=}
+      base_url: ${env.VLLM_URL:=}
       max_tokens: ${env.VLLM_MAX_TOKENS:=4096}
       api_token: ${env.VLLM_API_TOKEN:=fake}
       tls_verify: ${env.VLLM_TLS_VERIFY:=true}
   - provider_id: ${env.TGI_URL:+tgi}
     provider_type: remote::tgi
     config:
-      url: ${env.TGI_URL:=}
+      base_url: ${env.TGI_URL:=}
   - provider_id: fireworks
     provider_type: remote::fireworks
     config:
-      url: https://api.fireworks.ai/inference/v1
+      base_url: https://api.fireworks.ai/inference/v1
       api_key: ${env.FIREWORKS_API_KEY:=}
   - provider_id: together
     provider_type: remote::together
     config:
-      url: https://api.together.xyz/v1
+      base_url: https://api.together.xyz/v1
       api_key: ${env.TOGETHER_API_KEY:=}
   - provider_id: bedrock
     provider_type: remote::bedrock
@@ -52,9 +52,8 @@ providers:
   - provider_id: ${env.NVIDIA_API_KEY:+nvidia}
     provider_type: remote::nvidia
     config:
-      url: ${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com}
+      base_url: ${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com/v1}
       api_key: ${env.NVIDIA_API_KEY:=}
-      append_api_version: ${env.NVIDIA_APPEND_API_VERSION:=True}
   - provider_id: openai
     provider_type: remote::openai
     config:
@@ -76,18 +75,18 @@ providers:
   - provider_id: groq
     provider_type: remote::groq
     config:
-      url: https://api.groq.com
+      base_url: https://api.groq.com/openai/v1
       api_key: ${env.GROQ_API_KEY:=}
   - provider_id: sambanova
     provider_type: remote::sambanova
     config:
-      url: https://api.sambanova.ai/v1
+      base_url: https://api.sambanova.ai/v1
       api_key: ${env.SAMBANOVA_API_KEY:=}
   - provider_id: ${env.AZURE_API_KEY:+azure}
     provider_type: remote::azure
     config:
       api_key: ${env.AZURE_API_KEY:=}
-      api_base: ${env.AZURE_API_BASE:=}
+      base_url: ${env.AZURE_API_BASE:=}
       api_version: ${env.AZURE_API_VERSION:=}
       api_type: ${env.AZURE_API_TYPE:=}
   - provider_id: sentence-transformers
@@ -165,20 +164,15 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: sql_postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
-      responses_store:
-        type: sql_postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
+      persistence:
+        agent_state:
+          namespace: agents
+          backend: kv_default
+        responses:
+          table_name: responses
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
   post_training:
   - provider_id: torchtune-cpu
     provider_type: inline::torchtune-cpu
@@ -234,10 +228,10 @@ providers:
     config:
       kvstore:
         namespace: batches
-        backend: kv_postgres
+        backend: kv_default
 storage:
   backends:
-    kv_postgres:
+    kv_default:
       type: kv_postgres
       host: ${env.POSTGRES_HOST:=localhost}
       port: ${env.POSTGRES_PORT:=5432}
@@ -245,7 +239,7 @@ storage:
       user: ${env.POSTGRES_USER:=llamastack}
       password: ${env.POSTGRES_PASSWORD:=llamastack}
       table_name: ${env.POSTGRES_TABLE_NAME:=llamastack_kvstore}
-    sql_postgres:
+    sql_default:
       type: sql_postgres
       host: ${env.POSTGRES_HOST:=localhost}
       port: ${env.POSTGRES_PORT:=5432}
@@ -255,27 +249,44 @@ storage:
   stores:
     metadata:
       namespace: registry
-      backend: kv_postgres
+      backend: kv_default
     inference:
       table_name: inference_store
-      backend: sql_postgres
+      backend: sql_default
       max_write_queue_size: 10000
       num_writers: 4
     conversations:
       table_name: openai_conversations
-      backend: sql_postgres
+      backend: sql_default
     prompts:
       namespace: prompts
-      backend: kv_postgres
+      backend: kv_default
 registered_resources:
   models: []
-  shields: []
+  shields:
+  - shield_id: llama-guard
+    provider_id: ${env.SAFETY_MODEL:+llama-guard}
+    provider_shield_id: ${env.SAFETY_MODEL:=}
+  - shield_id: code-scanner
+    provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
+    provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
   vector_dbs: []
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups: []
+  tool_groups:
+  - toolgroup_id: builtin::websearch
+    provider_id: tavily-search
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
 server:
   port: 8321
 telemetry:
   enabled: true
+vector_stores:
+  default_provider_id: faiss
+  default_embedding_model:
+    provider_id: sentence-transformers
+    model_id: nomic-ai/nomic-embed-text-v1.5
+safety:
+  default_shield_id: llama-guard

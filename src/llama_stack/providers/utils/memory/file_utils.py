@@ -8,7 +8,7 @@ import base64
 import mimetypes
 import os
 
-from llama_stack.apis.common.content_types import URL
+from llama_stack_api import URL
 
 
 def data_url_from_file(file_path: str) -> URL:

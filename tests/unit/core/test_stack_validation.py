@@ -10,11 +10,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.apis.models import ListModelsResponse, Model, ModelType
-from llama_stack.apis.shields import ListShieldsResponse, Shield
-from llama_stack.core.datatypes import QualifiedModel, SafetyConfig, StackRunConfig, StorageConfig, VectorStoresConfig
+from llama_stack.core.datatypes import QualifiedModel, SafetyConfig, StackRunConfig, VectorStoresConfig
 from llama_stack.core.stack import validate_safety_config, validate_vector_stores_config
-from llama_stack.providers.datatypes import Api
+from llama_stack.core.storage.datatypes import ServerStoresConfig, StorageConfig
+from llama_stack_api import Api, ListModelsResponse, ListShieldsResponse, Model, ModelType, Shield
 
 
 class TestVectorStoresValidation:
@@ -23,7 +22,15 @@ class TestVectorStoresValidation:
         run_config = StackRunConfig(
             image_name="test",
             providers={},
-            storage=StorageConfig(backends={}, stores={}),
+            storage=StorageConfig(
+                backends={},
+                stores=ServerStoresConfig(
+                    metadata=None,
+                    inference=None,
+                    conversations=None,
+                    prompts=None,
+                ),
+            ),
             vector_stores=VectorStoresConfig(
                 default_provider_id="faiss",
                 default_embedding_model=QualifiedModel(
@@ -43,7 +50,15 @@ class TestVectorStoresValidation:
         run_config = StackRunConfig(
             image_name="test",
             providers={},
-            storage=StorageConfig(backends={}, stores={}),
+            storage=StorageConfig(
+                backends={},
+                stores=ServerStoresConfig(
+                    metadata=None,
+                    inference=None,
+                    conversations=None,
+                    prompts=None,
+                ),
+            ),
             vector_stores=VectorStoresConfig(
                 default_provider_id="faiss",
                 default_embedding_model=QualifiedModel(

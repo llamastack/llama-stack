@@ -14,7 +14,7 @@ from io import BytesIO
 
 import pytest
 
-from llama_stack.apis.files import OpenAIFilePurpose
+from llama_stack_api import OpenAIFilePurpose
 
 
 class BatchHelper:

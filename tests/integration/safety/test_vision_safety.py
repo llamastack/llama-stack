@@ -10,7 +10,7 @@ import os
 
 import pytest
 
-from llama_stack.apis.safety import ViolationLevel
+from llama_stack_api import ViolationLevel
 
 VISION_SHIELD_ENABLED_PROVIDERS = {"together"}
 

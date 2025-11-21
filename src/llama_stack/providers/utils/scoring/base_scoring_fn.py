@@ -6,9 +6,8 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-from llama_stack.apis.scoring import ScoringFnParams, ScoringResultRow
-from llama_stack.apis.scoring_functions import ScoringFn
 from llama_stack.providers.utils.scoring.aggregation_utils import aggregate_metrics
+from llama_stack_api import ScoringFn, ScoringFnParams, ScoringResultRow
 
 
 class BaseScoringFn(ABC):

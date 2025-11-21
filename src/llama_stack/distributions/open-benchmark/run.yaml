@@ -27,12 +27,12 @@ providers:
   - provider_id: groq
     provider_type: remote::groq
     config:
-      url: https://api.groq.com
+      base_url: https://api.groq.com/openai/v1
       api_key: ${env.GROQ_API_KEY:=}
   - provider_id: together
     provider_type: remote::together
     config:
-      url: https://api.together.xyz/v1
+      base_url: https://api.together.xyz/v1
       api_key: ${env.TOGETHER_API_KEY:=}
   vector_io:
   - provider_id: sqlite-vec

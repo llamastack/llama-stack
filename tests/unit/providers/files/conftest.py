@@ -9,8 +9,8 @@ import pytest
 from moto import mock_aws
 
 from llama_stack.core.storage.datatypes import SqliteSqlStoreConfig, SqlStoreReference
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.remote.files.s3 import S3FilesImplConfig, get_adapter_impl
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
 
 
 class MockUploadFile:

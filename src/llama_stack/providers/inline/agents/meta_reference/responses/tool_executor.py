@@ -9,7 +9,14 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack.core.telemetry import tracing
+from llama_stack.log import get_logger
+from llama_stack_api import (
+    ImageContentItem,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
+    OpenAIChatCompletionToolCall,
+    OpenAIImageURL,
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolMCP,
     OpenAIResponseObjectStreamResponseFileSearchCallCompleted,
@@ -23,24 +30,14 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObjectStreamResponseWebSearchCallSearching,
     OpenAIResponseOutputMessageFileSearchToolCall,
     OpenAIResponseOutputMessageFileSearchToolCallResults,
-    OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageWebSearchToolCall,
-)
-from llama_stack.apis.common.content_types import (
-    ImageContentItem,
-    TextContentItem,
-)
-from llama_stack.apis.inference import (
-    OpenAIChatCompletionContentPartImageParam,
-    OpenAIChatCompletionContentPartTextParam,
-    OpenAIChatCompletionToolCall,
-    OpenAIImageURL,
     OpenAIToolMessageParam,
+    TextContentItem,
+    ToolGroups,
+    ToolInvocationResult,
+    ToolRuntime,
+    VectorIO,
 )
-from llama_stack.apis.tools import ToolGroups, ToolInvocationResult, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
-from llama_stack.core.telemetry import tracing
-from llama_stack.log import get_logger
 
 from .types import ChatCompletionContext, ToolExecutionResult
 
@@ -299,12 +296,14 @@ class ToolExecutor:
                     "server_url": mcp_tool.server_url,
                     "tool_name": function_name,
                 }
+                # Invoke MCP tool with authorization from tool config
                 async with tracing.span("invoke_mcp_tool", attributes):
                     result = await invoke_mcp_tool(
                         endpoint=mcp_tool.server_url,
-                        headers=mcp_tool.headers or {},
                         tool_name=function_name,
                         kwargs=tool_kwargs,
+                        headers=mcp_tool.headers,
+                        authorization=mcp_tool.authorization,
                     )
             elif function_name == "knowledge_search":
                 response_file_search_tool = (
@@ -398,6 +397,10 @@ class ToolExecutor:
         # Build output message
         message: Any
         if mcp_tool_to_server and function.name in mcp_tool_to_server:
+            from llama_stack_api import (
+                OpenAIResponseOutputMessageMCPCall,
+            )
+
             message = OpenAIResponseOutputMessageMCPCall(
                 id=item_id,
                 arguments=function.arguments,

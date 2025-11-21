@@ -20,6 +20,7 @@ TEST_PATTERN=""
 INFERENCE_MODE="replay"
 EXTRA_PARAMS=""
 COLLECT_ONLY=false
+TYPESCRIPT_ONLY=false
 
 # Function to display usage
 usage() {
@@ -34,6 +35,7 @@ Options:
     --subdirs STRING         Comma-separated list of test subdirectories to run (overrides suite)
     --pattern STRING         Regex pattern to pass to pytest -k
     --collect-only           Collect tests only without running them (skips server startup)
+    --typescript-only        Skip Python tests and run only TypeScript client tests
     --help                   Show this help message
 
 Suites are defined in tests/integration/suites.py and define which tests to run.
@@ -88,6 +90,10 @@ while [[ $# -gt 0 ]]; do
         ;;
     --collect-only)
         COLLECT_ONLY=true
+        shift
+        ;;
+    --typescript-only)
+        TYPESCRIPT_ONLY=true
         shift
         ;;
     --help)
@@ -162,6 +168,17 @@ if [[ "$COLLECT_ONLY" == false ]]; then
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
         echo "Setting stack config type: library_client"
     fi
+
+    # Set MCP host for in-process MCP server tests
+    # - For library client and server mode: localhost (both on same host)
+    # - For docker mode: host.docker.internal (container needs to reach host)
+    if [[ "$STACK_CONFIG" == docker:* ]]; then
+        export LLAMA_STACK_TEST_MCP_HOST="host.docker.internal"
+        echo "Setting MCP host: host.docker.internal (docker mode)"
+    else
+        export LLAMA_STACK_TEST_MCP_HOST="localhost"
+        echo "Setting MCP host: localhost (library/server mode)"
+    fi
 fi
 
 SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
@@ -169,6 +186,10 @@ echo "Setting up environment variables:"
 echo "$SETUP_ENV"
 eval "$SETUP_ENV"
 echo ""
+
+# Export suite and setup names for TypeScript tests
+export LLAMA_STACK_TEST_SUITE="$TEST_SUITE"
+export LLAMA_STACK_TEST_SETUP="$TEST_SETUP"
 
 ROOT_DIR="$THIS_DIR/.."
 cd $ROOT_DIR
@@ -201,6 +222,71 @@ find_available_port() {
     return 1
 }
 
+run_client_ts_tests() {
+    if ! command -v npm &>/dev/null; then
+        echo "npm could not be found; ensure Node.js is installed"
+        return 1
+    fi
+
+    pushd tests/integration/client-typescript >/dev/null
+
+    # Determine if TS_CLIENT_PATH is a directory path or an npm version
+    if [[ -d "$TS_CLIENT_PATH" ]]; then
+        # It's a directory path - use local checkout
+        if [[ ! -f "$TS_CLIENT_PATH/package.json" ]]; then
+            echo "Error: $TS_CLIENT_PATH exists but doesn't look like llama-stack-client-typescript (no package.json)"
+            popd >/dev/null
+            return 1
+        fi
+        echo "Using local llama-stack-client-typescript from: $TS_CLIENT_PATH"
+
+        # Build the TypeScript client first
+        echo "Building TypeScript client..."
+        pushd "$TS_CLIENT_PATH" >/dev/null
+        npm install --silent
+        npm run build --silent
+        popd >/dev/null
+
+        # Install other dependencies first
+        if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+            npm ci --silent
+        else
+            npm install --silent
+        fi
+
+        # Then install the client from local directory
+        echo "Installing llama-stack-client from: $TS_CLIENT_PATH"
+        npm install "$TS_CLIENT_PATH" --silent
+    else
+        # It's an npm version specifier - install from npm
+        echo "Installing llama-stack-client@${TS_CLIENT_PATH} from npm"
+        if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+            npm ci --silent
+            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+        else
+            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+        fi
+    fi
+
+    # Verify installation
+    echo "Verifying llama-stack-client installation..."
+    if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
+        echo "✅ llama-stack-client successfully installed"
+        npm list llama-stack-client
+    else
+        echo "❌ llama-stack-client not found in node_modules"
+        echo "Installed packages:"
+        npm list --depth=0
+        popd >/dev/null
+        return 1
+    fi
+
+    echo "Running TypeScript tests for suite $TEST_SUITE (setup $TEST_SETUP)"
+    npm test
+
+    popd >/dev/null
+}
+
 # Start Llama Stack Server if needed
 if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     # Find an available port for the server
@@ -210,6 +296,7 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         exit 1
     fi
     export LLAMA_STACK_PORT
+    export TEST_API_BASE_URL="http://localhost:$LLAMA_STACK_PORT"
     echo "Will use port: $LLAMA_STACK_PORT"
 
     stop_server() {
@@ -287,6 +374,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
         exit 1
     fi
     export LLAMA_STACK_PORT
+    export TEST_API_BASE_URL="http://localhost:$LLAMA_STACK_PORT"
     echo "Will use port: $LLAMA_STACK_PORT"
 
     echo "=== Building Docker Image for distribution: $DISTRO ==="
@@ -338,6 +426,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     DOCKER_ENV_VARS=""
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_INFERENCE_MODE=$INFERENCE_MODE"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_STACK_CONFIG_TYPE=server"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_MCP_HOST=${LLAMA_STACK_TEST_MCP_HOST:-host.docker.internal}"
     # Disabled: https://github.com/llamastack/llama-stack/issues/4089
     #DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${COLLECTOR_PORT}"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_METRIC_EXPORT_INTERVAL=200"
@@ -371,8 +460,11 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     # Use regular port mapping instead
     NETWORK_MODE=""
     PORT_MAPPINGS=""
+    ADD_HOST_FLAG=""
     if [[ "$(uname)" != "Darwin" ]] && [[ "$(uname)" != *"MINGW"* ]]; then
         NETWORK_MODE="--network host"
+        # On Linux with host network, also add host.docker.internal mapping for consistency
+        ADD_HOST_FLAG="--add-host=host.docker.internal:host-gateway"
     else
         # On non-Linux (macOS, Windows), need explicit port mappings for both app and telemetry
         PORT_MAPPINGS="-p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT -p $COLLECTOR_PORT:$COLLECTOR_PORT"
@@ -381,6 +473,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
 
     docker run -d $NETWORK_MODE --name "$container_name" \
         $PORT_MAPPINGS \
+        $ADD_HOST_FLAG \
         $DOCKER_ENV_VARS \
         "$IMAGE_NAME" \
         --port $LLAMA_STACK_PORT
@@ -457,16 +550,23 @@ if [[ -n "$STACK_CONFIG" ]]; then
     STACK_CONFIG_ARG="--stack-config=$STACK_CONFIG"
 fi
 
-pytest -s -v $PYTEST_TARGET \
-    $STACK_CONFIG_ARG \
-    --inference-mode="$INFERENCE_MODE" \
-    -k "$PYTEST_PATTERN" \
-    $EXTRA_PARAMS \
-    --color=yes \
-    --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
-    --color=yes $EXTRA_PARAMS \
-    --capture=tee-sys
-exit_code=$?
+# Run Python tests unless typescript-only mode
+if [[ "$TYPESCRIPT_ONLY" == "false" ]]; then
+    pytest -s -v $PYTEST_TARGET \
+        $STACK_CONFIG_ARG \
+        --inference-mode="$INFERENCE_MODE" \
+        -k "$PYTEST_PATTERN" \
+        $EXTRA_PARAMS \
+        --color=yes \
+        --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
+        --color=yes $EXTRA_PARAMS \
+        --capture=tee-sys
+    exit_code=$?
+else
+    echo "Skipping Python tests (--typescript-only mode)"
+    exit_code=0
+fi
+
 set +x
 set -e
 
@@ -488,6 +588,11 @@ else
     fi
 
     exit 1
+fi
+
+# Run TypeScript client tests if TS_CLIENT_PATH is set
+if [[ $exit_code -eq 0 && -n "${TS_CLIENT_PATH:-}" && "${LLAMA_STACK_TEST_STACK_CONFIG_TYPE:-}" == "server" ]]; then
+    run_client_ts_tests
 fi
 
 echo ""

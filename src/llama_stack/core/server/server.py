@@ -31,8 +31,6 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from openai import BadRequestError
 from pydantic import BaseModel, ValidationError
 
-from llama_stack.apis.common.errors import ConflictError, ResourceNotFoundError
-from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
     AuthenticationRequiredError,
@@ -58,7 +56,7 @@ from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger, setup_logging
-from llama_stack.providers.datatypes import Api
+from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
@@ -526,8 +524,8 @@ def extract_path_params(route: str) -> list[str]:
 
 def remove_disabled_providers(obj):
     if isinstance(obj, dict):
-        keys = ["provider_id", "shield_id", "provider_model_id", "model_id"]
-        if any(k in obj and obj[k] in ("__disabled__", "", None) for k in keys):
+        # Filter out items where provider_id is explicitly disabled or empty
+        if "provider_id" in obj and obj["provider_id"] in ("__disabled__", "", None):
             return None
         return {k: v for k, v in ((k, remove_disabled_providers(v)) for k, v in obj.items()) if v is not None}
     elif isinstance(obj, list):

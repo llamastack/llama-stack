@@ -42,8 +42,8 @@ client.initialize()
 #### Create a safety shield
 
 ```python
-from llama_stack.apis.safety import Shield
-from llama_stack.apis.inference import Message
+from llama_stack_api.safety import Shield
+from llama_stack_api.inference import Message
 
 # Create a safety shield
 shield = Shield(

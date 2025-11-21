@@ -9,18 +9,16 @@ from urllib.parse import urljoin
 import httpx
 from pydantic import ConfigDict
 
-from llama_stack.apis.inference import (
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
+    HealthResponse,
+    HealthStatus,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
     ToolChoice,
 )
-from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import (
-    HealthResponse,
-    HealthStatus,
-)
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import VLLMInferenceAdapterConfig
 
@@ -41,12 +39,12 @@ class VLLMInferenceAdapter(OpenAIMixin):
 
     def get_base_url(self) -> str:
         """Get the base URL from config."""
-        if not self.config.url:
+        if not self.config.base_url:
             raise ValueError("No base URL configured")
-        return self.config.url
+        return str(self.config.base_url)
 
     async def initialize(self) -> None:
-        if not self.config.url:
+        if not self.config.base_url:
             raise ValueError(
                 "You must provide a URL in run.yaml (or via the VLLM_URL environment variable) to use vLLM."
             )

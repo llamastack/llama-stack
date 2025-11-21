@@ -13,8 +13,8 @@ from collections.abc import Generator
 
 import pytest
 
-from llama_stack.apis.safety import ViolationLevel
 from llama_stack.models.llama.sku_types import CoreModelId
+from llama_stack_api import ViolationLevel
 
 # Llama Guard models available for text and vision shields
 LLAMA_GUARD_TEXT_MODELS = [CoreModelId.llama_guard_4_12b.value]

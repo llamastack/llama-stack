@@ -10,7 +10,13 @@ from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
 
 import pytest
 
-from llama_stack.apis.inference import (
+from llama_stack.core.routers.inference import InferenceRouter
+from llama_stack.core.routing_tables.models import ModelsRoutingTable
+from llama_stack.providers.remote.inference.vllm.config import VLLMInferenceAdapterConfig
+from llama_stack.providers.remote.inference.vllm.vllm import VLLMInferenceAdapter
+from llama_stack_api import (
+    HealthStatus,
+    Model,
     OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -20,12 +26,6 @@ from llama_stack.apis.inference import (
     OpenAICompletionRequestWithExtraBody,
     ToolChoice,
 )
-from llama_stack.apis.models import Model
-from llama_stack.core.routers.inference import InferenceRouter
-from llama_stack.core.routing_tables.models import ModelsRoutingTable
-from llama_stack.providers.datatypes import HealthStatus
-from llama_stack.providers.remote.inference.vllm.config import VLLMInferenceAdapterConfig
-from llama_stack.providers.remote.inference.vllm.vllm import VLLMInferenceAdapter
 
 # These are unit test for the remote vllm provider
 # implementation. This should only contain tests which are specific to
@@ -40,7 +40,7 @@ from llama_stack.providers.remote.inference.vllm.vllm import VLLMInferenceAdapte
 
 @pytest.fixture(scope="function")
 async def vllm_inference_adapter():
-    config = VLLMInferenceAdapterConfig(url="http://mocked.localhost:12345")
+    config = VLLMInferenceAdapterConfig(base_url="http://mocked.localhost:12345")
     inference_adapter = VLLMInferenceAdapter(config=config)
     inference_adapter.model_store = AsyncMock()
     await inference_adapter.initialize()
@@ -204,7 +204,7 @@ async def test_vllm_completion_extra_body():
     via extra_body to the underlying OpenAI client through the InferenceRouter.
     """
     # Set up the vLLM adapter
-    config = VLLMInferenceAdapterConfig(url="http://mocked.localhost:12345")
+    config = VLLMInferenceAdapterConfig(base_url="http://mocked.localhost:12345")
     vllm_adapter = VLLMInferenceAdapter(config=config)
     vllm_adapter.__provider_id__ = "vllm"
     await vllm_adapter.initialize()
@@ -277,7 +277,7 @@ async def test_vllm_chat_completion_extra_body():
     via extra_body to the underlying OpenAI client through the InferenceRouter for chat completion.
     """
     # Set up the vLLM adapter
-    config = VLLMInferenceAdapterConfig(url="http://mocked.localhost:12345")
+    config = VLLMInferenceAdapterConfig(base_url="http://mocked.localhost:12345")
     vllm_adapter = VLLMInferenceAdapter(config=config)
     vllm_adapter.__provider_id__ = "vllm"
     await vllm_adapter.initialize()

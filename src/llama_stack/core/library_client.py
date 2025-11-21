@@ -19,6 +19,8 @@ import httpx
 import yaml
 from fastapi import Response as FastAPIResponse
 
+from llama_stack.core.utils.type_inspection import is_unwrapped_body_param
+
 try:
     from llama_stack_client import (
         NOT_GIVEN,
@@ -40,24 +42,16 @@ from termcolor import cprint
 from llama_stack.core.build import print_pip_install_help
 from llama_stack.core.configure import parse_and_maybe_upgrade_config
 from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
-from llama_stack.core.request_headers import (
-    PROVIDER_DATA_VAR,
-    request_provider_data_context,
-)
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR, request_provider_data_context
 from llama_stack.core.resolver import ProviderRegistry
 from llama_stack.core.server.routes import RouteImpls, find_matching_route, initialize_route_impls
-from llama_stack.core.stack import (
-    Stack,
-    get_stack_run_config_from_distro,
-    replace_env_vars,
-)
+from llama_stack.core.stack import Stack, get_stack_run_config_from_distro, replace_env_vars
 from llama_stack.core.telemetry import Telemetry
 from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
 from llama_stack.log import get_logger, setup_logging
-from llama_stack.strong_typing.inspection import is_unwrapped_body_param
 
 logger = get_logger(name=__name__, category="core")
 
@@ -388,6 +382,12 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         matched_func, path_params, route_path, webmethod = find_matching_route(options.method, path, self.route_impls)
         body |= path_params
+
+        # Pass through params that aren't already handled as path params
+        if options.params:
+            extra_query_params = {k: v for k, v in options.params.items() if k not in path_params}
+            if extra_query_params:
+                body["extra_query"] = extra_query_params
 
         body, field_names = self._handle_file_uploads(options, body)
 

@@ -33,10 +33,6 @@ from torch.distributed.launcher.api import LaunchConfig, elastic_launch
 
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import GenerationResult
-from llama_stack.providers.utils.inference.prompt_adapter import (
-    ChatCompletionRequestWithRawContent,
-    CompletionRequestWithRawContent,
-)
 
 log = get_logger(name=__name__, category="inference")
 
@@ -69,10 +65,7 @@ class CancelSentinel(BaseModel):
 
 class TaskRequest(BaseModel):
     type: Literal[ProcessingMessageName.task_request] = ProcessingMessageName.task_request
-    task: tuple[
-        str,
-        list[CompletionRequestWithRawContent] | list[ChatCompletionRequestWithRawContent],
-    ]
+    task: tuple[str, list]
 
 
 class TaskResponse(BaseModel):
@@ -328,10 +321,7 @@ class ModelParallelProcessGroup:
 
     def run_inference(
         self,
-        req: tuple[
-            str,
-            list[CompletionRequestWithRawContent] | list[ChatCompletionRequestWithRawContent],
-        ],
+        req: tuple[str, list],
     ) -> Generator:
         assert not self.running, "inference already running"
 

@@ -6,22 +6,22 @@
 
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, HttpUrl
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.schema_utils import json_schema_type
+from llama_stack_api import json_schema_type
 
 
 @json_schema_type
 class FireworksImplConfig(RemoteInferenceProviderConfig):
-    url: str = Field(
-        default="https://api.fireworks.ai/inference/v1",
+    base_url: HttpUrl | None = Field(
+        default=HttpUrl("https://api.fireworks.ai/inference/v1"),
         description="The URL for the Fireworks server",
     )
 
     @classmethod
     def sample_run_config(cls, api_key: str = "${env.FIREWORKS_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {
-            "url": "https://api.fireworks.ai/inference/v1",
+            "base_url": "https://api.fireworks.ai/inference/v1",
             "api_key": api_key,
         }

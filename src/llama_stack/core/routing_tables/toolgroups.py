@@ -6,11 +6,17 @@
 
 from typing import Any
 
-from llama_stack.apis.common.content_types import URL
-from llama_stack.apis.common.errors import ToolGroupNotFoundError
-from llama_stack.apis.tools import ListToolDefsResponse, ListToolGroupsResponse, ToolDef, ToolGroup, ToolGroups
 from llama_stack.core.datatypes import AuthenticationRequiredError, ToolGroupWithOwner
 from llama_stack.log import get_logger
+from llama_stack_api import (
+    URL,
+    ListToolDefsResponse,
+    ListToolGroupsResponse,
+    ToolDef,
+    ToolGroup,
+    ToolGroupNotFoundError,
+    ToolGroups,
+)
 
 from .common import CommonRoutingTableImpl
 
@@ -43,7 +49,9 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
             routing_key = self.tool_to_toolgroup[routing_key]
         return await super().get_provider_impl(routing_key, provider_id)
 
-    async def list_tools(self, toolgroup_id: str | None = None) -> ListToolDefsResponse:
+    async def list_tools(
+        self, toolgroup_id: str | None = None, authorization: str | None = None
+    ) -> ListToolDefsResponse:
         if toolgroup_id:
             if group_id := parse_toolgroup_from_toolgroup_name_pair(toolgroup_id):
                 toolgroup_id = group_id
@@ -55,7 +63,7 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
         for toolgroup in toolgroups:
             if toolgroup.identifier not in self.toolgroups_to_tools:
                 try:
-                    await self._index_tools(toolgroup)
+                    await self._index_tools(toolgroup, authorization=authorization)
                 except AuthenticationRequiredError:
                     # Send authentication errors back to the client so it knows
                     # that it needs to supply credentials for remote MCP servers.
@@ -70,9 +78,11 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
 
         return ListToolDefsResponse(data=all_tools)
 
-    async def _index_tools(self, toolgroup: ToolGroup):
+    async def _index_tools(self, toolgroup: ToolGroup, authorization: str | None = None):
         provider_impl = await super().get_provider_impl(toolgroup.identifier, toolgroup.provider_id)
-        tooldefs_response = await provider_impl.list_runtime_tools(toolgroup.identifier, toolgroup.mcp_endpoint)
+        tooldefs_response = await provider_impl.list_runtime_tools(
+            toolgroup.identifier, toolgroup.mcp_endpoint, authorization=authorization
+        )
 
         tooldefs = tooldefs_response.data
         for t in tooldefs:

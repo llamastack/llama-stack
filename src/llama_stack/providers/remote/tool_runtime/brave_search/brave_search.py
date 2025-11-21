@@ -8,17 +8,17 @@ from typing import Any
 
 import httpx
 
-from llama_stack.apis.common.content_types import URL
-from llama_stack.apis.tools import (
+from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.models.llama.datatypes import BuiltinTool
+from llama_stack_api import (
+    URL,
     ListToolDefsResponse,
     ToolDef,
     ToolGroup,
+    ToolGroupsProtocolPrivate,
     ToolInvocationResult,
     ToolRuntime,
 )
-from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.models.llama.datatypes import BuiltinTool
-from llama_stack.providers.datatypes import ToolGroupsProtocolPrivate
 
 from .config import BraveSearchToolConfig
 
@@ -48,7 +48,10 @@ class BraveSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRe
         return provider_data.brave_search_api_key
 
     async def list_runtime_tools(
-        self, tool_group_id: str | None = None, mcp_endpoint: URL | None = None
+        self,
+        tool_group_id: str | None = None,
+        mcp_endpoint: URL | None = None,
+        authorization: str | None = None,
     ) -> ListToolDefsResponse:
         return ListToolDefsResponse(
             data=[
@@ -70,7 +73,9 @@ class BraveSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRe
             ]
         )
 
-    async def invoke_tool(self, tool_name: str, kwargs: dict[str, Any]) -> ToolInvocationResult:
+    async def invoke_tool(
+        self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
+    ) -> ToolInvocationResult:
         api_key = self._get_api_key()
         url = "https://api.search.brave.com/res/v1/web/search"
         headers = {

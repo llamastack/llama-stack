@@ -11,17 +11,22 @@ from urllib.parse import urlparse
 import chromadb
 from numpy.typing import NDArray
 
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack.apis.vector_stores import VectorStore
+from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
 from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
-from llama_stack.providers.utils.kvstore import kvstore_impl
-from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack_api import (
+    Chunk,
+    Files,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoresProtocolPrivate,
+)
+from llama_stack_api.internal.kvstore import KVStore
 
 from .config import ChromaVectorIOConfig as RemoteChromaVectorIOConfig
 
@@ -131,7 +136,6 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
 
     async def initialize(self) -> None:
         self.kvstore = await kvstore_impl(self.config.persistence)
-        self.vector_store_table = self.kvstore
 
         if isinstance(self.config, RemoteChromaVectorIOConfig):
             log.info(f"Connecting to Chroma server at: {self.config.url}")
@@ -190,9 +194,16 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         if vector_store_id in self.cache:
             return self.cache[vector_store_id]
 
-        vector_store = await self.vector_store_table.get_vector_store(vector_store_id)
-        if not vector_store:
+        # Try to load from kvstore
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before using vector stores.")
+
+        key = f"{VECTOR_DBS_PREFIX}{vector_store_id}"
+        vector_store_data = await self.kvstore.get(key)
+        if not vector_store_data:
             raise ValueError(f"Vector DB {vector_store_id} not found in Llama Stack")
+
+        vector_store = VectorStore.model_validate_json(vector_store_data)
         collection = await maybe_await(self.client.get_collection(vector_store_id))
         if not collection:
             raise ValueError(f"Vector DB {vector_store_id} not found in Chroma")
