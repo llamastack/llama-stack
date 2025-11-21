@@ -102,7 +102,6 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar eval: Model evaluation and benchmarking framework
     :cvar post_training: Fine-tuning and model training
     :cvar tool_runtime: Tool execution and management
-    :cvar telemetry: Observability and system monitoring
     :cvar models: Model metadata and management
     :cvar shields: Safety shield implementations
     :cvar datasets: Dataset creation and management

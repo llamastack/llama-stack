@@ -116,10 +116,6 @@ The following environment variables can be configured:
 - `BRAVE_SEARCH_API_KEY`: Brave Search API key
 - `TAVILY_SEARCH_API_KEY`: Tavily Search API key
 
-### Telemetry Configuration
-- `OTEL_SERVICE_NAME`: OpenTelemetry service name
-- `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint URL
-
 ## Enabling Providers
 
 You can enable specific providers by setting appropriate environment variables. For example,
