@@ -125,7 +125,7 @@ class NeMoGuardrails:
 
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         """
-        Queries the /v1/guardrails/checks endpoint of the NeMo guardrails deployed API.
+        Queries the /v1/chat/completions endpoint of the NeMo guardrails deployed API.
 
         Args:
             messages (List[Message]): A list of Message objects to be checked for safety violations.
@@ -138,19 +138,10 @@ class NeMoGuardrails:
             requests.HTTPError: If the POST request fails.
         """
         request_data = {
-            "model": self.model,
+            "config_id": self.config_id,
             "messages": [{"role": message.role, "content": message.content} for message in messages],
-            "temperature": self.temperature,
-            "top_p": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "max_tokens": 160,
-            "stream": False,
-            "guardrails": {
-                "config_id": self.config_id,
-            },
         }
-        response = await self._guardrails_post(path="/v1/guardrail/checks", data=request_data)
+        response = await self._guardrails_post(path="/v1/chat/completions", data=request_data)
 
         if response["status"] == "blocked":
             user_message = "Sorry I cannot do this."
