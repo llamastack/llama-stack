@@ -14,7 +14,6 @@ import faiss  # type: ignore[import-untyped]
 import numpy as np
 from numpy.typing import NDArray
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
@@ -190,12 +189,10 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         config: FaissVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
-        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.vector_stores_config = vector_stores_config
         self.cache: dict[str, VectorStoreWithIndex] = {}
 
     async def initialize(self) -> None:
@@ -211,7 +208,6 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
                 vector_store,
                 await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
                 self.inference_api,
-                self.vector_stores_config,
             )
             self.cache[vector_store.identifier] = index
 
@@ -250,7 +246,6 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
             vector_store=vector_store,
             index=await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
 
     async def list_vector_stores(self) -> list[VectorStore]:
@@ -284,7 +279,6 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
             vector_store=vector_store,
             index=await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
         self.cache[vector_store_id] = index
         return index

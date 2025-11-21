@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack_api import Api, ProviderSpec
 
 from .config import WeaviateVectorIOConfig
@@ -13,10 +12,9 @@ from .config import WeaviateVectorIOConfig
 async def get_adapter_impl(
     config: WeaviateVectorIOConfig,
     deps: dict[Api, ProviderSpec],
-    vector_stores_config: VectorStoresConfig | None = None,
 ):
     from .weaviate import WeaviateVectorIOAdapter
 
-    impl = WeaviateVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files), vector_stores_config)
+    impl = WeaviateVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
     await impl.initialize()
     return impl

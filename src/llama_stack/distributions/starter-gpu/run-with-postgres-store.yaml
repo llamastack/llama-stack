@@ -297,5 +297,7 @@ vector_stores:
 
 
     Improved query:'
+  query_expansion_max_tokens: 100
+  query_expansion_temperature: 0.3
 safety:
   default_shield_id: llama-guard

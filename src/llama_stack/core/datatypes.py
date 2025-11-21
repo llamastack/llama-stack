@@ -18,6 +18,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
+from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_EXPANSION_PROMPT
 from llama_stack_api import (
     Api,
     Benchmark,
@@ -365,8 +366,16 @@ class VectorStoresConfig(BaseModel):
         description="Default LLM model for query expansion/rewriting in vector search.",
     )
     query_expansion_prompt: str = Field(
-        default="Expand this query with relevant synonyms and related terms. Return only the improved query, no explanations:\n\n{query}\n\nImproved query:",
+        default=DEFAULT_QUERY_EXPANSION_PROMPT,
         description="Prompt template for query expansion. Use {query} as placeholder for the original query.",
+    )
+    query_expansion_max_tokens: int = Field(
+        default=100,
+        description="Maximum number of tokens for query expansion responses.",
+    )
+    query_expansion_temperature: float = Field(
+        default=0.3,
+        description="Temperature for query expansion model (0.0 = deterministic, 1.0 = creative).",
     )
 
 

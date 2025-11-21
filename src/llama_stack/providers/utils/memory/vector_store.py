@@ -17,7 +17,6 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
-from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -30,18 +29,17 @@ from llama_stack_api import (
     Chunk,
     ChunkMetadata,
     InterleavedContent,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksResponse,
     RAGDocument,
     VectorStore,
 )
-from llama_stack_api.inference import (
-    OpenAIChatCompletionRequestWithExtraBody,
-    OpenAIUserMessageParam,
-)
-from llama_stack_api.models import ModelType
 
 log = get_logger(name=__name__, category="providers::utils")
+
+from llama_stack.providers.utils.memory import query_expansion_config
+from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_EXPANSION_PROMPT
 
 
 class ChunkForDeletion(BaseModel):
@@ -268,7 +266,6 @@ class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Api.inference
-    vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(
         self,
@@ -296,6 +293,39 @@ class VectorStoreWithIndex:
         embeddings = np.array([c.embedding for c in chunks], dtype=np.float32)
         await self.index.add_chunks(chunks, embeddings)
 
+    async def _rewrite_query_for_file_search(self, query: str) -> str:
+        """Rewrite a search query using the globally configured LLM model for better retrieval results."""
+        if not query_expansion_config._DEFAULT_QUERY_EXPANSION_MODEL:
+            log.debug("No default query expansion model configured, using original query")
+            return query
+
+        model_id = f"{query_expansion_config._DEFAULT_QUERY_EXPANSION_MODEL.provider_id}/{query_expansion_config._DEFAULT_QUERY_EXPANSION_MODEL.model_id}"
+
+        # Use custom prompt from config if provided, otherwise use built-in default
+        # Users only need to configure the model - prompt is automatic with optional override
+        if query_expansion_config._QUERY_EXPANSION_PROMPT_OVERRIDE:
+            # Custom prompt from config - format if it contains {query} placeholder
+            prompt = (
+                query_expansion_config._QUERY_EXPANSION_PROMPT_OVERRIDE.format(query=query)
+                if "{query}" in query_expansion_config._QUERY_EXPANSION_PROMPT_OVERRIDE
+                else query_expansion_config._QUERY_EXPANSION_PROMPT_OVERRIDE
+            )
+        else:
+            # Use built-in default prompt and format with query
+            prompt = DEFAULT_QUERY_EXPANSION_PROMPT.format(query=query)
+
+        request = OpenAIChatCompletionRequestWithExtraBody(
+            model=model_id,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=query_expansion_config._DEFAULT_QUERY_EXPANSION_MAX_TOKENS,
+            temperature=query_expansion_config._DEFAULT_QUERY_EXPANSION_TEMPERATURE,
+        )
+
+        response = await self.inference_api.openai_chat_completion(request)
+        rewritten_query = response.choices[0].message.content.strip()
+        log.debug(f"Query rewritten: '{query}' → '{rewritten_query}'")
+        return rewritten_query
+
     async def query_chunks(
         self,
         query: InterleavedContent,
@@ -303,10 +333,6 @@ class VectorStoreWithIndex:
     ) -> QueryChunksResponse:
         if params is None:
             params = {}
-
-        # Extract configuration if provided by router
-        if "vector_stores_config" in params:
-            self.vector_stores_config = params["vector_stores_config"]
 
         k = params.get("max_chunks", 3)
         mode = params.get("mode")
@@ -331,18 +357,9 @@ class VectorStoreWithIndex:
 
         query_string = interleaved_content_as_str(query)
 
-        # Apply query rewriting if enabled
+        # Apply query rewriting if enabled and model is configured
         if params.get("rewrite_query", False):
-            if self.vector_stores_config:
-                log.debug(f"VectorStoreWithIndex received config: {self.vector_stores_config}")
-                if hasattr(self.vector_stores_config, "default_query_expansion_model"):
-                    log.debug(
-                        f"Config has default_query_expansion_model: {self.vector_stores_config.default_query_expansion_model}"
-                    )
-            else:
-                log.debug("No vector_stores_config found - cannot perform query rewriting")
-
-            query_string = await self._rewrite_query_for_search(query_string)
+            query_string = await self._rewrite_query_for_file_search(query_string)
 
         if mode == "keyword":
             return await self.index.query_keyword(query_string, k, score_threshold)
@@ -359,88 +376,3 @@ class VectorStoreWithIndex:
             )
         else:
             return await self.index.query_vector(query_vector, k, score_threshold)
-
-    async def _rewrite_query_for_search(self, query: str) -> str:
-        """Rewrite the user query to improve vector search performance.
-
-        :param query: The original user query
-        :returns: The rewritten query optimized for vector search
-        """
-        expansion_model = None
-
-        # Check for per-store query expansion model first
-        if self.vector_store.query_expansion_model:
-            # Parse the model string into provider_id and model_id
-            model_parts = self.vector_store.query_expansion_model.split("/", 1)
-            if len(model_parts) == 2:
-                expansion_model = QualifiedModel(provider_id=model_parts[0], model_id=model_parts[1])
-                log.debug(f"Using per-store query expansion model: {expansion_model}")
-            else:
-                log.warning(
-                    f"Invalid query_expansion_model format: {self.vector_store.query_expansion_model}. Expected 'provider_id/model_id'"
-                )
-
-        # Fall back to global default if no per-store model
-        if not expansion_model:
-            if not self.vector_stores_config:
-                raise ValueError(
-                    f"No vector_stores_config found and no per-store query_expansion_model! self.vector_stores_config is: {self.vector_stores_config}"
-                )
-            if not self.vector_stores_config.default_query_expansion_model:
-                raise ValueError(
-                    f"No default_query_expansion_model configured and no per-store query_expansion_model! vector_stores_config: {self.vector_stores_config}, default_query_expansion_model: {self.vector_stores_config.default_query_expansion_model}"
-                )
-            expansion_model = self.vector_stores_config.default_query_expansion_model
-            log.debug(f"Using global default query expansion model: {expansion_model}")
-
-        chat_model = f"{expansion_model.provider_id}/{expansion_model.model_id}"
-
-        # Validate that the model is available and is an LLM
-        try:
-            models_response = await self.inference_api.routing_table.list_models()
-        except Exception as e:
-            raise RuntimeError(f"Failed to list available models for validation: {e}") from e
-
-        model_found = False
-        for model in models_response.data:
-            if model.identifier == chat_model:
-                if model.model_type != ModelType.llm:
-                    raise ValueError(
-                        f"Configured query expansion model '{chat_model}' is not an LLM model "
-                        f"(found type: {model.model_type}). Query rewriting requires an LLM model."
-                    )
-                model_found = True
-                break
-
-        if not model_found:
-            available_llm_models = [m.identifier for m in models_response.data if m.model_type == ModelType.llm]
-            raise ValueError(
-                f"Configured query expansion model '{chat_model}' is not available. "
-                f"Available LLM models: {available_llm_models}"
-            )
-
-        # Use the configured prompt (has a default value)
-        rewrite_prompt = self.vector_stores_config.query_expansion_prompt.format(query=query)
-
-        chat_request = OpenAIChatCompletionRequestWithExtraBody(
-            model=chat_model,
-            messages=[
-                OpenAIUserMessageParam(
-                    role="user",
-                    content=rewrite_prompt,
-                )
-            ],
-            max_tokens=100,
-        )
-
-        try:
-            response = await self.inference_api.openai_chat_completion(chat_request)
-        except Exception as e:
-            raise RuntimeError(f"Failed to generate rewritten query: {e}") from e
-
-        if response.choices and len(response.choices) > 0:
-            rewritten_query = response.choices[0].message.content.strip()
-            log.info(f"Query rewritten: '{query}' → '{rewritten_query}'")
-            return rewritten_query
-        else:
-            raise RuntimeError("No response received from LLM model for query rewriting")

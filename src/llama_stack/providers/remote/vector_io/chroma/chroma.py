@@ -12,7 +12,6 @@ from urllib.parse import urlparse
 import chromadb
 from numpy.typing import NDArray
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
@@ -225,13 +224,11 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         config: RemoteChromaVectorIOConfig | InlineChromaVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
-        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         log.info(f"Initializing ChromaVectorIOAdapter with url: {config}")
         self.config = config
         self.inference_api = inference_api
-        self.vector_stores_config = vector_stores_config
         self.client = None
         self.cache = {}
         self.vector_store_table = None
@@ -264,7 +261,7 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             )
         )
         self.cache[vector_store.identifier] = VectorStoreWithIndex(
-            vector_store, ChromaIndex(self.client, collection), self.inference_api, self.vector_stores_config
+            vector_store, ChromaIndex(self.client, collection), self.inference_api
         )
 
     async def unregister_vector_store(self, vector_store_id: str) -> None:
@@ -309,9 +306,7 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         collection = await maybe_await(self.client.get_collection(vector_store_id))
         if not collection:
             raise ValueError(f"Vector DB {vector_store_id} not found in Chroma")
-        index = VectorStoreWithIndex(
-            vector_store, ChromaIndex(self.client, collection), self.inference_api, self.vector_stores_config
-        )
+        index = VectorStoreWithIndex(vector_store, ChromaIndex(self.client, collection), self.inference_api)
         self.cache[vector_store_id] = index
         return index
 

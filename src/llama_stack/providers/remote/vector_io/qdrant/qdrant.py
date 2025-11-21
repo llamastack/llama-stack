@@ -13,7 +13,6 @@ from numpy.typing import NDArray
 from qdrant_client import AsyncQdrantClient, models
 from qdrant_client.models import PointStruct
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
@@ -268,14 +267,12 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         config: RemoteQdrantVectorIOConfig | InlineQdrantVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None = None,
-        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.client: AsyncQdrantClient = None
         self.cache = {}
         self.inference_api = inference_api
-        self.vector_stores_config = vector_stores_config
         self.vector_store_table = None
         self._qdrant_lock = asyncio.Lock()
 
@@ -294,7 +291,6 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
                 vector_store,
                 QdrantIndex(self.client, vector_store.identifier),
                 self.inference_api,
-                self.vector_stores_config,
             )
             self.cache[vector_store.identifier] = index
         self.openai_vector_stores = await self._load_openai_vector_stores()
@@ -314,7 +310,6 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             vector_store=vector_store,
             index=QdrantIndex(self.client, vector_store.identifier),
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
 
         self.cache[vector_store.identifier] = index
@@ -346,7 +341,6 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             vector_store=vector_store,
             index=QdrantIndex(client=self.client, collection_name=vector_store.identifier),
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
         self.cache[vector_store_id] = index
         return index

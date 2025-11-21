@@ -11,7 +11,6 @@ from typing import Any
 from numpy.typing import NDArray
 from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusClient, RRFRanker, WeightedRanker
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
@@ -273,14 +272,12 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
-        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.cache = {}
         self.client = None
         self.inference_api = inference_api
-        self.vector_stores_config = vector_stores_config
         self.vector_store_table = None
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
@@ -301,7 +298,6 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
                     kvstore=self.kvstore,
                 ),
                 inference_api=self.inference_api,
-                vector_stores_config=self.vector_stores_config,
             )
             self.cache[vector_store.identifier] = index
         if isinstance(self.config, RemoteMilvusVectorIOConfig):
@@ -329,7 +325,6 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             vector_store=vector_store,
             index=MilvusIndex(self.client, vector_store.identifier, consistency_level=consistency_level),
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
 
         self.cache[vector_store.identifier] = index
@@ -352,7 +347,6 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             vector_store=vector_store,
             index=MilvusIndex(client=self.client, collection_name=vector_store.identifier, kvstore=self.kvstore),
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
         self.cache[vector_store_id] = index
         return index

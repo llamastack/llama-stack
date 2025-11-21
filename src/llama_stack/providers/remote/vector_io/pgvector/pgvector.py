@@ -13,7 +13,6 @@ from psycopg2 import sql
 from psycopg2.extras import Json, execute_values
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
@@ -335,12 +334,10 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         config: PGVectorVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None = None,
-        vector_stores_config: VectorStoresConfig | None = None,
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
-        self.vector_stores_config = vector_stores_config
         self.conn = None
         self.cache = {}
         self.vector_store_table = None
@@ -396,7 +393,6 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 vector_store,
                 index=pgvector_index,
                 inference_api=self.inference_api,
-                vector_stores_config=self.vector_stores_config,
             )
             self.cache[vector_store.identifier] = index
 
@@ -428,7 +424,6 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             vector_store,
             index=pgvector_index,
             inference_api=self.inference_api,
-            vector_stores_config=self.vector_stores_config,
         )
         self.cache[vector_store.identifier] = index
 
@@ -469,9 +464,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         vector_store = VectorStore.model_validate_json(vector_store_data)
         index = PGVectorIndex(vector_store, vector_store.embedding_dimension, self.conn)
         await index.initialize()
-        self.cache[vector_store_id] = VectorStoreWithIndex(
-            vector_store, index, self.inference_api, self.vector_stores_config
-        )
+        self.cache[vector_store_id] = VectorStoreWithIndex(vector_store, index, self.inference_api)
         return self.cache[vector_store_id]
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:

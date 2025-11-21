@@ -99,19 +99,6 @@ class VectorIORouter(VectorIO):
     ) -> QueryChunksResponse:
         logger.debug(f"VectorIORouter.query_chunks: {vector_store_id}")
         provider = await self.routing_table.get_provider_impl(vector_store_id)
-
-        # Ensure params dict exists and add vector_stores_config for query rewriting
-        if params is None:
-            params = {}
-
-        logger.debug(f"Router vector_stores_config: {self.vector_stores_config}")
-        if self.vector_stores_config and hasattr(self.vector_stores_config, "default_query_expansion_model"):
-            logger.debug(
-                f"Router default_query_expansion_model: {self.vector_stores_config.default_query_expansion_model}"
-            )
-
-        params["vector_stores_config"] = self.vector_stores_config
-
         return await provider.query_chunks(vector_store_id, query, params)
 
     # OpenAI Vector Stores API endpoints
