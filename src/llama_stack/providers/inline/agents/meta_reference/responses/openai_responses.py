@@ -476,7 +476,7 @@ class OpenAIResponsesImpl:
             model=model,
             messages=messages,
             response_tools=tools,
-            responses_tool_choice=tool_choice,
+            tool_choice=tool_choice,
             temperature=temperature,
             response_format=response_format,
             tool_context=tool_context,

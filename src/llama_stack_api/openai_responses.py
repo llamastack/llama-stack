@@ -567,11 +567,18 @@ class OpenAIResponseInputToolChoiceFileSearch(BaseModel):
 
 
 @json_schema_type
-class OpenAIResponseInputToolChoiceWebSearch(OpenAIResponseInputToolWebSearch):
-    """Indicates that the model should use web search to generate a response.
+class OpenAIResponseInputToolChoiceWebSearch(BaseModel):
+    """Indicates that the model should use web search to generate a response
 
-    This is an alias for OpenAIResponseInputToolWebSearch used in tool_choice context.
+    :param type: Web search tool type variant to use
     """
+
+    type: (
+        Literal["web_search"]
+        | Literal["web_search_preview"]
+        | Literal["web_search_preview_2025_03_11"]
+        | Literal["web_search_2025_08_26"]
+    ) = "web_search"
 
 
 @json_schema_type
