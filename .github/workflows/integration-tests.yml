@@ -95,7 +95,7 @@ jobs:
 
       - name: Setup Node.js for TypeScript client tests
         if: ${{ matrix.client == 'server' }}
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
           node-version: '20'
           cache: 'npm'
