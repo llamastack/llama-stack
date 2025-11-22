@@ -38,7 +38,7 @@ from llama_stack_api import (
 
 log = get_logger(name=__name__, category="providers::utils")
 
-from llama_stack.providers.utils.memory import query_expansion_config
+from llama_stack.providers.utils.memory import rewrite_query_config
 from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_EXPANSION_PROMPT
 
 
@@ -295,20 +295,20 @@ class VectorStoreWithIndex:
 
     async def _rewrite_query_for_file_search(self, query: str) -> str:
         """Rewrite a search query using the globally configured LLM model for better retrieval results."""
-        if not query_expansion_config._DEFAULT_QUERY_EXPANSION_MODEL:
-            log.debug("No default query expansion model configured, using original query")
+        if not rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL:
+            log.debug("No default query rewriting model configured, using original query")
             return query
 
-        model_id = f"{query_expansion_config._DEFAULT_QUERY_EXPANSION_MODEL.provider_id}/{query_expansion_config._DEFAULT_QUERY_EXPANSION_MODEL.model_id}"
+        model_id = f"{rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL.provider_id}/{rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL.model_id}"
 
         # Use custom prompt from config if provided, otherwise use built-in default
         # Users only need to configure the model - prompt is automatic with optional override
-        if query_expansion_config._QUERY_EXPANSION_PROMPT_OVERRIDE:
+        if rewrite_query_config._REWRITE_QUERY_PROMPT_OVERRIDE:
             # Custom prompt from config - format if it contains {query} placeholder
             prompt = (
-                query_expansion_config._QUERY_EXPANSION_PROMPT_OVERRIDE.format(query=query)
-                if "{query}" in query_expansion_config._QUERY_EXPANSION_PROMPT_OVERRIDE
-                else query_expansion_config._QUERY_EXPANSION_PROMPT_OVERRIDE
+                rewrite_query_config._REWRITE_QUERY_PROMPT_OVERRIDE.format(query=query)
+                if "{query}" in rewrite_query_config._REWRITE_QUERY_PROMPT_OVERRIDE
+                else rewrite_query_config._REWRITE_QUERY_PROMPT_OVERRIDE
             )
         else:
             # Use built-in default prompt and format with query
@@ -317,8 +317,8 @@ class VectorStoreWithIndex:
         request = OpenAIChatCompletionRequestWithExtraBody(
             model=model_id,
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=query_expansion_config._DEFAULT_QUERY_EXPANSION_MAX_TOKENS,
-            temperature=query_expansion_config._DEFAULT_QUERY_EXPANSION_TEMPERATURE,
+            max_tokens=rewrite_query_config._DEFAULT_REWRITE_QUERY_MAX_TOKENS,
+            temperature=rewrite_query_config._DEFAULT_REWRITE_QUERY_TEMPERATURE,
         )
 
         response = await self.inference_api.openai_chat_completion(request)

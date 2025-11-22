@@ -16,7 +16,7 @@ import yaml
 from pydantic import BaseModel
 
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, SafetyConfig, StackConfig, VectorStoresConfig
+from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -222,61 +222,67 @@ async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig
         return
 
     # Validate default embedding model
-    default_embedding_model = vector_stores_config.default_embedding_model
-    if default_embedding_model is not None:
-        provider_id = default_embedding_model.provider_id
-        model_id = default_embedding_model.model_id
-        default_model_id = f"{provider_id}/{model_id}"
+    if vector_stores_config.default_embedding_model is not None:
+        await _validate_embedding_model(vector_stores_config.default_embedding_model, impls)
 
-        if Api.models not in impls:
-            raise ValueError(
-                f"Models API is not available but vector_stores config requires model '{default_model_id}'"
-            )
+    # Validate default rewrite query model
+    if vector_stores_config.rewrite_query_params and vector_stores_config.rewrite_query_params.model:
+        await _validate_rewrite_query_model(vector_stores_config.rewrite_query_params.model, impls)
 
-        models_impl = impls[Api.models]
-        response = await models_impl.list_models()
-        models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
 
-        default_model = models_list.get(default_model_id)
-        if default_model is None:
-            raise ValueError(
-                f"Embedding model '{default_model_id}' not found. Available embedding models: {models_list}"
-            )
+async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict[Api, Any]) -> None:
+    """Validate that an embedding model exists and has required metadata."""
+    provider_id = embedding_model.provider_id
+    model_id = embedding_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
 
-        embedding_dimension = default_model.metadata.get("embedding_dimension")
-        if embedding_dimension is None:
-            raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
+    if Api.models not in impls:
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{model_identifier}'")
 
-        try:
-            int(embedding_dimension)
-        except ValueError as err:
-            raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
 
-        logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
+    model = models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Embedding model '{model_identifier}' not found. Available embedding models: {list(models_list.keys())}"
+        )
 
-    # Validate default query expansion model
-    default_query_expansion_model = vector_stores_config.default_query_expansion_model
-    if default_query_expansion_model is not None:
-        provider_id = default_query_expansion_model.provider_id
-        model_id = default_query_expansion_model.model_id
-        query_model_id = f"{provider_id}/{model_id}"
+    embedding_dimension = model.metadata.get("embedding_dimension")
+    if embedding_dimension is None:
+        raise ValueError(f"Embedding model '{model_identifier}' is missing 'embedding_dimension' in metadata")
 
-        if Api.models not in impls:
-            raise ValueError(
-                f"Models API is not available but vector_stores config requires query expansion model '{query_model_id}'"
-            )
+    try:
+        int(embedding_dimension)
+    except ValueError as err:
+        raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
-        models_impl = impls[Api.models]
-        response = await models_impl.list_models()
-        llm_models_list = {m.identifier: m for m in response.data if m.model_type == "llm"}
+    logger.debug(f"Validated embedding model: {model_identifier} (dimension: {embedding_dimension})")
 
-        query_expansion_model = llm_models_list.get(query_model_id)
-        if query_expansion_model is None:
-            raise ValueError(
-                f"Query expansion model '{query_model_id}' not found. Available LLM models: {list(llm_models_list.keys())}"
-            )
 
-        logger.debug(f"Validated default query expansion model: {query_model_id}")
+async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, impls: dict[Api, Any]) -> None:
+    """Validate that a rewrite query model exists and is accessible."""
+    provider_id = rewrite_query_model.provider_id
+    model_id = rewrite_query_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
+
+    if Api.models not in impls:
+        raise ValueError(
+            f"Models API is not available but vector_stores config requires rewrite query model '{model_identifier}'"
+        )
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    llm_models_list = {m.identifier: m for m in response.data if m.model_type == "llm"}
+
+    model = llm_models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Rewrite query model '{model_identifier}' not found. Available LLM models: {list(llm_models_list.keys())}"
+        )
+
+    logger.debug(f"Validated rewrite query model: {model_identifier}")
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
@@ -543,9 +549,9 @@ class Stack:
         await validate_safety_config(self.run_config.safety, impls)
 
         # Set global query expansion configuration from stack config
-        from llama_stack.providers.utils.memory.query_expansion_config import set_default_query_expansion_config
+        from llama_stack.providers.utils.memory.rewrite_query_config import set_default_rewrite_query_config
 
-        set_default_query_expansion_config(self.run_config.vector_stores)
+        set_default_rewrite_query_config(self.run_config.vector_stores)
 
         self.impls = impls
 
