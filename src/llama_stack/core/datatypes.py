@@ -350,6 +350,27 @@ class QualifiedModel(BaseModel):
     model_id: str
 
 
+class RewriteQueryParams(BaseModel):
+    """Parameters for query rewriting/expansion."""
+
+    model: QualifiedModel | None = Field(
+        default=None,
+        description="LLM model for query rewriting/expansion in vector search.",
+    )
+    prompt: str = Field(
+        default=DEFAULT_QUERY_EXPANSION_PROMPT,
+        description="Prompt template for query rewriting. Use {query} as placeholder for the original query.",
+    )
+    max_tokens: int = Field(
+        default=100,
+        description="Maximum number of tokens for query expansion responses.",
+    )
+    temperature: float = Field(
+        default=0.3,
+        description="Temperature for query expansion model (0.0 = deterministic, 1.0 = creative).",
+    )
+
+
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
 
@@ -361,21 +382,9 @@ class VectorStoresConfig(BaseModel):
         default=None,
         description="Default embedding model configuration for vector stores.",
     )
-    default_query_expansion_model: QualifiedModel | None = Field(
+    rewrite_query_params: RewriteQueryParams | None = Field(
         default=None,
-        description="Default LLM model for query expansion/rewriting in vector search.",
-    )
-    query_expansion_prompt: str = Field(
-        default=DEFAULT_QUERY_EXPANSION_PROMPT,
-        description="Prompt template for query expansion. Use {query} as placeholder for the original query.",
-    )
-    query_expansion_max_tokens: int = Field(
-        default=100,
-        description="Maximum number of tokens for query expansion responses.",
-    )
-    query_expansion_temperature: float = Field(
-        default=0.3,
-        description="Temperature for query expansion model (0.0 = deterministic, 1.0 = creative).",
+        description="Parameters for query rewriting/expansion. None disables query rewriting.",
     )
 
 
