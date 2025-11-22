@@ -10598,18 +10598,9 @@ components:
           - web_search_preview
           - web_search_preview_2025_03_11
           - web_search_2025_08_26
-        search_context_size:
-          anyOf:
-          - type: string
-            pattern: ^low|medium|high$
-          - type: 'null'
-          default: medium
       type: object
       title: OpenAIResponseInputToolChoiceWebSearch
-      description: |-
-        Indicates that the model should use web search to generate a response.
-
-        This is an alias for OpenAIResponseInputToolWebSearch used in tool_choice context.
+      description: Indicates that the model should use web search to generate a response
     OpenAIResponseMessage-Input:
       properties:
         content:
@@ -11110,6 +11101,7 @@ components:
       title: AllowedToolsConfig
       type: object
     CustomToolConfig:
+      description: Custom tool configuration for OpenAI-compatible chat completion requests.
       properties:
         name:
           title: Name
