@@ -577,6 +577,11 @@ class OpenAIChatCompletionToolChoiceFunctionTool(BaseModel):
 
 @json_schema_type
 class CustomToolConfig(BaseModel):
+    """Custom tool configuration for OpenAI-compatible chat completion requests.
+
+    :param name: Name of the custom tool
+    """
+
     name: str
 
 
