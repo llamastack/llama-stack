@@ -255,7 +255,7 @@ class StreamingResponseOrchestrator:
                 self.server_label_to_tools,
             )
             # chat_tool_choice can be str, dict-like object, or None
-            if isinstance(chat_tool_choice, str):
+            if isinstance(chat_tool_choice, str | type(None)):
                 self.ctx.chat_tool_choice = chat_tool_choice
             else:
                 self.ctx.chat_tool_choice = chat_tool_choice.model_dump()
@@ -1389,7 +1389,7 @@ async def _process_tool_choice(
     else:
         # Handle specific tool choice by type
         # Each case validates the tool exists in chat_tools before returning
-        tool_name = responses_tool_choice.name if responses_tool_choice.name else None
+        tool_name = getattr(responses_tool_choice, "name", None)
         match responses_tool_choice:
             case OpenAIResponseInputToolChoiceCustomTool():
                 if tool_name and tool_name not in chat_tool_names:
