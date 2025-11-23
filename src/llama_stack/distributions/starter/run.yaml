@@ -47,7 +47,7 @@ providers:
   - provider_id: bedrock
     provider_type: remote::bedrock
     config:
-      api_key: ${env.AWS_BEDROCK_API_KEY:=}
+      api_key: ${env.AWS_BEARER_TOKEN_BEDROCK:=}
       region_name: ${env.AWS_DEFAULT_REGION:=us-east-2}
   - provider_id: ${env.NVIDIA_API_KEY:+nvidia}
     provider_type: remote::nvidia
