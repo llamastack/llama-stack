@@ -6,20 +6,11 @@
 from aiohttp import hdrs
 
 from llama_stack.core.external import ExternalApiSpec
-from llama_stack.core.server.fastapi_router_registry import _ROUTER_FACTORIES
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.core.telemetry.tracing import end_trace, start_trace
 from llama_stack.log import get_logger
-from llama_stack_api.version import (
-    LLAMA_STACK_API_V1,
-    LLAMA_STACK_API_V1ALPHA,
-    LLAMA_STACK_API_V1BETA,
-)
 
 logger = get_logger(name=__name__, category="core::server")
-
-# Valid API version levels - all routes must start with one of these
-VALID_API_LEVELS = {LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA, LLAMA_STACK_API_V1BETA}
 
 
 class TracingMiddleware:
@@ -29,19 +20,6 @@ class TracingMiddleware:
         self.external_apis = external_apis
         # FastAPI built-in paths that should bypass custom routing
         self.fastapi_paths = ("/docs", "/redoc", "/openapi.json", "/favicon.ico", "/static")
-
-    def _is_router_based_route(self, path: str) -> bool:
-        """Check if a path belongs to a router-based API.
-
-        Router-based APIs use FastAPI routers instead of the old webmethod system.
-        Paths must start with a valid API level (v1, v1alpha, v1beta) followed by an API name.
-        """
-        parts = path.strip("/").split("/")
-        if len(parts) < 2 or parts[0] not in VALID_API_LEVELS:
-            return False
-
-        # Check directly if the API name is in the router factories list
-        return parts[1] in _ROUTER_FACTORIES
 
     async def __call__(self, scope, receive, send):
         if scope.get("type") == "lifespan":
@@ -54,44 +32,6 @@ class TracingMiddleware:
             # Pass through to FastAPI's built-in handlers
             logger.debug(f"Bypassing custom routing for FastAPI built-in path: {path}")
             return await self.app(scope, receive, send)
-
-        # Check if this is a router-based route - if so, pass through to FastAPI
-        # Router-based routes are handled by FastAPI directly, so we skip the old route lookup
-        # but still need to set up tracing
-        is_router_based = self._is_router_based_route(path)
-        if is_router_based:
-            logger.debug(f"Router-based route detected: {path}, setting up tracing")
-            # Set up tracing for router-based routes
-            trace_attributes = {"__location__": "server", "raw_path": path}
-
-            # Extract W3C trace context headers and store as trace attributes
-            headers = dict(scope.get("headers", []))
-            traceparent = headers.get(b"traceparent", b"").decode()
-            if traceparent:
-                trace_attributes["traceparent"] = traceparent
-            tracestate = headers.get(b"tracestate", b"").decode()
-            if tracestate:
-                trace_attributes["tracestate"] = tracestate
-
-            trace_context = await start_trace(path, trace_attributes)
-
-            async def send_with_trace_id(message):
-                if message["type"] == "http.response.start":
-                    headers = message.get("headers", [])
-                    headers.append([b"x-trace-id", str(trace_context.trace_id).encode()])
-                    message["headers"] = headers
-                await send(message)
-
-            try:
-                return await self.app(scope, receive, send_with_trace_id)
-            finally:
-                # Always end trace, even if exception occurred
-                # FastAPI's exception handler will handle the exception and send the response
-                # The exception will continue to propagate for logging, which is normal
-                try:
-                    await end_trace()
-                except Exception:
-                    logger.exception("Error ending trace")
 
         if not hasattr(self, "route_impls"):
             self.route_impls = initialize_route_impls(self.impls, self.external_apis)
