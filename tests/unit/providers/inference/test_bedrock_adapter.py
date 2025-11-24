@@ -40,8 +40,8 @@ def test_api_key_from_header_overrides_config():
     """Test API key from request header overrides config via client property"""
     config = BedrockConfig(api_key="config-key", region_name="us-east-1")
     adapter = BedrockInferenceAdapter(config=config)
-    adapter.provider_data_api_key_field = "aws_bedrock_api_key"
-    adapter.get_request_provider_data = MagicMock(return_value=SimpleNamespace(aws_bedrock_api_key="header-key"))
+    adapter.provider_data_api_key_field = "aws_bearer_token_bedrock"
+    adapter.get_request_provider_data = MagicMock(return_value=SimpleNamespace(aws_bearer_token_bedrock="header-key"))
 
     # The client property is where header override happens (in OpenAIMixin)
     assert adapter.client.api_key == "header-key"
