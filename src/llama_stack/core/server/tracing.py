@@ -6,11 +6,10 @@
 from aiohttp import hdrs
 
 from llama_stack.core.external import ExternalApiSpec
-from llama_stack.core.server.fastapi_router_registry import has_router
+from llama_stack.core.server.fastapi_router_registry import _ROUTER_FACTORIES
 from llama_stack.core.server.routes import find_matching_route, initialize_route_impls
 from llama_stack.core.telemetry.tracing import end_trace, start_trace
 from llama_stack.log import get_logger
-from llama_stack_api.datatypes import Api
 from llama_stack_api.version import (
     LLAMA_STACK_API_V1,
     LLAMA_STACK_API_V1ALPHA,
@@ -35,20 +34,14 @@ class TracingMiddleware:
         """Check if a path belongs to a router-based API.
 
         Router-based APIs use FastAPI routers instead of the old webmethod system.
-        We need to check if the path matches any router-based API prefix.
+        Paths must start with a valid API level (v1, v1alpha, v1beta) followed by an API name.
         """
-        # Extract API name from path (e.g., /v1/batches -> batches)
-        # Paths must start with a valid API level: /v1/{api_name} or /v1alpha/{api_name} or /v1beta/{api_name}
         parts = path.strip("/").split("/")
-        if len(parts) >= 2 and parts[0] in VALID_API_LEVELS:
-            api_name = parts[1]
-            try:
-                api = Api(api_name)
-                return has_router(api)
-            except (ValueError, KeyError):
-                # Not a known API or not router-based
-                return False
-        return False
+        if len(parts) < 2 or parts[0] not in VALID_API_LEVELS:
+            return False
+
+        # Check directly if the API name is in the router factories list
+        return parts[1] in _ROUTER_FACTORIES
 
     async def __call__(self, scope, receive, send):
         if scope.get("type") == "lifespan":

@@ -44,7 +44,7 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
-from llama_stack.core.server.fastapi_router_registry import build_router, has_router
+from llama_stack.core.server.fastapi_router_registry import build_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
@@ -469,13 +469,12 @@ def create_app() -> StackApp:
         api = Api(api_str)
 
         # Try to discover and use a router factory from the API package
-        if has_router(api):
-            impl = impls[api]
-            router = build_router(api, impl)
-            if router:
-                app.include_router(router)
-                logger.debug(f"Registered router for {api} API")
-                continue
+        impl = impls[api]
+        router = build_router(api, impl)
+        if router:
+            app.include_router(router)
+            logger.debug(f"Registered router for {api} API")
+            continue
 
         # Fall back to old webmethod-based route discovery until the migration is complete
         impl = impls[api]

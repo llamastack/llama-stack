@@ -6,11 +6,10 @@
 
 """Router utilities for FastAPI routers.
 
-This module provides utilities to discover and create FastAPI routers from API packages.
-Routers are automatically discovered by checking for fastapi_routes modules in each API package.
+This module provides utilities to create FastAPI routers from API packages.
+APIs with routers are explicitly listed here.
 """
 
-import importlib
 from typing import TYPE_CHECKING, Any, cast
 
 from fastapi import APIRouter
@@ -18,46 +17,30 @@ from fastapi import APIRouter
 if TYPE_CHECKING:
     from llama_stack_api.datatypes import Api
 
+# Router factories for APIs that have FastAPI routers
+# Add new APIs here as they are migrated to the router system
+from llama_stack_api.batches.fastapi_routes import create_router as create_batches_router
 
-def has_router(api: "Api") -> bool:
-    """Check if an API has a router factory in its fastapi_routes module.
-
-    Args:
-        api: The API enum value
-
-    Returns:
-        True if the API has a fastapi_routes module with a create_router function
-    """
-    try:
-        routes_module = importlib.import_module(f"llama_stack_api.{api.value}.fastapi_routes")
-        return hasattr(routes_module, "create_router")
-    except (ImportError, AttributeError):
-        return False
+_ROUTER_FACTORIES: dict[str, APIRouter] = {
+    "batches": create_batches_router,
+}
 
 
 def build_router(api: "Api", impl: Any) -> APIRouter | None:
     """Build a router for an API by combining its router factory with the implementation.
-
-    This function discovers the router factory from the API package's routes module
-    and calls it with the implementation to create the final router instance.
 
     Args:
         api: The API enum value
         impl: The implementation instance for the API
 
     Returns:
-        APIRouter if the API has a fastapi_routes module with create_router, None otherwise
+        APIRouter if the API has a router factory, None otherwise
     """
-    try:
-        routes_module = importlib.import_module(f"llama_stack_api.{api.value}.fastapi_routes")
-        if hasattr(routes_module, "create_router"):
-            router_factory = routes_module.create_router
-            # cast is safe here: mypy can't verify the return type statically because
-            # we're dynamically importing the module. However, all router factories in
-            # API packages are required to return APIRouter. If a router factory returns the wrong
-            # type, it will fail at runtime when app.include_router(router) is called
-            return cast(APIRouter, router_factory(impl))
-    except (ImportError, AttributeError):
-        pass
+    router_factory = _ROUTER_FACTORIES.get(api.value)
+    if router_factory is None:
+        return None
 
-    return None
+    # cast is safe here: all router factories in API packages are required to return APIRouter.
+    # If a router factory returns the wrong type, it will fail at runtime when
+    # app.include_router(router) is called
+    return cast(APIRouter, router_factory(impl))
