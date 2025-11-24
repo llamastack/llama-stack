@@ -17,6 +17,8 @@ from llama_stack.core.datatypes import (
     ToolGroupInput,
     VectorStoresConfig,
 )
+from llama_stack.core.storage.kvstore.config import PostgresKVStoreConfig
+from llama_stack.core.storage.sqlstore.sqlstore import PostgresSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
@@ -35,8 +37,6 @@ from llama_stack.providers.remote.vector_io.pgvector.config import (
 )
 from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOConfig
 from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
-from llama_stack.providers.utils.kvstore.config import PostgresKVStoreConfig
-from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
 from llama_stack_api import RemoteProviderSpec
 
 

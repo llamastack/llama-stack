@@ -66,6 +66,8 @@ from llama_stack_api import (
     OpenAIResponseUsage,
     OpenAIResponseUsageInputTokensDetails,
     OpenAIResponseUsageOutputTokensDetails,
+    OpenAIToolMessageParam,
+    Safety,
     WebSearchToolTypes,
 )
 
@@ -111,9 +113,10 @@ class StreamingResponseOrchestrator:
         max_infer_iters: int,
         tool_executor,  # Will be the tool execution logic from the main class
         instructions: str | None,
-        safety_api,
+        safety_api: Safety | None,
         guardrail_ids: list[str] | None = None,
         prompt: OpenAIResponsePrompt | None = None,
+        parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
     ):
         self.inference_api = inference_api
@@ -128,6 +131,8 @@ class StreamingResponseOrchestrator:
         self.prompt = prompt
         # System message that is inserted into the model's context
         self.instructions = instructions
+        # Whether to allow more than one function tool call generated per turn.
+        self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
         self.sequence_number = 0
@@ -190,6 +195,7 @@ class StreamingResponseOrchestrator:
             usage=self.accumulated_usage,
             instructions=self.instructions,
             prompt=self.prompt,
+            parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
         )
 
@@ -901,10 +907,16 @@ class StreamingResponseOrchestrator:
         """Coordinate execution of both function and non-function tool calls."""
         # Execute non-function tool calls
         for tool_call in non_function_tool_calls:
-            # Check if total calls made to built-in and mcp tools exceed max_tool_calls
+            # if total calls made to built-in and mcp tools exceed max_tool_calls
+            # then create a tool response message indicating the call was skipped
             if self.max_tool_calls is not None and self.accumulated_builtin_tool_calls >= self.max_tool_calls:
                 logger.info(f"Ignoring built-in and mcp tool call since reached the limit of {self.max_tool_calls=}.")
-                break
+                skipped_call_message = OpenAIToolMessageParam(
+                    content=f"Tool call skipped: maximum tool calls limit ({self.max_tool_calls}) reached.",
+                    tool_call_id=tool_call.id,
+                )
+                next_turn_messages.append(skipped_call_message)
+                continue
 
             # Find the item_id for this tool call
             matching_item_id = None

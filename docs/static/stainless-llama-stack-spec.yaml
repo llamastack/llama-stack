@@ -1820,7 +1820,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterScoringFunctionRequestLoose'
+              $ref: '#/components/schemas/RegisterScoringFunctionRequest'
         required: true
       deprecated: true
   /v1/scoring-functions/{scoring_fn_id}:
@@ -3310,7 +3310,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RegisterDatasetRequestLoose'
+              $ref: '#/components/schemas/RegisterDatasetRequest'
         required: true
       deprecated: true
   /v1beta/datasets/{dataset_id}:
@@ -3567,7 +3567,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BenchmarkConfig'
+              $ref: '#/components/schemas/RunEvalRequest'
         required: true
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
     get:
@@ -6739,9 +6739,10 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          type: boolean
-          title: Parallel Tool Calls
-          default: false
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
         previous_response_id:
           anyOf:
           - type: string
@@ -7141,6 +7142,11 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        parallel_tool_calls:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
         previous_response_id:
           anyOf:
           - type: string
@@ -7267,9 +7273,10 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          type: boolean
-          title: Parallel Tool Calls
-          default: false
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
         previous_response_id:
           anyOf:
           - type: string
@@ -9871,9 +9878,21 @@ components:
           title: Object
           default: vector_store.file
         attributes:
-          additionalProperties: true
+          additionalProperties:
+            anyOf:
+            - type: string
+              maxLength: 512
+            - type: number
+            - type: boolean
+            title: string | number | boolean
+          propertyNames:
+            type: string
+            maxLength: 64
           type: object
+          maxProperties: 16
           title: Attributes
+          description: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters, booleans, or numbers.
+          x-oaiTypeLabel: map
         chunking_strategy:
           oneOf:
           - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
@@ -10602,6 +10621,14 @@ components:
       - scores
       title: EvaluateResponse
       description: The response from an evaluation.
+    RunEvalRequest:
+      properties:
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+      type: object
+      required:
+      - benchmark_config
+      title: RunEvalRequest
     Job:
       properties:
         job_id:
@@ -11185,6 +11212,67 @@ components:
       - $ref: '#/components/schemas/CompletionInputType'
         title: CompletionInputType
       title: StringType | ... (9 variants)
+    RegisterScoringFunctionRequest:
+      properties:
+        scoring_fn_id:
+          type: string
+          title: Scoring Fn Id
+        description:
+          type: string
+          title: Description
+        return_type:
+          anyOf:
+          - $ref: '#/components/schemas/StringType'
+            title: StringType
+          - $ref: '#/components/schemas/NumberType'
+            title: NumberType
+          - $ref: '#/components/schemas/BooleanType'
+            title: BooleanType
+          - $ref: '#/components/schemas/ArrayType'
+            title: ArrayType
+          - $ref: '#/components/schemas/ObjectType'
+            title: ObjectType
+          - $ref: '#/components/schemas/JsonType'
+            title: JsonType
+          - $ref: '#/components/schemas/UnionType'
+            title: UnionType
+          - $ref: '#/components/schemas/ChatCompletionInputType'
+            title: ChatCompletionInputType
+          - $ref: '#/components/schemas/CompletionInputType'
+            title: CompletionInputType
+          title: StringType | ... (9 variants)
+        provider_scoring_fn_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        provider_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        params:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
+              title: LLMAsJudgeScoringFnParams
+            - $ref: '#/components/schemas/RegexParserScoringFnParams'
+              title: RegexParserScoringFnParams
+            - $ref: '#/components/schemas/BasicScoringFnParams'
+              title: BasicScoringFnParams
+            discriminator:
+              propertyName: type
+              mapping:
+                basic: '#/components/schemas/BasicScoringFnParams'
+                llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
+                regex_parser: '#/components/schemas/RegexParserScoringFnParams'
+            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
+          - type: 'null'
+          title: Params
+      type: object
+      required:
+      - scoring_fn_id
+      - description
+      - return_type
+      title: RegisterScoringFunctionRequest
     RegisterShieldRequest:
       properties:
         shield_id:
@@ -11243,6 +11331,31 @@ components:
       - $ref: '#/components/schemas/RowsDataSource'
         title: RowsDataSource
       title: URIDataSource | RowsDataSource
+    RegisterDatasetRequest:
+      properties:
+        purpose:
+          $ref: '#/components/schemas/DatasetPurpose'
+        source:
+          anyOf:
+          - $ref: '#/components/schemas/URIDataSource'
+            title: URIDataSource
+          - $ref: '#/components/schemas/RowsDataSource'
+            title: RowsDataSource
+          title: URIDataSource | RowsDataSource
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - purpose
+      - source
+      title: RegisterDatasetRequest
     RegisterBenchmarkRequest:
       properties:
         benchmark_id:
@@ -11979,41 +12092,6 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
-    RegisterDatasetRequestLoose:
-      properties:
-        purpose:
-          title: Purpose
-        source:
-          title: Source
-        metadata:
-          title: Metadata
-        dataset_id:
-          title: Dataset Id
-      type: object
-      required:
-      - purpose
-      - source
-      title: RegisterDatasetRequestLoose
-    RegisterScoringFunctionRequestLoose:
-      properties:
-        scoring_fn_id:
-          title: Scoring Fn Id
-        description:
-          title: Description
-        return_type:
-          title: Return Type
-        provider_scoring_fn_id:
-          title: Provider Scoring Fn Id
-        provider_id:
-          title: Provider Id
-        params:
-          title: Params
-      type: object
-      required:
-      - scoring_fn_id
-      - description
-      - return_type
-      title: RegisterScoringFunctionRequestLoose
     SearchRankingOptions:
       properties:
         ranker:

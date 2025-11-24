@@ -14,9 +14,9 @@ Local filesystem-based file storage provider for managing files and documents lo
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `storage_dir` | `<class 'str'>` | No |  | Directory to store uploaded files |
-| `metadata_store` | `<class 'llama_stack.core.storage.datatypes.SqlStoreReference'>` | No |  | SQL store configuration for file metadata |
-| `ttl_secs` | `<class 'int'>` | No | 31536000 |  |
+| `storage_dir` | `str` | No |  | Directory to store uploaded files |
+| `metadata_store` | `SqlStoreReference` | No |  | SQL store configuration for file metadata |
+| `ttl_secs` | `int` | No | 31536000 |  |
 
 ## Sample Configuration
 

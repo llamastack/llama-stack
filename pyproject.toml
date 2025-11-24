@@ -38,7 +38,6 @@ dependencies = [
     "pyjwt[crypto]>=2.10.0",                          # Pull crypto to support RS256 for jwt. Requires 2.10.0+ for ssl_context support.
     "pydantic>=2.11.9",
     "rich",
-    "starlette",
     "termcolor",
     "tiktoken",
     "pillow",
@@ -50,7 +49,6 @@ dependencies = [
     "aiosqlite>=0.21.0",                              # server - for metadata store
     "asyncpg",                                        # for metadata store
     "sqlalchemy[asyncio]>=2.0.41",                    # server - for conversations
-    "pyyaml>=6.0.2",
     "starlette>=0.49.1",
 ]
 
@@ -358,6 +356,10 @@ exclude = [
 module = [
     "yaml",
     "fire",
+    "redis.asyncio",
+    "psycopg2",
+    "psycopg2.extras",
+    "psycopg2.extensions",
     "torchtune.*",
     "fairscale.*",
     "torchvision.*",

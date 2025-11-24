@@ -120,7 +120,7 @@ from llama_stack.providers.remote.inference.watsonx.watsonx import WatsonXInfere
             VLLMInferenceAdapter,
             "llama_stack.providers.remote.inference.vllm.VLLMProviderDataValidator",
             {
-                "url": "http://fake",
+                "base_url": "http://fake",
             },
         ),
     ],
@@ -153,7 +153,7 @@ def test_litellm_provider_data_used(config_cls, adapter_cls, provider_data_valid
     """Validate data for LiteLLM-based providers.  Similar to test_openai_provider_data_used, but without the
     assumption that there is an OpenAI-compatible client object."""
 
-    inference_adapter = adapter_cls(config=config_cls())
+    inference_adapter = adapter_cls(config=config_cls(base_url="http://fake"))
 
     inference_adapter.__provider_spec__ = MagicMock()
     inference_adapter.__provider_spec__.provider_data_validator = provider_data_validator

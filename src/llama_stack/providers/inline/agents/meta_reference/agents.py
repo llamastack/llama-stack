@@ -6,12 +6,13 @@
 
 
 from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.storage.kvstore import InmemoryKVStoreImpl, kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.kvstore import InmemoryKVStoreImpl, kvstore_impl
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack_api import (
     Agents,
     Conversations,
+    Files,
     Inference,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -22,6 +23,7 @@ from llama_stack_api import (
     OpenAIResponsePrompt,
     OpenAIResponseText,
     Order,
+    Prompts,
     ResponseGuardrail,
     Safety,
     ToolGroups,
@@ -41,10 +43,12 @@ class MetaReferenceAgentsImpl(Agents):
         config: MetaReferenceAgentsImplConfig,
         inference_api: Inference,
         vector_io_api: VectorIO,
-        safety_api: Safety,
+        safety_api: Safety | None,
         tool_runtime_api: ToolRuntime,
         tool_groups_api: ToolGroups,
         conversations_api: Conversations,
+        prompts_api: Prompts,
+        files_api: Files,
         policy: list[AccessRule],
         telemetry_enabled: bool = False,
     ):
@@ -56,7 +60,8 @@ class MetaReferenceAgentsImpl(Agents):
         self.tool_groups_api = tool_groups_api
         self.conversations_api = conversations_api
         self.telemetry_enabled = telemetry_enabled
-
+        self.prompts_api = prompts_api
+        self.files_api = files_api
         self.in_memory_store = InmemoryKVStoreImpl()
         self.openai_responses_impl: OpenAIResponsesImpl | None = None
         self.policy = policy
@@ -73,6 +78,8 @@ class MetaReferenceAgentsImpl(Agents):
             vector_io_api=self.vector_io_api,
             safety_api=self.safety_api,
             conversations_api=self.conversations_api,
+            prompts_api=self.prompts_api,
+            files_api=self.files_api,
         )
 
     async def shutdown(self) -> None:
@@ -92,6 +99,7 @@ class MetaReferenceAgentsImpl(Agents):
         model: str,
         prompt: OpenAIResponsePrompt | None = None,
         instructions: str | None = None,
+        parallel_tool_calls: bool | None = True,
         previous_response_id: str | None = None,
         conversation: str | None = None,
         store: bool | None = True,
@@ -120,6 +128,7 @@ class MetaReferenceAgentsImpl(Agents):
             include,
             max_infer_iters,
             guardrails,
+            parallel_tool_calls,
             max_tool_calls,
         )
         return result  # type: ignore[no-any-return]

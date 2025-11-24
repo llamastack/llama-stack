@@ -12,9 +12,9 @@ from llama_stack.providers.utils.inference.model_registry import RemoteInference
 
 
 class BedrockProviderDataValidator(BaseModel):
-    aws_bedrock_api_key: str | None = Field(
+    aws_bearer_token_bedrock: str | None = Field(
         default=None,
-        description="API key for Amazon Bedrock",
+        description="API Key (Bearer token) for Amazon Bedrock",
     )
 
 
@@ -27,6 +27,6 @@ class BedrockConfig(RemoteInferenceProviderConfig):
     @classmethod
     def sample_run_config(cls, **kwargs):
         return {
-            "api_key": "${env.AWS_BEDROCK_API_KEY:=}",
+            "api_key": "${env.AWS_BEARER_TOKEN_BEDROCK:=}",
             "region_name": "${env.AWS_DEFAULT_REGION:=us-east-2}",
         }

@@ -300,7 +300,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/BenchmarkConfig'
+              $ref: '#/components/schemas/RunEvalRequest'
         required: true
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
     get:
@@ -3297,9 +3297,10 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          type: boolean
-          title: Parallel Tool Calls
-          default: false
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
         previous_response_id:
           anyOf:
           - type: string
@@ -3696,9 +3697,10 @@ components:
           type: array
           title: Output
         parallel_tool_calls:
-          type: boolean
-          title: Parallel Tool Calls
-          default: false
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: true
         previous_response_id:
           anyOf:
           - type: string
@@ -6093,9 +6095,21 @@ components:
           title: Object
           default: vector_store.file
         attributes:
-          additionalProperties: true
+          additionalProperties:
+            anyOf:
+            - type: string
+              maxLength: 512
+            - type: number
+            - type: boolean
+            title: string | number | boolean
+          propertyNames:
+            type: string
+            maxLength: 64
           type: object
+          maxProperties: 16
           title: Attributes
+          description: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard. Keys are strings with a maximum length of 64 characters. Values are strings with a maximum length of 512 characters, booleans, or numbers.
+          x-oaiTypeLabel: map
         chunking_strategy:
           oneOf:
           - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
@@ -6745,6 +6759,14 @@ components:
       - scores
       title: EvaluateResponse
       description: The response from an evaluation.
+    RunEvalRequest:
+      properties:
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+      type: object
+      required:
+      - benchmark_config
+      title: RunEvalRequest
     Job:
       properties:
         job_id:

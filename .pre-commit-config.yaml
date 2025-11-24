@@ -199,6 +199,27 @@ repos:
               echo;
               exit 1;
             } || true
+      - id: check-api-independence
+        name: Ensure llama_stack_api does not import llama_stack
+        entry: bash
+        language: system
+        pass_filenames: false
+        require_serial: true
+        always_run: true
+        files: ^src/llama_stack_api/.*$
+        args:
+          - -c
+          - |
+            API_DIR="src/llama_stack_api"
+            grep -rn --include="*.py" -E '^[^#]*(import llama_stack\b|from llama_stack\b)' "$API_DIR" 2>/dev/null && {
+              echo "llama_stack_api must not import llama_stack";
+              exit 1;
+            }
+            [ -f "$API_DIR/pyproject.toml" ] && grep -n 'llama_stack[^_]' "$API_DIR/pyproject.toml" && {
+              echo "llama_stack_api must not depend on llama_stack in pyproject.toml";
+              exit 1;
+            }
+            exit 0
 
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks

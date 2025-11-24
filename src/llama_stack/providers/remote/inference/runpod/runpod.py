@@ -28,7 +28,7 @@ class RunpodInferenceAdapter(OpenAIMixin):
 
     def get_base_url(self) -> str:
         """Get base URL for OpenAI client."""
-        return self.config.url
+        return str(self.config.base_url)
 
     async def openai_chat_completion(
         self,

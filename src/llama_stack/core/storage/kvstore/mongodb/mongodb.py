@@ -9,8 +9,8 @@ from datetime import datetime
 from pymongo import AsyncMongoClient
 from pymongo.asynchronous.collection import AsyncCollection
 
+from llama_stack.core.storage.kvstore import KVStore
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.kvstore import KVStore
 
 from ..config import MongoDBKVStoreConfig
 
