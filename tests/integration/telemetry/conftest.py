@@ -15,6 +15,7 @@ from tests.integration.fixtures.common import instantiate_llama_stack_client
 from tests.integration.telemetry.collectors import InMemoryTelemetryManager, OtlpHttpTestCollector
 
 
+# TODO: Fix this to work with Automatic Instrumentation
 @pytest.fixture(scope="session")
 def telemetry_test_collector():
     stack_mode = os.environ.get("LLAMA_STACK_TEST_STACK_CONFIG_TYPE", "library_client")
@@ -48,6 +49,7 @@ def telemetry_test_collector():
             manager.shutdown()
 
 
+# TODO: Fix this to work with Automatic Instrumentation
 @pytest.fixture(scope="session")
 def llama_stack_client(telemetry_test_collector, request):
     """Ensure telemetry collector is ready before initializing the stack client."""
