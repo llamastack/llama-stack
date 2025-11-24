@@ -4,19 +4,32 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import re
 import time
 import uuid
 from collections.abc import AsyncIterator
 
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.apis.agents import Order
-from llama_stack.apis.agents.agents import ResponseGuardrailSpec
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.responses.responses_store import (
+    ResponsesStore,
+    _OpenAIResponseObjectWithInputAndMessages,
+)
+from llama_stack_api import (
+    ConversationItem,
+    Conversations,
+    Files,
+    Inference,
+    InvalidConversationIdError,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
+    OpenAIChatCompletionContentPartParam,
     OpenAIDeleteResponseObject,
+    OpenAIMessageParam,
     OpenAIResponseInput,
+    OpenAIResponseInputMessageContentFile,
+    OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
     OpenAIResponseMessage,
@@ -25,30 +38,22 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponsePrompt,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
-)
-from llama_stack.apis.common.errors import (
-    InvalidConversationIdError,
-)
-from llama_stack.apis.conversations import Conversations
-from llama_stack.apis.conversations.conversations import ConversationItem
-from llama_stack.apis.inference import (
-    Inference,
-    OpenAIMessageParam,
     OpenAISystemMessageParam,
-)
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.tools import ToolGroups, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.responses.responses_store import (
-    ResponsesStore,
-    _OpenAIResponseObjectWithInputAndMessages,
+    OpenAIUserMessageParam,
+    Order,
+    Prompts,
+    ResponseGuardrailSpec,
+    Safety,
+    ToolGroups,
+    ToolRuntime,
+    VectorIO,
 )
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
 from .types import ChatCompletionContext, ToolContext
 from .utils import (
+    convert_response_content_to_chat_content,
     convert_response_input_to_chat_messages,
     convert_response_text_to_chat_response_format,
     extract_guardrail_ids,
@@ -70,8 +75,10 @@ class OpenAIResponsesImpl:
         tool_runtime_api: ToolRuntime,
         responses_store: ResponsesStore,
         vector_io_api: VectorIO,  # VectorIO
-        safety_api: Safety,
+        safety_api: Safety | None,
         conversations_api: Conversations,
+        prompts_api: Prompts,
+        files_api: Files,
     ):
         self.inference_api = inference_api
         self.tool_groups_api = tool_groups_api
@@ -85,6 +92,8 @@ class OpenAIResponsesImpl:
             tool_runtime_api=tool_runtime_api,
             vector_io_api=vector_io_api,
         )
+        self.prompts_api = prompts_api
+        self.files_api = files_api
 
     async def _prepend_previous_response(
         self,
@@ -125,11 +134,13 @@ class OpenAIResponsesImpl:
                 # Use stored messages directly and convert only new input
                 message_adapter = TypeAdapter(list[OpenAIMessageParam])
                 messages = message_adapter.validate_python(previous_response.messages)
-                new_messages = await convert_response_input_to_chat_messages(input, previous_messages=messages)
+                new_messages = await convert_response_input_to_chat_messages(
+                    input, previous_messages=messages, files_api=self.files_api
+                )
                 messages.extend(new_messages)
             else:
                 # Backward compatibility: reconstruct from inputs
-                messages = await convert_response_input_to_chat_messages(all_input)
+                messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
 
             tool_context.recover_tools_from_previous_response(previous_response)
         elif conversation is not None:
@@ -141,7 +152,7 @@ class OpenAIResponsesImpl:
             all_input = input
             if not conversation_items.data:
                 # First turn - just convert the new input
-                messages = await convert_response_input_to_chat_messages(input)
+                messages = await convert_response_input_to_chat_messages(input, files_api=self.files_api)
             else:
                 if not stored_messages:
                     all_input = conversation_items.data
@@ -157,13 +168,81 @@ class OpenAIResponsesImpl:
                     all_input = input
 
                 messages = stored_messages or []
-                new_messages = await convert_response_input_to_chat_messages(all_input, previous_messages=messages)
+                new_messages = await convert_response_input_to_chat_messages(
+                    all_input, previous_messages=messages, files_api=self.files_api
+                )
                 messages.extend(new_messages)
         else:
             all_input = input
-            messages = await convert_response_input_to_chat_messages(all_input)
+            messages = await convert_response_input_to_chat_messages(all_input, files_api=self.files_api)
 
         return all_input, messages, tool_context
+
+    async def _prepend_prompt(
+        self,
+        messages: list[OpenAIMessageParam],
+        openai_response_prompt: OpenAIResponsePrompt | None,
+    ) -> None:
+        """Prepend prompt template to messages, resolving text/image/file variables.
+
+        :param messages: List of OpenAIMessageParam objects
+        :param openai_response_prompt: (Optional) OpenAIResponsePrompt object with variables
+        :returns: string of utf-8 characters
+        """
+        if not openai_response_prompt or not openai_response_prompt.id:
+            return
+
+        prompt_version = int(openai_response_prompt.version) if openai_response_prompt.version else None
+        cur_prompt = await self.prompts_api.get_prompt(openai_response_prompt.id, prompt_version)
+
+        if not cur_prompt or not cur_prompt.prompt:
+            return
+
+        cur_prompt_text = cur_prompt.prompt
+        cur_prompt_variables = cur_prompt.variables
+
+        if not openai_response_prompt.variables:
+            messages.insert(0, OpenAISystemMessageParam(content=cur_prompt_text))
+            return
+
+        # Validate that all provided variables exist in the prompt
+        for name in openai_response_prompt.variables.keys():
+            if name not in cur_prompt_variables:
+                raise ValueError(f"Variable {name} not found in prompt {openai_response_prompt.id}")
+
+        # Separate text and media variables
+        text_substitutions = {}
+        media_content_parts: list[OpenAIChatCompletionContentPartParam] = []
+
+        for name, value in openai_response_prompt.variables.items():
+            # Text variable found
+            if isinstance(value, OpenAIResponseInputMessageContentText):
+                text_substitutions[name] = value.text
+
+            # Media variable found
+            elif isinstance(value, OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile):
+                converted_parts = await convert_response_content_to_chat_content([value], files_api=self.files_api)
+                if isinstance(converted_parts, list):
+                    media_content_parts.extend(converted_parts)
+
+                # Eg: {{product_photo}} becomes "[Image: product_photo]"
+                # This gives the model textual context about what media exists in the prompt
+                var_type = value.type.replace("input_", "").replace("_", " ").title()
+                text_substitutions[name] = f"[{var_type}: {name}]"
+
+        def replace_variable(match: re.Match[str]) -> str:
+            var_name = match.group(1).strip()
+            return str(text_substitutions.get(var_name, match.group(0)))
+
+        pattern = r"\{\{\s*(\w+)\s*\}\}"
+        processed_prompt_text = re.sub(pattern, replace_variable, cur_prompt_text)
+
+        # Insert system message with resolved text
+        messages.insert(0, OpenAISystemMessageParam(content=processed_prompt_text))
+
+        # If we have media, create a new user message because allows to ingest images and files
+        if media_content_parts:
+            messages.append(OpenAIUserMessageParam(content=media_content_parts))
 
     async def get_openai_response(
         self,
@@ -255,11 +334,34 @@ class OpenAIResponsesImpl:
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
         guardrails: list[str | ResponseGuardrailSpec] | None = None,
+        parallel_tool_calls: bool | None = None,
+        max_tool_calls: int | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
 
+        # Validate MCP tools: ensure Authorization header is not passed via headers dict
+        if tools:
+            from llama_stack_api.openai_responses import OpenAIResponseInputToolMCP
+
+            for tool in tools:
+                if isinstance(tool, OpenAIResponseInputToolMCP) and tool.headers:
+                    for key in tool.headers.keys():
+                        if key.lower() == "authorization":
+                            raise ValueError(
+                                "Authorization header cannot be passed via 'headers'. "
+                                "Please use the 'authorization' parameter instead."
+                            )
+
         guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
+
+        # Validate that Safety API is available if guardrails are requested
+        if guardrail_ids and self.safety_api is None:
+            raise ValueError(
+                "Cannot process guardrails: Safety API is not configured.\n\n"
+                "To use guardrails, ensure the Safety API is configured in your stack, or remove "
+                "the 'guardrails' parameter from your request."
+            )
 
         if conversation is not None:
             if previous_response_id is not None:
@@ -270,10 +372,14 @@ class OpenAIResponsesImpl:
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)
 
+        if max_tool_calls is not None and max_tool_calls < 1:
+            raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
+
         stream_gen = self._create_streaming_response(
             input=input,
             conversation=conversation,
             model=model,
+            prompt=prompt,
             instructions=instructions,
             previous_response_id=previous_response_id,
             store=store,
@@ -282,6 +388,8 @@ class OpenAIResponsesImpl:
             tools=tools,
             max_infer_iters=max_infer_iters,
             guardrail_ids=guardrail_ids,
+            parallel_tool_calls=parallel_tool_calls,
+            max_tool_calls=max_tool_calls,
         )
 
         if stream:
@@ -325,12 +433,15 @@ class OpenAIResponsesImpl:
         instructions: str | None = None,
         previous_response_id: str | None = None,
         conversation: str | None = None,
+        prompt: OpenAIResponsePrompt | None = None,
         store: bool | None = True,
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         max_infer_iters: int | None = 10,
         guardrail_ids: list[str] | None = None,
+        parallel_tool_calls: bool | None = True,
+        max_tool_calls: int | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -344,6 +455,9 @@ class OpenAIResponsesImpl:
 
         if instructions:
             messages.insert(0, OpenAISystemMessageParam(content=instructions))
+
+        # Prepend reusable prompt (if provided)
+        await self._prepend_prompt(messages, prompt)
 
         # Structured outputs
         response_format = await convert_response_text_to_chat_response_format(text)
@@ -367,12 +481,15 @@ class OpenAIResponsesImpl:
             ctx=ctx,
             response_id=response_id,
             created_at=created_at,
+            prompt=prompt,
             text=text,
             max_infer_iters=max_infer_iters,
+            parallel_tool_calls=parallel_tool_calls,
             tool_executor=self.tool_executor,
             safety_api=self.safety_api,
             guardrail_ids=guardrail_ids,
             instructions=instructions,
+            max_tool_calls=max_tool_calls,
         )
 
         # Stream the response

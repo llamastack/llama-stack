@@ -9,9 +9,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from llama_stack.apis.providers import ListProvidersResponse, ProviderInfo, Providers
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import HealthResponse, HealthStatus
+from llama_stack_api import HealthResponse, HealthStatus, ListProvidersResponse, ProviderInfo, Providers
 
 from .datatypes import StackRunConfig
 from .utils.config import redact_sensitive_fields

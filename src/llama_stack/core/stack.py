@@ -13,26 +13,6 @@ from typing import Any
 
 import yaml
 
-from llama_stack.apis.agents import Agents
-from llama_stack.apis.batches import Batches
-from llama_stack.apis.benchmarks import Benchmarks
-from llama_stack.apis.conversations import Conversations
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.eval import Eval
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.inspect import Inspect
-from llama_stack.apis.models import Models
-from llama_stack.apis.post_training import PostTraining
-from llama_stack.apis.prompts import Prompts
-from llama_stack.apis.providers import Providers
-from llama_stack.apis.safety import Safety
-from llama_stack.apis.scoring import Scoring
-from llama_stack.apis.scoring_functions import ScoringFunctions
-from llama_stack.apis.shields import Shields
-from llama_stack.apis.tools import RAGToolRuntime, ToolGroups, ToolRuntime
-from llama_stack.apis.vector_io import VectorIO
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
@@ -54,7 +34,30 @@ from llama_stack.core.storage.datatypes import (
 from llama_stack.core.store.registry import create_dist_registry
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import Api
+from llama_stack_api import (
+    Agents,
+    Api,
+    Batches,
+    Benchmarks,
+    Conversations,
+    DatasetIO,
+    Datasets,
+    Eval,
+    Files,
+    Inference,
+    Inspect,
+    Models,
+    PostTraining,
+    Prompts,
+    Providers,
+    Safety,
+    Scoring,
+    ScoringFunctions,
+    Shields,
+    ToolGroups,
+    ToolRuntime,
+    VectorIO,
+)
 
 logger = get_logger(name=__name__, category="core")
 
@@ -78,7 +81,6 @@ class LlamaStack(
     Inspect,
     ToolGroups,
     ToolRuntime,
-    RAGToolRuntime,
     Files,
     Prompts,
     Conversations,
@@ -383,8 +385,8 @@ def _initialize_storage(run_config: StackRunConfig):
         else:
             raise ValueError(f"Unknown storage backend type: {type}")
 
-    from llama_stack.providers.utils.kvstore.kvstore import register_kvstore_backends
-    from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+    from llama_stack.core.storage.kvstore.kvstore import register_kvstore_backends
+    from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 
     register_kvstore_backends(kv_backends)
     register_sqlstore_backends(sql_backends)

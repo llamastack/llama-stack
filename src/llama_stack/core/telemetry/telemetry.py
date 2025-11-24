@@ -28,7 +28,7 @@ from pydantic import BaseModel, Field
 
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import Primitive
-from llama_stack.schema_utils import json_schema_type, register_schema
+from llama_stack_api import json_schema_type, register_schema
 
 ROOT_SPAN_MARKERS = ["__root__", "__root_span__"]
 
@@ -161,47 +161,6 @@ class MetricEvent(EventCommon):
     metric: str  # this would be an enum
     value: int | float
     unit: str
-
-
-@json_schema_type
-class MetricInResponse(BaseModel):
-    """A metric value included in API responses.
-    :param metric: The name of the metric
-    :param value: The numeric value of the metric
-    :param unit: (Optional) The unit of measurement for the metric value
-    """
-
-    metric: str
-    value: int | float
-    unit: str | None = None
-
-
-# This is a short term solution to allow inference API to return metrics
-# The ideal way to do this is to have a way for all response types to include metrics
-# and all metric events logged to the telemetry API to be included with the response
-# To do this, we will need to augment all response types with a metrics field.
-# We have hit a blocker from stainless SDK that prevents us from doing this.
-# The blocker is that if we were to augment the response types that have a data field
-# in them like so
-# class ListModelsResponse(BaseModel):
-# metrics: Optional[List[MetricEvent]] = None
-# data: List[Models]
-# ...
-# The client SDK will need to access the data by using a .data field, which is not
-# ergonomic. Stainless SDK does support unwrapping the response type, but it
-# requires that the response type to only have a single field.
-
-# We will need a way in the client SDK to signal that the metrics are needed
-# and if they are needed, the client SDK has to return the full response type
-# without unwrapping it.
-
-
-class MetricResponseMixin(BaseModel):
-    """Mixin class for API responses that can include metrics.
-    :param metrics: (Optional) List of metrics associated with the API response
-    """
-
-    metrics: list[MetricInResponse] | None = None
 
 
 @json_schema_type
@@ -427,6 +386,7 @@ _GLOBAL_STORAGE: dict[str, dict[str | int, Any]] = {
     "counters": {},
     "gauges": {},
     "up_down_counters": {},
+    "histograms": {},
 }
 _global_lock = threading.Lock()
 _TRACER_PROVIDER = None
@@ -540,6 +500,16 @@ class Telemetry:
             )
         return cast(metrics.ObservableGauge, _GLOBAL_STORAGE["gauges"][name])
 
+    def _get_or_create_histogram(self, name: str, unit: str) -> metrics.Histogram:
+        assert self.meter is not None
+        if name not in _GLOBAL_STORAGE["histograms"]:
+            _GLOBAL_STORAGE["histograms"][name] = self.meter.create_histogram(
+                name=name,
+                unit=unit,
+                description=f"Histogram for {name}",
+            )
+        return cast(metrics.Histogram, _GLOBAL_STORAGE["histograms"][name])
+
     def _log_metric(self, event: MetricEvent) -> None:
         # Add metric as an event to the current span
         try:
@@ -571,7 +541,16 @@ class Telemetry:
         # Log to OpenTelemetry meter if available
         if self.meter is None:
             return
-        if isinstance(event.value, int):
+
+        # Use histograms for token-related metrics (per-request measurements)
+        # Use counters for other cumulative metrics
+        token_metrics = {"prompt_tokens", "completion_tokens", "total_tokens"}
+
+        if event.metric in token_metrics:
+            # Token metrics are per-request measurements, use histogram
+            histogram = self._get_or_create_histogram(event.metric, event.unit)
+            histogram.record(event.value, attributes=_clean_attributes(event.attributes))
+        elif isinstance(event.value, int):
             counter = self._get_or_create_counter(event.metric, event.unit)
             counter.add(event.value, attributes=_clean_attributes(event.attributes))
         elif isinstance(event.value, float):

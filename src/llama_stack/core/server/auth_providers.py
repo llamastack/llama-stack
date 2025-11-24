@@ -13,7 +13,6 @@ import httpx
 import jwt
 from pydantic import BaseModel, Field
 
-from llama_stack.apis.common.errors import TokenValidationError
 from llama_stack.core.datatypes import (
     AuthenticationConfig,
     CustomAuthConfig,
@@ -23,6 +22,7 @@ from llama_stack.core.datatypes import (
     User,
 )
 from llama_stack.log import get_logger
+from llama_stack_api import TokenValidationError
 
 logger = get_logger(name=__name__, category="core::auth")
 

@@ -14,17 +14,24 @@ import faiss  # type: ignore[import-untyped]
 import numpy as np
 from numpy.typing import NDArray
 
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference, InterleavedContent
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack.apis.vector_stores import VectorStore
+from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import HealthResponse, HealthStatus, VectorStoresProtocolPrivate
-from llama_stack.providers.utils.kvstore import kvstore_impl
-from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack_api import (
+    Chunk,
+    Files,
+    HealthResponse,
+    HealthStatus,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoreNotFoundError,
+    VectorStoresProtocolPrivate,
+)
+from llama_stack_api.internal.kvstore import KVStore
 
 from .config import FaissVectorIOConfig
 
@@ -223,7 +230,8 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")
 
     async def register_vector_store(self, vector_store: VectorStore) -> None:
-        assert self.kvstore is not None
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before registering vector stores.")
 
         key = f"{VECTOR_DBS_PREFIX}{vector_store.identifier}"
         await self.kvstore.set(key=key, value=vector_store.model_dump_json())
@@ -239,7 +247,8 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         return [i.vector_store for i in self.cache.values()]
 
     async def unregister_vector_store(self, vector_store_id: str) -> None:
-        assert self.kvstore is not None
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
 
         if vector_store_id not in self.cache:
             return
@@ -247,6 +256,27 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         await self.cache[vector_store_id].index.delete()
         del self.cache[vector_store_id]
         await self.kvstore.delete(f"{VECTOR_DBS_PREFIX}{vector_store_id}")
+
+    async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex | None:
+        if vector_store_id in self.cache:
+            return self.cache[vector_store_id]
+
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before using vector stores.")
+
+        key = f"{VECTOR_DBS_PREFIX}{vector_store_id}"
+        vector_store_data = await self.kvstore.get(key)
+        if not vector_store_data:
+            raise VectorStoreNotFoundError(vector_store_id)
+
+        vector_store = VectorStore.model_validate_json(vector_store_data)
+        index = VectorStoreWithIndex(
+            vector_store=vector_store,
+            index=await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
+            inference_api=self.inference_api,
+        )
+        self.cache[vector_store_id] = index
+        return index
 
     async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
         index = self.cache.get(vector_store_id)

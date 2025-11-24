@@ -10,8 +10,14 @@ from pydantic import BaseModel
 
 
 class MCPProviderDataValidator(BaseModel):
-    # mcp_endpoint => dict of headers to send
-    mcp_headers: dict[str, dict[str, str]] | None = None
+    """
+    Validator for MCP provider-specific data passed via request headers.
+
+    Phase 1: Support old header-based authentication for backward compatibility.
+    In Phase 2, this will be deprecated in favor of the authorization parameter.
+    """
+
+    mcp_headers: dict[str, dict[str, str]] | None = None  # Map of URI -> headers dict
 
 
 class MCPProviderConfig(BaseModel):

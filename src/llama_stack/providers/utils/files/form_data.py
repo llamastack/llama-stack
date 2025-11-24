@@ -9,7 +9,7 @@ import json
 from fastapi import Request
 from pydantic import BaseModel, ValidationError
 
-from llama_stack.apis.files import ExpiresAfter
+from llama_stack_api import ExpiresAfter
 
 
 async def parse_pydantic_from_form[T: BaseModel](request: Request, field_name: str, model_class: type[T]) -> T | None:

@@ -19,6 +19,7 @@ This provider enables safety checks and guardrails for LLM interactions using NV
 Build the NVIDIA environment:
 
 ```bash
+uv pip install llama-stack-client
 uv run llama stack list-deps nvidia | xargs -L1 uv pip install
 ```
 
@@ -41,8 +42,8 @@ client.initialize()
 #### Create a safety shield
 
 ```python
-from llama_stack.apis.safety import Shield
-from llama_stack.apis.inference import Message
+from llama_stack_api.safety import Shield
+from llama_stack_api.inference import Message
 
 # Create a safety shield
 shield = Shield(

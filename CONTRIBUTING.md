@@ -231,7 +231,7 @@ npm run serve
 If you modify or add new API endpoints, update the API documentation accordingly. You can do this by running the following command:
 
 ```bash
-uv run ./docs/openapi_generator/run_openapi_generator.sh
+uv run ./scripts/run_openapi_generator.sh
 ```
 
 The generated API schema will be available in `docs/static/`. Make sure to review the changes before committing.

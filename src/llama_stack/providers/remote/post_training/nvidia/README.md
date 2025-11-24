@@ -22,6 +22,7 @@ This provider enables fine-tuning of LLMs using NVIDIA's NeMo Customizer service
 Build the NVIDIA environment:
 
 ```bash
+uv pip install llama-stack-client
 uv run llama stack list-deps nvidia | xargs -L1 uv pip install
 ```
 
@@ -127,7 +128,7 @@ client.post_training.job.cancel(job_uuid="your-job-id")
 #### 1. Register the model
 
 ```python
-from llama_stack.apis.models import Model, ModelType
+from llama_stack_api.models import Model, ModelType
 
 client.models.register(
     model_id="test-example-model@v1",

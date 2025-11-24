@@ -10,7 +10,10 @@ from typing import Any, Literal
 import aiohttp
 from pydantic import BaseModel, ConfigDict
 
-from llama_stack.apis.post_training import (
+from llama_stack.providers.remote.post_training.nvidia.config import NvidiaPostTrainingConfig
+from llama_stack.providers.remote.post_training.nvidia.utils import warn_unsupported_params
+from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
+from llama_stack_api import (
     AlgorithmConfig,
     DPOAlignmentConfig,
     JobStatus,
@@ -19,9 +22,6 @@ from llama_stack.apis.post_training import (
     PostTrainingJobStatusResponse,
     TrainingConfig,
 )
-from llama_stack.providers.remote.post_training.nvidia.config import NvidiaPostTrainingConfig
-from llama_stack.providers.remote.post_training.nvidia.utils import warn_unsupported_params
-from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 
 from .models import _MODEL_ENTRIES
 

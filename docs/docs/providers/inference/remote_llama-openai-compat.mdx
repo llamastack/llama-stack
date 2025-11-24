@@ -14,14 +14,14 @@ Llama OpenAI-compatible provider for using Llama models with OpenAI API format.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
-| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
-| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
-| `openai_compat_api_base` | `<class 'str'>` | No | https://api.llama.com/compat/v1/ | The URL for the Llama API server |
+| `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `SecretStr \| None` | No |  | Authentication credential for the provider |
+| `base_url` | `HttpUrl \| None` | No | https://api.llama.com/compat/v1/ | The URL for the Llama API server |
 
 ## Sample Configuration
 
 ```yaml
-openai_compat_api_base: https://api.llama.com/compat/v1/
+base_url: https://api.llama.com/compat/v1/
 api_key: ${env.LLAMA_API_KEY}
 ```

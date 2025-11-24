@@ -7,7 +7,7 @@
 
 from typing import cast
 
-from llama_stack.providers.datatypes import Api, InlineProviderSpec, ProviderSpec, RemoteProviderSpec
+from llama_stack_api import Api, InlineProviderSpec, ProviderSpec, RemoteProviderSpec
 
 # We provide two versions of these providers so that distributions can package the appropriate version of torch.
 # The CPU version is used for distributions that don't have GPU support -- they result in smaller container images.

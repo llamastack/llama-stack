@@ -16,12 +16,12 @@ Meta's reference implementation of inference with support for various model form
 |-------|------|----------|---------|-------------|
 | `model` | `str \| None` | No |  |  |
 | `torch_seed` | `int \| None` | No |  |  |
-| `max_seq_len` | `<class 'int'>` | No | 4096 |  |
-| `max_batch_size` | `<class 'int'>` | No | 1 |  |
+| `max_seq_len` | `int` | No | 4096 |  |
+| `max_batch_size` | `int` | No | 1 |  |
 | `model_parallel_size` | `int \| None` | No |  |  |
-| `create_distributed_process_group` | `<class 'bool'>` | No | True |  |
+| `create_distributed_process_group` | `bool` | No | True |  |
 | `checkpoint_dir` | `str \| None` | No |  |  |
-| `quantization` | `Bf16QuantizationConfig \| Fp8QuantizationConfig \| Int4QuantizationConfig, annotation=NoneType, required=True, discriminator='type'` | No |  |  |
+| `quantization` | `Bf16QuantizationConfig \| Fp8QuantizationConfig \| Int4QuantizationConfig \| None` | No |  |  |
 
 ## Sample Configuration
 

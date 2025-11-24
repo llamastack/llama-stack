@@ -9,15 +9,15 @@ import asyncio
 
 from ollama import AsyncClient as AsyncOllamaClient
 
-from llama_stack.apis.common.errors import UnsupportedModelError
-from llama_stack.apis.models import Model
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import (
-    HealthResponse,
-    HealthStatus,
-)
 from llama_stack.providers.remote.inference.ollama.config import OllamaImplConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
+    HealthResponse,
+    HealthStatus,
+    Model,
+    UnsupportedModelError,
+)
 
 logger = get_logger(name=__name__, category="inference::ollama")
 
@@ -55,17 +55,23 @@ class OllamaInferenceAdapter(OpenAIMixin):
         # ollama client attaches itself to the current event loop (sadly?)
         loop = asyncio.get_running_loop()
         if loop not in self._clients:
-            self._clients[loop] = AsyncOllamaClient(host=self.config.url)
+            # Ollama client expects base URL without /v1 suffix
+            base_url_str = str(self.config.base_url)
+            if base_url_str.endswith("/v1"):
+                host = base_url_str[:-3]
+            else:
+                host = base_url_str
+            self._clients[loop] = AsyncOllamaClient(host=host)
         return self._clients[loop]
 
     def get_api_key(self):
         return "NO KEY REQUIRED"
 
     def get_base_url(self):
-        return self.config.url.rstrip("/") + "/v1"
+        return str(self.config.base_url)
 
     async def initialize(self) -> None:
-        logger.info(f"checking connectivity to Ollama at `{self.config.url}`...")
+        logger.info(f"checking connectivity to Ollama at `{self.config.base_url}`...")
         r = await self.health()
         if r["status"] == HealthStatus.ERROR:
             logger.warning(

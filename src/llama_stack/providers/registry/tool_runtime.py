@@ -5,13 +5,13 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.datatypes import (
+from llama_stack.providers.registry.vector_io import DEFAULT_VECTOR_IO_DEPS
+from llama_stack_api import (
     Api,
     InlineProviderSpec,
     ProviderSpec,
     RemoteProviderSpec,
 )
-from llama_stack.providers.registry.vector_io import DEFAULT_VECTOR_IO_DEPS
 
 
 def available_providers() -> list[ProviderSpec]:

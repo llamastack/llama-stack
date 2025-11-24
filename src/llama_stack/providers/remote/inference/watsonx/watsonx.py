@@ -10,7 +10,14 @@ from typing import Any
 import litellm
 import requests
 
-from llama_stack.apis.inference.inference import (
+from llama_stack.core.telemetry.tracing import get_current_span
+from llama_stack.log import get_logger
+from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
+from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
+from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
+from llama_stack_api import (
+    Model,
+    ModelType,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -20,13 +27,6 @@ from llama_stack.apis.inference.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack.apis.models import Model
-from llama_stack.apis.models.models import ModelType
-from llama_stack.core.telemetry.tracing import get_current_span
-from llama_stack.log import get_logger
-from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
-from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
-from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
 
 logger = get_logger(name=__name__, category="providers::remote::watsonx")
 
@@ -238,8 +238,8 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         )
 
         # Convert response to OpenAI format
-        from llama_stack.apis.inference import OpenAIEmbeddingUsage
         from llama_stack.providers.utils.inference.litellm_openai_mixin import b64_encode_openai_embeddings_response
+        from llama_stack_api import OpenAIEmbeddingUsage
 
         data = b64_encode_openai_embeddings_response(response.data, params.encoding_format)
 
@@ -255,7 +255,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         )
 
     def get_base_url(self) -> str:
-        return self.config.url
+        return str(self.config.base_url)
 
     # Copied from OpenAIMixin
     async def check_model_availability(self, model: str) -> bool:
@@ -283,8 +283,8 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
             # ...
             provider_resource_id = f"{self.__provider_id__}/{model_spec['model_id']}"
             if "embedding" in functions:
-                embedding_dimension = model_spec["model_limits"]["embedding_dimension"]
-                context_length = model_spec["model_limits"]["max_sequence_length"]
+                embedding_dimension = model_spec.get("model_limits", {}).get("embedding_dimension", 0)
+                context_length = model_spec.get("model_limits", {}).get("max_sequence_length", 0)
                 embedding_metadata = {
                     "embedding_dimension": embedding_dimension,
                     "context_length": context_length,
@@ -306,10 +306,6 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
                     metadata={},
                     model_type=ModelType.llm,
                 )
-                # In theory, I guess it is possible that a model could be both an embedding model and a text chat model.
-                # In that case, the cache will record the generator Model object, and the list which we return will have
-                # both the generator Model object and the text chat Model object.  That's fine because the cache is
-                # only used for check_model_availability() anyway.
                 self._model_cache[provider_resource_id] = model
                 models.append(model)
         return models
@@ -320,7 +316,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         """
         Retrieves foundation model specifications from the watsonx.ai API.
         """
-        url = f"{self.config.url}/ml/v1/foundation_model_specs?version=2023-10-25"
+        url = f"{str(self.config.base_url)}/ml/v1/foundation_model_specs?version=2023-10-25"
         headers = {
             # Note that there is no authorization header.  Listing models does not require authentication.
             "Content-Type": "application/json",

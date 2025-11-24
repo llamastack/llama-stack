@@ -20,6 +20,7 @@ This provider enables dataset management using NVIDIA's NeMo Customizer service.
 Build the NVIDIA environment:
 
 ```bash
+uv pip install llama-stack-client
 uv run llama stack list-deps nvidia | xargs -L1 uv pip install
 ```
 

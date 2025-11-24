@@ -9,7 +9,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from llama_stack.core.storage.datatypes import KVStoreReference
-from llama_stack.schema_utils import json_schema_type
+from llama_stack_api import json_schema_type
 
 
 @json_schema_type

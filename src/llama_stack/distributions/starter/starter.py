@@ -17,9 +17,10 @@ from llama_stack.core.datatypes import (
     ToolGroupInput,
     VectorStoresConfig,
 )
+from llama_stack.core.storage.kvstore.config import PostgresKVStoreConfig
+from llama_stack.core.storage.sqlstore.sqlstore import PostgresSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
-from llama_stack.providers.datatypes import RemoteProviderSpec
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
@@ -36,7 +37,7 @@ from llama_stack.providers.remote.vector_io.pgvector.config import (
 )
 from llama_stack.providers.remote.vector_io.qdrant.config import QdrantVectorIOConfig
 from llama_stack.providers.remote.vector_io.weaviate.config import WeaviateVectorIOConfig
-from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig
+from llama_stack_api import RemoteProviderSpec
 
 
 def _get_config_for_provider(provider_spec: ProviderSpec) -> dict[str, Any]:
@@ -148,10 +149,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::reference"),
         ],
     }
+    files_config = LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}")
     files_provider = Provider(
         provider_id="meta-reference-files",
         provider_type="inline::localfs",
-        config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+        config=files_config,
     )
     embedding_provider = Provider(
         provider_id="sentence-transformers",
@@ -181,6 +183,90 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             provider_shield_id="${env.CODE_SCANNER_MODEL:=}",
         ),
     ]
+    postgres_sql_config = PostgresSqlStoreConfig.sample_run_config()
+    postgres_kv_config = PostgresKVStoreConfig.sample_run_config()
+    default_overrides = {
+        "inference": remote_inference_providers + [embedding_provider],
+        "vector_io": [
+            Provider(
+                provider_id="faiss",
+                provider_type="inline::faiss",
+                config=FaissVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="sqlite-vec",
+                provider_type="inline::sqlite-vec",
+                config=SQLiteVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="${env.MILVUS_URL:+milvus}",
+                provider_type="inline::milvus",
+                config=MilvusVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="${env.CHROMADB_URL:+chromadb}",
+                provider_type="remote::chromadb",
+                config=ChromaVectorIOConfig.sample_run_config(
+                    f"~/.llama/distributions/{name}/",
+                    url="${env.CHROMADB_URL:=}",
+                ),
+            ),
+            Provider(
+                provider_id="${env.PGVECTOR_DB:+pgvector}",
+                provider_type="remote::pgvector",
+                config=PGVectorVectorIOConfig.sample_run_config(
+                    f"~/.llama/distributions/{name}",
+                    db="${env.PGVECTOR_DB:=}",
+                    user="${env.PGVECTOR_USER:=}",
+                    password="${env.PGVECTOR_PASSWORD:=}",
+                ),
+            ),
+            Provider(
+                provider_id="${env.QDRANT_URL:+qdrant}",
+                provider_type="remote::qdrant",
+                config=QdrantVectorIOConfig.sample_run_config(
+                    f"~/.llama/distributions/{name}",
+                    url="${env.QDRANT_URL:=}",
+                ),
+            ),
+            Provider(
+                provider_id="${env.WEAVIATE_CLUSTER_URL:+weaviate}",
+                provider_type="remote::weaviate",
+                config=WeaviateVectorIOConfig.sample_run_config(
+                    f"~/.llama/distributions/{name}",
+                    cluster_url="${env.WEAVIATE_CLUSTER_URL:=}",
+                ),
+            ),
+        ],
+        "files": [files_provider],
+    }
+
+    base_run_settings = RunConfigSettings(
+        provider_overrides=default_overrides,
+        default_models=[],
+        default_tool_groups=default_tool_groups,
+        default_shields=default_shields,
+        vector_stores_config=VectorStoresConfig(
+            default_provider_id="faiss",
+            default_embedding_model=QualifiedModel(
+                provider_id="sentence-transformers",
+                model_id="nomic-ai/nomic-embed-text-v1.5",
+            ),
+        ),
+        safety_config=SafetyConfig(
+            default_shield_id="llama-guard",
+        ),
+    )
+
+    postgres_run_settings = base_run_settings.model_copy(
+        update={
+            "storage_backends": {
+                "kv_default": postgres_kv_config,
+                "sql_default": postgres_sql_config,
+            }
+        },
+        deep=True,
+    )
 
     return DistributionTemplate(
         name=name,
@@ -189,78 +275,10 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         container_image=None,
         template_path=None,
         providers=providers,
-        additional_pip_packages=PostgresSqlStoreConfig.pip_packages(),
+        additional_pip_packages=list(set(PostgresSqlStoreConfig.pip_packages() + PostgresKVStoreConfig.pip_packages())),
         run_configs={
-            "run.yaml": RunConfigSettings(
-                provider_overrides={
-                    "inference": remote_inference_providers + [embedding_provider],
-                    "vector_io": [
-                        Provider(
-                            provider_id="faiss",
-                            provider_type="inline::faiss",
-                            config=FaissVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
-                        ),
-                        Provider(
-                            provider_id="sqlite-vec",
-                            provider_type="inline::sqlite-vec",
-                            config=SQLiteVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
-                        ),
-                        Provider(
-                            provider_id="${env.MILVUS_URL:+milvus}",
-                            provider_type="inline::milvus",
-                            config=MilvusVectorIOConfig.sample_run_config(f"~/.llama/distributions/{name}"),
-                        ),
-                        Provider(
-                            provider_id="${env.CHROMADB_URL:+chromadb}",
-                            provider_type="remote::chromadb",
-                            config=ChromaVectorIOConfig.sample_run_config(
-                                f"~/.llama/distributions/{name}/",
-                                url="${env.CHROMADB_URL:=}",
-                            ),
-                        ),
-                        Provider(
-                            provider_id="${env.PGVECTOR_DB:+pgvector}",
-                            provider_type="remote::pgvector",
-                            config=PGVectorVectorIOConfig.sample_run_config(
-                                f"~/.llama/distributions/{name}",
-                                db="${env.PGVECTOR_DB:=}",
-                                user="${env.PGVECTOR_USER:=}",
-                                password="${env.PGVECTOR_PASSWORD:=}",
-                            ),
-                        ),
-                        Provider(
-                            provider_id="${env.QDRANT_URL:+qdrant}",
-                            provider_type="remote::qdrant",
-                            config=QdrantVectorIOConfig.sample_run_config(
-                                f"~/.llama/distributions/{name}",
-                                url="${env.QDRANT_URL:=}",
-                            ),
-                        ),
-                        Provider(
-                            provider_id="${env.WEAVIATE_CLUSTER_URL:+weaviate}",
-                            provider_type="remote::weaviate",
-                            config=WeaviateVectorIOConfig.sample_run_config(
-                                f"~/.llama/distributions/{name}",
-                                cluster_url="${env.WEAVIATE_CLUSTER_URL:=}",
-                            ),
-                        ),
-                    ],
-                    "files": [files_provider],
-                },
-                default_models=[],
-                default_tool_groups=default_tool_groups,
-                default_shields=default_shields,
-                vector_stores_config=VectorStoresConfig(
-                    default_provider_id="faiss",
-                    default_embedding_model=QualifiedModel(
-                        provider_id="sentence-transformers",
-                        model_id="nomic-ai/nomic-embed-text-v1.5",
-                    ),
-                ),
-                safety_config=SafetyConfig(
-                    default_shield_id="llama-guard",
-                ),
-            ),
+            "run.yaml": base_run_settings,
+            "run-with-postgres-store.yaml": postgres_run_settings,
         },
         run_config_env_vars={
             "LLAMA_STACK_PORT": (

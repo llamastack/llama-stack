@@ -7,16 +7,17 @@
 
 from jinja2 import Template
 
-from llama_stack.apis.common.content_types import InterleavedContent
-from llama_stack.apis.inference import OpenAIChatCompletionRequestWithExtraBody, OpenAIUserMessageParam
-from llama_stack.apis.tools.rag_tool import (
-    DefaultRAGQueryGeneratorConfig,
-    LLMRAGQueryGeneratorConfig,
-    RAGQueryGenerator,
-    RAGQueryGeneratorConfig,
-)
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
+)
+from llama_stack_api import (
+    DefaultRAGQueryGeneratorConfig,
+    InterleavedContent,
+    LLMRAGQueryGeneratorConfig,
+    OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIUserMessageParam,
+    RAGQueryGenerator,
+    RAGQueryGeneratorConfig,
 )
 
 

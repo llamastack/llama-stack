@@ -12,17 +12,9 @@ from numpy.typing import NDArray
 from weaviate.classes.init import Auth
 from weaviate.classes.query import Filter, HybridFusion
 
-from llama_stack.apis.common.content_types import InterleavedContent
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.files import Files
-from llama_stack.apis.inference import Inference
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse, VectorIO
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import VectorStoresProtocolPrivate
-from llama_stack.providers.utils.kvstore import kvstore_impl
-from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_RRF,
@@ -31,6 +23,18 @@ from llama_stack.providers.utils.memory.vector_store import (
     VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
+from llama_stack_api import (
+    Chunk,
+    Files,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoreNotFoundError,
+    VectorStoresProtocolPrivate,
+)
+from llama_stack_api.internal.kvstore import KVStore
 
 from .config import WeaviateVectorIOConfig
 
@@ -346,13 +350,16 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
         if vector_store_id in self.cache:
             return self.cache[vector_store_id]
 
-        if self.vector_store_table is None:
+        # Try to load from kvstore
+        if self.kvstore is None:
+            raise RuntimeError("KVStore not initialized. Call initialize() before using vector stores.")
+
+        key = f"{VECTOR_DBS_PREFIX}{vector_store_id}"
+        vector_store_data = await self.kvstore.get(key)
+        if not vector_store_data:
             raise VectorStoreNotFoundError(vector_store_id)
 
-        vector_store = await self.vector_store_table.get_vector_store(vector_store_id)
-        if not vector_store:
-            raise VectorStoreNotFoundError(vector_store_id)
-
+        vector_store = VectorStore.model_validate_json(vector_store_data)
         client = self._get_client()
         sanitized_collection_name = sanitize_collection_name(vector_store.identifier, weaviate_format=True)
         if not client.collections.exists(sanitized_collection_name):

@@ -5,9 +5,8 @@
 # the root directory of this source tree.
 from typing import Any
 
-from llama_stack.apis.scoring import ScoringResultRow
-from llama_stack.apis.scoring_functions import ScoringFnParams, ScoringFnParamsType
 from llama_stack.providers.utils.scoring.base_scoring_fn import RegisteredBaseScoringFn
+from llama_stack_api import ScoringFnParams, ScoringFnParamsType, ScoringResultRow
 
 from ..utils.math_utils import first_answer, normalize_final_answer, try_evaluate_frac, try_evaluate_latex
 from .fn_defs.regex_parser_math_response import (

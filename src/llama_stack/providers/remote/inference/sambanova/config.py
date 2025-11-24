@@ -6,10 +6,10 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.schema_utils import json_schema_type
+from llama_stack_api import json_schema_type
 
 
 class SambaNovaProviderDataValidator(BaseModel):
@@ -21,14 +21,14 @@ class SambaNovaProviderDataValidator(BaseModel):
 
 @json_schema_type
 class SambaNovaImplConfig(RemoteInferenceProviderConfig):
-    url: str = Field(
-        default="https://api.sambanova.ai/v1",
+    base_url: HttpUrl | None = Field(
+        default=HttpUrl("https://api.sambanova.ai/v1"),
         description="The URL for the SambaNova AI server",
     )
 
     @classmethod
     def sample_run_config(cls, api_key: str = "${env.SAMBANOVA_API_KEY:=}", **kwargs) -> dict[str, Any]:
         return {
-            "url": "https://api.sambanova.ai/v1",
+            "base_url": "https://api.sambanova.ai/v1",
             "api_key": api_key,
         }

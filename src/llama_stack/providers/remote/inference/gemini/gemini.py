@@ -6,13 +6,13 @@
 
 from typing import Any
 
-from llama_stack.apis.inference import (
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
     OpenAIEmbeddingData,
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
 )
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import GeminiConfig
 
