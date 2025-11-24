@@ -46,16 +46,6 @@ def create_query_dependency[T: BaseModel](model_class: type[T]) -> Callable[...,
 
     Returns:
         A dependency function that can be used with FastAPI's Depends()
-
-    Example:
-        ```python
-        get_list_batches_request = create_query_dependency(ListBatchesRequest)
-
-        @router.get("/batches")
-        async def list_batches(
-            request: Annotated[ListBatchesRequest, Depends(get_list_batches_request)]
-        ):
-            ...
         ```
     """
     # Build function signature dynamically from model fields
@@ -93,9 +83,12 @@ def create_query_dependency[T: BaseModel](model_class: type[T]) -> Callable[...,
         )
         sig_params.append(param)
 
-    dependency_func.__signature__ = inspect.Signature(sig_params)
-    dependency_func.__annotations__ = annotations
-    dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"
+    # These attributes are set dynamically at runtime. While mypy can't verify them statically,
+    # they are standard Python function attributes that exist on all callable objects at runtime.
+    # Setting them allows FastAPI to properly introspect the function signature for dependency injection.
+    dependency_func.__signature__ = inspect.Signature(sig_params)  # type: ignore[attr-defined]
+    dependency_func.__annotations__ = annotations  # type: ignore[attr-defined]
+    dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"  # type: ignore[attr-defined]
 
     return dependency_func
 
@@ -120,16 +113,6 @@ def create_path_dependency[T: BaseModel](model_class: type[T]) -> Callable[..., 
 
     Returns:
         A dependency function that can be used with FastAPI's Depends()
-
-    Example:
-        ```python
-        get_retrieve_batch_request = create_path_dependency(RetrieveBatchRequest)
-
-        @router.get("/batches/{batch_id}")
-        async def retrieve_batch(
-            request: Annotated[RetrieveBatchRequest, Depends(get_retrieve_batch_request)]
-        ):
-            ...
         ```
     """
     # Get the single field from the model (path parameter models typically have one field)
@@ -162,8 +145,11 @@ def create_path_dependency[T: BaseModel](model_class: type[T]) -> Callable[..., 
         annotation=annotations[field_name],
     )
 
-    dependency_func.__signature__ = inspect.Signature([param])
-    dependency_func.__annotations__ = annotations
-    dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"
+    # These attributes are set dynamically at runtime. While mypy can't verify them statically,
+    # they are standard Python function attributes that exist on all callable objects at runtime.
+    # Setting them allows FastAPI to properly introspect the function signature for dependency injection.
+    dependency_func.__signature__ = inspect.Signature([param])  # type: ignore[attr-defined]
+    dependency_func.__annotations__ = annotations  # type: ignore[attr-defined]
+    dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"  # type: ignore[attr-defined]
 
     return dependency_func

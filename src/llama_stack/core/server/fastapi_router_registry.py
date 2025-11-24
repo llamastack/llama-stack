@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 # Add new APIs here as they are migrated to the router system
 from llama_stack_api.batches.fastapi_routes import create_router as create_batches_router
 
-_ROUTER_FACTORIES: dict[str, APIRouter] = {
+_ROUTER_FACTORIES: dict[str, Any] = {
     "batches": create_batches_router,
 }
 
