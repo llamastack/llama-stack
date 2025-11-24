@@ -13,7 +13,7 @@ all API-related code together.
 
 from typing import Annotated
 
-from fastapi import APIRouter, Body, Depends, Path, Query
+from fastapi import APIRouter, Body, Depends
 
 from llama_stack_api.batches import Batches, BatchObject, ListBatchesResponse
 from llama_stack_api.batches.models import (
@@ -22,32 +22,18 @@ from llama_stack_api.batches.models import (
     ListBatchesRequest,
     RetrieveBatchRequest,
 )
-from llama_stack_api.router_utils import standard_responses
+from llama_stack_api.router_utils import create_path_dependency, create_query_dependency, standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
-
-def get_retrieve_batch_request(
-    batch_id: Annotated[str, Path(description="The ID of the batch to retrieve.")],
-) -> RetrieveBatchRequest:
-    """Dependency function to create RetrieveBatchRequest from path parameter."""
-    return RetrieveBatchRequest(batch_id=batch_id)
+# Automatically generate dependency functions from Pydantic models
+# This ensures the models are the single source of truth for descriptions
+get_retrieve_batch_request = create_path_dependency(RetrieveBatchRequest)
+get_cancel_batch_request = create_path_dependency(CancelBatchRequest)
 
 
-def get_cancel_batch_request(
-    batch_id: Annotated[str, Path(description="The ID of the batch to cancel.")],
-) -> CancelBatchRequest:
-    """Dependency function to create CancelBatchRequest from path parameter."""
-    return CancelBatchRequest(batch_id=batch_id)
-
-
-def get_list_batches_request(
-    after: Annotated[
-        str | None, Query(description="Optional cursor for pagination. Returns batches after this ID.")
-    ] = None,
-    limit: Annotated[int, Query(description="Maximum number of batches to return. Defaults to 20.")] = 20,
-) -> ListBatchesRequest:
-    """Dependency function to create ListBatchesRequest from query parameters."""
-    return ListBatchesRequest(after=after, limit=limit)
+# Automatically generate dependency function from Pydantic model
+# This ensures the model is the single source of truth for descriptions and defaults
+get_list_batches_request = create_query_dependency(ListBatchesRequest)
 
 
 def create_router(impl: Batches) -> APIRouter:
