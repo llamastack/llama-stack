@@ -490,7 +490,7 @@ class ServerConfig(BaseModel):
     )
 
 
-class StackRunConfig(BaseModel):
+class StackConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
     image_name: str = Field(
@@ -565,7 +565,7 @@ can be instantiated multiple times (with different configs) if necessary.
         return v
 
     @model_validator(mode="after")
-    def validate_server_stores(self) -> "StackRunConfig":
+    def validate_server_stores(self) -> "StackConfig":
         backend_map = self.storage.backends
         stores = self.storage.stores
         kv_backends = {

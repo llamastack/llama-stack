@@ -12,7 +12,7 @@ import yaml
 from termcolor import cprint
 
 from llama_stack.core.build import get_provider_dependencies
-from llama_stack.core.datatypes import Provider, StackRunConfig
+from llama_stack.core.datatypes import Provider, StackConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.log import get_logger
 from llama_stack_api import Api
@@ -78,7 +78,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
             with open(config_file) as f:
                 try:
                     contents = yaml.safe_load(f)
-                    run_config = StackRunConfig(**contents)
+                    run_config = StackConfig(**contents)
                 except Exception as e:
                     cprint(
                         f"Could not parse config file {config_file}: {e}",
@@ -119,7 +119,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                     file=sys.stderr,
                 )
                 sys.exit(1)
-        run_config = StackRunConfig(providers=provider_list, image_name="providers-run")
+        run_config = StackConfig(providers=provider_list, image_name="providers-run")
 
     normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(run_config)
     normal_deps += SERVER_DEPENDENCIES

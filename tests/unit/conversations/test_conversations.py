@@ -16,7 +16,7 @@ from llama_stack.core.conversations.conversations import (
     ConversationServiceConfig,
     ConversationServiceImpl,
 )
-from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.datatypes import (
     ServerStoresConfig,
     SqliteSqlStoreConfig,
@@ -44,7 +44,7 @@ async def service():
             ),
         )
         register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
-        run_config = StackRunConfig(image_name="test", apis=[], providers={}, storage=storage)
+        run_config = StackConfig(image_name="test", apis=[], providers={}, storage=storage)
 
         config = ConversationServiceConfig(run_config=run_config, policy=[])
         service = ConversationServiceImpl(config, {})
@@ -151,7 +151,7 @@ async def test_policy_configuration():
             ),
         )
         register_sqlstore_backends({"sql_test": storage.backends["sql_test"]})
-        run_config = StackRunConfig(image_name="test", apis=[], providers={}, storage=storage)
+        run_config = StackConfig(image_name="test", apis=[], providers={}, storage=storage)
 
         config = ConversationServiceConfig(run_config=run_config, policy=restrictive_policy)
         service = ConversationServiceImpl(config, {})

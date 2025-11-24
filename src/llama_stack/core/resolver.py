@@ -14,7 +14,7 @@ from llama_stack.core.datatypes import (
     AutoRoutedProviderSpec,
     Provider,
     RoutingTableProviderSpec,
-    StackRunConfig,
+    StackConfig,
 )
 from llama_stack.core.distribution import builtin_automatically_routed_apis
 from llama_stack.core.external import load_external_apis
@@ -147,7 +147,7 @@ ProviderRegistry = dict[Api, dict[str, ProviderSpec]]
 
 
 async def resolve_impls(
-    run_config: StackRunConfig,
+    run_config: StackConfig,
     provider_registry: ProviderRegistry,
     dist_registry: DistributionRegistry,
     policy: list[AccessRule],
@@ -217,7 +217,7 @@ def specs_for_autorouted_apis(apis_to_serve: list[str] | set[str]) -> dict[str, 
 
 
 def validate_and_prepare_providers(
-    run_config: StackRunConfig, provider_registry: ProviderRegistry, routing_table_apis: set[Api], router_apis: set[Api]
+    run_config: StackConfig, provider_registry: ProviderRegistry, routing_table_apis: set[Api], router_apis: set[Api]
 ) -> dict[str, dict[str, ProviderWithSpec]]:
     """Validates providers, handles deprecations, and organizes them into a spec dictionary."""
     providers_with_specs: dict[str, dict[str, ProviderWithSpec]] = {}
@@ -261,7 +261,7 @@ def validate_provider(provider: Provider, api: Api, provider_registry: ProviderR
 
 
 def sort_providers_by_deps(
-    providers_with_specs: dict[str, dict[str, ProviderWithSpec]], run_config: StackRunConfig
+    providers_with_specs: dict[str, dict[str, ProviderWithSpec]], run_config: StackConfig
 ) -> list[tuple[str, ProviderWithSpec]]:
     """Sorts providers based on their dependencies."""
     sorted_providers: list[tuple[str, ProviderWithSpec]] = topological_sort(
@@ -278,7 +278,7 @@ async def instantiate_providers(
     sorted_providers: list[tuple[str, ProviderWithSpec]],
     router_apis: set[Api],
     dist_registry: DistributionRegistry,
-    run_config: StackRunConfig,
+    run_config: StackConfig,
     policy: list[AccessRule],
     internal_impls: dict[Api, Any] | None = None,
 ) -> dict[Api, Any]:
@@ -357,7 +357,7 @@ async def instantiate_provider(
     deps: dict[Api, Any],
     inner_impls: dict[str, Any],
     dist_registry: DistributionRegistry,
-    run_config: StackRunConfig,
+    run_config: StackConfig,
     policy: list[AccessRule],
 ):
     provider_spec = provider.spec

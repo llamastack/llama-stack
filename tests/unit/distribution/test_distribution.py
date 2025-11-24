@@ -11,7 +11,7 @@ import pytest
 import yaml
 from pydantic import BaseModel, Field, ValidationError
 
-from llama_stack.core.datatypes import Api, Provider, StackRunConfig
+from llama_stack.core.datatypes import Api, Provider, StackConfig
 from llama_stack.core.distribution import INTERNAL_APIS, get_provider_registry, providable_apis
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
@@ -53,7 +53,7 @@ def _default_storage() -> StorageConfig:
     )
 
 
-def make_stack_config(**overrides) -> StackRunConfig:
+def make_stack_config(**overrides) -> StackConfig:
     storage = overrides.pop("storage", _default_storage())
     defaults = dict(
         image_name="test_image",
@@ -62,7 +62,7 @@ def make_stack_config(**overrides) -> StackRunConfig:
         storage=storage,
     )
     defaults.update(overrides)
-    return StackRunConfig(**defaults)
+    return StackConfig(**defaults)
 
 
 @pytest.fixture

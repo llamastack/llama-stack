@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.core.datatypes import AccessRule, StackRunConfig
+from llama_stack.core.datatypes import AccessRule, StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
@@ -36,7 +36,7 @@ class ConversationServiceConfig(BaseModel):
     :param policy: Access control rules
     """
 
-    run_config: StackRunConfig
+    run_config: StackConfig
     policy: list[AccessRule] = []
 
 

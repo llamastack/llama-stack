@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.datatypes import StackConfig
 
 
 def get_test_configs():
@@ -49,4 +49,4 @@ def test_load_run_config(config_file):
     with open(config_file) as f:
         config_data = yaml.safe_load(f)
 
-    StackRunConfig.model_validate(config_data)
+    StackConfig.model_validate(config_data)

@@ -8,7 +8,7 @@ from importlib.metadata import version
 
 from pydantic import BaseModel
 
-from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.external import load_external_apis
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack_api import (
@@ -22,7 +22,7 @@ from llama_stack_api import (
 
 
 class DistributionInspectConfig(BaseModel):
-    run_config: StackRunConfig
+    run_config: StackConfig
 
 
 async def get_provider_impl(config, deps):
@@ -40,7 +40,7 @@ class DistributionInspectImpl(Inspect):
         pass
 
     async def list_routes(self, api_filter: str | None = None) -> ListRoutesResponse:
-        run_config: StackRunConfig = self.config.run_config
+        run_config: StackConfig = self.config.run_config
 
         # Helper function to determine if a route should be included based on api_filter
         def should_include_route(webmethod) -> bool:

@@ -17,7 +17,7 @@ from termcolor import cprint
 
 from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
-from llama_stack.core.datatypes import Api, Provider, StackRunConfig
+from llama_stack.core.datatypes import Api, Provider, StackConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
 from llama_stack.core.storage.datatypes import (
@@ -156,7 +156,7 @@ class StackRun(Subcommand):
 
             # Write config to disk in providers-run directory
             distro_dir = DISTRIBS_BASE_DIR / "providers-run"
-            config_file = distro_dir / "run.yaml"
+            config_file = distro_dir / "config.yaml"
 
             logger.info(f"Writing generated config to: {config_file}")
             with open(config_file, "w") as f:
@@ -194,7 +194,7 @@ class StackRun(Subcommand):
                 logger_config = LoggingConfig(**cfg)
             else:
                 logger_config = None
-            config = StackRunConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
+            config = StackConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
 
         port = args.port or config.server.port
         host = config.server.host or "0.0.0.0"
@@ -318,7 +318,7 @@ class StackRun(Subcommand):
             ),
         )
 
-        return StackRunConfig(
+        return StackConfig(
             image_name="providers-run",
             apis=apis,
             providers=providers,

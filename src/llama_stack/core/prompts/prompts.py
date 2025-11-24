@@ -9,7 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack_api import ListPromptsResponse, Prompt, Prompts
 
@@ -20,7 +20,7 @@ class PromptServiceConfig(BaseModel):
     :param run_config: Stack run configuration containing distribution info
     """
 
-    run_config: StackRunConfig
+    run_config: StackConfig
 
 
 async def get_provider_impl(config: PromptServiceConfig, deps: dict[Any, Any]):

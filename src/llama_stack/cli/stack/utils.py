@@ -16,7 +16,7 @@ from termcolor import cprint
 from llama_stack.core.datatypes import (
     BuildConfig,
     Provider,
-    StackRunConfig,
+    StackConfig,
     StorageConfig,
 )
 from llama_stack.core.distribution import get_provider_registry
@@ -61,7 +61,7 @@ def generate_run_config(
     """
     apis = list(build_config.distribution_spec.providers.keys())
     distro_dir = DISTRIBS_BASE_DIR / image_name
-    run_config = StackRunConfig(
+    run_config = StackConfig(
         container_image=(image_name if build_config.image_type == LlamaStackImageType.CONTAINER.value else None),
         image_name=image_name,
         apis=apis,
