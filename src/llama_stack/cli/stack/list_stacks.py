@@ -64,14 +64,14 @@ class StackListBuilds(Subcommand):
         for name, (path, source_type) in sorted(distributions.items()):
             row = [name, source_type, str(path)]
             # Check for build and run config files
-            # For built-in distributions, configs are named build.yaml and run.yaml
-            # For custom distributions, configs are named {name}-build.yaml and {name}-run.yaml
+            # For built-in distributions, configs are named build.yaml and config.yaml
+            # For custom distributions, configs are named {name}-build.yaml and {name}-config.yaml
             if source_type == "built-in":
                 build_config = "Yes" if (path / "build.yaml").exists() else "No"
-                run_config = "Yes" if (path / "run.yaml").exists() else "No"
+                run_config = "Yes" if (path / "config.yaml").exists() else "No"
             else:
                 build_config = "Yes" if (path / f"{name}-build.yaml").exists() else "No"
-                run_config = "Yes" if (path / f"{name}-run.yaml").exists() else "No"
+                run_config = "Yes" if (path / f"{name}-config.yaml").exists() else "No"
             row.extend([build_config, run_config])
             rows.append(row)
         print_table(rows, headers, separate_rows=True)

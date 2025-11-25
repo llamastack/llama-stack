@@ -32,7 +32,7 @@ def mock_distribs_base_dir(tmp_path):
     starter_custom = custom_dir / "starter"
     starter_custom.mkdir()
     (starter_custom / "starter-build.yaml").write_text("# build config")
-    (starter_custom / "starter-run.yaml").write_text("# run config")
+    (starter_custom / "starter-config.yaml").write_text("# run config")
 
     return custom_dir
 
@@ -48,7 +48,7 @@ def mock_distro_dir(tmp_path):
         distro_path = distro_dir / distro_name
         distro_path.mkdir()
         (distro_path / "build.yaml").write_text("# build config")
-        (distro_path / "run.yaml").write_text("# run config")
+        (distro_path / "config.yaml").write_text("# run config")
 
     return distro_dir
 

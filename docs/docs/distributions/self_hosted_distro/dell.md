@@ -152,14 +152,14 @@ docker run \
   --pull always \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v $HOME/.llama:/root/.llama \
-  -v ./llama_stack/distributions/tgi/run-with-safety.yaml:/root/my-run.yaml \
+  -v ./llama_stack/distributions/tgi/run-with-safety.yaml:/root/my-config.yaml \
   -e INFERENCE_MODEL=$INFERENCE_MODEL \
   -e DEH_URL=$DEH_URL \
   -e SAFETY_MODEL=$SAFETY_MODEL \
   -e DEH_SAFETY_URL=$DEH_SAFETY_URL \
   -e CHROMA_URL=$CHROMA_URL \
   llamastack/distribution-dell \
-  --config /root/my-run.yaml \
+  --config /root/my-config.yaml \
   --port $LLAMA_STACK_PORT
 ```
 

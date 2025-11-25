@@ -276,7 +276,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         template_path=None,
         providers=providers,
         run_configs={
-            "run.yaml": base_run_settings,
+            "config.yaml": base_run_settings,
             "run-with-postgres-store.yaml": postgres_run_settings,
         },
         run_config_env_vars={

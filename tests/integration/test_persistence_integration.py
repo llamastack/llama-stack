@@ -17,7 +17,7 @@ from llama_stack.core.storage.datatypes import (
 
 def test_starter_distribution_config_loads_and_resolves():
     """Integration: Actual starter config should parse and have correct storage structure."""
-    with open("llama_stack/distributions/starter/run.yaml") as f:
+    with open("llama_stack/distributions/starter/config.yaml") as f:
         config_dict = yaml.safe_load(f)
 
     config = StackConfig(**config_dict)
@@ -47,7 +47,7 @@ def test_starter_distribution_config_loads_and_resolves():
 
 def test_postgres_demo_distribution_config_loads():
     """Integration: Postgres demo should use Postgres backend for all stores."""
-    with open("llama_stack/distributions/postgres-demo/run.yaml") as f:
+    with open("llama_stack/distributions/postgres-demo/config.yaml") as f:
         config_dict = yaml.safe_load(f)
 
     config = StackConfig(**config_dict)

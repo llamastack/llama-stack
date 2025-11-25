@@ -500,7 +500,7 @@ async def refresh_registry_task(impls: dict[Api, Any]):
 
 
 def get_stack_run_config_from_distro(distro: str) -> StackConfig:
-    distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/run.yaml"
+    distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/config.yaml"
 
     with importlib.resources.as_file(distro_path) as path:
         if not path.exists():

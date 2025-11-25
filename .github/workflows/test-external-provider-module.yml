@@ -43,8 +43,8 @@ jobs:
           nohup ramalama serve llama3.2:3b-instruct-fp16  > ramalama_server.log 2>&1 &
       - name: Apply image type to config file
         run: |
-          yq -i '.image_type = "${{ matrix.image-type }}"' tests/external/ramalama-stack/run.yaml
-          cat tests/external/ramalama-stack/run.yaml
+          yq -i '.image_type = "${{ matrix.image-type }}"' tests/external/ramalama-stack/config.yaml
+          cat tests/external/ramalama-stack/config.yaml
 
       - name: Install distribution dependencies
         run: |
@@ -59,7 +59,7 @@ jobs:
           # Use the virtual environment created by the build step (name comes from build config)
           source ramalama-stack-test/bin/activate
           uv pip list
-          nohup llama stack run tests/external/ramalama-stack/run.yaml > server.log 2>&1 &
+          nohup llama stack run tests/external/ramalama-stack/config.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |

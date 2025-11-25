@@ -9,8 +9,8 @@ from typing import Any
 from llama_stack.core.datatypes import (
     AccessRule,
     RoutedProtocol,
+    StackConfig,
 )
-from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.store import DistributionRegistry
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import Api, RoutingTable
