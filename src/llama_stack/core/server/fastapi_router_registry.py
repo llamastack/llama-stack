@@ -26,7 +26,7 @@ _ROUTER_FACTORIES: dict[str, Any] = {
 }
 
 
-def build_router(api: "Api", impl: Any) -> APIRouter | None:
+def build_fastapi_router(api: "Api", impl: Any) -> APIRouter | None:
     """Build a router for an API by combining its router factory with the implementation.
 
     Args:

@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.external import load_external_apis
-from llama_stack.core.server.fastapi_router_registry import build_router
+from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack_api import (
     Api,
@@ -70,7 +70,7 @@ class DistributionInspectImpl(Inspect):
         # Process webmethod-based routes (legacy)
         for api, endpoints in all_endpoints.items():
             # Skip APIs that have routers - they'll be processed separately
-            if build_router(api, None) is not None:
+            if build_fastapi_router(api, None) is not None:
                 continue
 
             provider_types = get_provider_types(api)
@@ -114,7 +114,7 @@ class DistributionInspectImpl(Inspect):
         protocols = api_protocol_map(external_apis)
         for api in protocols.keys():
             # For route inspection, we don't need a real implementation
-            router = build_router(api, None)
+            router = build_fastapi_router(api, None)
             if not router:
                 continue
 
