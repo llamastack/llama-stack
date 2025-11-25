@@ -10,16 +10,14 @@ This module provides utilities to create FastAPI routers from API packages.
 APIs with routers are explicitly listed here.
 """
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
 from fastapi import APIRouter
-
-if TYPE_CHECKING:
-    from llama_stack_api.datatypes import Api
 
 # Router factories for APIs that have FastAPI routers
 # Add new APIs here as they are migrated to the router system
 from llama_stack_api.batches.fastapi_routes import create_router as create_batches_router
+from llama_stack_api.datatypes import Api
 
 _ROUTER_FACTORIES: dict[str, Any] = {
     "batches": create_batches_router,
