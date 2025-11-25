@@ -14,6 +14,8 @@ from collections.abc import Callable
 from typing import Any, cast
 
 from fastapi import APIRouter
+from fastapi.routing import APIRoute
+from starlette.routing import Route
 
 # Router factories for APIs that have FastAPI routers
 # Add new APIs here as they are migrated to the router system
@@ -43,3 +45,40 @@ def build_fastapi_router(api: "Api", impl: Any) -> APIRouter | None:
     # If a router factory returns the wrong type, it will fail at runtime when
     # app.include_router(router) is called
     return cast(APIRouter, router_factory(impl))
+
+
+def get_router_routes(router: APIRouter) -> list[Route]:
+    """Extract routes from a FastAPI router.
+
+    Args:
+        router: The FastAPI router to extract routes from
+
+    Returns:
+        List of Route objects from the router
+    """
+    routes = []
+
+    for route in router.routes:
+        # FastAPI routers use APIRoute objects, which have path and methods attributes
+        if isinstance(route, APIRoute):
+            # Combine router prefix with route path
+            routes.append(
+                Route(
+                    path=route.path,
+                    methods=route.methods,
+                    name=route.name,
+                    endpoint=route.endpoint,
+                )
+            )
+        elif isinstance(route, Route):
+            # Fallback for regular Starlette Route objects
+            routes.append(
+                Route(
+                    path=route.path,
+                    methods=route.methods,
+                    name=route.name,
+                    endpoint=route.endpoint,
+                )
+            )
+
+    return routes
