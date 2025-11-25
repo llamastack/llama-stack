@@ -10,6 +10,7 @@ This module provides utilities to create FastAPI routers from API packages.
 APIs with routers are explicitly listed here.
 """
 
+from collections.abc import Callable
 from typing import Any, cast
 
 from fastapi import APIRouter
@@ -19,7 +20,7 @@ from fastapi import APIRouter
 from llama_stack_api.batches.fastapi_routes import create_router as create_batches_router
 from llama_stack_api.datatypes import Api
 
-_ROUTER_FACTORIES: dict[str, Any] = {
+_ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "batches": create_batches_router,
 }
 
