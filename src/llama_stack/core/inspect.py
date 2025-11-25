@@ -10,6 +10,7 @@ from pydantic import BaseModel
 
 from llama_stack.core.datatypes import StackRunConfig
 from llama_stack.core.external import load_external_apis
+from llama_stack.core.resolver import api_protocol_map
 from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack_api import (
@@ -107,9 +108,6 @@ class DistributionInspectImpl(Inspect):
                     prefix_level = router_prefix.lstrip("/")
                     return not route_deprecated and prefix_level == api_filter
                 return not route_deprecated
-
-        # Process router-based routes
-        from llama_stack.core.resolver import api_protocol_map
 
         protocols = api_protocol_map(external_apis)
         for api in protocols.keys():
