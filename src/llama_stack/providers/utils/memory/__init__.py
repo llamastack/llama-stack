@@ -4,6 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from .constants import DEFAULT_QUERY_EXPANSION_PROMPT
+from .constants import DEFAULT_QUERY_REWRITE_PROMPT
 
-__all__ = ["DEFAULT_QUERY_EXPANSION_PROMPT"]
+__all__ = ["DEFAULT_QUERY_REWRITE_PROMPT"]

@@ -39,7 +39,7 @@ from llama_stack_api import (
 log = get_logger(name=__name__, category="providers::utils")
 
 from llama_stack.providers.utils.memory import rewrite_query_config
-from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_EXPANSION_PROMPT
+from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
 
 
 class ChunkForDeletion(BaseModel):
@@ -312,7 +312,7 @@ class VectorStoreWithIndex:
             )
         else:
             # Use built-in default prompt and format with query
-            prompt = DEFAULT_QUERY_EXPANSION_PROMPT.format(query=query)
+            prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query=query)
 
         request = OpenAIChatCompletionRequestWithExtraBody(
             model=model_id,

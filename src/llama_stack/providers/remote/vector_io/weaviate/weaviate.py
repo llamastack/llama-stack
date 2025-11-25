@@ -262,12 +262,7 @@ class WeaviateIndex(EmbeddingIndex):
 
 
 class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProviderData, VectorStoresProtocolPrivate):
-    def __init__(
-        self,
-        config: WeaviateVectorIOConfig,
-        inference_api: Inference,
-        files_api: Files | None,
-    ) -> None:
+    def __init__(self, config: WeaviateVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api
@@ -313,9 +308,7 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
                 client = self._get_client()
                 idx = WeaviateIndex(client=client, collection_name=vector_store.identifier, kvstore=self.kvstore)
                 self.cache[vector_store.identifier] = VectorStoreWithIndex(
-                    vector_store=vector_store,
-                    index=idx,
-                    inference_api=self.inference_api,
+                    vector_store=vector_store, index=idx, inference_api=self.inference_api
                 )
 
             # Load OpenAI vector stores metadata into cache
@@ -341,9 +334,7 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
             )
 
         self.cache[vector_store.identifier] = VectorStoreWithIndex(
-            vector_store,
-            WeaviateIndex(client=client, collection_name=sanitized_collection_name),
-            self.inference_api,
+            vector_store, WeaviateIndex(client=client, collection_name=sanitized_collection_name), self.inference_api
         )
 
     async def unregister_vector_store(self, vector_store_id: str) -> None:

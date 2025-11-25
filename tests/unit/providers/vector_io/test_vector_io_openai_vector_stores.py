@@ -1237,7 +1237,7 @@ async def test_query_expansion_functionality(vector_io_adapter):
     from unittest.mock import MagicMock
 
     from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams
-    from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_EXPANSION_PROMPT
+    from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
     from llama_stack.providers.utils.memory.rewrite_query_config import set_default_rewrite_query_config
     from llama_stack.providers.utils.memory.vector_store import VectorStoreWithIndex
     from llama_stack_api import QueryChunksResponse
@@ -1288,7 +1288,7 @@ async def test_query_expansion_functionality(vector_io_adapter):
 
     # Verify default prompt is used (contains our built-in prompt text)
     prompt_text = chat_call_args.messages[0].content
-    expected_prompt = DEFAULT_QUERY_EXPANSION_PROMPT.format(query="test query")
+    expected_prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query="test query")
     assert prompt_text == expected_prompt
 
     # Verify default inference parameters are used

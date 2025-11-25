@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
-from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_EXPANSION_PROMPT
+from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
 
 # Global configuration for query rewriting - set during stack startup
 _DEFAULT_REWRITE_QUERY_MODEL: QualifiedModel | None = None
@@ -25,7 +25,7 @@ def set_default_rewrite_query_config(vector_stores_config: VectorStoresConfig | 
         params = vector_stores_config.rewrite_query_params
         _DEFAULT_REWRITE_QUERY_MODEL = params.model
         # Only set override if user provided a custom prompt different from default
-        if params.prompt != DEFAULT_QUERY_EXPANSION_PROMPT:
+        if params.prompt != DEFAULT_QUERY_REWRITE_PROMPT:
             _REWRITE_QUERY_PROMPT_OVERRIDE = params.prompt
         else:
             _REWRITE_QUERY_PROMPT_OVERRIDE = None
