@@ -184,12 +184,7 @@ class FaissIndex(EmbeddingIndex):
 
 
 class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
-    def __init__(
-        self,
-        config: FaissVectorIOConfig,
-        inference_api: Inference,
-        files_api: Files | None,
-    ) -> None:
+    def __init__(self, config: FaissVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
         self.inference_api = inference_api

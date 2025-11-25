@@ -288,9 +288,7 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         for vector_store_data in stored_vector_stores:
             vector_store = VectorStore.model_validate_json(vector_store_data)
             index = VectorStoreWithIndex(
-                vector_store,
-                QdrantIndex(self.client, vector_store.identifier),
-                self.inference_api,
+                vector_store, QdrantIndex(self.client, vector_store.identifier), self.inference_api
             )
             self.cache[vector_store.identifier] = index
         self.openai_vector_stores = await self._load_openai_vector_stores()

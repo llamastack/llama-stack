@@ -9,10 +9,7 @@ from llama_stack_api import Api, ProviderSpec
 from .config import WeaviateVectorIOConfig
 
 
-async def get_adapter_impl(
-    config: WeaviateVectorIOConfig,
-    deps: dict[Api, ProviderSpec],
-):
+async def get_adapter_impl(config: WeaviateVectorIOConfig, deps: dict[Api, ProviderSpec]):
     from .weaviate import WeaviateVectorIOAdapter
 
     impl = WeaviateVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))

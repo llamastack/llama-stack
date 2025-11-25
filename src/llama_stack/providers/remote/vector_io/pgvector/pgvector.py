@@ -330,10 +330,7 @@ class PGVectorIndex(EmbeddingIndex):
 
 class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     def __init__(
-        self,
-        config: PGVectorVectorIOConfig,
-        inference_api: Inference,
-        files_api: Files | None = None,
+        self, config: PGVectorVectorIOConfig, inference_api: Inference, files_api: Files | None = None
     ) -> None:
         super().__init__(files_api=files_api, kvstore=None)
         self.config = config
@@ -389,11 +386,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 kvstore=self.kvstore,
             )
             await pgvector_index.initialize()
-            index = VectorStoreWithIndex(
-                vector_store,
-                index=pgvector_index,
-                inference_api=self.inference_api,
-            )
+            index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
             self.cache[vector_store.identifier] = index
 
     async def shutdown(self) -> None:
@@ -420,11 +413,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             vector_store=vector_store, dimension=vector_store.embedding_dimension, conn=self.conn, kvstore=self.kvstore
         )
         await pgvector_index.initialize()
-        index = VectorStoreWithIndex(
-            vector_store,
-            index=pgvector_index,
-            inference_api=self.inference_api,
-        )
+        index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
         self.cache[vector_store.identifier] = index
 
     async def unregister_vector_store(self, vector_store_id: str) -> None:
