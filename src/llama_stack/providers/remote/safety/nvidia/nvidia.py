@@ -175,5 +175,7 @@ class NeMoGuardrails:
                 user_message="Sorry I cannot do this.",
                 violation_level=ViolationLevel.ERROR,
                 metadata={"reason": "Content violates safety guidelines", "response": content or "(empty)"},
-            ) if is_blocked else None
+            )
+            if is_blocked
+            else None
         )
