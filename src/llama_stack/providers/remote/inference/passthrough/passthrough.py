@@ -8,8 +8,10 @@ from collections.abc import AsyncIterator
 
 from openai import AsyncOpenAI
 
-from llama_stack.apis.inference import (
+from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack_api import (
     Inference,
+    Model,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -18,8 +20,6 @@ from llama_stack.apis.inference import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
 )
-from llama_stack.apis.models import Model
-from llama_stack.core.request_headers import NeedsRequestProviderData
 
 from .config import PassthroughImplConfig
 
@@ -82,8 +82,8 @@ class PassthroughInferenceAdapter(NeedsRequestProviderData, Inference):
 
     def _get_passthrough_url(self) -> str:
         """Get the passthrough URL from config or provider data."""
-        if self.config.url is not None:
-            return self.config.url
+        if self.config.base_url is not None:
+            return str(self.config.base_url)
 
         provider_data = self.get_request_provider_data()
         if provider_data is None:

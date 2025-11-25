@@ -22,7 +22,7 @@ from llama_stack.core.storage.datatypes import (
     SqlStoreReference,
     StorageConfig,
 )
-from llama_stack.providers.datatypes import ProviderSpec
+from llama_stack_api import ProviderSpec
 
 
 class SampleConfig(BaseModel):
@@ -312,7 +312,7 @@ pip_packages:
         """Test loading an external provider from a module (success path)."""
         from types import SimpleNamespace
 
-        from llama_stack.providers.datatypes import Api, ProviderSpec
+        from llama_stack_api import Api, ProviderSpec
 
         # Simulate a provider module with get_provider_spec
         fake_spec = ProviderSpec(
@@ -396,7 +396,7 @@ pip_packages:
     def test_external_provider_from_module_building(self, mock_providers):
         """Test loading an external provider from a module during build (building=True, partial spec)."""
         from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
-        from llama_stack.providers.datatypes import Api
+        from llama_stack_api import Api
 
         # No importlib patch needed, should not import module when type of `config` is BuildConfig or DistributionSpec
         build_config = BuildConfig(
@@ -457,7 +457,7 @@ class TestGetExternalProvidersFromModule:
         from types import SimpleNamespace
 
         from llama_stack.core.distribution import get_external_providers_from_module
-        from llama_stack.providers.datatypes import ProviderSpec
+        from llama_stack_api import ProviderSpec
 
         fake_spec = ProviderSpec(
             api=Api.inference,
@@ -594,7 +594,7 @@ class TestGetExternalProvidersFromModule:
         from types import SimpleNamespace
 
         from llama_stack.core.distribution import get_external_providers_from_module
-        from llama_stack.providers.datatypes import ProviderSpec
+        from llama_stack_api import ProviderSpec
 
         spec1 = ProviderSpec(
             api=Api.inference,
@@ -642,7 +642,7 @@ class TestGetExternalProvidersFromModule:
         from types import SimpleNamespace
 
         from llama_stack.core.distribution import get_external_providers_from_module
-        from llama_stack.providers.datatypes import ProviderSpec
+        from llama_stack_api import ProviderSpec
 
         spec1 = ProviderSpec(
             api=Api.inference,
@@ -690,7 +690,7 @@ class TestGetExternalProvidersFromModule:
         from types import SimpleNamespace
 
         from llama_stack.core.distribution import get_external_providers_from_module
-        from llama_stack.providers.datatypes import ProviderSpec
+        from llama_stack_api import ProviderSpec
 
         # Module returns both inline and remote variants
         spec1 = ProviderSpec(
@@ -829,7 +829,7 @@ class TestGetExternalProvidersFromModule:
         from types import SimpleNamespace
 
         from llama_stack.core.distribution import get_external_providers_from_module
-        from llama_stack.providers.datatypes import ProviderSpec
+        from llama_stack_api import ProviderSpec
 
         inference_spec = ProviderSpec(
             api=Api.inference,

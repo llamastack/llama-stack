@@ -7,10 +7,10 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, HttpUrl
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.schema_utils import json_schema_type
+from llama_stack_api import json_schema_type
 
 
 class NVIDIAProviderDataValidator(BaseModel):
@@ -44,17 +44,13 @@ class NVIDIAConfig(RemoteInferenceProviderConfig):
     URL of your running NVIDIA NIM and do not need to set the api_key.
     """
 
-    url: str = Field(
-        default_factory=lambda: os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com"),
+    base_url: HttpUrl | None = Field(
+        default_factory=lambda: os.getenv("NVIDIA_BASE_URL", "https://integrate.api.nvidia.com/v1"),
         description="A base url for accessing the NVIDIA NIM",
     )
     timeout: int = Field(
         default=60,
         description="Timeout for the HTTP requests",
-    )
-    append_api_version: bool = Field(
-        default_factory=lambda: os.getenv("NVIDIA_APPEND_API_VERSION", "True").lower() != "false",
-        description="When set to false, the API version will not be appended to the base_url. By default, it is true.",
     )
     rerank_model_to_url: dict[str, str] = Field(
         default_factory=lambda: {
@@ -68,13 +64,11 @@ class NVIDIAConfig(RemoteInferenceProviderConfig):
     @classmethod
     def sample_run_config(
         cls,
-        url: str = "${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com}",
+        base_url: HttpUrl | None = "${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com/v1}",
         api_key: str = "${env.NVIDIA_API_KEY:=}",
-        append_api_version: bool = "${env.NVIDIA_APPEND_API_VERSION:=True}",
         **kwargs,
     ) -> dict[str, Any]:
         return {
-            "url": url,
+            "base_url": base_url,
             "api_key": api_key,
-            "append_api_version": append_api_version,
         }

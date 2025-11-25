@@ -10,8 +10,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llama_stack.apis.common.responses import PaginatedResponse
 from llama_stack.core.server.server import create_dynamic_typed_route, create_sse_event, sse_generator
+from llama_stack_api import PaginatedResponse
 
 
 @pytest.fixture
@@ -104,11 +104,17 @@ async def test_paginated_response_url_setting():
 
     route_handler = create_dynamic_typed_route(mock_api_method, "get", "/test/route")
 
-    # Mock minimal request
+    # Mock minimal request with proper state object
     request = MagicMock()
     request.scope = {"user_attributes": {}, "principal": ""}
     request.headers = {}
     request.body = AsyncMock(return_value=b"")
+
+    # Create a simple state object without auto-generating attributes
+    class MockState:
+        pass
+
+    request.state = MockState()
 
     result = await route_handler(request)
 

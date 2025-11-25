@@ -5,12 +5,12 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.datatypes import (
+from llama_stack.core.storage.kvstore import kvstore_dependencies
+from llama_stack_api import (
     Api,
     InlineProviderSpec,
     ProviderSpec,
 )
-from llama_stack.providers.utils.kvstore import kvstore_dependencies
 
 
 def available_providers() -> list[ProviderSpec]:
@@ -30,11 +30,15 @@ def available_providers() -> list[ProviderSpec]:
             config_class="llama_stack.providers.inline.agents.meta_reference.MetaReferenceAgentsImplConfig",
             api_dependencies=[
                 Api.inference,
-                Api.safety,
                 Api.vector_io,
                 Api.tool_runtime,
                 Api.tool_groups,
                 Api.conversations,
+                Api.prompts,
+                Api.files,
+            ],
+            optional_api_dependencies=[
+                Api.safety,
             ],
             description="Meta's reference implementation of an agent system that can use tools, access vector databases, and perform complex reasoning tasks.",
         ),

@@ -17,7 +17,7 @@ from llama_stack.log import get_logger
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
 
-from llama_stack.apis.inference import (
+from llama_stack_api import (
     ModelStore,
     OpenAIEmbeddingData,
     OpenAIEmbeddingsRequestWithExtraBody,

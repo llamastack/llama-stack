@@ -39,6 +39,32 @@ runs:
       if: ${{ inputs.setup == 'vllm' && inputs.inference-mode == 'record' }}
       uses: ./.github/actions/setup-vllm
 
+    - name: Start Postgres service
+      if: ${{ contains(inputs.setup, 'postgres') }}
+      shell: bash
+      run: |
+        sudo docker rm -f postgres-ci || true
+        sudo docker run -d --name postgres-ci \
+          -e POSTGRES_USER=llamastack \
+          -e POSTGRES_PASSWORD=llamastack \
+          -e POSTGRES_DB=llamastack \
+          -p 5432:5432 \
+          postgres:16
+
+        echo "Waiting for Postgres to become ready..."
+        for i in {1..30}; do
+          if sudo docker exec postgres-ci pg_isready -U llamastack -d llamastack >/dev/null 2>&1; then
+            echo "Postgres is ready"
+            break
+          fi
+          if [ "$i" -eq 30 ]; then
+            echo "Postgres failed to start in time"
+            sudo docker logs postgres-ci || true
+            exit 1
+          fi
+          sleep 2
+        done
+
     - name: Build Llama Stack
       shell: bash
       run: |

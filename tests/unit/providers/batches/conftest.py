@@ -13,9 +13,9 @@ from unittest.mock import AsyncMock
 import pytest
 
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
+from llama_stack.core.storage.kvstore import kvstore_impl, register_kvstore_backends
 from llama_stack.providers.inline.batches.reference.batches import ReferenceBatchesImpl
 from llama_stack.providers.inline.batches.reference.config import ReferenceBatchesImplConfig
-from llama_stack.providers.utils.kvstore import kvstore_impl, register_kvstore_backends
 
 
 @pytest.fixture

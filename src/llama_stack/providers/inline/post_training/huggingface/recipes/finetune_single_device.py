@@ -18,16 +18,16 @@ from transformers import (
 )
 from trl import SFTConfig, SFTTrainer
 
-from llama_stack.apis.datasetio import DatasetIO
-from llama_stack.apis.datasets import Datasets
-from llama_stack.apis.post_training import (
+from llama_stack.log import get_logger
+from llama_stack.providers.inline.post_training.common.utils import evacuate_model_from_device
+from llama_stack_api import (
     Checkpoint,
     DataConfig,
+    DatasetIO,
+    Datasets,
     LoraFinetuningConfig,
     TrainingConfig,
 )
-from llama_stack.log import get_logger
-from llama_stack.providers.inline.post_training.common.utils import evacuate_model_from_device
 
 from ..config import HuggingFacePostTrainingConfig
 from ..utils import (

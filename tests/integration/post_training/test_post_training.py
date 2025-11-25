@@ -10,7 +10,8 @@ import uuid
 
 import pytest
 
-from llama_stack.apis.post_training import (
+from llama_stack.log import get_logger
+from llama_stack_api import (
     DataConfig,
     DatasetFormat,
     DPOAlignmentConfig,
@@ -18,7 +19,6 @@ from llama_stack.apis.post_training import (
     LoraFinetuningConfig,
     TrainingConfig,
 )
-from llama_stack.log import get_logger
 
 # Configure logging
 logger = get_logger(name=__name__, category="post_training")

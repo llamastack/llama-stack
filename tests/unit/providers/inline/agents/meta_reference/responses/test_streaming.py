@@ -8,11 +8,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.apis.tools import ToolDef
 from llama_stack.providers.inline.agents.meta_reference.responses.streaming import (
     convert_tooldef_to_chat_tool,
 )
 from llama_stack.providers.inline.agents.meta_reference.responses.types import ChatCompletionContext
+from llama_stack_api import ToolDef
 
 
 @pytest.fixture

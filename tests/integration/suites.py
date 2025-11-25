@@ -50,7 +50,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="ollama",
         description="Local Ollama provider with text + safety models",
         env={
-            "OLLAMA_URL": "http://0.0.0.0:11434",
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
             "SAFETY_MODEL": "ollama/llama-guard3:1b",
         },
         defaults={
@@ -64,11 +64,31 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="ollama",
         description="Local Ollama provider with a vision model",
         env={
-            "OLLAMA_URL": "http://0.0.0.0:11434",
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
         },
         defaults={
             "vision_model": "ollama/llama3.2-vision:11b",
             "embedding_model": "ollama/nomic-embed-text:v1.5",
+        },
+    ),
+    "ollama-postgres": Setup(
+        name="ollama-postgres",
+        description="Server-mode tests with Postgres-backed persistence",
+        env={
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
+            "SAFETY_MODEL": "ollama/llama-guard3:1b",
+            "POSTGRES_HOST": "127.0.0.1",
+            "POSTGRES_PORT": "5432",
+            "POSTGRES_DB": "llamastack",
+            "POSTGRES_USER": "llamastack",
+            "POSTGRES_PASSWORD": "llamastack",
+            "LLAMA_STACK_LOGGING": "openai_responses=info",
+        },
+        defaults={
+            "text_model": "ollama/llama3.2:3b-instruct-fp16",
+            "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
+            "safety_model": "ollama/llama-guard3:1b",
+            "safety_shield": "llama-guard",
         },
     ),
     "vllm": Setup(

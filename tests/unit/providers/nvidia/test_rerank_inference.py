@@ -9,10 +9,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 import pytest
 
-from llama_stack.apis.models import ModelType
 from llama_stack.providers.remote.inference.nvidia.config import NVIDIAConfig
 from llama_stack.providers.remote.inference.nvidia.nvidia import NVIDIAInferenceAdapter
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import ModelType
 
 
 class MockResponse:
@@ -146,7 +146,7 @@ async def test_hosted_model_not_in_endpoint_mapping():
 
 async def test_self_hosted_ignores_endpoint():
     adapter = create_adapter(
-        config=NVIDIAConfig(url="http://localhost:8000", api_key=None),
+        config=NVIDIAConfig(base_url="http://localhost:8000", api_key=None),
         rerank_endpoints={"test-model": "https://model.endpoint/rerank"},  # This should be ignored for self-hosted.
     )
     mock_session = MockSession(MockResponse())

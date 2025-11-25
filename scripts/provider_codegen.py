@@ -8,7 +8,8 @@
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from types import UnionType
+from typing import Annotated, Any, Union, get_args, get_origin
 
 from pydantic_core import PydanticUndefined
 from rich.progress import Progress, SpinnerColumn, TextColumn
@@ -22,7 +23,7 @@ def get_api_docstring(api_name: str) -> str | None:
     """Extract docstring from the API protocol class."""
     try:
         # Import the API module dynamically
-        api_module = __import__(f"llama_stack.apis.{api_name}", fromlist=[api_name.title()])
+        api_module = __import__(f"llama_stack_api.{api_name}", fromlist=[api_name.title()])
 
         # Get the main protocol class (usually capitalized API name)
         protocol_class_name = api_name.title()
@@ -49,6 +50,41 @@ class ChangedPathTracker:
 
     def changed_paths(self):
         return self._changed_paths
+
+
+def extract_type_annotation(annotation: Any) -> str:
+    """extract a type annotation into a clean string representation."""
+    if annotation is None:
+        return "Any"
+
+    if annotation is type(None):
+        return "None"
+
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+
+    # recursive workaround for Annotated types to ignore FieldInfo part
+    if origin is Annotated and args:
+        return extract_type_annotation(args[0])
+
+    if origin in [Union, UnionType]:
+        non_none_args = [arg for arg in args if arg is not type(None)]
+        has_none = len(non_none_args) < len(args)
+
+        if len(non_none_args) == 1:
+            formatted = extract_type_annotation(non_none_args[0])
+            return f"{formatted} | None" if has_none else formatted
+        else:
+            formatted_args = [extract_type_annotation(arg) for arg in non_none_args]
+            result = " | ".join(formatted_args)
+            return f"{result} | None" if has_none else result
+
+    if origin is not None and args:
+        origin_name = getattr(origin, "__name__", str(origin))
+        formatted_args = [extract_type_annotation(arg) for arg in args]
+        return f"{origin_name}[{', '.join(formatted_args)}]"
+
+    return annotation.__name__ if hasattr(annotation, "__name__") else str(annotation)
 
 
 def get_config_class_info(config_class_path: str) -> dict[str, Any]:
@@ -78,13 +114,8 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
             for field_name, field in config_class.model_fields.items():
                 if getattr(field, "exclude", False):
                     continue
-                field_type = str(field.annotation) if field.annotation else "Any"
 
-                # this string replace is ridiculous
-                field_type = field_type.replace("typing.", "").replace("Optional[", "").replace("]", "")
-                field_type = field_type.replace("Annotated[", "").replace("FieldInfo(", "").replace(")", "")
-                field_type = field_type.replace("llama_stack.apis.inference.inference.", "")
-                field_type = field_type.replace("llama_stack.providers.", "")
+                field_type = extract_type_annotation(field.annotation)
 
                 default_value = field.default
                 if field.default_factory is not None:
@@ -344,8 +375,16 @@ def generate_index_docs(api_name: str, api_docstring: str | None, provider_entri
     # Add YAML frontmatter for index
     md_lines.append("---")
     if api_docstring:
-        clean_desc = api_docstring.strip().replace('"', '\\"')
-        md_lines.append(f'description: "{clean_desc}"')
+        # Handle multi-line descriptions in YAML
+        if "\n" in api_docstring.strip():
+            md_lines.append("description: |")
+            for line in api_docstring.strip().split("\n"):
+                # Avoid trailing whitespace by only adding spaces to non-empty lines
+                md_lines.append(f"  {line}" if line.strip() else "")
+        else:
+            # For single line descriptions, format properly for YAML
+            clean_desc = api_docstring.strip().replace('"', '\\"')
+            md_lines.append(f'description: "{clean_desc}"')
     md_lines.append(f"sidebar_label: {sidebar_label}")
     md_lines.append(f"title: {api_name.title()}")
     md_lines.append("---")

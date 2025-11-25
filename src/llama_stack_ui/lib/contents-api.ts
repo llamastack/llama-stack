@@ -34,9 +34,35 @@ export class ContentsAPI {
 
   async getFileContents(
     vectorStoreId: string,
-    fileId: string
+    fileId: string,
+    includeEmbeddings: boolean = true,
+    includeMetadata: boolean = true
   ): Promise<VectorStoreContentsResponse> {
-    return this.client.vectorStores.files.content(vectorStoreId, fileId);
+    try {
+      // Use query parameters to pass embeddings and metadata flags (OpenAI-compatible pattern)
+      const extraQuery: Record<string, boolean> = {};
+      if (includeEmbeddings) {
+        extraQuery.include_embeddings = true;
+      }
+      if (includeMetadata) {
+        extraQuery.include_metadata = true;
+      }
+
+      const result = await this.client.vectorStores.files.content(
+        vectorStoreId,
+        fileId,
+        {
+          query: {
+            include_embeddings: includeEmbeddings,
+            include_metadata: includeMetadata,
+          },
+        }
+      );
+      return result;
+    } catch (error) {
+      console.error("ContentsAPI.getFileContents error:", error);
+      throw error;
+    }
   }
 
   async getContent(
@@ -70,11 +96,15 @@ export class ContentsAPI {
       order?: string;
       after?: string;
       before?: string;
+      includeEmbeddings?: boolean;
+      includeMetadata?: boolean;
     }
   ): Promise<VectorStoreListContentsResponse> {
-    const fileContents = await this.client.vectorStores.files.content(
+    const fileContents = await this.getFileContents(
       vectorStoreId,
-      fileId
+      fileId,
+      options?.includeEmbeddings ?? true,
+      options?.includeMetadata ?? true
     );
     const contentItems: VectorStoreContentItem[] = [];
 
@@ -82,7 +112,7 @@ export class ContentsAPI {
       const rawContent = content as Record<string, unknown>;
 
       // Extract actual fields from the API response
-      const embedding = rawContent.embedding || undefined;
+      const embedding = rawContent.embedding as number[] | undefined;
       const created_timestamp =
         rawContent.created_timestamp ||
         rawContent.created_at ||

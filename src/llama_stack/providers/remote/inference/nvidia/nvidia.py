@@ -9,17 +9,16 @@ from collections.abc import Iterable
 
 import aiohttp
 
-from llama_stack.apis.inference import (
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
+from llama_stack_api import (
+    Model,
+    ModelType,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
     RerankData,
     RerankResponse,
 )
-from llama_stack.apis.inference.inference import (
-    OpenAIChatCompletionContentPartImageParam,
-    OpenAIChatCompletionContentPartTextParam,
-)
-from llama_stack.apis.models import Model, ModelType
-from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from . import NVIDIAConfig
 from .utils import _is_nvidia_hosted
@@ -45,7 +44,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
     }
 
     async def initialize(self) -> None:
-        logger.info(f"Initializing NVIDIAInferenceAdapter({self.config.url})...")
+        logger.info(f"Initializing NVIDIAInferenceAdapter({self.config.base_url})...")
 
         if _is_nvidia_hosted(self.config):
             if not self.config.auth_credential:
@@ -73,7 +72,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
         :return: The NVIDIA API base URL
         """
-        return f"{self.config.url}/v1" if self.config.append_api_version else self.config.url
+        return str(self.config.base_url)
 
     async def list_provider_model_ids(self) -> Iterable[str]:
         """

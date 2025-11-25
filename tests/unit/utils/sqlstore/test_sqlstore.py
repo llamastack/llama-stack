@@ -9,9 +9,9 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
-from llama_stack.providers.utils.sqlstore.api import ColumnType
-from llama_stack.providers.utils.sqlstore.sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
+from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
 
 async def test_sqlite_sqlstore():
@@ -63,6 +63,38 @@ async def test_sqlite_sqlstore():
         result = await sqlstore.fetch_all("test")
         assert result.data == [{"id": 12, "name": "test12"}]
         assert result.has_more is False
+
+
+async def test_sqlstore_upsert_support():
+    with TemporaryDirectory() as tmp_dir:
+        db_path = tmp_dir + "/upsert.db"
+        store = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=db_path))
+
+        await store.create_table(
+            "items",
+            {
+                "id": ColumnDefinition(type=ColumnType.STRING, primary_key=True),
+                "value": ColumnType.STRING,
+                "updated_at": ColumnType.INTEGER,
+            },
+        )
+
+        await store.upsert(
+            table="items",
+            data={"id": "item_1", "value": "first", "updated_at": 1},
+            conflict_columns=["id"],
+        )
+        row = await store.fetch_one("items", {"id": "item_1"})
+        assert row == {"id": "item_1", "value": "first", "updated_at": 1}
+
+        await store.upsert(
+            table="items",
+            data={"id": "item_1", "value": "second", "updated_at": 2},
+            conflict_columns=["id"],
+            update_columns=["value", "updated_at"],
+        )
+        row = await store.fetch_one("items", {"id": "item_1"})
+        assert row == {"id": "item_1", "value": "second", "updated_at": 2}
 
 
 async def test_sqlstore_pagination_basic():

@@ -6,10 +6,10 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field, SecretStr
+from pydantic import BaseModel, Field, HttpUrl, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.schema_utils import json_schema_type
+from llama_stack_api import json_schema_type
 
 
 class DatabricksProviderDataValidator(BaseModel):
@@ -21,9 +21,9 @@ class DatabricksProviderDataValidator(BaseModel):
 
 @json_schema_type
 class DatabricksImplConfig(RemoteInferenceProviderConfig):
-    url: str | None = Field(
+    base_url: HttpUrl | None = Field(
         default=None,
-        description="The URL for the Databricks model serving endpoint",
+        description="The URL for the Databricks model serving endpoint (should include /serving-endpoints path)",
     )
     auth_credential: SecretStr | None = Field(
         default=None,
@@ -34,11 +34,11 @@ class DatabricksImplConfig(RemoteInferenceProviderConfig):
     @classmethod
     def sample_run_config(
         cls,
-        url: str = "${env.DATABRICKS_HOST:=}",
+        base_url: str = "${env.DATABRICKS_HOST:=}",
         api_token: str = "${env.DATABRICKS_TOKEN:=}",
         **kwargs: Any,
     ) -> dict[str, Any]:
         return {
-            "url": url,
+            "base_url": base_url,
             "api_token": api_token,
         }

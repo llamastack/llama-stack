@@ -6,8 +6,7 @@
 
 from typing import Any
 
-from llama_stack.apis.file_processor import FileProcessor, ProcessedContent
-from llama_stack.apis.vector_io import VectorStoreChunkingStrategy
+from llama_stack_api import FileProcessor, ProcessedContent, VectorStoreChunkingStrategy
 
 from .config import ReferenceFileProcessorImplConfig
 

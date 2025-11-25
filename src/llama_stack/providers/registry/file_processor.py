@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.providers.datatypes import Api, InlineProviderSpec, ProviderSpec
+from llama_stack_api import Api, InlineProviderSpec, ProviderSpec
 
 
 def available_providers() -> list[ProviderSpec]:

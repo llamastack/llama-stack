@@ -9,20 +9,20 @@ from typing import Any
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from llama_stack.apis.inference import OpenAIMessageParam
-from llama_stack.apis.safety import (
+from llama_stack.core.utils.model_utils import model_local_dir
+from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
+from llama_stack_api import (
+    ModerationObject,
+    OpenAIMessageParam,
     RunShieldResponse,
     Safety,
     SafetyViolation,
+    Shield,
+    ShieldsProtocolPrivate,
     ShieldStore,
     ViolationLevel,
 )
-from llama_stack.apis.safety.safety import ModerationObject
-from llama_stack.apis.shields import Shield
-from llama_stack.core.utils.model_utils import model_local_dir
-from llama_stack.log import get_logger
-from llama_stack.providers.datatypes import ShieldsProtocolPrivate
-from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 
 from .config import PromptGuardConfig, PromptGuardType
 
