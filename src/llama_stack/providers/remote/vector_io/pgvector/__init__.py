@@ -9,10 +9,7 @@ from llama_stack_api import Api, ProviderSpec
 from .config import PGVectorVectorIOConfig
 
 
-async def get_adapter_impl(
-    config: PGVectorVectorIOConfig,
-    deps: dict[Api, ProviderSpec],
-):
+async def get_adapter_impl(config: PGVectorVectorIOConfig, deps: dict[Api, ProviderSpec]):
     from .pgvector import PGVectorVectorIOAdapter
 
     impl = PGVectorVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))

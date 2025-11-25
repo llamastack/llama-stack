@@ -18,7 +18,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
-from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_EXPANSION_PROMPT
+from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
 from llama_stack_api import (
     Api,
     Benchmark,
@@ -358,7 +358,7 @@ class RewriteQueryParams(BaseModel):
         description="LLM model for query rewriting/expansion in vector search.",
     )
     prompt: str = Field(
-        default=DEFAULT_QUERY_EXPANSION_PROMPT,
+        default=DEFAULT_QUERY_REWRITE_PROMPT,
         description="Prompt template for query rewriting. Use {query} as placeholder for the original query.",
     )
     max_tokens: int = Field(
