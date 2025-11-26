@@ -600,3 +600,155 @@ def test_response_streaming_multi_turn_tool_execution(responses_client, text_mod
             assert expected_output.lower() in final_response.output_text.lower(), (
                 f"Expected '{expected_output}' to appear in response: {final_response.output_text}"
             )
+
+
+def test_max_tool_calls_with_function_tools(responses_client, text_model_id):
+    """Test handling of max_tool_calls with function tools in responses."""
+
+    max_tool_calls = 1
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get weather information for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city name (e.g., 'New York', 'London')",
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "name": "get_time",
+            "description": "Get current time for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city name (e.g., 'New York', 'London')",
+                    },
+                },
+            },
+        },
+    ]
+
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="Can you tell me the weather in Paris and the current time?",
+        tools=tools,
+        stream=False,
+        max_tool_calls=max_tool_calls,
+    )
+
+    # Verify we got two function calls and that the max_tool_calls does not affect function tools
+    assert len(response.output) == 2
+    assert response.output[0].type == "function_call"
+    assert response.output[0].name == "get_weather"
+    assert response.output[0].status == "completed"
+    assert response.output[1].type == "function_call"
+    assert response.output[1].name == "get_time"
+    assert response.output[1].status == "completed"
+
+    # Verify we have a valid max_tool_calls field
+    assert response.max_tool_calls == max_tool_calls
+
+
+def test_max_tool_calls_invalid(responses_client, text_model_id):
+    """Test handling of invalid max_tool_calls in responses."""
+
+    input = "Search for today's top technology news."
+    invalid_max_tool_calls = 0
+    tools = [
+        {"type": "web_search"},
+    ]
+
+    # Create a response with an invalid max_tool_calls value i.e. 0
+    # Handle ValueError from LLS and BadRequestError from OpenAI client
+    with pytest.raises((ValueError, llama_stack_client.BadRequestError, openai.BadRequestError)) as excinfo:
+        responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            max_tool_calls=invalid_max_tool_calls,
+        )
+
+    error_message = str(excinfo.value)
+    assert f"Invalid max_tool_calls={invalid_max_tool_calls}; should be >= 1" in error_message, (
+        f"Expected error message about invalid max_tool_calls, got: {error_message}"
+    )
+
+
+def test_max_tool_calls_with_mcp_tools(responses_client, text_model_id):
+    """Test handling of max_tool_calls with mcp tools in responses."""
+
+    with make_mcp_server(tools=dependency_tools()) as mcp_server_info:
+        input = "Get the experiment ID for 'boiling_point' and get the user ID for 'charlie'"
+        max_tool_calls = [1, 5]
+        tools = [
+            {"type": "mcp", "server_label": "localmcp", "server_url": mcp_server_info["server_url"]},
+        ]
+
+        # First create a response that triggers mcp tools without max_tool_calls
+        response = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+        )
+
+        # Verify we got two mcp tool calls followed by a message
+        assert len(response.output) == 4
+        mcp_list_tools = [output for output in response.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 2, f"Expected two mcp calls, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Next create a response that triggers mcp tools with max_tool_calls set to 1
+        response_2 = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            max_tool_calls=max_tool_calls[0],
+        )
+
+        # Verify we got one mcp tool call followed by a message
+        assert len(response_2.output) == 3
+        mcp_list_tools = [output for output in response_2.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response_2.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response_2.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 1, f"Expected one mcp call, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Verify we have a valid max_tool_calls field
+        assert response_2.max_tool_calls == max_tool_calls[0]
+
+        # Finally create a response that triggers mcp tools with max_tool_calls set to 5
+        response_3 = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            max_tool_calls=max_tool_calls[1],
+        )
+
+        # Verify we got two mcp tool calls followed by a message
+        assert len(response_3.output) == 4
+        mcp_list_tools = [output for output in response_3.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response_3.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response_3.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 2, f"Expected two mcp calls, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Verify we have a valid max_tool_calls field
+        assert response_3.max_tool_calls == max_tool_calls[1]

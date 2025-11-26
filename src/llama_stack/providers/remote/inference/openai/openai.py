@@ -35,4 +35,4 @@ class OpenAIInferenceAdapter(OpenAIMixin):
 
         Returns the OpenAI API base URL from the configuration.
         """
-        return self.config.base_url
+        return str(self.config.base_url)
