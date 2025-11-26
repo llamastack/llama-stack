@@ -153,6 +153,7 @@ class AuthorizedSqlStore:
         limit: int | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
         cursor: tuple[str, str] | None = None,
+        action: Action = Action.READ,
     ) -> PaginatedResponse:
         """Fetch all rows with automatic access control filtering."""
         access_where = self._build_access_control_where_clause(self.policy)
@@ -177,7 +178,7 @@ class AuthorizedSqlStore:
                 str(record_id), table, User(principal=stored_owner_principal, attributes=stored_access_attrs)
             )
 
-            if is_action_allowed(self.policy, Action.READ, sql_record, current_user):
+            if is_action_allowed(self.policy, action, sql_record, current_user):
                 filtered_rows.append(row)
 
         return PaginatedResponse(
@@ -190,6 +191,7 @@ class AuthorizedSqlStore:
         table: str,
         where: Mapping[str, Any] | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
+        action: Action = Action.READ,
     ) -> dict[str, Any] | None:
         """Fetch one row with automatic access control checking."""
         results = await self.fetch_all(
@@ -197,6 +199,7 @@ class AuthorizedSqlStore:
             where=where,
             limit=1,
             order_by=order_by,
+            action=action,
         )
 
         return results.data[0] if results.data else None
