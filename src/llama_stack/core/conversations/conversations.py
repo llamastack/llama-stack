@@ -36,7 +36,7 @@ class ConversationServiceConfig(BaseModel):
     :param policy: Access control rules
     """
 
-    run_config: StackConfig
+    config: StackConfig
     policy: list[AccessRule] = []
 
 
@@ -56,7 +56,7 @@ class ConversationServiceImpl(Conversations):
         self.policy = config.policy
 
         # Use conversations store reference from run config
-        conversations_ref = config.run_config.storage.stores.conversations
+        conversations_ref = config.config.storage.stores.conversations
         if not conversations_ref:
             raise ValueError("storage.stores.conversations must be configured in run config")
 

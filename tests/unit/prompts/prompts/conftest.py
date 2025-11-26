@@ -47,7 +47,7 @@ async def temp_prompt_store(tmp_path_factory):
         providers={},
         storage=storage,
     )
-    config = PromptServiceConfig(run_config=mock_run_config)
+    config = PromptServiceConfig(config=mock_run_config)
     store = PromptServiceImpl(config, deps={})
 
     register_kvstore_backends({"kv_test": storage.backends["kv_test"]})

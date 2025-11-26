@@ -20,7 +20,7 @@ class PromptServiceConfig(BaseModel):
     :param run_config: Stack run configuration containing distribution info
     """
 
-    run_config: StackConfig
+    config: StackConfig
 
 
 async def get_provider_impl(config: PromptServiceConfig, deps: dict[Any, Any]):
@@ -40,7 +40,7 @@ class PromptServiceImpl(Prompts):
 
     async def initialize(self) -> None:
         # Use prompts store reference from run config
-        prompts_ref = self.config.run_config.storage.stores.prompts
+        prompts_ref = self.config.config.storage.stores.prompts
         if not prompts_ref:
             raise ValueError("storage.stores.prompts must be configured in run config")
         self.kvstore = await kvstore_impl(prompts_ref)

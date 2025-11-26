@@ -19,7 +19,7 @@ logger = get_logger(name=__name__, category="core")
 
 
 class ProviderImplConfig(BaseModel):
-    run_config: StackConfig
+    config: StackConfig
 
 
 async def get_provider_impl(config, deps):
@@ -41,7 +41,7 @@ class ProviderImpl(Providers):
         pass
 
     async def list_providers(self) -> ListProvidersResponse:
-        run_config = self.config.run_config
+        run_config = self.config
         safe_config = StackConfig(**redact_sensitive_fields(run_config.model_dump()))
         providers_health = await self.get_providers_health()
         ret = []

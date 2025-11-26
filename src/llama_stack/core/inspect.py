@@ -22,7 +22,7 @@ from llama_stack_api import (
 
 
 class DistributionInspectConfig(BaseModel):
-    run_config: StackConfig
+    config: StackConfig
 
 
 async def get_provider_impl(config, deps):
@@ -40,7 +40,7 @@ class DistributionInspectImpl(Inspect):
         pass
 
     async def list_routes(self, api_filter: str | None = None) -> ListRoutesResponse:
-        run_config: StackConfig = self.config.run_config
+        config: StackConfig = self.config.config
 
         # Helper function to determine if a route should be included based on api_filter
         def should_include_route(webmethod) -> bool:
@@ -55,7 +55,7 @@ class DistributionInspectImpl(Inspect):
                 return not webmethod.deprecated and webmethod.level == api_filter
 
         ret = []
-        external_apis = load_external_apis(run_config)
+        external_apis = load_external_apis(config)
         all_endpoints = get_all_api_routes(external_apis)
         for api, endpoints in all_endpoints.items():
             # Always include provider and inspect APIs, filter others based on run config
@@ -72,7 +72,7 @@ class DistributionInspectImpl(Inspect):
                     ]
                 )
             else:
-                providers = run_config.providers.get(api.value, [])
+                providers = config.providers.get(api.value, [])
                 if providers:  # Only process if there are providers for this API
                     ret.extend(
                         [

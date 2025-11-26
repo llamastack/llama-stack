@@ -78,7 +78,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
             with open(config_file) as f:
                 try:
                     contents = yaml.safe_load(f)
-                    run_config = StackConfig(**contents)
+                    config = StackConfig(**contents)
                 except Exception as e:
                     cprint(
                         f"Could not parse config file {config_file}: {e}",
@@ -119,16 +119,16 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                     file=sys.stderr,
                 )
                 sys.exit(1)
-        run_config = StackConfig(providers=provider_list, image_name="providers-run")
+        config = StackConfig(providers=provider_list, image_name="providers-run")
 
-    normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(run_config)
+    normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(config)
     normal_deps += SERVER_DEPENDENCIES
 
     # Add external API dependencies
-    if run_config.external_apis_dir:
+    if config.external_apis_dir:
         from llama_stack.core.external import load_external_apis
 
-        external_apis = load_external_apis(run_config)
+        external_apis = load_external_apis(config)
         if external_apis:
             for _, api_spec in external_apis.items():
                 normal_deps.extend(api_spec.pip_packages)

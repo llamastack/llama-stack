@@ -341,7 +341,7 @@ def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
     return config_dict
 
 
-def add_internal_implementations(impls: dict[Api, Any], run_config: StackConfig) -> None:
+def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> None:
     """Add internal implementations (inspect and providers) to the implementations dictionary.
 
     Args:
@@ -349,25 +349,25 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackConfig)
         run_config: Stack run configuration
     """
     inspect_impl = DistributionInspectImpl(
-        DistributionInspectConfig(run_config=run_config),
+        DistributionInspectConfig(config=config),
         deps=impls,
     )
     impls[Api.inspect] = inspect_impl
 
     providers_impl = ProviderImpl(
-        ProviderImplConfig(run_config=run_config),
+        ProviderImplConfig(config=config),
         deps=impls,
     )
     impls[Api.providers] = providers_impl
 
     prompts_impl = PromptServiceImpl(
-        PromptServiceConfig(run_config=run_config),
+        PromptServiceConfig(config=config),
         deps=impls,
     )
     impls[Api.prompts] = prompts_impl
 
     conversations_impl = ConversationServiceImpl(
-        ConversationServiceConfig(run_config=run_config),
+        ConversationServiceConfig(config=config),
         deps=impls,
     )
     impls[Api.conversations] = conversations_impl
