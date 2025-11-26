@@ -448,12 +448,16 @@ class OpenAIAssistantMessageParam(BaseModel):
     :param content: The content of the model's response
     :param name: (Optional) The name of the assistant message participant.
     :param tool_calls: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+    :param reasoning_content: (Optional) The reasoning content from the model (for vLLM ≤ v0.8.4)
+    :param reasoning: (Optional) The reasoning content from the model (for vLLM ≥ v0.9.x)
     """
 
     role: Literal["assistant"] = "assistant"
     content: OpenAIChatCompletionTextOnlyMessageContent | None = None
     name: str | None = None
     tool_calls: list[OpenAIChatCompletionToolCall] | None = None
+    reasoning_content: str | None = None
+    reasoning: str | None = None
 
 
 @json_schema_type
@@ -605,7 +609,8 @@ class OpenAIChoiceDelta(BaseModel):
     :param refusal: (Optional) The refusal of the delta
     :param role: (Optional) The role of the delta
     :param tool_calls: (Optional) The tool calls of the delta
-    :param reasoning_content: (Optional) The reasoning content from the model (non-standard, for o1/o3 models)
+    :param reasoning_content: (Optional) The reasoning content from the model (for vLLM ≤ v0.8.4)
+    :param reasoning: (Optional) The reasoning content from the model (for vLLM ≥ v0.9.x)
     """
 
     content: str | None = None
@@ -613,6 +618,7 @@ class OpenAIChoiceDelta(BaseModel):
     role: str | None = None
     tool_calls: list[OpenAIChatCompletionToolCall] | None = None
     reasoning_content: str | None = None
+    reasoning: str | None = None
 
 
 @json_schema_type
