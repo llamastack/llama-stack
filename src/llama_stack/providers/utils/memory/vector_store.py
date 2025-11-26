@@ -296,8 +296,9 @@ class VectorStoreWithIndex:
     async def _rewrite_query_for_file_search(self, query: str) -> str:
         """Rewrite a search query using the globally configured LLM model for better retrieval results."""
         if not rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL:
-            log.debug("No default query rewriting model configured, using original query")
-            return query
+            raise ValueError(
+                "Query rewriting requested but not configured. Please configure rewrite_query_params.model in vector_stores config."
+            )
 
         model_id = f"{rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL.provider_id}/{rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL.model_id}"
 
