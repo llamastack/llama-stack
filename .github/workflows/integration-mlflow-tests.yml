@@ -1,0 +1,125 @@
+name: MLflow Prompts Integration Tests
+
+run-name: Run the integration test suite with MLflow Prompt Registry provider
+
+on:
+  push:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
+  pull_request:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
+    paths:
+      - 'src/llama_stack/providers/remote/prompts/mlflow/**'
+      - 'tests/integration/providers/remote/prompts/mlflow/**'
+      - 'tests/unit/providers/remote/prompts/mlflow/**'
+      - 'uv.lock'
+      - 'pyproject.toml'
+      - 'requirements.txt'
+      - '.github/workflows/integration-mlflow-tests.yml' # This workflow
+  schedule:
+    - cron: '0 0 * * *'  # Daily at 12 AM UTC
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-mlflow:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+
+      - name: Install dependencies
+        uses: ./.github/actions/setup-runner
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup MLflow Server
+        run: |
+          docker run --rm -d --pull always \
+            --name mlflow \
+            -p 5555:5555 \
+            ghcr.io/mlflow/mlflow:latest \
+            mlflow server \
+              --host 0.0.0.0 \
+              --port 5555 \
+              --backend-store-uri sqlite:///mlflow.db \
+              --default-artifact-root ./mlruns
+
+      - name: Wait for MLflow to be ready
+        run: |
+          echo "Waiting for MLflow to be ready..."
+          for i in {1..60}; do
+            if curl -s http://localhost:5555/health | grep -q '"status": "OK"'; then
+              echo "MLflow is ready!"
+              exit 0
+            fi
+            echo "Not ready yet... ($i/60)"
+            sleep 2
+          done
+          echo "MLflow failed to start"
+          docker logs mlflow
+          exit 1
+
+      - name: Verify MLflow API
+        run: |
+          echo "Testing MLflow API..."
+          curl -X GET http://localhost:5555/api/2.0/mlflow/experiments/list
+          echo ""
+          echo "MLflow API is responding!"
+
+      - name: Build Llama Stack
+        run: |
+          uv run --no-sync llama stack list-deps ci-tests | xargs -L1 uv pip install
+
+      - name: Install MLflow Python client
+        run: |
+          uv pip install 'mlflow>=3.4.0'
+
+      - name: Check Storage and Memory Available Before Tests
+        if: ${{ always() }}
+        run: |
+          free -h
+          df -h
+
+      - name: Run MLflow Integration Tests
+        env:
+          MLFLOW_TRACKING_URI: http://localhost:5555
+        run: |
+          uv run --no-sync \
+            pytest -sv \
+            tests/integration/providers/remote/prompts/mlflow/
+
+      - name: Check Storage and Memory Available After Tests
+        if: ${{ always() }}
+        run: |
+          free -h
+          df -h
+
+      - name: Write MLflow logs to file
+        if: ${{ always() }}
+        run: |
+          docker logs mlflow > mlflow.log 2>&1 || true
+
+      - name: Upload all logs to artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: mlflow-logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.python-version }}
+          path: |
+            *.log
+          retention-days: 1
+
+      - name: Stop MLflow container
+        if: ${{ always() }}
+        run: |
+          docker stop mlflow || true
