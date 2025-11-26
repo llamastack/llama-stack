@@ -45,7 +45,7 @@ CATEGORIES = [
     "providers",
     "models",
     "files",
-    "file_processor",
+    "file_processors",
     "vector_io",
     "tool_runtime",
     "cli",

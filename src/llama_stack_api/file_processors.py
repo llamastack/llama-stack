@@ -53,7 +53,7 @@ class ProcessedContent(BaseModel):
 
 @telemetry_traceable
 @runtime_checkable
-class FileProcessor(Protocol):
+class FileProcessors(Protocol):
     """
     File Processor API for converting files into structured, processable content.
 
@@ -72,7 +72,7 @@ class FileProcessor(Protocol):
     processing capabilities, and optimization strategies.
     """
 
-    @webmethod(route="/file-processor/process", method="POST", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(route="/file-processors/process", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def process_file(
         self,
         file_data: bytes,

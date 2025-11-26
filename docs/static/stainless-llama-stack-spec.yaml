@@ -3887,7 +3887,7 @@ paths:
             schema:
               $ref: '#/components/schemas/SupervisedFineTuneRequest'
         required: true
-  /v1alpha/file-processor/process:
+  /v1alpha/file-processors/process:
     post:
       responses:
         '200':
@@ -3909,13 +3909,13 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
       tags:
-      - File Processor
+      - File Processors
       summary: Process File
       description: |-
         Process a file into structured content with optional chunking and embeddings.
 
         This method processes raw file data and converts it into text content for applications such as vector store ingestion.
-      operationId: process_file_v1alpha_file_processor_process_post
+      operationId: process_file_v1alpha_file_processors_process_post
       requestBody:
         content:
           application/json:
@@ -13005,7 +13005,7 @@ components:
       - benchmarks
       - tool_groups
       - files
-      - file_processor
+      - file_processors
       - prompts
       - conversations
       - inspect
