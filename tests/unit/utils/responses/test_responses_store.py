@@ -6,17 +6,23 @@
 
 import time
 from tempfile import TemporaryDirectory
+from uuid import uuid4
 
 import pytest
 
-from llama_stack.apis.agents import Order
-from llama_stack.apis.agents.openai_responses import (
-    OpenAIResponseInput,
-    OpenAIResponseObject,
-)
-from llama_stack.apis.inference import OpenAIMessageParam, OpenAIUserMessageParam
+from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack_api import OpenAIMessageParam, OpenAIResponseInput, OpenAIResponseObject, OpenAIUserMessageParam, Order
+
+
+def build_store(db_path: str, policy: list | None = None) -> ResponsesStore:
+    backend_name = f"sql_responses_{uuid4().hex}"
+    register_sqlstore_backends({backend_name: SqliteSqlStoreConfig(db_path=db_path)})
+    return ResponsesStore(
+        ResponsesStoreReference(backend=backend_name, table_name="responses"),
+        policy=policy or [],
+    )
 
 
 def create_test_response_object(
@@ -35,7 +41,7 @@ def create_test_response_object(
 
 def create_test_response_input(content: str, input_id: str) -> OpenAIResponseInput:
     """Helper to create a test response input."""
-    from llama_stack.apis.agents.openai_responses import OpenAIResponseMessage
+    from llama_stack_api import OpenAIResponseMessage
 
     return OpenAIResponseMessage(
         id=input_id,
@@ -54,7 +60,7 @@ async def test_responses_store_pagination_basic():
     """Test basic pagination functionality for responses store."""
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"
-        store = ResponsesStore(SqliteSqlStoreConfig(db_path=db_path), policy=[])
+        store = build_store(db_path)
         await store.initialize()
 
         # Create test data with different timestamps
@@ -103,7 +109,7 @@ async def test_responses_store_pagination_ascending():
     """Test pagination with ascending order."""
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"
-        store = ResponsesStore(SqliteSqlStoreConfig(db_path=db_path), policy=[])
+        store = build_store(db_path)
         await store.initialize()
 
         # Create test data
@@ -141,7 +147,7 @@ async def test_responses_store_pagination_with_model_filter():
     """Test pagination combined with model filtering."""
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"
-        store = ResponsesStore(SqliteSqlStoreConfig(db_path=db_path), policy=[])
+        store = build_store(db_path)
         await store.initialize()
 
         # Create test data with different models
@@ -182,7 +188,7 @@ async def test_responses_store_pagination_invalid_after():
     """Test error handling for invalid 'after' parameter."""
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"
-        store = ResponsesStore(SqliteSqlStoreConfig(db_path=db_path), policy=[])
+        store = build_store(db_path)
         await store.initialize()
 
         # Try to paginate with non-existent ID
@@ -194,7 +200,7 @@ async def test_responses_store_pagination_no_limit():
     """Test pagination behavior when no limit is specified."""
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"
-        store = ResponsesStore(SqliteSqlStoreConfig(db_path=db_path), policy=[])
+        store = build_store(db_path)
         await store.initialize()
 
         # Create test data
@@ -226,7 +232,7 @@ async def test_responses_store_get_response_object():
     """Test retrieving a single response object."""
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"
-        store = ResponsesStore(SqliteSqlStoreConfig(db_path=db_path), policy=[])
+        store = build_store(db_path)
         await store.initialize()
 
         # Store a test response
@@ -254,7 +260,7 @@ async def test_responses_store_input_items_pagination():
     """Test pagination functionality for input items."""
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"
-        store = ResponsesStore(SqliteSqlStoreConfig(db_path=db_path), policy=[])
+        store = build_store(db_path)
         await store.initialize()
 
         # Store a test response with many inputs with explicit IDs
@@ -335,7 +341,7 @@ async def test_responses_store_input_items_before_pagination():
     """Test before pagination functionality for input items."""
     with TemporaryDirectory() as tmp_dir:
         db_path = tmp_dir + "/test.db"
-        store = ResponsesStore(SqliteSqlStoreConfig(db_path=db_path), policy=[])
+        store = build_store(db_path)
         await store.initialize()
 
         # Store a test response with many inputs with explicit IDs

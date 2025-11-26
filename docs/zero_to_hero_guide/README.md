@@ -78,17 +78,14 @@ If you're looking for more specific topics, we have a [Zero to Hero Guide](#next
 
 ## Build, Configure, and Run Llama Stack
 
-1. **Build the Llama Stack**:
-   Build the Llama Stack using the `starter` template:
+1. **Install dependencies**:
    ```bash
-   uv run --with llama-stack llama stack build --distro starter --image-type venv
+   llama stack list-deps starter | xargs -L1 uv pip install
    ```
-   **Expected Output:**
+
+2. **Start the distribution**:
    ```bash
-   ...
-   Build Successful!
-   You can find the newly-built template here: ~/.llama/distributions/starter/starter-run.yaml
-   You can run the new Llama Stack Distro via: uv run --with llama-stack llama stack run starter
+   llama stack run starter
    ```
 
 3. **Set the ENV variables by exporting them to the terminal**:

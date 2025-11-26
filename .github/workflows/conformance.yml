@@ -22,7 +22,6 @@ on:
       - 'docs/static/stable-llama-stack-spec.yaml'       # Stable APIs spec
       - 'docs/static/experimental-llama-stack-spec.yaml' # Experimental APIs spec
       - 'docs/static/deprecated-llama-stack-spec.yaml'   # Deprecated APIs spec
-      - 'docs/static/llama-stack-spec.html'              # Legacy HTML spec
       - '.github/workflows/conformance.yml'              # This workflow itself
 
 concurrency:
@@ -36,16 +35,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR Code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           fetch-depth: 0
 
       # Check if we should skip conformance testing due to breaking changes
       - name: Check if conformance test should be skipped
         id: skip-check
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-
           # Skip if title contains "!:" indicating breaking change (like "feat!:")
           if [[ "$PR_TITLE" == *"!:"* ]]; then
             echo "skip=true" >> $GITHUB_OUTPUT
@@ -60,7 +59,7 @@ jobs:
       # This allows us to diff the current changes against the previous state
       - name: Checkout Base Branch
         if: steps.skip-check.outputs.skip != 'true'
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           ref: ${{ github.event.pull_request.base.ref }}
           path: 'base'

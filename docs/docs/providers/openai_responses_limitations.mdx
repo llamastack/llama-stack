@@ -1,0 +1,299 @@
+---
+title: Known Limitations of the OpenAI-compatible Responses API in Llama Stack
+description: Limitations of Responses API
+sidebar_label: Limitations of Responses API
+sidebar_position: 1
+---
+
+## Unresolved Issues
+
+This document outlines known limitations and inconsistencies between Llama Stack's Responses API and OpenAI's Responses API. This comparison is based on OpenAI's API and reflects a comparison with the OpenAI APIs as of October 6, 2025 (OpenAI's client version `openai==1.107`).
+See the OpenAI [changelog](https://platform.openai.com/docs/changelog) for details of any new functionality that has been added since that date. Links to issues are included so readers can read about status, post comments, and/or subscribe for updates relating to any limitations that are of specific interest to them. We would also love any other feedback on any use-cases you try that do not work to help prioritize the pieces left to implement.
+Please open new issues in the [meta-llama/llama-stack](https://github.com/meta-llama/llama-stack) GitHub repository with details of anything that does not work that does not already have an open issue.
+
+### Instructions
+**Status:** Partial Implementation + Work in Progress
+
+**Issue:** [#3566](https://github.com/llamastack/llama-stack/issues/3566)
+
+In Llama Stack, the instructions parameter is already implemented for creating a response, but it is not yet included in the output response object.
+
+---
+
+### Streaming
+
+**Status:** Partial Implementation
+
+**Issue:** [#2364](https://github.com/llamastack/llama-stack/issues/2364)
+
+Streaming functionality for the Responses API is partially implemented and does work to some extent, but some streaming response objects that would be needed for full compatibility are still missing.
+
+---
+
+### Prompt Templates
+
+**Status:** Partial Implementation
+
+**Issue:** [#3321](https://github.com/llamastack/llama-stack/issues/3321)
+
+OpenAI's platform supports [templated prompts using a structured language](https://platform.openai.com/docs/guides/text?api-mode=responses#reusable-prompts). These templates can be stored server-side for organizational sharing. This feature is under development for Llama Stack.
+
+---
+
+### Web-search tool compatibility
+
+**Status:** Partial Implementation
+
+Both OpenAI and Llama Stack support a web-search built-in tool.  The [OpenAI documentation](https://platform.openai.com/docs/api-reference/responses/create) for web search tool in a Responses tool list says:
+
+> The type of the web search tool. One of `web_search` or `web_search_2025_08_26`.
+
+Llama Stack now supports both `web_search` and `web_search_2025_08_26` types, matching OpenAI's API. For backward compatibility, Llama Stack also supports `web_search_preview` and `web_search_preview_2025_03_11` types.
+
+The OpenAI web search tool also has fields for `filters` and `user_location` which are not yet implemented in Llama Stack.  If feasible, it would be good to support these too.
+
+---
+
+### Other built-in Tools
+
+**Status:** Partial Implementation
+
+OpenAI's Responses API includes an ecosystem of built-in tools (e.g., code interpreter) that lower the barrier to entry for agentic workflows. These tools are typically aligned with specific model training.
+
+**Current Status in Llama Stack:**
+- Some built-in tools exist (file search, web search)
+- Missing tools include code interpreter, computer use, and image generation
+- Some built-in tools may require additional APIs (e.g., [containers API](https://platform.openai.com/docs/api-reference/containers) for code interpreter)
+
+It's unclear whether there is demand for additional built-in tools in Llama Stack. No upstream issues have been filed for adding more built-in tools.
+
+---
+
+### Response Branching
+
+**Status:** Not Working
+
+Response branching, as discussed in the [Agents vs OpenAI Responses API documentation](https://llamastack.github.io/docs/building_applications/responses_vs_agents), is not currently functional.
+
+---
+
+### Include
+
+**Status:** Not Implemented
+
+The `include` parameter allows you to provide a list of values that indicate additional information for the system to include in the model response.  The [OpenAI API](https://platform.openai.com/docs/api-reference/responses/create) specifies the following allowed values for this parameter.
+
+- `web_search_call.action.sources`
+- `code_interpreter_call.outputs`
+- `computer_call_output.output.image_url`
+- `file_search_call.results`
+- `message.input_image.image_url`
+- `message.output_text.logprobs`
+- `reasoning.encrypted_content`
+
+Some of these are not relevant to Llama Stack in its current form. For example, code interpreter is not implemented (see "Built-in tools" below), so `code_interpreter_call.outputs` would not be a useful directive to Llama Stack.
+
+However, others might be useful. For example, `message.output_text.logprobs` can be useful for assessing how confident a model is in each token of its output.
+
+---
+
+### Tool Choice
+
+**Status:** Not Implemented
+
+**Issue:** [#3548](https://github.com/llamastack/llama-stack/issues/3548)
+
+In OpenAI's API, the `tool_choice` parameter allows you to set restrictions or requirements for which tools should be used when generating a response. This feature is not implemented in Llama Stack.
+
+---
+
+### Safety Identification and Tracking
+
+**Status:** Not Implemented
+
+OpenAI's platform allows users to track agentic users using a safety identifier passed with each response. When requests violate moderation or safety rules, account holders are alerted and automated actions can be taken. This capability is not currently available in Llama Stack.
+
+---
+
+### Connectors
+
+**Status:** Not Implemented
+
+Connectors are MCP servers maintained and managed by the Responses API provider. OpenAI has documented their connectors at [https://platform.openai.com/docs/guides/tools-connectors-mcp](https://platform.openai.com/docs/guides/tools-connectors-mcp).
+
+**Open Questions:**
+- Should Llama Stack include built-in support for some, all, or none of OpenAI's connectors?
+- Should there be a mechanism for administrators to add custom connectors via `run.yaml` or an API?
+
+---
+
+### Reasoning
+
+**Status:** Partially Implemented
+
+The `reasoning` object in the output of Responses works for inference providers such as vLLM that output reasoning traces in chat completions requests.  It does not work for other providers such as OpenAI's hosted service.  See [#3551](https://github.com/llamastack/llama-stack/issues/3551) for more details.
+
+---
+
+### Service Tier
+
+**Status:** Not Implemented
+
+**Issue:** [#3550](https://github.com/llamastack/llama-stack/issues/3550)
+
+Responses has a field `service_tier` that can be used to prioritize access to inference resources.  Not all inference providers have such a concept, but Llama Stack pass through this value for those providers that do.  Currently it does not.
+
+---
+
+### Top Logprobs
+
+**Status:** Not Implemented
+
+**Issue:** [#3552](https://github.com/llamastack/llama-stack/issues/3552)
+
+The `top_logprobs` parameter from OpenAI's Responses API extends the functionality obtained by including `message.output_text.logprobs` in the `include` parameter list (as discussed in the Include section above).
+It enables users to also get logprobs for alternative tokens.
+
+---
+
+### Max Tool Calls
+
+**Status:** Not Implemented
+
+**Issue:** [#3563](https://github.com/llamastack/llama-stack/issues/3563)
+
+The Responses API can accept a `max_tool_calls` parameter that limits the number of tool calls allowed to be executed for a given response. This feature needs full implementation and documentation.
+
+---
+
+### Max Output Tokens
+
+**Status:** Not Implemented
+
+**Issue:** [#3562](https://github.com/llamastack/llama-stack/issues/3562)
+
+The `max_output_tokens` field limits how many tokens the model is allowed to generate (for both reasoning and output combined).  It is not implemented in Llama Stack.
+
+---
+
+### Incomplete Details
+
+**Status:** Not Implemented
+
+**Issue:** [#3567](https://github.com/llamastack/llama-stack/issues/3567)
+
+The return object from a call to Responses includes a field for indicating why a response is incomplete if it is.  For example, if the model stops generating because it has reached the specified max output tokens (see above), this field should be set to "IncompleteDetails(reason='max_output_tokens')".  This is not implemented in Llama Stack.
+
+---
+
+### Metadata
+
+**Status:** Not Implemented
+
+**Issue:** [#3564](https://github.com/llamastack/llama-stack/issues/3564)
+
+Metadata allows you to attach additional information to a response for your own reference and tracking.  It is not implemented in Llama Stack.
+
+---
+
+### Background
+
+**Status:** Not Implemented
+
+**Issue:** [#3568](https://github.com/llamastack/llama-stack/issues/3568)
+
+[Background mode](https://platform.openai.com/docs/guides/background) in OpenAI Responses lets you start a response generation job and then check back in on it later.  This is useful if you might lose a connection during a generation and want to reconnect later and get the response back (for example if the client is running in a mobile app).  It is not implemented in Llama Stack.
+
+---
+
+### Global Guardrails
+
+**Status:** Feature Request
+
+When calling the OpenAI Responses API, model outputs go through safety models configured by OpenAI administrators. Perhaps Llama Stack should provide a mechanism to configure safety models (or non-model logic) for all Responses requests, either through `run.yaml` or an administrative API.
+
+---
+
+### User-Controlled Guardrails
+
+**Status:** Feature Request
+
+**Issue:** [#3325](https://github.com/llamastack/llama-stack/issues/3325)
+
+OpenAI has not released a way for users to configure their own guardrails. However, Llama Stack users may want this capability to complement or replace global guardrails. This could be implemented as a non-breaking, additive difference from the OpenAI API.
+
+---
+
+### MCP Elicitations
+
+**Status:** Unknown
+
+Elicitations allow MCP servers to request additional information from users through the client during interactions (e.g., a tool requesting a username before proceeding).
+See the [MCP specification](https://modelcontextprotocol.io/specification/draft/client/elicitation) for details.
+
+**Open Questions:**
+- Does this work in OpenAI's Responses API reference implementation?
+- If not, is there a reasonable way to make that work within the API as is? Or would the API need to change?
+- Does this work in Llama Stack?
+
+---
+
+### MCP Sampling
+
+**Status:** Unknown
+
+Sampling allows MCP tools to query the generative AI model. See the [MCP specification](https://modelcontextprotocol.io/specification/draft/client/sampling) for details.
+
+**Open Questions:**
+- Does this work in OpenAI's Responses API reference implementation?
+- If not, is there a reasonable way to make that work within the API as is? Or would the API need to change?
+- Does this work in Llama Stack?
+
+### Prompt Caching
+
+**Status:** Unknown
+
+OpenAI provides a [prompt caching](https://platform.openai.com/docs/guides/prompt-caching) mechanism in Responses that is enabled for its most recent models.
+
+**Open Questions:**
+- Does this work in Llama Stack?
+- If not, is there a reasonable way to make that work for those inference providers that have this capability by passing through the provided `prompt_cache_key` to the inference provider?
+- Is there a reasonable way to make that work for inference providers that don't build in this capability by doing some sort of caching at the Llama Stack layer?
+
+---
+
+### Parallel Tool Calls
+
+**Status:** Rumored Issue
+
+There are reports that `parallel_tool_calls` may not work correctly. This needs verification and a ticket should be opened if confirmed.
+
+---
+
+## Resolved Issues
+
+The following limitations have been addressed in recent releases:
+
+### MCP and Function Tools with No Arguments
+
+**Status:** ✅ Resolved
+
+MCP and function tools now work correctly even when they have no arguments.
+
+---
+
+### `require_approval` Parameter for MCP Tools
+
+**Status:** ✅ Resolved
+
+The `require_approval` parameter for MCP tools in the Responses API now works correctly.
+
+---
+
+### MCP Tools with Array-Type Arguments
+
+**Status:** ✅ Resolved
+
+**Fixed in:** [#3003](https://github.com/llamastack/llama-stack/pull/3003) (Agent API), [#3602](https://github.com/llamastack/llama-stack/pull/3602) (Responses API)
+
+MCP tools now correctly handle array-type arguments in both the Agent API and Responses API.

@@ -11,6 +11,16 @@ import pytest
 import requests
 
 from llama_stack.core.datatypes import User
+from llama_stack_api import OpenAIFilePurpose
+
+purpose = OpenAIFilePurpose.ASSISTANTS
+
+
+@pytest.fixture()
+def provider_type_is_openai(llama_stack_client):
+    providers = [provider for provider in llama_stack_client.providers.list() if provider.api == "files"]
+    assert len(providers) == 1, "Expected exactly one files provider"
+    return providers[0].provider_type == "remote::openai"
 
 
 # a fixture to skip all these tests if a files provider is not available
@@ -20,7 +30,7 @@ def skip_if_no_files_provider(llama_stack_client):
         pytest.skip("No files providers found")
 
 
-def test_openai_client_basic_operations(openai_client):
+def test_openai_client_basic_operations(openai_client, provider_type_is_openai):
     """Test basic file operations through OpenAI client."""
     from openai import NotFoundError
 
@@ -34,7 +44,7 @@ def test_openai_client_basic_operations(openai_client):
         # Upload file using OpenAI client
         with BytesIO(test_content) as file_buffer:
             file_buffer.name = "openai_test.txt"
-            uploaded_file = client.files.create(file=file_buffer, purpose="assistants")
+            uploaded_file = client.files.create(file=file_buffer, purpose=purpose)
 
         # Verify basic response structure
         assert uploaded_file.id.startswith("file-")
@@ -50,16 +60,18 @@ def test_openai_client_basic_operations(openai_client):
         retrieved_file = client.files.retrieve(uploaded_file.id)
         assert retrieved_file.id == uploaded_file.id
 
-        # Retrieve file content - OpenAI client returns httpx Response object
-        content_response = client.files.content(uploaded_file.id)
-        assert content_response.content == test_content
+        # Retrieve file content
+        # OpenAI provider does not allow content retrieval with many `purpose` values
+        if not provider_type_is_openai:
+            content_response = client.files.content(uploaded_file.id)
+            assert content_response.content == test_content
 
         # Delete file
         delete_response = client.files.delete(uploaded_file.id)
         assert delete_response.deleted is True
 
         # Retrieve file should fail
-        with pytest.raises(NotFoundError, match="not found"):
+        with pytest.raises(NotFoundError):
             client.files.retrieve(uploaded_file.id)
 
         # File should not be found in listing
@@ -68,7 +80,7 @@ def test_openai_client_basic_operations(openai_client):
         assert uploaded_file.id not in file_ids
 
         # Double delete should fail
-        with pytest.raises(NotFoundError, match="not found"):
+        with pytest.raises(NotFoundError):
             client.files.delete(uploaded_file.id)
 
     finally:
@@ -91,7 +103,7 @@ def test_expires_after(openai_client):
             file_buffer.name = "expires_after.txt"
             uploaded_file = client.files.create(
                 file=file_buffer,
-                purpose="assistants",
+                purpose=purpose,
                 expires_after={"anchor": "created_at", "seconds": 4545},
             )
 
@@ -126,7 +138,7 @@ def test_expires_after_requests(openai_client):
     try:
         files = {"file": ("expires_after_with_requests.txt", BytesIO(b"expires_after via requests"))}
         data = {
-            "purpose": "assistants",
+            "purpose": str(purpose),
             "expires_after[anchor]": "created_at",
             "expires_after[seconds]": "4545",
         }
@@ -163,7 +175,7 @@ def test_expires_after_requests(openai_client):
 
 
 @pytest.mark.xfail(message="User isolation broken for current providers, must be fixed.")
-@patch("llama_stack.providers.utils.sqlstore.authorized_sqlstore.get_authenticated_user")
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
 def test_files_authentication_isolation(mock_get_authenticated_user, llama_stack_client):
     """Test that users can only access their own files."""
     from llama_stack_client import NotFoundError
@@ -180,7 +192,7 @@ def test_files_authentication_isolation(mock_get_authenticated_user, llama_stack
 
     with BytesIO(test_content_1) as file_buffer:
         file_buffer.name = "user1_file.txt"
-        user1_file = client.files.create(file=file_buffer, purpose="assistants")
+        user1_file = client.files.create(file=file_buffer, purpose=purpose)
 
     # User 2 uploads a file
     mock_get_authenticated_user.return_value = user2
@@ -188,7 +200,7 @@ def test_files_authentication_isolation(mock_get_authenticated_user, llama_stack
 
     with BytesIO(test_content_2) as file_buffer:
         file_buffer.name = "user2_file.txt"
-        user2_file = client.files.create(file=file_buffer, purpose="assistants")
+        user2_file = client.files.create(file=file_buffer, purpose=purpose)
 
     try:
         # User 1 can see their own file
@@ -263,8 +275,10 @@ def test_files_authentication_isolation(mock_get_authenticated_user, llama_stack
         raise e
 
 
-@patch("llama_stack.providers.utils.sqlstore.authorized_sqlstore.get_authenticated_user")
-def test_files_authentication_shared_attributes(mock_get_authenticated_user, llama_stack_client):
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
+def test_files_authentication_shared_attributes(
+    mock_get_authenticated_user, llama_stack_client, provider_type_is_openai
+):
     """Test access control with users having identical attributes."""
     client = llama_stack_client
 
@@ -278,7 +292,7 @@ def test_files_authentication_shared_attributes(mock_get_authenticated_user, lla
 
     with BytesIO(test_content) as file_buffer:
         file_buffer.name = "shared_attributes_file.txt"
-        shared_file = client.files.create(file=file_buffer, purpose="assistants")
+        shared_file = client.files.create(file=file_buffer, purpose=purpose)
 
     try:
         # User B with identical attributes can access the file
@@ -294,12 +308,13 @@ def test_files_authentication_shared_attributes(mock_get_authenticated_user, lla
         assert retrieved_file.id == shared_file.id
 
         # User B can access file content
-        content_response = client.files.content(shared_file.id)
-        if isinstance(content_response, str):
-            content = bytes(content_response, "utf-8")
-        else:
-            content = content_response.content
-        assert content == test_content
+        if not provider_type_is_openai:
+            content_response = client.files.content(shared_file.id)
+            if isinstance(content_response, str):
+                content = bytes(content_response, "utf-8")
+            else:
+                content = content_response.content
+            assert content == test_content
 
         # Cleanup
         mock_get_authenticated_user.return_value = user_a
@@ -320,8 +335,10 @@ def test_files_authentication_shared_attributes(mock_get_authenticated_user, lla
         raise e
 
 
-@patch("llama_stack.providers.utils.sqlstore.authorized_sqlstore.get_authenticated_user")
-def test_files_authentication_anonymous_access(mock_get_authenticated_user, llama_stack_client):
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
+def test_files_authentication_anonymous_access(
+    mock_get_authenticated_user, llama_stack_client, provider_type_is_openai
+):
     client = llama_stack_client
 
     # Simulate anonymous user (no authentication)
@@ -331,7 +348,7 @@ def test_files_authentication_anonymous_access(mock_get_authenticated_user, llam
 
     with BytesIO(test_content) as file_buffer:
         file_buffer.name = "anonymous_file.txt"
-        anonymous_file = client.files.create(file=file_buffer, purpose="assistants")
+        anonymous_file = client.files.create(file=file_buffer, purpose=purpose)
 
     try:
         # Anonymous user should be able to access their own uploaded file
@@ -344,12 +361,13 @@ def test_files_authentication_anonymous_access(mock_get_authenticated_user, llam
         assert retrieved_file.id == anonymous_file.id
 
         # Can access file content
-        content_response = client.files.content(anonymous_file.id)
-        if isinstance(content_response, str):
-            content = bytes(content_response, "utf-8")
-        else:
-            content = content_response.content
-        assert content == test_content
+        if not provider_type_is_openai:
+            content_response = client.files.content(anonymous_file.id)
+            if isinstance(content_response, str):
+                content = bytes(content_response, "utf-8")
+            else:
+                content = content_response.content
+            assert content == test_content
 
         # Can delete the file
         delete_response = client.files.delete(anonymous_file.id)

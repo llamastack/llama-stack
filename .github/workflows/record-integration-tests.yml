@@ -46,7 +46,7 @@ jobs:
           echo "::endgroup::"
 
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           fetch-depth: 0
 
@@ -61,6 +61,9 @@ jobs:
 
       - name: Run and record tests
         uses: ./.github/actions/run-and-record-tests
+        env:
+          # Set OPENAI_API_KEY if using gpt setup
+          OPENAI_API_KEY: ${{ inputs.test-setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
         with:
           stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
           setup: ${{ inputs.test-setup || 'ollama' }}

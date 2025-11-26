@@ -10,16 +10,19 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from llama_stack.apis.inference import CompletionMessage, UserMessage
-from llama_stack.apis.resource import ResourceType
-from llama_stack.apis.safety import RunShieldResponse, ViolationLevel
-from llama_stack.apis.shields import Shield
-from llama_stack.models.llama.datatypes import StopReason
 from llama_stack.providers.remote.safety.nvidia.config import NVIDIASafetyConfig
 from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter
+from llama_stack_api import (
+    OpenAIAssistantMessageParam,
+    OpenAIUserMessageParam,
+    ResourceType,
+    RunShieldResponse,
+    Shield,
+    ViolationLevel,
+)
 
 
-class TestNVIDIASafetyAdapter(NVIDIASafetyAdapter):
+class FakeNVIDIASafetyAdapter(NVIDIASafetyAdapter):
     """Test implementation that provides the required shield_store."""
 
     def __init__(self, config: NVIDIASafetyConfig, shield_store):
@@ -41,7 +44,7 @@ def nvidia_adapter():
     shield_store = AsyncMock()
     shield_store.get_shield = AsyncMock()
 
-    adapter = TestNVIDIASafetyAdapter(config=config, shield_store=shield_store)
+    adapter = FakeNVIDIASafetyAdapter(config=config, shield_store=shield_store)
 
     return adapter
 
@@ -136,11 +139,9 @@ async def test_run_shield_allowed(nvidia_adapter, mock_guardrails_post):
 
     # Run the shield
     messages = [
-        UserMessage(role="user", content="Hello, how are you?"),
-        CompletionMessage(
-            role="assistant",
+        OpenAIUserMessageParam(content="Hello, how are you?"),
+        OpenAIAssistantMessageParam(
             content="I'm doing well, thank you for asking!",
-            stop_reason=StopReason.end_of_message,
             tool_calls=[],
         ),
     ]
@@ -191,13 +192,10 @@ async def test_run_shield_blocked(nvidia_adapter, mock_guardrails_post):
     # Mock Guardrails API response
     mock_guardrails_post.return_value = {"status": "blocked", "rails_status": {"reason": "harmful_content"}}
 
-    # Run the shield
     messages = [
-        UserMessage(role="user", content="Hello, how are you?"),
-        CompletionMessage(
-            role="assistant",
+        OpenAIUserMessageParam(content="Hello, how are you?"),
+        OpenAIAssistantMessageParam(
             content="I'm doing well, thank you for asking!",
-            stop_reason=StopReason.end_of_message,
             tool_calls=[],
         ),
     ]
@@ -243,7 +241,7 @@ async def test_run_shield_not_found(nvidia_adapter, mock_guardrails_post):
     adapter.shield_store.get_shield.return_value = None
 
     messages = [
-        UserMessage(role="user", content="Hello, how are you?"),
+        OpenAIUserMessageParam(content="Hello, how are you?"),
     ]
 
     with pytest.raises(ValueError):
@@ -274,11 +272,9 @@ async def test_run_shield_http_error(nvidia_adapter, mock_guardrails_post):
 
     # Running the shield should raise an exception
     messages = [
-        UserMessage(role="user", content="Hello, how are you?"),
-        CompletionMessage(
-            role="assistant",
+        OpenAIUserMessageParam(content="Hello, how are you?"),
+        OpenAIAssistantMessageParam(
             content="I'm doing well, thank you for asking!",
-            stop_reason=StopReason.end_of_message,
             tool_calls=[],
         ),
     ]

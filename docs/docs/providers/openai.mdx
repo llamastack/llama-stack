@@ -1,8 +1,14 @@
-title: OpenAI Compatibility
-description: OpenAI API Compatibility
-sidebar_label: OpenAI Compatibility
-sidebar_position: 1
 ---
+title: OpenAI Implementation Guide
+description: Code examples and implementation details for OpenAI API compatibility
+sidebar_label: OpenAI Implementation
+sidebar_position: 2
+---
+
+# OpenAI Implementation Guide
+
+This guide provides detailed code examples and implementation details for using OpenAI-compatible APIs with Llama Stack. For a comprehensive overview of OpenAI compatibility features, see our [OpenAI API Compatibility Guide](../api-openai/index.mdx).
+
 ## OpenAI API Compatibility
 
 ### Server path
@@ -47,7 +53,7 @@ models = client.models.list()
 
 #### Responses
 
-> **Note:** The Responses API implementation is still in active development. While it is quite usable, there are still unimplemented parts of the API. We'd love feedback on any use-cases you try that do not work to help prioritize the pieces left to implement. Please open issues in the [meta-llama/llama-stack](https://github.com/meta-llama/llama-stack) GitHub repository with details of anything that does not work.
+> **Note:** The Responses API implementation is still in active development. While it is quite usable, there are still unimplemented parts of the API.  See [Known Limitations of the OpenAI-compatible Responses API in Llama Stack](./openai_responses_limitations.mdx) for more details.
 
 ##### Simple inference
 
@@ -194,3 +200,9 @@ Lines of code unfurl
 Logic whispers in the dark
 Art in hidden form
 ```
+
+## Additional Resources
+
+- **[OpenAI API Compatibility Guide](../api-openai/index.mdx)** - Comprehensive overview of OpenAI compatibility features
+- **[OpenAI Responses API Limitations](./openai_responses_limitations.mdx)** - Detailed limitations and known issues
+- **[Provider Documentation](../index.mdx)** - Complete provider ecosystem overview

@@ -9,33 +9,28 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
-from chromadb import PersistentClient
 
-from llama_stack.apis.vector_dbs import VectorDB
-from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
-from llama_stack.providers.inline.vector_io.chroma.config import ChromaVectorIOConfig
+from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
+from llama_stack.core.storage.kvstore import register_kvstore_backends
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import FaissIndex, FaissVectorIOAdapter
-from llama_stack.providers.inline.vector_io.milvus.config import SqliteKVStoreConfig
-from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec import SQLiteVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex, SQLiteVecVectorIOAdapter
-from llama_stack.providers.remote.vector_io.chroma.chroma import ChromaIndex, ChromaVectorIOAdapter, maybe_await
 from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
-from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantVectorIOAdapter
+from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore
 
-EMBEDDING_DIMENSION = 384
+EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
 
 
-@pytest.fixture(params=["sqlite_vec", "faiss", "chroma", "pgvector"])
+@pytest.fixture(params=["sqlite_vec", "faiss", "pgvector"])
 def vector_provider(request):
     return request.param
 
 
 @pytest.fixture
-def vector_db_id() -> str:
+def vector_store_id() -> str:
     return f"test-vector-db-{random.randint(1, 100)}"
 
 
@@ -47,9 +42,15 @@ def embedding_dimension() -> int:
 @pytest.fixture(scope="session")
 def sample_chunks():
     """Generates chunks that force multiple batches for a single document to expose ID conflicts."""
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     n, k = 10, 3
     sample = [
-        Chunk(content=f"Sentence {i} from document {j}", metadata={"document_id": f"document-{j}"})
+        Chunk(
+            content=f"Sentence {i} from document {j}",
+            chunk_id=generate_chunk_id(f"document-{j}", f"Sentence {i} from document {j}"),
+            metadata={"document_id": f"document-{j}"},
+        )
         for j in range(k)
         for i in range(n)
     ]
@@ -57,6 +58,7 @@ def sample_chunks():
         [
             Chunk(
                 content=f"Sentence {i} from document {j + k}",
+                chunk_id=f"document-{j}-chunk-{i}",
                 chunk_metadata=ChunkMetadata(
                     document_id=f"document-{j + k}",
                     chunk_id=f"document-{j}-chunk-{i}",
@@ -77,6 +79,7 @@ def sample_chunks_with_metadata():
     sample = [
         Chunk(
             content=f"Sentence {i} from document {j}",
+            chunk_id=f"document-{j}-chunk-{i}",
             metadata={"document_id": f"document-{j}"},
             chunk_metadata=ChunkMetadata(
                 document_id=f"document-{j}",
@@ -117,8 +120,9 @@ async def unique_kvstore_config(tmp_path_factory):
     unique_id = f"test_kv_{np.random.randint(1e6)}"
     temp_dir = tmp_path_factory.getbasetemp()
     db_path = str(temp_dir / f"{unique_id}.db")
-
-    return SqliteKVStoreConfig(db_path=db_path)
+    backend_name = f"kv_vector_{unique_id}"
+    register_kvstore_backends({backend_name: SqliteKVStoreConfig(db_path=db_path)})
+    return KVStoreReference(backend=backend_name, namespace=f"vector_io::{unique_id}")
 
 
 @pytest.fixture(scope="session")
@@ -143,7 +147,7 @@ async def sqlite_vec_vec_index(embedding_dimension, tmp_path_factory):
 async def sqlite_vec_adapter(sqlite_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = SQLiteVectorIOConfig(
         db_path=sqlite_vec_db_path,
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
     adapter = SQLiteVecVectorIOAdapter(
         config=config,
@@ -152,8 +156,8 @@ async def sqlite_vec_adapter(sqlite_vec_db_path, unique_kvstore_config, mock_inf
     )
     collection_id = f"sqlite_test_collection_{np.random.randint(1e6)}"
     await adapter.initialize()
-    await adapter.register_vector_db(
-        VectorDB(
+    await adapter.register_vector_store(
+        VectorStore(
             identifier=collection_id,
             provider_id="test_provider",
             embedding_model="test_model",
@@ -181,7 +185,7 @@ async def faiss_vec_index(embedding_dimension):
 @pytest.fixture
 async def faiss_vec_adapter(unique_kvstore_config, mock_inference_api, embedding_dimension):
     config = FaissVectorIOConfig(
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
     adapter = FaissVectorIOAdapter(
         config=config,
@@ -189,8 +193,8 @@ async def faiss_vec_adapter(unique_kvstore_config, mock_inference_api, embedding
         files_api=None,
     )
     await adapter.initialize()
-    await adapter.register_vector_db(
-        VectorDB(
+    await adapter.register_vector_store(
+        VectorStore(
             identifier=f"faiss_test_collection_{np.random.randint(1e6)}",
             provider_id="test_provider",
             embedding_model="test_model",
@@ -199,98 +203,6 @@ async def faiss_vec_adapter(unique_kvstore_config, mock_inference_api, embedding
     )
     yield adapter
     await adapter.shutdown()
-
-
-@pytest.fixture
-def chroma_vec_db_path(tmp_path_factory):
-    persist_dir = tmp_path_factory.mktemp(f"chroma_{np.random.randint(1e6)}")
-    return str(persist_dir)
-
-
-@pytest.fixture
-async def chroma_vec_index(chroma_vec_db_path, embedding_dimension):
-    client = PersistentClient(path=chroma_vec_db_path)
-    name = f"{COLLECTION_PREFIX}_{np.random.randint(1e6)}"
-    collection = await maybe_await(client.get_or_create_collection(name))
-    index = ChromaIndex(client=client, collection=collection)
-    await index.initialize()
-    yield index
-    await index.delete()
-
-
-@pytest.fixture
-async def chroma_vec_adapter(chroma_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
-    config = ChromaVectorIOConfig(
-        db_path=chroma_vec_db_path,
-        kvstore=unique_kvstore_config,
-    )
-    adapter = ChromaVectorIOAdapter(
-        config=config,
-        inference_api=mock_inference_api,
-        files_api=None,
-    )
-    await adapter.initialize()
-    await adapter.register_vector_db(
-        VectorDB(
-            identifier=f"chroma_test_collection_{random.randint(1, 1_000_000)}",
-            provider_id="test_provider",
-            embedding_model="test_model",
-            embedding_dimension=embedding_dimension,
-        )
-    )
-    yield adapter
-    await adapter.shutdown()
-
-
-@pytest.fixture
-def qdrant_vec_db_path(tmp_path_factory):
-    import uuid
-
-    db_path = str(tmp_path_factory.getbasetemp() / f"test_qdrant_{uuid.uuid4()}.db")
-    return db_path
-
-
-@pytest.fixture
-async def qdrant_vec_adapter(qdrant_vec_db_path, unique_kvstore_config, mock_inference_api, embedding_dimension):
-    import uuid
-
-    config = QdrantVectorIOConfig(
-        db_path=qdrant_vec_db_path,
-        kvstore=unique_kvstore_config,
-    )
-    adapter = QdrantVectorIOAdapter(
-        config=config,
-        inference_api=mock_inference_api,
-        files_api=None,
-    )
-    collection_id = f"qdrant_test_collection_{uuid.uuid4()}"
-    await adapter.initialize()
-    await adapter.register_vector_db(
-        VectorDB(
-            identifier=collection_id,
-            provider_id="test_provider",
-            embedding_model="test_model",
-            embedding_dimension=embedding_dimension,
-        )
-    )
-    adapter.test_collection_id = collection_id
-    yield adapter
-    await adapter.shutdown()
-
-
-@pytest.fixture
-async def qdrant_vec_index(qdrant_vec_db_path, embedding_dimension):
-    import uuid
-
-    from qdrant_client import AsyncQdrantClient
-
-    from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantIndex
-
-    client = AsyncQdrantClient(path=qdrant_vec_db_path)
-    collection_name = f"qdrant_test_collection_{uuid.uuid4()}"
-    index = QdrantIndex(client, collection_name)
-    yield index
-    await index.delete()
 
 
 @pytest.fixture
@@ -310,7 +222,7 @@ def mock_psycopg2_connection():
 async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
     connection, cursor = mock_psycopg2_connection
 
-    vector_db = VectorDB(
+    vector_store = VectorStore(
         identifier="test-vector-db",
         embedding_model="test-model",
         embedding_dimension=embedding_dimension,
@@ -320,7 +232,7 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
 
     with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2"):
         with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.execute_values"):
-            index = PGVectorIndex(vector_db, embedding_dimension, connection, distance_metric="COSINE")
+            index = PGVectorIndex(vector_store, embedding_dimension, connection, distance_metric="COSINE")
             index._test_chunks = []
             original_add_chunks = index.add_chunks
 
@@ -348,7 +260,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         db="test_db",
         user="test_user",
         password="test_password",
-        kvstore=unique_kvstore_config,
+        persistence=unique_kvstore_config,
     )
 
     adapter = PGVectorVectorIOAdapter(config, mock_inference_api, None)
@@ -367,7 +279,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         ) as mock_check_version:
             mock_check_version.return_value = "0.5.1"
 
-            with patch("llama_stack.providers.utils.kvstore.kvstore_impl") as mock_kvstore_impl:
+            with patch("llama_stack.core.storage.kvstore.kvstore_impl") as mock_kvstore_impl:
                 mock_kvstore = AsyncMock()
                 mock_kvstore_impl.return_value = mock_kvstore
 
@@ -376,30 +288,30 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
                         await adapter.initialize()
                         adapter.conn = mock_conn
 
-                        async def mock_insert_chunks(vector_db_id, chunks, ttl_seconds=None):
-                            index = await adapter._get_and_cache_vector_db_index(vector_db_id)
+                        async def mock_insert_chunks(vector_store_id, chunks, ttl_seconds=None):
+                            index = await adapter._get_and_cache_vector_store_index(vector_store_id)
                             if not index:
-                                raise ValueError(f"Vector DB {vector_db_id} not found")
+                                raise ValueError(f"Vector DB {vector_store_id} not found")
                             await index.insert_chunks(chunks)
 
                         adapter.insert_chunks = mock_insert_chunks
 
-                        async def mock_query_chunks(vector_db_id, query, params=None):
-                            index = await adapter._get_and_cache_vector_db_index(vector_db_id)
+                        async def mock_query_chunks(vector_store_id, query, params=None):
+                            index = await adapter._get_and_cache_vector_store_index(vector_store_id)
                             if not index:
-                                raise ValueError(f"Vector DB {vector_db_id} not found")
+                                raise ValueError(f"Vector DB {vector_store_id} not found")
                             return await index.query_chunks(query, params)
 
                         adapter.query_chunks = mock_query_chunks
 
-                        test_vector_db = VectorDB(
+                        test_vector_store = VectorStore(
                             identifier=f"pgvector_test_collection_{random.randint(1, 1_000_000)}",
                             provider_id="test_provider",
                             embedding_model="test_model",
                             embedding_dimension=embedding_dimension,
                         )
-                        await adapter.register_vector_db(test_vector_db)
-                        adapter.test_collection_id = test_vector_db.identifier
+                        await adapter.register_vector_store(test_vector_store)
+                        adapter.test_collection_id = test_vector_store.identifier
 
                         yield adapter
                         await adapter.shutdown()
@@ -410,8 +322,6 @@ def vector_io_adapter(vector_provider, request):
     vector_provider_dict = {
         "faiss": "faiss_vec_adapter",
         "sqlite_vec": "sqlite_vec_adapter",
-        "chroma": "chroma_vec_adapter",
-        "qdrant": "qdrant_vec_adapter",
         "pgvector": "pgvector_vec_adapter",
     }
     return request.getfixturevalue(vector_provider_dict[vector_provider])

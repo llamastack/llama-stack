@@ -5,7 +5,9 @@
 # the root directory of this source tree.
 
 import base64
-from unittest.mock import AsyncMock, patch
+import json
+import logging  # allow-direct-logging
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -24,6 +26,13 @@ from llama_stack.core.server.auth import AuthenticationMiddleware, _has_required
 from llama_stack.core.server.auth_providers import (
     get_attributes_from_claims,
 )
+
+
+@pytest.fixture
+def suppress_auth_errors(caplog):
+    """Suppress expected ERROR/WARNING logs for tests that deliberately trigger authentication errors"""
+    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.auth")
+    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.auth_providers")
 
 
 class MockResponse:
@@ -122,7 +131,7 @@ def mock_impls():
 
 
 @pytest.fixture
-def scope_middleware_with_mocks(mock_auth_endpoint):
+def middleware_with_mocks(mock_auth_endpoint):
     """Create AuthenticationMiddleware with mocked route implementations"""
     mock_app = AsyncMock()
     auth_config = AuthenticationConfig(
@@ -135,20 +144,22 @@ def scope_middleware_with_mocks(mock_auth_endpoint):
     middleware = AuthenticationMiddleware(mock_app, auth_config, {})
 
     # Mock the route_impls to simulate finding routes with required scopes
-    from llama_stack.schema_utils import WebMethod
+    from llama_stack_api import WebMethod
 
-    scoped_webmethod = WebMethod(route="/test/scoped", method="POST", required_scope="test.read")
-
-    public_webmethod = WebMethod(route="/test/public", method="GET")
+    routes = {
+        ("POST", "/test/scoped"): WebMethod(route="/test/scoped", method="POST", required_scope="test.read"),
+        ("GET", "/test/public"): WebMethod(route="/test/public", method="GET"),
+        ("GET", "/health"): WebMethod(route="/health", method="GET", require_authentication=False),
+        ("GET", "/version"): WebMethod(route="/version", method="GET", require_authentication=False),
+        ("GET", "/models/list"): WebMethod(route="/models/list", method="GET", require_authentication=True),
+    }
 
     # Mock the route finding logic
     def mock_find_matching_route(method, path, route_impls):
-        if method == "POST" and path == "/test/scoped":
-            return None, {}, "/test/scoped", scoped_webmethod
-        elif method == "GET" and path == "/test/public":
-            return None, {}, "/test/public", public_webmethod
-        else:
-            raise ValueError("No matching route")
+        webmethod = routes.get((method, path))
+        if webmethod:
+            return None, {}, path, webmethod
+        raise ValueError("No matching route")
 
     import llama_stack.core.server.auth
 
@@ -234,20 +245,20 @@ def test_valid_http_authentication(http_client, valid_api_key):
 
 
 @patch("httpx.AsyncClient.post", new=mock_post_failure)
-def test_invalid_http_authentication(http_client, invalid_api_key):
+def test_invalid_http_authentication(http_client, invalid_api_key, suppress_auth_errors):
     response = http_client.get("/test", headers={"Authorization": f"Bearer {invalid_api_key}"})
     assert response.status_code == 401
     assert "Authentication failed" in response.json()["error"]["message"]
 
 
 @patch("httpx.AsyncClient.post", new=mock_post_exception)
-def test_http_auth_service_error(http_client, valid_api_key):
+def test_http_auth_service_error(http_client, valid_api_key, suppress_auth_errors):
     response = http_client.get("/test", headers={"Authorization": f"Bearer {valid_api_key}"})
     assert response.status_code == 401
     assert "Authentication service error" in response.json()["error"]["message"]
 
 
-def test_http_auth_request_payload(http_client, valid_api_key, mock_auth_endpoint):
+def test_http_auth_request_payload(http_client, valid_api_key, mock_auth_endpoint, suppress_auth_errors):
     with patch("httpx.AsyncClient.post") as mock_post:
         mock_response = MockResponse(200, {"message": "Authentication successful"})
         mock_post.return_value = mock_response
@@ -372,7 +383,7 @@ async def mock_jwks_response(*args, **kwargs):
 
 @pytest.fixture
 def jwt_token_valid():
-    from jose import jwt
+    import jwt
 
     return jwt.encode(
         {
@@ -387,15 +398,37 @@ def jwt_token_valid():
     )
 
 
-@patch("httpx.AsyncClient.get", new=mock_jwks_response)
-def test_valid_oauth2_authentication(oauth2_client, jwt_token_valid):
+@pytest.fixture
+def mock_jwks_urlopen():
+    """Mock urllib.request.urlopen for PyJWKClient JWKS requests."""
+    with patch("urllib.request.urlopen") as mock_urlopen:
+        # Mock the JWKS response for PyJWKClient
+        mock_response = Mock()
+        mock_response.read.return_value = json.dumps(
+            {
+                "keys": [
+                    {
+                        "kid": "1234567890",
+                        "kty": "oct",
+                        "alg": "HS256",
+                        "use": "sig",
+                        "k": base64.b64encode(b"foobarbaz").decode(),
+                    }
+                ]
+            }
+        ).encode()
+        mock_urlopen.return_value.__enter__.return_value = mock_response
+        yield mock_urlopen
+
+
+def test_valid_oauth2_authentication(oauth2_client, jwt_token_valid, mock_jwks_urlopen):
     response = oauth2_client.get("/test", headers={"Authorization": f"Bearer {jwt_token_valid}"})
     assert response.status_code == 200
     assert response.json() == {"message": "Authentication successful"}
 
 
 @patch("httpx.AsyncClient.get", new=mock_jwks_response)
-def test_invalid_oauth2_authentication(oauth2_client, invalid_token):
+def test_invalid_oauth2_authentication(oauth2_client, invalid_token, suppress_auth_errors):
     response = oauth2_client.get("/test", headers={"Authorization": f"Bearer {invalid_token}"})
     assert response.status_code == 401
     assert "Invalid JWT token" in response.json()["error"]["message"]
@@ -440,13 +473,12 @@ def oauth2_client_with_jwks_token(oauth2_app_with_jwks_token):
 
 
 @patch("httpx.AsyncClient.get", new=mock_auth_jwks_response)
-def test_oauth2_with_jwks_token_expected(oauth2_client, jwt_token_valid):
+def test_oauth2_with_jwks_token_expected(oauth2_client, jwt_token_valid, suppress_auth_errors):
     response = oauth2_client.get("/test", headers={"Authorization": f"Bearer {jwt_token_valid}"})
     assert response.status_code == 401
 
 
-@patch("httpx.AsyncClient.get", new=mock_auth_jwks_response)
-def test_oauth2_with_jwks_token_configured(oauth2_client_with_jwks_token, jwt_token_valid):
+def test_oauth2_with_jwks_token_configured(oauth2_client_with_jwks_token, jwt_token_valid, mock_jwks_urlopen):
     response = oauth2_client_with_jwks_token.get("/test", headers={"Authorization": f"Bearer {jwt_token_valid}"})
     assert response.status_code == 200
     assert response.json() == {"message": "Authentication successful"}
@@ -491,6 +523,82 @@ def test_get_attributes_from_claims():
     assert set(attributes["roles"]) == {"my-user", "my-username"}
     assert set(attributes["teams"]) == {"my-team", "group1", "group2"}
     assert attributes["namespaces"] == ["my-tenant"]
+
+    # Test nested claims with dot notation (e.g., Keycloak resource_access structure)
+    claims = {
+        "sub": "user123",
+        "resource_access": {"llamastack": {"roles": ["inference_max", "admin"]}, "other-client": {"roles": ["viewer"]}},
+        "realm_access": {"roles": ["offline_access", "uma_authorization"]},
+    }
+    attributes = get_attributes_from_claims(
+        claims, {"resource_access.llamastack.roles": "roles", "realm_access.roles": "realm_roles"}
+    )
+    assert set(attributes["roles"]) == {"inference_max", "admin"}
+    assert set(attributes["realm_roles"]) == {"offline_access", "uma_authorization"}
+
+    # Test that dot notation takes precedence over literal keys with dots
+    claims = {
+        "my.dotted.key": "literal-value",
+        "my": {"dotted": {"key": "nested-value"}},
+    }
+    attributes = get_attributes_from_claims(claims, {"my.dotted.key": "test"})
+    assert attributes["test"] == ["nested-value"]
+
+    # Test that literal key works when nested traversal doesn't exist
+    claims = {
+        "my.dotted.key": "literal-value",
+    }
+    attributes = get_attributes_from_claims(claims, {"my.dotted.key": "test"})
+    assert attributes["test"] == ["literal-value"]
+
+    # Test missing nested paths are handled gracefully
+    claims = {
+        "sub": "user123",
+        "resource_access": {"other-client": {"roles": ["viewer"]}},
+    }
+    attributes = get_attributes_from_claims(
+        claims,
+        {
+            "resource_access.llamastack.roles": "roles",  # Missing nested path
+            "resource_access.missing.key": "missing_attr",  # Missing nested path
+            "completely.missing.path": "another_missing",  # Completely missing
+            "sub": "username",  # Existing path
+        },
+    )
+    # Only the existing claim should be in attributes
+    assert attributes["username"] == ["user123"]
+    assert "roles" not in attributes
+    assert "missing_attr" not in attributes
+    assert "another_missing" not in attributes
+
+    # Test mixture of flat and nested claims paths
+    claims = {
+        "sub": "user456",
+        "flat_key": "flat-value",
+        "scope": "read write admin",
+        "resource_access": {"app1": {"roles": ["role1", "role2"]}, "app2": {"roles": ["role3"]}},
+        "groups": ["group1", "group2"],
+        "metadata": {"tenant": "tenant1", "region": "us-west"},
+    }
+    attributes = get_attributes_from_claims(
+        claims,
+        {
+            "sub": "user_id",  # Flat string
+            "scope": "permissions",  # Flat string with spaces
+            "groups": "teams",  # Flat list
+            "resource_access.app1.roles": "app1_roles",  # Nested list
+            "resource_access.app2.roles": "app2_roles",  # Nested list
+            "metadata.tenant": "tenant",  # Nested string
+            "metadata.region": "region",  # Nested string
+        },
+    )
+    assert attributes["user_id"] == ["user456"]
+    assert set(attributes["permissions"]) == {"read", "write", "admin"}
+    assert set(attributes["teams"]) == {"group1", "group2"}
+    assert set(attributes["app1_roles"]) == {"role1", "role2"}
+    assert attributes["app2_roles"] == ["role3"]
+    assert attributes["tenant"] == ["tenant1"]
+    assert attributes["region"] == ["us-west"]
 
 
 # TODO: add more tests for oauth2 token provider
@@ -626,21 +734,21 @@ def test_valid_introspection_authentication(introspection_client, valid_api_key)
 
 
 @patch("httpx.AsyncClient.post", new=mock_introspection_inactive)
-def test_inactive_introspection_authentication(introspection_client, invalid_api_key):
+def test_inactive_introspection_authentication(introspection_client, invalid_api_key, suppress_auth_errors):
     response = introspection_client.get("/test", headers={"Authorization": f"Bearer {invalid_api_key}"})
     assert response.status_code == 401
     assert "Token not active" in response.json()["error"]["message"]
 
 
 @patch("httpx.AsyncClient.post", new=mock_introspection_invalid)
-def test_invalid_introspection_authentication(introspection_client, invalid_api_key):
+def test_invalid_introspection_authentication(introspection_client, invalid_api_key, suppress_auth_errors):
     response = introspection_client.get("/test", headers={"Authorization": f"Bearer {invalid_api_key}"})
     assert response.status_code == 401
     assert "Not JSON" in response.json()["error"]["message"]
 
 
 @patch("httpx.AsyncClient.post", new=mock_introspection_failed)
-def test_failed_introspection_authentication(introspection_client, invalid_api_key):
+def test_failed_introspection_authentication(introspection_client, invalid_api_key, suppress_auth_errors):
     response = introspection_client.get("/test", headers={"Authorization": f"Bearer {invalid_api_key}"})
     assert response.status_code == 401
     assert "Token introspection failed: 500" in response.json()["error"]["message"]
@@ -659,9 +767,9 @@ def test_valid_introspection_with_custom_mapping_authentication(
 
 # Scope-based authorization tests
 @patch("httpx.AsyncClient.post", new=mock_post_success_with_scope)
-async def test_scope_authorization_success(scope_middleware_with_mocks, valid_api_key):
+async def test_scope_authorization_success(middleware_with_mocks, valid_api_key):
     """Test that user with required scope can access protected endpoint"""
-    middleware, mock_app = scope_middleware_with_mocks
+    middleware, mock_app = middleware_with_mocks
     mock_receive = AsyncMock()
     mock_send = AsyncMock()
 
@@ -680,9 +788,9 @@ async def test_scope_authorization_success(scope_middleware_with_mocks, valid_ap
 
 
 @patch("httpx.AsyncClient.post", new=mock_post_success_no_scope)
-async def test_scope_authorization_denied(scope_middleware_with_mocks, valid_api_key):
+async def test_scope_authorization_denied(middleware_with_mocks, valid_api_key):
     """Test that user without required scope gets 403 access denied"""
-    middleware, mock_app = scope_middleware_with_mocks
+    middleware, mock_app = middleware_with_mocks
     mock_receive = AsyncMock()
     mock_send = AsyncMock()
 
@@ -710,9 +818,9 @@ async def test_scope_authorization_denied(scope_middleware_with_mocks, valid_api
 
 
 @patch("httpx.AsyncClient.post", new=mock_post_success_no_scope)
-async def test_public_endpoint_no_scope_required(scope_middleware_with_mocks, valid_api_key):
+async def test_public_endpoint_no_scope_required(middleware_with_mocks, valid_api_key):
     """Test that public endpoints work without specific scopes"""
-    middleware, mock_app = scope_middleware_with_mocks
+    middleware, mock_app = middleware_with_mocks
     mock_receive = AsyncMock()
     mock_send = AsyncMock()
 
@@ -730,9 +838,9 @@ async def test_public_endpoint_no_scope_required(scope_middleware_with_mocks, va
     mock_send.assert_not_called()
 
 
-async def test_scope_authorization_no_auth_disabled(scope_middleware_with_mocks):
+async def test_scope_authorization_no_auth_disabled(middleware_with_mocks):
     """Test that when auth is disabled (no user), scope checks are bypassed"""
-    middleware, mock_app = scope_middleware_with_mocks
+    middleware, mock_app = middleware_with_mocks
     mock_receive = AsyncMock()
     mock_send = AsyncMock()
 
@@ -857,20 +965,22 @@ def test_valid_kubernetes_auth_authentication(kubernetes_auth_client, valid_toke
 
 
 @patch("httpx.AsyncClient.post", new=mock_kubernetes_selfsubjectreview_failure)
-def test_invalid_kubernetes_auth_authentication(kubernetes_auth_client, invalid_token):
+def test_invalid_kubernetes_auth_authentication(kubernetes_auth_client, invalid_token, suppress_auth_errors):
     response = kubernetes_auth_client.get("/test", headers={"Authorization": f"Bearer {invalid_token}"})
     assert response.status_code == 401
     assert "Invalid token" in response.json()["error"]["message"]
 
 
 @patch("httpx.AsyncClient.post", new=mock_kubernetes_selfsubjectreview_http_error)
-def test_kubernetes_auth_http_error(kubernetes_auth_client, valid_token):
+def test_kubernetes_auth_http_error(kubernetes_auth_client, valid_token, suppress_auth_errors):
     response = kubernetes_auth_client.get("/test", headers={"Authorization": f"Bearer {valid_token}"})
     assert response.status_code == 401
     assert "Token validation failed" in response.json()["error"]["message"]
 
 
-def test_kubernetes_auth_request_payload(kubernetes_auth_client, valid_token, mock_kubernetes_api_server):
+def test_kubernetes_auth_request_payload(
+    kubernetes_auth_client, valid_token, mock_kubernetes_api_server, suppress_auth_errors
+):
     with patch("httpx.AsyncClient.post") as mock_post:
         mock_response = MockResponse(
             200,
@@ -907,3 +1017,41 @@ def test_kubernetes_auth_request_payload(kubernetes_auth_client, valid_token, mo
         request_body = call_args[1]["json"]
         assert request_body["apiVersion"] == "authentication.k8s.io/v1"
         assert request_body["kind"] == "SelfSubjectReview"
+
+
+async def test_unauthenticated_endpoint_access_health(middleware_with_mocks):
+    """Test that /health endpoints can be accessed without authentication"""
+    middleware, mock_app = middleware_with_mocks
+
+    # Test request to /health without auth header (level prefix v1 is added by router)
+    scope = {"type": "http", "path": "/health", "headers": [], "method": "GET"}
+    receive = AsyncMock()
+    send = AsyncMock()
+
+    # Should allow the request to proceed without authentication
+    await middleware(scope, receive, send)
+
+    # Verify that the request was passed to the app
+    mock_app.assert_called_once_with(scope, receive, send)
+
+    # Verify that no error response was sent
+    assert not any(call[0][0].get("status") == 401 for call in send.call_args_list)
+
+
+async def test_unauthenticated_endpoint_denied_for_other_paths(middleware_with_mocks):
+    """Test that endpoints other than /health and /version require authentication"""
+    middleware, mock_app = middleware_with_mocks
+
+    # Test request to /models/list without auth header
+    scope = {"type": "http", "path": "/models/list", "headers": [], "method": "GET"}
+    receive = AsyncMock()
+    send = AsyncMock()
+
+    # Should return 401 error
+    await middleware(scope, receive, send)
+
+    # Verify that the app was NOT called
+    mock_app.assert_not_called()
+
+    # Verify that a 401 error response was sent
+    assert any(call[0][0].get("status") == 401 for call in send.call_args_list)

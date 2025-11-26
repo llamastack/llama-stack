@@ -16,16 +16,16 @@ import sys
 from tests.integration.suites import SETUP_DEFINITIONS, SUITE_DEFINITIONS
 
 
-def get_setup_env_vars(setup_name, suite_name=None):
+def get_setup_config(setup_name, suite_name=None):
     """
-    Get environment variables for a setup, with optional suite default fallback.
+    Get full configuration (env vars + defaults) for a setup.
 
     Args:
         setup_name: Name of the setup (e.g., 'ollama', 'gpt')
         suite_name: Optional suite name to get default setup if setup_name is None
 
     Returns:
-        Dictionary of environment variables
+        Dictionary with 'env' and 'defaults' keys
     """
     # If no setup specified, try to get default from suite
     if not setup_name and suite_name:
@@ -34,7 +34,7 @@ def get_setup_env_vars(setup_name, suite_name=None):
             setup_name = suite.default_setup
 
     if not setup_name:
-        return {}
+        return {"env": {}, "defaults": {}}
 
     setup = SETUP_DEFINITIONS.get(setup_name)
     if not setup:
@@ -44,27 +44,31 @@ def get_setup_env_vars(setup_name, suite_name=None):
         )
         sys.exit(1)
 
-    return setup.env
+    return {"env": setup.env, "defaults": setup.defaults}
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Extract environment variables from a test setup")
+    parser = argparse.ArgumentParser(description="Extract environment variables and defaults from a test setup")
     parser.add_argument("--setup", help="Setup name (e.g., ollama, gpt)")
     parser.add_argument("--suite", help="Suite name to get default setup from if --setup not provided")
     parser.add_argument("--format", choices=["bash", "json"], default="bash", help="Output format (default: bash)")
 
     args = parser.parse_args()
 
-    env_vars = get_setup_env_vars(args.setup, args.suite)
+    config = get_setup_config(args.setup, args.suite)
 
     if args.format == "bash":
-        # Output as bash export statements
-        for key, value in env_vars.items():
+        # Output env vars as bash export statements
+        for key, value in config["env"].items():
             print(f"export {key}='{value}'")
+        # Output defaults as bash export statements with LLAMA_STACK_TEST_ prefix
+        for key, value in config["defaults"].items():
+            env_key = f"LLAMA_STACK_TEST_{key.upper()}"
+            print(f"export {env_key}='{value}'")
     elif args.format == "json":
         import json
 
-        print(json.dumps(env_vars))
+        print(json.dumps(config))
 
 
 if __name__ == "__main__":

@@ -4,16 +4,13 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""
-Integration tests for MCP tools with complex JSON Schema support.
+"""Integration tests for MCP tools with complex JSON Schema support.
 Tests $ref, $defs, and other JSON Schema features through MCP integration.
 """
 
-import json
-
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import make_mcp_server
 
 AUTH_TOKEN = "test-token"
@@ -123,15 +120,11 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-        }
-
+        # Use the dedicated authorization parameter
         # List runtime tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         tools = response
@@ -166,15 +159,12 @@ class TestMCPSchemaPreservation:
             provider_id="model-context-protocol",
             mcp_endpoint=dict(uri=uri),
         )
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-        }
 
+        # Use the dedicated authorization parameter
         # List tools
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Find book_flight tool (which should have $ref/$defs)
@@ -216,14 +206,10 @@ class TestMCPSchemaPreservation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-        }
-
+        # Use the dedicated authorization parameter
         response = llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Find get_weather tool
@@ -263,15 +249,10 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-        }
-
-        # List tools to populate the tool index
+        # Use the dedicated authorization parameter
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Invoke tool with complex nested data
@@ -283,7 +264,7 @@ class TestMCPToolInvocation:
                     "shipping": {"address": {"street": "123 Main St", "city": "San Francisco", "zipcode": "94102"}},
                 }
             },
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Should succeed without schema validation errors
@@ -309,22 +290,17 @@ class TestMCPToolInvocation:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-        }
-
-        # List tools to populate the tool index
+        # Use the dedicated authorization parameter
         llama_stack_client.tool_runtime.list_tools(
             tool_group_id=test_toolgroup_id,
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         # Test with email format
         result_email = llama_stack_client.tool_runtime.invoke_tool(
             tool_name="flexible_contact",
             kwargs={"contact_info": "user@example.com"},
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         assert result_email.error_message is None
@@ -333,7 +309,7 @@ class TestMCPToolInvocation:
         result_phone = llama_stack_client.tool_runtime.invoke_tool(
             tool_name="flexible_contact",
             kwargs={"contact_info": "+15551234567"},
-            extra_headers=auth_headers,
+            authorization=AUTH_TOKEN,
         )
 
         assert result_phone.error_message is None
@@ -348,7 +324,8 @@ class TestAgentWithMCPTools:
         if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
             pytest.skip("Library client required for local MCP server")
 
-        from llama_stack_client import Agent
+        from llama_stack_client.lib.agents.agent import Agent
+        from llama_stack_client.lib.agents.turn_events import StepCompleted
 
         test_toolgroup_id = "mcp::complex_agent"
         uri = mcp_server_with_complex_schemas["server_url"]
@@ -364,41 +341,56 @@ class TestAgentWithMCPTools:
             mcp_endpoint=dict(uri=uri),
         )
 
-        provider_data = {"mcp_headers": {uri: {"Authorization": f"Bearer {AUTH_TOKEN}"}}}
-        auth_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-        }
+        # Use the dedicated authorization parameter
+        tools_list = llama_stack_client.tool_runtime.list_tools(
+            tool_group_id=test_toolgroup_id,
+            authorization=AUTH_TOKEN,
+        )
+        tool_defs = [
+            {
+                "type": "mcp",
+                "server_url": uri,
+                "server_label": test_toolgroup_id,
+                "require_approval": "never",
+                "allowed_tools": [tool.name for tool in tools_list],
+                "authorization": AUTH_TOKEN,
+            }
+        ]
 
-        # Create agent with MCP tools
         agent = Agent(
             client=llama_stack_client,
             model=text_model_id,
             instructions="You are a helpful assistant that can process orders and book flights.",
-            tools=[test_toolgroup_id],
-            extra_headers=auth_headers,
+            tools=tool_defs,
         )
 
         session_id = agent.create_session("test-session-complex")
 
         # Ask agent to use a tool with complex schema
-        response = agent.create_turn(
-            session_id=session_id,
-            messages=[
-                {"role": "user", "content": "Process an order with 2 widgets going to 123 Main St, San Francisco"}
-            ],
-            stream=False,
-            extra_headers=auth_headers,
+        chunks = list(
+            agent.create_turn(
+                session_id=session_id,
+                messages=[
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": "Process an order with 2 widgets going to 123 Main St, San Francisco",
+                            }
+                        ],
+                    }
+                ],
+                stream=True,
+            )
         )
 
-        steps = response.steps
+        events = [chunk.event for chunk in chunks]
+        tool_execution_steps = [
+            event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
+        ]
 
-        # Verify agent was able to call the tool
-        # (The LLM should have been able to understand the schema and formulate a valid call)
-        tool_execution_steps = [s for s in steps if s.step_type == "tool_execution"]
-
-        # Agent might or might not call the tool depending on the model
-        # But if it does, there should be no errors
         for step in tool_execution_steps:
-            if step.tool_responses:
-                for tool_response in step.tool_responses:
-                    assert tool_response.content is not None
+            for tool_response in step.result.tool_responses:
+                assert tool_response.get("content") is not None

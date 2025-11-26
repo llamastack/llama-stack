@@ -12,9 +12,15 @@ import pytest
 
 from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.datatypes import User
-from llama_stack.providers.utils.sqlstore.api import ColumnType
-from llama_stack.providers.utils.sqlstore.authorized_sqlstore import AuthorizedSqlStore
-from llama_stack.providers.utils.sqlstore.sqlstore import PostgresSqlStoreConfig, SqliteSqlStoreConfig, sqlstore_impl
+from llama_stack.core.storage.datatypes import SqlStoreReference
+from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
+from llama_stack.core.storage.sqlstore.sqlstore import (
+    PostgresSqlStoreConfig,
+    SqliteSqlStoreConfig,
+    register_sqlstore_backends,
+    sqlstore_impl,
+)
+from llama_stack_api.internal.sqlstore import ColumnType
 
 
 def get_postgres_config():
@@ -55,8 +61,9 @@ def authorized_store(backend_config):
     config_func = backend_config
 
     config = config_func()
-
-    base_sqlstore = sqlstore_impl(config)
+    backend_name = f"sql_{type(config).__name__.lower()}"
+    register_sqlstore_backends({backend_name: config})
+    base_sqlstore = sqlstore_impl(SqlStoreReference(backend=backend_name, table_name="authorized_store"))
     authorized_store = AuthorizedSqlStore(base_sqlstore, default_policy())
 
     yield authorized_store
@@ -89,7 +96,7 @@ async def cleanup_records(sql_store, table_name, record_ids):
 
 
 @pytest.mark.parametrize("backend_config", BACKEND_CONFIGS)
-@patch("llama_stack.providers.utils.sqlstore.authorized_sqlstore.get_authenticated_user")
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
 async def test_authorized_store_attributes(mock_get_authenticated_user, authorized_store, request):
     """Test that JSON column comparisons work correctly for both PostgreSQL and SQLite"""
     backend_name = request.node.callspec.id
@@ -183,7 +190,7 @@ async def test_authorized_store_attributes(mock_get_authenticated_user, authoriz
 
 
 @pytest.mark.parametrize("backend_config", BACKEND_CONFIGS)
-@patch("llama_stack.providers.utils.sqlstore.authorized_sqlstore.get_authenticated_user")
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
 async def test_user_ownership_policy(mock_get_authenticated_user, authorized_store, request):
     """Test that 'user is owner' policies work correctly with record ownership"""
     from llama_stack.core.access_control.datatypes import AccessRule, Action, Scope

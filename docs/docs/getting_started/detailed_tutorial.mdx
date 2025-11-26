@@ -58,15 +58,19 @@ Llama Stack is a server that exposes multiple APIs, you connect with it using th
 
 <Tabs>
 <TabItem value="venv" label="Using venv">
-You can use Python to build and run the Llama Stack server, which is useful for testing and development.
+You can use Python to install dependencies and run the Llama Stack server, which is useful for testing and development.
 
 Llama Stack uses a [YAML configuration file](../distributions/configuration) to specify the stack setup,
 which defines the providers and their settings. The generated configuration serves as a starting point that you can [customize for your specific needs](../distributions/customizing_run_yaml).
-Now let's build and run the Llama Stack config for Ollama.
+Now let's install dependencies and run the Llama Stack config for Ollama.
 We use `starter` as template. By default all providers are disabled, this requires enable ollama by passing environment variables.
 
 ```bash
-llama stack build --distro starter --image-type venv --run
+# Install dependencies for the starter distribution
+uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
+
+# Run the server
+llama stack run starter
 ```
 </TabItem>
 <TabItem value="container" label="Using a Container">
@@ -140,7 +144,7 @@ source .venv/bin/activate
 ```bash
 uv venv client --python 3.12
 source client/bin/activate
-pip install llama-stack-client
+uv pip install llama-stack-client
 ```
 </TabItem>
 </Tabs>
@@ -164,7 +168,7 @@ Available Models
 ┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ model_type      ┃ identifier                          ┃ provider_resource_id                ┃ metadata                                  ┃ provider_id           ┃
 ┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
-│ embedding       │ ollama/all-minilm:l6-v2             │ all-minilm:l6-v2                    │ {'embedding_dimension': 384.0}            │ ollama                │
+│ embedding       │ ollama/nomic-embed-text:v1.5        │ nomic-embed-text:v1.5               │ {'embedding_dimension': 768.0}            │ ollama                │
 ├─────────────────┼─────────────────────────────────────┼─────────────────────────────────────┼───────────────────────────────────────────┼───────────────────────┤
 │ ...             │ ...                                 │ ...                                 │                                           │ ...                   │
 ├─────────────────┼─────────────────────────────────────┼─────────────────────────────────────┼───────────────────────────────────────────┼───────────────────────┤
@@ -235,8 +239,13 @@ client = LlamaStackClient(base_url="http://localhost:8321")
 models = client.models.list()
 
 # Select the first LLM
-llm = next(m for m in models if m.model_type == "llm" and m.provider_id == "ollama")
-model_id = llm.identifier
+llm = next(
+    m for m in models
+    if m.custom_metadata
+    and m.custom_metadata.get("model_type") == "llm"
+    and m.custom_metadata.get("provider_id") == "ollama"
+)
+model_id = llm.id
 
 print("Model:", model_id)
 
@@ -275,8 +284,13 @@ import uuid
 client = LlamaStackClient(base_url=f"http://localhost:8321")
 
 models = client.models.list()
-llm = next(m for m in models if m.model_type == "llm" and m.provider_id == "ollama")
-model_id = llm.identifier
+llm = next(
+    m for m in models
+    if m.custom_metadata
+    and m.custom_metadata.get("model_type") == "llm"
+    and m.custom_metadata.get("provider_id") == "ollama"
+)
+model_id = llm.id
 
 agent = Agent(client, model=model_id, instructions="You are a helpful assistant.")
 
@@ -304,7 +318,7 @@ stream = agent.create_turn(
 for event in AgentEventLogger().log(stream):
     event.print()
 ```
-### ii. Run the Script
+#### ii. Run the Script
 Let's run the script using `uv`
 ```bash
 uv run python agent.py
@@ -446,8 +460,11 @@ import uuid
 client = LlamaStackClient(base_url="http://localhost:8321")
 
 # Create a vector database instance
-embed_lm = next(m for m in client.models.list() if m.model_type == "embedding")
-embedding_model = embed_lm.identifier
+embed_lm = next(
+    m for m in client.models.list()
+    if m.custom_metadata and m.custom_metadata.get("model_type") == "embedding"
+)
+embedding_model = embed_lm.id
 vector_db_id = f"v{uuid.uuid4().hex}"
 # The VectorDB API is deprecated; the server now returns its own authoritative ID.
 # We capture the correct ID from the response's .identifier attribute.
@@ -485,9 +502,11 @@ client.tool_runtime.rag_tool.insert(
 llm = next(
     m
     for m in client.models.list()
-    if m.model_type == "llm" and m.provider_id == "ollama"
+    if m.custom_metadata
+    and m.custom_metadata.get("model_type") == "llm"
+    and m.custom_metadata.get("provider_id") == "ollama"
 )
-model = llm.identifier
+model = llm.id
 
 # Create the RAG agent
 rag_agent = Agent(

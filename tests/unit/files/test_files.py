@@ -7,15 +7,14 @@
 
 import pytest
 
-from llama_stack.apis.common.errors import ResourceNotFoundError
-from llama_stack.apis.common.responses import Order
-from llama_stack.apis.files import OpenAIFilePurpose
 from llama_stack.core.access_control.access_control import default_policy
+from llama_stack.core.storage.datatypes import SqliteSqlStoreConfig, SqlStoreReference
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.inline.files.localfs import (
     LocalfsFilesImpl,
     LocalfsFilesImplConfig,
 )
-from llama_stack.providers.utils.sqlstore.sqlstore import SqliteSqlStoreConfig
+from llama_stack_api import OpenAIFilePurpose, Order, ResourceNotFoundError
 
 
 class MockUploadFile:
@@ -36,8 +35,11 @@ async def files_provider(tmp_path):
     storage_dir = tmp_path / "files"
     db_path = tmp_path / "files_metadata.db"
 
+    backend_name = "sql_localfs_test"
+    register_sqlstore_backends({backend_name: SqliteSqlStoreConfig(db_path=db_path.as_posix())})
     config = LocalfsFilesImplConfig(
-        storage_dir=storage_dir.as_posix(), metadata_store=SqliteSqlStoreConfig(db_path=db_path.as_posix())
+        storage_dir=storage_dir.as_posix(),
+        metadata_store=SqlStoreReference(backend=backend_name, table_name="files_metadata"),
     )
 
     provider = LocalfsFilesImpl(config, default_policy())

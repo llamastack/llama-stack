@@ -39,7 +39,7 @@ class Setup(BaseModel):
 
     name: str
     description: str
-    defaults: dict[str, str] = Field(default_factory=dict)
+    defaults: dict[str, str | int] = Field(default_factory=dict)
     env: dict[str, str] = Field(default_factory=dict)
 
 
@@ -50,12 +50,12 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="ollama",
         description="Local Ollama provider with text + safety models",
         env={
-            "OLLAMA_URL": "http://0.0.0.0:11434",
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
             "SAFETY_MODEL": "ollama/llama-guard3:1b",
         },
         defaults={
             "text_model": "ollama/llama3.2:3b-instruct-fp16",
-            "embedding_model": "ollama/all-minilm:l6-v2",
+            "embedding_model": "ollama/nomic-embed-text:v1.5",
             "safety_model": "ollama/llama-guard3:1b",
             "safety_shield": "llama-guard",
         },
@@ -64,11 +64,31 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="ollama",
         description="Local Ollama provider with a vision model",
         env={
-            "OLLAMA_URL": "http://0.0.0.0:11434",
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
         },
         defaults={
             "vision_model": "ollama/llama3.2-vision:11b",
-            "embedding_model": "ollama/all-minilm:l6-v2",
+            "embedding_model": "ollama/nomic-embed-text:v1.5",
+        },
+    ),
+    "ollama-postgres": Setup(
+        name="ollama-postgres",
+        description="Server-mode tests with Postgres-backed persistence",
+        env={
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
+            "SAFETY_MODEL": "ollama/llama-guard3:1b",
+            "POSTGRES_HOST": "127.0.0.1",
+            "POSTGRES_PORT": "5432",
+            "POSTGRES_DB": "llamastack",
+            "POSTGRES_USER": "llamastack",
+            "POSTGRES_PASSWORD": "llamastack",
+            "LLAMA_STACK_LOGGING": "openai_responses=info",
+        },
+        defaults={
+            "text_model": "ollama/llama3.2:3b-instruct-fp16",
+            "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
+            "safety_model": "ollama/llama-guard3:1b",
+            "safety_shield": "llama-guard",
         },
     ),
     "vllm": Setup(
@@ -78,8 +98,8 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "VLLM_URL": "http://localhost:8000/v1",
         },
         defaults={
-            "text_model": "vllm/meta-llama/Llama-3.2-1B-Instruct",
-            "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+            "text_model": "vllm/Qwen/Qwen3-0.6B",
+            "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
         },
     ),
     "gpt": Setup(
@@ -88,6 +108,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
+            "embedding_dimension": 1536,
         },
     ),
     "tgi": Setup(
@@ -167,6 +188,11 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="base",
         roots=base_roots,
         default_setup="ollama",
+    ),
+    "base-vllm-subset": Suite(
+        name="base-vllm-subset",
+        roots=["tests/integration/inference"],
+        default_setup="vllm",
     ),
     "responses": Suite(
         name="responses",

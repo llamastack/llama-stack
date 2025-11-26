@@ -59,8 +59,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llama_stack.apis.batches import BatchObject
-from llama_stack.apis.common.errors import ConflictError, ResourceNotFoundError
+from llama_stack_api import BatchObject, ConflictError, ResourceNotFoundError
 
 
 class TestReferenceBatchesImpl:
@@ -213,7 +212,6 @@ class TestReferenceBatchesImpl:
     @pytest.mark.parametrize(
         "endpoint",
         [
-            "/v1/embeddings",
             "/v1/invalid/endpoint",
             "",
         ],
@@ -765,3 +763,12 @@ class TestReferenceBatchesImpl:
         await asyncio.sleep(0.042)  # let tasks start
 
         assert active_batches == 2, f"Expected 2 active batches, got {active_batches}"
+
+    async def test_create_batch_embeddings_endpoint(self, provider):
+        """Test that batch creation succeeds with embeddings endpoint."""
+        batch = await provider.create_batch(
+            input_file_id="file_123",
+            endpoint="/v1/embeddings",
+            completion_window="24h",
+        )
+        assert batch.endpoint == "/v1/embeddings"

@@ -6,7 +6,7 @@
 # the root directory of this source tree.
 
 set -e
-cd llama_stack/ui
+cd src/llama_stack_ui
 
 if [ ! -d node_modules ] || [ ! -x node_modules/.bin/prettier ] || [ ! -x node_modules/.bin/eslint ]; then
   echo "UI dependencies not installed, skipping prettier/linter check"

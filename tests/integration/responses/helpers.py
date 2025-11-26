@@ -7,7 +7,7 @@
 import time
 
 
-def new_vector_store(openai_client, name):
+def new_vector_store(openai_client, name, embedding_model, embedding_dimension):
     """Create a new vector store, cleaning up any existing one with the same name."""
     # Ensure we don't reuse an existing vector store
     vector_stores = openai_client.vector_stores.list()
@@ -16,7 +16,11 @@ def new_vector_store(openai_client, name):
             openai_client.vector_stores.delete(vector_store_id=vector_store.id)
 
     # Create a new vector store
-    vector_store = openai_client.vector_stores.create(name=name)
+
+    vector_store = openai_client.vector_stores.create(
+        name=name,
+        extra_body={"embedding_model": embedding_model, "embedding_dimension": embedding_dimension},
+    )
     return vector_store
 
 

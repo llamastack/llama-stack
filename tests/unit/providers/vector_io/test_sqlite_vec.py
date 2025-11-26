@@ -9,12 +9,12 @@ import asyncio
 import numpy as np
 import pytest
 
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import (
     SQLiteVecIndex,
     SQLiteVecVectorIOAdapter,
     _create_sqlite_connection,
 )
+from llama_stack_api import Chunk, QueryChunksResponse
 
 # This test is a unit test for the SQLiteVecVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -434,9 +434,15 @@ async def test_query_chunks_hybrid_tie_breaking(
     sqlite_vec_index, sample_embeddings, embedding_dimension, tmp_path_factory
 ):
     """Test tie-breaking and determinism when scores are equal."""
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     # Create two chunks with the same content and embedding
-    chunk1 = Chunk(content="identical", metadata={"document_id": "docA"})
-    chunk2 = Chunk(content="identical", metadata={"document_id": "docB"})
+    chunk1 = Chunk(
+        content="identical", chunk_id=generate_chunk_id("docA", "identical"), metadata={"document_id": "docA"}
+    )
+    chunk2 = Chunk(
+        content="identical", chunk_id=generate_chunk_id("docB", "identical"), metadata={"document_id": "docB"}
+    )
     chunks = [chunk1, chunk2]
     # Use the same embedding for both chunks to ensure equal scores
     same_embedding = sample_embeddings[0]

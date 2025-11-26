@@ -24,111 +24,44 @@ ollama run llama3.2:3b --keepalive 60m
 
 #### Step 2: Run the Llama Stack server
 
-We will use `uv` to run the Llama Stack server.
+```python file=./demo_script.py title="demo_script.py"
+```
+
+We will use `uv` to install dependencies and run the Llama Stack server.
 ```bash
-OLLAMA_URL=http://localhost:11434 \
-  uv run --with llama-stack llama stack build --distro starter --image-type venv --run
+# Install dependencies for the starter distribution
+uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
+
+# Run the server
+OLLAMA_URL=http://localhost:11434 uv run --with llama-stack llama stack run starter
 ```
 #### Step 3: Run the demo
 Now open up a new terminal and copy the following script into a file named `demo_script.py`.
 
-```python title="demo_script.py"
-# Copyright (c) Meta Platforms, Inc. and affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the terms described in the LICENSE file in
-# the root directory of this source tree.
-
-from llama_stack_client import Agent, AgentEventLogger, RAGDocument, LlamaStackClient
-
-vector_db_id = "my_demo_vector_db"
-client = LlamaStackClient(base_url="http://localhost:8321")
-
-models = client.models.list()
-
-# Select the first LLM and first embedding models
-model_id = next(m for m in models if m.model_type == "llm").identifier
-embedding_model_id = (
-    em := next(m for m in models if m.model_type == "embedding")
-).identifier
-embedding_dimension = em.metadata["embedding_dimension"]
-
-vector_db = client.vector_dbs.register(
-    vector_db_id=vector_db_id,
-    embedding_model=embedding_model_id,
-    embedding_dimension=embedding_dimension,
-    provider_id="faiss",
-)
-vector_db_id = vector_db.identifier
-source = "https://www.paulgraham.com/greatwork.html"
-print("rag_tool> Ingesting document:", source)
-document = RAGDocument(
-    document_id="document_1",
-    content=source,
-    mime_type="text/html",
-    metadata={},
-)
-client.tool_runtime.rag_tool.insert(
-    documents=[document],
-    vector_db_id=vector_db_id,
-    chunk_size_in_tokens=100,
-)
-agent = Agent(
-    client,
-    model=model_id,
-    instructions="You are a helpful assistant",
-    tools=[
-        {
-            "name": "builtin::rag/knowledge_search",
-            "args": {"vector_db_ids": [vector_db_id]},
-        }
-    ],
-)
-
-prompt = "How do you do great work?"
-print("prompt>", prompt)
-
-use_stream = True
-response = agent.create_turn(
-    messages=[{"role": "user", "content": prompt}],
-    session_id=agent.create_session("rag_session"),
-    stream=use_stream,
-)
-
-# Only call `AgentEventLogger().log(response)` for streaming responses.
-if use_stream:
-    for log in AgentEventLogger().log(response):
-        log.print()
-else:
-    print(response)
-```
 We will use `uv` to run the script
 ```
 uv run --with llama-stack-client,fire,requests demo_script.py
 ```
 And you should see output like below.
+```python
+>print(resp.output[1].content[0].text)
+To do great work, consider the following principles:
+
+1. **Follow Your Interests**: Engage in work that genuinely excites you. If you find an area intriguing, pursue it without being overly concerned about external pressures or norms. You should create things that you would want for yourself, as this often aligns with what others in your circle might want too.
+
+2. **Work Hard on Ambitious Projects**: Ambition is vital, but it should be tempered by genuine interest. Instead of detailed planning for the future, focus on exciting projects that keep your options open. This approach, known as "staying upwind," allows for adaptability and can lead to unforeseen achievements.
+
+3. **Choose Quality Colleagues**: Collaborating with talented colleagues can significantly affect your own work. Seek out individuals who offer surprising insights and whom you admire. The presence of good colleagues can elevate the quality of your work and inspire you.
+
+4. **Maintain High Morale**: Your attitude towards work and life affects your performance. Cultivating optimism and viewing yourself as lucky rather than victimized can boost your productivity. It’s essential to care for your physical health as well since it directly impacts your mental faculties and morale.
+
+5. **Be Consistent**: Great work often comes from cumulative effort. Daily progress, even in small amounts, can result in substantial achievements over time. Emphasize consistency and make the work engaging, as this reduces the perceived burden of hard labor.
+
+6. **Embrace Curiosity**: Curiosity is a driving force that can guide you in selecting fields of interest, pushing you to explore uncharted territories. Allow it to shape your work and continually seek knowledge and insights.
+
+By focusing on these aspects, you can create an environment conducive to great work and personal fulfillment.
 ```
-rag_tool> Ingesting document: https://www.paulgraham.com/greatwork.html
 
-prompt> How do you do great work?
-
-inference> [knowledge_search(query="What is the key to doing great work")]
-
-tool_execution> Tool:knowledge_search Args:{'query': 'What is the key to doing great work'}
-
-tool_execution> Tool:knowledge_search Response:[TextContentItem(text='knowledge_search tool found 5 chunks:\nBEGIN of knowledge_search tool results.\n', type='text'), TextContentItem(text="Result 1:\nDocument_id:docum\nContent:  work. Doing great work means doing something important\nso well that you expand people's ideas of what's possible. But\nthere's no threshold for importance. It's a matter of degree, and\noften hard to judge at the time anyway.\n", type='text'), TextContentItem(text="Result 2:\nDocument_id:docum\nContent:  work. Doing great work means doing something important\nso well that you expand people's ideas of what's possible. But\nthere's no threshold for importance. It's a matter of degree, and\noften hard to judge at the time anyway.\n", type='text'), TextContentItem(text="Result 3:\nDocument_id:docum\nContent:  work. Doing great work means doing something important\nso well that you expand people's ideas of what's possible. But\nthere's no threshold for importance. It's a matter of degree, and\noften hard to judge at the time anyway.\n", type='text'), TextContentItem(text="Result 4:\nDocument_id:docum\nContent:  work. Doing great work means doing something important\nso well that you expand people's ideas of what's possible. But\nthere's no threshold for importance. It's a matter of degree, and\noften hard to judge at the time anyway.\n", type='text'), TextContentItem(text="Result 5:\nDocument_id:docum\nContent:  work. Doing great work means doing something important\nso well that you expand people's ideas of what's possible. But\nthere's no threshold for importance. It's a matter of degree, and\noften hard to judge at the time anyway.\n", type='text'), TextContentItem(text='END of knowledge_search tool results.\n', type='text')]
-
-inference> Based on the search results, it seems that doing great work means doing something important so well that you expand people's ideas of what's possible. However, there is no clear threshold for importance, and it can be difficult to judge at the time.
-
-To further clarify, I would suggest that doing great work involves:
-
-* Completing tasks with high quality and attention to detail
-* Expanding on existing knowledge or ideas
-* Making a positive impact on others through your work
-* Striving for excellence and continuous improvement
-
-Ultimately, great work is about making a meaningful contribution and leaving a lasting impression.
-```
 Congratulations! You've successfully built your first RAG application using Llama Stack! 🎉🥳
 
 :::tip HuggingFace access

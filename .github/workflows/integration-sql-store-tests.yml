@@ -4,11 +4,15 @@ run-name: Run the integration test suite with SqlStore
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
     paths:
-      - 'llama_stack/providers/utils/sqlstore/**'
+      - 'src/llama_stack/providers/utils/sqlstore/**'
       - 'tests/integration/sqlstore/**'
       - 'uv.lock'
       - 'pyproject.toml'
@@ -44,7 +48,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -64,7 +68,7 @@ jobs:
 
       - name: Upload test logs
         if: ${{ always() }}
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
           name: postgres-test-logs-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.python-version }}
           path: |

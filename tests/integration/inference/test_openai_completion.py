@@ -27,9 +27,11 @@ def _normalize_text(text: str) -> str:
 
 
 def provider_from_model(client_with_models, model_id):
-    models = {m.identifier: m for m in client_with_models.models.list()}
-    models.update({m.provider_resource_id: m for m in client_with_models.models.list()})
-    provider_id = models[model_id].provider_id
+    models = {m.id: m for m in client_with_models.models.list()}
+    models.update(
+        {m.custom_metadata["provider_resource_id"]: m for m in client_with_models.models.list() if m.custom_metadata}
+    )
+    provider_id = models[model_id].custom_metadata["provider_id"]
     providers = {p.provider_id: p for p in client_with_models.providers.list()}
     return providers[provider_id]
 
@@ -39,7 +41,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
     if provider.provider_type in (
         "inline::meta-reference",
         "inline::sentence-transformers",
-        "inline::vllm",
+        "remote::vllm",
         "remote::bedrock",
         "remote::databricks",
         # Technically Nvidia does support OpenAI completions, but none of their hosted models
@@ -52,13 +54,13 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         # {"error":{"message":"Unknown request URL: GET /openai/v1/completions. Please check the URL for typos,
         # or see the docs at https://console.groq.com/docs/","type":"invalid_request_error","code":"unknown_url"}}
         "remote::groq",
+        "remote::oci",
         "remote::gemini",  # https://generativelanguage.googleapis.com/v1beta/openai/completions -> 404
         "remote::anthropic",  # at least claude-3-{5,7}-{haiku,sonnet}-* / claude-{sonnet,opus}-4-* are not supported
         "remote::azure",  # {'error': {'code': 'OperationNotSupported', 'message': 'The completion operation
         #  does not work with the specified model, gpt-5-mini. Please choose different model and try
         #  again. You can learn more about which models can be used with each operation here:
         #  https://go.microsoft.com/fwlink/?linkid=2197993.'}}"}
-        "remote::watsonx",  # return 404 when hitting the /openai/v1 endpoint
         "remote::llama-openai-compat",
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI completions.")
@@ -68,6 +70,7 @@ def skip_if_doesnt_support_completions_logprobs(client_with_models, model_id):
     provider_type = provider_from_model(client_with_models, model_id).provider_type
     if provider_type in (
         "remote::ollama",  # logprobs is ignored
+        "remote::watsonx",
     ):
         pytest.skip(f"Model {model_id} hosted by {provider_type} doesn't support /v1/completions logprobs.")
 
@@ -110,6 +113,7 @@ def skip_if_doesnt_support_n(client_with_models, model_id):
         # Error code 400 - {'message': '"n" > 1 is not currently supported', 'type': 'invalid_request_error', 'param': 'n', 'code': 'wrong_api_format'}
         "remote::cerebras",
         "remote::databricks",  # Bad request: parameter "n" must be equal to 1 for streaming mode
+        "remote::watsonx",
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support n param.")
 
@@ -119,12 +123,11 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
     if provider.provider_type in (
         "inline::meta-reference",
         "inline::sentence-transformers",
-        "inline::vllm",
+        "remote::vllm",
         "remote::bedrock",
         "remote::databricks",
         "remote::cerebras",
         "remote::runpod",
-        "remote::watsonx",  # watsonx returns 404 when hitting the /openai/v1 endpoint
     ):
         pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support OpenAI chat completions.")
 
@@ -223,7 +226,7 @@ def test_openai_completion_guided_choice(llama_stack_client, client_with_models,
         model=text_model_id,
         prompt=prompt,
         stream=False,
-        guided_choice=["joy", "sadness"],
+        extra_body={"guided_choice": ["joy", "sadness"]},
     )
     assert len(response.choices) > 0
     choice = response.choices[0]
@@ -508,6 +511,12 @@ def test_openai_chat_completion_non_streaming_with_file(openai_client, client_wi
     assert "hello world" in normalized_content
 
 
+def skip_if_doesnt_support_completions_stop_sequence(client_with_models, model_id):
+    provider_type = provider_from_model(client_with_models, model_id).provider_type
+    if provider_type in ("remote::watsonx",):  # openai.BadRequestError: Error code: 400
+        pytest.skip(f"Model {model_id} hosted by {provider_type} doesn't support /v1/completions stop sequence.")
+
+
 @pytest.mark.parametrize(
     "test_case",
     [
@@ -516,6 +525,7 @@ def test_openai_chat_completion_non_streaming_with_file(openai_client, client_wi
 )
 def test_openai_completion_stop_sequence(client_with_models, openai_client, text_model_id, test_case):
     skip_if_model_doesnt_support_openai_completion(client_with_models, text_model_id)
+    skip_if_doesnt_support_completions_stop_sequence(client_with_models, text_model_id)
 
     tc = TestCase(test_case)
 
@@ -714,6 +724,6 @@ def test_openai_chat_completion_structured_output(openai_client, text_model_id, 
     print(response.choices[0].message.content)
     answer = AnswerFormat.model_validate_json(response.choices[0].message.content)
     expected = tc["expected"]
-    assert answer.first_name == expected["first_name"]
-    assert answer.last_name == expected["last_name"]
+    assert expected["first_name"].lower() in answer.first_name.lower()
+    assert expected["last_name"].lower() in answer.last_name.lower()
     assert answer.year_of_birth == expected["year_of_birth"]

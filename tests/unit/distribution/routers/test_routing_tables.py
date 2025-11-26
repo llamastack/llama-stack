@@ -10,14 +10,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.apis.common.content_types import URL
-from llama_stack.apis.common.type_system import NumberType
-from llama_stack.apis.datasets.datasets import Dataset, DatasetPurpose, URIDataSource
-from llama_stack.apis.datatypes import Api
-from llama_stack.apis.models import Model, ModelType
-from llama_stack.apis.shields.shields import Shield
-from llama_stack.apis.tools import ListToolDefsResponse, ToolDef, ToolGroup
-from llama_stack.apis.vector_dbs import VectorDB
 from llama_stack.core.datatypes import RegistryEntrySource
 from llama_stack.core.routing_tables.benchmarks import BenchmarksRoutingTable
 from llama_stack.core.routing_tables.datasets import DatasetsRoutingTable
@@ -25,7 +17,21 @@ from llama_stack.core.routing_tables.models import ModelsRoutingTable
 from llama_stack.core.routing_tables.scoring_functions import ScoringFunctionsRoutingTable
 from llama_stack.core.routing_tables.shields import ShieldsRoutingTable
 from llama_stack.core.routing_tables.toolgroups import ToolGroupsRoutingTable
-from llama_stack.core.routing_tables.vector_dbs import VectorDBsRoutingTable
+from llama_stack_api import (
+    URL,
+    Api,
+    Dataset,
+    DatasetPurpose,
+    ListToolDefsResponse,
+    Model,
+    ModelNotFoundError,
+    ModelType,
+    NumberType,
+    Shield,
+    ToolDef,
+    ToolGroup,
+    URIDataSource,
+)
 
 
 class Impl:
@@ -131,7 +137,7 @@ class ToolGroupsImpl(Impl):
     async def unregister_toolgroup(self, toolgroup_id: str):
         return toolgroup_id
 
-    async def list_runtime_tools(self, toolgroup_id, mcp_endpoint):
+    async def list_runtime_tools(self, toolgroup_id, mcp_endpoint, authorization=None):
         return ListToolDefsResponse(
             data=[
                 ToolDef(
@@ -143,31 +149,6 @@ class ToolGroupsImpl(Impl):
                     },
                 )
             ]
-        )
-
-
-class VectorDBImpl(Impl):
-    def __init__(self):
-        super().__init__(Api.vector_io)
-
-    async def register_vector_db(self, vector_db: VectorDB):
-        return vector_db
-
-    async def unregister_vector_db(self, vector_db_id: str):
-        return vector_db_id
-
-    async def openai_create_vector_store(self, **kwargs):
-        import time
-        import uuid
-
-        from llama_stack.apis.vector_io.vector_io import VectorStoreFileCounts, VectorStoreObject
-
-        vector_store_id = kwargs.get("provider_vector_db_id") or f"vs_{uuid.uuid4()}"
-        return VectorStoreObject(
-            id=vector_store_id,
-            name=kwargs.get("name", vector_store_id),
-            created_at=int(time.time()),
-            file_counts=VectorStoreFileCounts(completed=0, cancelled=0, failed=0, in_progress=0, total=0),
         )
 
 
@@ -191,6 +172,14 @@ async def test_models_routing_table(cached_disk_dist_registry):
     openai_model_ids = {m.id for m in openai_models.data}
     assert "test_provider/test-model" in openai_model_ids
     assert "test_provider/test-model-2" in openai_model_ids
+
+    # Verify custom_metadata is populated with Llama Stack-specific data
+    for openai_model in openai_models.data:
+        assert openai_model.custom_metadata is not None
+        assert "model_type" in openai_model.custom_metadata
+        assert "provider_id" in openai_model.custom_metadata
+        assert "provider_resource_id" in openai_model.custom_metadata
+        assert openai_model.custom_metadata["provider_id"] == "test_provider"
 
     # Test get_object_by_identifier
     model = await table.get_object_by_identifier("model", "test_provider/test-model")
@@ -263,40 +252,6 @@ async def test_shields_routing_table(cached_disk_dist_registry):
         await table.unregister_shield(identifier="non-existent")
 
 
-async def test_vectordbs_routing_table(cached_disk_dist_registry):
-    table = VectorDBsRoutingTable({"test_provider": VectorDBImpl()}, cached_disk_dist_registry, {})
-    await table.initialize()
-
-    m_table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
-    await m_table.initialize()
-    await m_table.register_model(
-        model_id="test-model",
-        provider_id="test_provider",
-        metadata={"embedding_dimension": 128},
-        model_type=ModelType.embedding,
-    )
-
-    # Register multiple vector databases and verify listing
-    vdb1 = await table.register_vector_db(vector_db_id="test-vectordb", embedding_model="test_provider/test-model")
-    vdb2 = await table.register_vector_db(vector_db_id="test-vectordb-2", embedding_model="test_provider/test-model")
-    vector_dbs = await table.list_vector_dbs()
-
-    assert len(vector_dbs.data) == 2
-    vector_db_ids = {v.identifier for v in vector_dbs.data}
-    assert vdb1.identifier in vector_db_ids
-    assert vdb2.identifier in vector_db_ids
-
-    # Verify they have UUID-based identifiers
-    assert vdb1.identifier.startswith("vs_")
-    assert vdb2.identifier.startswith("vs_")
-
-    await table.unregister_vector_db(vector_db_id=vdb1.identifier)
-    await table.unregister_vector_db(vector_db_id=vdb2.identifier)
-
-    vector_dbs = await table.list_vector_dbs()
-    assert len(vector_dbs.data) == 0
-
-
 async def test_datasets_routing_table(cached_disk_dist_registry):
     table = DatasetsRoutingTable({"localfs": DatasetsImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
@@ -354,6 +309,111 @@ async def test_scoring_functions_routing_table(cached_disk_dist_registry):
     assert len(scoring_functions_list_after_deletion.data) == 0
 
 
+async def test_double_registration_models_positive(cached_disk_dist_registry):
+    """Test that registering the same model twice with identical data succeeds."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register a model
+    await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
+
+    # Register the exact same model again - should succeed (idempotent)
+    await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
+
+    # Verify only one model exists
+    models = await table.list_models()
+    assert len(models.data) == 1
+    assert models.data[0].identifier == "test_provider/test-model"
+
+
+async def test_double_registration_models_negative(cached_disk_dist_registry):
+    """Test that registering the same model with different data fails."""
+    table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register a model with specific metadata
+    await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
+
+    # Try to register the same model with different metadata - should fail
+    with pytest.raises(
+        ValueError, match="Object of type 'model' and identifier 'test_provider/test-model' already exists"
+    ):
+        await table.register_model(
+            model_id="test-model", provider_id="test_provider", metadata={"param1": "different_value"}
+        )
+
+
+async def test_double_registration_scoring_functions_positive(cached_disk_dist_registry):
+    """Test that registering the same scoring function twice with identical data succeeds."""
+    table = ScoringFunctionsRoutingTable({"test_provider": ScoringFunctionsImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register a scoring function
+    await table.register_scoring_function(
+        scoring_fn_id="test-scoring-fn",
+        provider_id="test_provider",
+        description="Test scoring function",
+        return_type=NumberType(),
+    )
+
+    # Register the exact same scoring function again - should succeed (idempotent)
+    await table.register_scoring_function(
+        scoring_fn_id="test-scoring-fn",
+        provider_id="test_provider",
+        description="Test scoring function",
+        return_type=NumberType(),
+    )
+
+    # Verify only one scoring function exists
+    scoring_functions = await table.list_scoring_functions()
+    assert len(scoring_functions.data) == 1
+    assert scoring_functions.data[0].identifier == "test-scoring-fn"
+
+
+async def test_double_registration_scoring_functions_negative(cached_disk_dist_registry):
+    """Test that registering the same scoring function with different data fails."""
+    table = ScoringFunctionsRoutingTable({"test_provider": ScoringFunctionsImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register a scoring function
+    await table.register_scoring_function(
+        scoring_fn_id="test-scoring-fn",
+        provider_id="test_provider",
+        description="Test scoring function",
+        return_type=NumberType(),
+    )
+
+    # Try to register the same scoring function with different description - should fail
+    with pytest.raises(
+        ValueError, match="Object of type 'scoring_function' and identifier 'test-scoring-fn' already exists"
+    ):
+        await table.register_scoring_function(
+            scoring_fn_id="test-scoring-fn",
+            provider_id="test_provider",
+            description="Different description",
+            return_type=NumberType(),
+        )
+
+
+async def test_double_registration_different_providers(cached_disk_dist_registry):
+    """Test that registering objects with same ID but different providers succeeds."""
+    impl1 = InferenceImpl()
+    impl2 = InferenceImpl()
+    table = ModelsRoutingTable({"provider1": impl1, "provider2": impl2}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    # Register same model ID with different providers - should succeed
+    await table.register_model(model_id="shared-model", provider_id="provider1")
+    await table.register_model(model_id="shared-model", provider_id="provider2")
+
+    # Verify both models exist with different identifiers
+    models = await table.list_models()
+    assert len(models.data) == 2
+    model_ids = {m.identifier for m in models.data}
+    assert "provider1/shared-model" in model_ids
+    assert "provider2/shared-model" in model_ids
+
+
 async def test_benchmarks_routing_table(cached_disk_dist_registry):
     table = BenchmarksRoutingTable({"test_provider": BenchmarksImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
@@ -406,6 +466,7 @@ async def test_models_alias_registration_and_lookup(cached_disk_dist_registry):
     await table.initialize()
 
     # Register model with alias (model_id different from provider_model_id)
+    # NOTE: Aliases are not supported anymore, so this is a no-op
     await table.register_model(
         model_id="my-alias", provider_model_id="actual-provider-model", provider_id="test_provider"
     )
@@ -414,12 +475,15 @@ async def test_models_alias_registration_and_lookup(cached_disk_dist_registry):
     models = await table.list_models()
     assert len(models.data) == 1
     model = models.data[0]
-    assert model.identifier == "my-alias"  # Uses alias as identifier
+    assert model.identifier == "test_provider/actual-provider-model"
     assert model.provider_resource_id == "actual-provider-model"
 
-    # Test lookup by alias works
-    retrieved_model = await table.get_model("my-alias")
-    assert retrieved_model.identifier == "my-alias"
+    # Test lookup by alias fails
+    with pytest.raises(ModelNotFoundError, match="Model 'my-alias' not found"):
+        await table.get_model("my-alias")
+
+    retrieved_model = await table.get_model("test_provider/actual-provider-model")
+    assert retrieved_model.identifier == "test_provider/actual-provider-model"
     assert retrieved_model.provider_resource_id == "actual-provider-model"
 
 
@@ -450,12 +514,8 @@ async def test_models_multi_provider_disambiguation(cached_disk_dist_registry):
     assert model2.provider_resource_id == "common-model"
 
     # Test lookup by unscoped provider_model_id fails with multiple providers error
-    try:
+    with pytest.raises(ModelNotFoundError, match="Model 'common-model' not found"):
         await table.get_model("common-model")
-        raise AssertionError("Should have raised ValueError for multiple providers")
-    except ValueError as e:
-        assert "Multiple providers found" in str(e)
-        assert "provider1" in str(e) and "provider2" in str(e)
 
 
 async def test_models_fallback_lookup_behavior(cached_disk_dist_registry):
@@ -478,16 +538,12 @@ async def test_models_fallback_lookup_behavior(cached_disk_dist_registry):
     assert retrieved_model.identifier == "test_provider/test-model"
 
     # Test lookup by unscoped provider_model_id (fallback via iteration)
-    retrieved_model = await table.get_model("test-model")
-    assert retrieved_model.identifier == "test_provider/test-model"
-    assert retrieved_model.provider_resource_id == "test-model"
+    with pytest.raises(ModelNotFoundError, match="Model 'test-model' not found"):
+        await table.get_model("test-model")
 
     # Test lookup of non-existent model fails
-    try:
+    with pytest.raises(ModelNotFoundError, match="Model 'non-existent' not found"):
         await table.get_model("non-existent")
-        raise AssertionError("Should have raised ValueError for non-existent model")
-    except ValueError as e:
-        assert "not found" in str(e)
 
 
 async def test_models_source_tracking_default(cached_disk_dist_registry):
@@ -559,7 +615,7 @@ async def test_models_source_interaction_preserves_default(cached_disk_dist_regi
     assert len(models.data) == 1
     user_model = models.data[0]
     assert user_model.source == RegistryEntrySource.via_register_api
-    assert user_model.identifier == "my-custom-alias"
+    assert user_model.identifier == "test_provider/provider-model-1"
     assert user_model.provider_resource_id == "provider-model-1"
 
     # Now simulate provider refresh
@@ -586,7 +642,7 @@ async def test_models_source_interaction_preserves_default(cached_disk_dist_regi
     assert len(models.data) == 2
 
     # Find the user model and provider model
-    user_model = next((m for m in models.data if m.identifier == "my-custom-alias"), None)
+    user_model = next((m for m in models.data if m.identifier == "test_provider/provider-model-1"), None)
     provider_model = next((m for m in models.data if m.identifier == "test_provider/different-model"), None)
 
     assert user_model is not None

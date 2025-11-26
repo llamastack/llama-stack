@@ -26,7 +26,6 @@ The starter distribution consists of the following provider configurations:
 | inference | `remote::openai`, `remote::fireworks`, `remote::together`, `remote::ollama`, `remote::anthropic`, `remote::gemini`, `remote::groq`, `remote::sambanova`, `remote::vllm`, `remote::tgi`, `remote::cerebras`, `remote::llama-openai-compat`, `remote::nvidia`, `remote::hf::serverless`, `remote::hf::endpoint`, `inline::sentence-transformers` |
 | safety | `inline::llama-guard`                                                                                                                                                                                                                                                                                                                          |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust`                                                                                                                                                                                                                                                                                  |
-| telemetry | `inline::meta-reference`                                                                                                                                                                                                                                                                                                                       |
 | tool_runtime | `remote::brave-search`, `remote::tavily-search`, `inline::rag-runtime`, `remote::model-context-protocol`                                                                                                                                                                                                                                       |
 | vector_io | `inline::faiss`, `inline::sqlite-vec`, `inline::milvus`, `remote::chromadb`, `remote::pgvector`                                                                                                                                                                                                                                                 |
 
@@ -119,7 +118,7 @@ The following environment variables can be configured:
 
 ### Telemetry Configuration
 - `OTEL_SERVICE_NAME`: OpenTelemetry service name
-- `TELEMETRY_SINKS`: Telemetry sinks (default: `console,sqlite`)
+- `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint URL
 
 ## Enabling Providers
 
@@ -164,12 +163,53 @@ docker run \
   --port $LLAMA_STACK_PORT
 ```
 
-### Via venv
+The container will run the distribution with a SQLite store by default. This store is used for the following components:
+
+- Metadata store: store metadata about the models, providers, etc.
+- Inference store: collect of responses from the inference provider
+- Agents store: store agent configurations (sessions, turns, etc.)
+- Agents Responses store: store responses from the agents
+
+However, you can use PostgreSQL instead by running the `starter::run-with-postgres-store.yaml` configuration:
+
+```bash
+docker run \
+  -it \
+  --pull always \
+  -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+  -e OPENAI_API_KEY=your_openai_key \
+  -e FIREWORKS_API_KEY=your_fireworks_key \
+  -e TOGETHER_API_KEY=your_together_key \
+  -e POSTGRES_HOST=your_postgres_host \
+  -e POSTGRES_PORT=your_postgres_port \
+  -e POSTGRES_DB=your_postgres_db \
+  -e POSTGRES_USER=your_postgres_user \
+  -e POSTGRES_PASSWORD=your_postgres_password \
+  llamastack/distribution-starter \
+  starter::run-with-postgres-store.yaml
+```
+
+Postgres environment variables:
+
+- `POSTGRES_HOST`: Postgres host (default: `localhost`)
+- `POSTGRES_PORT`: Postgres port (default: `5432`)
+- `POSTGRES_DB`: Postgres database name (default: `llamastack`)
+- `POSTGRES_USER`: Postgres username (default: `llamastack`)
+- `POSTGRES_PASSWORD`: Postgres password (default: `llamastack`)
+
+### Via Conda or venv
 
 Ensure you have configured the starter distribution using the environment variables explained above.
 
 ```bash
-uv run --with llama-stack llama stack build --distro starter --image-type venv --run
+# Install dependencies for the starter distribution
+uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
+
+# Run the server (with SQLite - default)
+uv run --with llama-stack llama stack run starter
+
+# Or run with PostgreSQL
+uv run --with llama-stack llama stack run starter::run-with-postgres-store.yaml
 ```
 
 ## Example Usage
@@ -216,7 +256,6 @@ The starter distribution uses SQLite for local storage of various components:
 - **Files metadata**: `~/.llama/distributions/starter/files_metadata.db`
 - **Agents store**: `~/.llama/distributions/starter/agents_store.db`
 - **Responses store**: `~/.llama/distributions/starter/responses_store.db`
-- **Trace store**: `~/.llama/distributions/starter/trace_store.db`
 - **Evaluation store**: `~/.llama/distributions/starter/meta_reference_eval.db`
 - **Dataset I/O stores**: Various HuggingFace and local filesystem stores
 
