@@ -9,7 +9,6 @@ from typing import Annotated, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
-from llama_stack_api.common.tracing import telemetry_traceable
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputFunctionToolCallOutput,
     OpenAIResponseMCPApprovalRequest,
@@ -157,7 +156,6 @@ class ConversationItemDeletedResource(BaseModel):
 
 
 @runtime_checkable
-@telemetry_traceable
 class Conversations(Protocol):
     """Conversations
 

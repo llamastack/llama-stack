@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from typing_extensions import runtime_checkable
 
 from llama_stack_api.common.content_types import URL, InterleavedContent
-from llama_stack_api.common.tracing import telemetry_traceable
 from llama_stack_api.resource import Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1
@@ -109,7 +108,6 @@ class ListToolDefsResponse(BaseModel):
 
 
 @runtime_checkable
-@telemetry_traceable
 class ToolGroups(Protocol):
     @webmethod(route="/toolgroups", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     async def register_tool_group(
@@ -191,7 +189,6 @@ class SpecialToolGroup(Enum):
 
 
 @runtime_checkable
-@telemetry_traceable
 class ToolRuntime(Protocol):
     tool_store: ToolStore | None = None
 
