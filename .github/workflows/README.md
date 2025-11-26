@@ -5,7 +5,6 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | Name | File | Purpose |
 | ---- | ---- | ------- |
 | Backward Compatibility Check | [backward-compat.yml](backward-compat.yml) | Check backward compatibility for run.yaml configs |
-| Update Changelog | [changelog.yml](changelog.yml) | Creates PR for updating the CHANGELOG.md |
 | API Conformance Tests | [conformance.yml](conformance.yml) | Run the API Conformance test suite on the changes. |
 | Installer CI | [install-script-ci.yml](install-script-ci.yml) | Test the installation script |
 | Integration Auth Tests | [integration-auth-tests.yml](integration-auth-tests.yml) | Run the integration test suite with Kubernetes authentication |
