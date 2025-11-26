@@ -416,14 +416,28 @@ class OpenAIResponseInputToolWebSearch(BaseModel):
 
     # Must match values of WebSearchToolTypes above
     type: (
-        Literal["web_search"]
+        Literal["web_search"] 
         | Literal["web_search_preview"]
         | Literal["web_search_preview_2025_03_11"]
         | Literal["web_search_2025_08_26"]
     ) = "web_search"
-    # TODO: actually use search_context_size somewhere...
+    # Context size hint; validated to accepted values. Used to set an internal context window.
     search_context_size: str | None = Field(default="medium", pattern="^low|medium|high$")
-    # TODO: add user_location
+    # Optional user location hint to improve local relevance (e.g., "Seattle, WA").
+    user_location: str | None = None
+    # Derived internal-only: token budget influenced by search_context_size. Excluded from wire schema.
+    context_window: int = Field(default=1024, exclude=True)
+
+    @model_validator(mode="after")
+    def _apply_context_size(self) -> "OpenAIResponseInputToolWebSearch":
+        size = (self.search_context_size or "medium").lower()
+        if size == "low":
+            object.__setattr__(self, "context_window", 512)
+        elif size == "high":
+            object.__setattr__(self, "context_window", 2048)
+        else:
+            object.__setattr__(self, "context_window", 1024)
+        return self
 
 
 @json_schema_type
