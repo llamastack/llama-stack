@@ -1325,7 +1325,7 @@ async def test_query_expansion_functionality(vector_io_adapter):
     assert chat_call_args.max_tokens == 150
     assert chat_call_args.temperature == 0.7
 
-    # Test 2: No query expansion when no global model is configured
+    # Test 2: Error when query rewriting is requested but no global model is configured
     mock_inference_api.reset_mock()
     mock_index.reset_mock()
 
@@ -1333,14 +1333,8 @@ async def test_query_expansion_functionality(vector_io_adapter):
     set_default_rewrite_query_config(None)
 
     params = {"rewrite_query": True, "max_chunks": 5}
-    result2 = await vector_store_with_index.query_chunks("test query", params)
-
-    # Verify chat completion was NOT called
-    mock_inference_api.openai_chat_completion.assert_not_called()
-    # But normal flow should still work
-    mock_inference_api.openai_embeddings.assert_called_once()
-    mock_index.query_vector.assert_called_once()
-    assert result2 == mock_response
+    with pytest.raises(ValueError, match="Query rewriting requested but not configured"):
+        await vector_store_with_index.query_chunks("test query", params)
 
     # Test 3: Normal behavior without rewrite_query parameter
     mock_inference_api.reset_mock()
