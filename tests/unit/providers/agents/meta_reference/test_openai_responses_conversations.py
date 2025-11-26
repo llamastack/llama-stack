@@ -7,19 +7,19 @@
 
 import pytest
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.common.errors import (
+    ConversationNotFoundError,
+    InvalidConversationIdError,
+)
+from llama_stack_api.conversations import (
+    ConversationItemList,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStreamResponseCompleted,
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseOutputMessageContentOutputText,
-)
-from llama_stack.apis.common.errors import (
-    ConversationNotFoundError,
-    InvalidConversationIdError,
-)
-from llama_stack.apis.conversations.conversations import (
-    ConversationItemList,
 )
 
 # Import existing fixtures from the main responses test file
@@ -39,6 +39,8 @@ def responses_impl_with_conversations(
     mock_vector_io_api,
     mock_conversations_api,
     mock_safety_api,
+    mock_prompts_api,
+    mock_files_api,
 ):
     """Create OpenAIResponsesImpl instance with conversations API."""
     return OpenAIResponsesImpl(
@@ -49,6 +51,8 @@ def responses_impl_with_conversations(
         vector_io_api=mock_vector_io_api,
         conversations_api=mock_conversations_api,
         safety_api=mock_safety_api,
+        prompts_api=mock_prompts_api,
+        files_api=mock_files_api,
     )
 
 

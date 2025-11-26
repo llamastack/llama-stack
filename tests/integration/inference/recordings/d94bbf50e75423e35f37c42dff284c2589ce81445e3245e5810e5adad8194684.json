@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Saturn is the planet known for its stunning ring system, making it the correct answer.",
+              "content": "Saturn's rings are the most prominent ring system in our solar system.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 19,
+          "completion_tokens": 16,
           "prompt_tokens": 39,
-          "total_tokens": 58,
+          "total_tokens": 55,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

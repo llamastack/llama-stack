@@ -1,0 +1,103 @@
+{
+  "test_id": "tests/integration/inference/test_tools_with_schemas.py::TestMCPToolsInChatCompletion::test_mcp_tools_in_inference[txt=vllm/Qwen/Qwen3-0.6B]",
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Calculate 5 + 3"
+        }
+      ],
+      "max_tokens": 4096,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "calculate",
+            "description": "",
+            "parameters": {
+              "properties": {
+                "x": {
+                  "title": "X",
+                  "type": "number"
+                },
+                "y": {
+                  "title": "Y",
+                  "type": "number"
+                },
+                "operation": {
+                  "title": "Operation",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "x",
+                "y",
+                "operation"
+              ],
+              "title": "calculateArguments",
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-99bf0054f11a",
+        "choices": [
+          {
+            "finish_reason": "tool_calls",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<think>\nOkay, the user wants to calculate 5 plus 3. Let me check the tools provided. The only function available is 'calculate', which requires x, y, and operation. The parameters are numbers and an operation. The user input is straightforward: 5 + 3. So I need to call the 'calculate' function with x=5, y=3, and operation='+'. That should give the correct result. I don't see any other parameters needed here. Just make sure the JSON is correctly formatted with the required fields.\n</think>\n\n",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": [
+                {
+                  "id": "chatcmpl-tool-6d1a92899a8246bb8fae5682dc08590c",
+                  "function": {
+                    "arguments": "{\"x\": 5, \"y\": 3, \"operation\": \"+\"}",
+                    "name": "calculate"
+                  },
+                  "type": "function"
+                }
+              ],
+              "reasoning_content": null
+            },
+            "stop_reason": null
+          }
+        ],
+        "created": 0,
+        "model": "Qwen/Qwen3-0.6B",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 144,
+          "prompt_tokens": 193,
+          "total_tokens": 337,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        },
+        "prompt_logprobs": null,
+        "kv_transfer_params": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

@@ -14,14 +14,14 @@ Passthrough inference provider for connecting to any external inference service 
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
-| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
-| `api_key` | `pydantic.types.SecretStr \| None` | No |  | API Key for the passthrouth endpoint |
-| `url` | `<class 'str'>` | No |  | The URL for the passthrough endpoint |
+| `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `SecretStr \| None` | No |  | Authentication credential for the provider |
+| `base_url` | `HttpUrl \| None` | No |  | The URL for the passthrough endpoint |
 
 ## Sample Configuration
 
 ```yaml
-url: ${env.PASSTHROUGH_URL}
+base_url: ${env.PASSTHROUGH_URL}
 api_key: ${env.PASSTHROUGH_API_KEY}
 ```

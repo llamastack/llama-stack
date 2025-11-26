@@ -5,18 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.apis.conversations.conversations import (
-    Conversation,
-    ConversationCreateRequest,
-    ConversationItem,
-    ConversationItemList,
-)
-
-
-def test_conversation_create_request_defaults():
-    request = ConversationCreateRequest()
-    assert request.items == []
-    assert request.metadata == {}
+from llama_stack_api import Conversation, ConversationItem, ConversationItemList
 
 
 def test_conversation_model_defaults():

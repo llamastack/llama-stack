@@ -5,8 +5,8 @@
 # the root directory of this source tree.
 
 
-from llama_stack.providers.utils.kvstore.config import SqliteKVStoreConfig
-from llama_stack.providers.utils.kvstore.sqlite.sqlite import SqliteKVStoreImpl
+from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
+from llama_stack.core.storage.kvstore.sqlite.sqlite import SqliteKVStoreImpl
 
 
 async def test_memory_kvstore_persistence_behavior():

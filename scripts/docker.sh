@@ -215,6 +215,16 @@ build_image() {
         --build-arg "LLAMA_STACK_DIR=/workspace"
     )
 
+    # Pass UV index configuration for release branches
+    if [[ -n "${UV_EXTRA_INDEX_URL:-}" ]]; then
+        echo "Adding UV_EXTRA_INDEX_URL to docker build: $UV_EXTRA_INDEX_URL"
+        build_cmd+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
+    fi
+    if [[ -n "${UV_INDEX_STRATEGY:-}" ]]; then
+        echo "Adding UV_INDEX_STRATEGY to docker build: $UV_INDEX_STRATEGY"
+        build_cmd+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
+    fi
+
     if ! "${build_cmd[@]}"; then
         echo "❌ Failed to build Docker image"
         exit 1
@@ -277,9 +287,9 @@ start_container() {
     # On macOS/Windows, use host.docker.internal to reach host from container
     # On Linux with --network host, use localhost
     if [[ "$(uname)" == "Darwin" ]] || [[ "$(uname)" == *"MINGW"* ]]; then
-        OLLAMA_URL="${OLLAMA_URL:-http://host.docker.internal:11434}"
+        OLLAMA_URL="${OLLAMA_URL:-http://host.docker.internal:11434/v1}"
     else
-        OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434}"
+        OLLAMA_URL="${OLLAMA_URL:-http://localhost:11434/v1}"
     fi
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OLLAMA_URL=$OLLAMA_URL"
 

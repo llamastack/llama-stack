@@ -10,15 +10,12 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from llama_stack.apis.files import Files
-from llama_stack.apis.vector_io import Chunk, QueryChunksResponse
-from llama_stack.apis.vector_stores import VectorStore
-from llama_stack.providers.datatypes import HealthStatus
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import (
     FaissIndex,
     FaissVectorIOAdapter,
 )
+from llama_stack_api import Chunk, Files, HealthStatus, QueryChunksResponse, VectorStore
 
 # This test is a unit test for the FaissVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -49,9 +46,21 @@ def vector_store_id():
 
 @pytest.fixture
 def sample_chunks():
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     return [
-        Chunk(content="MOCK text content 1", mime_type="text/plain", metadata={"document_id": "mock-doc-1"}),
-        Chunk(content="MOCK text content 1", mime_type="text/plain", metadata={"document_id": "mock-doc-2"}),
+        Chunk(
+            content="MOCK text content 1",
+            chunk_id=generate_chunk_id("mock-doc-1", "MOCK text content 1"),
+            mime_type="text/plain",
+            metadata={"document_id": "mock-doc-1"},
+        ),
+        Chunk(
+            content="MOCK text content 1",
+            chunk_id=generate_chunk_id("mock-doc-2", "MOCK text content 1"),
+            mime_type="text/plain",
+            metadata={"document_id": "mock-doc-2"},
+        ),
     ]
 
 

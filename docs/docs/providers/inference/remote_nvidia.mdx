@@ -14,17 +14,16 @@ NVIDIA inference provider for accessing NVIDIA NIM models and AI services.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
-| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
-| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
-| `url` | `<class 'str'>` | No | https://integrate.api.nvidia.com | A base url for accessing the NVIDIA NIM |
-| `timeout` | `<class 'int'>` | No | 60 | Timeout for the HTTP requests |
-| `append_api_version` | `<class 'bool'>` | No | True | When set to false, the API version will not be appended to the base_url. By default, it is true. |
+| `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `SecretStr \| None` | No |  | Authentication credential for the provider |
+| `base_url` | `HttpUrl \| None` | No | https://integrate.api.nvidia.com/v1 | A base url for accessing the NVIDIA NIM |
+| `timeout` | `int` | No | 60 | Timeout for the HTTP requests |
+| `rerank_model_to_url` | `dict[str, str]` | No | `{'nv-rerank-qa-mistral-4b:1': 'https://ai.api.nvidia.com/v1/retrieval/nvidia/reranking', 'nvidia/nv-rerankqa-mistral-4b-v3': 'https://ai.api.nvidia.com/v1/retrieval/nvidia/nv-rerankqa-mistral-4b-v3/reranking', 'nvidia/llama-3.2-nv-rerankqa-1b-v2': 'https://ai.api.nvidia.com/v1/retrieval/nvidia/llama-3_2-nv-rerankqa-1b-v2/reranking'}` | Mapping of rerank model identifiers to their API endpoints.  |
 
 ## Sample Configuration
 
 ```yaml
-url: ${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com}
+base_url: ${env.NVIDIA_BASE_URL:=https://integrate.api.nvidia.com/v1}
 api_key: ${env.NVIDIA_API_KEY:=}
-append_api_version: ${env.NVIDIA_APPEND_API_VERSION:=True}
 ```

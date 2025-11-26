@@ -9,8 +9,6 @@ import time
 
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
-
 from .helpers import new_vector_store, upload_file
 
 
@@ -28,12 +26,9 @@ from .helpers import new_vector_store, upload_file
         },
     ],
 )
-def test_response_text_format(compat_client, text_model_id, text_format):
-    if isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API text format is not yet supported in library client.")
-
+def test_response_text_format(responses_client, text_model_id, text_format):
     stream = False
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input="What is the capital of France?",
         stream=stream,
@@ -47,13 +42,10 @@ def test_response_text_format(compat_client, text_model_id, text_format):
 
 
 @pytest.fixture
-def vector_store_with_filtered_files(compat_client, embedding_model_id, embedding_dimension, tmp_path_factory):
+def vector_store_with_filtered_files(responses_client, embedding_model_id, embedding_dimension, tmp_path_factory):
     # """Create a vector store with multiple files that have different attributes for filtering tests."""
-    if isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("upload_file() is not yet supported in library client somehow?")
-
     vector_store = new_vector_store(
-        compat_client, "test_vector_store_with_filters", embedding_model_id, embedding_dimension
+        responses_client, "test_vector_store_with_filters", embedding_model_id, embedding_dimension
     )
     tmp_path = tmp_path_factory.mktemp("filter_test_files")
 
@@ -104,11 +96,11 @@ def vector_store_with_filtered_files(compat_client, embedding_model_id, embeddin
         file_path.write_text(file_data["content"])
 
         # Upload file
-        file_response = upload_file(compat_client, file_data["name"], str(file_path))
+        file_response = upload_file(responses_client, file_data["name"], str(file_path))
         file_ids.append(file_response.id)
 
         # Attach file to vector store with attributes
-        file_attach_response = compat_client.vector_stores.files.create(
+        file_attach_response = responses_client.vector_stores.files.create(
             vector_store_id=vector_store.id,
             file_id=file_response.id,
             attributes=file_data["attributes"],
@@ -117,7 +109,7 @@ def vector_store_with_filtered_files(compat_client, embedding_model_id, embeddin
         # Wait for attachment
         while file_attach_response.status == "in_progress":
             time.sleep(0.1)
-            file_attach_response = compat_client.vector_stores.files.retrieve(
+            file_attach_response = responses_client.vector_stores.files.retrieve(
                 vector_store_id=vector_store.id,
                 file_id=file_response.id,
             )
@@ -127,17 +119,17 @@ def vector_store_with_filtered_files(compat_client, embedding_model_id, embeddin
 
     # Cleanup: delete vector store and files
     try:
-        compat_client.vector_stores.delete(vector_store_id=vector_store.id)
+        responses_client.vector_stores.delete(vector_store_id=vector_store.id)
         for file_id in file_ids:
             try:
-                compat_client.files.delete(file_id=file_id)
+                responses_client.files.delete(file_id=file_id)
             except Exception:
                 pass  # File might already be deleted
     except Exception:
         pass  # Best effort cleanup
 
 
-def test_response_file_search_filter_by_region(compat_client, text_model_id, vector_store_with_filtered_files):
+def test_response_file_search_filter_by_region(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with region equality filter."""
     tools = [
         {
@@ -147,7 +139,7 @@ def test_response_file_search_filter_by_region(compat_client, text_model_id, vec
         }
     ]
 
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input="What are the updates from the US region?",
         tools=tools,
@@ -168,7 +160,7 @@ def test_response_file_search_filter_by_region(compat_client, text_model_id, vec
         assert "asia" not in result.text.lower()
 
 
-def test_response_file_search_filter_by_category(compat_client, text_model_id, vector_store_with_filtered_files):
+def test_response_file_search_filter_by_category(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with category equality filter."""
     tools = [
         {
@@ -178,7 +170,7 @@ def test_response_file_search_filter_by_category(compat_client, text_model_id, v
         }
     ]
 
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input="Show me all marketing reports",
         tools=tools,
@@ -198,7 +190,7 @@ def test_response_file_search_filter_by_category(compat_client, text_model_id, v
         assert "revenue figures" not in result.text.lower()
 
 
-def test_response_file_search_filter_by_date_range(compat_client, text_model_id, vector_store_with_filtered_files):
+def test_response_file_search_filter_by_date_range(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with date range filter using compound AND."""
     tools = [
         {
@@ -222,7 +214,7 @@ def test_response_file_search_filter_by_date_range(compat_client, text_model_id,
         }
     ]
 
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input="What happened in Q1 2023?",
         tools=tools,
@@ -241,7 +233,7 @@ def test_response_file_search_filter_by_date_range(compat_client, text_model_id,
         assert "q3" not in result.text.lower()
 
 
-def test_response_file_search_filter_compound_and(compat_client, text_model_id, vector_store_with_filtered_files):
+def test_response_file_search_filter_compound_and(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with compound AND filter (region AND category)."""
     tools = [
         {
@@ -257,7 +249,7 @@ def test_response_file_search_filter_compound_and(compat_client, text_model_id, 
         }
     ]
 
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input="What are the engineering updates from the US?",
         tools=tools,
@@ -277,7 +269,7 @@ def test_response_file_search_filter_compound_and(compat_client, text_model_id, 
         assert "promotional" not in result.text.lower() and "revenue" not in result.text.lower()
 
 
-def test_response_file_search_filter_compound_or(compat_client, text_model_id, vector_store_with_filtered_files):
+def test_response_file_search_filter_compound_or(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test file search with compound OR filter (marketing OR sales)."""
     tools = [
         {
@@ -293,7 +285,7 @@ def test_response_file_search_filter_compound_or(compat_client, text_model_id, v
         }
     ]
 
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input="Show me marketing and sales documents",
         tools=tools,
@@ -320,7 +312,7 @@ def test_response_file_search_filter_compound_or(compat_client, text_model_id, v
     assert categories_found.issubset({"marketing", "sales"}), f"Found unexpected categories: {categories_found}"
 
 
-def test_response_file_search_streaming_events(compat_client, text_model_id, vector_store_with_filtered_files):
+def test_response_file_search_streaming_events(responses_client, text_model_id, vector_store_with_filtered_files):
     """Test that file search emits proper streaming events (in_progress, searching, completed)."""
     tools = [
         {
@@ -329,7 +321,7 @@ def test_response_file_search_streaming_events(compat_client, text_model_id, vec
         }
     ]
 
-    stream = compat_client.responses.create(
+    stream = responses_client.responses.create(
         model=text_model_id,
         input="What are the marketing updates?",
         tools=tools,

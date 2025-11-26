@@ -4,13 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import json
-
 import pytest
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
-
-from llama_stack import LlamaStackAsLibraryClient
 
 AUTH_TOKEN = "test-token"
 
@@ -24,9 +20,6 @@ def mcp_server():
 
 
 def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
-    if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-        pytest.skip("The local MCP server only reliably reachable from library client.")
-
     test_toolgroup_id = MCP_TOOLGROUP_ID
     uri = mcp_server["server_url"]
 
@@ -42,31 +35,20 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
         mcp_endpoint=dict(uri=uri),
     )
 
-    provider_data = {
-        "mcp_headers": {
-            uri: {
-                "Authorization": f"Bearer {AUTH_TOKEN}",
-            },
-        },
-    }
-    auth_headers = {
-        "X-LlamaStack-Provider-Data": json.dumps(provider_data),
-    }
-
-    with pytest.raises(Exception, match="Unauthorized"):
-        llama_stack_client.tools.list(toolgroup_id=test_toolgroup_id)
-
-    tools_list = llama_stack_client.tools.list(
-        toolgroup_id=test_toolgroup_id,
-        extra_headers=auth_headers,
+    # Use the dedicated authorization parameter (no more provider_data headers)
+    # This tests direct tool_runtime.invoke_tool API calls
+    tools_list = llama_stack_client.tool_runtime.list_tools(
+        tool_group_id=test_toolgroup_id,
+        authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
     )
     assert len(tools_list) == 2
     assert {t.name for t in tools_list} == {"greet_everyone", "get_boiling_point"}
 
+    # Invoke tool with authorization parameter
     response = llama_stack_client.tool_runtime.invoke_tool(
         tool_name="greet_everyone",
         kwargs=dict(url="https://www.google.com"),
-        extra_headers=auth_headers,
+        authorization=AUTH_TOKEN,  # Use dedicated authorization parameter
     )
     content = response.content
     assert len(content) == 1
@@ -81,9 +63,7 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
             "server_label": test_toolgroup_id,
             "require_approval": "never",
             "allowed_tools": [tool.name for tool in tools_list],
-            "headers": {
-                "Authorization": f"Bearer {AUTH_TOKEN}",
-            },
+            "authorization": AUTH_TOKEN,
         }
     ]
     agent = Agent(
@@ -109,7 +89,6 @@ def test_mcp_invocation(llama_stack_client, text_model_id, mcp_server):
                 }
             ],
             stream=True,
-            extra_headers=auth_headers,
         )
     )
     events = [chunk.event for chunk in chunks]

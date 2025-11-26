@@ -72,7 +72,8 @@ runs:
           echo "New recordings detected, committing and pushing"
           git add tests/integration/
 
-          git commit -m "Recordings update from CI (suite: ${{ inputs.suite }})"
+          git commit -m "Recordings update from CI (setup: ${{ inputs.setup }}, suite: ${{ inputs.suite }})"
+
           git fetch origin ${{ github.ref_name }}
           git rebase origin/${{ github.ref_name }}
           echo "Rebased successfully"
@@ -88,13 +89,15 @@ runs:
       run: |
         # Ollama logs (if ollama container exists)
         sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log 2>&1 || true
+        # vllm logs (if vllm container exists)
+        sudo docker logs vllm > vllm-${{ inputs.inference-mode }}.log 2>&1 || true
         # Note: distro container logs are now dumped in integration-tests.sh before container is removed
 
     - name: Upload logs
       if: ${{ always() }}
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
-        name: logs-${{ github.run_id }}-${{ github.run_attempt || '' }}-${{ strategy.job-index }}
+        name: logs-${{ github.run_id }}-${{ github.run_attempt || '1' }}-${{ strategy.job-index || github.job }}-${{ github.action }}
         path: |
           *.log
         retention-days: 1

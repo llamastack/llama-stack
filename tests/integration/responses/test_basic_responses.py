@@ -13,8 +13,8 @@ from .streaming_assertions import StreamingValidator
 
 
 @pytest.mark.parametrize("case", basic_test_cases)
-def test_response_non_streaming_basic(compat_client, text_model_id, case):
-    response = compat_client.responses.create(
+def test_response_non_streaming_basic(responses_client, text_model_id, case):
+    response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
         stream=False,
@@ -31,10 +31,10 @@ def test_response_non_streaming_basic(compat_client, text_model_id, case):
         "Total tokens should equal input + output tokens"
     )
 
-    retrieved_response = compat_client.responses.retrieve(response_id=response.id)
+    retrieved_response = responses_client.responses.retrieve(response_id=response.id)
     assert retrieved_response.output_text == response.output_text
 
-    next_response = compat_client.responses.create(
+    next_response = responses_client.responses.create(
         model=text_model_id,
         input="Repeat your previous response in all caps.",
         previous_response_id=response.id,
@@ -44,8 +44,8 @@ def test_response_non_streaming_basic(compat_client, text_model_id, case):
 
 
 @pytest.mark.parametrize("case", basic_test_cases)
-def test_response_streaming_basic(compat_client, text_model_id, case):
-    response = compat_client.responses.create(
+def test_response_streaming_basic(responses_client, text_model_id, case):
+    response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
         stream=True,
@@ -98,15 +98,15 @@ def test_response_streaming_basic(compat_client, text_model_id, case):
     validator.assert_response_consistency()
 
     # Verify stored response matches streamed response
-    retrieved_response = compat_client.responses.retrieve(response_id=response_id)
+    retrieved_response = responses_client.responses.retrieve(response_id=response_id)
     final_event = events[-1]
     assert retrieved_response.output_text == final_event.response.output_text
 
 
 @pytest.mark.parametrize("case", basic_test_cases)
-def test_response_streaming_incremental_content(compat_client, text_model_id, case):
+def test_response_streaming_incremental_content(responses_client, text_model_id, case):
     """Test that streaming actually delivers content incrementally, not just at the end."""
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
         stream=True,
@@ -170,10 +170,10 @@ def test_response_streaming_incremental_content(compat_client, text_model_id, ca
 
 
 @pytest.mark.parametrize("case", multi_turn_test_cases)
-def test_response_non_streaming_multi_turn(compat_client, text_model_id, case):
+def test_response_non_streaming_multi_turn(responses_client, text_model_id, case):
     previous_response_id = None
     for turn_input, turn_expected in case.turns:
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input=turn_input,
             previous_response_id=previous_response_id,
@@ -184,8 +184,8 @@ def test_response_non_streaming_multi_turn(compat_client, text_model_id, case):
 
 
 @pytest.mark.parametrize("case", image_test_cases)
-def test_response_non_streaming_image(compat_client, text_model_id, case):
-    response = compat_client.responses.create(
+def test_response_non_streaming_image(responses_client, text_model_id, case):
+    response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
         stream=False,
@@ -195,10 +195,10 @@ def test_response_non_streaming_image(compat_client, text_model_id, case):
 
 
 @pytest.mark.parametrize("case", multi_turn_image_test_cases)
-def test_response_non_streaming_multi_turn_image(compat_client, text_model_id, case):
+def test_response_non_streaming_multi_turn_image(responses_client, text_model_id, case):
     previous_response_id = None
     for turn_input, turn_expected in case.turns:
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input=turn_input,
             previous_response_id=previous_response_id,

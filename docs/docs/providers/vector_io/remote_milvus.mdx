@@ -405,10 +405,10 @@ For more details on TLS configuration, refer to the [TLS setup guide](https://mi
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `uri` | `<class 'str'>` | No |  | The URI of the Milvus server |
+| `uri` | `str` | No |  | The URI of the Milvus server |
 | `token` | `str \| None` | No |  | The token of the Milvus server |
-| `consistency_level` | `<class 'str'>` | No | Strong | The consistency level of the Milvus server |
-| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  | Config for KV store backend |
+| `consistency_level` | `str` | No | Strong | The consistency level of the Milvus server |
+| `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
 | `config` | `dict` | No | `{}` | This configuration allows additional fields to be passed through to the underlying Milvus client. See the [Milvus](https://milvus.io/docs/install-overview.md) documentation for more details about Milvus in general. |
 
 :::note

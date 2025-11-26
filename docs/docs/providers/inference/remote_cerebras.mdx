@@ -14,14 +14,14 @@ Cerebras inference provider for running models on Cerebras Cloud platform.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
-| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
-| `api_key` | `pydantic.types.SecretStr \| None` | No |  | Authentication credential for the provider |
-| `base_url` | `<class 'str'>` | No | https://api.cerebras.ai | Base URL for the Cerebras API |
+| `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
+| `api_key` | `SecretStr \| None` | No |  | Authentication credential for the provider |
+| `base_url` | `HttpUrl \| None` | No | https://api.cerebras.ai/v1 | Base URL for the Cerebras API |
 
 ## Sample Configuration
 
 ```yaml
-base_url: https://api.cerebras.ai
+base_url: https://api.cerebras.ai/v1
 api_key: ${env.CEREBRAS_API_KEY:=}
 ```

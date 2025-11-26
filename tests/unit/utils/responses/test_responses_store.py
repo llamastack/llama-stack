@@ -10,15 +10,10 @@ from uuid import uuid4
 
 import pytest
 
-from llama_stack.apis.agents import Order
-from llama_stack.apis.agents.openai_responses import (
-    OpenAIResponseInput,
-    OpenAIResponseObject,
-)
-from llama_stack.apis.inference import OpenAIMessageParam, OpenAIUserMessageParam
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
+from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
-from llama_stack.providers.utils.sqlstore.sqlstore import register_sqlstore_backends
+from llama_stack_api import OpenAIMessageParam, OpenAIResponseInput, OpenAIResponseObject, OpenAIUserMessageParam, Order
 
 
 def build_store(db_path: str, policy: list | None = None) -> ResponsesStore:
@@ -46,7 +41,7 @@ def create_test_response_object(
 
 def create_test_response_input(content: str, input_id: str) -> OpenAIResponseInput:
     """Helper to create a test response input."""
-    from llama_stack.apis.agents.openai_responses import OpenAIResponseMessage
+    from llama_stack_api import OpenAIResponseMessage
 
     return OpenAIResponseMessage(
         id=input_id,

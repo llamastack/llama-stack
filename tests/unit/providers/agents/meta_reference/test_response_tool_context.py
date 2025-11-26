@@ -5,7 +5,8 @@
 # the root directory of this source tree.
 
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack.providers.inline.agents.meta_reference.responses.types import ToolContext
+from llama_stack_api.openai_responses import (
     MCPListToolsTool,
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolFunction,
@@ -15,7 +16,6 @@ from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseToolMCP,
 )
-from llama_stack.providers.inline.agents.meta_reference.responses.types import ToolContext
 
 
 class TestToolContext:

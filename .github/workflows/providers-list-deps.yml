@@ -7,22 +7,22 @@ on:
     branches:
       - main
     paths:
-      - 'llama_stack/cli/stack/list_deps.py'
-      - 'llama_stack/cli/stack/_list_deps.py'
-      - 'llama_stack/core/build.*'
-      - 'llama_stack/core/*.sh'
+      - 'src/llama_stack/cli/stack/list_deps.py'
+      - 'src/llama_stack/cli/stack/_list_deps.py'
+      - 'src/llama_stack/core/build.*'
+      - 'src/llama_stack/core/*.sh'
       - '.github/workflows/providers-list-deps.yml'
-      - 'llama_stack/templates/**'
+      - 'src/llama_stack/templates/**'
       - 'pyproject.toml'
 
   pull_request:
     paths:
-      - 'llama_stack/cli/stack/list_deps.py'
-      - 'llama_stack/cli/stack/_list_deps.py'
-      - 'llama_stack/core/build.*'
-      - 'llama_stack/core/*.sh'
+      - 'src/llama_stack/cli/stack/list_deps.py'
+      - 'src/llama_stack/cli/stack/_list_deps.py'
+      - 'src/llama_stack/core/build.*'
+      - 'src/llama_stack/core/*.sh'
       - '.github/workflows/providers-list-deps.yml'
-      - 'llama_stack/templates/**'
+      - 'src/llama_stack/templates/**'
       - 'pyproject.toml'
 
 concurrency:
@@ -36,12 +36,12 @@ jobs:
       distros: ${{ steps.set-matrix.outputs.distros }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Generate Distribution List
         id: set-matrix
         run: |
-          distros=$(ls llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
+          distros=$(ls src/llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
           echo "distros=$distros" >> "$GITHUB_OUTPUT"
 
   list-deps:
@@ -55,7 +55,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -102,4 +102,4 @@ jobs:
           USE_COPY_NOT_MOUNT: "true"
           LLAMA_STACK_DIR: "."
         run: |
-          uv run llama stack list-deps llama_stack/distributions/ci-tests/build.yaml
+          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/build.yaml

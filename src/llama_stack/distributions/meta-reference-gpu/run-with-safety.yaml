@@ -1,0 +1,157 @@
+version: 2
+image_name: meta-reference-gpu
+apis:
+- agents
+- datasetio
+- eval
+- inference
+- safety
+- scoring
+- tool_runtime
+- vector_io
+providers:
+  inference:
+  - provider_id: meta-reference-inference
+    provider_type: inline::meta-reference
+    config:
+      model: ${env.INFERENCE_MODEL}
+      checkpoint_dir: ${env.INFERENCE_CHECKPOINT_DIR:=null}
+      quantization:
+        type: ${env.QUANTIZATION_TYPE:=bf16}
+      model_parallel_size: ${env.MODEL_PARALLEL_SIZE:=0}
+      max_batch_size: ${env.MAX_BATCH_SIZE:=1}
+      max_seq_len: ${env.MAX_SEQ_LEN:=4096}
+  - provider_id: sentence-transformers
+    provider_type: inline::sentence-transformers
+  - provider_id: meta-reference-safety
+    provider_type: inline::meta-reference
+    config:
+      model: ${env.SAFETY_MODEL}
+      checkpoint_dir: ${env.SAFETY_CHECKPOINT_DIR:=null}
+      quantization:
+        type: ${env.QUANTIZATION_TYPE:=bf16}
+      model_parallel_size: ${env.MODEL_PARALLEL_SIZE:=0}
+      max_batch_size: ${env.MAX_BATCH_SIZE:=1}
+      max_seq_len: ${env.MAX_SEQ_LEN:=4096}
+  vector_io:
+  - provider_id: faiss
+    provider_type: inline::faiss
+    config:
+      persistence:
+        namespace: vector_io::faiss
+        backend: kv_default
+  safety:
+  - provider_id: llama-guard
+    provider_type: inline::llama-guard
+    config:
+      excluded_categories: []
+  agents:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      persistence:
+        agent_state:
+          namespace: agents
+          backend: kv_default
+        responses:
+          table_name: responses
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
+  eval:
+  - provider_id: meta-reference
+    provider_type: inline::meta-reference
+    config:
+      kvstore:
+        namespace: eval
+        backend: kv_default
+  datasetio:
+  - provider_id: huggingface
+    provider_type: remote::huggingface
+    config:
+      kvstore:
+        namespace: datasetio::huggingface
+        backend: kv_default
+  - provider_id: localfs
+    provider_type: inline::localfs
+    config:
+      kvstore:
+        namespace: datasetio::localfs
+        backend: kv_default
+  scoring:
+  - provider_id: basic
+    provider_type: inline::basic
+  - provider_id: llm-as-judge
+    provider_type: inline::llm-as-judge
+  - provider_id: braintrust
+    provider_type: inline::braintrust
+    config:
+      openai_api_key: ${env.OPENAI_API_KEY:=}
+  tool_runtime:
+  - provider_id: brave-search
+    provider_type: remote::brave-search
+    config:
+      api_key: ${env.BRAVE_SEARCH_API_KEY:=}
+      max_results: 3
+  - provider_id: tavily-search
+    provider_type: remote::tavily-search
+    config:
+      api_key: ${env.TAVILY_SEARCH_API_KEY:=}
+      max_results: 3
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
+  - provider_id: model-context-protocol
+    provider_type: remote::model-context-protocol
+storage:
+  backends:
+    kv_default:
+      type: kv_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/kvstore.db
+    sql_default:
+      type: sql_sqlite
+      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/meta-reference-gpu}/sql_store.db
+  stores:
+    metadata:
+      namespace: registry
+      backend: kv_default
+    inference:
+      table_name: inference_store
+      backend: sql_default
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      table_name: openai_conversations
+      backend: sql_default
+    prompts:
+      namespace: prompts
+      backend: kv_default
+registered_resources:
+  models:
+  - metadata: {}
+    model_id: ${env.INFERENCE_MODEL}
+    provider_id: meta-reference-inference
+    model_type: llm
+  - metadata: {}
+    model_id: ${env.SAFETY_MODEL}
+    provider_id: meta-reference-safety
+    model_type: llm
+  - metadata:
+      embedding_dimension: 768
+    model_id: nomic-embed-text-v1.5
+    provider_id: sentence-transformers
+    model_type: embedding
+  shields:
+  - shield_id: ${env.SAFETY_MODEL}
+  vector_dbs: []
+  datasets: []
+  scoring_fns: []
+  benchmarks: []
+  tool_groups:
+  - toolgroup_id: builtin::websearch
+    provider_id: tavily-search
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
+server:
+  port: 8321
+telemetry:
+  enabled: true

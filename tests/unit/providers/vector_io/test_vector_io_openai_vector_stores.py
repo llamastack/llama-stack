@@ -11,17 +11,17 @@ from unittest.mock import AsyncMock, patch
 import numpy as np
 import pytest
 
-from llama_stack.apis.common.errors import VectorStoreNotFoundError
-from llama_stack.apis.vector_io import (
+from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
+from llama_stack_api import (
     Chunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
+    VectorStore,
     VectorStoreChunkingStrategyAuto,
     VectorStoreFileObject,
+    VectorStoreNotFoundError,
 )
-from llama_stack.apis.vector_stores import VectorStore
-from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 
 # This test is a unit test for the inline VectorIO providers. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -92,6 +92,99 @@ async def test_persistence_across_adapter_restarts(vector_io_adapter):
     await vector_io_adapter.shutdown()
 
 
+async def test_vector_store_lazy_loading_from_kvstore(vector_io_adapter):
+    """
+    Test that vector stores can be lazy-loaded from KV store when not in cache.
+
+    Verifies that clearing the cache doesn't break vector store access - they
+    can be loaded on-demand from persistent storage.
+    """
+    await vector_io_adapter.initialize()
+
+    vector_store_id = f"lazy_load_test_{np.random.randint(1e6)}"
+    vector_store = VectorStore(
+        identifier=vector_store_id,
+        provider_id="test_provider",
+        embedding_model="test_model",
+        embedding_dimension=128,
+    )
+    await vector_io_adapter.register_vector_store(vector_store)
+    assert vector_store_id in vector_io_adapter.cache
+
+    vector_io_adapter.cache.clear()
+    assert vector_store_id not in vector_io_adapter.cache
+
+    loaded_index = await vector_io_adapter._get_and_cache_vector_store_index(vector_store_id)
+    assert loaded_index is not None
+    assert loaded_index.vector_store.identifier == vector_store_id
+    assert vector_store_id in vector_io_adapter.cache
+
+    cached_index = await vector_io_adapter._get_and_cache_vector_store_index(vector_store_id)
+    assert cached_index is loaded_index
+
+    await vector_io_adapter.shutdown()
+
+
+async def test_vector_store_preloading_on_initialization(vector_io_adapter):
+    """
+    Test that vector stores are preloaded from KV store during initialization.
+
+    Verifies that after restart, all vector stores are automatically loaded into
+    cache and immediately accessible without requiring lazy loading.
+    """
+    await vector_io_adapter.initialize()
+
+    vector_store_ids = [f"preload_test_{i}_{np.random.randint(1e6)}" for i in range(3)]
+    for vs_id in vector_store_ids:
+        vector_store = VectorStore(
+            identifier=vs_id,
+            provider_id="test_provider",
+            embedding_model="test_model",
+            embedding_dimension=128,
+        )
+        await vector_io_adapter.register_vector_store(vector_store)
+
+    for vs_id in vector_store_ids:
+        assert vs_id in vector_io_adapter.cache
+
+    await vector_io_adapter.shutdown()
+    await vector_io_adapter.initialize()
+
+    for vs_id in vector_store_ids:
+        assert vs_id in vector_io_adapter.cache
+
+    for vs_id in vector_store_ids:
+        loaded_index = await vector_io_adapter._get_and_cache_vector_store_index(vs_id)
+        assert loaded_index is not None
+        assert loaded_index.vector_store.identifier == vs_id
+
+    await vector_io_adapter.shutdown()
+
+
+async def test_kvstore_none_raises_runtime_error(vector_io_adapter):
+    """
+    Test that accessing vector stores with uninitialized kvstore raises RuntimeError.
+
+    Verifies proper RuntimeError is raised instead of assertions when kvstore is None.
+    """
+    await vector_io_adapter.initialize()
+
+    vector_store_id = f"kvstore_none_test_{np.random.randint(1e6)}"
+    vector_store = VectorStore(
+        identifier=vector_store_id,
+        provider_id="test_provider",
+        embedding_model="test_model",
+        embedding_dimension=128,
+    )
+    await vector_io_adapter.register_vector_store(vector_store)
+
+    vector_io_adapter.cache.clear()
+    vector_io_adapter.kvstore = None
+
+    with pytest.raises(RuntimeError, match="KVStore not initialized"):
+        await vector_io_adapter._get_and_cache_vector_store_index(vector_store_id)
+
+
 async def test_register_and_unregister_vector_store(vector_io_adapter):
     unique_id = f"foo_db_{np.random.randint(1e6)}"
     dummy = VectorStore(
@@ -129,16 +222,30 @@ async def test_insert_chunks_missing_db_raises(vector_io_adapter):
 
 async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
     """Ensure no KeyError when document_id is missing or in different places."""
-    from llama_stack.apis.vector_io import Chunk, ChunkMetadata
+    from llama_stack_api import Chunk, ChunkMetadata
 
     fake_index = AsyncMock()
     vector_io_adapter.cache["db1"] = fake_index
 
     # Various document_id scenarios that shouldn't crash
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     chunks = [
-        Chunk(content="has doc_id in metadata", metadata={"document_id": "doc-1"}),
-        Chunk(content="no doc_id anywhere", metadata={"source": "test"}),
-        Chunk(content="doc_id in chunk_metadata", chunk_metadata=ChunkMetadata(document_id="doc-3")),
+        Chunk(
+            content="has doc_id in metadata",
+            chunk_id=generate_chunk_id("doc-1", "has doc_id in metadata"),
+            metadata={"document_id": "doc-1"},
+        ),
+        Chunk(
+            content="no doc_id anywhere",
+            chunk_id=generate_chunk_id("unknown", "no doc_id anywhere"),
+            metadata={"source": "test"},
+        ),
+        Chunk(
+            content="doc_id in chunk_metadata",
+            chunk_id=generate_chunk_id("doc-3", "doc_id in chunk_metadata"),
+            chunk_metadata=ChunkMetadata(document_id="doc-3"),
+        ),
     ]
 
     # Should work without KeyError
@@ -148,10 +255,11 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
 
 async def test_document_id_with_invalid_type_raises_error():
     """Ensure TypeError is raised when document_id is not a string."""
-    from llama_stack.apis.vector_io import Chunk
-
     # Integer document_id should raise TypeError
-    chunk = Chunk(content="test", metadata={"document_id": 12345})
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_api import Chunk
+
+    chunk = Chunk(content="test", chunk_id=generate_chunk_id("test", "test"), metadata={"document_id": 12345})
     with pytest.raises(TypeError) as exc_info:
         _ = chunk.document_id
     assert "metadata['document_id'] must be a string" in str(exc_info.value)
@@ -159,7 +267,9 @@ async def test_document_id_with_invalid_type_raises_error():
 
 
 async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter):
-    expected = QueryChunksResponse(chunks=[Chunk(content="c1")], scores=[0.1])
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
+    expected = QueryChunksResponse(chunks=[Chunk(content="c1", chunk_id=generate_chunk_id("test", "c1"))], scores=[0.1])
     fake_index = AsyncMock(query_chunks=AsyncMock(return_value=expected))
     vector_io_adapter.cache["db1"] = fake_index
 
