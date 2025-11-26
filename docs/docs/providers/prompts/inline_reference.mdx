@@ -1,0 +1,496 @@
+---
+description: |
+  Reference implementation of the Prompts API using KVStore backend (SQLite, PostgreSQL, etc.)
+  for centralized prompt management with versioning support. This is the default provider for
+  prompts that works without external dependencies.
+
+  ## Features
+  The Reference Prompts Provider supports:
+  - Create and store prompts with automatic versioning
+  - Retrieve prompts by ID and version
+  - Update prompts (creates new immutable versions)
+  - Delete prompts and their versions
+  - List all prompts or all versions of a specific prompt
+  - Set default version for a prompt
+  - Automatic variable extraction from templates
+  - Storage in SQLite, PostgreSQL, or other KVStore backends
+
+  ## Key Capabilities
+  - **Zero Dependencies**: No external services required, runs in-process
+  - **Flexible Storage**: Supports SQLite (default), PostgreSQL, and other KVStore backends
+  - **Version Control**: Immutable versioning ensures prompt history is preserved
+  - **Default Version Management**: Easily switch between prompt versions
+  - **Variable Auto-Extraction**: Automatically detects `{{ variable }}` placeholders
+  - **Full CRUD Support**: Unlike remote providers, supports deletion of prompts
+
+  ## Usage
+
+  To use Reference Prompts Provider in your Llama Stack project:
+
+  1. Configure your Llama Stack project with the inline::reference provider
+  2. Optionally configure storage backend (defaults to SQLite)
+  3. Start creating and managing prompts
+
+  ## Quick Start
+
+  ### 1. Configure Llama Stack
+
+  **Basic configuration with SQLite** (default):
+
+  ```yaml
+  prompts:
+    - provider_id: reference-prompts
+      provider_type: inline::reference
+      config:
+        run_config:
+          storage:
+            stores:
+              prompts:
+                type: sqlite
+                db_path: ./prompts.db
+  ```
+
+  **With PostgreSQL**:
+
+  ```yaml
+  prompts:
+    - provider_id: postgres-prompts
+      provider_type: inline::reference
+      config:
+        run_config:
+          storage:
+            stores:
+              prompts:
+                type: postgres
+                url: postgresql://user:pass@localhost/llama_stack
+  ```
+
+  ### 2. Use the Prompts API
+
+  ```python
+  from llama_stack_client import LlamaStackClient
+
+  client = LlamaStackClient(base_url="http://localhost:5000")
+
+  # Create a prompt
+  prompt = client.prompts.create(
+      prompt="Summarize the following text in {{ num_sentences }} sentences:\n\n{{ text }}",
+      variables=["num_sentences", "text"]
+  )
+  print(f"Created prompt: {prompt.prompt_id} (v{prompt.version})")
+
+  # Retrieve prompt
+  retrieved = client.prompts.get(prompt_id=prompt.prompt_id)
+  print(f"Retrieved: {retrieved.prompt}")
+
+  # Update prompt (creates version 2)
+  updated = client.prompts.update(
+      prompt_id=prompt.prompt_id,
+      prompt="Summarize in exactly {{ num_sentences }} sentences:\n\n{{ text }}",
+      version=1,
+      set_as_default=True
+  )
+  print(f"Updated to version: {updated.version}")
+
+  # List all prompts
+  prompts = client.prompts.list()
+  print(f"Found {len(prompts.data)} prompts")
+
+  # Delete prompt
+  client.prompts.delete(prompt_id=prompt.prompt_id)
+  ```
+
+sidebar_label: Inline - Reference
+title: inline::reference
+---
+
+# inline::reference
+
+## Description
+
+Reference implementation of the Prompts API using KVStore backend (SQLite, PostgreSQL, etc.)
+for centralized prompt management with versioning support. This is the default provider for
+prompts that works without external dependencies.
+
+## Features
+The Reference Prompts Provider supports:
+- Create and store prompts with automatic versioning
+- Retrieve prompts by ID and version
+- Update prompts (creates new immutable versions)
+- Delete prompts and their versions
+- List all prompts or all versions of a specific prompt
+- Set default version for a prompt
+- Automatic variable extraction from templates
+- Storage in SQLite, PostgreSQL, or other KVStore backends
+
+## Key Capabilities
+- **Zero Dependencies**: No external services required, runs in-process
+- **Flexible Storage**: Supports SQLite (default), PostgreSQL, and other KVStore backends
+- **Version Control**: Immutable versioning ensures prompt history is preserved
+- **Default Version Management**: Easily switch between prompt versions
+- **Variable Auto-Extraction**: Automatically detects `{{ variable }}` placeholders
+- **Full CRUD Support**: Unlike remote providers, supports deletion of prompts
+
+## Configuration Examples
+
+### SQLite (Local Development)
+
+For local development with filesystem storage:
+
+```yaml
+prompts:
+  - provider_id: local-prompts
+    provider_type: inline::reference
+    config:
+      run_config:
+        storage:
+          stores:
+            prompts:
+              type: sqlite
+              db_path: ./prompts.db
+```
+
+### PostgreSQL (Production)
+
+For production with PostgreSQL:
+
+```yaml
+prompts:
+  - provider_id: prod-prompts
+    provider_type: inline::reference
+    config:
+      run_config:
+        storage:
+          stores:
+            prompts:
+              type: postgres
+              url: ${env.DATABASE_URL}
+```
+
+### With Explicit Backend Configuration
+
+```yaml
+prompts:
+  - provider_id: reference-prompts
+    provider_type: inline::reference
+    config:
+      run_config:
+        storage:
+          backends:
+            kv_default:
+              type: sqlite
+              db_path: ./data/prompts.db
+          stores:
+            prompts:
+              backend: kv_default
+              namespace: prompts
+```
+
+## API Reference
+
+### Create Prompt
+
+Creates a new prompt (version 1):
+
+```python
+prompt = client.prompts.create(
+    prompt="You are a {{ role }} assistant. {{ instruction }}",
+    variables=["role", "instruction"]  # Optional - auto-extracted if omitted
+)
+```
+
+**Auto-extraction**: If `variables` is not provided, the provider automatically extracts variables from `{{ variable }}` placeholders.
+
+### Retrieve Prompt
+
+Get a prompt by ID (retrieves default version):
+
+```python
+prompt = client.prompts.get(prompt_id="pmpt_abc123...")
+```
+
+Get a specific version:
+
+```python
+prompt = client.prompts.get(prompt_id="pmpt_abc123...", version=2)
+```
+
+### Update Prompt
+
+Creates a new version of an existing prompt:
+
+```python
+updated = client.prompts.update(
+    prompt_id="pmpt_abc123...",
+    prompt="Updated template with {{ variable }}",
+    version=1,  # Must be the latest version
+    set_as_default=True  # Make this the new default
+)
+```
+
+**Important**: You must provide the current latest version number. The update creates a new version (e.g., version 2).
+
+### Delete Prompt
+
+Delete a prompt and all its versions:
+
+```python
+client.prompts.delete(prompt_id="pmpt_abc123...")
+```
+
+**Note**: This operation is permanent and deletes all versions of the prompt.
+
+### List Prompts
+
+List all prompts (returns default versions only):
+
+```python
+response = client.prompts.list()
+for prompt in response.data:
+    print(f"{prompt.prompt_id}: v{prompt.version} (default)")
+```
+
+### List Prompt Versions
+
+List all versions of a specific prompt:
+
+```python
+response = client.prompts.list_versions(prompt_id="pmpt_abc123...")
+for prompt in response.data:
+    default = " (default)" if prompt.is_default else ""
+    print(f"Version {prompt.version}{default}")
+```
+
+### Set Default Version
+
+Change which version is the default:
+
+```python
+client.prompts.set_default_version(
+    prompt_id="pmpt_abc123...",
+    version=2
+)
+```
+
+## Version Management
+
+The Reference Prompts Provider implements immutable versioning:
+
+1. **Create**: Creates version 1
+2. **Update**: Creates a new version (2, 3, 4, ...)
+3. **Default**: One version is marked as default
+4. **History**: All versions are preserved and retrievable
+5. **Delete**: Can delete all versions at once
+
+```
+pmpt_abc123
+├── Version 1 (Original)
+├── Version 2 (Updated)
+└── Version 3 (Latest, Default) <- Current default version
+```
+
+## Storage Backends
+
+The reference provider uses Llama Stack's KVStore abstraction, which supports multiple backends:
+
+### SQLite (Default)
+
+Best for:
+- Local development
+- Single-server deployments
+- Embedded applications
+- Testing
+
+Limitations:
+- Not suitable for high-concurrency scenarios
+- No built-in replication
+
+### PostgreSQL
+
+Best for:
+- Production deployments
+- Multi-server setups
+- High availability requirements
+- Team collaboration
+
+Advantages:
+- Supports concurrent access
+- Built-in replication and backups
+- Scalable and robust
+
+## Best Practices
+
+### 1. Choose Appropriate Storage
+
+**Development**:
+```yaml
+# Use SQLite for local development
+storage:
+  stores:
+    prompts:
+      type: sqlite
+      db_path: ./dev-prompts.db
+```
+
+**Production**:
+```yaml
+# Use PostgreSQL for production
+storage:
+  stores:
+    prompts:
+      type: postgres
+      url: ${env.DATABASE_URL}
+```
+
+### 2. Backup Your Data
+
+For SQLite:
+```bash
+# Backup SQLite database
+cp prompts.db prompts.db.backup
+```
+
+For PostgreSQL:
+```bash
+# Backup PostgreSQL database
+pg_dump llama_stack > backup.sql
+```
+
+### 3. Version Management
+
+- Always retrieve latest version before updating
+- Use `set_as_default=True` when updating to make new version active
+- Keep version history for audit trail
+- Use deletion sparingly (consider archiving instead)
+
+### 4. Auto-Extract Variables
+
+Let the provider auto-extract variables to avoid validation errors:
+
+```python
+# Recommended
+prompt = client.prompts.create(
+    prompt="Summarize {{ text }} in {{ format }}"
+)
+```
+
+### 5. Use Meaningful Templates
+
+Include context in your templates:
+
+```python
+# Good
+prompt = """You are a {{ role }} assistant specialized in {{ domain }}.
+
+Task: {{ task }}
+
+Output format: {{ format }}"""
+
+# Less clear
+prompt = "Do {{ task }} as {{ role }}"
+```
+
+## Troubleshooting
+
+### Database Connection Errors
+
+**Error**: Failed to connect to database
+
+**Solutions**:
+1. Verify database URL is correct
+2. Ensure database server is running (for PostgreSQL)
+3. Check file permissions (for SQLite)
+4. Verify network connectivity (for remote databases)
+
+### Version Mismatch Error
+
+**Error**: `Version X is not the latest version. Use latest version Y to update.`
+
+**Cause**: Attempting to update an outdated version
+
+**Solution**: Always use the latest version number when updating:
+```python
+# Get latest version
+versions = client.prompts.list_versions(prompt_id)
+latest_version = max(v.version for v in versions.data)
+
+# Use latest version for update
+client.prompts.update(prompt_id=prompt_id, version=latest_version, ...)
+```
+
+### Variable Validation Error
+
+**Error**: `Template contains undeclared variables: ['var2']`
+
+**Cause**: Template has `{{ var2 }}` but `variables` list doesn't include it
+
+**Solution**: Either add missing variable or let the provider auto-extract:
+```python
+# Option 1: Add missing variable
+client.prompts.create(
+    prompt="Template with {{ var1 }} and {{ var2 }}",
+    variables=["var1", "var2"]
+)
+
+# Option 2: Let provider auto-extract (recommended)
+client.prompts.create(
+    prompt="Template with {{ var1 }} and {{ var2 }}"
+)
+```
+
+### Prompt Not Found
+
+**Error**: `Prompt pmpt_abc123... not found`
+
+**Possible causes**:
+1. Prompt ID is incorrect
+2. Prompt was deleted
+3. Wrong database or storage backend
+
+**Solution**: Verify prompt exists using `list()` method
+
+## Migration Guide
+
+### Migrating from Core Implementation
+
+If you're upgrading from an older Llama Stack version where prompts were in `core/prompts`:
+
+**Old code** (still works):
+```python
+from llama_stack.core.prompts import PromptServiceConfig, PromptServiceImpl
+```
+
+**New code** (recommended):
+```python
+from llama_stack.providers.inline.prompts.reference import ReferencePromptsConfig, PromptServiceImpl
+```
+
+**Note**: Backward compatibility is maintained. Old imports still work.
+
+### Data Migration
+
+No data migration needed when upgrading:
+- Same KVStore backend is used
+- Existing prompts remain accessible
+- Configuration structure is compatible
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `run_config` | `StackRunConfig` | Yes |  | Stack run configuration containing storage configuration for KVStore |
+
+## Sample Configuration
+
+```yaml
+run_config:
+  storage:
+    backends:
+      kv_default:
+        type: sqlite
+        db_path: ./prompts.db
+    stores:
+      prompts:
+        backend: kv_default
+        namespace: prompts
+```
