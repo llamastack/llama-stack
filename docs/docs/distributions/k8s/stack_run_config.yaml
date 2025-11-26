@@ -140,8 +140,6 @@ server:
   auth:
     provider_config:
       type: github_token
-telemetry:
-  enabled: true
 vector_stores:
   default_provider_id: chromadb
   default_embedding_model:
