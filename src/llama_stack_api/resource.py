@@ -20,6 +20,7 @@ class ResourceType(StrEnum):
     tool = "tool"
     tool_group = "tool_group"
     prompt = "prompt"
+    connector = "connector"
 
 
 class Resource(BaseModel):

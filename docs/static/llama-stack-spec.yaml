@@ -10114,6 +10114,78 @@ components:
       - chunk_id
       title: Chunk
       description: A chunk of content that can be inserted into a vector database.
+    Connector:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Unique identifier for this resource in llama stack
+        provider_resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Unique identifier for this resource in the provider
+        provider_id:
+          type: string
+          title: Provider Id
+          description: ID of the provider that owns this resource
+        type:
+          type: string
+          const: connector
+          title: Type
+          default: connector
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          type: string
+          title: Connector Id
+          description: Identifier for the connector
+        url:
+          type: string
+          title: Url
+          description: URL of the connector
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Timestamp of creation
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: Timestamp of last update
+        server_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Name of the server
+        server_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Label of the server
+        server_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Description of the server
+      type: object
+      required:
+      - identifier
+      - provider_id
+      - connector_id
+      - url
+      - created_at
+      - updated_at
+      title: Connector
+      description: A connector resource representing a connector registered in Llama Stack.
+    ConnectorType:
+      type: string
+      enum:
+      - mcp
+      title: ConnectorType
+      description: Type of connector.
     ConversationItemInclude:
       type: string
       enum:
@@ -10204,6 +10276,30 @@ components:
       - cancelled
       title: JobStatus
       description: Status of a job execution.
+    ListConnectorsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Connector'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListConnectorsResponse
+      description: Response containing a list of connectors.
+    ListToolsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ToolDef'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListToolsResponse
+      description: Response containing a list of tools.
     MCPListToolsTool:
       properties:
         input_schema:
@@ -11134,6 +11230,72 @@ components:
           type: string
       title: DialogType
       type: object
+    ToolGroupInput:
+      description: Input data for registering a tool group.
+      properties:
+        toolgroup_id:
+          title: Toolgroup Id
+          type: string
+        provider_id:
+          title: Provider Id
+          type: string
+        args:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        mcp_endpoint:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+            title: URL
+          - type: 'null'
+          nullable: true
+          title: URL
+      required:
+      - toolgroup_id
+      - provider_id
+      title: ToolGroupInput
+      type: object
+    ConnectorInput:
+      description: Input for creating a connector.
+      properties:
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Unique identifier for the connector
+          nullable: true
+        url:
+          description: URL of the connector
+          title: Url
+          type: string
+        server_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Label of the server
+          nullable: true
+        headers:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: HTTP headers to include when connecting
+          nullable: true
+        authorization:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: OAuth access token for authentication
+          nullable: true
+      required:
+      - url
+      title: ConnectorInput
+      type: object
     ConversationMessage:
       description: OpenAI-compatible message item for conversations.
       properties:
@@ -11218,33 +11380,6 @@ components:
       - items
       title: ConversationItemCreateRequest
       type: object
-    ToolGroupInput:
-      description: Input data for registering a tool group.
-      properties:
-        toolgroup_id:
-          title: Toolgroup Id
-          type: string
-        provider_id:
-          title: Provider Id
-          type: string
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          nullable: true
-          title: URL
-      required:
-      - toolgroup_id
-      - provider_id
-      title: ToolGroupInput
-      type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
       enum:
@@ -11269,6 +11404,7 @@ components:
       - files
       - prompts
       - conversations
+      - connectors
       - inspect
       title: Api
       type: string
