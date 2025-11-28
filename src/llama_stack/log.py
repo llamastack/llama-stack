@@ -57,6 +57,9 @@ UNCATEGORIZED = "uncategorized"
 # Initialize category levels with default level
 _category_levels: dict[str, int] = dict.fromkeys(CATEGORIES, DEFAULT_LOG_LEVEL)
 
+# Track which logger names map to which categories so we can update levels later
+_logger_categories: dict[str, str] = {}
+
 
 def config_to_category_levels(category: str, level: str):
     """
@@ -287,8 +290,11 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
             # Skip infrastructure loggers (uvicorn, fastapi) to preserve their configured levels
             if name.startswith(("uvicorn", "fastapi")):
                 continue
-            # Update llama_stack loggers if root level was explicitly set (e.g., via all=CRITICAL)
-            if name.startswith("llama_stack") and "root" in category_levels:
+            # Update loggers that were created (with a category) before setup_logging was called
+            if name in _logger_categories and _logger_categories[name] in _category_levels:
+                logger.setLevel(_category_levels[_logger_categories[name]])
+            # Update other llama_stack loggers (without a category) if root level was explicitly set (e.g., via all=CRITICAL)
+            elif name.startswith("llama_stack") and "root" in category_levels:
                 logger.setLevel(root_level)
             # Update third-party library loggers
             elif not name.startswith("llama_stack"):
@@ -316,6 +322,7 @@ def get_logger(
     logger = logging.getLogger(name)
     if category in _category_levels:
         log_level = _category_levels[category]
+        _logger_categories[name] = category
     else:
         root_category = category.split("::")[0]
         if root_category in _category_levels:
@@ -327,5 +334,6 @@ def get_logger(
                     f"or add it to the CATEGORIES list. Available categories: {CATEGORIES}"
                 )
             log_level = _category_levels.get("root", DEFAULT_LOG_LEVEL)
+        _logger_categories[name] = root_category
     logger.setLevel(log_level)
     return logging.LoggerAdapter(logger, {"category": category})
