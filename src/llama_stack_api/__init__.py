@@ -66,6 +66,14 @@ from .common.type_system import (
     ParamType,
     StringType,
 )
+from .connectors import (
+    Connector,
+    ConnectorInput,
+    Connectors,
+    ConnectorType,
+    ListConnectorsResponse,
+    ListToolsResponse,
+)
 from .conversations import (
     Conversation,
     ConversationDeletedResource,
@@ -340,6 +348,12 @@ from .rag_tool import (
     RRFRanker,
     WeightedRanker,
 )
+from .registries import (
+    ListRegistriesResponse,
+    Registry,
+    RegistryInput,
+    RegistryType,
+)
 from .resource import Resource, ResourceType
 from .safety import (
     ModerationObject,
@@ -482,6 +496,10 @@ __all__ = [
     "CommonShieldFields",
     "CompletionInputType",
     "CompletionRequest",
+    "Connector",
+    "ConnectorInput",
+    "Connectors",
+    "ConnectorType",
     "Conversation",
     "ConversationDeletedResource",
     "ConversationItem",
@@ -556,6 +574,7 @@ __all__ = [
     "LLMRAGQueryGeneratorConfig",
     "ListBatchesResponse",
     "ListBenchmarksResponse",
+    "ListConnectorsResponse",
     "ListDatasetsResponse",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
@@ -565,11 +584,13 @@ __all__ = [
     "ListPostTrainingJobsResponse",
     "ListPromptsResponse",
     "ListProvidersResponse",
+    "ListRegistriesResponse",
     "ListRoutesResponse",
     "ListScoringFunctionsResponse",
     "ListShieldsResponse",
     "ListToolDefsResponse",
     "ListToolGroupsResponse",
+    "ListToolsResponse",
     "LogProbConfig",
     "LoraFinetuningConfig",
     "MCPListToolsTool",
@@ -753,6 +774,9 @@ __all__ = [
     "RRFRanker",
     "Ranker",
     "RegexParserScoringFnParams",
+    "Registry",
+    "RegistryType",
+    "RegistryInput",
     "RemoteProviderConfig",
     "RemoteProviderSpec",
     "RerankData",

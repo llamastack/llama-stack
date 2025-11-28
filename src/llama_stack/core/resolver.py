@@ -28,6 +28,7 @@ from llama_stack_api import (
     Batches,
     Benchmarks,
     BenchmarksProtocolPrivate,
+    Connectors,
     Conversations,
     DatasetIO,
     Datasets,
@@ -100,6 +101,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.files: Files,
         Api.prompts: Prompts,
         Api.conversations: Conversations,
+        Api.connectors: Connectors,
     }
 
     if external_apis:
