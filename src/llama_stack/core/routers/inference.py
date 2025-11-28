@@ -176,7 +176,7 @@ class InferenceRouter(Inference):
     async def openai_completion(
         self,
         params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[Any]:
         logger.debug(
             f"InferenceRouter.openai_completion: model={params.model}, stream={params.stream}, prompt={params.prompt}",
         )
@@ -185,9 +185,12 @@ class InferenceRouter(Inference):
         params.model = provider_resource_id
 
         if params.stream:
-            return await provider.openai_completion(params)
-            # TODO: Metrics do NOT work with openai_completion stream=True due to the fact
-            # that we do not return an AsyncIterator, our tests expect a stream of chunks we cannot intercept currently.
+            response_stream = await provider.openai_completion(params)
+            return self.wrap_completion_stream_with_metrics(
+                response=response_stream,
+                fully_qualified_model_id=request_model_id,
+                provider_id=provider.__provider_id__,
+            )
 
         response = await provider.openai_completion(params)
         response.model = request_model_id
@@ -412,16 +415,17 @@ class InferenceRouter(Inference):
                         completion_text += "".join(choice_data["content_parts"])
 
                     # Add metrics to the chunk
-                    if self.telemetry_enabled and hasattr(chunk, "usage") and chunk.usage:
-                        metrics = self._construct_metrics(
-                            prompt_tokens=chunk.usage.prompt_tokens,
-                            completion_tokens=chunk.usage.completion_tokens,
-                            total_tokens=chunk.usage.total_tokens,
-                            fully_qualified_model_id=fully_qualified_model_id,
-                            provider_id=provider_id,
-                        )
-                        for metric in metrics:
-                            enqueue_event(metric)
+                    if self.telemetry_enabled:
+                        if hasattr(chunk, "usage") and chunk.usage:
+                            metrics = self._construct_metrics(
+                                prompt_tokens=chunk.usage.prompt_tokens,
+                                completion_tokens=chunk.usage.completion_tokens,
+                                total_tokens=chunk.usage.total_tokens,
+                                fully_qualified_model_id=fully_qualified_model_id,
+                                provider_id=provider_id,
+                            )
+                            for metric in metrics:
+                                enqueue_event(metric)
 
                 yield chunk
         finally:
@@ -471,3 +475,31 @@ class InferenceRouter(Inference):
                 )
                 logger.debug(f"InferenceRouter.completion_response: {final_response}")
                 asyncio.create_task(self.store.store_chat_completion(final_response, messages))
+
+    async def wrap_completion_stream_with_metrics(
+        self,
+        response: AsyncIterator,
+        fully_qualified_model_id: str,
+        provider_id: str,
+    ) -> AsyncIterator:
+        """Stream OpenAI completion chunks and compute metrics on final chunk."""
+
+        async for chunk in response:
+            if hasattr(chunk, "model"):
+                chunk.model = fully_qualified_model_id
+
+            if getattr(chunk, "choices", None) and any(c.finish_reason for c in chunk.choices):
+                if self.telemetry_enabled:
+                    if getattr(chunk, "usage", None):
+                        usage = chunk.usage
+                        metrics = self._construct_metrics(
+                            prompt_tokens=usage.prompt_tokens,
+                            completion_tokens=usage.completion_tokens,
+                            total_tokens=usage.total_tokens,
+                            fully_qualified_model_id=fully_qualified_model_id,
+                            provider_id=provider_id,
+                        )
+                        for metric in metrics:
+                            enqueue_event(metric)
+
+            yield chunk
