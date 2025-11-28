@@ -3887,6 +3887,41 @@ paths:
             schema:
               $ref: '#/components/schemas/SupervisedFineTuneRequest'
         required: true
+  /v1alpha/file-processors/process:
+    post:
+      responses:
+        '200':
+          description: ProcessedContent with extracted text, optional chunks, and metadata.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessedContent'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - File Processors
+      summary: Process File
+      description: |-
+        Process a file into structured content with optional chunking and embeddings.
+
+        This method processes raw file data and converts it into text content for applications such as vector store ingestion.
+      operationId: process_file_v1alpha_file_processors_process_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProcessFileRequest'
+        required: true
 components:
   schemas:
     Error:
@@ -12076,6 +12111,73 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ProcessFileRequest:
+      properties:
+        file_data:
+          type: string
+          format: binary
+          title: File Data
+        filename:
+          type: string
+          title: Filename
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        chunking_strategy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              title: VectorStoreChunkingStrategyAuto
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              title: VectorStoreChunkingStrategyStatic
+            discriminator:
+              propertyName: type
+              mapping:
+                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          - type: 'null'
+          title: Chunking Strategy
+        include_embeddings:
+          type: boolean
+          title: Include Embeddings
+          default: false
+      type: object
+      required:
+      - file_data
+      - filename
+      title: ProcessFileRequest
+    ProcessedContent:
+      properties:
+        content:
+          type: string
+          title: Content
+        chunks:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/Chunk-Output'
+            type: array
+          - type: 'null'
+        embeddings:
+          anyOf:
+          - items:
+              items:
+                type: number
+              type: array
+            type: array
+          - type: 'null'
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+      type: object
+      required:
+      - content
+      - metadata
+      title: ProcessedContent
+      description: Result of file processing operation.
     SearchRankingOptions:
       properties:
         ranker:
@@ -12903,6 +13005,7 @@ components:
       - benchmarks
       - tool_groups
       - files
+      - file_processors
       - prompts
       - conversations
       - inspect

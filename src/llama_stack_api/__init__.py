@@ -112,6 +112,7 @@ from .datatypes import (
     VectorStoresProtocolPrivate,
 )
 from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
+from .file_processors import FileProcessors, ProcessedContent, ProcessFileRequest
 from .files import (
     ExpiresAfter,
     Files,
@@ -518,6 +519,7 @@ __all__ = [
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",
+    "FileProcessors",
     "Files",
     "Fp8QuantizationConfig",
     "clear_dynamic_schema_types",
@@ -725,6 +727,8 @@ __all__ = [
     "ParamType",
     "parse_type",
     "PostTraining",
+    "ProcessedContent",
+    "ProcessFileRequest",
     "PostTrainingMetric",
     "PostTrainingJob",
     "PostTrainingJobArtifactsResponse",
