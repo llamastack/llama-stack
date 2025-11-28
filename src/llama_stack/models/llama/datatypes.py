@@ -31,7 +31,7 @@ class BuiltinTool(Enum):
 
 
 Primitive = str | int | float | bool | None
-RecursiveType = Primitive | list[Primitive] | dict[str, Primitive]
+type RecursiveType = Primitive | list[RecursiveType] | dict[str, RecursiveType]
 
 
 class ToolCall(BaseModel):
