@@ -607,11 +607,14 @@ class OpenAIVectorStoreMixin(ABC):
                 if ranking_options and ranking_options.score_threshold is not None
                 else 0.0
             )
+
             params = {
                 "max_chunks": max_num_results * CHUNK_MULTIPLIER,
                 "score_threshold": score_threshold,
                 "mode": search_mode,
+                "rewrite_query": rewrite_query,
             }
+
             # TODO: Add support for ranking_options.ranker
 
             response = await self.query_chunks(
