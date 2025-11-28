@@ -378,6 +378,91 @@ paths:
           type: string
         description: 'Path parameter: identifier'
       deprecated: true
+  /v1/tool-runtime/invoke:
+    post:
+      responses:
+        '200':
+          description: A ToolInvocationResult.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolInvocationResult'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Tool Runtime
+      summary: Invoke Tool
+      description: Run a tool with the given arguments.
+      operationId: invoke_tool_v1_tool_runtime_invoke_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvokeToolRequest'
+        required: true
+      deprecated: true
+  /v1/tool-runtime/list-tools:
+    get:
+      responses:
+        '200':
+          description: A ListToolDefsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolDefsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Tool Runtime
+      summary: List Runtime Tools
+      description: List all tools in the runtime.
+      operationId: list_runtime_tools_v1_tool_runtime_list_tools_get
+      parameters:
+      - name: authorization
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: tool_group_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Tool Group Id
+      - name: mcp_endpoint
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+          - type: 'null'
+          title: Mcp Endpoint
+      deprecated: true
   /v1/toolgroups:
     get:
       responses:
@@ -404,6 +489,7 @@ paths:
       summary: List Tool Groups
       description: List tool groups with optional provider.
       operationId: list_tool_groups_v1_toolgroups_get
+      deprecated: true
     post:
       responses:
         '400':
@@ -465,6 +551,7 @@ paths:
         schema:
           type: string
         description: 'Path parameter: toolgroup_id'
+      deprecated: true
     delete:
       responses:
         '400':
@@ -493,6 +580,76 @@ paths:
         schema:
           type: string
         description: 'Path parameter: toolgroup_id'
+      deprecated: true
+  /v1/tools:
+    get:
+      responses:
+        '200':
+          description: A ListToolDefsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolDefsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Tool Groups
+      summary: List Tools
+      description: List tools with optional tool group.
+      operationId: list_tools_v1_tools_get
+      parameters:
+      - name: toolgroup_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Toolgroup Id
+      deprecated: true
+  /v1/tools/{tool_name}:
+    get:
+      responses:
+        '200':
+          description: A ToolDef.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolDef'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Tool Groups
+      summary: Get Tool
+      description: Get a tool by its name.
+      operationId: get_tool_v1_tools__tool_name__get
+      parameters:
+      - name: tool_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: tool_name'
       deprecated: true
   /v1beta/datasets:
     get:
