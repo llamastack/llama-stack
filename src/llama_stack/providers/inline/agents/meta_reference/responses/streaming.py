@@ -8,6 +8,8 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
+from openai.types.chat import ChatCompletionToolParam
+
 from llama_stack.core.telemetry import tracing
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
@@ -22,6 +24,10 @@ from llama_stack_api import (
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
+    OpenAIChatCompletionToolChoice,
+    OpenAIChatCompletionToolChoiceAllowedTools,
+    OpenAIChatCompletionToolChoiceCustomTool,
+    OpenAIChatCompletionToolChoiceFunctionTool,
     OpenAIChoice,
     OpenAIMessageParam,
     OpenAIResponseContentPartOutputText,
@@ -29,6 +35,14 @@ from llama_stack_api import (
     OpenAIResponseContentPartRefusal,
     OpenAIResponseError,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
+    OpenAIResponseInputToolChoiceAllowedTools,
+    OpenAIResponseInputToolChoiceCustomTool,
+    OpenAIResponseInputToolChoiceFileSearch,
+    OpenAIResponseInputToolChoiceFunctionTool,
+    OpenAIResponseInputToolChoiceMCPTool,
+    OpenAIResponseInputToolChoiceMode,
+    OpenAIResponseInputToolChoiceWebSearch,
     OpenAIResponseInputToolMCP,
     OpenAIResponseMCPApprovalRequest,
     OpenAIResponseMessage,
@@ -74,6 +88,7 @@ from llama_stack_api import (
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
     convert_chat_choice_to_response_message,
+    convert_mcp_tool_choice,
     is_function_tool_call,
     run_guardrails,
 )
@@ -140,6 +155,13 @@ class StreamingResponseOrchestrator:
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
             ctx.tool_context.previous_tools if ctx.tool_context else {}
         )
+        # Reverse mapping: server_label -> list of tool names for efficient lookup
+        self.server_label_to_tools: dict[str, list[str]] = {}
+        # Build initial reverse mapping from previous_tools
+        for tool_name, mcp_server in self.mcp_tool_to_server.items():
+            if mcp_server.server_label not in self.server_label_to_tools:
+                self.server_label_to_tools[mcp_server.server_label] = []
+            self.server_label_to_tools[mcp_server.server_label].append(tool_name)
         # Track final messages after all tool executions
         self.final_messages: list[OpenAIMessageParam] = []
         # mapping for annotations
@@ -191,6 +213,7 @@ class StreamingResponseOrchestrator:
             output=self._clone_outputs(outputs),
             text=self.text,
             tools=self.ctx.available_tools(),
+            tool_choice=self.ctx.responses_tool_choice,
             error=error,
             usage=self.accumulated_usage,
             instructions=self.instructions,
@@ -225,6 +248,18 @@ class StreamingResponseOrchestrator:
         async for stream_event in self._process_tools(output_messages):
             yield stream_event
 
+        if self.ctx.responses_tool_choice and len(self.ctx.chat_tools) > 0:
+            chat_tool_choice = await _process_tool_choice(
+                self.ctx.chat_tools,
+                self.ctx.responses_tool_choice,
+                self.server_label_to_tools,
+            )
+            # chat_tool_choice can be str, dict-like object, or None
+            if isinstance(chat_tool_choice, str | type(None)):
+                self.ctx.chat_tool_choice = chat_tool_choice
+            else:
+                self.ctx.chat_tool_choice = chat_tool_choice.model_dump()
+
         n_iter = 0
         messages = self.ctx.messages.copy()
         final_status = "completed"
@@ -244,6 +279,7 @@ class StreamingResponseOrchestrator:
                     messages=messages,
                     # Pydantic models are dict-compatible but mypy treats them as distinct types
                     tools=self.ctx.chat_tools,  # type: ignore[arg-type]
+                    tool_choice=self.ctx.chat_tool_choice,
                     stream=True,
                     temperature=self.ctx.temperature,
                     response_format=response_format,
@@ -320,6 +356,10 @@ class StreamingResponseOrchestrator:
                     break
 
                 n_iter += 1
+                # After first iteration, reset tool_choice to "auto" to let model decide freely
+                # based on tool results (prevents infinite loops when forcing specific tools)
+                if n_iter == 1 and self.ctx.chat_tool_choice:
+                    self.ctx.chat_tool_choice = "auto"
                 if n_iter >= self.max_infer_iters:
                     logger.info(
                         f"Exiting inference loop since iteration count({n_iter}) exceeds {self.max_infer_iters=}"
@@ -1137,6 +1177,11 @@ class StreamingResponseOrchestrator:
                         raise ValueError(f"Duplicate tool name {t.name} found for server {mcp_tool.server_label}")
                     self.mcp_tool_to_server[t.name] = mcp_tool
 
+                    # Add to reverse mapping for efficient server_label lookup
+                    if mcp_tool.server_label not in self.server_label_to_tools:
+                        self.server_label_to_tools[mcp_tool.server_label] = []
+                    self.server_label_to_tools[mcp_tool.server_label].append(t.name)
+
                     # Add to MCP list message
                     mcp_list_message.tools.append(
                         MCPListToolsTool(
@@ -1276,3 +1321,112 @@ class StreamingResponseOrchestrator:
 
         async for stream_event in self._add_mcp_list_tools(mcp_list_message, output_messages):
             yield stream_event
+
+
+async def _process_tool_choice(
+    chat_tools: list[ChatCompletionToolParam],
+    responses_tool_choice: OpenAIResponseInputToolChoice,
+    server_label_to_tools: dict[str, list[str]],
+) -> str | OpenAIChatCompletionToolChoice | None:
+    """Process and validate the OpenAI Responses tool choice and return the appropriate chat completion tool choice object.
+
+    :param chat_tools: The list of chat tools to enforce tool choice against.
+    :param responses_tool_choice: The OpenAI Responses tool choice to process.
+    :param server_label_to_tools: A dictionary mapping server labels to the list of tools available on that server.
+    :return: The appropriate chat completion tool choice object.
+    """
+
+    # retrieve all function tool names from the chat tools
+    # Note: chat_tools contains dicts, not objects
+    chat_tool_names = [tool["function"]["name"] for tool in chat_tools if tool["type"] == "function"]
+
+    if isinstance(responses_tool_choice, OpenAIResponseInputToolChoiceMode):
+        if responses_tool_choice.value == "required":
+            if len(chat_tool_names) == 0:
+                return None
+
+            # add all function tools to the allowed tools list and set mode to required
+            return OpenAIChatCompletionToolChoiceAllowedTools(
+                tools=[{"type": "function", "function": {"name": tool}} for tool in chat_tool_names],
+                mode="required",
+            )
+        # return other modes as is
+        return responses_tool_choice.value
+
+    elif isinstance(responses_tool_choice, OpenAIResponseInputToolChoiceAllowedTools):
+        # ensure that specified tool choices are available in the chat tools, if not, remove them from the list
+        final_tools = []
+        for tool in responses_tool_choice.tools:
+            match tool.get("type"):
+                case "function":
+                    final_tools.append({"type": "function", "function": {"name": tool.get("name")}})
+                case "custom":
+                    final_tools.append({"type": "custom", "custom": {"name": tool.get("name")}})
+                case "mcp":
+                    mcp_tools = convert_mcp_tool_choice(
+                        chat_tool_names, tool.get("server_label"), server_label_to_tools, None
+                    )
+                    # convert_mcp_tool_choice can return a dict, list, or None
+                    if isinstance(mcp_tools, list):
+                        final_tools.extend(mcp_tools)
+                    elif isinstance(mcp_tools, dict):
+                        final_tools.append(mcp_tools)
+                    # Skip if None or empty
+                case "file_search":
+                    final_tools.append({"type": "function", "function": {"name": "file_search"}})
+                case _ if tool["type"] in WebSearchToolTypes:
+                    final_tools.append({"type": "function", "function": {"name": "web_search"}})
+                case _:
+                    logger.warning(f"Unsupported tool type: {tool['type']}, skipping tool choice enforcement for it")
+                    continue
+
+        return OpenAIChatCompletionToolChoiceAllowedTools(
+            tools=final_tools,
+            mode=responses_tool_choice.mode,
+        )
+
+    else:
+        # Handle specific tool choice by type
+        # Each case validates the tool exists in chat_tools before returning
+        tool_name = getattr(responses_tool_choice, "name", None)
+        match responses_tool_choice:
+            case OpenAIResponseInputToolChoiceCustomTool():
+                if tool_name and tool_name not in chat_tool_names:
+                    logger.warning(f"Tool {tool_name} not found in chat tools")
+                    return None
+                return OpenAIChatCompletionToolChoiceCustomTool(name=tool_name)
+
+            case OpenAIResponseInputToolChoiceFunctionTool():
+                if tool_name and tool_name not in chat_tool_names:
+                    logger.warning(f"Tool {tool_name} not found in chat tools")
+                    return None
+                return OpenAIChatCompletionToolChoiceFunctionTool(name=tool_name)
+
+            case OpenAIResponseInputToolChoiceFileSearch():
+                if "file_search" not in chat_tool_names:
+                    logger.warning("Tool file_search not found in chat tools")
+                    return None
+                return OpenAIChatCompletionToolChoiceFunctionTool(name="file_search")
+
+            case OpenAIResponseInputToolChoiceWebSearch():
+                if "web_search" not in chat_tool_names:
+                    logger.warning("Tool web_search not found in chat tools")
+                    return None
+                return OpenAIChatCompletionToolChoiceFunctionTool(name="web_search")
+
+            case OpenAIResponseInputToolChoiceMCPTool():
+                tool_choice = convert_mcp_tool_choice(
+                    chat_tool_names,
+                    responses_tool_choice.server_label,
+                    server_label_to_tools,
+                    tool_name,
+                )
+                if isinstance(tool_choice, dict):
+                    # for single tool choice, return as function tool choice
+                    return OpenAIChatCompletionToolChoiceFunctionTool(name=tool_choice["function"]["name"])
+                elif isinstance(tool_choice, list):
+                    # for multiple tool choices, return as allowed tools
+                    return OpenAIChatCompletionToolChoiceAllowedTools(
+                        tools=tool_choice,
+                        mode="required",
+                    )
