@@ -74,6 +74,14 @@ from .common.type_system import (
     ParamType,
     StringType,
 )
+from .connectors import (
+    Connector,
+    ConnectorInput,
+    Connectors,
+    ConnectorType,
+    ListConnectorsResponse,
+    ListToolsResponse,
+)
 from .conversations import (
     Conversation,
     ConversationDeletedResource,
@@ -493,6 +501,10 @@ __all__ = [
     "CommonShieldFields",
     "CompletionInputType",
     "CompletionRequest",
+    "Connector",
+    "ConnectorInput",
+    "Connectors",
+    "ConnectorType",
     "Conversation",
     "ConversationDeletedResource",
     "ConversationItem",
@@ -568,6 +580,7 @@ __all__ = [
     "ListBatchesResponse",
     "RetrieveBatchRequest",
     "ListBenchmarksResponse",
+    "ListConnectorsResponse",
     "ListDatasetsResponse",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
@@ -582,6 +595,7 @@ __all__ = [
     "ListShieldsResponse",
     "ListToolDefsResponse",
     "ListToolGroupsResponse",
+    "ListToolsResponse",
     "LogProbConfig",
     "LoraFinetuningConfig",
     "MCPListToolsTool",
