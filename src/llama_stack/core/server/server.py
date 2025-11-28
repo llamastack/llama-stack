@@ -288,7 +288,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
                 if test_context_token is not None and reset_test_context_fn is not None:
                     reset_test_context_fn(test_context_token)
 
-    sig = inspect.signature(func)
+    sig = inspect.signature(func, eval_str=True)
 
     new_params = [inspect.Parameter("request", inspect.Parameter.POSITIONAL_OR_KEYWORD, annotation=Request)]
     new_params.extend(sig.parameters.values())
