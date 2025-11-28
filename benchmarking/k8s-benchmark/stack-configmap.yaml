@@ -9,7 +9,6 @@ data:
     - inference
     - files
     - safety
-    - telemetry
     - tool_runtime
     - vector_io
     providers:
@@ -67,12 +66,6 @@ data:
             db: ${env.POSTGRES_DB:=llamastack}
             user: ${env.POSTGRES_USER:=llamastack}
             password: ${env.POSTGRES_PASSWORD:=llamastack}
-      telemetry:
-      - provider_id: meta-reference
-        provider_type: inline::meta-reference
-        config:
-          service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
-          sinks: ${env.TELEMETRY_SINKS:=console}
       tool_runtime:
       - provider_id: brave-search
         provider_type: remote::brave-search

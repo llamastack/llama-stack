@@ -8,7 +8,6 @@ from collections.abc import AsyncIterator, Iterable
 
 from openai import AuthenticationError
 
-from llama_stack.core.telemetry.tracing import get_current_span
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
@@ -84,7 +83,7 @@ class BedrockInferenceAdapter(OpenAIMixin):
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """Override to enable streaming usage metrics and handle authentication errors."""
         # Enable streaming usage metrics when telemetry is active
-        if params.stream and get_current_span() is not None:
+        if params.stream:
             if params.stream_options is None:
                 params.stream_options = {"include_usage": True}
             elif "include_usage" not in params.stream_options:
