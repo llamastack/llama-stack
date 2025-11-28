@@ -9,7 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack_api import ListPromptsResponse, Prompt, Prompts
 
@@ -20,7 +20,7 @@ class PromptServiceConfig(BaseModel):
     :param run_config: Stack run configuration containing distribution info
     """
 
-    run_config: StackRunConfig
+    config: StackConfig
 
 
 async def get_provider_impl(config: PromptServiceConfig, deps: dict[Any, Any]):
@@ -40,7 +40,7 @@ class PromptServiceImpl(Prompts):
 
     async def initialize(self) -> None:
         # Use prompts store reference from run config
-        prompts_ref = self.config.run_config.storage.stores.prompts
+        prompts_ref = self.config.config.storage.stores.prompts
         if not prompts_ref:
             raise ValueError("storage.stores.prompts must be configured in run config")
         self.kvstore = await kvstore_impl(prompts_ref)

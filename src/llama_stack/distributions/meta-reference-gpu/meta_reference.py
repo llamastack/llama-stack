@@ -105,7 +105,7 @@ def get_distribution_template() -> DistributionTemplate:
         template_path=Path(__file__).parent / "doc_template.md",
         providers=providers,
         run_configs={
-            "run.yaml": RunConfigSettings(
+            "config.yaml": RunConfigSettings(
                 provider_overrides={
                     "inference": [inference_provider, embedding_provider],
                     "vector_io": [vector_io_provider],

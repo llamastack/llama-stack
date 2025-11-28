@@ -16,7 +16,7 @@ from termcolor import cprint
 from llama_stack.core.datatypes import (
     BuildConfig,
     Provider,
-    StackRunConfig,
+    StackConfig,
     StorageConfig,
 )
 from llama_stack.core.distribution import get_provider_registry
@@ -57,11 +57,11 @@ def generate_run_config(
     image_name: str,
 ) -> Path:
     """
-    Generate a run.yaml template file for user to edit from a build.yaml file
+    Generate a config.yaml template file for user to edit from a build.yaml file
     """
     apis = list(build_config.distribution_spec.providers.keys())
     distro_dir = DISTRIBS_BASE_DIR / image_name
-    run_config = StackRunConfig(
+    run_config = StackConfig(
         container_image=(image_name if build_config.image_type == LlamaStackImageType.CONTAINER.value else None),
         image_name=image_name,
         apis=apis,
@@ -123,7 +123,7 @@ def generate_run_config(
             )
             run_config.providers[api].append(p_spec)
 
-    run_config_file = build_dir / f"{image_name}-run.yaml"
+    run_config_file = build_dir / f"{image_name}-config.yaml"
 
     with open(run_config_file, "w") as f:
         to_write = json.loads(run_config.model_dump_json())
@@ -131,7 +131,7 @@ def generate_run_config(
 
     # Only print this message for non-container builds since it will be displayed before the
     # container is built
-    # For non-container builds, the run.yaml is generated at the very end of the build process so it
+    # For non-container builds, the config.yaml is generated at the very end of the build process so it
     # makes sense to display this message
     if build_config.image_type != LlamaStackImageType.CONTAINER.value:
         cprint(f"You can now run your stack with `llama stack run {run_config_file}`", color="green", file=sys.stderr)

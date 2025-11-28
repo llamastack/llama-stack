@@ -29,7 +29,7 @@ The only difference vs. the `tgi` distribution is that it runs the Dell-TGI serv
 ```
 $ cd distributions/dell-tgi/
 $ ls
-compose.yaml  README.md  run.yaml
+compose.yaml  README.md  config.yaml
 $ docker compose up
 ```
 
@@ -65,10 +65,10 @@ registry.dell.huggingface.co/enterprise-dell-inference-meta-llama-meta-llama-3.1
 #### Start Llama Stack server pointing to TGI server
 
 ```
-docker run --pull always --network host -it -p 8321:8321 -v ./run.yaml:/root/my-run.yaml --gpus=all llamastack/distribution-tgi --yaml_config /root/my-run.yaml
+docker run --pull always --network host -it -p 8321:8321 -v ./config.yaml:/root/my-config.yaml --gpus=all llamastack/distribution-tgi --yaml_config /root/my-config.yaml
 ```
 
-Make sure in you `run.yaml` file, you inference provider is pointing to the correct TGI server endpoint. E.g.
+Make sure in you `config.yaml` file, you inference provider is pointing to the correct TGI server endpoint. E.g.
 ```
 inference:
   - provider_id: tgi0

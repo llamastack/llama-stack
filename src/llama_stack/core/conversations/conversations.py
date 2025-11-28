@@ -10,7 +10,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, TypeAdapter
 
-from llama_stack.core.datatypes import AccessRule, StackRunConfig
+from llama_stack.core.datatypes import AccessRule, StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
@@ -36,7 +36,7 @@ class ConversationServiceConfig(BaseModel):
     :param policy: Access control rules
     """
 
-    run_config: StackRunConfig
+    config: StackConfig
     policy: list[AccessRule] = []
 
 
@@ -56,7 +56,7 @@ class ConversationServiceImpl(Conversations):
         self.policy = config.policy
 
         # Use conversations store reference from run config
-        conversations_ref = config.run_config.storage.stores.conversations
+        conversations_ref = config.config.storage.stores.conversations
         if not conversations_ref:
             raise ValueError("storage.stores.conversations must be configured in run config")
 

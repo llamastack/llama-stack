@@ -151,7 +151,7 @@ def pytest_addoption(parser):
             """
             a 'pointer' to the stack. this can be either be:
             (a) a template name like `starter`, or
-            (b) a path to a run.yaml file, or
+            (b) a path to a config.yaml file, or
             (c) an adhoc config spec, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`, or
             (d) a server config like `server:ci-tests`, or
             (e) a docker config like `docker:ci-tests` (builds and runs container)

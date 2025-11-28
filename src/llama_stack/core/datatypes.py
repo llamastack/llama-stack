@@ -490,7 +490,7 @@ class ServerConfig(BaseModel):
     )
 
 
-class StackRunConfig(BaseModel):
+class StackConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
     image_name: str = Field(
@@ -517,6 +517,7 @@ can be instantiated multiple times (with different configs) if necessary.
 """,
     )
     storage: StorageConfig = Field(
+        default_factory=StorageConfig,
         description="Catalog of named storage backends and references available to the stack",
     )
 
@@ -564,7 +565,7 @@ can be instantiated multiple times (with different configs) if necessary.
         return v
 
     @model_validator(mode="after")
-    def validate_server_stores(self) -> "StackRunConfig":
+    def validate_server_stores(self) -> "StackConfig":
         backend_map = self.storage.backends
         stores = self.storage.stores
         kv_backends = {
@@ -624,10 +625,6 @@ class BuildConfig(BaseModel):
         default=None,
         description="Path to directory containing external provider implementations. The providers packages will be resolved from this directory. "
         "pip_packages MUST contain the provider package name.",
-    )
-    additional_pip_packages: list[str] = Field(
-        default_factory=list,
-        description="Additional pip packages to install in the distribution. These packages will be installed in the distribution environment.",
     )
     external_apis_dir: Path | None = Field(
         default=None,

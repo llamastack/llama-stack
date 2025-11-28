@@ -51,7 +51,7 @@ results = await client.vector_stores.search(
 
 > **Note**: For detailed configuration examples and options, see [Configuration Examples](../openai_file_operations_support.md#configuration-examples) in the full documentation.
 
-**Basic Setup**: Configure vector_io and files providers in your run.yaml
+**Basic Setup**: Configure vector_io and files providers in your config.yaml
 
 ## Common Use Cases
 

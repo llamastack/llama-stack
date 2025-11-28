@@ -46,7 +46,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
     async def initialize(self) -> None:
         if not self.config.base_url:
             raise ValueError(
-                "You must provide a URL in run.yaml (or via the VLLM_URL environment variable) to use vLLM."
+                "You must provide a URL in config.yaml (or via the VLLM_URL environment variable) to use vLLM."
             )
 
     async def health(self) -> HealthResponse:

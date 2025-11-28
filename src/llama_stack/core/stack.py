@@ -14,7 +14,7 @@ from typing import Any
 import yaml
 
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig
+from llama_stack.core.datatypes import Provider, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -108,7 +108,7 @@ REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
 
-async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
+async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
     for rsrc, api, register_method, list_method in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
@@ -341,7 +341,7 @@ def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
     return config_dict
 
 
-def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConfig) -> None:
+def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> None:
     """Add internal implementations (inspect and providers) to the implementations dictionary.
 
     Args:
@@ -349,31 +349,31 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
         run_config: Stack run configuration
     """
     inspect_impl = DistributionInspectImpl(
-        DistributionInspectConfig(run_config=run_config),
+        DistributionInspectConfig(config=config),
         deps=impls,
     )
     impls[Api.inspect] = inspect_impl
 
     providers_impl = ProviderImpl(
-        ProviderImplConfig(run_config=run_config),
+        ProviderImplConfig(config=config),
         deps=impls,
     )
     impls[Api.providers] = providers_impl
 
     prompts_impl = PromptServiceImpl(
-        PromptServiceConfig(run_config=run_config),
+        PromptServiceConfig(config=config),
         deps=impls,
     )
     impls[Api.prompts] = prompts_impl
 
     conversations_impl = ConversationServiceImpl(
-        ConversationServiceConfig(run_config=run_config),
+        ConversationServiceConfig(config=config),
         deps=impls,
     )
     impls[Api.conversations] = conversations_impl
 
 
-def _initialize_storage(run_config: StackRunConfig):
+def _initialize_storage(run_config: StackConfig):
     kv_backends: dict[str, StorageBackendConfig] = {}
     sql_backends: dict[str, StorageBackendConfig] = {}
     for backend_name, backend_config in run_config.storage.backends.items():
@@ -393,7 +393,7 @@ def _initialize_storage(run_config: StackRunConfig):
 
 
 class Stack:
-    def __init__(self, run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None):
+    def __init__(self, run_config: StackConfig, provider_registry: ProviderRegistry | None = None):
         self.run_config = run_config
         self.provider_registry = provider_registry
         self.impls = None
@@ -499,20 +499,20 @@ async def refresh_registry_task(impls: dict[Api, Any]):
         await asyncio.sleep(REGISTRY_REFRESH_INTERVAL_SECONDS)
 
 
-def get_stack_run_config_from_distro(distro: str) -> StackRunConfig:
-    distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/run.yaml"
+def get_stack_run_config_from_distro(distro: str) -> StackConfig:
+    distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/config.yaml"
 
     with importlib.resources.as_file(distro_path) as path:
         if not path.exists():
             raise ValueError(f"Distribution '{distro}' not found at {distro_path}")
         run_config = yaml.safe_load(path.open())
 
-    return StackRunConfig(**replace_env_vars(run_config))
+    return StackConfig(**replace_env_vars(run_config))
 
 
 def run_config_from_adhoc_config_spec(
     adhoc_config_spec: str, provider_registry: ProviderRegistry | None = None
-) -> StackRunConfig:
+) -> StackConfig:
     """
     Create an adhoc distribution from a list of API providers.
 
@@ -552,7 +552,7 @@ def run_config_from_adhoc_config_spec(
                 config=provider_config,
             )
         ]
-    config = StackRunConfig(
+    config = StackConfig(
         image_name="distro-test",
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
