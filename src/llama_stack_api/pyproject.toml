@@ -24,6 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = [
+    "fastapi>=0.115.0,<1.0",
     "pydantic>=2.11.9",
     "jsonschema",
     "opentelemetry-sdk>=1.30.0",
