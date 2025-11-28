@@ -3893,6 +3893,212 @@ paths:
             schema:
               $ref: '#/components/schemas/SupervisedFineTuneRequest'
         required: true
+  /v1alpha/connectors/{connector_id}:
+    get:
+      responses:
+        '200':
+          description: A Connector.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connector'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Connectors
+      summary: Get Connector
+      description: Get a connector by its ID.
+      operationId: get_connector_v1alpha_connectors__connector_id__get
+      parameters:
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: connector_id'
+  /v1alpha/connectors/{connector_id}/tools/{tool_name}:
+    get:
+      responses:
+        '200':
+          description: A MCPListToolsTool.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MCPListToolsTool'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Connectors
+      summary: Get Connector Tool
+      description: Get a tool definition by its name from a connector.
+      operationId: get_connector_tool_v1alpha_connectors__connector_id__tools__tool_name__get
+      parameters:
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: connector_id'
+      - name: tool_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: tool_name'
+  /v1alpha/connectors/registries/{registry_id}:
+    get:
+      responses:
+        '200':
+          description: A Registry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registry'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Connectors
+      summary: Get Registry
+      description: Get a registry by its ID.
+      operationId: get_registry_v1alpha_connectors_registries__registry_id__get
+      parameters:
+      - name: registry_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: registry_id'
+  /v1alpha/connectors/{connector_id}/tools:
+    get:
+      responses:
+        '200':
+          description: A ListToolsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolsResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Connectors
+      summary: List Connector Tools
+      description: List tools available from a connector.
+      operationId: list_connector_tools_v1alpha_connectors__connector_id__tools_get
+      parameters:
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: connector_id'
+  /v1alpha/connectors:
+    get:
+      responses:
+        '200':
+          description: A ListConnectorsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListConnectorsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Connectors
+      summary: List Connectors
+      description: List all configured connectors.
+      operationId: list_connectors_v1alpha_connectors_get
+      parameters:
+      - name: include_tools
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Include Tools
+      - name: registry_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Registry Id
+  /v1alpha/connectors/registries:
+    get:
+      responses:
+        '200':
+          description: A ListRegistriesResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRegistriesResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Connectors
+      summary: List Registries
+      description: List all registries.
+      operationId: list_registries_v1alpha_connectors_registries_get
 components:
   schemas:
     Error:
@@ -11618,6 +11824,90 @@ components:
       - chunk_id
       title: Chunk
       description: A chunk of content that can be inserted into a vector database.
+    Connector:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Unique identifier for this resource in llama stack
+        provider_resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Unique identifier for this resource in the provider
+        provider_id:
+          type: string
+          title: Provider Id
+          description: ID of the provider that owns this resource
+        type:
+          type: string
+          const: connector
+          title: Type
+          default: connector
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: User-specified identifier for the connector
+        url:
+          type: string
+          title: Url
+          description: URL of the connector
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Timestamp of creation
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: Timestamp of last update
+        server_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Name of the server
+        server_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Label of the server
+        server_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Description of the server
+        tools:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/MCPListToolsTool'
+            type: array
+          - type: 'null'
+          description: List of tools available from the connector
+        registry_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID of the registry this connector belongs to
+      type: object
+      required:
+      - identifier
+      - provider_id
+      - url
+      - created_at
+      - updated_at
+      title: Connector
+      description: A connector resource representing a connector registered in Llama Stack.
+    ConnectorType:
+      type: string
+      enum:
+      - mcp
+      title: ConnectorType
+      description: Type of connector.
     ConversationItemInclude:
       type: string
       enum:
@@ -11708,6 +11998,42 @@ components:
       - cancelled
       title: JobStatus
       description: Status of a job execution.
+    ListConnectorsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Connector'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListConnectorsResponse
+      description: Response containing a list of connectors.
+    ListRegistriesResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Registry'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListRegistriesResponse
+      description: Response containing a list of registries.
+    ListToolsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/MCPListToolsTool'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListToolsResponse
+      description: Response containing a list of tools.
     MCPListToolsTool:
       properties:
         input_schema:
@@ -12100,6 +12426,63 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    Registry:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Unique identifier for this resource in llama stack
+        provider_resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Unique identifier for this resource in the provider
+        provider_id:
+          type: string
+          title: Provider Id
+          description: ID of the provider that owns this resource
+        type:
+          type: string
+          const: registry
+          title: Type
+          default: registry
+        registry_type:
+          $ref: '#/components/schemas/RegistryType'
+          default: mcp
+        user_registry_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: User-specified identifier for the registry
+        url:
+          type: string
+          title: Url
+          description: URL of the registry
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+          description: Timestamp of creation
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+          description: Timestamp of last update
+      type: object
+      required:
+      - identifier
+      - provider_id
+      - url
+      - created_at
+      - updated_at
+      title: Registry
+      description: A registry resource representing a registry of connectors.
+    RegistryType:
+      type: string
+      enum:
+      - mcp
+      title: RegistryType
+      description: Type of registry.
     SearchRankingOptions:
       properties:
         ranker:
@@ -12573,6 +12956,45 @@ components:
           type: string
       title: DialogType
       type: object
+    RegistryInput:
+      description: Input for creating a registry.
+      properties:
+        url:
+          title: Url
+          type: string
+        user_registry_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: User-specified identifier for the registry
+          nullable: true
+        registry_type:
+          $ref: '#/components/schemas/RegistryType'
+          default: mcp
+      required:
+      - url
+      title: RegistryInput
+      type: object
+    ConnectorInput:
+      description: Input for creating a connector.
+      properties:
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Unique identifier for the connector
+          nullable: true
+        url:
+          description: URL of the connector
+          title: Url
+          type: string
+      required:
+      - url
+      title: ConnectorInput
+      type: object
     ConversationMessage:
       description: OpenAI-compatible message item for conversations.
       properties:
@@ -12708,6 +13130,7 @@ components:
       - files
       - prompts
       - conversations
+      - connectors
       - inspect
       title: Api
       type: string
