@@ -4,10 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import logging
 from collections.abc import AsyncIterator
 
-logger = logging.getLogger(__name__)
+from llama_stack.log import get_logger
+
+log = get_logger(name=__name__, category="providers::utils")
 
 
 async def wrap_async_stream[T](stream: AsyncIterator[T]) -> AsyncIterator[T]:
@@ -18,5 +19,5 @@ async def wrap_async_stream[T](stream: AsyncIterator[T]) -> AsyncIterator[T]:
         async for item in stream:
             yield item
     except Exception as e:
-        logger.error(f"Error in wrapped async stream: {e}")
+        log.error(f"Error in wrapped async stream: {e}")
         raise
