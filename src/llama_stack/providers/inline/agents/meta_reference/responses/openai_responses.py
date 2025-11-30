@@ -43,6 +43,7 @@ from llama_stack_api import (
     Order,
     Prompts,
     ResponseGuardrailSpec,
+    ResponseItemInclude,
     Safety,
     ToolGroups,
     ToolRuntime,
@@ -265,7 +266,7 @@ class OpenAIResponsesImpl:
         response_id: str,
         after: str | None = None,
         before: str | None = None,
-        include: list[str] | None = None,
+        include: list[ResponseItemInclude] | None = None,
         limit: int | None = 20,
         order: Order | None = Order.desc,
     ) -> ListOpenAIResponseInputItem:
@@ -331,7 +332,7 @@ class OpenAIResponsesImpl:
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
-        include: list[str] | None = None,
+        include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,
         guardrails: list[str | ResponseGuardrailSpec] | None = None,
         parallel_tool_calls: bool | None = None,
@@ -392,6 +393,7 @@ class OpenAIResponsesImpl:
             parallel_tool_calls=parallel_tool_calls,
             max_tool_calls=max_tool_calls,
             metadata=metadata,
+            include=include,
         )
 
         if stream:
@@ -445,6 +447,7 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = True,
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
+        include: list[ResponseItemInclude] | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -494,6 +497,7 @@ class OpenAIResponsesImpl:
             instructions=instructions,
             max_tool_calls=max_tool_calls,
             metadata=metadata,
+            include=include,
         )
 
         # Stream the response
