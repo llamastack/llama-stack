@@ -1022,11 +1022,11 @@ class InferenceProvider(Protocol):
     async def openai_completion(
         self,
         params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         """Create completion.
 
         Generate an OpenAI-compatible completion for the given prompt using the specified model.
-        :returns: An OpenAICompletion.
+        :returns: An OpenAICompletion or an async iterator of OpenAICompletion chunks when streaming.
         """
         ...
 

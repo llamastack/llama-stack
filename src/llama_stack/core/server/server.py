@@ -205,11 +205,7 @@ async def sse_generator(event_gen_coroutine):
     except asyncio.CancelledError:
         logger.info("Generator cancelled")
         if event_gen:
-            # Some generators (like OpenAI's AsyncStream) only have close()
-            if hasattr(event_gen, "aclose"):
-                await event_gen.aclose()
-            elif hasattr(event_gen, "close"):
-                await event_gen.close()
+            await event_gen.aclose()
     except Exception as e:
         logger.exception("Error in sse_generator")
         yield create_sse_event(

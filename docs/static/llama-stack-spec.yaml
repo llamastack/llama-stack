@@ -289,9 +289,12 @@ paths:
     post:
       responses:
         '200':
-          description: An OpenAICompletion.
+          description: An OpenAICompletion or an async iterator of OpenAICompletion chunks when streaming.
           content:
             application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAICompletion'
+            text/event-stream:
               schema:
                 $ref: '#/components/schemas/OpenAICompletion'
         '400':
