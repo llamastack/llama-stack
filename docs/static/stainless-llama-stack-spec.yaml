@@ -2091,6 +2091,7 @@ paths:
             schema:
               $ref: '#/components/schemas/InvokeToolRequest'
         required: true
+      deprecated: true
   /v1/tool-runtime/list-tools:
     get:
       responses:
@@ -2142,6 +2143,7 @@ paths:
           - $ref: '#/components/schemas/URL'
           - type: 'null'
           title: Mcp Endpoint
+      deprecated: true
   /v1/toolgroups:
     get:
       responses:
@@ -2168,6 +2170,7 @@ paths:
       summary: List Tool Groups
       description: List tool groups with optional provider.
       operationId: list_tool_groups_v1_toolgroups_get
+      deprecated: true
     post:
       responses:
         '400':
@@ -2229,6 +2232,7 @@ paths:
         schema:
           type: string
         description: 'Path parameter: toolgroup_id'
+      deprecated: true
     delete:
       responses:
         '400':
@@ -2293,6 +2297,7 @@ paths:
           - type: string
           - type: 'null'
           title: Toolgroup Id
+      deprecated: true
   /v1/tools/{tool_name}:
     get:
       responses:
@@ -2326,6 +2331,7 @@ paths:
         schema:
           type: string
         description: 'Path parameter: tool_name'
+      deprecated: true
   /v1/vector-io/insert:
     post:
       responses:
