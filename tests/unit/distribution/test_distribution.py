@@ -395,27 +395,25 @@ pip_packages:
 
     def test_external_provider_from_module_building(self, mock_providers):
         """Test loading an external provider from a module during build (building=True, partial spec)."""
-        from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
+        from llama_stack.core.datatypes import StackConfig
         from llama_stack_api import Api
 
-        # No importlib patch needed, should not import module when type of `config` is BuildConfig or DistributionSpec
-        build_config = BuildConfig(
-            version=2,
-            image_type="container",
+        # No importlib patch needed, should not import module when building
+        config = StackConfig(
             image_name="test_image",
-            distribution_spec=DistributionSpec(
-                description="test",
-                providers={
-                    "inference": [
-                        BuildProvider(
-                            provider_type="external_test",
-                            module="external_test",
-                        )
-                    ]
-                },
-            ),
+            apis=[],
+            providers={
+                "inference": [
+                    Provider(
+                        provider_id="external_test",
+                        provider_type="external_test",
+                        config={},
+                        module="external_test",
+                    )
+                ]
+            },
         )
-        registry = get_provider_registry(build_config)
+        registry = get_provider_registry(config, building=True)
         assert Api.inference in registry
         assert "external_test" in registry[Api.inference]
         provider = registry[Api.inference]["external_test"]
@@ -492,31 +490,29 @@ class TestGetExternalProvidersFromModule:
             assert result[Api.inference]["versioned_test"].module == "versioned_test==1.0.0"
 
     def test_buildconfig_does_not_import_module(self, mock_providers):
-        """Test that BuildConfig does not import the module (building=True)."""
-        from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
+        """Test that StackConfig does not import the module when building (building=True)."""
+        from llama_stack.core.datatypes import StackConfig
         from llama_stack.core.distribution import get_external_providers_from_module
 
-        build_config = BuildConfig(
-            version=2,
-            image_type="container",
+        config = StackConfig(
             image_name="test_image",
-            distribution_spec=DistributionSpec(
-                description="test",
-                providers={
-                    "inference": [
-                        BuildProvider(
-                            provider_type="build_test",
-                            module="build_test==1.0.0",
-                        )
-                    ]
-                },
-            ),
+            apis=[],
+            providers={
+                "inference": [
+                    Provider(
+                        provider_id="build_test",
+                        provider_type="build_test",
+                        config={},
+                        module="build_test==1.0.0",
+                    )
+                ]
+            },
         )
 
         # Should not call import_module at all when building
         with patch("importlib.import_module") as mock_import:
             registry = {Api.inference: {}}
-            result = get_external_providers_from_module(registry, build_config, building=True)
+            result = get_external_providers_from_module(registry, config, building=True)
 
             # Verify module was NOT imported
             mock_import.assert_not_called()
@@ -530,28 +526,24 @@ class TestGetExternalProvidersFromModule:
             assert provider.api == Api.inference
 
     def test_buildconfig_multiple_providers(self, mock_providers):
-        """Test BuildConfig with multiple providers for the same API."""
-        from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
+        """Test StackConfig with multiple providers for the same API."""
+        from llama_stack.core.datatypes import StackConfig
         from llama_stack.core.distribution import get_external_providers_from_module
 
-        build_config = BuildConfig(
-            version=2,
-            image_type="container",
+        config = StackConfig(
             image_name="test_image",
-            distribution_spec=DistributionSpec(
-                description="test",
-                providers={
-                    "inference": [
-                        BuildProvider(provider_type="provider1", module="provider1"),
-                        BuildProvider(provider_type="provider2", module="provider2"),
-                    ]
-                },
-            ),
+            apis=[],
+            providers={
+                "inference": [
+                    Provider(provider_id="provider1", provider_type="provider1", config={}, module="provider1"),
+                    Provider(provider_id="provider2", provider_type="provider2", config={}, module="provider2"),
+                ]
+            },
         )
 
         with patch("importlib.import_module") as mock_import:
             registry = {Api.inference: {}}
-            result = get_external_providers_from_module(registry, build_config, building=True)
+            result = get_external_providers_from_module(registry, config, building=True)
 
             mock_import.assert_not_called()
             assert "provider1" in result[Api.inference]
