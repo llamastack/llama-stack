@@ -7,8 +7,6 @@
 from collections.abc import AsyncGenerator
 from contextvars import ContextVar
 
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT
-
 _MISSING = object()
 
 
@@ -69,16 +67,12 @@ def preserve_contexts_async_generator[T](
             try:
                 yield item
                 # Update our tracked values with any changes made during this iteration
-                # Only for non-trace context vars - trace context must persist across yields
-                # to allow nested span tracking for telemetry
+                # This allows context changes to persist across generator iterations
                 for context_var in context_vars:
-                    if context_var is not CURRENT_TRACE_CONTEXT:
-                        initial_context_values[context_var.name] = context_var.get()
+                    initial_context_values[context_var.name] = context_var.get()
             finally:
-                # Restore non-trace context vars after each yield to prevent leaks between requests
-                # CURRENT_TRACE_CONTEXT is NOT restored here to preserve telemetry span stack
+                # Restore context vars after each yield to prevent leaks between requests
                 for context_var in context_vars:
-                    if context_var is not CURRENT_TRACE_CONTEXT:
-                        _restore_context_var(context_var)
+                    _restore_context_var(context_var)
 
     return wrapper()
