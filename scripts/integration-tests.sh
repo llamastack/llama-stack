@@ -171,10 +171,18 @@ if [[ "$COLLECT_ONLY" == false ]]; then
 
     # Set MCP host for in-process MCP server tests
     # - For library client and server mode: localhost (both on same host)
-    # - For docker mode: host.docker.internal (container needs to reach host)
+    # - For docker mode on Linux: localhost (container uses host network, shares network namespace)
+    # - For docker mode on macOS/Windows: host.docker.internal (container uses bridge network)
     if [[ "$STACK_CONFIG" == docker:* ]]; then
-        export LLAMA_STACK_TEST_MCP_HOST="host.docker.internal"
-        echo "Setting MCP host: host.docker.internal (docker mode)"
+        if [[ "$(uname)" != "Darwin" ]] && [[ "$(uname)" != *"MINGW"* ]]; then
+            # On Linux with host network mode, container shares host network namespace
+            export LLAMA_STACK_TEST_MCP_HOST="localhost"
+            echo "Setting MCP host: localhost (docker mode with host network)"
+        else
+            # On macOS/Windows with bridge network, need special host access
+            export LLAMA_STACK_TEST_MCP_HOST="host.docker.internal"
+            echo "Setting MCP host: host.docker.internal (docker mode with bridge network)"
+        fi
     else
         export LLAMA_STACK_TEST_MCP_HOST="localhost"
         echo "Setting MCP host: localhost (library/server mode)"

@@ -336,6 +336,7 @@ class OpenAIResponsesImpl:
         guardrails: list[str | ResponseGuardrailSpec] | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
+        metadata: dict[str, str] | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -390,6 +391,7 @@ class OpenAIResponsesImpl:
             guardrail_ids=guardrail_ids,
             parallel_tool_calls=parallel_tool_calls,
             max_tool_calls=max_tool_calls,
+            metadata=metadata,
         )
 
         if stream:
@@ -442,6 +444,7 @@ class OpenAIResponsesImpl:
         guardrail_ids: list[str] | None = None,
         parallel_tool_calls: bool | None = True,
         max_tool_calls: int | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -490,6 +493,7 @@ class OpenAIResponsesImpl:
             guardrail_ids=guardrail_ids,
             instructions=instructions,
             max_tool_calls=max_tool_calls,
+            metadata=metadata,
         )
 
         # Stream the response
