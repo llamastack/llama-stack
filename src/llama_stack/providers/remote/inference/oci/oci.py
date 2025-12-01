@@ -116,7 +116,7 @@ class OCIInferenceAdapter(OpenAIMixin):
 
         models: ModelCollection = client.list_models(
             compartment_id=compartment_id, 
-            capability=MODEL_CAPABILITIES, 
+            # capability=MODEL_CAPABILITIES, 
             lifecycle_state="ACTIVE"
         ).data
 
