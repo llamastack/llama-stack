@@ -3639,6 +3639,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
         input:
           items:
             anyOf:
@@ -4042,6 +4048,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
       type: object
       required:
       - input
@@ -4172,6 +4184,12 @@ components:
         max_tool_calls:
           anyOf:
           - type: integer
+          - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
           - type: 'null'
       type: object
       required:

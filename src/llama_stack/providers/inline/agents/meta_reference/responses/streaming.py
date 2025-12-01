@@ -120,6 +120,7 @@ class StreamingResponseOrchestrator:
         prompt: OpenAIResponsePrompt | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
+        metadata: dict[str, str] | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -137,6 +138,7 @@ class StreamingResponseOrchestrator:
         self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
+        self.metadata = metadata
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -164,6 +166,7 @@ class StreamingResponseOrchestrator:
             model=self.ctx.model,
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
+            metadata=self.metadata,
         )
 
         return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
@@ -199,6 +202,7 @@ class StreamingResponseOrchestrator:
             prompt=self.prompt,
             parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
+            metadata=self.metadata,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
