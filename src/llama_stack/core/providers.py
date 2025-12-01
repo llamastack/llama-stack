@@ -41,7 +41,7 @@ class ProviderImpl(Providers):
         pass
 
     async def list_providers(self) -> ListProvidersResponse:
-        run_config = self.config
+        run_config = self.config.config
         safe_config = StackConfig(**redact_sensitive_fields(run_config.model_dump()))
         providers_health = await self.get_providers_health()
         ret = []
