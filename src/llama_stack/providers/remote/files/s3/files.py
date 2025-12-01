@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from __future__ import annotations
-
 import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Annotated, Any, cast
@@ -39,7 +37,7 @@ from .config import S3FilesImplConfig
 # TODO: provider data for S3 credentials
 
 
-def _create_s3_client(config: S3FilesImplConfig) -> S3Client:
+def _create_s3_client(config: S3FilesImplConfig) -> "S3Client":
     try:
         s3_config = {
             "region_name": config.region,
@@ -66,7 +64,7 @@ def _create_s3_client(config: S3FilesImplConfig) -> S3Client:
         raise RuntimeError(f"Failed to initialize S3 client: {e}") from e
 
 
-async def _create_bucket_if_not_exists(client: S3Client, config: S3FilesImplConfig) -> None:
+async def _create_bucket_if_not_exists(client: "S3Client", config: S3FilesImplConfig) -> None:
     try:
         client.head_bucket(Bucket=config.bucket_name)
     except ClientError as e:
@@ -192,7 +190,7 @@ class S3FilesImpl(Files):
         pass
 
     @property
-    def client(self) -> S3Client:
+    def client(self) -> "S3Client":
         assert self._client is not None, "Provider not initialized"
         return self._client
 
