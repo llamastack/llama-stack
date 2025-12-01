@@ -8,7 +8,6 @@ from collections.abc import AsyncIterator, Iterable
 
 from openai import AuthenticationError
 
-from llama_stack.core.telemetry.tracing import get_current_span
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
@@ -37,7 +36,7 @@ class BedrockInferenceAdapter(OpenAIMixin):
     """
 
     config: BedrockConfig
-    provider_data_api_key_field: str = "aws_bedrock_api_key"
+    provider_data_api_key_field: str = "aws_bearer_token_bedrock"
 
     def get_base_url(self) -> str:
         """Get base URL for OpenAI client."""
@@ -84,7 +83,7 @@ class BedrockInferenceAdapter(OpenAIMixin):
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """Override to enable streaming usage metrics and handle authentication errors."""
         # Enable streaming usage metrics when telemetry is active
-        if params.stream and get_current_span() is not None:
+        if params.stream:
             if params.stream_options is None:
                 params.stream_options = {"include_usage": True}
             elif "include_usage" not in params.stream_options:
@@ -111,7 +110,7 @@ class BedrockInferenceAdapter(OpenAIMixin):
                 logger.error(f"AWS Bedrock authentication token expired: {error_msg}")
                 raise ValueError(
                     "AWS Bedrock authentication failed: Bearer token has expired. "
-                    "The AWS_BEDROCK_API_KEY environment variable contains an expired pre-signed URL. "
+                    "The AWS_BEARER_TOKEN_BEDROCK environment variable contains an expired pre-signed URL. "
                     "Please refresh your token by generating a new pre-signed URL with AWS credentials. "
                     "Refer to AWS Bedrock documentation for details on OpenAI-compatible endpoints."
                 ) from e

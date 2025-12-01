@@ -13,7 +13,7 @@ function HomepageHeader() {
         <div className={styles.heroContent}>
           <h1 className={styles.heroTitle}>Build AI Applications with Llama Stack</h1>
           <p className={styles.heroSubtitle}>
-            Unified APIs for Inference, RAG, Agents, Tools, Safety, and Telemetry
+            Unified APIs for Inference, RAG, Agents, Tools, and Safety
           </p>
           <div className={styles.buttons}>
             <Link
@@ -206,7 +206,7 @@ export default function Home() {
   return (
     <Layout
       title="Build AI Applications"
-      description="The open-source framework for building generative AI applications with unified APIs for Inference, RAG, Agents, Tools, Safety, and Telemetry.">
+      description="The open-source framework for building generative AI applications with unified APIs for Inference, RAG, Agents, Tools, Safety, and Evals.">
       <HomepageHeader />
       <main>
         <QuickStart />
