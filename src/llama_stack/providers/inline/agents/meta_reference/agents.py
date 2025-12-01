@@ -50,7 +50,6 @@ class MetaReferenceAgentsImpl(Agents):
         prompts_api: Prompts,
         files_api: Files,
         policy: list[AccessRule],
-        telemetry_enabled: bool = False,
     ):
         self.config = config
         self.inference_api = inference_api
@@ -59,7 +58,6 @@ class MetaReferenceAgentsImpl(Agents):
         self.tool_runtime_api = tool_runtime_api
         self.tool_groups_api = tool_groups_api
         self.conversations_api = conversations_api
-        self.telemetry_enabled = telemetry_enabled
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.in_memory_store = InmemoryKVStoreImpl()

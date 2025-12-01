@@ -116,10 +116,6 @@ The following environment variables can be configured:
 - `BRAVE_SEARCH_API_KEY`: Brave Search API key
 - `TAVILY_SEARCH_API_KEY`: Tavily Search API key
 
-### Telemetry Configuration
-- `OTEL_SERVICE_NAME`: OpenTelemetry service name
-- `OTEL_EXPORTER_OTLP_ENDPOINT`: OpenTelemetry collector endpoint URL
-
 ## Enabling Providers
 
 You can enable specific providers by setting appropriate environment variables. For example,
@@ -265,7 +261,7 @@ The starter distribution uses SQLite for local storage of various components:
 2. **Flexible Configuration**: Easy to enable/disable providers based on your needs
 3. **No Local GPU Required**: Most providers are cloud-based, making it accessible to developers without high-end hardware
 4. **Easy Migration**: Start with hosted providers and gradually move to local ones as needed
-5. **Production Ready**: Includes safety, evaluation, and telemetry components
+5. **Production Ready**: Includes safety and evaluation
 6. **Tool Integration**: Comes with web search, RAG, and model context protocol tools
 
 The starter distribution is ideal for developers who want to experiment with different AI providers, build prototypes quickly, or create applications that can work with multiple AI backends.
