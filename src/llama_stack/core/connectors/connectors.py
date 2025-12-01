@@ -14,18 +14,16 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.tools.mcp import get_mcp_server_info, list_mcp_tools
 from llama_stack_api import (
     Connector,
+    ConnectorNotFoundError,
     Connectors,
+    ConnectorToolNotFoundError,
     ConnectorType,
     ListConnectorsResponse,
     ListRegistriesResponse,
     ListToolsResponse,
     Registry,
-    ToolDef,
-)
-from llama_stack_api.common.errors import (
-    ConnectorNotFoundError,
-    ConnectorToolNotFoundError,
     RegistryNotFoundError,
+    ToolDef,
 )
 
 logger = get_logger(name=__name__, category="connectors")
@@ -54,6 +52,17 @@ class ConnectorServiceImpl(Connectors):
         # TODO: should these be stored in a kvstore?
         self.connectors_map: dict[str, Connector] = {}
         self.registries_map: dict[str, Registry] = {}
+
+    def get_connector_url(self, connector_id: str) -> str | None:
+        """Get the URL of a connector by its ID.
+
+        :param connector_id: The ID of the connector to get the URL for.
+        :returns: The URL of the connector.
+        """
+        connector = self.connectors_map.get(connector_id)
+        if connector is None:
+            return None
+        return connector.url
 
     async def register_connector(
         self,

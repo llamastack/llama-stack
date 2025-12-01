@@ -15,6 +15,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import interleaved_con
 from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
+    Connectors,
     Inference,
     MCPListToolsTool,
     ModelNotFoundError,
@@ -121,8 +122,10 @@ class StreamingResponseOrchestrator:
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
+        connectors_api: Connectors | None = None,
     ):
         self.inference_api = inference_api
+        self.connectors_api = connectors_api
         self.ctx = ctx
         self.response_id = response_id
         self.created_at = created_at
@@ -1087,6 +1090,15 @@ class StreamingResponseOrchestrator:
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process an MCP tool configuration and emit appropriate streaming events."""
         from llama_stack.providers.utils.tools.mcp import list_mcp_tools
+
+        # Resolve connector_id to server_url if provided
+        if mcp_tool.connector_id and not mcp_tool.server_url:
+            if self.connectors_api is None:
+                raise ValueError("Connectors API not available to resolve connector_id")
+            server_url = self.connectors_api.get_connector_url(mcp_tool.connector_id)
+            if not server_url:
+                raise ValueError(f"Connector {mcp_tool.connector_id} not found")
+            mcp_tool = mcp_tool.model_copy(update={"server_url": server_url})
 
         # Emit mcp_list_tools.in_progress
         self.sequence_number += 1
