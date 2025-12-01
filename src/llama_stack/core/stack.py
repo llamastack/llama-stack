@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 
+from llama_stack.core.connectors.connectors import ConnectorServiceConfig, ConnectorServiceImpl
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
@@ -39,6 +40,7 @@ from llama_stack_api import (
     Api,
     Batches,
     Benchmarks,
+    Connectors,
     Conversations,
     DatasetIO,
     Datasets,
@@ -64,6 +66,7 @@ logger = get_logger(name=__name__, category="core")
 
 class LlamaStack(
     Providers,
+    Connectors,
     Inference,
     Agents,
     Batches,
@@ -100,6 +103,7 @@ RESOURCES = [
     ),
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
     ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
+    ("connectors", Api.connectors, "register_connector", "list_connectors"),
 ]
 
 
@@ -371,6 +375,11 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
         deps=impls,
     )
     impls[Api.conversations] = conversations_impl
+
+    connectors_impl = ConnectorServiceImpl(
+        ConnectorServiceConfig(run_config=run_config),
+    )
+    impls[Api.connectors] = connectors_impl
 
 
 def _initialize_storage(run_config: StackRunConfig):

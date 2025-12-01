@@ -3903,23 +3903,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Connector'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Connectors
       summary: Get Connector
       description: Get a connector by its ID.
       operationId: get_connector_v1alpha_connectors__connector_id__get
       parameters:
+      - name: include_tools
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+          title: Include Tools
       - name: connector_id
         in: path
         required: true
@@ -3930,11 +3937,11 @@ paths:
     get:
       responses:
         '200':
-          description: A MCPListToolsTool.
+          description: A ToolDef.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MCPListToolsTool'
+                $ref: '#/components/schemas/ToolDef'
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -11884,7 +11891,7 @@ components:
         tools:
           anyOf:
           - items:
-              $ref: '#/components/schemas/MCPListToolsTool'
+              $ref: '#/components/schemas/ToolDef'
             type: array
           - type: 'null'
           description: List of tools available from the connector
@@ -12026,7 +12033,7 @@ components:
       properties:
         data:
           items:
-            $ref: '#/components/schemas/MCPListToolsTool'
+            $ref: '#/components/schemas/ToolDef'
           type: array
           title: Data
       type: object
@@ -12975,6 +12982,33 @@ components:
       - url
       title: RegistryInput
       type: object
+    ToolGroupInput:
+      description: Input data for registering a tool group.
+      properties:
+        toolgroup_id:
+          title: Toolgroup Id
+          type: string
+        provider_id:
+          title: Provider Id
+          type: string
+        args:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        mcp_endpoint:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+            title: URL
+          - type: 'null'
+          nullable: true
+          title: URL
+      required:
+      - toolgroup_id
+      - provider_id
+      title: ToolGroupInput
+      type: object
     ConnectorInput:
       description: Input for creating a connector.
       properties:
@@ -12991,6 +13025,19 @@ components:
           description: URL of the connector
           title: Url
           type: string
+        headers:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: HTTP headers to include when connecting
+          nullable: true
+        authorization:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: OAuth access token for authentication
+          nullable: true
       required:
       - url
       title: ConnectorInput
@@ -13078,33 +13125,6 @@ components:
       required:
       - items
       title: ConversationItemCreateRequest
-      type: object
-    ToolGroupInput:
-      description: Input data for registering a tool group.
-      properties:
-        toolgroup_id:
-          title: Toolgroup Id
-          type: string
-        provider_id:
-          title: Provider Id
-          type: string
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          nullable: true
-          title: URL
-      required:
-      - toolgroup_id
-      - provider_id
-      title: ToolGroupInput
       type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.

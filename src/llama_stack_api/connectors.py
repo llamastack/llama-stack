@@ -6,15 +6,15 @@
 
 from datetime import datetime
 from enum import StrEnum
-from typing import Literal, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, Field
 from typing_extensions import runtime_checkable
 
-from llama_stack_api.openai_responses import MCPListToolsTool
 from llama_stack_api.registries import ListRegistriesResponse, Registry
 from llama_stack_api.resource import Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, webmethod
+from llama_stack_api.tools import ToolDef
 from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
 
 
@@ -54,7 +54,9 @@ class Connector(Resource):
     server_name: str | None = Field(default=None, description="Name of the server")
     server_label: str | None = Field(default=None, description="Label of the server")
     server_description: str | None = Field(default=None, description="Description of the server")
-    tools: list[MCPListToolsTool] | None = Field(default=None, description="List of tools available from the connector")
+    # TODO: using ToolDef for now, but MCPListToolsTool should probably be updated and used instead
+    # once toolgroups are removed completely
+    tools: list[ToolDef] | None = Field(default=None, description="List of tools available from the connector")
     registry_id: str | None = Field(default=None, description="ID of the registry this connector belongs to")
 
     def _generate_connector_id(self) -> str:
@@ -67,6 +69,11 @@ class Connector(Resource):
     def connector_id(self) -> str:
         return self.user_connector_id if self.user_connector_id is not None else self._generate_connector_id()
 
+    @property
+    def without_tools(self) -> "Connector":
+        """Return a copy of this connector with tools removed."""
+        return self.model_copy(update={"tools": None})
+
 
 @json_schema_type
 class ConnectorInput(BaseModel):
@@ -75,11 +82,15 @@ class ConnectorInput(BaseModel):
     :param connector_type: Type of connector
     :param connector_id: Unique identifier for the connector
     :param url: URL of the connector
+    :param headers: (Optional) HTTP headers to include when connecting to the server
+    :param authorization: (Optional) OAuth access token for authenticating with the MCP server
     """
 
     connector_type: ConnectorType = Field(default=ConnectorType.MCP)
     connector_id: str | None = Field(default=None, description="Unique identifier for the connector")
     url: str = Field(..., description="URL of the connector")
+    headers: dict[str, Any] | None = Field(default=None, description="HTTP headers to include when connecting")
+    authorization: str | None = Field(default=None, description="OAuth access token for authentication")
 
 
 @json_schema_type
@@ -99,11 +110,14 @@ class ListToolsResponse(BaseModel):
     :param data: List of tools
     """
 
-    data: list[MCPListToolsTool]
+    data: list[ToolDef]
 
 
 @runtime_checkable
 class Connectors(Protocol):
+    # NOTE: Route order matters! More specific routes must come before less specific ones.
+    # Routes with {param:path} are greedy and will match everything including slashes.
+
     @webmethod(route="/connectors", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_connectors(
         self,
@@ -118,19 +132,38 @@ class Connectors(Protocol):
         """
         ...
 
-    @webmethod(route="/connectors/{connector_id:path}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
-    async def get_connector(
-        self,
-        connector_id: str,
-    ) -> Connector:
-        """Get a connector by its ID.
+    @webmethod(route="/connectors/registries", method="GET", level=LLAMA_STACK_API_V1ALPHA)
+    async def list_registries(self) -> ListRegistriesResponse:
+        """List all registries.
 
-        :param connector_id: The ID of the connector to get.
-        :returns: A Connector.
+        :returns: A ListRegistriesResponse.
         """
         ...
 
-    @webmethod(route="/connectors/{connector_id:path}/tools", method="GET", level=LLAMA_STACK_API_V1ALPHA)
+    @webmethod(route="/connectors/registries/{registry_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
+    async def get_registry(self, registry_id: str) -> Registry:
+        """Get a registry by its ID.
+
+        :param registry_id: The ID of the registry to get.
+        :returns: A Registry.
+        """
+        ...
+
+    @webmethod(route="/connectors/{connector_id}/tools/{tool_name}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
+    async def get_connector_tool(
+        self,
+        connector_id: str,
+        tool_name: str,
+    ) -> ToolDef:
+        """Get a tool definition by its name from a connector.
+
+        :param connector_id: The ID of the connector to get the tool from.
+        :param tool_name: The name of the tool to get.
+        :returns: A ToolDef.
+        """
+        ...
+
+    @webmethod(route="/connectors/{connector_id}/tools", method="GET", level=LLAMA_STACK_API_V1ALPHA)
     async def list_connector_tools(
         self,
         connector_id: str,
@@ -142,35 +175,15 @@ class Connectors(Protocol):
         """
         ...
 
-    @webmethod(
-        route="/connectors/{connector_id:path}/tools/{tool_name:path}", method="GET", level=LLAMA_STACK_API_V1ALPHA
-    )
-    async def get_connector_tool(
+    @webmethod(route="/connectors/{connector_id}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
+    async def get_connector(
         self,
         connector_id: str,
-        tool_name: str,
-    ) -> MCPListToolsTool:
-        """Get a tool definition by its name from a connector.
+        include_tools: bool = False,
+    ) -> Connector:
+        """Get a connector by its ID.
 
-        :param connector_id: The ID of the connector to get the tool from.
-        :param tool_name: The name of the tool to get.
-        :returns: A MCPListToolsTool.
-        """
-        ...
-
-    @webmethod(route="/connectors/registries", method="GET", level=LLAMA_STACK_API_V1ALPHA)
-    async def list_registries(self) -> ListRegistriesResponse:
-        """List all registries.
-
-        :returns: A ListRegistriesResponse.
-        """
-        ...
-
-    @webmethod(route="/connectors/registries/{registry_id:path}", method="GET", level=LLAMA_STACK_API_V1ALPHA)
-    async def get_registry(self, registry_id: str) -> Registry:
-        """Get a registry by its ID.
-
-        :param registry_id: The ID of the registry to get.
-        :returns: A Registry.
+        :param connector_id: The ID of the connector to get.
+        :returns: A Connector.
         """
         ...
