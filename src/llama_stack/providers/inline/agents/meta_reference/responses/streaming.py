@@ -8,7 +8,8 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack.core.telemetry import tracing
+from opentelemetry import trace
+
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack_api import (
@@ -79,6 +80,7 @@ from .utils import (
 )
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
+tracer = trace.get_tracer(__name__)
 
 
 def convert_tooldef_to_chat_tool(tool_def):
@@ -1106,8 +1108,10 @@ class StreamingResponseOrchestrator:
                 "server_url": mcp_tool.server_url,
                 "mcp_list_tools_id": list_id,
             }
-            # List MCP tools with authorization from tool config
-            async with tracing.span("list_mcp_tools", attributes):
+
+            # TODO: follow semantic conventions for Open Telemetry tool spans
+            # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
+            with tracer.start_as_current_span("list_mcp_tools", attributes=attributes):
                 tool_defs = await list_mcp_tools(
                     endpoint=mcp_tool.server_url,
                     headers=mcp_tool.headers,
@@ -1183,9 +1187,9 @@ class StreamingResponseOrchestrator:
         if mcp_server.require_approval == "never":
             return False
         if isinstance(mcp_server, ApprovalFilter):
-            if tool_name in mcp_server.always:
+            if mcp_server.always and tool_name in mcp_server.always:
                 return True
-            if tool_name in mcp_server.never:
+            if mcp_server.never and tool_name in mcp_server.never:
                 return False
         return True
 

@@ -7,7 +7,6 @@
 import asyncio
 import time
 from collections.abc import AsyncIterator
-from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import Body
@@ -15,11 +14,7 @@ from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatC
 from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
 from pydantic import TypeAdapter
 
-from llama_stack.core.telemetry.telemetry import MetricEvent
-from llama_stack.core.telemetry.tracing import enqueue_event, get_current_span
 from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.chat_format import ChatFormat
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import (
     HealthResponse,
@@ -60,15 +55,10 @@ class InferenceRouter(Inference):
         self,
         routing_table: RoutingTable,
         store: InferenceStore | None = None,
-        telemetry_enabled: bool = False,
     ) -> None:
         logger.debug("Initializing InferenceRouter")
         self.routing_table = routing_table
-        self.telemetry_enabled = telemetry_enabled
         self.store = store
-        if self.telemetry_enabled:
-            self.tokenizer = Tokenizer.get_instance()
-            self.formatter = ChatFormat(self.tokenizer)
 
     async def initialize(self) -> None:
         logger.debug("InferenceRouter.initialize")
@@ -93,54 +83,6 @@ class InferenceRouter(Inference):
             f"InferenceRouter.register_model: {model_id=} {provider_model_id=} {provider_id=} {metadata=} {model_type=}",
         )
         await self.routing_table.register_model(model_id, provider_model_id, provider_id, metadata, model_type)
-
-    def _construct_metrics(
-        self,
-        prompt_tokens: int,
-        completion_tokens: int,
-        total_tokens: int,
-        fully_qualified_model_id: str,
-        provider_id: str,
-    ) -> list[MetricEvent]:
-        """Constructs a list of MetricEvent objects containing token usage metrics.
-
-        Args:
-            prompt_tokens: Number of tokens in the prompt
-            completion_tokens: Number of tokens in the completion
-            total_tokens: Total number of tokens used
-            fully_qualified_model_id:
-            provider_id: The provider identifier
-
-        Returns:
-            List of MetricEvent objects with token usage metrics
-        """
-        span = get_current_span()
-        if span is None:
-            logger.warning("No span found for token usage metrics")
-            return []
-
-        metrics = [
-            ("prompt_tokens", prompt_tokens),
-            ("completion_tokens", completion_tokens),
-            ("total_tokens", total_tokens),
-        ]
-        metric_events = []
-        for metric_name, value in metrics:
-            metric_events.append(
-                MetricEvent(
-                    trace_id=span.trace_id,
-                    span_id=span.span_id,
-                    metric=metric_name,
-                    value=value,
-                    timestamp=datetime.now(UTC),
-                    unit="tokens",
-                    attributes={
-                        "model_id": fully_qualified_model_id,
-                        "provider_id": provider_id,
-                    },
-                )
-            )
-        return metric_events
 
     async def _get_model_provider(self, model_id: str, expected_model_type: str) -> tuple[Inference, str]:
         model = await self.routing_table.get_object_by_identifier("model", model_id)
@@ -186,26 +128,9 @@ class InferenceRouter(Inference):
 
         if params.stream:
             return await provider.openai_completion(params)
-            # TODO: Metrics do NOT work with openai_completion stream=True due to the fact
-            # that we do not return an AsyncIterator, our tests expect a stream of chunks we cannot intercept currently.
 
         response = await provider.openai_completion(params)
         response.model = request_model_id
-        if self.telemetry_enabled and response.usage is not None:
-            metrics = self._construct_metrics(
-                prompt_tokens=response.usage.prompt_tokens,
-                completion_tokens=response.usage.completion_tokens,
-                total_tokens=response.usage.total_tokens,
-                fully_qualified_model_id=request_model_id,
-                provider_id=provider.__provider_id__,
-            )
-            for metric in metrics:
-                enqueue_event(metric)
-
-            # these metrics will show up in the client response.
-            response.metrics = (
-                metrics if not hasattr(response, "metrics") or response.metrics is None else response.metrics + metrics
-            )
         return response
 
     async def openai_chat_completion(
@@ -254,20 +179,6 @@ class InferenceRouter(Inference):
         if self.store:
             asyncio.create_task(self.store.store_chat_completion(response, params.messages))
 
-        if self.telemetry_enabled and response.usage is not None:
-            metrics = self._construct_metrics(
-                prompt_tokens=response.usage.prompt_tokens,
-                completion_tokens=response.usage.completion_tokens,
-                total_tokens=response.usage.total_tokens,
-                fully_qualified_model_id=request_model_id,
-                provider_id=provider.__provider_id__,
-            )
-            for metric in metrics:
-                enqueue_event(metric)
-            # these metrics will show up in the client response.
-            response.metrics = (
-                metrics if not hasattr(response, "metrics") or response.metrics is None else response.metrics + metrics
-            )
         return response
 
     async def openai_embeddings(
@@ -410,18 +321,6 @@ class InferenceRouter(Inference):
                     completion_text = ""
                     for choice_data in choices_data.values():
                         completion_text += "".join(choice_data["content_parts"])
-
-                    # Add metrics to the chunk
-                    if self.telemetry_enabled and hasattr(chunk, "usage") and chunk.usage:
-                        metrics = self._construct_metrics(
-                            prompt_tokens=chunk.usage.prompt_tokens,
-                            completion_tokens=chunk.usage.completion_tokens,
-                            total_tokens=chunk.usage.total_tokens,
-                            fully_qualified_model_id=fully_qualified_model_id,
-                            provider_id=provider_id,
-                        )
-                        for metric in metrics:
-                            enqueue_event(metric)
 
                 yield chunk
         finally:
