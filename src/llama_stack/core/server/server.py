@@ -53,7 +53,7 @@ from llama_stack.core.stack import (
 from llama_stack.core.telemetry import Telemetry
 from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, setup_logger
 from llama_stack.core.utils.config import redact_sensitive_fields
-from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger, setup_logging
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
@@ -374,7 +374,7 @@ def create_app() -> StackApp:
     if config_file is None:
         raise ValueError("LLAMA_STACK_CONFIG environment variable is required")
 
-    config_file = resolve_config_or_distro(config_file, Mode.RUN)
+    config_file = resolve_config_or_distro(config_file)
 
     # Load and process configuration
     logger_config = None

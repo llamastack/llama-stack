@@ -64,9 +64,9 @@ def format_output_deps_only(
 def run_stack_list_deps_command(args: argparse.Namespace) -> None:
     if args.config:
         try:
-            from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+            from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 
-            config_file = resolve_config_or_distro(args.config, Mode.RUN)
+            config_file = resolve_config_or_distro(args.config)
         except ValueError as e:
             cprint(
                 f"Could not parse config file {args.config}: {e}",

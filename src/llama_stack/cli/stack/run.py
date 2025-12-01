@@ -30,7 +30,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import LoggingConfig, get_logger
 
@@ -108,9 +108,9 @@ class StackRun(Subcommand):
 
         if args.config:
             try:
-                from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+                from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 
-                config_file = resolve_config_or_distro(args.config, Mode.RUN)
+                config_file = resolve_config_or_distro(args.config)
             except ValueError as e:
                 self.parser.error(str(e))
         elif args.providers:
@@ -187,7 +187,7 @@ class StackRun(Subcommand):
         if not config_file:
             self.parser.error("Config file is required")
 
-        config_file = resolve_config_or_distro(str(config_file), Mode.RUN)
+        config_file = resolve_config_or_distro(str(config_file))
         with open(config_file) as fp:
             config_contents = yaml.safe_load(fp)
             if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
