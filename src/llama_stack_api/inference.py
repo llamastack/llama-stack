@@ -438,6 +438,7 @@ class OpenAIChatCompletionToolCall(BaseModel):
     id: str | None = None
     type: Literal["function"] = "function"
     function: OpenAIChatCompletionToolCallFunction | None = None
+    extra_content: dict[str, Any] | None = None
 
 
 @json_schema_type

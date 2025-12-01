@@ -1071,6 +1071,11 @@ components:
             title: OpenAIChatCompletionToolCallFunction
           - type: 'null'
           title: OpenAIChatCompletionToolCallFunction
+        extra_content:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
       type: object
       title: OpenAIChatCompletionToolCall
       description: Tool call specification for OpenAI-compatible chat completion responses.
