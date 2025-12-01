@@ -1,0 +1,58 @@
+{
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming[client_with_models-txt=bedrock/openai.gpt-oss-20b-1:0-inference:chat_completion:non_streaming_02]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-runtime.us-west-2.amazonaws.com/openai/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b-1:0",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Which planet has rings around it with a name starting with letter S?"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b-1:0"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-b992b97cfe82",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<reasoning>The user: \"Which planet has rings around it with a name starting with letter S?\" They likely refer to a planet that has rings and has a name starting with S. We know planets with rings: Saturn, Jupiter, Uranus, Neptune, and the dwarf planet Ceres? Wait, Ceres is a dwarf planet without rings (maybe). Also ringed planets in Solar System: Saturn (planet), Jupiter, Uranus, Neptune. Also the dwarf planet Haumea (maybe). But indeed only Saturn is the planet starting with 'S'. So answer: Saturn. The question: \"Which planet has rings around it with a name starting with letter S?\" Possibly they may want \"Saturn\". Provide context: Saturn is the sixth planet from the Sun, has the most massive ring system. So answer: Saturn.\n\nWe might consider also \"S\" as starting letter for 'Saturn' only. Provide explanation.\n\nThus answer: Saturn.</reasoning>**Saturn** is the planet that has rings and whose name starts with the letter \u201cS.\u201d It is the sixth planet from the Sun and boasts the most spectacular and extensive ring system of all the Solar System\u2019s planets.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "openai.gpt-oss-20b-1:0",
+        "object": "chat.completion",
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 246,
+          "prompt_tokens": 83,
+          "total_tokens": 329,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
