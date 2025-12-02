@@ -391,6 +391,9 @@ async def instantiate_provider(
         method = "get_adapter_impl"
         args = [config, deps]
 
+        if "policy" in inspect.signature(getattr(module, method)).parameters:
+            args.append(policy)
+
     elif isinstance(provider_spec, AutoRoutedProviderSpec):
         method = "get_auto_router_impl"
 
