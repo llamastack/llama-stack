@@ -9,6 +9,7 @@ from typing import Annotated, Any
 
 from fastapi import Depends, File, Form, Response, UploadFile
 
+from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
@@ -73,11 +74,13 @@ class OpenAIFilesImpl(Files):
         """Return current UTC timestamp as int seconds."""
         return int(datetime.now(UTC).timestamp())
 
-    async def _get_file(self, file_id: str, return_expired: bool = False) -> dict[str, Any]:
+    async def _get_file(
+        self, file_id: str, return_expired: bool = False, action: Action = Action.READ
+    ) -> dict[str, Any]:
         where: dict[str, str | dict] = {"id": file_id}
         if not return_expired:
             where["expires_at"] = {">": self._now()}
-        if not (row := await self.sql_store.fetch_one("openai_files", where=where)):
+        if not (row := await self.sql_store.fetch_one("openai_files", where=where, action=action)):
             raise ResourceNotFoundError(file_id, "File", "files.list()")
         return row
 
@@ -213,7 +216,7 @@ class OpenAIFilesImpl(Files):
 
     async def openai_delete_file(self, file_id: str) -> OpenAIFileDeleteResponse:
         await self._delete_if_expired(file_id)
-        _ = await self._get_file(file_id)
+        _ = await self._get_file(file_id, action=Action.DELETE)
         await self._delete_file(file_id)
         return OpenAIFileDeleteResponse(id=file_id, deleted=True)
 
