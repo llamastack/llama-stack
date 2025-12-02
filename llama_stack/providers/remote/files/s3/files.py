@@ -12,9 +12,22 @@ import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError
 from fastapi import Depends, File, Form, Response, UploadFile
 
+<<<<<<< HEAD:llama_stack/providers/remote/files/s3/files.py
 from llama_stack.apis.common.errors import ResourceNotFoundError
 from llama_stack.apis.common.responses import Order
 from llama_stack.apis.files import (
+=======
+if TYPE_CHECKING:
+    from mypy_boto3_s3.client import S3Client
+
+from llama_stack.core.access_control.datatypes import Action
+from llama_stack.core.datatypes import AccessRule
+from llama_stack.core.id_generation import generate_object_id
+from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
+from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
+from llama_stack.providers.utils.files.form_data import parse_expires_after
+from llama_stack_api import (
+>>>>>>> 4ff0c25c (fix(files): Enforce DELETE action permission for file deletion (#4275)):src/llama_stack/providers/remote/files/s3/files.py
     ExpiresAfter,
     Files,
     ListOpenAIFileResponse,
@@ -135,11 +148,13 @@ class S3FilesImpl(Files):
         """Return current UTC timestamp as int seconds."""
         return int(datetime.now(UTC).timestamp())
 
-    async def _get_file(self, file_id: str, return_expired: bool = False) -> dict[str, Any]:
+    async def _get_file(
+        self, file_id: str, return_expired: bool = False, action: Action = Action.READ
+    ) -> dict[str, Any]:
         where: dict[str, str | dict] = {"id": file_id}
         if not return_expired:
             where["expires_at"] = {">": self._now()}
-        if not (row := await self.sql_store.fetch_one("openai_files", where=where)):
+        if not (row := await self.sql_store.fetch_one("openai_files", where=where, action=action)):
             raise ResourceNotFoundError(file_id, "File", "files.list()")
         return row
 
@@ -284,7 +299,7 @@ class S3FilesImpl(Files):
 
     async def openai_delete_file(self, file_id: str) -> OpenAIFileDeleteResponse:
         await self._delete_if_expired(file_id)
-        _ = await self._get_file(file_id)  # raises if not found
+        _ = await self._get_file(file_id, action=Action.DELETE)  # raises if not found
         await self._delete_file(file_id)
         return OpenAIFileDeleteResponse(id=file_id, deleted=True)
 
