@@ -100,13 +100,16 @@ class DistributionInspectImpl(Inspect):
                 router_routes = get_router_routes(router)
                 for route in router_routes:
                     if _should_include_router_route(route, router.prefix):
-                        ret.append(
-                            RouteInfo(
-                                route=route.path,
-                                method=next(iter([m for m in route.methods if m != "HEAD"])),
-                                provider_types=_get_provider_types(api),
-                            )
-                        )
+                        if route.methods is not None:
+                            available_methods = [m for m in route.methods if m != "HEAD"]
+                            if available_methods:
+                                ret.append(
+                                    RouteInfo(
+                                        route=route.path,
+                                        method=available_methods[0],
+                                        provider_types=_get_provider_types(api),
+                                    )
+                                )
 
         # Process routes from legacy webmethod-based APIs
         for api, endpoints in all_endpoints.items():
