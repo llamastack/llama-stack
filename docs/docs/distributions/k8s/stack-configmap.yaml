@@ -8,7 +8,6 @@ data:
     - inference
     - files
     - safety
-    - telemetry
     - tool_runtime
     - vector_io
     providers:
@@ -73,12 +72,6 @@ data:
             db: ${env.POSTGRES_DB:=llamastack}
             user: ${env.POSTGRES_USER:=llamastack}
             password: ${env.POSTGRES_PASSWORD:=llamastack}
-      telemetry:
-      - provider_id: meta-reference
-        provider_type: inline::meta-reference
-        config:
-          service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
-          sinks: ${env.TELEMETRY_SINKS:=console}
       tool_runtime:
       - provider_id: brave-search
         provider_type: remote::brave-search
@@ -113,13 +106,21 @@ data:
           db: ${env.POSTGRES_DB:=llamastack}
           user: ${env.POSTGRES_USER:=llamastack}
           password: ${env.POSTGRES_PASSWORD:=llamastack}
-      references:
+      stores:
         metadata:
           backend: kv_default
           namespace: registry
         inference:
           backend: sql_default
           table_name: inference_store
+          max_write_queue_size: 10000
+          num_writers: 4
+        conversations:
+          backend: sql_default
+          table_name: openai_conversations
+        prompts:
+          backend: kv_default
+          namespace: prompts
     models:
     - metadata:
         embedding_dimension: 768

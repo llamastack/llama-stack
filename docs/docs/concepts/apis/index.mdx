@@ -7,7 +7,7 @@ sidebar_position: 1
 
 # APIs
 
-A Llama Stack API is described as a collection of REST endpoints. We currently support the following APIs:
+A Llama Stack API is described as a collection of REST endpoints following OpenAI API standards. We currently support the following APIs:
 
 - **Inference**: run inference with a LLM
 - **Safety**: apply safety policies to the output at a Systems (not only model) level
@@ -16,13 +16,25 @@ A Llama Stack API is described as a collection of REST endpoints. We currently s
 - **Scoring**: evaluate outputs of the system
 - **Eval**: generate outputs (via Inference or Agents) and perform scoring
 - **VectorIO**: perform operations on vector stores, such as adding documents, searching, and deleting documents
-- **Telemetry**: collect telemetry data from the system
+- **Files**: manage file uploads, storage, and retrieval
 - **Post Training**: fine-tune a model
 - **Tool Runtime**: interact with various tools and protocols
-- **Responses**: generate responses from an LLM using this OpenAI compatible API.
+- **Responses**: generate responses from an LLM
 
 We are working on adding a few more APIs to complete the application lifecycle. These will include:
 - **Batch Inference**: run inference on a dataset of inputs
 - **Batch Agents**: run agents on a dataset of inputs
-- **Synthetic Data Generation**: generate synthetic data for model development
 - **Batches**: OpenAI-compatible batch management for inference
+
+
+## OpenAI API Compatibility
+We are working on adding OpenAI API compatibility to Llama Stack. This will allow you to use Llama Stack with OpenAI API clients and tools.
+
+### File Operations and Vector Store Integration
+
+The Files API and Vector Store APIs work together through file operations, enabling automatic document processing and search. This integration implements the [OpenAI Vector Store Files API specification](https://platform.openai.com/docs/api-reference/vector-stores-files) and allows you to:
+- Upload documents through the Files API
+- Automatically process and chunk documents into searchable vectors
+- Store processed content in vector databases based on the availability of [our providers](../../providers/index.mdx)
+- Search through documents using natural language queries
+For detailed information about this integration, see [File Operations and Vector Store Integration](../file_operations_vector_stores.md).

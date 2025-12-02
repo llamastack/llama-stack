@@ -20,8 +20,8 @@ import yaml
 from llama_stack_client import LlamaStackClient
 from openai import OpenAI
 
-from llama_stack import LlamaStackAsLibraryClient
 from llama_stack.core.datatypes import VectorStoresConfig
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.core.stack import run_config_from_adhoc_config_spec
 from llama_stack.env import get_env_or_fail
 
@@ -40,7 +40,12 @@ def is_port_available(port: int, host: str = "localhost") -> bool:
 
 def start_llama_stack_server(config_name: str) -> subprocess.Popen:
     """Start a llama stack server with the given config."""
-    cmd = f"uv run llama stack run {config_name}"
+
+    # remove server.log if it exists
+    if os.path.exists("server.log"):
+        os.remove("server.log")
+
+    cmd = f"llama stack run {config_name}"
     devnull = open(os.devnull, "w")
     process = subprocess.Popen(
         shlex.split(cmd),
@@ -83,6 +88,35 @@ def wait_for_server_ready(base_url: str, timeout: int = 30, process: subprocess.
     return False
 
 
+def stop_server_on_port(port: int, timeout: float = 10.0) -> None:
+    """Terminate any server processes bound to the given port."""
+
+    try:
+        output = subprocess.check_output(["lsof", "-ti", f":{port}"], text=True)
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return
+
+    pids = {int(line) for line in output.splitlines() if line.strip()}
+    if not pids:
+        return
+
+    deadline = time.time() + timeout
+    for sig in (signal.SIGTERM, signal.SIGKILL):
+        for pid in list(pids):
+            try:
+                os.kill(pid, sig)
+            except ProcessLookupError:
+                pids.discard(pid)
+
+        while not is_port_available(port) and time.time() < deadline:
+            time.sleep(0.1)
+
+        if is_port_available(port):
+            return
+
+    raise RuntimeError(f"Unable to free port {port} for test server restart")
+
+
 def get_provider_data():
     # TODO: this needs to be generalized so each provider can have a sample provider data just
     # like sample run config on which we can do replace_env_vars()
@@ -119,13 +153,14 @@ def client_with_models(
     vision_model_id,
     embedding_model_id,
     judge_model_id,
+    rerank_model_id,
 ):
     client = llama_stack_client
 
     providers = [p for p in client.providers.list() if p.api == "inference"]
     assert len(providers) > 0, "No inference providers found"
 
-    model_ids = {m.identifier for m in client.models.list()}
+    model_ids = {m.id for m in client.models.list()}
 
     if text_model_id and text_model_id not in model_ids:
         raise ValueError(f"text_model_id {text_model_id} not found")
@@ -136,6 +171,9 @@ def client_with_models(
 
     if embedding_model_id and embedding_model_id not in model_ids:
         raise ValueError(f"embedding_model_id {embedding_model_id} not found")
+
+    if rerank_model_id and rerank_model_id not in model_ids:
+        raise ValueError(f"rerank_model_id {rerank_model_id} not found")
     return client
 
 
@@ -151,7 +189,14 @@ def model_providers(llama_stack_client):
 
 @pytest.fixture(autouse=True)
 def skip_if_no_model(request):
-    model_fixtures = ["text_model_id", "vision_model_id", "embedding_model_id", "judge_model_id", "shield_id"]
+    model_fixtures = [
+        "text_model_id",
+        "vision_model_id",
+        "embedding_model_id",
+        "judge_model_id",
+        "shield_id",
+        "rerank_model_id",
+    ]
     test_func = request.node.function
 
     actual_params = inspect.signature(test_func).parameters.keys()
@@ -188,11 +233,27 @@ def instantiate_llama_stack_client(session):
         raise ValueError("You must specify either --stack-config or LLAMA_STACK_CONFIG")
 
     # Handle server:<config_name> format or server:<config_name>:<port>
+    # Also handles server:<distro>::<run_file.yaml> format
     if config.startswith("server:"):
-        parts = config.split(":")
-        config_name = parts[1]
-        port = int(parts[2]) if len(parts) > 2 else int(os.environ.get("LLAMA_STACK_PORT", DEFAULT_PORT))
+        # Strip the "server:" prefix first
+        config_part = config[7:]  # len("server:") == 7
+
+        # Check for :: (distro::runfile format)
+        if "::" in config_part:
+            config_name = config_part
+            port = int(os.environ.get("LLAMA_STACK_PORT", DEFAULT_PORT))
+        else:
+            # Single colon format: either <name> or <name>:<port>
+            parts = config_part.split(":")
+            config_name = parts[0]
+            port = int(parts[1]) if len(parts) > 1 else int(os.environ.get("LLAMA_STACK_PORT", DEFAULT_PORT))
+
         base_url = f"http://localhost:{port}"
+
+        force_restart = os.environ.get("LLAMA_STACK_TEST_FORCE_SERVER_RESTART") == "1"
+        if force_restart:
+            print(f"Forcing restart of the server on port {port}")
+            stop_server_on_port(port)
 
         # Check if port is available
         if is_port_available(port):
@@ -273,7 +334,13 @@ def require_server(llama_stack_client):
 @pytest.fixture(scope="session")
 def openai_client(llama_stack_client, require_server):
     base_url = f"{llama_stack_client.base_url}/v1"
-    return OpenAI(base_url=base_url, api_key="fake")
+    client = OpenAI(base_url=base_url, api_key="fake", max_retries=0, timeout=30.0)
+    yield client
+    # Cleanup: close HTTP connections
+    try:
+        client.close()
+    except Exception:
+        pass
 
 
 @pytest.fixture(params=["openai_client", "client_with_models"])

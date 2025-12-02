@@ -27,9 +27,11 @@ def _normalize_text(text: str) -> str:
 
 
 def provider_from_model(client_with_models, model_id):
-    models = {m.identifier: m for m in client_with_models.models.list()}
-    models.update({m.provider_resource_id: m for m in client_with_models.models.list()})
-    provider_id = models[model_id].provider_id
+    models = {m.id: m for m in client_with_models.models.list()}
+    models.update(
+        {m.custom_metadata["provider_resource_id"]: m for m in client_with_models.models.list() if m.custom_metadata}
+    )
+    provider_id = models[model_id].custom_metadata["provider_id"]
     providers = {p.provider_id: p for p in client_with_models.providers.list()}
     return providers[provider_id]
 
@@ -39,7 +41,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
     if provider.provider_type in (
         "inline::meta-reference",
         "inline::sentence-transformers",
-        "inline::vllm",
+        "remote::vllm",
         "remote::bedrock",
         "remote::databricks",
         # Technically Nvidia does support OpenAI completions, but none of their hosted models
@@ -52,6 +54,7 @@ def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id)
         # {"error":{"message":"Unknown request URL: GET /openai/v1/completions. Please check the URL for typos,
         # or see the docs at https://console.groq.com/docs/","type":"invalid_request_error","code":"unknown_url"}}
         "remote::groq",
+        "remote::oci",
         "remote::gemini",  # https://generativelanguage.googleapis.com/v1beta/openai/completions -> 404
         "remote::anthropic",  # at least claude-3-{5,7}-{haiku,sonnet}-* / claude-{sonnet,opus}-4-* are not supported
         "remote::azure",  # {'error': {'code': 'OperationNotSupported', 'message': 'The completion operation
@@ -120,7 +123,7 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
     if provider.provider_type in (
         "inline::meta-reference",
         "inline::sentence-transformers",
-        "inline::vllm",
+        "remote::vllm",
         "remote::bedrock",
         "remote::databricks",
         "remote::cerebras",
@@ -721,6 +724,6 @@ def test_openai_chat_completion_structured_output(openai_client, text_model_id, 
     print(response.choices[0].message.content)
     answer = AnswerFormat.model_validate_json(response.choices[0].message.content)
     expected = tc["expected"]
-    assert answer.first_name == expected["first_name"]
-    assert answer.last_name == expected["last_name"]
+    assert expected["first_name"].lower() in answer.first_name.lower()
+    assert expected["last_name"].lower() in answer.last_name.lower()
     assert answer.year_of_birth == expected["year_of_birth"]

@@ -1,5 +1,5 @@
 exclude: 'build/'
-
+minimum_pre_commit_version: 4.4.0
 default_language_version:
     python: python3.12
     node: "22"
@@ -19,6 +19,7 @@ repos:
     -   id: no-commit-to-branch
     -   id: check-yaml
         args: ["--unsafe"]
+        exclude: 'docs/static/openai-spec-2.3.0.yml'
     -   id: detect-private-key
     -   id: mixed-line-ending
         args: [--fix=lf] # Forces to replace line ending by LF (line feed)
@@ -42,7 +43,6 @@ repos:
     hooks:
     -   id: ruff
         args: [ --fix ]
-        exclude: ^llama_stack/strong_typing/.*$
     -   id: ruff-format
 
 -   repo: https://github.com/adamchainz/blacken-docs
@@ -52,13 +52,9 @@ repos:
         additional_dependencies:
         - black==24.3.0
 
--   repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.7.20
-    hooks:
-    -   id: uv-lock
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.16.1
+    rev: v1.18.2
     hooks:
     -   id: mypy
         additional_dependencies:
@@ -78,33 +74,48 @@ repos:
 
 -   repo: local
     hooks:
+      - id: uv-lock
+        name: uv-lock
+        additional_dependencies:
+          - uv==0.7.20
+        entry: ./scripts/uv-run-with-index.sh lock
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^(pyproject\.toml|uv\.lock)$
+      - id: mypy-full
+        name: mypy (full type_checking)
+        entry: ./scripts/uv-run-with-index.sh run --group dev --group type_checking mypy
+        language: system
+        pass_filenames: false
+        stages: [manual]
       - id: distro-codegen
         name: Distribution Template Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run --group codegen ./scripts/distro_codegen.py
+        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/distro_codegen.py
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/distributions/.*$|^llama_stack/providers/.*/inference/.*/models\.py$
+        files: ^src/llama_stack/distributions/.*$|^src/llama_stack/providers/.*/inference/.*/models\.py$
       - id: provider-codegen
         name: Provider Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run --group codegen ./scripts/provider_codegen.py
+        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/providers/.*$
+        files: ^src/llama_stack/providers/.*$|^scripts/run_openapi_generator.sh$
       - id: openapi-codegen
         name: API Spec Codegen
         additional_dependencies:
           - uv==0.7.8
-        entry: sh -c 'uv run ./docs/openapi_generator/run_openapi_generator.sh > /dev/null'
+        entry: sh -c './scripts/uv-run-with-index.sh run scripts/run_openapi_generator.sh'
         language: python
         pass_filenames: false
         require_serial: true
-        files: ^llama_stack/apis/|^docs/openapi_generator/
+        files: ^src/llama_stack_api/.*$
       - id: check-workflows-use-hashes
         name: Check GitHub Actions use SHA-pinned actions
         entry: ./scripts/check-workflows-use-hashes.sh
@@ -120,7 +131,7 @@ repos:
         pass_filenames: false
         require_serial: true
         always_run: true
-        files: ^llama_stack/.*$
+        files: ^src/llama_stack/.*$
       - id: forbid-pytest-asyncio
         name: Block @pytest.mark.asyncio and @pytest_asyncio.fixture
         entry: bash
@@ -141,7 +152,7 @@ repos:
         name: Generate CI documentation
         additional_dependencies:
           - uv==0.7.8
-        entry: uv run ./scripts/gen-ci-docs.py
+        entry: ./scripts/uv-run-with-index.sh run ./scripts/gen-ci-docs.py
         language: python
         pass_filenames: false
         require_serial: true
@@ -150,7 +161,7 @@ repos:
         name: Format & Lint UI
         entry: bash ./scripts/run-ui-linter.sh
         language: system
-        files: ^llama_stack/ui/.*\.(ts|tsx)$
+        files: ^src/llama_stack_ui/.*\.(ts|tsx)$
         pass_filenames: false
         require_serial: true
 
@@ -171,6 +182,44 @@ repos:
               done <<< "$matches"
               exit 1
             fi
+            exit 0
+      - id: fips-compliance
+        name: Ensure llama-stack remains FIPS compliant
+        entry: bash
+        language: system
+        types: [python]
+        pass_filenames: true
+        exclude: '^tests/.*$'  # Exclude test dir as some safety tests used MD5
+        args:
+          - -c
+          - |
+            grep -EnH '^[^#]*\b(md5|sha1|uuid3|uuid5)\b' "$@" && {
+              echo;
+              echo "❌ Do not use any of the following functions: hashlib.md5, hashlib.sha1, uuid.uuid3, uuid.uuid5"
+              echo "   These functions are not FIPS-compliant"
+              echo;
+              exit 1;
+            } || true
+      - id: check-api-independence
+        name: Ensure llama_stack_api does not import llama_stack
+        entry: bash
+        language: system
+        pass_filenames: false
+        require_serial: true
+        always_run: true
+        files: ^src/llama_stack_api/.*$
+        args:
+          - -c
+          - |
+            API_DIR="src/llama_stack_api"
+            grep -rn --include="*.py" -E '^[^#]*(import llama_stack\b|from llama_stack\b)' "$API_DIR" 2>/dev/null && {
+              echo "llama_stack_api must not import llama_stack";
+              exit 1;
+            }
+            [ -f "$API_DIR/pyproject.toml" ] && grep -n 'llama_stack[^_]' "$API_DIR/pyproject.toml" && {
+              echo "llama_stack_api must not depend on llama_stack in pyproject.toml";
+              exit 1;
+            }
             exit 0
 
 ci:

@@ -6,6 +6,7 @@
 
 import base64
 import json
+import logging  # allow-direct-logging
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -25,6 +26,13 @@ from llama_stack.core.server.auth import AuthenticationMiddleware, _has_required
 from llama_stack.core.server.auth_providers import (
     get_attributes_from_claims,
 )
+
+
+@pytest.fixture
+def suppress_auth_errors(caplog):
+    """Suppress expected ERROR/WARNING logs for tests that deliberately trigger authentication errors"""
+    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.auth")
+    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.auth_providers")
 
 
 class MockResponse:
@@ -136,7 +144,7 @@ def middleware_with_mocks(mock_auth_endpoint):
     middleware = AuthenticationMiddleware(mock_app, auth_config, {})
 
     # Mock the route_impls to simulate finding routes with required scopes
-    from llama_stack.schema_utils import WebMethod
+    from llama_stack_api import WebMethod
 
     routes = {
         ("POST", "/test/scoped"): WebMethod(route="/test/scoped", method="POST", required_scope="test.read"),
@@ -237,20 +245,20 @@ def test_valid_http_authentication(http_client, valid_api_key):
 
 
 @patch("httpx.AsyncClient.post", new=mock_post_failure)
-def test_invalid_http_authentication(http_client, invalid_api_key):
+def test_invalid_http_authentication(http_client, invalid_api_key, suppress_auth_errors):
     response = http_client.get("/test", headers={"Authorization": f"Bearer {invalid_api_key}"})
     assert response.status_code == 401
     assert "Authentication failed" in response.json()["error"]["message"]
 
 
 @patch("httpx.AsyncClient.post", new=mock_post_exception)
-def test_http_auth_service_error(http_client, valid_api_key):
+def test_http_auth_service_error(http_client, valid_api_key, suppress_auth_errors):
     response = http_client.get("/test", headers={"Authorization": f"Bearer {valid_api_key}"})
     assert response.status_code == 401
     assert "Authentication service error" in response.json()["error"]["message"]
 
 
-def test_http_auth_request_payload(http_client, valid_api_key, mock_auth_endpoint):
+def test_http_auth_request_payload(http_client, valid_api_key, mock_auth_endpoint, suppress_auth_errors):
     with patch("httpx.AsyncClient.post") as mock_post:
         mock_response = MockResponse(200, {"message": "Authentication successful"})
         mock_post.return_value = mock_response
@@ -356,23 +364,6 @@ def test_invalid_auth_header_format_oauth2(oauth2_client):
     assert "Invalid Authorization header format" in response.json()["error"]["message"]
 
 
-async def mock_jwks_response(*args, **kwargs):
-    return MockResponse(
-        200,
-        {
-            "keys": [
-                {
-                    "kid": "1234567890",
-                    "kty": "oct",
-                    "alg": "HS256",
-                    "use": "sig",
-                    "k": base64.b64encode(b"foobarbaz").decode(),
-                }
-            ]
-        },
-    )
-
-
 @pytest.fixture
 def jwt_token_valid():
     import jwt
@@ -413,26 +404,58 @@ def mock_jwks_urlopen():
         yield mock_urlopen
 
 
+@pytest.fixture
+def mock_jwks_urlopen_with_auth_required():
+    """Mock urllib.request.urlopen that requires Bearer token for JWKS requests."""
+    with patch("urllib.request.urlopen") as mock_urlopen:
+
+        def side_effect(request, **kwargs):
+            # Check if Authorization header is present
+            auth_header = request.headers.get("Authorization") if hasattr(request, "headers") else None
+
+            if not auth_header or not auth_header.startswith("Bearer "):
+                # Simulate 401 Unauthorized
+                import urllib.error
+
+                raise urllib.error.HTTPError(
+                    url=request.full_url if hasattr(request, "full_url") else "",
+                    code=401,
+                    msg="Unauthorized",
+                    hdrs={},
+                    fp=None,
+                )
+
+            # Mock the JWKS response for PyJWKClient
+            mock_response = Mock()
+            mock_response.read.return_value = json.dumps(
+                {
+                    "keys": [
+                        {
+                            "kid": "1234567890",
+                            "kty": "oct",
+                            "alg": "HS256",
+                            "use": "sig",
+                            "k": base64.b64encode(b"foobarbaz").decode(),
+                        }
+                    ]
+                }
+            ).encode()
+            return mock_response
+
+        mock_urlopen.side_effect = side_effect
+        yield mock_urlopen
+
+
 def test_valid_oauth2_authentication(oauth2_client, jwt_token_valid, mock_jwks_urlopen):
     response = oauth2_client.get("/test", headers={"Authorization": f"Bearer {jwt_token_valid}"})
     assert response.status_code == 200
     assert response.json() == {"message": "Authentication successful"}
 
 
-@patch("httpx.AsyncClient.get", new=mock_jwks_response)
-def test_invalid_oauth2_authentication(oauth2_client, invalid_token):
+def test_invalid_oauth2_authentication(oauth2_client, invalid_token, mock_jwks_urlopen, suppress_auth_errors):
     response = oauth2_client.get("/test", headers={"Authorization": f"Bearer {invalid_token}"})
     assert response.status_code == 401
     assert "Invalid JWT token" in response.json()["error"]["message"]
-
-
-async def mock_auth_jwks_response(*args, **kwargs):
-    if "headers" not in kwargs or "Authorization" not in kwargs["headers"]:
-        return MockResponse(401, {})
-    authz = kwargs["headers"]["Authorization"]
-    if authz != "Bearer my-jwks-token":
-        return MockResponse(401, {})
-    return await mock_jwks_response(args, kwargs)
 
 
 @pytest.fixture
@@ -464,8 +487,9 @@ def oauth2_client_with_jwks_token(oauth2_app_with_jwks_token):
     return TestClient(oauth2_app_with_jwks_token)
 
 
-@patch("httpx.AsyncClient.get", new=mock_auth_jwks_response)
-def test_oauth2_with_jwks_token_expected(oauth2_client, jwt_token_valid):
+def test_oauth2_with_jwks_token_expected(
+    oauth2_client, jwt_token_valid, mock_jwks_urlopen_with_auth_required, suppress_auth_errors
+):
     response = oauth2_client.get("/test", headers={"Authorization": f"Bearer {jwt_token_valid}"})
     assert response.status_code == 401
 
@@ -726,21 +750,21 @@ def test_valid_introspection_authentication(introspection_client, valid_api_key)
 
 
 @patch("httpx.AsyncClient.post", new=mock_introspection_inactive)
-def test_inactive_introspection_authentication(introspection_client, invalid_api_key):
+def test_inactive_introspection_authentication(introspection_client, invalid_api_key, suppress_auth_errors):
     response = introspection_client.get("/test", headers={"Authorization": f"Bearer {invalid_api_key}"})
     assert response.status_code == 401
     assert "Token not active" in response.json()["error"]["message"]
 
 
 @patch("httpx.AsyncClient.post", new=mock_introspection_invalid)
-def test_invalid_introspection_authentication(introspection_client, invalid_api_key):
+def test_invalid_introspection_authentication(introspection_client, invalid_api_key, suppress_auth_errors):
     response = introspection_client.get("/test", headers={"Authorization": f"Bearer {invalid_api_key}"})
     assert response.status_code == 401
     assert "Not JSON" in response.json()["error"]["message"]
 
 
 @patch("httpx.AsyncClient.post", new=mock_introspection_failed)
-def test_failed_introspection_authentication(introspection_client, invalid_api_key):
+def test_failed_introspection_authentication(introspection_client, invalid_api_key, suppress_auth_errors):
     response = introspection_client.get("/test", headers={"Authorization": f"Bearer {invalid_api_key}"})
     assert response.status_code == 401
     assert "Token introspection failed: 500" in response.json()["error"]["message"]
@@ -957,20 +981,22 @@ def test_valid_kubernetes_auth_authentication(kubernetes_auth_client, valid_toke
 
 
 @patch("httpx.AsyncClient.post", new=mock_kubernetes_selfsubjectreview_failure)
-def test_invalid_kubernetes_auth_authentication(kubernetes_auth_client, invalid_token):
+def test_invalid_kubernetes_auth_authentication(kubernetes_auth_client, invalid_token, suppress_auth_errors):
     response = kubernetes_auth_client.get("/test", headers={"Authorization": f"Bearer {invalid_token}"})
     assert response.status_code == 401
     assert "Invalid token" in response.json()["error"]["message"]
 
 
 @patch("httpx.AsyncClient.post", new=mock_kubernetes_selfsubjectreview_http_error)
-def test_kubernetes_auth_http_error(kubernetes_auth_client, valid_token):
+def test_kubernetes_auth_http_error(kubernetes_auth_client, valid_token, suppress_auth_errors):
     response = kubernetes_auth_client.get("/test", headers={"Authorization": f"Bearer {valid_token}"})
     assert response.status_code == 401
     assert "Token validation failed" in response.json()["error"]["message"]
 
 
-def test_kubernetes_auth_request_payload(kubernetes_auth_client, valid_token, mock_kubernetes_api_server):
+def test_kubernetes_auth_request_payload(
+    kubernetes_auth_client, valid_token, mock_kubernetes_api_server, suppress_auth_errors
+):
     with patch("httpx.AsyncClient.post") as mock_post:
         mock_response = MockResponse(
             200,

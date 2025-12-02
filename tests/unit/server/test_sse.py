@@ -5,10 +5,19 @@
 # the root directory of this source tree.
 
 import asyncio
+import logging  # allow-direct-logging
 from unittest.mock import AsyncMock, MagicMock
 
-from llama_stack.apis.common.responses import PaginatedResponse
+import pytest
+
 from llama_stack.core.server.server import create_dynamic_typed_route, create_sse_event, sse_generator
+from llama_stack_api import PaginatedResponse
+
+
+@pytest.fixture
+def suppress_sse_errors(caplog):
+    """Suppress expected ERROR logs for tests that deliberately trigger SSE errors"""
+    caplog.set_level(logging.CRITICAL, logger="llama_stack.core.server.server")
 
 
 async def test_sse_generator_basic():
@@ -70,7 +79,7 @@ async def test_sse_generator_client_disconnected_before_response_starts():
     assert len(seen_events) == 0
 
 
-async def test_sse_generator_error_before_response_starts():
+async def test_sse_generator_error_before_response_starts(suppress_sse_errors):
     # Raise an error before the response starts
     async def async_event_gen():
         raise Exception("Test error")
@@ -95,11 +104,17 @@ async def test_paginated_response_url_setting():
 
     route_handler = create_dynamic_typed_route(mock_api_method, "get", "/test/route")
 
-    # Mock minimal request
+    # Mock minimal request with proper state object
     request = MagicMock()
     request.scope = {"user_attributes": {}, "principal": ""}
     request.headers = {}
     request.body = AsyncMock(return_value=b"")
+
+    # Create a simple state object without auto-generating attributes
+    class MockState:
+        pass
+
+    request.state = MockState()
 
     result = await route_handler(request)
 

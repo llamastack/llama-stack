@@ -14,14 +14,14 @@ Databricks inference provider for running models on Databricks' unified analytic
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
-| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
-| `api_token` | `pydantic.types.SecretStr \| None` | No |  | The Databricks API token |
-| `url` | `str \| None` | No |  | The URL for the Databricks model serving endpoint |
+| `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
+| `api_token` | `SecretStr \| None` | No |  | The Databricks API token |
+| `base_url` | `HttpUrl \| None` | No |  | The URL for the Databricks model serving endpoint (should include /serving-endpoints path) |
 
 ## Sample Configuration
 
 ```yaml
-url: ${env.DATABRICKS_HOST:=}
+base_url: ${env.DATABRICKS_HOST:=}
 api_token: ${env.DATABRICKS_TOKEN:=}
 ```

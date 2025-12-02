@@ -20,10 +20,11 @@ TEST_PATTERN=""
 INFERENCE_MODE="replay"
 EXTRA_PARAMS=""
 COLLECT_ONLY=false
+TYPESCRIPT_ONLY=false
 
 # Function to display usage
 usage() {
-    cat << EOF
+    cat <<EOF
 Usage: $0 [OPTIONS]
 
 Options:
@@ -34,6 +35,7 @@ Options:
     --subdirs STRING         Comma-separated list of test subdirectories to run (overrides suite)
     --pattern STRING         Regex pattern to pass to pytest -k
     --collect-only           Collect tests only without running them (skips server startup)
+    --typescript-only        Skip Python tests and run only TypeScript client tests
     --help                   Show this help message
 
 Suites are defined in tests/integration/suites.py and define which tests to run.
@@ -62,46 +64,49 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --stack-config)
-            STACK_CONFIG="$2"
-            shift 2
-            ;;
-        --setup)
-            TEST_SETUP="$2"
-            shift 2
-            ;;
-        --subdirs)
-            TEST_SUBDIRS="$2"
-            shift 2
-            ;;
-        --suite)
-            TEST_SUITE="$2"
-            shift 2
-            ;;
-        --inference-mode)
-            INFERENCE_MODE="$2"
-            shift 2
-            ;;
-        --pattern)
-            TEST_PATTERN="$2"
-            shift 2
-            ;;
-        --collect-only)
-            COLLECT_ONLY=true
-            shift
-            ;;
-        --help)
-            usage
-            exit 0
-            ;;
-        *)
-            echo "Unknown option: $1"
-            usage
-            exit 1
-            ;;
+    --stack-config)
+        STACK_CONFIG="$2"
+        shift 2
+        ;;
+    --setup)
+        TEST_SETUP="$2"
+        shift 2
+        ;;
+    --subdirs)
+        TEST_SUBDIRS="$2"
+        shift 2
+        ;;
+    --suite)
+        TEST_SUITE="$2"
+        shift 2
+        ;;
+    --inference-mode)
+        INFERENCE_MODE="$2"
+        shift 2
+        ;;
+    --pattern)
+        TEST_PATTERN="$2"
+        shift 2
+        ;;
+    --collect-only)
+        COLLECT_ONLY=true
+        shift
+        ;;
+    --typescript-only)
+        TYPESCRIPT_ONLY=true
+        shift
+        ;;
+    --help)
+        usage
+        exit 0
+        ;;
+    *)
+        echo "Unknown option: $1"
+        usage
+        exit 1
+        ;;
     esac
 done
-
 
 # Validate required parameters
 if [[ -z "$STACK_CONFIG" && "$COLLECT_ONLY" == false ]]; then
@@ -163,6 +168,25 @@ if [[ "$COLLECT_ONLY" == false ]]; then
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="library_client"
         echo "Setting stack config type: library_client"
     fi
+
+    # Set MCP host for in-process MCP server tests
+    # - For library client and server mode: localhost (both on same host)
+    # - For docker mode on Linux: localhost (container uses host network, shares network namespace)
+    # - For docker mode on macOS/Windows: host.docker.internal (container uses bridge network)
+    if [[ "$STACK_CONFIG" == docker:* ]]; then
+        if [[ "$(uname)" != "Darwin" ]] && [[ "$(uname)" != *"MINGW"* ]]; then
+            # On Linux with host network mode, container shares host network namespace
+            export LLAMA_STACK_TEST_MCP_HOST="localhost"
+            echo "Setting MCP host: localhost (docker mode with host network)"
+        else
+            # On macOS/Windows with bridge network, need special host access
+            export LLAMA_STACK_TEST_MCP_HOST="host.docker.internal"
+            echo "Setting MCP host: host.docker.internal (docker mode with bridge network)"
+        fi
+    else
+        export LLAMA_STACK_TEST_MCP_HOST="localhost"
+        echo "Setting MCP host: localhost (library/server mode)"
+    fi
 fi
 
 SETUP_ENV=$(PYTHONPATH=$THIS_DIR/.. python "$THIS_DIR/get_setup_env.py" --suite "$TEST_SUITE" --setup "$TEST_SETUP" --format bash)
@@ -171,27 +195,121 @@ echo "$SETUP_ENV"
 eval "$SETUP_ENV"
 echo ""
 
+# Export suite and setup names for TypeScript tests
+export LLAMA_STACK_TEST_SUITE="$TEST_SUITE"
+export LLAMA_STACK_TEST_SETUP="$TEST_SETUP"
+
 ROOT_DIR="$THIS_DIR/.."
 cd $ROOT_DIR
 
 # check if "llama" and "pytest" are available. this script does not use `uv run` given
 # it can be used in a pre-release environment where we have not been able to tell
 # uv about pre-release dependencies properly (yet).
-if [[ "$COLLECT_ONLY" == false ]] && ! command -v llama &> /dev/null; then
+if [[ "$COLLECT_ONLY" == false ]] && ! command -v llama &>/dev/null; then
     echo "llama could not be found, ensure llama-stack is installed"
     exit 1
 fi
 
-if ! command -v pytest &> /dev/null; then
+if ! command -v pytest &>/dev/null; then
     echo "pytest could not be found, ensure pytest is installed"
     exit 1
 fi
 
+# Helper function to find next available port
+find_available_port() {
+    local start_port=$1
+    local port=$start_port
+    for ((i=0; i<100; i++)); do
+        if ! lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
+            echo $port
+            return 0
+        fi
+        ((port++))
+    done
+    echo "Failed to find available port starting from $start_port" >&2
+    return 1
+}
+
+run_client_ts_tests() {
+    if ! command -v npm &>/dev/null; then
+        echo "npm could not be found; ensure Node.js is installed"
+        return 1
+    fi
+
+    pushd tests/integration/client-typescript >/dev/null
+
+    # Determine if TS_CLIENT_PATH is a directory path or an npm version
+    if [[ -d "$TS_CLIENT_PATH" ]]; then
+        # It's a directory path - use local checkout
+        if [[ ! -f "$TS_CLIENT_PATH/package.json" ]]; then
+            echo "Error: $TS_CLIENT_PATH exists but doesn't look like llama-stack-client-typescript (no package.json)"
+            popd >/dev/null
+            return 1
+        fi
+        echo "Using local llama-stack-client-typescript from: $TS_CLIENT_PATH"
+
+        # Build the TypeScript client first
+        echo "Building TypeScript client..."
+        pushd "$TS_CLIENT_PATH" >/dev/null
+        npm install --silent
+        npm run build --silent
+        popd >/dev/null
+
+        # Install other dependencies first
+        if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+            npm ci --silent
+        else
+            npm install --silent
+        fi
+
+        # Then install the client from local directory
+        echo "Installing llama-stack-client from: $TS_CLIENT_PATH"
+        npm install "$TS_CLIENT_PATH" --silent
+    else
+        # It's an npm version specifier - install from npm
+        echo "Installing llama-stack-client@${TS_CLIENT_PATH} from npm"
+        if [[ "${CI:-}" == "true" || "${CI:-}" == "1" ]]; then
+            npm ci --silent
+            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+        else
+            npm install "llama-stack-client@${TS_CLIENT_PATH}" --silent
+        fi
+    fi
+
+    # Verify installation
+    echo "Verifying llama-stack-client installation..."
+    if npm list llama-stack-client 2>/dev/null | grep -q llama-stack-client; then
+        echo "✅ llama-stack-client successfully installed"
+        npm list llama-stack-client
+    else
+        echo "❌ llama-stack-client not found in node_modules"
+        echo "Installed packages:"
+        npm list --depth=0
+        popd >/dev/null
+        return 1
+    fi
+
+    echo "Running TypeScript tests for suite $TEST_SUITE (setup $TEST_SETUP)"
+    npm test
+
+    popd >/dev/null
+}
+
 # Start Llama Stack Server if needed
 if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
+    # Find an available port for the server
+    LLAMA_STACK_PORT=$(find_available_port 8321)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: $LLAMA_STACK_PORT"
+        exit 1
+    fi
+    export LLAMA_STACK_PORT
+    export TEST_API_BASE_URL="http://localhost:$LLAMA_STACK_PORT"
+    echo "Will use port: $LLAMA_STACK_PORT"
+
     stop_server() {
         echo "Stopping Llama Stack Server..."
-        pids=$(lsof -i :8321 | awk 'NR>1 {print $2}')
+        pids=$(lsof -i :$LLAMA_STACK_PORT | awk 'NR>1 {print $2}')
         if [[ -n "$pids" ]]; then
             echo "Killing Llama Stack Server processes: $pids"
             kill -9 $pids
@@ -201,33 +319,39 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
         echo "Llama Stack Server stopped"
     }
 
-    # check if server is already running
-    if curl -s http://localhost:8321/v1/health 2>/dev/null | grep -q "OK"; then
-        echo "Llama Stack Server is already running, skipping start"
-    else
-        echo "=== Starting Llama Stack Server ==="
-        export LLAMA_STACK_LOG_WIDTH=120
+    echo "=== Starting Llama Stack Server ==="
+    export LLAMA_STACK_LOG_WIDTH=120
 
-        # remove "server:" from STACK_CONFIG
-        stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
-        nohup llama stack run $stack_config > server.log 2>&1 &
+        # Configure telemetry collector for server mode
+        # Use a fixed port for the OTEL collector so the server can connect to it
+        COLLECTOR_PORT=4317
+        export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
+        # Disabled: https://github.com/llamastack/llama-stack/issues/4089
+        #export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
+        export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+        export OTEL_BSP_SCHEDULE_DELAY="200"
+        export OTEL_BSP_EXPORT_TIMEOUT="2000"
+        export OTEL_METRIC_EXPORT_INTERVAL="200"
 
-        echo "Waiting for Llama Stack Server to start..."
-        for i in {1..30}; do
-            if curl -s http://localhost:8321/v1/health 2>/dev/null | grep -q "OK"; then
-                echo "✅ Llama Stack Server started successfully"
-                break
-            fi
-            if [[ $i -eq 30 ]]; then
-                echo "❌ Llama Stack Server failed to start"
-                echo "Server logs:"
-                cat server.log
-                exit 1
-            fi
-            sleep 1
-        done
-        echo ""
-    fi
+    # remove "server:" from STACK_CONFIG
+    stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
+    nohup llama stack run $stack_config >server.log 2>&1 &
+
+    echo "Waiting for Llama Stack Server to start on port $LLAMA_STACK_PORT..."
+    for i in {1..30}; do
+        if curl -s http://localhost:$LLAMA_STACK_PORT/v1/health 2>/dev/null | grep -q "OK"; then
+            echo "✅ Llama Stack Server started successfully"
+            break
+        fi
+        if [[ $i -eq 30 ]]; then
+            echo "❌ Llama Stack Server failed to start"
+            echo "Server logs:"
+            cat server.log
+            exit 1
+        fi
+        sleep 1
+    done
+    echo ""
 
     trap stop_server EXIT ERR INT TERM
 fi
@@ -239,7 +363,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
         container_name="llama-stack-test-$DISTRO"
         if docker ps -a --format '{{.Names}}' | grep -q "^${container_name}$"; then
             echo "Dumping container logs before stopping..."
-            docker logs "$container_name" > "docker-${DISTRO}-${INFERENCE_MODE}.log" 2>&1 || true
+            docker logs "$container_name" >"docker-${DISTRO}-${INFERENCE_MODE}.log" 2>&1 || true
             echo "Stopping and removing container: $container_name"
             docker stop "$container_name" 2>/dev/null || true
             docker rm "$container_name" 2>/dev/null || true
@@ -251,7 +375,15 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
 
     # Extract distribution name from docker:distro format
     DISTRO=$(echo "$STACK_CONFIG" | sed 's/^docker://')
-    export LLAMA_STACK_PORT=8321
+    # Find an available port for the docker container
+    LLAMA_STACK_PORT=$(find_available_port 8321)
+    if [[ $? -ne 0 ]]; then
+        echo "Error: $LLAMA_STACK_PORT"
+        exit 1
+    fi
+    export LLAMA_STACK_PORT
+    export TEST_API_BASE_URL="http://localhost:$LLAMA_STACK_PORT"
+    echo "Will use port: $LLAMA_STACK_PORT"
 
     echo "=== Building Docker Image for distribution: $DISTRO ==="
     containerfile="$ROOT_DIR/containers/Containerfile"
@@ -271,6 +403,16 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
         --build-arg "LLAMA_STACK_DIR=/workspace"
     )
 
+    # Pass UV index configuration for release branches
+    if [[ -n "${UV_EXTRA_INDEX_URL:-}" ]]; then
+        echo "Adding UV_EXTRA_INDEX_URL to docker build: $UV_EXTRA_INDEX_URL"
+        build_cmd+=(--build-arg "UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL")
+    fi
+    if [[ -n "${UV_INDEX_STRATEGY:-}" ]]; then
+        echo "Adding UV_INDEX_STRATEGY to docker build: $UV_INDEX_STRATEGY"
+        build_cmd+=(--build-arg "UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY")
+    fi
+
     if ! "${build_cmd[@]}"; then
         echo "❌ Failed to build Docker image"
         exit 1
@@ -284,10 +426,20 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     docker stop "$container_name" 2>/dev/null || true
     docker rm "$container_name" 2>/dev/null || true
 
+    # Configure telemetry collector port shared between host and container
+    COLLECTOR_PORT=4317
+    export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
+
     # Build environment variables for docker run
     DOCKER_ENV_VARS=""
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_INFERENCE_MODE=$INFERENCE_MODE"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_STACK_CONFIG_TYPE=server"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_MCP_HOST=${LLAMA_STACK_TEST_MCP_HOST:-host.docker.internal}"
+    # Disabled: https://github.com/llamastack/llama-stack/issues/4089
+    #DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${COLLECTOR_PORT}"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_METRIC_EXPORT_INTERVAL=200"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_BSP_SCHEDULE_DELAY=200"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_BSP_EXPORT_TIMEOUT=2000"
 
     # Pass through API keys if they exist
     [ -n "${TOGETHER_API_KEY:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e TOGETHER_API_KEY=$TOGETHER_API_KEY"
@@ -300,6 +452,10 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     [ -n "${OLLAMA_URL:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OLLAMA_URL=$OLLAMA_URL"
     [ -n "${SAFETY_MODEL:-}" ] && DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e SAFETY_MODEL=$SAFETY_MODEL"
 
+    if [[ "$TEST_SETUP" == "vllm" ]]; then
+        DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e VLLM_URL=http://localhost:8000/v1"
+    fi
+
     # Determine the actual image name (may have localhost/ prefix)
     IMAGE_NAME=$(docker images --format "{{.Repository}}:{{.Tag}}" | grep "distribution-$DISTRO:dev$" | head -1)
     if [[ -z "$IMAGE_NAME" ]]; then
@@ -308,8 +464,24 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     fi
     echo "Using image: $IMAGE_NAME"
 
-    docker run -d --network host --name "$container_name" \
-        -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
+    # On macOS/Darwin, --network host doesn't work as expected due to Docker running in a VM
+    # Use regular port mapping instead
+    NETWORK_MODE=""
+    PORT_MAPPINGS=""
+    ADD_HOST_FLAG=""
+    if [[ "$(uname)" != "Darwin" ]] && [[ "$(uname)" != *"MINGW"* ]]; then
+        NETWORK_MODE="--network host"
+        # On Linux with host network, also add host.docker.internal mapping for consistency
+        ADD_HOST_FLAG="--add-host=host.docker.internal:host-gateway"
+    else
+        # On non-Linux (macOS, Windows), need explicit port mappings for both app and telemetry
+        PORT_MAPPINGS="-p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT -p $COLLECTOR_PORT:$COLLECTOR_PORT"
+        echo "Using bridge networking with port mapping (non-Linux)"
+    fi
+
+    docker run -d $NETWORK_MODE --name "$container_name" \
+        $PORT_MAPPINGS \
+        $ADD_HOST_FLAG \
         $DOCKER_ENV_VARS \
         "$IMAGE_NAME" \
         --port $LLAMA_STACK_PORT
@@ -339,11 +511,6 @@ fi
 # Run tests
 echo "=== Running Integration Tests ==="
 EXCLUDE_TESTS="builtin_tool or safety_with_image or code_interpreter or test_rag"
-
-# Additional exclusions for vllm setup
-if [[ "$TEST_SETUP" == "vllm" ]]; then
-    EXCLUDE_TESTS="${EXCLUDE_TESTS} or test_inference_store_tool_calls"
-fi
 
 PYTEST_PATTERN="not( $EXCLUDE_TESTS )"
 if [[ -n "$TEST_PATTERN" ]]; then
@@ -391,16 +558,23 @@ if [[ -n "$STACK_CONFIG" ]]; then
     STACK_CONFIG_ARG="--stack-config=$STACK_CONFIG"
 fi
 
-pytest -s -v $PYTEST_TARGET \
-    $STACK_CONFIG_ARG \
-    --inference-mode="$INFERENCE_MODE" \
-    -k "$PYTEST_PATTERN" \
-    $EXTRA_PARAMS \
-    --color=yes \
-    --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
-    --color=yes $EXTRA_PARAMS \
-    --capture=tee-sys
-exit_code=$?
+# Run Python tests unless typescript-only mode
+if [[ "$TYPESCRIPT_ONLY" == "false" ]]; then
+    pytest -s -v $PYTEST_TARGET \
+        $STACK_CONFIG_ARG \
+        --inference-mode="$INFERENCE_MODE" \
+        -k "$PYTEST_PATTERN" \
+        $EXTRA_PARAMS \
+        --color=yes \
+        --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
+        --color=yes $EXTRA_PARAMS \
+        --capture=tee-sys
+    exit_code=$?
+else
+    echo "Skipping Python tests (--typescript-only mode)"
+    exit_code=0
+fi
+
 set +x
 set -e
 
@@ -411,21 +585,22 @@ elif [ $exit_code -eq 5 ]; then
 else
     echo "❌ Tests failed"
     echo ""
-    echo "=== Dumping last 100 lines of logs for debugging ==="
-
     # Output server or container logs based on stack config
     if [[ "$STACK_CONFIG" == *"server:"* && -f "server.log" ]]; then
-        echo "--- Last 100 lines of server.log ---"
-        tail -100 server.log
+        echo "--- Server side failures can be located inside server.log (available from artifacts on CI) ---"
     elif [[ "$STACK_CONFIG" == *"docker:"* ]]; then
         docker_log_file="docker-${DISTRO}-${INFERENCE_MODE}.log"
         if [[ -f "$docker_log_file" ]]; then
-            echo "--- Last 100 lines of $docker_log_file ---"
-            tail -100 "$docker_log_file"
+            echo "--- Server side failures can be located inside $docker_log_file (available from artifacts on CI) ---"
         fi
     fi
 
     exit 1
+fi
+
+# Run TypeScript client tests if TS_CLIENT_PATH is set
+if [[ $exit_code -eq 0 && -n "${TS_CLIENT_PATH:-}" && "${LLAMA_STACK_TEST_STACK_CONFIG_TYPE:-}" == "server" ]]; then
+    run_client_ts_tests
 fi
 
 echo ""

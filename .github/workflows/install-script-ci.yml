@@ -16,24 +16,30 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # 5.0.0
+      - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # 6.0.0
       - name: Run ShellCheck on install.sh
         run: shellcheck scripts/install.sh
   smoke-test-on-dev:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
 
       - name: Build a single provider
         run: |
+          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=starter"
+          if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+          fi
+          if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+          fi
           docker build . \
             -f containers/Containerfile \
-            --build-arg INSTALL_MODE=editable \
-            --build-arg DISTRO_NAME=starter \
+            $BUILD_ARGS \
             --tag llama-stack:starter-ci
 
       - name: Run installer end-to-end

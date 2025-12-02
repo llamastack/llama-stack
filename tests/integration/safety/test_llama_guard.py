@@ -13,8 +13,8 @@ from collections.abc import Generator
 
 import pytest
 
-from llama_stack.apis.safety import ViolationLevel
 from llama_stack.models.llama.sku_types import CoreModelId
+from llama_stack_api import ViolationLevel
 
 # Llama Guard models available for text and vision shields
 LLAMA_GUARD_TEXT_MODELS = [CoreModelId.llama_guard_4_12b.value]
@@ -40,7 +40,7 @@ def text_model(request, client_with_models):
     model_id = request.param
 
     # Check if the model is available
-    available_models = [m.identifier for m in client_with_models.models.list()]
+    available_models = [m.id for m in client_with_models.models.list()]
 
     if model_id not in available_models:
         pytest.skip(
@@ -76,7 +76,7 @@ def vision_model(request, client_with_models):
     model_id = request.param
 
     # Check if the model is available
-    available_models = [m.identifier for m in client_with_models.models.list()]
+    available_models = [m.id for m in client_with_models.models.list()]
 
     if model_id not in available_models:
         pytest.skip(

@@ -6,7 +6,6 @@ apis:
 - inference
 - files
 - safety
-- telemetry
 - tool_runtime
 - vector_io
 providers:
@@ -27,28 +26,16 @@ providers:
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
       metadata_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/files_metadata.db
+        table_name: files_metadata
+        backend: sql_default
   vector_io:
   - provider_id: ${env.ENABLE_CHROMADB:+chromadb}
     provider_type: remote::chromadb
     config:
       url: ${env.CHROMADB_URL:=}
-      kvstore:
-        type: postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
-  files:
-  - provider_id: meta-reference-files
-    provider_type: inline::localfs
-    config:
-      storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter/files}
-      metadata_store:
-        type: sqlite
-        db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/starter}/files_metadata.db
+      persistence:
+        namespace: vector_io::chroma_remote
+        backend: kv_default
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
@@ -58,26 +45,15 @@ providers:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
     config:
-      persistence_store:
-        type: postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
-      responses_store:
-        type: postgres
-        host: ${env.POSTGRES_HOST:=localhost}
-        port: ${env.POSTGRES_PORT:=5432}
-        db: ${env.POSTGRES_DB:=llamastack}
-        user: ${env.POSTGRES_USER:=llamastack}
-        password: ${env.POSTGRES_PASSWORD:=llamastack}
-  telemetry:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
-    config:
-      service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
-      sinks: ${env.TELEMETRY_SINKS:=console}
+      persistence:
+        agent_state:
+          namespace: agents
+          backend: kv_default
+        responses:
+          table_name: responses
+          backend: sql_default
+          max_write_queue_size: 10000
+          num_writers: 4
   tool_runtime:
   - provider_id: brave-search
     provider_type: remote::brave-search
@@ -112,32 +88,46 @@ storage:
       db: ${env.POSTGRES_DB:=llamastack}
       user: ${env.POSTGRES_USER:=llamastack}
       password: ${env.POSTGRES_PASSWORD:=llamastack}
-  references:
+  stores:
     metadata:
-      backend: kv_default
       namespace: registry
+      backend: kv_default
     inference:
-      backend: sql_default
       table_name: inference_store
-models:
-- metadata:
-    embedding_dimension: 768
-  model_id: nomic-embed-text-v1.5
-  provider_id: sentence-transformers
-  model_type: embedding
-- model_id: ${env.INFERENCE_MODEL}
-  provider_id: vllm-inference
-  model_type: llm
-shields:
-- shield_id: ${env.SAFETY_MODEL:=meta-llama/Llama-Guard-3-1B}
-vector_dbs: []
-datasets: []
-scoring_fns: []
-benchmarks: []
-tool_groups:
-- toolgroup_id: builtin::websearch
-  provider_id: tavily-search
-- toolgroup_id: builtin::rag
-  provider_id: rag-runtime
+      backend: sql_default
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      table_name: openai_conversations
+      backend: sql_default
+    prompts:
+      namespace: prompts
+      backend: kv_default
+registered_resources:
+  models:
+  - metadata:
+      embedding_dimension: 768
+    model_id: nomic-embed-text-v1.5
+    provider_id: sentence-transformers
+    model_type: embedding
+  - model_id: ${env.INFERENCE_MODEL}
+    provider_id: vllm-inference
+    model_type: llm
+  shields:
+  - shield_id: ${env.SAFETY_MODEL:=meta-llama/Llama-Guard-3-1B}
+  vector_dbs: []
+  datasets: []
+  scoring_fns: []
+  benchmarks: []
+  tool_groups:
+  - toolgroup_id: builtin::websearch
+    provider_id: tavily-search
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
 server:
   port: 8323
+vector_stores:
+  default_provider_id: chromadb
+  default_embedding_model:
+    provider_id: sentence-transformers
+    model_id: nomic-ai/nomic-embed-text-v1.5

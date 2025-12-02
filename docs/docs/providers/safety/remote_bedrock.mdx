@@ -14,8 +14,8 @@ AWS Bedrock safety provider for content moderation using AWS's safety services.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `allowed_models` | `list[str \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
-| `refresh_models` | `<class 'bool'>` | No | False | Whether to refresh models periodically from the provider |
+| `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
+| `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
 | `aws_access_key_id` | `str \| None` | No |  | The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID |
 | `aws_secret_access_key` | `str \| None` | No |  | The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY |
 | `aws_session_token` | `str \| None` | No |  | The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN |

@@ -8,13 +8,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from llama_stack.apis.tools.rag_tool import RAGQueryConfig
-from llama_stack.apis.vector_io import (
-    Chunk,
-    ChunkMetadata,
-    QueryChunksResponse,
-)
 from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRuntimeImpl
+from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, RAGQueryConfig
 
 
 class TestRagQuery:
@@ -23,14 +18,14 @@ class TestRagQuery:
             config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         with pytest.raises(ValueError):
-            await rag_tool.query(content=MagicMock(), vector_db_ids=[])
+            await rag_tool.query(content=MagicMock(), vector_store_ids=[])
 
     async def test_query_chunk_metadata_handling(self):
         rag_tool = MemoryToolRuntimeImpl(
             config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         content = "test query content"
-        vector_db_ids = ["db1"]
+        vector_store_ids = ["db1"]
 
         chunk_metadata = ChunkMetadata(
             document_id="doc1",
@@ -41,6 +36,7 @@ class TestRagQuery:
         interleaved_content = MagicMock()
         chunk = Chunk(
             content=interleaved_content,
+            chunk_id="chunk1",
             metadata={
                 "key1": "value1",
                 "token_count": 10,
@@ -48,14 +44,13 @@ class TestRagQuery:
                 # Note this is inserted into `metadata` during MemoryToolRuntimeImpl().insert()
                 "document_id": "doc1",
             },
-            stored_chunk_id="chunk1",
             chunk_metadata=chunk_metadata,
         )
 
         query_response = QueryChunksResponse(chunks=[chunk], scores=[1.0])
 
         rag_tool.vector_io_api.query_chunks = AsyncMock(return_value=query_response)
-        result = await rag_tool.query(content=content, vector_db_ids=vector_db_ids)
+        result = await rag_tool.query(content=content, vector_store_ids=vector_store_ids)
 
         assert result is not None
         expected_metadata_string = (
@@ -90,7 +85,7 @@ class TestRagQuery:
             files_api=MagicMock(),
         )
 
-        vector_db_ids = ["db1", "db2"]
+        vector_store_ids = ["db1", "db2"]
 
         # Fake chunks from each DB
         chunk_metadata1 = ChunkMetadata(
@@ -101,8 +96,8 @@ class TestRagQuery:
         )
         chunk1 = Chunk(
             content="chunk from db1",
-            metadata={"vector_db_id": "db1", "document_id": "doc1"},
-            stored_chunk_id="c1",
+            chunk_id="c1",
+            metadata={"vector_store_id": "db1", "document_id": "doc1"},
             chunk_metadata=chunk_metadata1,
         )
 
@@ -114,8 +109,8 @@ class TestRagQuery:
         )
         chunk2 = Chunk(
             content="chunk from db2",
-            metadata={"vector_db_id": "db2", "document_id": "doc2"},
-            stored_chunk_id="c2",
+            chunk_id="c2",
+            metadata={"vector_store_id": "db2", "document_id": "doc2"},
             chunk_metadata=chunk_metadata2,
         )
 
@@ -126,13 +121,13 @@ class TestRagQuery:
             ]
         )
 
-        result = await rag_tool.query(content="test", vector_db_ids=vector_db_ids)
+        result = await rag_tool.query(content="test", vector_store_ids=vector_store_ids)
         returned_chunks = result.metadata["chunks"]
         returned_scores = result.metadata["scores"]
         returned_doc_ids = result.metadata["document_ids"]
-        returned_vector_db_ids = result.metadata["vector_db_ids"]
+        returned_vector_store_ids = result.metadata["vector_store_ids"]
 
         assert returned_chunks == ["chunk from db1", "chunk from db2"]
         assert returned_scores == (0.9, 0.8)
         assert returned_doc_ids == ["doc1", "doc2"]
-        assert returned_vector_db_ids == ["db1", "db2"]
+        assert returned_vector_store_ids == ["db1", "db2"]

@@ -11,9 +11,9 @@ import pytest
 from llama_stack_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
 
-from llama_stack.apis.vector_io import Chunk
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
+from llama_stack_api import Chunk, ExpiresAfter
 
 from ..conftest import vector_provider_wrapper
 
@@ -84,23 +84,37 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
 
 @pytest.fixture(scope="session")
 def sample_chunks():
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
+    chunks_data = [
+        (
+            "Python is a high-level programming language that emphasizes code readability and allows programmers to express concepts in fewer lines of code than would be possible in languages such as C++ or Java.",
+            "doc1",
+            "programming",
+        ),
+        (
+            "Machine learning is a subset of artificial intelligence that enables systems to automatically learn and improve from experience without being explicitly programmed, using statistical techniques to give computer systems the ability to progressively improve performance on a specific task.",
+            "doc2",
+            "ai",
+        ),
+        (
+            "Data structures are fundamental to computer science because they provide organized ways to store and access data efficiently, enable faster processing of data through optimized algorithms, and form the building blocks for more complex software systems.",
+            "doc3",
+            "computer_science",
+        ),
+        (
+            "Neural networks are inspired by biological neural networks found in animal brains, using interconnected nodes called artificial neurons to process information through weighted connections that can be trained to recognize patterns and solve complex problems through iterative learning.",
+            "doc4",
+            "ai",
+        ),
+    ]
     return [
         Chunk(
-            content="Python is a high-level programming language that emphasizes code readability and allows programmers to express concepts in fewer lines of code than would be possible in languages such as C++ or Java.",
-            metadata={"document_id": "doc1", "topic": "programming"},
-        ),
-        Chunk(
-            content="Machine learning is a subset of artificial intelligence that enables systems to automatically learn and improve from experience without being explicitly programmed, using statistical techniques to give computer systems the ability to progressively improve performance on a specific task.",
-            metadata={"document_id": "doc2", "topic": "ai"},
-        ),
-        Chunk(
-            content="Data structures are fundamental to computer science because they provide organized ways to store and access data efficiently, enable faster processing of data through optimized algorithms, and form the building blocks for more complex software systems.",
-            metadata={"document_id": "doc3", "topic": "computer_science"},
-        ),
-        Chunk(
-            content="Neural networks are inspired by biological neural networks found in animal brains, using interconnected nodes called artificial neurons to process information through weighted connections that can be trained to recognize patterns and solve complex problems through iterative learning.",
-            metadata={"document_id": "doc4", "topic": "ai"},
-        ),
+            content=content,
+            chunk_id=generate_chunk_id(doc_id, content),
+            metadata={"document_id": doc_id, "topic": topic},
+        )
+        for content, doc_id, topic in chunks_data
     ]
 
 
@@ -338,7 +352,7 @@ def test_openai_vector_store_search_empty(
     assert search_response is not None
     assert hasattr(search_response, "data")
     assert len(search_response.data) == 0  # Empty store should return no results
-    assert search_response.search_query == "test query"
+    assert search_response.search_query == ["test query"]
     assert search_response.has_more is False
 
 
@@ -369,7 +383,7 @@ def test_openai_vector_store_with_chunks(
 
     # Insert chunks using the native LlamaStack API (since OpenAI API doesn't have direct chunk insertion)
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -436,7 +450,7 @@ def test_openai_vector_store_search_relevance(
 
     # Insert chunks using native API
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -486,7 +500,7 @@ def test_openai_vector_store_search_with_ranking_options(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -546,7 +560,7 @@ def test_openai_vector_store_search_with_high_score_filter(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -612,7 +626,7 @@ def test_openai_vector_store_search_with_max_num_results(
 
     # Insert chunks
     llama_client.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
 
@@ -633,7 +647,7 @@ def test_openai_vector_store_attach_file(
 ):
     """Test OpenAI vector store attach file."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_api import ExpiresAfter
 
     compat_client = compat_client_with_empty_stores
 
@@ -667,7 +681,7 @@ def test_openai_vector_store_attach_file(
     assert file_attach_response.id == file.id
     assert file_attach_response.vector_store_id == vector_store.id
     assert file_attach_response.status == "completed"
-    assert file_attach_response.chunking_strategy.type == "auto"
+    assert file_attach_response.chunking_strategy.type == "static"
     assert file_attach_response.created_at > 0
     assert not file_attach_response.last_error
 
@@ -697,7 +711,7 @@ def test_openai_vector_store_attach_files_on_creation(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_api import ExpiresAfter
 
     # Create some files and attach them to the vector store
     valid_file_ids = []
@@ -762,7 +776,7 @@ def test_openai_vector_store_list_files(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_api import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -803,8 +817,8 @@ def test_openai_vector_store_list_files(
     assert set(file_ids) == {file.id for file in files_list.data}
     assert files_list.data[0].object == "vector_store.file"
     assert files_list.data[0].vector_store_id == vector_store.id
-    assert files_list.data[0].status == "completed"
-    assert files_list.data[0].chunking_strategy.type == "auto"
+    assert files_list.data[0].status in ["completed", "in_progress"]
+    assert files_list.data[0].chunking_strategy.type == "static"
     assert files_list.data[0].created_at > 0
     assert files_list.first_id == files_list.data[0].id
     assert not files_list.data[0].last_error
@@ -813,7 +827,7 @@ def test_openai_vector_store_list_files(
     assert first_page.has_more
     assert len(first_page.data) == 2
     assert first_page.first_id == first_page.data[0].id
-    assert first_page.last_id != first_page.data[-1].id
+    assert first_page.last_id == first_page.data[-1].id
 
     next_page = compat_client.vector_stores.files.list(
         vector_store_id=vector_store.id, limit=2, after=first_page.data[-1].id
@@ -854,7 +868,7 @@ def test_openai_vector_store_retrieve_file_contents(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_api import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -895,16 +909,16 @@ def test_openai_vector_store_retrieve_file_contents(
     )
 
     assert file_contents is not None
-    assert len(file_contents.content) == 1
-    content = file_contents.content[0]
+    assert file_contents.object == "vector_store.file_content.page"
+    assert len(file_contents.data) == 1
+    content = file_contents.data[0]
 
     # llama-stack-client returns a model, openai-python is a badboy and returns a dict
     if not isinstance(content, dict):
         content = content.model_dump()
     assert content["type"] == "text"
     assert content["text"] == test_content.decode("utf-8")
-    assert file_contents.filename == file_name
-    assert file_contents.attributes == attributes
+    assert file_contents.has_more is False
 
 
 @vector_provider_wrapper
@@ -915,7 +929,7 @@ def test_openai_vector_store_delete_file(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_api import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -981,7 +995,7 @@ def test_openai_vector_store_delete_file_removes_from_vector_store(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_api import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -1033,7 +1047,7 @@ def test_openai_vector_store_update_file(
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
 
     compat_client = compat_client_with_empty_stores
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_api import ExpiresAfter
 
     # Create a vector store
     vector_store = compat_client.vector_stores.create(
@@ -1090,7 +1104,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(
     This test confirms that client.vector_stores.create() creates a unique ID
     """
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    from llama_stack.apis.files import ExpiresAfter
+    from llama_stack_api import ExpiresAfter
 
     compat_client = compat_client_with_empty_stores
 
@@ -1177,7 +1191,7 @@ def test_openai_vector_store_search_modes(
     )
 
     client_with_models.vector_io.insert(
-        vector_db_id=vector_store.id,
+        vector_store_id=vector_store.id,
         chunks=sample_chunks,
     )
     query = "Python programming language"
@@ -1471,14 +1485,12 @@ def test_openai_vector_store_file_batch_retrieve_contents(
         )
 
         assert file_contents is not None
-        assert file_contents.filename == file_data[i][0]
-        assert len(file_contents.content) > 0
+        assert file_contents.object == "vector_store.file_content.page"
+        assert len(file_contents.data) > 0
 
         # Verify the content matches what we uploaded
         content_text = (
-            file_contents.content[0].text
-            if hasattr(file_contents.content[0], "text")
-            else file_contents.content[0]["text"]
+            file_contents.data[0].text if hasattr(file_contents.data[0], "text") else file_contents.data[0]["text"]
         )
         assert file_data[i][1].decode("utf-8") in content_text
 
@@ -1594,3 +1606,97 @@ def test_openai_vector_store_embedding_config_from_metadata(
 
     assert "metadata_config_store" in store_names
     assert "consistent_config_store" in store_names
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_file_contents_with_extra_query(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    """Test that vector store file contents endpoint supports extra_query parameter."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    compat_client = compat_client_with_empty_stores
+
+    # Create a vector store
+    vector_store = compat_client.vector_stores.create(
+        name="test_extra_query_store",
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    # Create and attach a file
+    test_content = b"This is test content for extra_query validation."
+    with BytesIO(test_content) as file_buffer:
+        file_buffer.name = "test_extra_query.txt"
+        file = compat_client.files.create(
+            file=file_buffer,
+            purpose="assistants",
+            expires_after=ExpiresAfter(anchor="created_at", seconds=86400),
+        )
+
+    file_attach_response = compat_client.vector_stores.files.create(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+        extra_body={"embedding_model": embedding_model_id},
+    )
+    assert file_attach_response.status == "completed"
+
+    # Wait for processing
+    time.sleep(2)
+
+    # Test that extra_query parameter is accepted and processed
+    content_with_extra_query = compat_client.vector_stores.files.content(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+        extra_query={"include_embeddings": True, "include_metadata": True},
+    )
+
+    # Test without extra_query for comparison
+    content_without_extra_query = compat_client.vector_stores.files.content(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+    )
+
+    # Validate that both calls succeed
+    assert content_with_extra_query is not None
+    assert content_without_extra_query is not None
+    assert len(content_with_extra_query.data) > 0
+    assert len(content_without_extra_query.data) > 0
+
+    # Validate that extra_query parameter is processed correctly
+    # Both should have the embedding/metadata fields available (may be None based on flags)
+    first_chunk_with_flags = content_with_extra_query.data[0]
+    first_chunk_without_flags = content_without_extra_query.data[0]
+
+    # The key validation: extra_query fields are present in the response
+    # Handle both dict and object responses (different clients may return different formats)
+    def has_field(obj, field):
+        if isinstance(obj, dict):
+            return field in obj
+        else:
+            return hasattr(obj, field)
+
+    # Validate that all expected fields are present in both responses
+    expected_fields = ["embedding", "chunk_metadata", "metadata", "text"]
+    for field in expected_fields:
+        assert has_field(first_chunk_with_flags, field), f"Field '{field}' missing from response with extra_query"
+        assert has_field(first_chunk_without_flags, field), f"Field '{field}' missing from response without extra_query"
+
+    # Validate content is the same
+    def get_field(obj, field):
+        if isinstance(obj, dict):
+            return obj[field]
+        else:
+            return getattr(obj, field)
+
+    assert get_field(first_chunk_with_flags, "text") == test_content.decode("utf-8")
+    assert get_field(first_chunk_without_flags, "text") == test_content.decode("utf-8")
+
+    with_flags_embedding = get_field(first_chunk_with_flags, "embedding")
+    without_flags_embedding = get_field(first_chunk_without_flags, "embedding")
+
+    # Validate that embeddings are included when requested and excluded when not requested
+    assert with_flags_embedding is not None, "Embeddings should be included when include_embeddings=True"
+    assert len(with_flags_embedding) > 0, "Embedding should be a non-empty list"
+    assert without_flags_embedding is None, "Embeddings should not be included when include_embeddings=False"

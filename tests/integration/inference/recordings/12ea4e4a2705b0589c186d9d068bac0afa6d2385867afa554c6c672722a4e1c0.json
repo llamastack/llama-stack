@@ -84,7 +84,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "{\"name\":\"complex\",\"parameters\":{}\"}}",
+              "content": "{\"name\":\"complex\", \"parameters\": {\"data':[1, \"hello\", 3.14, true]\"}}",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -100,14 +100,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 10,
+          "completion_tokens": 25,
           "prompt_tokens": 246,
-          "total_tokens": 256,
+          "total_tokens": 271,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

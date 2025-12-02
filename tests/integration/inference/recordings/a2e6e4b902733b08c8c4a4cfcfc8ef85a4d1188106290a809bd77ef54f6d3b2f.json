@@ -28,7 +28,7 @@
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Humans live on Earth. It is the only known planet in our solar system that supports life.",
+              "content": "Humans live on Earth. It is the only known planet in the universe that supports life and has conditions suitable for human habitation.",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
@@ -44,14 +44,15 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 20,
+          "completion_tokens": 27,
           "prompt_tokens": 32,
-          "total_tokens": 52,
+          "total_tokens": 59,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

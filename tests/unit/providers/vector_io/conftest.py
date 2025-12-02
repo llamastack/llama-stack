@@ -10,16 +10,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import numpy as np
 import pytest
 
-from llama_stack.apis.vector_io import Chunk, ChunkMetadata, QueryChunksResponse
-from llama_stack.apis.vector_stores import VectorStore
 from llama_stack.core.storage.datatypes import KVStoreReference, SqliteKVStoreConfig
+from llama_stack.core.storage.kvstore import register_kvstore_backends
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.faiss.faiss import FaissIndex, FaissVectorIOAdapter
 from llama_stack.providers.inline.vector_io.sqlite_vec import SQLiteVectorIOConfig
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex, SQLiteVecVectorIOAdapter
 from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
-from llama_stack.providers.utils.kvstore import register_kvstore_backends
+from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore
 
 EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
@@ -43,9 +42,15 @@ def embedding_dimension() -> int:
 @pytest.fixture(scope="session")
 def sample_chunks():
     """Generates chunks that force multiple batches for a single document to expose ID conflicts."""
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
     n, k = 10, 3
     sample = [
-        Chunk(content=f"Sentence {i} from document {j}", metadata={"document_id": f"document-{j}"})
+        Chunk(
+            content=f"Sentence {i} from document {j}",
+            chunk_id=generate_chunk_id(f"document-{j}", f"Sentence {i} from document {j}"),
+            metadata={"document_id": f"document-{j}"},
+        )
         for j in range(k)
         for i in range(n)
     ]
@@ -53,6 +58,7 @@ def sample_chunks():
         [
             Chunk(
                 content=f"Sentence {i} from document {j + k}",
+                chunk_id=f"document-{j}-chunk-{i}",
                 chunk_metadata=ChunkMetadata(
                     document_id=f"document-{j + k}",
                     chunk_id=f"document-{j}-chunk-{i}",
@@ -73,6 +79,7 @@ def sample_chunks_with_metadata():
     sample = [
         Chunk(
             content=f"Sentence {i} from document {j}",
+            chunk_id=f"document-{j}-chunk-{i}",
             metadata={"document_id": f"document-{j}"},
             chunk_metadata=ChunkMetadata(
                 document_id=f"document-{j}",
@@ -272,7 +279,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         ) as mock_check_version:
             mock_check_version.return_value = "0.5.1"
 
-            with patch("llama_stack.providers.utils.kvstore.kvstore_impl") as mock_kvstore_impl:
+            with patch("llama_stack.core.storage.kvstore.kvstore_impl") as mock_kvstore_impl:
                 mock_kvstore = AsyncMock()
                 mock_kvstore_impl.return_value = mock_kvstore
 

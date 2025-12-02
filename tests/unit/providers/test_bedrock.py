@@ -4,50 +4,66 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from llama_stack.providers.remote.inference.bedrock.bedrock import (
-    _get_region_prefix,
-    _to_inference_profile_id,
-)
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, PropertyMock, patch
+
+from llama_stack.providers.remote.inference.bedrock.bedrock import BedrockInferenceAdapter
+from llama_stack.providers.remote.inference.bedrock.config import BedrockConfig
+from llama_stack_api import OpenAIChatCompletionRequestWithExtraBody
 
 
-def test_region_prefixes():
-    assert _get_region_prefix("us-east-1") == "us."
-    assert _get_region_prefix("eu-west-1") == "eu."
-    assert _get_region_prefix("ap-south-1") == "ap."
-    assert _get_region_prefix("ca-central-1") == "us."
+def test_can_create_adapter():
+    config = BedrockConfig(api_key="test-key", region_name="us-east-1")
+    adapter = BedrockInferenceAdapter(config=config)
 
-    # Test case insensitive
-    assert _get_region_prefix("US-EAST-1") == "us."
-    assert _get_region_prefix("EU-WEST-1") == "eu."
-    assert _get_region_prefix("Ap-South-1") == "ap."
-
-    # Test None region
-    assert _get_region_prefix(None) == "us."
+    assert adapter is not None
+    assert adapter.config.region_name == "us-east-1"
+    assert adapter.get_api_key() == "test-key"
 
 
-def test_model_id_conversion():
-    # Basic conversion
-    assert (
-        _to_inference_profile_id("meta.llama3-1-70b-instruct-v1:0", "us-east-1") == "us.meta.llama3-1-70b-instruct-v1:0"
+def test_different_aws_regions():
+    # just check a couple regions to verify URL construction works
+    config = BedrockConfig(api_key="key", region_name="us-east-1")
+    adapter = BedrockInferenceAdapter(config=config)
+    assert adapter.get_base_url() == "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1"
+
+    config = BedrockConfig(api_key="key", region_name="eu-west-1")
+    adapter = BedrockInferenceAdapter(config=config)
+    assert adapter.get_base_url() == "https://bedrock-runtime.eu-west-1.amazonaws.com/openai/v1"
+
+
+async def test_basic_chat_completion():
+    """Test basic chat completion works with OpenAIMixin"""
+    config = BedrockConfig(api_key="k", region_name="us-east-1")
+    adapter = BedrockInferenceAdapter(config=config)
+
+    class FakeModelStore:
+        async def has_model(self, model_id):
+            return True
+
+        async def get_model(self, model_id):
+            return SimpleNamespace(provider_resource_id="meta.llama3-1-8b-instruct-v1:0")
+
+    adapter.model_store = FakeModelStore()
+
+    fake_response = SimpleNamespace(
+        id="chatcmpl-123",
+        choices=[SimpleNamespace(message=SimpleNamespace(content="Hello!", role="assistant"), finish_reason="stop")],
     )
 
-    # Already has prefix
-    assert (
-        _to_inference_profile_id("us.meta.llama3-1-70b-instruct-v1:0", "us-east-1")
-        == "us.meta.llama3-1-70b-instruct-v1:0"
-    )
+    mock_create = AsyncMock(return_value=fake_response)
 
-    # ARN should be returned unchanged
-    arn = "arn:aws:bedrock:us-east-1:123456789012:inference-profile/us.meta.llama3-1-70b-instruct-v1:0"
-    assert _to_inference_profile_id(arn, "us-east-1") == arn
+    class FakeClient:
+        def __init__(self):
+            self.chat = SimpleNamespace(completions=SimpleNamespace(create=mock_create))
 
-    # ARN should be returned unchanged even without region
-    assert _to_inference_profile_id(arn) == arn
+    with patch.object(type(adapter), "client", new_callable=PropertyMock, return_value=FakeClient()):
+        params = OpenAIChatCompletionRequestWithExtraBody(
+            model="llama3-1-8b",
+            messages=[{"role": "user", "content": "hello"}],
+            stream=False,
+        )
+        response = await adapter.openai_chat_completion(params=params)
 
-    # Optional region parameter defaults to us-east-1
-    assert _to_inference_profile_id("meta.llama3-1-70b-instruct-v1:0") == "us.meta.llama3-1-70b-instruct-v1:0"
-
-    # Different regions work with optional parameter
-    assert (
-        _to_inference_profile_id("meta.llama3-1-70b-instruct-v1:0", "eu-west-1") == "eu.meta.llama3-1-70b-instruct-v1:0"
-    )
+        assert response.id == "chatcmpl-123"
+        assert mock_create.await_count == 1

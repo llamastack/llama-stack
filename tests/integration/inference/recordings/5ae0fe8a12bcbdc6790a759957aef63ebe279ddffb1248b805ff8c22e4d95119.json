@@ -42,17 +42,27 @@
         "id": "rec-5ae0fe8a12bc",
         "choices": [
           {
-            "finish_reason": "stop",
+            "finish_reason": "tool_calls",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "{\"name\":\"get_weather\",\"parameters {\"city\":\"Tokyo\"}}",
+              "content": "",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": null
+              "tool_calls": [
+                {
+                  "id": "call_4yf859if",
+                  "function": {
+                    "arguments": "{\"city\":\"Tokyo\"}",
+                    "name": "get_weather"
+                  },
+                  "type": "function",
+                  "index": 0
+                }
+              ]
             }
           }
         ],
@@ -71,5 +81,6 @@
       }
     },
     "is_streaming": false
-  }
+  },
+  "id_normalization_mapping": {}
 }

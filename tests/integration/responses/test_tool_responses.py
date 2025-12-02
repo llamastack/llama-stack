@@ -5,14 +5,16 @@
 # the root directory of this source tree.
 
 import json
+import logging  # allow-direct-logging
 import os
 
 import httpx
+import llama_stack_client
 import openai
 import pytest
 
-from llama_stack import LlamaStackAsLibraryClient
 from llama_stack.core.datatypes import AuthenticationRequiredError
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import dependency_tools, make_mcp_server
 
 from .fixtures.test_cases import (
@@ -28,8 +30,8 @@ from .streaming_assertions import StreamingValidator
 
 
 @pytest.mark.parametrize("case", web_search_test_cases)
-def test_response_non_streaming_web_search(compat_client, text_model_id, case):
-    response = compat_client.responses.create(
+def test_response_non_streaming_web_search(responses_client, text_model_id, case):
+    response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
         tools=case.tools,
@@ -47,12 +49,9 @@ def test_response_non_streaming_web_search(compat_client, text_model_id, case):
 
 @pytest.mark.parametrize("case", file_search_test_cases)
 def test_response_non_streaming_file_search(
-    compat_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path, case
+    responses_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path, case
 ):
-    if isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API file search is not yet supported in library client.")
-
-    vector_store = new_vector_store(compat_client, "test_vector_store", embedding_model_id, embedding_dimension)
+    vector_store = new_vector_store(responses_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     if case.file_content:
         file_name = "test_response_non_streaming_file_search.txt"
@@ -64,16 +63,16 @@ def test_response_non_streaming_file_search(
     else:
         raise ValueError("No file content or path provided for case")
 
-    file_response = upload_file(compat_client, file_name, file_path)
+    file_response = upload_file(responses_client, file_name, file_path)
 
     # Attach our file to the vector store
-    compat_client.vector_stores.files.create(
+    responses_client.vector_stores.files.create(
         vector_store_id=vector_store.id,
         file_id=file_response.id,
     )
 
     # Wait for the file to be attached
-    wait_for_file_attachment(compat_client, vector_store.id, file_response.id)
+    wait_for_file_attachment(responses_client, vector_store.id, file_response.id)
 
     # Update our tools with the right vector store id
     tools = case.tools
@@ -82,7 +81,7 @@ def test_response_non_streaming_file_search(
             tool["vector_store_ids"] = [vector_store.id]
 
     # Create the response request, which should query our vector store
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
         tools=tools,
@@ -104,15 +103,12 @@ def test_response_non_streaming_file_search(
 
 
 def test_response_non_streaming_file_search_empty_vector_store(
-    compat_client, text_model_id, embedding_model_id, embedding_dimension
+    responses_client, text_model_id, embedding_model_id, embedding_dimension
 ):
-    if isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API file search is not yet supported in library client.")
-
-    vector_store = new_vector_store(compat_client, "test_vector_store", embedding_model_id, embedding_dimension)
+    vector_store = new_vector_store(responses_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     # Create the response request, which should query our vector store
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input="How many experts does the Llama 4 Maverick model have?",
         tools=[{"type": "file_search", "vector_store_ids": [vector_store.id]}],
@@ -132,13 +128,10 @@ def test_response_non_streaming_file_search_empty_vector_store(
 
 
 def test_response_sequential_file_search(
-    compat_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path
+    responses_client, text_model_id, embedding_model_id, embedding_dimension, tmp_path
 ):
     """Test file search with sequential responses using previous_response_id."""
-    if isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("Responses API file search is not yet supported in library client.")
-
-    vector_store = new_vector_store(compat_client, "test_vector_store", embedding_model_id, embedding_dimension)
+    vector_store = new_vector_store(responses_client, "test_vector_store", embedding_model_id, embedding_dimension)
 
     # Create a test file with content
     file_content = "The Llama 4 Maverick model has 128 experts in its mixture of experts architecture."
@@ -146,21 +139,21 @@ def test_response_sequential_file_search(
     file_path = tmp_path / file_name
     file_path.write_text(file_content)
 
-    file_response = upload_file(compat_client, file_name, file_path)
+    file_response = upload_file(responses_client, file_name, file_path)
 
     # Attach the file to the vector store
-    compat_client.vector_stores.files.create(
+    responses_client.vector_stores.files.create(
         vector_store_id=vector_store.id,
         file_id=file_response.id,
     )
 
     # Wait for the file to be attached
-    wait_for_file_attachment(compat_client, vector_store.id, file_response.id)
+    wait_for_file_attachment(responses_client, vector_store.id, file_response.id)
 
     tools = [{"type": "file_search", "vector_store_ids": [vector_store.id]}]
 
     # First response request with file search
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input="How many experts does the Llama 4 Maverick model have?",
         tools=tools,
@@ -177,7 +170,7 @@ def test_response_sequential_file_search(
     assert "128" in response.output_text or "experts" in response.output_text.lower()
 
     # Second response request using previous_response_id
-    response2 = compat_client.responses.create(
+    response2 = responses_client.responses.create(
         model=text_model_id,
         input="Can you tell me more about the architecture?",
         tools=tools,
@@ -198,14 +191,11 @@ def test_response_sequential_file_search(
 
 
 @pytest.mark.parametrize("case", mcp_tool_test_cases)
-def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case):
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
+def test_response_non_streaming_mcp_tool(responses_client, text_model_id, case, caplog):
     with make_mcp_server() as mcp_server_info:
         tools = setup_mcp_tools(case.tools, mcp_server_info)
 
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input=case.input,
             tools=tools,
@@ -242,22 +232,26 @@ def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case):
 
         exc_type = (
             AuthenticationRequiredError
-            if isinstance(compat_client, LlamaStackAsLibraryClient)
-            else (httpx.HTTPStatusError, openai.AuthenticationError)
+            if isinstance(responses_client, LlamaStackAsLibraryClient)
+            else (httpx.HTTPStatusError, openai.AuthenticationError, llama_stack_client.AuthenticationError)
         )
-        with pytest.raises(exc_type):
-            compat_client.responses.create(
-                model=text_model_id,
-                input=case.input,
-                tools=tools,
-                stream=False,
-            )
+        # Suppress expected auth error logs only for the failing auth attempt
+        with caplog.at_level(
+            logging.CRITICAL, logger="llama_stack.providers.inline.agents.meta_reference.responses.streaming"
+        ):
+            with pytest.raises(exc_type):
+                responses_client.responses.create(
+                    model=text_model_id,
+                    input=case.input,
+                    tools=tools,
+                    stream=False,
+                )
 
         for tool in tools:
             if tool["type"] == "mcp":
-                tool["headers"] = {"Authorization": "Bearer test-token"}
+                tool["authorization"] = "test-token"
 
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input=case.input,
             tools=tools,
@@ -267,14 +261,11 @@ def test_response_non_streaming_mcp_tool(compat_client, text_model_id, case):
 
 
 @pytest.mark.parametrize("case", mcp_tool_test_cases)
-def test_response_sequential_mcp_tool(compat_client, text_model_id, case):
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
+def test_response_sequential_mcp_tool(responses_client, text_model_id, case):
     with make_mcp_server() as mcp_server_info:
         tools = setup_mcp_tools(case.tools, mcp_server_info)
 
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input=case.input,
             tools=tools,
@@ -306,7 +297,7 @@ def test_response_sequential_mcp_tool(compat_client, text_model_id, case):
         text_content = message.content[0].text
         assert "boiling point" in text_content.lower()
 
-        response2 = compat_client.responses.create(
+        response2 = responses_client.responses.create(
             model=text_model_id, input=case.input, tools=tools, stream=False, previous_response_id=response.id
         )
 
@@ -318,16 +309,13 @@ def test_response_sequential_mcp_tool(compat_client, text_model_id, case):
 
 @pytest.mark.parametrize("case", mcp_tool_test_cases)
 @pytest.mark.parametrize("approve", [True, False])
-def test_response_mcp_tool_approval(compat_client, text_model_id, case, approve):
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
+def test_response_mcp_tool_approval(responses_client, text_model_id, case, approve):
     with make_mcp_server() as mcp_server_info:
         tools = setup_mcp_tools(case.tools, mcp_server_info)
         for tool in tools:
             tool["require_approval"] = "always"
 
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             model=text_model_id,
             input=case.input,
             tools=tools,
@@ -347,13 +335,13 @@ def test_response_mcp_tool_approval(compat_client, text_model_id, case, approve)
         approval_request = response.output[1]
         assert approval_request.type == "mcp_approval_request"
         assert approval_request.name == "get_boiling_point"
-        assert json.loads(approval_request.arguments) == {
-            "liquid_name": "myawesomeliquid",
-            "celsius": True,
-        }
+        args = json.loads(approval_request.arguments)
+        assert args["liquid_name"] == "myawesomeliquid"
+        # celsius has a default value of True, so it may be omitted or explicitly set
+        assert args.get("celsius", True) is True
 
         # send approval response
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             previous_response_id=response.id,
             model=text_model_id,
             input=[{"type": "mcp_approval_response", "approval_request_id": approval_request.id, "approve": approve}],
@@ -393,8 +381,8 @@ def test_response_mcp_tool_approval(compat_client, text_model_id, case, approve)
 
 
 @pytest.mark.parametrize("case", custom_tool_test_cases)
-def test_response_non_streaming_custom_tool(compat_client, text_model_id, case):
-    response = compat_client.responses.create(
+def test_response_non_streaming_custom_tool(responses_client, text_model_id, case):
+    response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
         tools=case.tools,
@@ -407,8 +395,8 @@ def test_response_non_streaming_custom_tool(compat_client, text_model_id, case):
 
 
 @pytest.mark.parametrize("case", custom_tool_test_cases)
-def test_response_function_call_ordering_1(compat_client, text_model_id, case):
-    response = compat_client.responses.create(
+def test_response_function_call_ordering_1(responses_client, text_model_id, case):
+    response = responses_client.responses.create(
         model=text_model_id,
         input=case.input,
         tools=case.tools,
@@ -432,13 +420,13 @@ def test_response_function_call_ordering_1(compat_client, text_model_id, case):
             "call_id": response.output[0].call_id,
         }
     )
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id, input=inputs, tools=case.tools, stream=False, previous_response_id=response.id
     )
     assert len(response.output) == 1
 
 
-def test_response_function_call_ordering_2(compat_client, text_model_id):
+def test_response_function_call_ordering_2(responses_client, text_model_id):
     tools = [
         {
             "type": "function",
@@ -463,7 +451,7 @@ def test_response_function_call_ordering_2(compat_client, text_model_id):
             "content": "Is the weather better in San Francisco or Los Angeles?",
         }
     ]
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input=inputs,
         tools=tools,
@@ -484,7 +472,7 @@ def test_response_function_call_ordering_2(compat_client, text_model_id):
                     "call_id": output.call_id,
                 }
             )
-    response = compat_client.responses.create(
+    response = responses_client.responses.create(
         model=text_model_id,
         input=inputs,
         tools=tools,
@@ -495,15 +483,12 @@ def test_response_function_call_ordering_2(compat_client, text_model_id):
 
 
 @pytest.mark.parametrize("case", multi_turn_tool_execution_test_cases)
-def test_response_non_streaming_multi_turn_tool_execution(compat_client, text_model_id, case):
+def test_response_non_streaming_multi_turn_tool_execution(responses_client, text_model_id, case):
     """Test multi-turn tool execution where multiple MCP tool calls are performed in sequence."""
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
     with make_mcp_server(tools=dependency_tools()) as mcp_server_info:
         tools = setup_mcp_tools(case.tools, mcp_server_info)
 
-        response = compat_client.responses.create(
+        response = responses_client.responses.create(
             input=case.input,
             model=text_model_id,
             tools=tools,
@@ -545,15 +530,12 @@ def test_response_non_streaming_multi_turn_tool_execution(compat_client, text_mo
 
 
 @pytest.mark.parametrize("case", multi_turn_tool_execution_streaming_test_cases)
-def test_response_streaming_multi_turn_tool_execution(compat_client, text_model_id, case):
+def test_response_streaming_multi_turn_tool_execution(responses_client, text_model_id, case):
     """Test streaming multi-turn tool execution where multiple MCP tool calls are performed in sequence."""
-    if not isinstance(compat_client, LlamaStackAsLibraryClient):
-        pytest.skip("in-process MCP server is only supported in library client")
-
     with make_mcp_server(tools=dependency_tools()) as mcp_server_info:
         tools = setup_mcp_tools(case.tools, mcp_server_info)
 
-        stream = compat_client.responses.create(
+        stream = responses_client.responses.create(
             input=case.input,
             model=text_model_id,
             tools=tools,
@@ -618,3 +600,155 @@ def test_response_streaming_multi_turn_tool_execution(compat_client, text_model_
             assert expected_output.lower() in final_response.output_text.lower(), (
                 f"Expected '{expected_output}' to appear in response: {final_response.output_text}"
             )
+
+
+def test_max_tool_calls_with_function_tools(responses_client, text_model_id):
+    """Test handling of max_tool_calls with function tools in responses."""
+
+    max_tool_calls = 1
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get weather information for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city name (e.g., 'New York', 'London')",
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "name": "get_time",
+            "description": "Get current time for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city name (e.g., 'New York', 'London')",
+                    },
+                },
+            },
+        },
+    ]
+
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="Can you tell me the weather in Paris and the current time?",
+        tools=tools,
+        stream=False,
+        max_tool_calls=max_tool_calls,
+    )
+
+    # Verify we got two function calls and that the max_tool_calls does not affect function tools
+    assert len(response.output) == 2
+    assert response.output[0].type == "function_call"
+    assert response.output[0].name == "get_weather"
+    assert response.output[0].status == "completed"
+    assert response.output[1].type == "function_call"
+    assert response.output[1].name == "get_time"
+    assert response.output[1].status == "completed"
+
+    # Verify we have a valid max_tool_calls field
+    assert response.max_tool_calls == max_tool_calls
+
+
+def test_max_tool_calls_invalid(responses_client, text_model_id):
+    """Test handling of invalid max_tool_calls in responses."""
+
+    input = "Search for today's top technology news."
+    invalid_max_tool_calls = 0
+    tools = [
+        {"type": "web_search"},
+    ]
+
+    # Create a response with an invalid max_tool_calls value i.e. 0
+    # Handle ValueError from LLS and BadRequestError from OpenAI client
+    with pytest.raises((ValueError, llama_stack_client.BadRequestError, openai.BadRequestError)) as excinfo:
+        responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            max_tool_calls=invalid_max_tool_calls,
+        )
+
+    error_message = str(excinfo.value)
+    assert f"Invalid max_tool_calls={invalid_max_tool_calls}; should be >= 1" in error_message, (
+        f"Expected error message about invalid max_tool_calls, got: {error_message}"
+    )
+
+
+def test_max_tool_calls_with_mcp_tools(responses_client, text_model_id):
+    """Test handling of max_tool_calls with mcp tools in responses."""
+
+    with make_mcp_server(tools=dependency_tools()) as mcp_server_info:
+        input = "Get the experiment ID for 'boiling_point' and get the user ID for 'charlie'"
+        max_tool_calls = [1, 5]
+        tools = [
+            {"type": "mcp", "server_label": "localmcp", "server_url": mcp_server_info["server_url"]},
+        ]
+
+        # First create a response that triggers mcp tools without max_tool_calls
+        response = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+        )
+
+        # Verify we got two mcp tool calls followed by a message
+        assert len(response.output) == 4
+        mcp_list_tools = [output for output in response.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 2, f"Expected two mcp calls, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Next create a response that triggers mcp tools with max_tool_calls set to 1
+        response_2 = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            max_tool_calls=max_tool_calls[0],
+        )
+
+        # Verify we got one mcp tool call followed by a message
+        assert len(response_2.output) == 3
+        mcp_list_tools = [output for output in response_2.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response_2.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response_2.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 1, f"Expected one mcp call, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Verify we have a valid max_tool_calls field
+        assert response_2.max_tool_calls == max_tool_calls[0]
+
+        # Finally create a response that triggers mcp tools with max_tool_calls set to 5
+        response_3 = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            max_tool_calls=max_tool_calls[1],
+        )
+
+        # Verify we got two mcp tool calls followed by a message
+        assert len(response_3.output) == 4
+        mcp_list_tools = [output for output in response_3.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response_3.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response_3.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 2, f"Expected two mcp calls, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Verify we have a valid max_tool_calls field
+        assert response_3.max_tool_calls == max_tool_calls[1]

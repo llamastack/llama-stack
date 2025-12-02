@@ -21,7 +21,6 @@ apis:
 - inference
 - vector_io
 - safety
-- telemetry
 providers:
   inference:
   - provider_id: ollama
@@ -51,10 +50,6 @@ providers:
         responses:
           backend: sql_default
           table_name: responses
-  telemetry:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
-    config: {}
 storage:
   backends:
     kv_default:
@@ -63,13 +58,21 @@ storage:
     sql_default:
       type: sql_sqlite
       db_path: ${env.SQLITE_STORE_DIR:=~/.llama/distributions/ollama}/sqlstore.db
-  references:
+  stores:
     metadata:
       backend: kv_default
       namespace: registry
     inference:
       backend: sql_default
       table_name: inference_store
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      backend: sql_default
+      table_name: openai_conversations
+    prompts:
+      backend: kv_default
+      namespace: prompts
 models:
 - metadata: {}
   model_id: ${env.INFERENCE_MODEL}
@@ -92,7 +95,6 @@ apis:
 - inference
 - vector_io
 - safety
-- telemetry
 ```
 
 ## Providers
@@ -219,7 +221,15 @@ models:
 ```
 A Model is an instance of a "Resource" (see [Concepts](../concepts/)) and is associated with a specific inference provider (in this case, the provider with identifier `ollama`). This is an instance of a "pre-registered" model. While we always encourage the clients to register models before using them, some Stack servers may come up a list of "already known and available" models.
 
-What's with the `provider_model_id` field? This is an identifier for the model inside the provider's model catalog. Contrast it with `model_id` which is the identifier for the same model for Llama Stack's purposes. For example, you may want to name "llama3.2:vision-11b" as "image_captioning_model" when you use it in your Stack interactions. When omitted, the server will set `provider_model_id` to be the same as `model_id`.
+What's with the `provider_model_id` field? This is an identifier for the model inside the provider's model catalog. The `model_id` field is provided for configuration purposes but is not used as part of the model identifier.
+
+**Important:** Models are identified as `provider_id/provider_model_id` in the system and when making API calls. When `provider_model_id` is omitted, the server will set it to be the same as `model_id`.
+
+Examples:
+- Config: `model_id: llama3.2`, `provider_id: ollama`, `provider_model_id: null`
+  → Access as: `ollama/llama3.2`
+- Config: `model_id: my-llama`, `provider_id: vllm-inference`, `provider_model_id: llama-3-2-3b`
+  → Access as: `vllm-inference/llama-3-2-3b` (the `model_id` is not used in the identifier)
 
 If you need to conditionally register a model in the configuration, such as only when specific environment variable(s) are set, this can be accomplished by utilizing a special `__disabled__` string as the default value of an environment variable substitution, as shown below:
 
@@ -589,24 +599,13 @@ created by users sharing a team with them:
 
 In addition to resource-based access control, Llama Stack supports endpoint-level authorization using OAuth 2.0 style scopes. When authentication is enabled, specific API endpoints require users to have particular scopes in their authentication token.
 
-**Scope-Gated APIs:**
-The following APIs are currently gated by scopes:
-
-- **Telemetry API** (scope: `telemetry.read`):
-  - `POST /telemetry/traces` - Query traces
-  - `GET /telemetry/traces/{trace_id}` - Get trace by ID
-  - `GET /telemetry/traces/{trace_id}/spans/{span_id}` - Get span by ID
-  - `POST /telemetry/spans/{span_id}/tree` - Get span tree
-  - `POST /telemetry/spans` - Query spans
-  - `POST /telemetry/metrics/{metric_name}` - Query metrics
-
 **Authentication Configuration:**
 
 For **JWT/OAuth2 providers**, scopes should be included in the JWT's claims:
 ```json
 {
   "sub": "user123",
-  "scope": "telemetry.read",
+  "scope": "<scope>",
   "aud": "llama-stack"
 }
 ```
@@ -616,7 +615,7 @@ For **custom authentication providers**, the endpoint must return user attribute
 {
   "principal": "user123",
   "attributes": {
-    "scopes": ["telemetry.read"]
+    "scopes": ["<scope>"]
   }
 }
 ```

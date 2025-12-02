@@ -72,14 +72,14 @@ description: |
   Example with hybrid search:
   ```python
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={"mode": "hybrid", "max_chunks": 3, "score_threshold": 0.7},
   )
 
   # Using RRF ranker
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={
           "mode": "hybrid",
@@ -91,7 +91,7 @@ description: |
 
   # Using weighted ranker
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={
           "mode": "hybrid",
@@ -105,7 +105,7 @@ description: |
   Example with explicit vector search:
   ```python
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={"mode": "vector", "max_chunks": 3, "score_threshold": 0.7},
   )
@@ -114,7 +114,7 @@ description: |
   Example with keyword search:
   ```python
   response = await vector_io.query_chunks(
-      vector_db_id="my_db",
+      vector_store_id="my_db",
       query="your query here",
       params={"mode": "keyword", "max_chunks": 3, "score_threshold": 0.7},
   )
@@ -153,7 +153,7 @@ description: |
   Example using RAGQueryConfig with different search modes:
 
   ```python
-  from llama_stack.apis.tools import RAGQueryConfig, RRFRanker, WeightedRanker
+  from llama_stack_api import RAGQueryConfig, RRFRanker, WeightedRanker
 
   # Vector search
   config = RAGQueryConfig(mode="vector", max_chunks=5)
@@ -277,14 +277,14 @@ The SQLite-vec provider supports three search modes:
 Example with hybrid search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "hybrid", "max_chunks": 3, "score_threshold": 0.7},
 )
 
 # Using RRF ranker
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={
         "mode": "hybrid",
@@ -296,7 +296,7 @@ response = await vector_io.query_chunks(
 
 # Using weighted ranker
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={
         "mode": "hybrid",
@@ -310,7 +310,7 @@ response = await vector_io.query_chunks(
 Example with explicit vector search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "vector", "max_chunks": 3, "score_threshold": 0.7},
 )
@@ -319,7 +319,7 @@ response = await vector_io.query_chunks(
 Example with keyword search:
 ```python
 response = await vector_io.query_chunks(
-    vector_db_id="my_db",
+    vector_store_id="my_db",
     query="your query here",
     params={"mode": "keyword", "max_chunks": 3, "score_threshold": 0.7},
 )
@@ -358,7 +358,7 @@ Two ranker types are supported:
 Example using RAGQueryConfig with different search modes:
 
 ```python
-from llama_stack.apis.tools import RAGQueryConfig, RRFRanker, WeightedRanker
+from llama_stack_api import RAGQueryConfig, RRFRanker, WeightedRanker
 
 # Vector search
 config = RAGQueryConfig(mode="vector", max_chunks=5)
@@ -407,8 +407,8 @@ See [sqlite-vec's GitHub repo](https://github.com/asg017/sqlite-vec/tree/main) f
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `db_path` | `<class 'str'>` | No |  | Path to the SQLite database file |
-| `persistence` | `<class 'llama_stack.core.storage.datatypes.KVStoreReference'>` | No |  | Config for KV store backend (SQLite only for now) |
+| `db_path` | `str` | No |  | Path to the SQLite database file |
+| `persistence` | `KVStoreReference` | No |  | Config for KV store backend (SQLite only for now) |
 
 ## Sample Configuration
 

@@ -7,19 +7,19 @@
 
 import pytest
 
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.common.errors import (
+    ConversationNotFoundError,
+    InvalidConversationIdError,
+)
+from llama_stack_api.conversations import (
+    ConversationItemList,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStreamResponseCompleted,
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseOutputMessageContentOutputText,
-)
-from llama_stack.apis.common.errors import (
-    ConversationNotFoundError,
-    InvalidConversationIdError,
-)
-from llama_stack.apis.conversations.conversations import (
-    ConversationItemList,
 )
 
 # Import existing fixtures from the main responses test file
@@ -39,6 +39,8 @@ def responses_impl_with_conversations(
     mock_vector_io_api,
     mock_conversations_api,
     mock_safety_api,
+    mock_prompts_api,
+    mock_files_api,
 ):
     """Create OpenAIResponsesImpl instance with conversations API."""
     return OpenAIResponsesImpl(
@@ -49,6 +51,8 @@ def responses_impl_with_conversations(
         vector_io_api=mock_vector_io_api,
         conversations_api=mock_conversations_api,
         safety_api=mock_safety_api,
+        prompts_api=mock_prompts_api,
+        files_api=mock_files_api,
     )
 
 
@@ -62,7 +66,7 @@ class TestConversationValidation:
         conv_id = "conv_nonexistent"
 
         # Mock conversation not found
-        mock_conversations_api.list.side_effect = ConversationNotFoundError("conv_nonexistent")
+        mock_conversations_api.list_items.side_effect = ConversationNotFoundError("conv_nonexistent")
 
         with pytest.raises(ConversationNotFoundError):
             await responses_impl_with_conversations.create_openai_response(
@@ -160,7 +164,7 @@ class TestIntegrationWorkflow:
         self, responses_impl_with_conversations, mock_conversations_api
     ):
         """Test creating a response with a valid conversation parameter."""
-        mock_conversations_api.list.return_value = ConversationItemList(
+        mock_conversations_api.list_items.return_value = ConversationItemList(
             data=[], first_id=None, has_more=False, last_id=None, object="list"
         )
 
@@ -227,7 +231,7 @@ class TestIntegrationWorkflow:
         self, responses_impl_with_conversations, mock_conversations_api
     ):
         """Test creating a response with a non-existent conversation."""
-        mock_conversations_api.list.side_effect = ConversationNotFoundError("conv_nonexistent")
+        mock_conversations_api.list_items.side_effect = ConversationNotFoundError("conv_nonexistent")
 
         with pytest.raises(ConversationNotFoundError) as exc_info:
             await responses_impl_with_conversations.create_openai_response(

@@ -11,7 +11,7 @@ If you are planning to use an external service for Inference (even Ollama or TGI
 This avoids the overhead of setting up a server.
 ```bash
 # setup
-uv pip install llama-stack
+uv pip install llama-stack llama-stack-client
 llama stack list-deps starter | xargs -L1 uv pip install
 ```
 
