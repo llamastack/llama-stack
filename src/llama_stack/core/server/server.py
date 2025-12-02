@@ -51,8 +51,6 @@ from llama_stack.core.stack import (
     cast_image_name_to_string,
     replace_env_vars,
 )
-from llama_stack.core.telemetry import Telemetry
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, setup_logger
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
@@ -61,7 +59,6 @@ from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFo
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
-from .tracing import TracingMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
@@ -264,7 +261,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
             try:
                 if is_streaming:
-                    context_vars = [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
+                    context_vars = [PROVIDER_DATA_VAR]
                     if test_context_var is not None:
                         context_vars.append(test_context_var)
                     gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
@@ -442,9 +439,6 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
-    if config.telemetry.enabled:
-        setup_logger(Telemetry())
-
     # Load external APIs if configured
     external_apis = load_external_apis(config)
     all_routes = get_all_api_routes(external_apis)
@@ -515,9 +509,6 @@ def create_app() -> StackApp:
     app.exception_handler(BadRequestError)(global_exception_handler)
     # Generic Exception handler should be last
     app.exception_handler(Exception)(global_exception_handler)
-
-    if config.telemetry.enabled:
-        app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
 
     return app
 
