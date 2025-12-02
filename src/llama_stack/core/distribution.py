@@ -86,7 +86,7 @@ def _load_inline_provider_spec(spec_data: dict[str, Any], api: Api, provider_nam
 
 
 def get_provider_registry(
-    config: StackConfig | None = None, building: bool = False
+    config: StackConfig | None = None, listing: bool = False
 ) -> dict[Api, dict[str, ProviderSpec]]:
     """Get the provider registry, optionally including external providers.
 
@@ -111,13 +111,13 @@ def get_provider_registry(
         safety/
           llama-guard.yaml
 
-    This method is overloaded in that it can be called from a variety of places: during build, during run, during stack construction.
-    So when building external providers from a module, there are scenarios where the pip package required to import the module might not be available yet.
+    This method is overloaded in that it can be called from a variety of places: during list-deps, during run, during stack construction.
+    So when listing external providers from a module, there are scenarios where the pip package required to import the module might not be available yet.
     There is special handling for all of the potential cases this method can be called from.
 
     Args:
         config: Optional object containing the external providers directory path
-        building: Optional bool delineating whether or not this is being called from a build process
+        listing: Optional bool delineating whether or not this is being called from a list-deps process
 
     Returns:
         A dictionary mapping APIs to their available providers
@@ -163,7 +163,7 @@ def get_provider_registry(
         registry = get_external_providers_from_module(
             registry=registry,
             config=config,
-            building=building,
+            listing=listing,
         )
 
     return registry
@@ -222,7 +222,7 @@ def get_external_providers_from_dir(
 
 
 def get_external_providers_from_module(
-    registry: dict[Api, dict[str, ProviderSpec]], config, building: bool
+    registry: dict[Api, dict[str, ProviderSpec]], config, listing: bool
 ) -> dict[Api, dict[str, ProviderSpec]]:
     provider_list = None
     provider_list = config.providers.items()
@@ -235,14 +235,14 @@ def get_external_providers_from_module(
                 continue
             # get provider using module
             try:
-                if not building:
+                if not listing:
                     package_name = provider.module.split("==")[0]
                     module = importlib.import_module(f"{package_name}.provider")
                     # if config class is wrong you will get an error saying module could not be imported
                     spec = module.get_provider_spec()
                 else:
-                    # pass in a partially filled out provider spec to satisfy the registry -- knowing we will be overwriting it later upon build and run
-                    # in the case we are building we CANNOT import this module of course because it has not been installed.
+                    # pass in a partially filled out provider spec to satisfy the registry -- knowing we will be overwriting it later upon list-deps and run
+                    # in the case we are listing we CANNOT import this module of course because it has not been installed.
                     spec = ProviderSpec(
                         api=Api(provider_api),
                         provider_type=provider.provider_type,

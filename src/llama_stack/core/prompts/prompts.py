@@ -34,13 +34,13 @@ class PromptServiceImpl(Prompts):
     """Built-in prompt service implementation using KVStore."""
 
     def __init__(self, config: PromptServiceConfig, deps: dict[Any, Any]):
-        self.config = config
+        self.stack_config = config.config
         self.deps = deps
         self.kvstore: KVStore
 
     async def initialize(self) -> None:
         # Use prompts store reference from run config
-        prompts_ref = self.config.config.storage.stores.prompts
+        prompts_ref = self.stack_config.storage.stores.prompts
         if not prompts_ref:
             raise ValueError("storage.stores.prompts must be configured in run config")
         self.kvstore = await kvstore_impl(prompts_ref)

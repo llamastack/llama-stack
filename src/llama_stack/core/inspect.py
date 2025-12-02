@@ -33,14 +33,14 @@ async def get_provider_impl(config, deps):
 
 class DistributionInspectImpl(Inspect):
     def __init__(self, config: DistributionInspectConfig, deps):
-        self.config = config
+        self.stack_config = config.config
         self.deps = deps
 
     async def initialize(self) -> None:
         pass
 
     async def list_routes(self, api_filter: str | None = None) -> ListRoutesResponse:
-        config: StackConfig = self.config.config
+        config: StackConfig = self.stack_config
 
         # Helper function to determine if a route should be included based on api_filter
         def should_include_route(webmethod) -> bool:
