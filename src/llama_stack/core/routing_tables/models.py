@@ -135,6 +135,14 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
 
         all_models = registry_models + unique_dynamic_models
 
+        # Log error if no models are found, log debug statement if either registry or dynamic is empty
+        if len(all_models) == 0:
+            logger.error("No models found from registry or providers data")
+        elif len(registry_models) == 0:
+            logger.debug("No models found in registry")
+        elif len(dynamic_models) == 0:
+            logger.debug("No models found via providers data")
+
         openai_models = [
             OpenAIModel(
                 id=model.identifier,
