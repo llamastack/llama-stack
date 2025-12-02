@@ -116,13 +116,13 @@ if [[ -z "$STACK_CONFIG" && "$COLLECT_ONLY" == false ]]; then
 fi
 
 if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" && "$COLLECT_ONLY" == false ]]; then
-    echo "Error: --test-setup is required when --test-subdirs is provided"
+    echo "Error: --setup is required when --subdirs is provided"
     usage
     exit 1
 fi
 
 if [[ -z "$TEST_SUITE" && -z "$TEST_SUBDIRS" ]]; then
-    echo "Error: --test-suite or --test-subdirs is required"
+    echo "Error: --suite or --subdirs is required"
     exit 1
 fi
 
