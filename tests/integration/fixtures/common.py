@@ -14,6 +14,11 @@ import tempfile
 import time
 from urllib.parse import urlparse
 
+# Initialize logging early before any loggers get created
+from llama_stack.log import setup_logging
+
+setup_logging()
+
 import pytest
 import requests
 import yaml
