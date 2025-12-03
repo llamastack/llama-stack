@@ -688,6 +688,40 @@ components:
       - data
       title: ListBatchesResponse
       description: Response containing a list of batch objects.
+    CreateBatchRequest:
+      properties:
+        input_file_id:
+          type: string
+          title: Input File Id
+          description: The ID of an uploaded file containing requests for the batch.
+        endpoint:
+          type: string
+          title: Endpoint
+          description: The endpoint to be used for all requests in the batch.
+        completion_window:
+          type: string
+          const: 24h
+          title: Completion Window
+          description: The time window within which the batch should be processed.
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          description: Optional metadata for the batch.
+        idempotency_key:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional idempotency key. When provided, enables idempotent behavior.
+      type: object
+      required:
+      - input_file_id
+      - endpoint
+      - completion_window
+      title: CreateBatchRequest
+      description: Request model for creating a batch.
     Batch:
       properties:
         id:
@@ -8322,6 +8356,44 @@ components:
       required:
       - query
       title: VectorStoreSearchRequest
+      type: object
+    ListBatchesRequest:
+      description: Request model for listing batches.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional cursor for pagination. Returns batches after this ID.
+          nullable: true
+        limit:
+          default: 20
+          description: Maximum number of batches to return. Defaults to 20.
+          title: Limit
+          type: integer
+      title: ListBatchesRequest
+      type: object
+    RetrieveBatchRequest:
+      description: Request model for retrieving a batch.
+      properties:
+        batch_id:
+          description: The ID of the batch to retrieve.
+          title: Batch Id
+          type: string
+      required:
+      - batch_id
+      title: RetrieveBatchRequest
+      type: object
+    CancelBatchRequest:
+      description: Request model for canceling a batch.
+      properties:
+        batch_id:
+          description: The ID of the batch to cancel.
+          title: Batch Id
+          type: string
+      required:
+      - batch_id
+      title: CancelBatchRequest
       type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.

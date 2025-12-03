@@ -45,6 +45,7 @@ import asyncio
 import pytest
 
 from llama_stack_api import ConflictError
+from llama_stack_api.batches.models import CreateBatchRequest, RetrieveBatchRequest
 
 
 class TestReferenceBatchesIdempotency:
@@ -56,18 +57,22 @@ class TestReferenceBatchesIdempotency:
         del sample_batch_data["metadata"]
 
         batch1 = await provider.create_batch(
-            **sample_batch_data,
-            metadata={"test": "value1", "other": "value2"},
-            idempotency_key="unique-token-1",
+            CreateBatchRequest(
+                **sample_batch_data,
+                metadata={"test": "value1", "other": "value2"},
+                idempotency_key="unique-token-1",
+            )
         )
 
         # sleep for 1 second to allow created_at timestamps to be different
         await asyncio.sleep(1)
 
         batch2 = await provider.create_batch(
-            **sample_batch_data,
-            metadata={"other": "value2", "test": "value1"},  # Different order
-            idempotency_key="unique-token-1",
+            CreateBatchRequest(
+                **sample_batch_data,
+                metadata={"other": "value2", "test": "value1"},  # Different order
+                idempotency_key="unique-token-1",
+            )
         )
 
         assert batch1.id == batch2.id
@@ -77,23 +82,17 @@ class TestReferenceBatchesIdempotency:
 
     async def test_different_idempotency_keys_create_different_batches(self, provider, sample_batch_data):
         """Test that different idempotency keys create different batches even with same params."""
-        batch1 = await provider.create_batch(
-            **sample_batch_data,
-            idempotency_key="token-A",
-        )
+        batch1 = await provider.create_batch(CreateBatchRequest(**sample_batch_data, idempotency_key="token-A"))
 
-        batch2 = await provider.create_batch(
-            **sample_batch_data,
-            idempotency_key="token-B",
-        )
+        batch2 = await provider.create_batch(CreateBatchRequest(**sample_batch_data, idempotency_key="token-B"))
 
         assert batch1.id != batch2.id
 
     async def test_non_idempotent_behavior_without_key(self, provider, sample_batch_data):
         """Test that batches without idempotency key create unique batches even with identical parameters."""
-        batch1 = await provider.create_batch(**sample_batch_data)
+        batch1 = await provider.create_batch(CreateBatchRequest(**sample_batch_data))
 
-        batch2 = await provider.create_batch(**sample_batch_data)
+        batch2 = await provider.create_batch(CreateBatchRequest(**sample_batch_data))
 
         assert batch1.id != batch2.id
         assert batch1.input_file_id == batch2.input_file_id
@@ -117,12 +116,12 @@ class TestReferenceBatchesIdempotency:
 
         sample_batch_data[param_name] = first_value
 
-        batch1 = await provider.create_batch(**sample_batch_data)
+        batch1 = await provider.create_batch(CreateBatchRequest(**sample_batch_data))
 
         with pytest.raises(ConflictError, match="Idempotency key.*was previously used with different parameters"):
             sample_batch_data[param_name] = second_value
-            await provider.create_batch(**sample_batch_data)
+            await provider.create_batch(CreateBatchRequest(**sample_batch_data))
 
-        retrieved_batch = await provider.retrieve_batch(batch1.id)
+        retrieved_batch = await provider.retrieve_batch(RetrieveBatchRequest(batch_id=batch1.id))
         assert retrieved_batch.id == batch1.id
         assert getattr(retrieved_batch, param_name) == first_value
