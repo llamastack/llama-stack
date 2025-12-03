@@ -3,14 +3,18 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+import asyncio
 import base64
 import io
+import mimetypes
+import os
 import re
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
-from urllib.parse import unquote
+from urllib.parse import unquote, urlparse
 
 import httpx
 import numpy as np
@@ -53,6 +57,9 @@ class ChunkForDeletion(BaseModel):
 RERANKER_TYPE_RRF = "rrf"
 RERANKER_TYPE_WEIGHTED = "weighted"
 RERANKER_TYPE_NORMALIZED = "normalized"
+
+# Maximum file size for file:// URIs (default 100MB, configurable via env)
+MAX_FILE_URI_SIZE_BYTES = int(os.environ.get("LLAMA_STACK_MAX_FILE_URI_SIZE_MB", "100")) * 1024 * 1024
 
 
 def parse_pdf(data: bytes) -> str:
@@ -131,10 +138,37 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
         return ""
 
 
+async def read_file_uri(uri: str, max_size: int | None = None) -> tuple[bytes, str | None]:
+    parsed = urlparse(uri)
+    file_path = unquote(parsed.path)
+    real_path = os.path.realpath(file_path)
+    filename = os.path.basename(real_path)
+
+    if os.path.isdir(real_path):
+        raise IsADirectoryError(f"Cannot read directory: {filename}")
+    if not os.path.isfile(real_path):
+        raise FileNotFoundError(f"File not found: {filename}")
+
+    file_size = os.path.getsize(real_path)
+    size_limit = max_size if max_size is not None else MAX_FILE_URI_SIZE_BYTES
+    if file_size > size_limit:
+        raise ValueError(f"File too large: {file_size} bytes exceeds limit of {size_limit} bytes")
+
+    content = await asyncio.to_thread(Path(real_path).read_bytes)
+    mime_type, _ = mimetypes.guess_type(real_path)
+    return content, mime_type
+
+
 async def content_from_doc(doc: RAGDocument) -> str:
     if isinstance(doc.content, URL):
         if doc.content.uri.startswith("data:"):
             return content_from_data(doc.content.uri)
+        if doc.content.uri.startswith("file://"):
+            content, guessed_mime = await read_file_uri(doc.content.uri)
+            mime = doc.mime_type or guessed_mime
+            if mime == "application/pdf":
+                return parse_pdf(content)
+            return content.decode("utf-8")
         async with httpx.AsyncClient() as client:
             r = await client.get(doc.content.uri)
         if doc.mime_type == "application/pdf":
@@ -145,6 +179,12 @@ async def content_from_doc(doc: RAGDocument) -> str:
         if pattern.match(doc.content):
             if doc.content.startswith("data:"):
                 return content_from_data(doc.content)
+            if doc.content.startswith("file://"):
+                content, guessed_mime = await read_file_uri(doc.content)
+                mime = doc.mime_type or guessed_mime
+                if mime == "application/pdf":
+                    return parse_pdf(content)
+                return content.decode("utf-8")
             async with httpx.AsyncClient() as client:
                 r = await client.get(doc.content)
             if doc.mime_type == "application/pdf":
