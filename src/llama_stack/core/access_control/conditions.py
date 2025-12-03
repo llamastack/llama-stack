@@ -15,7 +15,7 @@ class User(Protocol):
 class ProtectedResource(Protocol):
     type: str
     identifier: str
-    owner: User
+    owner: User | None
 
 
 class Condition(Protocol):

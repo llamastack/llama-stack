@@ -56,7 +56,7 @@ def _enhance_item_with_access_control(item: Mapping[str, Any], current_user: Use
 
 
 class SqlRecord(ProtectedResource):
-    def __init__(self, record_id: str, table_name: str, owner: User):
+    def __init__(self, record_id: str, table_name: str, owner: User | None):
         self.type = f"sql_record::{table_name}"
         self.identifier = record_id
         self.owner = owner
@@ -171,12 +171,16 @@ class AuthorizedSqlStore:
 
         for row in rows.data:
             stored_access_attrs = row.get("access_attributes")
-            stored_owner_principal = row.get("owner_principal") or ""
+            stored_owner_principal = row.get("owner_principal")
 
             record_id = row.get("id", "unknown")
-            sql_record = SqlRecord(
-                str(record_id), table, User(principal=stored_owner_principal, attributes=stored_access_attrs)
+            # Create owner as None if owner_principal is empty/missing, matching ResourceWithOwner behavior
+            owner = (
+                User(principal=stored_owner_principal, attributes=stored_access_attrs)
+                if stored_owner_principal
+                else None
             )
+            sql_record = SqlRecord(str(record_id), table, owner)
 
             if is_action_allowed(self.policy, action, sql_record, current_user):
                 filtered_rows.append(row)
