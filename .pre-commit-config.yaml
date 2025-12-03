@@ -1,5 +1,6 @@
 exclude: 'build/'
 minimum_pre_commit_version: 4.4.0
+x-uv-dependency: &uv-dependency "uv==0.9.15"
 default_language_version:
     python: python3.12
     node: "22"
@@ -58,7 +59,7 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies:
-          - uv==0.6.2
+          - *uv-dependency
           - mypy
           - pytest
           - rich
@@ -77,7 +78,7 @@ repos:
       - id: uv-lock
         name: uv-lock
         additional_dependencies:
-          - uv==0.7.20
+          - *uv-dependency
         entry: ./scripts/uv-run-with-index.sh lock
         language: python
         pass_filenames: false
@@ -92,7 +93,7 @@ repos:
       - id: distro-codegen
         name: Distribution Template Codegen
         additional_dependencies:
-          - uv==0.7.8
+          - *uv-dependency
         entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/distro_codegen.py
         language: python
         pass_filenames: false
@@ -101,7 +102,7 @@ repos:
       - id: provider-codegen
         name: Provider Codegen
         additional_dependencies:
-          - uv==0.7.8
+          - *uv-dependency
         entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py
         language: python
         pass_filenames: false
@@ -110,7 +111,7 @@ repos:
       - id: openapi-codegen
         name: API Spec Codegen
         additional_dependencies:
-          - uv==0.7.8
+          - *uv-dependency
         entry: sh -c './scripts/uv-run-with-index.sh run scripts/run_openapi_generator.sh'
         language: python
         pass_filenames: false
@@ -151,7 +152,7 @@ repos:
       - id: generate-ci-docs
         name: Generate CI documentation
         additional_dependencies:
-          - uv==0.7.8
+          - *uv-dependency
         entry: ./scripts/uv-run-with-index.sh run ./scripts/gen-ci-docs.py
         language: python
         pass_filenames: false
