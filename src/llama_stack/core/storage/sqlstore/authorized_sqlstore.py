@@ -56,7 +56,7 @@ def _enhance_item_with_access_control(item: Mapping[str, Any], current_user: Use
 
 
 class SqlRecord(ProtectedResource):
-    def __init__(self, record_id: str, table_name: str, owner: User):
+    def __init__(self, record_id: str, table_name: str, owner: User | None):
         self.type = f"sql_record::{table_name}"
         self.identifier = record_id
         self.owner = owner
@@ -153,6 +153,7 @@ class AuthorizedSqlStore:
         limit: int | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
         cursor: tuple[str, str] | None = None,
+        action: Action = Action.READ,
     ) -> PaginatedResponse:
         """Fetch all rows with automatic access control filtering."""
         access_where = self._build_access_control_where_clause(self.policy)
@@ -170,14 +171,18 @@ class AuthorizedSqlStore:
 
         for row in rows.data:
             stored_access_attrs = row.get("access_attributes")
-            stored_owner_principal = row.get("owner_principal") or ""
+            stored_owner_principal = row.get("owner_principal")
 
             record_id = row.get("id", "unknown")
-            sql_record = SqlRecord(
-                str(record_id), table, User(principal=stored_owner_principal, attributes=stored_access_attrs)
+            # Create owner as None if owner_principal is empty/missing, matching ResourceWithOwner behavior
+            owner = (
+                User(principal=stored_owner_principal, attributes=stored_access_attrs)
+                if stored_owner_principal
+                else None
             )
+            sql_record = SqlRecord(str(record_id), table, owner)
 
-            if is_action_allowed(self.policy, Action.READ, sql_record, current_user):
+            if is_action_allowed(self.policy, action, sql_record, current_user):
                 filtered_rows.append(row)
 
         return PaginatedResponse(
@@ -190,6 +195,7 @@ class AuthorizedSqlStore:
         table: str,
         where: Mapping[str, Any] | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
+        action: Action = Action.READ,
     ) -> dict[str, Any] | None:
         """Fetch one row with automatic access control checking."""
         results = await self.fetch_all(
@@ -197,6 +203,7 @@ class AuthorizedSqlStore:
             where=where,
             limit=1,
             order_by=order_by,
+            action=action,
         )
 
         return results.data[0] if results.data else None

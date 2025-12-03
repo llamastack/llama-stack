@@ -247,3 +247,36 @@ async def test_user_ownership_policy(mock_get_authenticated_user, authorized_sto
     finally:
         # Clean up records
         await cleanup_records(authorized_store.sql_store, table_name, ["1", "2"])
+
+
+@pytest.mark.parametrize("backend_config", BACKEND_CONFIGS)
+@patch("llama_stack.core.storage.sqlstore.authorized_sqlstore.get_authenticated_user")
+async def test_sqlrecord_created_with_no_owner(mock_get_authenticated_user, authorized_store, request):
+    """Test that SqlRecord is created with no owner == None when owner_principal is empty/missing"""
+    backend_name = request.node.callspec.id
+
+    # Create test table
+    table_name = f"test_sqlrecord_created_with_no_owner_{backend_name}"
+    await create_test_table(authorized_store, table_name)
+
+    try:
+        # Test with no authenticated user (should handle JSON null comparison)
+        mock_get_authenticated_user.return_value = None
+
+        # Insert some test data
+        await authorized_store.insert(table_name, {"id": "1", "data": "public_data"})
+
+        # Test fetching with no user - should create SqlRecord with no owner
+        with patch(
+            "llama_stack.core.storage.sqlstore.authorized_sqlstore.is_action_allowed", return_value=True
+        ) as mock_is_action_allowed:
+            result = await authorized_store.fetch_all(table_name)
+            mock_is_action_allowed.assert_called_once()
+            args = mock_is_action_allowed.call_args
+            assert args[0][2].type == f"sql_record::{table_name}"
+            assert args[0][2].owner is None
+        assert len(result.data) == 1
+
+    finally:
+        # Clean up records
+        await cleanup_records(authorized_store.sql_store, table_name, ["1"])

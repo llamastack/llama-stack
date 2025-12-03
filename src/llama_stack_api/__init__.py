@@ -26,7 +26,15 @@ from . import common  # noqa: F401
 
 # Import all public API symbols
 from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec
-from .batches import Batches, BatchObject, ListBatchesResponse
+from .batches import (
+    Batches,
+    BatchObject,
+    CancelBatchRequest,
+    CreateBatchRequest,
+    ListBatchesRequest,
+    ListBatchesResponse,
+    RetrieveBatchRequest,
+)
 from .benchmarks import (
     Benchmark,
     BenchmarkInput,
@@ -463,6 +471,9 @@ __all__ = [
     "BasicScoringFnParams",
     "Batches",
     "BatchObject",
+    "CancelBatchRequest",
+    "CreateBatchRequest",
+    "ListBatchesRequest",
     "Benchmark",
     "BenchmarkConfig",
     "BenchmarkInput",
@@ -557,6 +568,7 @@ __all__ = [
     "LLMAsJudgeScoringFnParams",
     "LLMRAGQueryGeneratorConfig",
     "ListBatchesResponse",
+    "RetrieveBatchRequest",
     "ListBenchmarksResponse",
     "ListDatasetsResponse",
     "ListModelsResponse",

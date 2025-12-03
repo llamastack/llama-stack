@@ -22,7 +22,6 @@ from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.common.responses import (
     Order,
 )
-from llama_stack_api.common.tracing import telemetry_traceable
 from llama_stack_api.models import Model
 from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
@@ -989,7 +988,6 @@ class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
 
 
 @runtime_checkable
-@telemetry_traceable
 class InferenceProvider(Protocol):
     """
     This protocol defines the interface that should be implemented by all inference providers.
