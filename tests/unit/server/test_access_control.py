@@ -10,10 +10,12 @@ import pytest
 import yaml
 from pydantic import TypeAdapter, ValidationError
 
+from llama_stack.apis.common.errors import ModelNotFoundError
 from llama_stack.apis.datatypes import Api
 from llama_stack.apis.models import ModelType
 from llama_stack.core.access_control.access_control import AccessDeniedError, is_action_allowed
 from llama_stack.core.datatypes import AccessRule, ModelWithOwner, User
+from llama_stack.core.routers.inference import InferenceRouter
 from llama_stack.core.routing_tables.models import ModelsRoutingTable
 
 
@@ -558,3 +560,97 @@ def test_condition_reprs(condition):
     from llama_stack.core.access_control.conditions import parse_condition
 
     assert condition == str(parse_condition(condition))
+
+
+@pytest.fixture
+def restricted_user():
+    """User with limited access."""
+    return User("restricted-user", {"roles": ["user"]})
+
+
+@pytest.fixture
+def admin_user():
+    """User with admin access."""
+    return User("admin-user", {"roles": ["admin"]})
+
+
+@pytest.fixture
+def rbac_policy():
+    """RBAC policy that restricts access to certain models."""
+    from llama_stack.core.access_control.datatypes import Action, Scope
+
+    return [
+        # Admins get full access
+        AccessRule(
+            permit=Scope(actions=list(Action)),
+            when=["user with admin in roles"],
+        ),
+        # Regular users only get read access to their own resources
+        AccessRule(
+            permit=Scope(actions=[Action.READ]),
+            when=["user is owner"],
+        ),
+    ]
+
+
+class TestInferenceRouterRBACBypass:
+    """Test RBAC bypass vulnerability in inference router fallback path."""
+
+    @pytest.fixture
+    def mock_routing_table(self):
+        """Create a mock routing table for testing."""
+        routing_table = AsyncMock()
+        routing_table.impls_by_provider_id = {"test-provider": AsyncMock()}
+        routing_table.policy = []
+        return routing_table
+
+    @patch("llama_stack.core.routers.inference.get_authenticated_user")
+    async def test_registry_path_and_fallback_path_consistent(
+        self, mock_get_user, mock_routing_table, restricted_user, admin_user, rbac_policy
+    ):
+        """Test that registry path and fallback path have consistent RBAC enforcement."""
+        mock_routing_table.policy = rbac_policy
+
+        # Create a model owned by admin
+        admin_model = ModelWithOwner(
+            identifier="admin-model",
+            provider_id="test-provider",
+            provider_resource_id="admin-resource",
+            model_type=ModelType.llm,
+            type="model",
+            metadata={},
+            owner=admin_user,
+        )
+
+        # Setup router
+        router = InferenceRouter(
+            routing_table=mock_routing_table,
+            store=None,
+        )
+
+        # Test 1: Restricted user tries to access via registry (should fail)
+        mock_get_user.return_value = restricted_user
+        mock_routing_table.get_object_by_identifier.return_value = None  # RBAC blocks it
+        with pytest.raises(ModelNotFoundError):
+            await router._get_model_provider("admin-model", "llm")
+
+        # Test 2: Restricted user tries to access via fallback path (should also fail)
+        mock_routing_table.get_object_by_identifier.return_value = None
+        with pytest.raises(ModelNotFoundError):
+            await router._get_model_provider("test-provider/admin-resource", "llm")
+
+        # Test 3: Admin user can access via registry
+        mock_get_user.return_value = admin_user
+        mock_routing_table.get_object_by_identifier.return_value = admin_model
+        provider_mock = AsyncMock()
+        mock_routing_table.get_provider_impl.return_value = provider_mock
+
+        provider, resource_id = await router._get_model_provider("admin-model", "llm")
+        assert provider == provider_mock
+        assert resource_id == "admin-resource"
+
+        # Test 4: Admin user can also access via fallback path
+        mock_routing_table.get_object_by_identifier.return_value = None
+        provider, resource_id = await router._get_model_provider("test-provider/admin-resource", "llm")
+        assert provider == mock_routing_table.impls_by_provider_id["test-provider"]
+        assert resource_id == "admin-resource"
