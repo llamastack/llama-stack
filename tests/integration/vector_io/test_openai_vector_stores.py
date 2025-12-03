@@ -1726,27 +1726,28 @@ def test_openai_vector_store_search_with_rewrite_query(
         name="rewrite_test",
         extra_body={"embedding_model": embedding_model_id, "provider_id": vector_io_provider_id},
     )
-    llama_client.vector_io.insert(vector_store_id=vector_store.id, chunks=sample_chunks)
+    llama_client.vector_io.insert(
+        vector_store_id=vector_store.id,
+        chunks=sample_chunks,
+    )
 
-    # Test rewrite_query=False (default behavior)
     response_no_rewrite = compat_client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="programming",
         max_num_results=2,
         rewrite_query=False,
     )
-
-    # Test rewrite_query=True (may work if LLM models are available, or gracefully handle if not)
-    response_with_rewrite = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id,
-        query="programming",
-        max_num_results=2,
-        rewrite_query=True,
-    )
-
-    # Both requests should succeed (rewrite_query=True will gracefully fall back if no LLM models)
     assert response_no_rewrite is not None
-    assert response_with_rewrite is not None
 
-    # Both should return the same data since we have embedding models but may not have LLM models
-    assert len(response_no_rewrite.data) > 0
+    # Test rewrite_query=True should fail with proper error when no LLM models are configured
+    with pytest.raises((BadRequestError, OpenAIBadRequestError, ValueError)) as exc_info:
+        compat_client.vector_stores.search(
+            vector_store_id=vector_store.id,
+            query="programming",
+            max_num_results=2,
+            rewrite_query=True,
+        )
+
+    # Verify the error message indicates missing query rewriting configuration
+    error_message = str(exc_info.value)
+    assert "Query rewriting requested but not configured" in error_message
