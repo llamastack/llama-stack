@@ -6,12 +6,9 @@
 
 from typing import Protocol, runtime_checkable
 
-try:
-    from openai.types import Batch as BatchObject
-except ImportError as e:
-    raise ImportError("OpenAI package is required for batches API. Please install it with: pip install openai") from e
+from openai.types import Batch as BatchObject
 
-from llama_stack_api.batches.models import (
+from .models import (
     CancelBatchRequest,
     CreateBatchRequest,
     ListBatchesRequest,

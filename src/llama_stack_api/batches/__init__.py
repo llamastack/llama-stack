@@ -11,16 +11,16 @@ Pydantic models are defined in llama_stack_api.batches.models.
 The FastAPI router is defined in llama_stack_api.batches.fastapi_routes.
 """
 
-try:
-    from openai.types import Batch as BatchObject
-except ImportError as e:
-    raise ImportError("OpenAI package is required for batches API. Please install it with: pip install openai") from e
+from openai.types import Batch as BatchObject
+
+# Import fastapi_routes for router factory access
+from . import fastapi_routes
 
 # Import protocol for re-export
-from llama_stack_api.batches.api import Batches
+from .api import Batches
 
 # Import models for re-export
-from llama_stack_api.batches.models import (
+from .models import (
     CancelBatchRequest,
     CreateBatchRequest,
     ListBatchesRequest,
@@ -31,9 +31,10 @@ from llama_stack_api.batches.models import (
 __all__ = [
     "Batches",
     "BatchObject",
+    "CancelBatchRequest",
     "CreateBatchRequest",
     "ListBatchesRequest",
-    "RetrieveBatchRequest",
-    "CancelBatchRequest",
     "ListBatchesResponse",
+    "RetrieveBatchRequest",
+    "fastapi_routes",
 ]

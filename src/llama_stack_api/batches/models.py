@@ -12,14 +12,10 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 
 from typing import Literal
 
+from openai.types import Batch as BatchObject
 from pydantic import BaseModel, Field
 
 from llama_stack_api.schema_utils import json_schema_type
-
-try:
-    from openai.types import Batch as BatchObject
-except ImportError as e:
-    raise ImportError("OpenAI package is required for batches API. Please install it with: pip install openai") from e
 
 
 @json_schema_type

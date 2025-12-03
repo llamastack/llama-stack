@@ -15,7 +15,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends
 
-from llama_stack_api.batches import Batches, BatchObject, ListBatchesResponse
 from llama_stack_api.batches.models import (
     CancelBatchRequest,
     CreateBatchRequest,
@@ -24,6 +23,9 @@ from llama_stack_api.batches.models import (
 )
 from llama_stack_api.router_utils import create_path_dependency, create_query_dependency, standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
+
+from .api import Batches
+from .models import BatchObject, ListBatchesResponse
 
 # Automatically generate dependency functions from Pydantic models
 # This ensures the models are the single source of truth for descriptions
