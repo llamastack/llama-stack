@@ -28,6 +28,18 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
 }
 
 
+def has_router(api: "Api") -> bool:
+    """Check if an API has a router factory.
+
+    Args:
+        api: The API enum value
+
+    Returns:
+        True if the API has a router factory, False otherwise
+    """
+    return api.value in _ROUTER_FACTORIES
+
+
 def build_fastapi_router(api: "Api", impl: Any) -> APIRouter | None:
     """Build a router for an API by combining its router factory with the implementation.
 

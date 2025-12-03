@@ -14,7 +14,7 @@ from typing import Any
 from fastapi import FastAPI
 
 from llama_stack.core.resolver import api_protocol_map
-from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
+from llama_stack.core.server.fastapi_router_registry import build_fastapi_router, has_router
 from llama_stack_api import Api
 
 from .state import _protocol_methods_cache
@@ -81,9 +81,9 @@ def create_llama_stack_app() -> FastAPI:
     protocols = api_protocol_map()
     for api in protocols.keys():
         # For OpenAPI generation, we don't need a real implementation
-        router = build_fastapi_router(api, None)
-        if router:
-            app.include_router(router)
+        if not has_router(api):
+            continue
+        app.include_router(build_fastapi_router(api, None))
 
     # Get all API routes (for legacy webmethod-based routes)
     from llama_stack.core.server.routes import get_all_api_routes
@@ -95,7 +95,7 @@ def create_llama_stack_app() -> FastAPI:
 
     for api, routes in api_routes.items():
         # Skip APIs that have routers - they're already included above
-        if build_fastapi_router(api, None) is not None:
+        if has_router(api):
             continue
 
         for route, webmethod in routes:
