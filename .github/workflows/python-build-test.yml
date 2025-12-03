@@ -28,7 +28,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         activate-environment: true
-        version: 0.7.6
 
     - name: Build Llama Stack API package
       working-directory: src/llama_stack_api
