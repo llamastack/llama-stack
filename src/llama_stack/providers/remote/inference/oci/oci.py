@@ -18,10 +18,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.oci.auth import OciInstancePrincipalAuth, OciUserPrincipalAuth
 from llama_stack.providers.remote.inference.oci.config import OCIConfig
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
-from llama_stack_api import (
-    Model,
-    ModelType
-)
+from llama_stack_api import Model, ModelType
 
 logger = get_logger(name=__name__, category="inference::oci")
 
@@ -114,9 +111,9 @@ class OCIInferenceAdapter(OpenAIMixin):
             client = GenerativeAiClient(config=oci_config, signer=oci_signer)
 
         models: ModelCollection = client.list_models(
-            compartment_id=compartment_id, 
-            # capability=MODEL_CAPABILITIES, 
-            lifecycle_state="ACTIVE"
+            compartment_id=compartment_id,
+            # capability=MODEL_CAPABILITIES,
+            lifecycle_state="ACTIVE",
         ).data
 
         seen_models = set()
@@ -138,9 +135,9 @@ class OCIInferenceAdapter(OpenAIMixin):
 
             if "TEXT_EMBEDDINGS" in model.capabilities:
                 self.embedding_models.append(model.display_name)
-    
+
         return model_ids
-    
+
     def construct_model_from_identifier(self, identifier: str) -> Model:
         """
         Construct a Model instance corresponding to the given identifier
