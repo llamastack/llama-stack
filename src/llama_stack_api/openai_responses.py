@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 from collections.abc import Sequence
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import TypedDict
@@ -488,7 +488,8 @@ class OpenAIResponseInputToolMCP(BaseModel):
 
     :param type: Tool type identifier, always "mcp"
     :param server_label: Label to identify this MCP server
-    :param server_url: URL endpoint of the MCP server
+    :param server_url: (Optional) URL endpoint of the MCP server
+    :param connector_id: (Optional) ID of the connector to use for this MCP server
     :param headers: (Optional) HTTP headers to include when connecting to the server
     :param authorization: (Optional) OAuth access token for authenticating with the MCP server
     :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
@@ -497,12 +498,19 @@ class OpenAIResponseInputToolMCP(BaseModel):
 
     type: Literal["mcp"] = "mcp"
     server_label: str
-    server_url: str
+    server_url: str | None = None
+    connector_id: str | None = None
     headers: dict[str, Any] | None = None
     authorization: str | None = Field(default=None, exclude=True)
 
     require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"
     allowed_tools: list[str] | AllowedToolsFilter | None = None
+
+    @model_validator(mode="after")
+    def validate_server_or_connector(self) -> Self:
+        if not self.server_url and not self.connector_id:
+            raise ValueError("Either 'server_url' or 'connector_id' must be provided for MCP tool")
+        return self
 
 
 OpenAIResponseInputTool = Annotated[

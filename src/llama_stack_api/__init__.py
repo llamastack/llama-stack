@@ -46,10 +46,13 @@ from .common.content_types import (
 )
 from .common.errors import (
     ConflictError,
+    ConnectorNotFoundError,
+    ConnectorToolNotFoundError,
     DatasetNotFoundError,
     InvalidConversationIdError,
     ModelNotFoundError,
     ModelTypeError,
+    RegistryNotFoundError,
     ResourceNotFoundError,
     TokenValidationError,
     ToolGroupNotFoundError,
@@ -65,6 +68,14 @@ from .common.type_system import (
     NumberType,
     ParamType,
     StringType,
+)
+from .connectors import (
+    Connector,
+    ConnectorInput,
+    Connectors,
+    ConnectorType,
+    ListConnectorsResponse,
+    ListToolsResponse,
 )
 from .conversations import (
     Conversation,
@@ -340,6 +351,12 @@ from .rag_tool import (
     RRFRanker,
     WeightedRanker,
 )
+from .registries import (
+    ListRegistriesResponse,
+    Registry,
+    RegistryInput,
+    RegistryType,
+)
 from .resource import Resource, ResourceType
 from .safety import (
     ModerationObject,
@@ -482,6 +499,12 @@ __all__ = [
     "CommonShieldFields",
     "CompletionInputType",
     "CompletionRequest",
+    "Connector",
+    "ConnectorInput",
+    "Connectors",
+    "ConnectorType",
+    "ConnectorNotFoundError",
+    "ConnectorToolNotFoundError",
     "Conversation",
     "ConversationDeletedResource",
     "ConversationItem",
@@ -556,6 +579,7 @@ __all__ = [
     "LLMRAGQueryGeneratorConfig",
     "ListBatchesResponse",
     "ListBenchmarksResponse",
+    "ListConnectorsResponse",
     "ListDatasetsResponse",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
@@ -565,11 +589,13 @@ __all__ = [
     "ListPostTrainingJobsResponse",
     "ListPromptsResponse",
     "ListProvidersResponse",
+    "ListRegistriesResponse",
     "ListRoutesResponse",
     "ListScoringFunctionsResponse",
     "ListShieldsResponse",
     "ListToolDefsResponse",
     "ListToolGroupsResponse",
+    "ListToolsResponse",
     "LogProbConfig",
     "LoraFinetuningConfig",
     "MCPListToolsTool",
@@ -753,6 +779,10 @@ __all__ = [
     "RRFRanker",
     "Ranker",
     "RegexParserScoringFnParams",
+    "Registry",
+    "RegistryNotFoundError",
+    "RegistryType",
+    "RegistryInput",
     "RemoteProviderConfig",
     "RemoteProviderSpec",
     "RerankData",

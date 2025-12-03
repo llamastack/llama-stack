@@ -17,6 +17,7 @@ from llama_stack.providers.utils.responses.responses_store import (
     _OpenAIResponseObjectWithInputAndMessages,
 )
 from llama_stack_api import (
+    Connectors,
     ConversationItem,
     Conversations,
     Files,
@@ -79,6 +80,7 @@ class OpenAIResponsesImpl:
         conversations_api: Conversations,
         prompts_api: Prompts,
         files_api: Files,
+        connectors_api: Connectors,
     ):
         self.inference_api = inference_api
         self.tool_groups_api = tool_groups_api
@@ -94,6 +96,7 @@ class OpenAIResponsesImpl:
         )
         self.prompts_api = prompts_api
         self.files_api = files_api
+        self.connectors_api = connectors_api
 
     async def _prepend_previous_response(
         self,
@@ -494,6 +497,7 @@ class OpenAIResponsesImpl:
             instructions=instructions,
             max_tool_calls=max_tool_calls,
             metadata=metadata,
+            connectors_api=self.connectors_api,
         )
 
         # Stream the response
