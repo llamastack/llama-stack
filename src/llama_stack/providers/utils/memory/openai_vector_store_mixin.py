@@ -15,8 +15,10 @@ from typing import Annotated, Any
 from fastapi import Body
 from pydantic import TypeAdapter
 
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
     content_from_data_and_mime_type,
@@ -25,9 +27,11 @@ from llama_stack.providers.utils.memory.vector_store import (
 from llama_stack_api import (
     Chunk,
     Files,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     OpenAIFileObject,
+    OpenAIUserMessageParam,
     QueryChunksResponse,
     SearchRankingOptions,
     VectorStore,
@@ -85,11 +89,13 @@ class OpenAIVectorStoreMixin(ABC):
         self,
         files_api: Files | None = None,
         kvstore: KVStore | None = None,
+        vector_stores_config: VectorStoresConfig | None = None,
     ):
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.files_api = files_api
         self.kvstore = kvstore
+        self.vector_stores_config = vector_stores_config
         self._last_file_batch_cleanup_time = 0
         self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
         self._vector_store_locks: dict[str, asyncio.Lock] = {}
@@ -99,6 +105,46 @@ class OpenAIVectorStoreMixin(ABC):
         if vector_store_id not in self._vector_store_locks:
             self._vector_store_locks[vector_store_id] = asyncio.Lock()
         return self._vector_store_locks[vector_store_id]
+
+    async def _rewrite_query_for_search(self, query: str) -> str:
+        """Rewrite a search query using the configured LLM model for better retrieval results."""
+        if (
+            not self.vector_stores_config
+            or not self.vector_stores_config.rewrite_query_params
+            or not self.vector_stores_config.rewrite_query_params.model
+        ):
+            raise ValueError(
+                "Query rewriting requested but not configured. Please configure rewrite_query_params.model in vector_stores config."
+            )
+
+        model = self.vector_stores_config.rewrite_query_params.model
+        model_id = f"{model.provider_id}/{model.model_id}"
+
+        # Use custom prompt from config if provided, otherwise use built-in default
+        # Users only need to configure the model - prompt is automatic with optional override
+        custom_prompt = self.vector_stores_config.rewrite_query_params.prompt
+        if custom_prompt:
+            if "{query}" not in custom_prompt:
+                raise ValueError("'{query}' is required in the custom_prompt")
+
+            prompt = custom_prompt.format(query=query)
+        else:
+            prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query=query)
+
+        request = OpenAIChatCompletionRequestWithExtraBody(
+            model=model_id,
+            messages=[OpenAIUserMessageParam(role="user", content=prompt)],
+            max_tokens=self.vector_stores_config.rewrite_query_params.max_tokens or 100,
+            temperature=self.vector_stores_config.rewrite_query_params.temperature or 0.3,
+        )
+
+        response = await self.inference_api.openai_chat_completion(request)  # type: ignore
+        content = response.choices[0].message.content
+        if content is None:
+            raise ValueError("LLM response content is None - cannot rewrite query")
+        rewritten_query: str = content.strip()
+        logger.debug(f"Query rewritten: '{query}' → '{rewritten_query}'")
+        return rewritten_query
 
     async def _save_openai_vector_store(self, store_id: str, store_info: dict[str, Any]) -> None:
         """Save vector store metadata to persistent storage."""
@@ -608,20 +654,20 @@ class OpenAIVectorStoreMixin(ABC):
         else:
             search_query = query
 
+        if rewrite_query:
+            search_query = await self._rewrite_query_for_search(search_query)
+
         try:
             score_threshold = (
                 ranking_options.score_threshold
                 if ranking_options and ranking_options.score_threshold is not None
                 else 0.0
             )
-
             params = {
                 "max_chunks": max_num_results * CHUNK_MULTIPLIER,
                 "score_threshold": score_threshold,
                 "mode": search_mode,
-                "rewrite_query": rewrite_query,
             }
-
             # TODO: Add support for ranking_options.ranker
 
             response = await self.query_chunks(

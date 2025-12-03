@@ -373,6 +373,10 @@ async def instantiate_provider(
 
         method = "get_adapter_impl"
         args = [config, deps]
+
+        if "policy" in inspect.signature(getattr(module, method)).parameters:
+            args.append(policy)
+
     elif isinstance(provider_spec, AutoRoutedProviderSpec):
         method = "get_auto_router_impl"
 
@@ -391,8 +395,6 @@ async def instantiate_provider(
         args = [config, deps]
         if "policy" in inspect.signature(getattr(module, method)).parameters:
             args.append(policy)
-        if "telemetry_enabled" in inspect.signature(getattr(module, method)).parameters and run_config.telemetry:
-            args.append(run_config.telemetry.enabled)
 
     fn = getattr(module, method)
     impl = await fn(*args)
@@ -400,8 +402,7 @@ async def instantiate_provider(
     impl.__provider_spec__ = provider_spec
     impl.__provider_config__ = config
 
-    # Inject vector_stores_config for vector_io providers using OpenAIVectorStoreMixin
-    if provider_spec.api == Api.vector_io and hasattr(impl, 'vector_stores_config'):
+    if provider_spec.api == Api.vector_io and hasattr(impl, "vector_stores_config"):
         impl.vector_stores_config = run_config.vector_stores
 
     protocols = api_protocol_map_for_compliance_check(run_config)

@@ -547,12 +547,6 @@ class Stack:
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
         await validate_safety_config(self.run_config.safety, impls)
-
-        # Set global query expansion configuration from stack config
-        from llama_stack.providers.utils.memory.rewrite_query_config import set_default_rewrite_query_config
-
-        set_default_rewrite_query_config(self.run_config.vector_stores)
-
         self.impls = impls
 
     def create_registry_refresh_task(self):

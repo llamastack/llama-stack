@@ -29,7 +29,6 @@ from llama_stack_api import (
     Chunk,
     ChunkMetadata,
     InterleavedContent,
-    OpenAIChatCompletionRequestWithExtraBody,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksResponse,
     RAGDocument,
@@ -37,9 +36,6 @@ from llama_stack_api import (
 )
 
 log = get_logger(name=__name__, category="providers::utils")
-
-from llama_stack.providers.utils.memory import rewrite_query_config
-from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
 
 
 class ChunkForDeletion(BaseModel):
@@ -293,40 +289,6 @@ class VectorStoreWithIndex:
         embeddings = np.array([c.embedding for c in chunks], dtype=np.float32)
         await self.index.add_chunks(chunks, embeddings)
 
-    async def _rewrite_query_for_file_search(self, query: str) -> str:
-        """Rewrite a search query using the globally configured LLM model for better retrieval results."""
-        if not rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL:
-            raise ValueError(
-                "Query rewriting requested but not configured. Please configure rewrite_query_params.model in vector_stores config."
-            )
-
-        model_id = f"{rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL.provider_id}/{rewrite_query_config._DEFAULT_REWRITE_QUERY_MODEL.model_id}"
-
-        # Use custom prompt from config if provided, otherwise use built-in default
-        # Users only need to configure the model - prompt is automatic with optional override
-        if rewrite_query_config._REWRITE_QUERY_PROMPT_OVERRIDE:
-            # Custom prompt from config - format if it contains {query} placeholder
-            prompt = (
-                rewrite_query_config._REWRITE_QUERY_PROMPT_OVERRIDE.format(query=query)
-                if "{query}" in rewrite_query_config._REWRITE_QUERY_PROMPT_OVERRIDE
-                else rewrite_query_config._REWRITE_QUERY_PROMPT_OVERRIDE
-            )
-        else:
-            # Use built-in default prompt and format with query
-            prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query=query)
-
-        request = OpenAIChatCompletionRequestWithExtraBody(
-            model=model_id,
-            messages=[{"role": "user", "content": prompt}],
-            max_tokens=rewrite_query_config._DEFAULT_REWRITE_QUERY_MAX_TOKENS,
-            temperature=rewrite_query_config._DEFAULT_REWRITE_QUERY_TEMPERATURE,
-        )
-
-        response = await self.inference_api.openai_chat_completion(request)
-        rewritten_query = response.choices[0].message.content.strip()
-        log.debug(f"Query rewritten: '{query}' → '{rewritten_query}'")
-        return rewritten_query
-
     async def query_chunks(
         self,
         query: InterleavedContent,
@@ -334,7 +296,6 @@ class VectorStoreWithIndex:
     ) -> QueryChunksResponse:
         if params is None:
             params = {}
-
         k = params.get("max_chunks", 3)
         mode = params.get("mode")
         score_threshold = params.get("score_threshold", 0.0)
@@ -357,11 +318,6 @@ class VectorStoreWithIndex:
                 reranker_params = {"impact_factor": k_value}
 
         query_string = interleaved_content_as_str(query)
-
-        # Apply query rewriting if enabled and model is configured
-        if params.get("rewrite_query", False):
-            query_string = await self._rewrite_query_for_file_search(query_string)
-
         if mode == "keyword":
             return await self.index.query_keyword(query_string, k, score_threshold)
 
