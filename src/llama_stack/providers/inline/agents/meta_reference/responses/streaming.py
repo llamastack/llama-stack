@@ -250,7 +250,7 @@ class StreamingResponseOrchestrator:
                 logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
 
                 logprobs = (
-                    True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else False
+                    True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
                 )
 
                 params = OpenAIChatCompletionRequestWithExtraBody(
