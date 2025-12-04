@@ -6,12 +6,14 @@
 
 import asyncio
 import importlib.resources
+import inspect
 import os
 import re
 import tempfile
-from typing import Any
+from typing import Any, get_type_hints
 
 import yaml
+from pydantic import BaseModel
 
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, SafetyConfig, StackConfig, VectorStoresConfig
@@ -108,6 +110,58 @@ REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
 
+def is_request_model(t: Any) -> bool:
+    """Check if a type is a request model (Pydantic BaseModel).
+
+    Args:
+        t: The type to check
+
+    Returns:
+        True if the type is a Pydantic BaseModel subclass, False otherwise
+    """
+
+    return inspect.isclass(t) and issubclass(t, BaseModel)
+
+
+async def invoke_with_optional_request(method: Any) -> Any:
+    """Invoke a method, automatically creating a request instance if needed.
+
+    For APIs that use request models, this will create an empty request object.
+    For backward compatibility, falls back to calling without arguments.
+
+    Uses get_type_hints() to resolve forward references (e.g., "ListBenchmarksRequest" -> actual class).
+
+    Args:
+        method: The method to invoke
+
+    Returns:
+        The result of calling the method
+    """
+    try:
+        hints = get_type_hints(method)
+    except Exception:
+        # Forward references can't be resolved, fall back to calling without request
+        return await method()
+
+    params = list(inspect.signature(method).parameters.values())
+    params = [p for p in params if p.name != "self"]
+
+    # If the method has exactly one parameter and it's a request model, create an empty request
+    if len(params) == 1:
+        param = params[0]
+        model = hints.get(param.name)
+
+        if model and is_request_model(model):
+            try:
+                instance = model()
+                return await method(instance)
+            except Exception:
+                # Request model requires arguments, fall back
+                pass
+
+    return await method()
+
+
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
     for rsrc, api, register_method, list_method in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
@@ -129,7 +183,7 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
 
         method = getattr(impls[api], list_method)
-        response = await method()
+        response = await invoke_with_optional_request(method)
 
         objects_to_process = response.data if hasattr(response, "data") else response
 
