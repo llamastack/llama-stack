@@ -16,6 +16,9 @@ concurrency:
 jobs:
   pre-commit:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22]
     permissions:
       contents: write
       pull-requests: write
@@ -41,7 +44,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
-          node-version: '20'
+          node-version: ${{matrix.node-version}}
           cache: 'npm'
           cache-dependency-path: 'src/llama_stack_ui/'
 
