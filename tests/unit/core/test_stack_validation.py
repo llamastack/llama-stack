@@ -13,7 +13,7 @@ import pytest
 from llama_stack.core.datatypes import QualifiedModel, SafetyConfig, StackRunConfig, VectorStoresConfig
 from llama_stack.core.stack import validate_safety_config, validate_vector_stores_config
 from llama_stack.core.storage.datatypes import ServerStoresConfig, StorageConfig
-from llama_stack_api import Api, ListModelsResponse, ListShieldsResponse, Model, ModelType, Shield
+from llama_stack_api import Api, ListShieldsResponse, ModelType, OpenAIListModelsResponse, OpenAIModel, Shield
 
 
 class TestVectorStoresValidation:
@@ -40,7 +40,7 @@ class TestVectorStoresValidation:
             ),
         )
         mock_models = AsyncMock()
-        mock_models.list_models.return_value = ListModelsResponse(data=[])
+        mock_models.openai_list_models.return_value = OpenAIListModelsResponse(data=[])
 
         with pytest.raises(ValueError, match="not found"):
             await validate_vector_stores_config(run_config.vector_stores, {Api.models: mock_models})
@@ -68,14 +68,19 @@ class TestVectorStoresValidation:
             ),
         )
         mock_models = AsyncMock()
-        mock_models.list_models.return_value = ListModelsResponse(
+        mock_models.openai_list_models.return_value = OpenAIListModelsResponse(
             data=[
-                Model(
-                    identifier="p/valid",  # Must match provider_id/model_id format
-                    model_type=ModelType.embedding,
-                    metadata={"embedding_dimension": 768},
-                    provider_id="p",
-                    provider_resource_id="valid",
+                OpenAIModel(
+                    id="p/valid",  # Must match provider_id/model_id format
+                    object="model",
+                    created=857142,
+                    owned_by="llama_stack",
+                    custom_metadata={
+                        "embedding_dimension": 768,
+                        "model_type": ModelType.embedding.value,
+                        "provider_id": "p",
+                        "provider_resource_id": "valid",
+                    },
                 )
             ]
         )

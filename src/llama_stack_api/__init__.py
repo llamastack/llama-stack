@@ -214,7 +214,6 @@ from .inspect import (
 )
 from .models import (
     CommonModelFields,
-    ListModelsResponse,
     Model,
     ModelInput,
     Models,
@@ -569,7 +568,6 @@ __all__ = [
     "RetrieveBatchRequest",
     "ListBenchmarksResponse",
     "ListDatasetsResponse",
-    "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
     "ListOpenAIFileResponse",
     "ListOpenAIResponseInputItem",

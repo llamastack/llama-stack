@@ -68,7 +68,7 @@ async def test_access_control_with_cache(mock_get_authenticated_user, test_setup
     await registry.register(model_data_scientist)
 
     mock_get_authenticated_user.return_value = User("test-user", {"roles": ["admin"], "teams": ["management"]})
-    all_models = await routing_table.list_models()
+    all_models = await routing_table.openai_list_models()
     assert len(all_models.data) == 2
 
     model = await routing_table.get_model("model-public")
@@ -79,9 +79,9 @@ async def test_access_control_with_cache(mock_get_authenticated_user, test_setup
         await routing_table.get_model("model-data-scientist")
 
     mock_get_authenticated_user.return_value = User("test-user", {"roles": ["data-scientist"], "teams": ["other-team"]})
-    all_models = await routing_table.list_models()
+    all_models = await routing_table.openai_list_models()
     assert len(all_models.data) == 1
-    assert all_models.data[0].identifier == "model-public"
+    assert all_models.data[0].id == "model-public"
     model = await routing_table.get_model("model-public")
     assert model.identifier == "model-public"
     with pytest.raises(ValueError):
@@ -90,9 +90,9 @@ async def test_access_control_with_cache(mock_get_authenticated_user, test_setup
         await routing_table.get_model("model-data-scientist")
 
     mock_get_authenticated_user.return_value = User("test-user", {"roles": ["data-scientist"], "teams": ["ml-team"]})
-    all_models = await routing_table.list_models()
+    all_models = await routing_table.openai_list_models()
     assert len(all_models.data) == 2
-    model_ids = [m.identifier for m in all_models.data]
+    model_ids = [m.id for m in all_models.data]
     assert "model-public" in model_ids
     assert "model-data-scientist" in model_ids
     assert "model-admin" not in model_ids
@@ -161,8 +161,8 @@ async def test_access_control_empty_attributes(mock_get_authenticated_user, test
     )
     result = await routing_table.get_model("model-empty-attrs")
     assert result.identifier == "model-empty-attrs"
-    all_models = await routing_table.list_models()
-    model_ids = [m.identifier for m in all_models.data]
+    all_models = await routing_table.openai_list_models()
+    model_ids = [m.id for m in all_models.data]
     assert "model-empty-attrs" in model_ids
 
 
@@ -191,9 +191,9 @@ async def test_no_user_attributes(mock_get_authenticated_user, test_setup):
     with pytest.raises(ValueError):
         await routing_table.get_model("model-restricted")
 
-    all_models = await routing_table.list_models()
+    all_models = await routing_table.openai_list_models()
     assert len(all_models.data) == 1
-    assert all_models.data[0].identifier == "model-public-2"
+    assert all_models.data[0].id == "model-public-2"
 
 
 @patch("llama_stack.core.routing_tables.common.get_authenticated_user")
@@ -718,8 +718,8 @@ class TestModelListingRBACBypass:
         mock_get_user_common.return_value = admin_user
         mock_get_user_models.return_value = admin_user
 
-        result = await routing_table.list_models()
-        model_ids = [m.identifier for m in result.data]
+        result = await routing_table.openai_list_models()
+        model_ids = [m.id for m in result.data]
         assert "test-provider/dynamic-model-1" in model_ids
         assert "test-provider/dynamic-model-2" in model_ids
 
@@ -729,7 +729,7 @@ class TestModelListingRBACBypass:
         mock_get_user_common.return_value = restricted_user
         mock_get_user_models.return_value = restricted_user
 
-        result = await routing_table.list_models()
-        model_ids = [m.identifier for m in result.data]
+        result = await routing_table.openai_list_models()
+        model_ids = [m.id for m in result.data]
         # Restricted user should see no models (no ownership, not admin)
         assert len(model_ids) == 0
