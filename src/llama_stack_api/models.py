@@ -77,10 +77,6 @@ class ModelInput(CommonModelFields):
     model_config = ConfigDict(protected_namespaces=())
 
 
-class ListModelsResponse(BaseModel):
-    data: list[Model]
-
-
 @json_schema_type
 class OpenAIModel(BaseModel):
     """A model from OpenAI.
@@ -106,13 +102,6 @@ class OpenAIListModelsResponse(BaseModel):
 
 @runtime_checkable
 class Models(Protocol):
-    async def list_models(self) -> ListModelsResponse:
-        """List all models.
-
-        :returns: A ListModelsResponse.
-        """
-        ...
-
     @webmethod(route="/models", method="GET", level=LLAMA_STACK_API_V1)
     async def openai_list_models(self) -> OpenAIListModelsResponse:
         """List models using the OpenAI API.

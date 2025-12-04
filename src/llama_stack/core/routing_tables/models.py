@@ -16,7 +16,6 @@ from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProv
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    ListModelsResponse,
     Model,
     ModelNotFoundError,
     Models,
@@ -127,19 +126,6 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 continue
 
         return dynamic_models
-
-    async def list_models(self) -> ListModelsResponse:
-        # Get models from registry
-        registry_models = await self.get_all_with_type("model")
-
-        # Get additional models available via provider_data (user-specific, not cached)
-        dynamic_models = await self._get_dynamic_models_from_provider_data()
-
-        # Combine, avoiding duplicates (registry takes precedence)
-        registry_identifiers = {m.identifier for m in registry_models}
-        unique_dynamic_models = [m for m in dynamic_models if m.identifier not in registry_identifiers]
-
-        return ListModelsResponse(data=registry_models + unique_dynamic_models)
 
     async def openai_list_models(self) -> OpenAIListModelsResponse:
         # Get models from registry

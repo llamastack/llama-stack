@@ -160,9 +160,9 @@ async def test_models_routing_table(cached_disk_dist_registry):
     await table.register_model(model_id="test-model", provider_id="test_provider")
     await table.register_model(model_id="test-model-2", provider_id="test_provider")
 
-    models = await table.list_models()
-    assert len(models.data) == 2
-    model_ids = {m.identifier for m in models.data}
+    models = await table.get_all_with_type("model")
+    assert len(models) == 2
+    model_ids = {m.identifier for m in models}
     assert "test_provider/test-model" in model_ids
     assert "test_provider/test-model-2" in model_ids
 
@@ -199,7 +199,7 @@ async def test_models_routing_table(cached_disk_dist_registry):
     await table.unregister_model(model_id="test_provider/test-model")
     await table.unregister_model(model_id="test_provider/test-model-2")
 
-    models = await table.list_models()
+    models = await table.openai_list_models()
     assert len(models.data) == 0
 
     # Test openai list models
@@ -321,9 +321,9 @@ async def test_double_registration_models_positive(cached_disk_dist_registry):
     await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
 
     # Verify only one model exists
-    models = await table.list_models()
+    models = await table.openai_list_models()
     assert len(models.data) == 1
-    assert models.data[0].identifier == "test_provider/test-model"
+    assert models.data[0].id == "test_provider/test-model"
 
 
 async def test_double_registration_models_negative(cached_disk_dist_registry):
@@ -407,9 +407,9 @@ async def test_double_registration_different_providers(cached_disk_dist_registry
     await table.register_model(model_id="shared-model", provider_id="provider2")
 
     # Verify both models exist with different identifiers
-    models = await table.list_models()
+    models = await table.openai_list_models()
     assert len(models.data) == 2
-    model_ids = {m.identifier for m in models.data}
+    model_ids = {m.id for m in models.data}
     assert "provider1/shared-model" in model_ids
     assert "provider2/shared-model" in model_ids
 
@@ -472,11 +472,11 @@ async def test_models_alias_registration_and_lookup(cached_disk_dist_registry):
     )
 
     # Verify the model was registered with alias as identifier (not namespaced)
-    models = await table.list_models()
+    models = await table.openai_list_models()
     assert len(models.data) == 1
     model = models.data[0]
-    assert model.identifier == "test_provider/actual-provider-model"
-    assert model.provider_resource_id == "actual-provider-model"
+    assert model.id == "test_provider/actual-provider-model"
+    assert model.custom_metadata["provider_resource_id"] == "actual-provider-model"
 
     # Test lookup by alias fails
     with pytest.raises(ModelNotFoundError, match="Model 'my-alias' not found"):
@@ -499,9 +499,9 @@ async def test_models_multi_provider_disambiguation(cached_disk_dist_registry):
     await table.register_model(model_id="common-model", provider_id="provider2")
 
     # Verify both models get namespaced identifiers
-    models = await table.list_models()
+    models = await table.openai_list_models()
     assert len(models.data) == 2
-    identifiers = {m.identifier for m in models.data}
+    identifiers = {m.id for m in models.data}
     assert identifiers == {"provider1/common-model", "provider2/common-model"}
 
     # Test lookup by full namespaced identifier works
@@ -527,11 +527,11 @@ async def test_models_fallback_lookup_behavior(cached_disk_dist_registry):
     await table.register_model(model_id="test-model", provider_id="test_provider")
 
     # Verify namespaced identifier was created
-    models = await table.list_models()
+    models = await table.openai_list_models()
     assert len(models.data) == 1
     model = models.data[0]
-    assert model.identifier == "test_provider/test-model"
-    assert model.provider_resource_id == "test-model"
+    assert model.id == "test_provider/test-model"
+    assert model.custom_metadata["provider_resource_id"] == "test-model"
 
     # Test lookup by full namespaced identifier (direct hit via get_object_by_identifier)
     retrieved_model = await table.get_model("test_provider/test-model")
@@ -554,9 +554,9 @@ async def test_models_source_tracking_default(cached_disk_dist_registry):
     # Register model via register_model (should get default source)
     await table.register_model(model_id="user-model", provider_id="test_provider")
 
-    models = await table.list_models()
-    assert len(models.data) == 1
-    model = models.data[0]
+    models = await table.get_all_with_type("model")
+    assert len(models) == 1
+    model = models[0]
     assert model.source == RegistryEntrySource.via_register_api
     assert model.identifier == "test_provider/user-model"
 
@@ -588,11 +588,11 @@ async def test_models_source_tracking_provider(cached_disk_dist_registry):
     ]
     await table.update_registered_models("test_provider", provider_models)
 
-    models = await table.list_models()
-    assert len(models.data) == 2
+    models = await table.get_all_with_type("model")
+    assert len(models) == 2
 
     # All models should have provider source
-    for model in models.data:
+    for model in models:
         assert model.source == RegistryEntrySource.listed_from_provider
         assert model.provider_id == "test_provider"
 
@@ -611,9 +611,9 @@ async def test_models_source_interaction_preserves_default(cached_disk_dist_regi
     )
 
     # Verify user model is registered with default source
-    models = await table.list_models()
-    assert len(models.data) == 1
-    user_model = models.data[0]
+    models = await table.get_all_with_type("model")
+    assert len(models) == 1
+    user_model = models[0]
     assert user_model.source == RegistryEntrySource.via_register_api
     assert user_model.identifier == "test_provider/provider-model-1"
     assert user_model.provider_resource_id == "provider-model-1"
@@ -638,13 +638,12 @@ async def test_models_source_interaction_preserves_default(cached_disk_dist_regi
     await table.update_registered_models("test_provider", provider_models)
 
     # Verify user model with alias is preserved, but provider added new model
-    models = await table.list_models()
-    assert len(models.data) == 2
+    models = await table.get_all_with_type("model")
+    assert len(models) == 2
 
     # Find the user model and provider model
-    user_model = next((m for m in models.data if m.identifier == "test_provider/provider-model-1"), None)
-    provider_model = next((m for m in models.data if m.identifier == "test_provider/different-model"), None)
-
+    user_model = next((m for m in models if m.identifier == "test_provider/provider-model-1"), None)
+    provider_model = next((m for m in models if m.identifier == "test_provider/different-model"), None)
     assert user_model is not None
     assert user_model.source == RegistryEntrySource.via_register_api
     assert user_model.provider_resource_id == "provider-model-1"
@@ -678,8 +677,8 @@ async def test_models_source_interaction_cleanup_provider_models(cached_disk_dis
     await table.update_registered_models("test_provider", provider_models_v1)
 
     # Verify we have both user and provider models
-    models = await table.list_models()
-    assert len(models.data) == 2
+    models = await table.get_all_with_type("model")
+    assert len(models) == 2
 
     # Now update with new provider models (should remove old provider models)
     provider_models_v2 = [
@@ -694,17 +693,17 @@ async def test_models_source_interaction_cleanup_provider_models(cached_disk_dis
     await table.update_registered_models("test_provider", provider_models_v2)
 
     # Should have user model + new provider model, old provider model gone
-    models = await table.list_models()
-    assert len(models.data) == 2
+    models = await table.get_all_with_type("model")
+    assert len(models) == 2
 
-    identifiers = {m.identifier for m in models.data}
+    identifiers = {m.identifier for m in models}
     assert "test_provider/user-model" in identifiers  # User model preserved
     assert "test_provider/provider-model-new" in identifiers  # New provider model (uses provider's identifier)
     assert "test_provider/provider-model-old" not in identifiers  # Old provider model removed
 
     # Verify sources are correct
-    user_model = next((m for m in models.data if m.identifier == "test_provider/user-model"), None)
-    provider_model = next((m for m in models.data if m.identifier == "test_provider/provider-model-new"), None)
+    user_model = next((m for m in models if m.identifier == "test_provider/user-model"), None)
+    provider_model = next((m for m in models if m.identifier == "test_provider/provider-model-new"), None)
 
     assert user_model.source == RegistryEntrySource.via_register_api
     assert provider_model.source == RegistryEntrySource.listed_from_provider

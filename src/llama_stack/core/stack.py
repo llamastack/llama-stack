@@ -89,7 +89,7 @@ class LlamaStack(
 
 
 RESOURCES = [
-    ("models", Api.models, "register_model", "list_models"),
+    ("models", Api.models, "register_model", "openai_list_models"),
     ("shields", Api.shields, "register_shield", "list_shields"),
     ("datasets", Api.datasets, "register_dataset", "list_datasets"),
     (
@@ -156,14 +156,14 @@ async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig
         raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
 
     models_impl = impls[Api.models]
-    response = await models_impl.list_models()
-    models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
+    response = await models_impl.openai_list_models()
+    models_list = {m.id: m for m in response.data if m.custom_metadata["model_type"] == "embedding"}
 
     default_model = models_list.get(default_model_id)
     if default_model is None:
         raise ValueError(f"Embedding model '{default_model_id}' not found. Available embedding models: {models_list}")
 
-    embedding_dimension = default_model.metadata.get("embedding_dimension")
+    embedding_dimension = default_model.custom_metadata.get("embedding_dimension")
     if embedding_dimension is None:
         raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
 
