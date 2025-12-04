@@ -9,6 +9,7 @@ from importlib.metadata import version
 from pydantic import BaseModel
 
 from llama_stack.core.datatypes import StackConfig
+from llama_stack.core.distribution import builtin_automatically_routed_apis
 from llama_stack.core.external import load_external_apis
 from llama_stack.core.server.fastapi_router_registry import (
     _ROUTER_FACTORIES,
@@ -65,6 +66,17 @@ class DistributionInspectImpl(Inspect):
         def _get_provider_types(api: Api) -> list[str]:
             if api.value in ["providers", "inspect"]:
                 return []  # These APIs don't have "real" providers  they're internal to the stack
+
+            # For routing table APIs, look up providers from their router API
+            # (e.g., benchmarks -> eval, models -> inference, etc.)
+            auto_routed_apis = builtin_automatically_routed_apis()
+            for auto_routed in auto_routed_apis:
+                if auto_routed.routing_table_api == api:
+                    # This is a routing table API, use its router API for providers
+                    providers = config.providers.get(auto_routed.router_api.value, [])
+                    return [p.provider_type for p in providers] if providers else []
+
+            # Regular API, look up providers directly
             providers = config.providers.get(api.value, [])
             return [p.provider_type for p in providers] if providers else []
 
