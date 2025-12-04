@@ -8,7 +8,6 @@ from typing import Any, Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
-from .common.tracing import telemetry_traceable
 from .schema_utils import json_schema_type, webmethod
 from .vector_io import Chunk, VectorStoreChunkingStrategy
 from .version import LLAMA_STACK_API_V1ALPHA
@@ -16,10 +15,16 @@ from .version import LLAMA_STACK_API_V1ALPHA
 
 @json_schema_type
 class ProcessFileRequest(BaseModel):
-    """Request for processing a file into structured content."""
+    """Request for processing a file into structured content.
 
-    file_data: bytes
-    """Raw file data to process."""
+    Exactly one of file_data or file_id must be provided.
+    """
+
+    file_data: bytes | str | None = None
+    """Raw file data to process. Can be bytes for binary files or str for plain text content. Mutually exclusive with file_id."""
+
+    file_id: str | None = None
+    """ID of file already uploaded to file storage. Mutually exclusive with file_data."""
 
     filename: str
     """Original filename for format detection and processing hints."""
@@ -30,7 +35,7 @@ class ProcessFileRequest(BaseModel):
     chunking_strategy: VectorStoreChunkingStrategy | None = None
     """Optional chunking strategy for splitting content into chunks."""
 
-    include_embeddings: bool = False
+    generate_embeddings: bool = False
     """Whether to generate embeddings for chunks."""
 
 
@@ -48,10 +53,11 @@ class ProcessedContent(BaseModel):
     """Optional embeddings for chunks if requested."""
 
     metadata: dict[str, Any]
-    """Processing metadata including processor name, timing, and provider-specific data."""
+    """Processing-run metadata such as processor name/version, processing_time_ms,
+    page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores,
+    plus provider-specific fields."""
 
 
-@telemetry_traceable
 @runtime_checkable
 class FileProcessors(Protocol):
     """
@@ -75,22 +81,28 @@ class FileProcessors(Protocol):
     @webmethod(route="/file-processors/process", method="POST", level=LLAMA_STACK_API_V1ALPHA)
     async def process_file(
         self,
-        file_data: bytes,
         filename: str,
+        file_data: bytes | str | None = None,
+        file_id: str | None = None,
         options: dict[str, Any] | None = None,
         chunking_strategy: VectorStoreChunkingStrategy | None = None,
-        include_embeddings: bool = False,
+        generate_embeddings: bool = False,
     ) -> ProcessedContent:
         """
         Process a file into structured content with optional chunking and embeddings.
 
-        This method processes raw file data and converts it into text content for applications such as vector store ingestion.
+        This method supports two modes of operation:
+        1. Direct input: Process raw file data directly (file_data parameter)
+        2. File storage: Process files already uploaded to file storage (file_id parameter)
 
-        :param file_data: Raw bytes of the file to process.
-        :param filename: Original filename for format detection.
+        Exactly one of file_data or file_id must be provided.
+
+        :param filename: Original filename for format detection and processing hints.
+        :param file_data: Raw file data to process. Can be bytes for binary files or str for plain text content. Mutually exclusive with file_id.
+        :param file_id: ID of file already uploaded to file storage. Mutually exclusive with file_data.
         :param options: Provider-specific processing options (e.g., OCR settings, output format).
         :param chunking_strategy: Optional strategy for splitting content into chunks.
-        :param include_embeddings: Whether to generate embeddings for chunks.
+        :param generate_embeddings: Whether to generate embeddings for chunks.
         :returns: ProcessedContent with extracted text, optional chunks, and metadata.
         """
         ...

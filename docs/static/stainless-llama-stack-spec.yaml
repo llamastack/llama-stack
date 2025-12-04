@@ -3930,7 +3930,11 @@ paths:
       description: |-
         Process a file into structured content with optional chunking and embeddings.
 
-        This method processes raw file data and converts it into text content for applications such as vector store ingestion.
+        This method supports two modes of operation:
+        1. Direct input: Process raw file data directly (file_data parameter)
+        2. File storage: Process files already uploaded to file storage (file_id parameter)
+
+        Exactly one of file_data or file_id must be provided.
       operationId: process_file_v1alpha_file_processors_process_post
       requestBody:
         content:
@@ -12153,13 +12157,20 @@ components:
       title: OutputTokensDetails
     ProcessFileRequest:
       properties:
-        file_data:
-          type: string
-          format: binary
-          title: File Data
         filename:
           type: string
           title: Filename
+        file_data:
+          anyOf:
+          - type: string
+            format: binary
+          - type: string
+          - type: 'null'
+          title: string
+        file_id:
+          anyOf:
+          - type: string
+          - type: 'null'
         options:
           anyOf:
           - additionalProperties: true
@@ -12180,13 +12191,12 @@ components:
             title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
           - type: 'null'
           title: Chunking Strategy
-        include_embeddings:
+        generate_embeddings:
           type: boolean
-          title: Include Embeddings
+          title: Generate Embeddings
           default: false
       type: object
       required:
-      - file_data
       - filename
       title: ProcessFileRequest
     ProcessedContent:
