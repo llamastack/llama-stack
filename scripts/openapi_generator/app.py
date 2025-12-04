@@ -14,6 +14,7 @@ from typing import Any
 from fastapi import FastAPI
 
 from llama_stack.core.resolver import api_protocol_map
+from llama_stack.core.server.fastapi_router_registry import build_fastapi_router, has_router
 from llama_stack_api import Api
 
 from .state import _protocol_methods_cache
@@ -64,7 +65,8 @@ def _get_protocol_method(api: Api, method_name: str) -> Any | None:
 def create_llama_stack_app() -> FastAPI:
     """
     Create a FastAPI app that represents the Llama Stack API.
-    This uses the existing route discovery system to automatically find all routes.
+    This uses both router-based routes (for migrated APIs) and the existing
+    route discovery system for legacy webmethod-based routes.
     """
     app = FastAPI(
         title="Llama Stack API",
@@ -75,15 +77,27 @@ def create_llama_stack_app() -> FastAPI:
         ],
     )
 
-    # Get all API routes
+    # Include routers for APIs that have them
+    protocols = api_protocol_map()
+    for api in protocols.keys():
+        # For OpenAPI generation, we don't need a real implementation
+        if not has_router(api):
+            continue
+        app.include_router(build_fastapi_router(api, None))
+
+    # Get all API routes (for legacy webmethod-based routes)
     from llama_stack.core.server.routes import get_all_api_routes
 
     api_routes = get_all_api_routes()
 
-    # Create FastAPI routes from the discovered routes
+    # Create FastAPI routes from the discovered routes (skip APIs that have routers)
     from . import endpoints
 
     for api, routes in api_routes.items():
+        # Skip APIs that have routers - they're already included above
+        if has_router(api):
+            continue
+
         for route, webmethod in routes:
             # Convert the route to a FastAPI endpoint
             endpoints._create_fastapi_endpoint(app, route, webmethod, api)
