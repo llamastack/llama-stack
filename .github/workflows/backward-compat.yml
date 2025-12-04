@@ -1,6 +1,6 @@
 name: Backward Compatibility Check
 
-run-name: Check backward compatibility for run.yaml configs
+run-name: Check backward compatibility for config.yaml files
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ on:
     paths:
       - 'src/llama_stack/core/datatypes.py'
       - 'src/llama_stack/providers/datatypes.py'
-      - 'src/llama_stack/distributions/**/run.yaml'
+      - 'src/llama_stack/distributions/**/config.yaml'
       - 'tests/backward_compat/**'
       - '.github/workflows/backward-compat.yml'
 
@@ -45,15 +45,15 @@ jobs:
         run: |
           uv sync --group dev
 
-      - name: Extract run.yaml files from main branch
+      - name: Extract config.yaml files from main branch
         id: extract_configs
         run: |
-          # Get list of run.yaml paths from main
+          # Get list of config.yaml paths from main
           git fetch origin main
-          CONFIG_PATHS=$(git ls-tree -r --name-only origin/main | grep "src/llama_stack/distributions/.*/run.yaml$" || true)
+          CONFIG_PATHS=$(git ls-tree -r --name-only origin/main | grep "src/llama_stack/distributions/.*/config.yaml$" || true)
 
           if [ -z "$CONFIG_PATHS" ]; then
-            echo "No run.yaml files found in main branch"
+            echo "No config.yaml files found in main branch"
             exit 1
           fi
 
@@ -125,7 +125,7 @@ jobs:
               echo ""
               echo "⚠️  WARNING: Breaking changes detected but acknowledged"
               echo ""
-              echo "This PR introduces backward-incompatible changes to run.yaml."
+              echo "This PR introduces backward-incompatible changes to config.yaml."
               echo "The changes have been properly acknowledged."
               echo ""
               exit 0  # Pass the check
@@ -133,7 +133,7 @@ jobs:
               echo ""
               echo "❌ ERROR: Breaking changes detected without acknowledgment"
               echo ""
-              echo "This PR introduces backward-incompatible changes to run.yaml"
+              echo "This PR introduces backward-incompatible changes to config.yaml"
               echo "that will break existing user configurations."
               echo ""
               echo "To acknowledge this breaking change, do ONE of:"
@@ -155,11 +155,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extract ci-tests run.yaml from main
+      - name: Extract ci-tests config.yaml from main
         run: |
           git fetch origin main
-          git show origin/main:src/llama_stack/distributions/ci-tests/run.yaml > /tmp/main-ci-tests-run.yaml
-          echo "Extracted ci-tests run.yaml from main branch"
+          git show origin/main:src/llama_stack/distributions/ci-tests/config.yaml > /tmp/main-ci-tests-config.yaml
+          echo "Extracted ci-tests config.yaml from main branch"
 
       - name: Setup test environment
         uses: ./.github/actions/setup-test-environment
@@ -175,7 +175,7 @@ jobs:
         continue-on-error: true
         uses: ./.github/actions/run-and-record-tests
         with:
-          stack-config: /tmp/main-ci-tests-run.yaml
+          stack-config: /tmp/main-ci-tests-config.yaml
           setup: 'ollama'
           inference-mode: 'replay'
           suite: 'base'
@@ -258,21 +258,21 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Extract ci-tests run.yaml from release
+      - name: Extract ci-tests config.yaml from release
         if: steps.get_release.outputs.has_release == 'true'
         id: extract_config
         run: |
           RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
 
           # Try with src/ prefix first (newer releases), then without (older releases)
-          if git show "$RELEASE_TAG:src/llama_stack/distributions/ci-tests/run.yaml" > /tmp/release-ci-tests-run.yaml 2>/dev/null; then
-            echo "Extracted ci-tests run.yaml from release $RELEASE_TAG (src/ path)"
+          if git show "$RELEASE_TAG:src/llama_stack/distributions/ci-tests/config.yaml" > /tmp/release-ci-tests-config.yaml 2>/dev/null; then
+            echo "Extracted ci-tests config.yaml from release $RELEASE_TAG (src/ path)"
             echo "has_config=true" >> $GITHUB_OUTPUT
-          elif git show "$RELEASE_TAG:llama_stack/distributions/ci-tests/run.yaml" > /tmp/release-ci-tests-run.yaml 2>/dev/null; then
-            echo "Extracted ci-tests run.yaml from release $RELEASE_TAG (old path)"
+          elif git show "$RELEASE_TAG:llama_stack/distributions/ci-tests/config.yaml" > /tmp/release-ci-tests-config.yaml 2>/dev/null; then
+            echo "Extracted ci-tests config.yaml from release $RELEASE_TAG (old path)"
             echo "has_config=true" >> $GITHUB_OUTPUT
           else
-            echo "::warning::ci-tests/run.yaml not found in release $RELEASE_TAG"
+            echo "::warning::ci-tests/config.yaml not found in release $RELEASE_TAG"
             echo "has_config=false" >> $GITHUB_OUTPUT
           fi
 
@@ -292,7 +292,7 @@ jobs:
         continue-on-error: true
         uses: ./.github/actions/run-and-record-tests
         with:
-          stack-config: /tmp/release-ci-tests-run.yaml
+          stack-config: /tmp/release-ci-tests-config.yaml
           setup: 'ollama'
           inference-mode: 'replay'
           suite: 'base'
@@ -318,7 +318,7 @@ jobs:
         continue-on-error: true
         uses: ./.github/actions/run-and-record-tests
         with:
-          stack-config: /tmp/release-ci-tests-run.yaml
+          stack-config: /tmp/release-ci-tests-config.yaml
           setup: 'ollama'
           inference-mode: 'replay'
           suite: 'base'
@@ -447,11 +447,11 @@ jobs:
         run: |
           RELEASE_TAG="${{ steps.get_release.outputs.tag }}"
 
-          # Get run.yaml files from the release (try both src/ and old path)
-          CONFIG_PATHS=$(git ls-tree -r --name-only "$RELEASE_TAG" | grep "llama_stack/distributions/.*/run.yaml$" || true)
+          # Get config.yaml files from the release (try both src/ and old path)
+          CONFIG_PATHS=$(git ls-tree -r --name-only "$RELEASE_TAG" | grep "llama_stack/distributions/.*/config.yaml$" || true)
 
           if [ -z "$CONFIG_PATHS" ]; then
-            echo "::warning::No run.yaml files found in release $RELEASE_TAG"
+            echo "::warning::No config.yaml files found in release $RELEASE_TAG"
             echo "has_configs=false" >> $GITHUB_OUTPUT
             exit 0
           fi
@@ -523,7 +523,7 @@ jobs:
           ⚠️  This PR introduces a schema breaking change that affects compatibility with the latest release.
 
           - Users on release \`$RELEASE_TAG\` will not be able to upgrade
-          - Existing run.yaml configurations will fail validation
+          - Existing config.yaml configurations will fail validation
 
           The tests pass on \`main\` but fail with this PR's changes.
 
@@ -543,7 +543,7 @@ jobs:
           - Tests **PASS** on main branch ✅
           - Tests **FAIL** on PR branch ❌
           - Users on release \`$RELEASE_TAG\` will not be able to upgrade
-          - Existing run.yaml configurations will fail validation
+          - Existing config.yaml configurations will fail validation
 
           > **Note:** This is informational only and does not block merge.
           > Consider whether this breaking change is acceptable for users.
@@ -570,7 +570,7 @@ jobs:
             cat >> $GITHUB_STEP_SUMMARY <<EOF
           ## ✅ Release Schema Compatibility Passed
 
-          All run.yaml configs from release \`$RELEASE_TAG\` are compatible.
+          All config.yaml configs from release \`$RELEASE_TAG\` are compatible.
           This PR maintains backward compatibility with the latest release.
           EOF
           fi

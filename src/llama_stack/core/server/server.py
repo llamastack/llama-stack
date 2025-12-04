@@ -34,7 +34,7 @@ from pydantic import BaseModel, ValidationError
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
     AuthenticationRequiredError,
-    StackRunConfig,
+    StackConfig,
     process_cors_config,
 )
 from llama_stack.core.distribution import builtin_automatically_routed_apis
@@ -52,7 +52,7 @@ from llama_stack.core.stack import (
     replace_env_vars,
 )
 from llama_stack.core.utils.config import redact_sensitive_fields
-from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
@@ -147,7 +147,7 @@ class StackApp(FastAPI):
     start background tasks (e.g. refresh model registry periodically) from the lifespan context manager.
     """
 
-    def __init__(self, config: StackRunConfig, *args, **kwargs):
+    def __init__(self, config: StackConfig, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.stack: Stack = Stack(config)
 
@@ -369,7 +369,7 @@ def create_app() -> StackApp:
     if config_file is None:
         raise ValueError("LLAMA_STACK_CONFIG environment variable is required")
 
-    config_file = resolve_config_or_distro(config_file, Mode.RUN)
+    config_file = resolve_config_or_distro(config_file)
 
     # Load and process configuration
     logger_config = None
@@ -380,7 +380,7 @@ def create_app() -> StackApp:
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
-        config = StackRunConfig(**cast_image_name_to_string(config))
+        config = StackConfig(**cast_image_name_to_string(config))
 
     _log_run_config(run_config=config)
 
@@ -510,7 +510,7 @@ def create_app() -> StackApp:
     return app
 
 
-def _log_run_config(run_config: StackRunConfig):
+def _log_run_config(run_config: StackConfig):
     """Logs the run config with redacted fields and disabled providers removed."""
     logger.info("Run configuration:")
     safe_config = redact_sensitive_fields(run_config.model_dump(mode="json"))

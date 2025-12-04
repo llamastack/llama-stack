@@ -102,4 +102,4 @@ jobs:
           USE_COPY_NOT_MOUNT: "true"
           LLAMA_STACK_DIR: "."
         run: |
-          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/build.yaml
+          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/config.yaml

@@ -25,7 +25,7 @@ Here are the most important options:
   - **`server:<config>`** - automatically start a server with the given config (e.g., `server:starter`). This provides one-step testing by auto-starting the server if the port is available, or reusing an existing server if already running.
   - **`server:<config>:<port>`** - same as above but with a custom port (e.g., `server:starter:8322`)
   - a URL which points to a Llama Stack distribution server
-  - a distribution name (e.g., `starter`) or a path to a `run.yaml` file
+  - a distribution name (e.g., `starter`) or a path to a `config.yaml` file
   - a comma-separated list of api=provider pairs, e.g. `inference=ollama,safety=llama-guard,agents=meta-reference`. This is most useful for testing a single API surface.
 - `--env`: set environment variables, e.g. --env KEY=value. this is a utility option to set environment variables required by various providers.
 

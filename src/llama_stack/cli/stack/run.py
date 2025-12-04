@@ -17,7 +17,7 @@ from termcolor import cprint
 
 from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
-from llama_stack.core.datatypes import Api, Provider, StackRunConfig
+from llama_stack.core.datatypes import Api, Provider, StackConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
 from llama_stack.core.storage.datatypes import (
@@ -30,7 +30,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import LoggingConfig, get_logger
 
@@ -108,9 +108,9 @@ class StackRun(Subcommand):
 
         if args.config:
             try:
-                from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+                from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 
-                config_file = resolve_config_or_distro(args.config, Mode.RUN)
+                config_file = resolve_config_or_distro(args.config)
             except ValueError as e:
                 self.parser.error(str(e))
         elif args.providers:
@@ -156,7 +156,7 @@ class StackRun(Subcommand):
 
             # Write config to disk in providers-run directory
             distro_dir = DISTRIBS_BASE_DIR / "providers-run"
-            config_file = distro_dir / "run.yaml"
+            config_file = distro_dir / "config.yaml"
 
             logger.info(f"Writing generated config to: {config_file}")
             with open(config_file, "w") as f:
@@ -187,14 +187,14 @@ class StackRun(Subcommand):
         if not config_file:
             self.parser.error("Config file is required")
 
-        config_file = resolve_config_or_distro(str(config_file), Mode.RUN)
+        config_file = resolve_config_or_distro(str(config_file))
         with open(config_file) as fp:
             config_contents = yaml.safe_load(fp)
             if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
                 logger_config = LoggingConfig(**cfg)
             else:
                 logger_config = None
-            config = StackRunConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
+            config = StackConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
 
         port = args.port or config.server.port
         host = config.server.host or ["::", "0.0.0.0"]
@@ -318,7 +318,7 @@ class StackRun(Subcommand):
             ),
         )
 
-        return StackRunConfig(
+        return StackConfig(
             image_name="providers-run",
             apis=apis,
             providers=providers,

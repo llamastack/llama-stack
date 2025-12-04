@@ -474,7 +474,7 @@ class ServerConfig(BaseModel):
     )
 
 
-class StackRunConfig(BaseModel):
+class StackConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
     image_name: str = Field(
@@ -501,6 +501,7 @@ can be instantiated multiple times (with different configs) if necessary.
 """,
     )
     storage: StorageConfig = Field(
+        default_factory=StorageConfig,
         description="Catalog of named storage backends and references available to the stack",
     )
 
@@ -546,7 +547,7 @@ can be instantiated multiple times (with different configs) if necessary.
         return v
 
     @model_validator(mode="after")
-    def validate_server_stores(self) -> "StackRunConfig":
+    def validate_server_stores(self) -> "StackConfig":
         backend_map = self.storage.backends
         stores = self.storage.stores
         kv_backends = {
@@ -588,39 +589,3 @@ can be instantiated multiple times (with different configs) if necessary.
         _ensure_backend(stores.responses, sql_backends, "storage.stores.responses")
         _ensure_backend(stores.prompts, kv_backends, "storage.stores.prompts")
         return self
-
-
-class BuildConfig(BaseModel):
-    version: int = LLAMA_STACK_BUILD_CONFIG_VERSION
-
-    distribution_spec: DistributionSpec = Field(description="The distribution spec to build including API providers. ")
-    image_type: str = Field(
-        default="venv",
-        description="Type of package to build (container | venv)",
-    )
-    image_name: str | None = Field(
-        default=None,
-        description="Name of the distribution to build",
-    )
-    external_providers_dir: Path | None = Field(
-        default=None,
-        description="Path to directory containing external provider implementations. The providers packages will be resolved from this directory. "
-        "pip_packages MUST contain the provider package name.",
-    )
-    additional_pip_packages: list[str] = Field(
-        default_factory=list,
-        description="Additional pip packages to install in the distribution. These packages will be installed in the distribution environment.",
-    )
-    external_apis_dir: Path | None = Field(
-        default=None,
-        description="Path to directory containing external API implementations. The APIs code and dependencies must be installed on the system.",
-    )
-
-    @field_validator("external_providers_dir")
-    @classmethod
-    def validate_external_providers_dir(cls, v):
-        if v is None:
-            return None
-        if isinstance(v, str):
-            return Path(v)
-        return v

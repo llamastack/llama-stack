@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from enum import StrEnum
 from pathlib import Path
 
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
@@ -16,21 +15,14 @@ logger = get_logger(name=__name__, category="core")
 DISTRO_DIR = Path(__file__).parent.parent.parent.parent / "llama_stack" / "distributions"
 
 
-class Mode(StrEnum):
-    RUN = "run"
-    BUILD = "build"
-
-
 def resolve_config_or_distro(
     config_or_distro: str,
-    mode: Mode = Mode.RUN,
 ) -> Path:
     """
     Resolve a config/distro argument to a concrete config file path.
 
     Args:
         config_or_distro: User input (file path, distribution name, or built distribution)
-        mode: Mode resolving for ("run", "build", "server")
 
     Returns:
         Path to the resolved config file
@@ -47,7 +39,7 @@ def resolve_config_or_distro(
 
     # Strategy 2: Try as distribution name (if no .yaml extension)
     if not config_or_distro.endswith(".yaml"):
-        distro_config = _get_distro_config_path(config_or_distro, mode)
+        distro_config = _get_distro_config_path(config_or_distro)
         if distro_config.exists():
             logger.debug(f"Using distribution: {distro_config}")
             return distro_config
@@ -63,34 +55,34 @@ def resolve_config_or_distro(
             return distro_config
 
     # Strategy 4: Try as built distribution name
-    distrib_config = DISTRIBS_BASE_DIR / f"llamastack-{config_or_distro}" / f"{config_or_distro}-{mode}.yaml"
+    distrib_config = DISTRIBS_BASE_DIR / f"llamastack-{config_or_distro}" / f"{config_or_distro}-config.yaml"
     if distrib_config.exists():
         logger.debug(f"Using built distribution: {distrib_config}")
         return distrib_config
 
-    distrib_config = DISTRIBS_BASE_DIR / f"{config_or_distro}" / f"{config_or_distro}-{mode}.yaml"
+    distrib_config = DISTRIBS_BASE_DIR / f"{config_or_distro}" / "config.yaml"
     if distrib_config.exists():
         logger.debug(f"Using built distribution: {distrib_config}")
         return distrib_config
 
     # Strategy 5: Failed - provide helpful error
-    raise ValueError(_format_resolution_error(config_or_distro, mode))
+    raise ValueError(_format_resolution_error(config_or_distro))
 
 
-def _get_distro_config_path(distro_name: str, mode: str) -> Path:
+def _get_distro_config_path(distro_name: str, path: str | None = None) -> Path:
     """Get the config file path for a distro."""
-    if not mode.endswith(".yaml"):
-        mode = f"{mode}.yaml"
-    return DISTRO_DIR / distro_name / mode
+    if not path or not path.endswith(".yaml"):
+        path = "config.yaml"
+    return DISTRO_DIR / distro_name / path
 
 
-def _format_resolution_error(config_or_distro: str, mode: Mode) -> str:
+def _format_resolution_error(config_or_distro: str) -> str:
     """Format a helpful error message for resolution failures."""
     from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 
-    distro_path = _get_distro_config_path(config_or_distro, mode)
-    distrib_path = DISTRIBS_BASE_DIR / f"llamastack-{config_or_distro}" / f"{config_or_distro}-{mode}.yaml"
-    distrib_path2 = DISTRIBS_BASE_DIR / f"{config_or_distro}" / f"{config_or_distro}-{mode}.yaml"
+    distro_path = _get_distro_config_path(config_or_distro)
+    distrib_path = DISTRIBS_BASE_DIR / f"llamastack-{config_or_distro}" / f"{config_or_distro}-config.yaml"
+    distrib_path2 = DISTRIBS_BASE_DIR / f"{config_or_distro}" / f"{config_or_distro}-config.yaml"
 
     available_distros = _get_available_distros()
     distros_str = ", ".join(available_distros) if available_distros else "none found"

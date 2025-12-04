@@ -27,7 +27,7 @@ async def temp_prompt_store(tmp_path_factory):
     temp_dir = tmp_path_factory.getbasetemp()
     db_path = str(temp_dir / f"{unique_id}.db")
 
-    from llama_stack.core.datatypes import StackRunConfig
+    from llama_stack.core.datatypes import StackConfig
 
     storage = StorageConfig(
         backends={
@@ -41,13 +41,13 @@ async def temp_prompt_store(tmp_path_factory):
             prompts=KVStoreReference(backend="kv_test", namespace="prompts"),
         ),
     )
-    mock_run_config = StackRunConfig(
+    mock_run_config = StackConfig(
         image_name="test-distribution",
         apis=[],
         providers={},
         storage=storage,
     )
-    config = PromptServiceConfig(run_config=mock_run_config)
+    config = PromptServiceConfig(config=mock_run_config)
     store = PromptServiceImpl(config, deps={})
 
     register_kvstore_backends({"kv_test": storage.backends["kv_test"]})

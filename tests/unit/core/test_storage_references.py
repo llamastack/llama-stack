@@ -11,7 +11,7 @@ from pydantic import ValidationError
 
 from llama_stack.core.datatypes import (
     LLAMA_STACK_RUN_CONFIG_VERSION,
-    StackRunConfig,
+    StackConfig,
 )
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
@@ -51,7 +51,7 @@ def _base_run_config(**overrides):
             ),
         ),
     )
-    return StackRunConfig(
+    return StackConfig(
         version=LLAMA_STACK_RUN_CONFIG_VERSION,
         image_name="test-distro",
         apis=[],
