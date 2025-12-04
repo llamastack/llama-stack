@@ -367,7 +367,11 @@ class OpenAIVectorStoreMixin(ABC):
         extra_body = params.model_extra or {}
         metadata = params.metadata or {}
 
-        provider_vector_store_id = extra_body.get("provider_vector_store_id")
+        # Get the canonical UUID from router (or generate if called directly without router)
+        vector_store_id = extra_body.get("vector_store_id") or generate_object_id("vector_store", lambda: f"vs_{uuid.uuid4()}")
+
+        # Get the physical storage name (custom collection name or fallback to UUID)
+        provider_vector_store_id = extra_body.get("provider_vector_store_id") or vector_store_id
 
         # Use embedding info from metadata if available, otherwise from extra_body
         if metadata.get("embedding_model"):
@@ -388,8 +392,6 @@ class OpenAIVectorStoreMixin(ABC):
 
         # use provider_id set by router; fallback to provider's own ID when used directly via --stack-config
         provider_id = extra_body.get("provider_id") or getattr(self, "__provider_id__", None)
-        # Derive the canonical vector_store_id (allow override, else generate)
-        vector_store_id = provider_vector_store_id or generate_object_id("vector_store", lambda: f"vs_{uuid.uuid4()}")
 
         if embedding_model is None:
             raise ValueError("embedding_model is required")
@@ -403,11 +405,11 @@ class OpenAIVectorStoreMixin(ABC):
 
         # call to the provider to create any index, etc.
         vector_store = VectorStore(
-            identifier=vector_store_id,
+            identifier=vector_store_id,  # Canonical UUID for routing
             embedding_dimension=embedding_dimension,
             embedding_model=embedding_model,
             provider_id=provider_id,
-            provider_resource_id=vector_store_id,
+            provider_resource_id=provider_vector_store_id,  # Physical storage name (custom or UUID)
             vector_store_name=params.name,
         )
         await self.register_vector_store(vector_store)
