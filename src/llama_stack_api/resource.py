@@ -35,3 +35,12 @@ class Resource(BaseModel):
     provider_id: str = Field(description="ID of the provider that owns this resource")
 
     type: ResourceType = Field(description="Type of resource (e.g. 'model', 'shield', 'vector_store', etc.)")
+
+
+class ListResourcesResponse[ResourceT: Resource](BaseModel):
+    """Base response type for listing resources.
+
+    :param data: List of resources
+    """
+
+    data: list[ResourceT]

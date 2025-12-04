@@ -17,7 +17,7 @@ from typing import (
 from pydantic import BaseModel, Field
 
 from llama_stack_api.common.type_system import ParamType
-from llama_stack_api.resource import Resource, ResourceType
+from llama_stack_api.resource import ListResourcesResponse, Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
@@ -156,8 +156,8 @@ class ScoringFnInput(CommonScoringFnFields, BaseModel):
 
 
 @json_schema_type
-class ListScoringFunctionsResponse(BaseModel):
-    data: list[ScoringFn]
+class ListScoringFunctionsResponse(ListResourcesResponse[ScoringFn]):
+    pass
 
 
 @runtime_checkable

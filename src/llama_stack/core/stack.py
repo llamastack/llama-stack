@@ -6,11 +6,11 @@
 
 import asyncio
 import importlib.resources
-import inspect
 import os
 import re
 import tempfile
-from typing import Any, get_type_hints
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 import yaml
 from pydantic import BaseModel
@@ -90,130 +90,65 @@ class LlamaStack(
     pass
 
 
-RESOURCES = [
-    ("models", Api.models, "register_model", "list_models"),
-    ("shields", Api.shields, "register_shield", "list_shields"),
-    ("datasets", Api.datasets, "register_dataset", "list_datasets"),
-    (
-        "scoring_fns",
-        Api.scoring_functions,
-        "register_scoring_function",
-        "list_scoring_functions",
-    ),
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
-]
-
-
 REGISTRY_REFRESH_INTERVAL_SECONDS = 300
 REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
 
-def is_request_model(t: Any) -> bool:
-    """Check if a type is a request model (Pydantic BaseModel).
-
-    Args:
-        t: The type to check
-
-    Returns:
-        True if the type is a Pydantic BaseModel subclass, False otherwise
-    """
-
-    return inspect.isclass(t) and issubclass(t, BaseModel)
+from llama_stack_api.resource import ListResourcesResponse, Resource
 
 
-async def invoke_with_optional_request(method: Any) -> Any:
-    """Invoke a method, automatically creating a request instance if needed.
+async def _register_resource[InputT: BaseModel, ResourceT: Resource](
+    name: str,
+    inputs: list[InputT],
+    register_fn: Callable[..., Awaitable[ResourceT | None]],
+    list_fn: Callable[[], Awaitable[ListResourcesResponse[ResourceT]]],
+):
+    for input in inputs:
+        if hasattr(input, "provider_id"):
+            if not input.provider_id or input.provider_id == "__disabled__":
+                logger.debug(f"Skipping {name} registration for disabled provider.")
+                continue
+            logger.debug(f"registering {name} {input} for provider {input.provider_id}")
 
-    For APIs that use request models, this will create an empty request object.
-    For backward compatibility, falls back to calling without arguments.
+        # we want to maintain the type information in arguments to register.
+        # instead of register(**obj.model_dump()), which may convert a typed attr to a dict,
+        # we use model_dump() to find all the attrs and then getattr to get the still typed value.
+        await register_fn(**{k: getattr(input, k) for k in input.model_dump().keys()})
 
-    Uses get_type_hints() to resolve forward references (e.g., "ListBenchmarksRequest" -> actual class).
-
-    Handles methods with:
-    - No parameters: calls without arguments
-    - One or more request model parameters: creates empty instances for each
-    - Mixed parameters: creates request models, uses defaults for others
-    - Required non-request-model parameters without defaults: falls back to calling without arguments
-
-    Args:
-        method: The method to invoke
-
-    Returns:
-        The result of calling the method
-    """
-    try:
-        hints = get_type_hints(method)
-    except Exception:
-        # Forward references can't be resolved, fall back to calling without request
-        return await method()
-
-    params = list(inspect.signature(method).parameters.values())
-    params = [p for p in params if p.name != "self"]
-
-    if not params:
-        return await method()
-
-    # Build arguments for the method call
-    args: dict[str, Any] = {}
-    can_call = True
-
-    for param in params:
-        param_type = hints.get(param.name)
-
-        # If it's a request model, try to create an empty instance
-        if param_type and is_request_model(param_type):
-            try:
-                args[param.name] = param_type()
-            except Exception:
-                # Request model requires arguments, can't create empty instance
-                can_call = False
-                break
-        # If it has a default value, we can skip it (will use default)
-        elif param.default != inspect.Parameter.empty:
-            continue
-        # Required parameter that's not a request model - can't provide it
-        else:
-            can_call = False
-            break
-
-    if can_call and args:
-        return await method(**args)
-
-    # Fall back to calling without arguments for backward compatibility
-    return await method()
+    response = await list_fn()
+    for obj in response.data:
+        logger.debug(f"{name}: {obj.identifier} served by {obj.provider_id}")
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
-    for rsrc, api, register_method, list_method in RESOURCES:
-        objects = getattr(run_config.registered_resources, rsrc)
-        if api not in impls:
-            continue
+    resources = run_config.registered_resources
 
-        method = getattr(impls[api], register_method)
-        for obj in objects:
-            if hasattr(obj, "provider_id"):
-                # Do not register models on disabled providers
-                if not obj.provider_id or obj.provider_id == "__disabled__":
-                    logger.debug(f"Skipping {rsrc.capitalize()} registration for disabled provider.")
-                    continue
-                logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
+    if Api.models in impls:
+        impl = impls[Api.models]
+        await _register_resource("models", resources.models, impl.register_model, impl.list_models)
 
-            # we want to maintain the type information in arguments to method.
-            # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
-            # we use model_dump() to find all the attrs and then getattr to get the still typed value.
-            await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+    if Api.shields in impls:
+        impl = impls[Api.shields]
+        await _register_resource("shields", resources.shields, impl.register_shield, impl.list_shields)
 
-        method = getattr(impls[api], list_method)
-        response = await invoke_with_optional_request(method)
+    if Api.datasets in impls:
+        impl = impls[Api.datasets]
+        await _register_resource("datasets", resources.datasets, impl.register_dataset, impl.list_datasets)
 
-        objects_to_process = response.data if hasattr(response, "data") else response
+    if Api.scoring_functions in impls:
+        impl = impls[Api.scoring_functions]
+        await _register_resource(
+            "scoring_fns", resources.scoring_fns, impl.register_scoring_function, impl.list_scoring_functions
+        )
 
-        for obj in objects_to_process:
-            logger.debug(
-                f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
-            )
+    if Api.benchmarks in impls:
+        impl = impls[Api.benchmarks]
+        await _register_resource("benchmarks", resources.benchmarks, impl.register_benchmark, impl.list_benchmarks)
+
+    if Api.tool_groups in impls:
+        impl = impls[Api.tool_groups]
+        await _register_resource("tool_groups", resources.tool_groups, impl.register_tool_group, impl.list_tool_groups)
 
 
 async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
