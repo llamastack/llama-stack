@@ -7,7 +7,7 @@ required-version = ">=0.7.0"
 
 [project]
 name = "llama_stack"
-version = "0.4.0.dev0"
+version = "0.4.0rc1"
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"
@@ -54,7 +54,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.3.0", # Optional for library-only usage
+    "llama-stack-client>=0.4.0rc1",
 ]
 
 [dependency-groups]
@@ -103,7 +103,7 @@ type_checking = [
     "lm-format-enforcer",
     "mcp",
     "ollama",
-    "llama-stack-client>=0.3.0",
+    "llama-stack-client>=0.4.0rc1",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
