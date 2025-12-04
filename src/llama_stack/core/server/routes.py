@@ -26,6 +26,18 @@ RouteMatch = tuple[EndpointFunc, PathParams, str, WebMethod]
 def get_all_api_routes(
     external_apis: dict[Api, ExternalApiSpec] | None = None,
 ) -> dict[Api, list[tuple[Route, WebMethod]]]:
+    """Get all API routes from webmethod-based protocols.
+
+    This function only returns routes from APIs that use the legacy @webmethod
+    decorator system. For APIs that have been migrated to FastAPI routers,
+    use the router registry (fastapi_router_registry.has_router() and fastapi_router_registry.build_fastapi_router()).
+
+    Args:
+        external_apis: Optional dictionary of external API specifications
+
+    Returns:
+        Dictionary mapping API to list of (Route, WebMethod) tuples
+    """
     apis = {}
 
     protocols = api_protocol_map(external_apis)

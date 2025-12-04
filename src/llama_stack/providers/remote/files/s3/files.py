@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from __future__ import annotations
-
 import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Annotated, Any, cast
@@ -17,6 +15,7 @@ from fastapi import Depends, File, Form, Response, UploadFile
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
 
+from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
@@ -39,7 +38,7 @@ from .config import S3FilesImplConfig
 # TODO: provider data for S3 credentials
 
 
-def _create_s3_client(config: S3FilesImplConfig) -> S3Client:
+def _create_s3_client(config: S3FilesImplConfig) -> "S3Client":
     try:
         s3_config = {
             "region_name": config.region,
@@ -66,7 +65,7 @@ def _create_s3_client(config: S3FilesImplConfig) -> S3Client:
         raise RuntimeError(f"Failed to initialize S3 client: {e}") from e
 
 
-async def _create_bucket_if_not_exists(client: S3Client, config: S3FilesImplConfig) -> None:
+async def _create_bucket_if_not_exists(client: "S3Client", config: S3FilesImplConfig) -> None:
     try:
         client.head_bucket(Bucket=config.bucket_name)
     except ClientError as e:
@@ -143,11 +142,13 @@ class S3FilesImpl(Files):
         """Return current UTC timestamp as int seconds."""
         return int(datetime.now(UTC).timestamp())
 
-    async def _get_file(self, file_id: str, return_expired: bool = False) -> dict[str, Any]:
+    async def _get_file(
+        self, file_id: str, return_expired: bool = False, action: Action = Action.READ
+    ) -> dict[str, Any]:
         where: dict[str, str | dict] = {"id": file_id}
         if not return_expired:
             where["expires_at"] = {">": self._now()}
-        if not (row := await self.sql_store.fetch_one("openai_files", where=where)):
+        if not (row := await self.sql_store.fetch_one("openai_files", where=where, action=action)):
             raise ResourceNotFoundError(file_id, "File", "files.list()")
         return row
 
@@ -192,7 +193,7 @@ class S3FilesImpl(Files):
         pass
 
     @property
-    def client(self) -> S3Client:
+    def client(self) -> "S3Client":
         assert self._client is not None, "Provider not initialized"
         return self._client
 
@@ -292,7 +293,7 @@ class S3FilesImpl(Files):
 
     async def openai_delete_file(self, file_id: str) -> OpenAIFileDeleteResponse:
         await self._delete_if_expired(file_id)
-        _ = await self._get_file(file_id)  # raises if not found
+        _ = await self._get_file(file_id, action=Action.DELETE)  # raises if not found
         await self._delete_file(file_id)
         return OpenAIFileDeleteResponse(id=file_id, deleted=True)
 
