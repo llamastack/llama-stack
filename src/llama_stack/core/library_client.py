@@ -10,6 +10,7 @@ import json
 import logging  # allow-direct-logging
 import os
 import sys
+import typing
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
@@ -504,6 +505,25 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                 unwrapped_body_param = param
                 break
 
+        # Check for parameters with Depends() annotation (FastAPI router endpoints)
+        # These need special handling: construct the request model from body
+        depends_param = None
+        for param in params_list:
+            param_type = param.annotation
+            if get_origin(param_type) is typing.Annotated:
+                args = get_args(param_type)
+                if len(args) > 1:
+                    # Check if any metadata is Depends
+                    metadata = args[1:]
+                    for item in metadata:
+                        # Check if it's a Depends object (has dependency attribute or is a callable)
+                        # Depends objects typically have a 'dependency' attribute or are callable functions
+                        if hasattr(item, "dependency") or callable(item) or "Depends" in str(type(item)):
+                            depends_param = param
+                            break
+                if depends_param:
+                    break
+
         # Convert parameters to Pydantic models where needed
         converted_body = {}
         for param_name, param in sig.parameters.items():
@@ -513,6 +533,14 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     converted_body[param_name] = value
                 else:
                     converted_body[param_name] = convert_to_pydantic(param.annotation, value)
+
+        # Handle Depends parameter: construct request model from body
+        if depends_param and depends_param.name not in converted_body:
+            param_type = depends_param.annotation
+            if get_origin(param_type) is typing.Annotated:
+                base_type = get_args(param_type)[0]
+                # Construct the request model from all body parameters
+                converted_body[depends_param.name] = base_type(**body)
 
         # handle unwrapped body parameter after processing all named parameters
         if unwrapped_body_param:
