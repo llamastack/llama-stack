@@ -35,5 +35,5 @@ def test_bedrock_config_sample():
     sample = BedrockConfig.sample_run_config()
     assert "api_key" in sample
     assert "region_name" in sample
-    assert sample["api_key"] == "${env.AWS_BEARER_TOKEN_BEDROCK:=}"
-    assert sample["region_name"] == "${env.AWS_DEFAULT_REGION:=us-east-2}"
+    assert sample["api_key"] == "${env.AWS_BEARER_TOKEN_BEDROCK:=replay-mode-dummy-key}"
+    assert sample["region_name"] == "${env.AWS_DEFAULT_REGION:=us-west-2}"
