@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from datetime import datetime
 from enum import StrEnum
 from typing import Any, Literal, Protocol
 
@@ -44,15 +43,12 @@ class Connector(Resource):
     connector_type: ConnectorType = Field(default=ConnectorType.MCP)
     connector_id: str = Field(..., description="Identifier for the connector")
     url: str = Field(..., description="URL of the connector")
-    created_at: datetime = Field(..., description="Timestamp of creation")
-    updated_at: datetime = Field(..., description="Timestamp of last update")
     server_name: str | None = Field(default=None, description="Name of the server")
     server_label: str | None = Field(default=None, description="Label of the server")
     server_description: str | None = Field(default=None, description="Description of the server")
-
-    def _generate_connector_id(self) -> str:
-        name = self.server_name if self.server_name is not None else self.identifier
-        return f"{self.connector_type.value}::{name}"
+    # Credentials configured at boot time - excluded from API responses
+    authorization: str | None = Field(default=None, exclude=True, description="Default OAuth access token")
+    headers: dict[str, Any] | None = Field(default=None, exclude=True, description="Default HTTP headers")
 
 
 @json_schema_type
@@ -67,6 +63,7 @@ class ConnectorInput(BaseModel):
     :param server_label: (Optional) Label of the server
     """
 
+    type: Literal[ResourceType.connector] = ResourceType.connector
     connector_type: ConnectorType = Field(default=ConnectorType.MCP)
     connector_id: str | None = Field(default=None, description="Unique identifier for the connector")
     url: str = Field(..., description="URL of the connector")

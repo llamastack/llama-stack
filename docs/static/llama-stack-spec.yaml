@@ -10145,16 +10145,6 @@ components:
           type: string
           title: Url
           description: URL of the connector
-        created_at:
-          type: string
-          format: date-time
-          title: Created At
-          description: Timestamp of creation
-        updated_at:
-          type: string
-          format: date-time
-          title: Updated At
-          description: Timestamp of last update
         server_name:
           anyOf:
           - type: string
@@ -10176,8 +10166,6 @@ components:
       - provider_id
       - connector_id
       - url
-      - created_at
-      - updated_at
       title: Connector
       description: A connector resource representing a connector registered in Llama Stack.
     ConnectorType:
@@ -11260,6 +11248,11 @@ components:
     ConnectorInput:
       description: Input for creating a connector.
       properties:
+        type:
+          const: connector
+          default: connector
+          title: Type
+          type: string
         connector_type:
           $ref: '#/components/schemas/ConnectorType'
           default: mcp
