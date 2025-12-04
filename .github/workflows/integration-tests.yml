@@ -74,6 +74,7 @@ jobs:
         client: [library, docker, server]
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
+        node-version: [22]
         client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
         # Test configurations: Generated from CI_MATRIX in tests/integration/suites.py
         # See scripts/generate_ci_matrix.py for generation logic
@@ -97,7 +98,7 @@ jobs:
         if: ${{ matrix.client == 'server' }}
         uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
         with:
-          node-version: '20'
+          node-version: ${{matrix.node-version}}
           cache: 'npm'
           cache-dependency-path: tests/integration/client-typescript/package-lock.json
 
