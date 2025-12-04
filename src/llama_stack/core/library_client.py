@@ -539,8 +539,21 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             param_type = depends_param.annotation
             if get_origin(param_type) is typing.Annotated:
                 base_type = get_args(param_type)[0]
-                # Construct the request model from all body parameters
-                converted_body[depends_param.name] = base_type(**body)
+                # Handle Union types (e.g., SomeRequestModel | None) - extract the non-None type
+                # In Python 3.10+, Union types created with | syntax are still typing.Union
+                origin = get_origin(base_type)
+                if origin is Union:
+                    # Get the first non-None type from the Union
+                    union_args = get_args(base_type)
+                    base_type = next(
+                        (t for t in union_args if t is not type(None) and t is not None),
+                        union_args[0] if union_args else None,
+                    )
+
+                # Only try to instantiate if it's a class (not a Union or other non-callable type)
+                if base_type is not None and inspect.isclass(base_type) and callable(base_type):
+                    # Construct the request model from all body parameters
+                    converted_body[depends_param.name] = base_type(**body)
 
         # handle unwrapped body parameter after processing all named parameters
         if unwrapped_body_param:
