@@ -12,18 +12,18 @@ from .fixtures.test_cases import basic_test_cases, image_test_cases, multi_turn_
 from .streaming_assertions import StreamingValidator
 
 
-def provider_from_model(responses_client, text_model_id):
-    models = {m.id: m for m in responses_client.models.list()}
+def provider_from_model(client_with_models, text_model_id):
+    models = {m.id: m for m in client_with_models.models.list()}
     models.update(
-        {m.custom_metadata["provider_resource_id"]: m for m in responses_client.models.list() if m.custom_metadata}
+        {m.custom_metadata["provider_resource_id"]: m for m in client_with_models.models.list() if m.custom_metadata}
     )
     provider_id = models[text_model_id].custom_metadata["provider_id"]
-    providers = {p.provider_id: p for p in responses_client.providers.list()}
+    providers = {p.provider_id: p for p in client_with_models.providers.list()}
     return providers[provider_id]
 
 
-def skip_if_chat_completions_logprobs_not_supported(responses_client, text_model_id):
-    provider_type = provider_from_model(responses_client, text_model_id).provider_type
+def skip_if_chat_completions_logprobs_not_supported(client_with_models, text_model_id):
+    provider_type = provider_from_model(client_with_models, text_model_id).provider_type
     if provider_type in ("remote::ollama",):
         pytest.skip(f"Model {text_model_id} hosted by {provider_type} doesn't support /v1/chat/completions logprobs.")
 
