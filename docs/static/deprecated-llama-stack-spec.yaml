@@ -794,7 +794,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Benchmarks
-      summary: List Benchmarks
+      summary: List all benchmarks.
       description: List all benchmarks.
       operationId: list_benchmarks_v1alpha_eval_benchmarks_get
     post:
@@ -812,10 +812,10 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
         '204':
-          description: Successful Response
+          description: The benchmark was successfully registered.
       tags:
       - Benchmarks
-      summary: Register Benchmark
+      summary: Register a benchmark.
       description: Register a benchmark.
       operationId: register_benchmark_v1alpha_eval_benchmarks_post
       requestBody:
@@ -835,20 +835,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Benchmark'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Benchmarks
-      summary: Get Benchmark
+      summary: Get a benchmark by its ID.
       description: Get a benchmark by its ID.
       operationId: get_benchmark_v1alpha_eval_benchmarks__benchmark_id__get
       parameters:
@@ -857,26 +857,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          description: The ID of the benchmark to get.
+          title: Benchmark Id
+        description: The ID of the benchmark to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The benchmark was successfully unregistered.
       tags:
       - Benchmarks
-      summary: Unregister Benchmark
+      summary: Unregister a benchmark.
       description: Unregister a benchmark.
       operationId: unregister_benchmark_v1alpha_eval_benchmarks__benchmark_id__delete
       parameters:
@@ -885,7 +887,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          description: The ID of the benchmark to unregister.
+          title: Benchmark Id
+        description: The ID of the benchmark to unregister.
       deprecated: true
 components:
   schemas:
@@ -7375,20 +7379,23 @@ components:
           type: string
           const: benchmark
           title: Type
+          description: The resource type, always benchmark.
           default: benchmark
         dataset_id:
           type: string
           title: Dataset Id
+          description: Identifier of the dataset to use for the benchmark evaluation.
         scoring_functions:
           items:
             type: string
           type: array
           title: Scoring Functions
+          description: List of scoring function identifiers to apply during evaluation.
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
-          description: Metadata for this evaluation task
+          description: Metadata for this evaluation task.
       type: object
       required:
       - identifier
@@ -7404,10 +7411,12 @@ components:
             $ref: '#/components/schemas/Benchmark'
           type: array
           title: Data
+          description: List of benchmark objects.
       type: object
       required:
       - data
       title: ListBenchmarksResponse
+      description: Response containing a list of benchmark objects.
     BenchmarkConfig:
       properties:
         eval_candidate:
@@ -8369,33 +8378,40 @@ components:
         benchmark_id:
           type: string
           title: Benchmark Id
+          description: The ID of the benchmark to register.
         dataset_id:
           type: string
           title: Dataset Id
+          description: The ID of the dataset to use for the benchmark.
         scoring_functions:
           items:
             type: string
           type: array
           title: Scoring Functions
+          description: The scoring functions to use for the benchmark.
         provider_benchmark_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the provider benchmark to use for the benchmark.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the provider to use for the benchmark.
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The metadata to use for the benchmark.
       type: object
       required:
       - benchmark_id
       - dataset_id
       - scoring_functions
       title: RegisterBenchmarkRequest
+      description: Request model for registering a benchmark.
     AllowedToolsFilter:
       properties:
         tool_names:
@@ -9600,6 +9616,33 @@ components:
       required:
       - batch_id
       title: CancelBatchRequest
+      type: object
+    ListBenchmarksRequest:
+      description: Request model for listing benchmarks.
+      properties: {}
+      title: ListBenchmarksRequest
+      type: object
+    GetBenchmarkRequest:
+      description: Request model for getting a benchmark.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark to get.
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: GetBenchmarkRequest
+      type: object
+    UnregisterBenchmarkRequest:
+      description: Request model for unregistering a benchmark.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark to unregister.
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: UnregisterBenchmarkRequest
       type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
