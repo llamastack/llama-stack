@@ -9,7 +9,7 @@ from typing import Annotated, Any, Literal, Protocol
 
 from pydantic import BaseModel, Field
 
-from llama_stack_api.resource import Resource, ResourceType
+from llama_stack_api.resource import ListResourcesResponse, Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1BETA
 
@@ -137,13 +137,10 @@ class DatasetInput(CommonDatasetFields, BaseModel):
 
 
 @json_schema_type
-class ListDatasetsResponse(BaseModel):
-    """Response from listing datasets.
+class ListDatasetsResponse(ListResourcesResponse[Dataset]):
+    """Response from listing datasets."""
 
-    :param data: List of datasets
-    """
-
-    data: list[Dataset]
+    pass
 
 
 class Datasets(Protocol):

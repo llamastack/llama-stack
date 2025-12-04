@@ -9,7 +9,7 @@ from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from llama_stack_api.resource import Resource, ResourceType
+from llama_stack_api.resource import ListResourcesResponse, Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
@@ -77,8 +77,8 @@ class ModelInput(CommonModelFields):
     model_config = ConfigDict(protected_namespaces=())
 
 
-class ListModelsResponse(BaseModel):
-    data: list[Model]
+class ListModelsResponse(ListResourcesResponse[Model]):
+    pass
 
 
 @json_schema_type
