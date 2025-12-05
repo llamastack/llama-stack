@@ -8665,16 +8665,16 @@ components:
           type: string
           title: Url
           description: URL of the connector
-        server_name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Name of the server
         server_label:
           anyOf:
           - type: string
           - type: 'null'
           description: Label of the server
+        server_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Name of the server
         server_description:
           anyOf:
           - type: string
@@ -9766,22 +9766,15 @@ components:
       title: ToolGroupInput
       type: object
     ConnectorInput:
-      description: Input for creating a connector.
+      description: Input for creating a connector
       properties:
-        type:
-          const: connector
-          default: connector
-          title: Type
-          type: string
         connector_type:
           $ref: '#/components/schemas/ConnectorType'
           default: mcp
         connector_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for the connector
-          nullable: true
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
         url:
           description: URL of the connector
           title: Url
@@ -9792,20 +9785,13 @@ components:
           - type: 'null'
           description: Label of the server
           nullable: true
-        headers:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          description: HTTP headers to include when connecting
-          nullable: true
-        authorization:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: OAuth access token for authentication
-          nullable: true
+        type:
+          const: connector
+          default: connector
+          title: Type
+          type: string
       required:
+      - connector_id
       - url
       title: ConnectorInput
       type: object

@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 from enum import StrEnum
-from typing import Any, Literal, Protocol
+from typing import Literal, Protocol
 
 from pydantic import BaseModel, Field
 from typing_extensions import runtime_checkable
@@ -23,8 +23,23 @@ class ConnectorType(StrEnum):
     MCP = "mcp"
 
 
+class CommonConnectorFields(BaseModel):
+    """Common fields for all connectors.
+
+    :param connector_type: Type of connector
+    :param connector_id: Identifier for the connector
+    :param url: URL of the connector
+    :param server_label: Label of the server
+    """
+
+    connector_type: ConnectorType = Field(default=ConnectorType.MCP)
+    connector_id: str = Field(..., description="Identifier for the connector")
+    url: str = Field(..., description="URL of the connector")
+    server_label: str | None = Field(default=None, description="Label of the server")
+
+
 @json_schema_type
-class Connector(Resource):
+class Connector(CommonConnectorFields, Resource):
     """A connector resource representing a connector registered in Llama Stack.
 
     :param type: Type of resource, always 'connector' for connectors
@@ -38,38 +53,16 @@ class Connector(Resource):
     """
 
     model_config = {"populate_by_name": True}
-
     type: Literal[ResourceType.connector] = ResourceType.connector
-    connector_type: ConnectorType = Field(default=ConnectorType.MCP)
-    connector_id: str = Field(..., description="Identifier for the connector")
-    url: str = Field(..., description="URL of the connector")
     server_name: str | None = Field(default=None, description="Name of the server")
-    server_label: str | None = Field(default=None, description="Label of the server")
     server_description: str | None = Field(default=None, description="Description of the server")
-    # Credentials configured at boot time - excluded from API responses
-    authorization: str | None = Field(default=None, exclude=True, description="Default OAuth access token")
-    headers: dict[str, Any] | None = Field(default=None, exclude=True, description="Default HTTP headers")
 
 
 @json_schema_type
-class ConnectorInput(BaseModel):
-    """Input for creating a connector.
-
-    :param connector_type: Type of connector
-    :param connector_id: Unique identifier for the connector
-    :param url: URL of the connector
-    :param headers: (Optional) HTTP headers to include when connecting to the server
-    :param authorization: (Optional) OAuth access token for authenticating with the MCP server
-    :param server_label: (Optional) Label of the server
-    """
+class ConnectorInput(CommonConnectorFields):
+    """Input for creating a connector"""
 
     type: Literal[ResourceType.connector] = ResourceType.connector
-    connector_type: ConnectorType = Field(default=ConnectorType.MCP)
-    connector_id: str | None = Field(default=None, description="Unique identifier for the connector")
-    url: str = Field(..., description="URL of the connector")
-    server_label: str | None = Field(default=None, description="Label of the server")
-    headers: dict[str, Any] | None = Field(default=None, description="HTTP headers to include when connecting")
-    authorization: str | None = Field(default=None, description="OAuth access token for authentication")
 
 
 @json_schema_type
