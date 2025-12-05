@@ -75,8 +75,18 @@ jobs:
           cat <<EOF > $run_dir/run.yaml
           version: '2'
           image_name: kube
-          apis: []
-          providers: {}
+          apis:
+            - files
+            - inference
+          providers:
+            files:
+              - provider_id: meta-reference-files
+                provider_type: inline::localfs
+                config:
+                  storage_dir: $run_dir/files
+                  metadata_store:
+                    table_name: files_metadata
+                    backend: sql_default
           storage:
             backends:
               kv_default:
@@ -100,6 +110,21 @@ jobs:
                 backend: kv_default
           server:
             port: 8321
+            auth:
+              access_policy:
+                - permit:
+                    actions: [read, delete]
+                    resource: sql_record::openai_files::*
+                  when:
+                    - user with system:serviceaccount:llama-stack:llama-stack-user1 in roles
+                    - user in owners roles
+                  description: User1 can read and delete their Files
+                - permit:
+                    actions: [read]
+                    resource: sql_record::openai_files::*
+                  when:
+                    - user in owners roles
+                  description: Owners can read their Files
           EOF
           yq eval '.server.auth.provider_config.type = "${{ matrix.auth-provider }}"' -i $run_dir/run.yaml
           yq eval '.server.auth.provider_config.tls_cafile = "${{ env.KUBERNETES_CA_CERT_PATH }}"' -i $run_dir/run.yaml
@@ -174,3 +199,51 @@ jobs:
           echo "Testing /v1/providers with valid token (should succeed)..."
           test_endpoint "http://127.0.0.1:8321/v1/providers" "llama-stack-auth-token" "200" "providers.json" || exit 1
           cat providers.json | jq . > /dev/null && echo "  ✓ Valid JSON response"
+
+          echo "Setting up test service accounts..."
+          kubectl create serviceaccount llama-stack-user1 -n llama-stack
+          kubectl create serviceaccount llama-stack-user2 -n llama-stack
+          kubectl create token llama-stack-user1 -n llama-stack > user1-token
+          kubectl create token llama-stack-user2 -n llama-stack > user2-token
+          echo "Created user1 and user2 tokens"
+
+          # Create test file
+          echo "test content" > test-file.txt
+
+          echo "Both user1 and user2 can create files..."
+          test_endpoint "http://127.0.0.1:8321/v1/files -F file=@test-file.txt -F purpose=assistants" "user1-token" "200" "user1-files.json" || exit 1
+          test_endpoint "http://127.0.0.1:8321/v1/files -F file=@test-file.txt -F purpose=assistants" "user2-token" "200" "user2-files.json" || exit 1
+
+          echo "user1 can only read their own files..."
+          test_endpoint "http://127.0.0.1:8321/v1/files" "user1-token" "200" "user1-files-list.json" || exit 1
+          USER1_FILE_COUNT=$(jq '.data|length' user1-files-list.json)
+          echo "User1 has $USER1_FILE_COUNT file(s)"
+          [ $USER1_FILE_COUNT -eq 1 ] || ( echo "  ✗ User1 should have 1 file, but has $USER1_FILE_COUNT" && exit 1 )
+          echo "  ✓ User1 can see exactly 1 file"
+
+          echo "user2 can read their own file..."
+          test_endpoint "http://127.0.0.1:8321/v1/files" "user2-token" "200" "user2-files-list.json" || exit 1
+          USER2_FILE_COUNT=$(jq '.data|length' user2-files-list.json)
+          echo "User2 has $USER2_FILE_COUNT file(s)"
+          [ $USER2_FILE_COUNT -eq 1 ] || ( echo "  ✗ User2 should have 1 file, but has $USER2_FILE_COUNT" && exit 1 )
+          echo "  ✓ User2 can see their own file"
+
+          echo "Both file ids should differ"
+          FILEID_USER1=$(jq -r '.data[0].id' user1-files-list.json)
+          FILEID_USER2=$(jq -r '.data[0].id' user2-files-list.json)
+          [ "$FILEID_USER1" != "$FILEID_USER2" ] || ( echo "  ✗ File IDs should differ" && exit 1 )
+          echo "  ✓ File IDs differ"
+
+          echo "user2 can't delete their own file or other users' files..."
+          test_endpoint "http://127.0.0.1:8321/v1/files/$FILEID_USER2 -X DELETE" "user1-token" "404" || exit 1
+          test_endpoint "http://127.0.0.1:8321/v1/files/$FILEID_USER1 -X DELETE" "user2-token" "404" || exit 1
+          echo "  ✓ Delete correctly blocked"
+
+          echo "user1 can delete their own files but not other users' files..."
+          test_endpoint "http://127.0.0.1:8321/v1/files/$FILEID_USER1 -X DELETE" "user1-token" "200" || exit 1
+          echo "  ✓ Delete successful"
+          test_endpoint "http://127.0.0.1:8321/v1/files/$FILEID_USER2 -X DELETE" "user1-token" "404" || exit 1
+          echo "  ✓ Delete correctly blocked"
+
+          echo ""
+          echo "✓ ABAC test completed successfully!"
