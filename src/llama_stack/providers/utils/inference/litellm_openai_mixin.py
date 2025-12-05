@@ -16,6 +16,7 @@ from llama_stack.providers.utils.inference.model_registry import ModelRegistryHe
 from llama_stack.providers.utils.inference.openai_compat import (
     prepare_openai_completion_params,
 )
+from llama_stack.providers.utils.inference.stream_utils import wrap_async_stream
 from llama_stack_api import (
     InferenceProvider,
     OpenAIChatCompletion,
@@ -178,7 +179,7 @@ class LiteLLMOpenAIMixin(
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         if not self.model_store:
             raise ValueError("Model store is not initialized")
 
@@ -210,7 +211,12 @@ class LiteLLMOpenAIMixin(
             api_base=self.api_base,
         )
         # LiteLLM returns compatible type but mypy can't verify external library
-        return await litellm.atext_completion(**request_params)  # type: ignore[no-any-return]  # external lib lacks type stubs
+        result = await litellm.atext_completion(**request_params)
+
+        if params.stream:
+            return wrap_async_stream(result)  # type: ignore[arg-type]  # LiteLLM streaming types
+
+        return result  # type: ignore[return-value]  # external lib lacks type stubs
 
     async def openai_chat_completion(
         self,
@@ -261,7 +267,12 @@ class LiteLLMOpenAIMixin(
             api_base=self.api_base,
         )
         # LiteLLM returns compatible type but mypy can't verify external library
-        return await litellm.acompletion(**request_params)  # type: ignore[no-any-return]  # external lib lacks type stubs
+        result = await litellm.acompletion(**request_params)
+
+        if params.stream:
+            return wrap_async_stream(result)  # type: ignore[arg-type]  # LiteLLM streaming types
+
+        return result  # type: ignore[return-value]  # external lib lacks type stubs
 
     async def check_model_availability(self, model: str) -> bool:
         """
