@@ -4,11 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import os
+import tempfile
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from llama_stack.providers.utils.memory.vector_store import content_from_data_and_mime_type, content_from_doc
+from llama_stack.providers.utils.memory.vector_store import (
+    content_from_data_and_mime_type,
+    content_from_doc,
+    read_file_uri,
+)
 from llama_stack_api import URL, RAGDocument, TextContentItem
 
 
@@ -215,3 +221,63 @@ async def test_memory_tool_error_handling():
     # processed 2 documents successfully, skipped 1
     assert memory_tool.files_api.openai_upload_file.call_count == 2
     assert memory_tool.vector_io_api.openai_attach_file_to_vector_store.call_count == 2
+
+
+class TestReadFileUri:
+    async def test_read_file_uri_basic(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("Hello from file URI!")
+            temp_path = f.name
+
+        try:
+            content, mime_type = await read_file_uri(f"file://{temp_path}")
+            assert content == b"Hello from file URI!"
+            assert mime_type == "text/plain"
+        finally:
+            os.unlink(temp_path)
+
+    async def test_read_file_uri_with_spaces(self):
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, prefix="test file ") as f:
+            f.write("Content with spaces in path")
+            temp_path = f.name
+
+        try:
+            encoded_uri = f"file://{temp_path.replace(' ', '%20')}"
+            content, mime_type = await read_file_uri(encoded_uri)
+            assert content == b"Content with spaces in path"
+        finally:
+            os.unlink(temp_path)
+
+    async def test_read_file_uri_file_not_found(self):
+        """Test FileNotFoundError with sanitized message (no path disclosure)."""
+        with pytest.raises(FileNotFoundError) as exc_info:
+            await read_file_uri("file:///nonexistent/path/to/secret/file.txt")
+
+        error_message = str(exc_info.value)
+        assert "file.txt" in error_message
+        assert "/nonexistent/path/to/secret" not in error_message
+
+    async def test_read_file_uri_directory_error(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with pytest.raises(IsADirectoryError) as exc_info:
+                await read_file_uri(f"file://{temp_dir}")
+
+            error_message = str(exc_info.value)
+            dir_name = os.path.basename(temp_dir)
+            assert dir_name in error_message
+
+    async def test_read_file_uri_size_limit(self):
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
+            f.write(b"x" * 1000)  # 1KB file
+            temp_path = f.name
+
+        try:
+            with pytest.raises(ValueError) as exc_info:
+                await read_file_uri(f"file://{temp_path}", max_size=500)
+
+            error_message = str(exc_info.value)
+            assert "too large" in error_message
+            assert "1000 bytes" in error_message
+            assert "500 bytes" in error_message
+        finally:
+            os.unlink(temp_path)
