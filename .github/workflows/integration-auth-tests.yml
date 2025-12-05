@@ -72,7 +72,7 @@ jobs:
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           run_dir=$(mktemp -d)
-          cat <<'EOF' > $run_dir/run.yaml
+          cat <<EOF > $run_dir/run.yaml
           version: '2'
           image_name: kube
           apis: []
