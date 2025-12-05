@@ -1456,15 +1456,15 @@ components:
           type: number
           title: Logprob
         top_logprobs:
-          items:
-            $ref: '#/components/schemas/OpenAITopLogProb'
-          type: array
-          title: Top Logprobs
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITopLogProb'
+            type: array
+          - type: 'null'
       type: object
       required:
       - token
       - logprob
-      - top_logprobs
       title: OpenAITokenLogProb
       description: |-
         The log probability for a token from an OpenAI-compatible chat completion response.
@@ -2552,15 +2552,22 @@ components:
     OpenAIResponseOutputMessageContentOutputText:
       properties:
         text:
-          type: string
           title: Text
-        type:
           type: string
+        type:
           const: output_text
-          title: Type
           default: output_text
+          title: Type
+          type: string
         annotations:
           items:
+            discriminator:
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              propertyName: type
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
               title: OpenAIResponseAnnotationFileCitation
@@ -2570,20 +2577,20 @@ components:
               title: OpenAIResponseAnnotationContainerFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
               title: OpenAIResponseAnnotationFilePath
-            discriminator:
-              propertyName: type
-              mapping:
-                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
             title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
-          type: array
           title: Annotations
-      type: object
+          type: array
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+          nullable: true
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
+      type: object
     OpenAIResponseOutputMessageFileSearchToolCall:
       properties:
         id:
@@ -4199,7 +4206,7 @@ components:
         include:
           anyOf:
           - items:
-              type: string
+              $ref: '#/components/schemas/ResponseItemInclude'
             type: array
           - type: 'null'
         max_infer_iters:
@@ -4398,8 +4405,7 @@ components:
         logprobs:
           anyOf:
           - items:
-              additionalProperties: true
-              type: object
+              $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
           nullable: true
@@ -5161,6 +5167,13 @@ components:
         item_id:
           title: Item Id
           type: string
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+          nullable: true
         output_index:
           title: Output Index
           type: integer
@@ -8827,19 +8840,19 @@ components:
             title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
           - items:
               oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
-                title: OpenAIResponseOutputMessageContentOutputText
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input'
+                title: OpenAIResponseOutputMessageContentOutputText-Input
               - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
                 title: OpenAIResponseContentPartRefusal
               discriminator:
                 propertyName: type
                 mapping:
-                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input'
                   refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
-              title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
+              title: OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal
             type: array
-            title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
-          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
+            title: list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
         role:
           title: Role
           type: string
@@ -8896,19 +8909,19 @@ components:
             title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
           - items:
               oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
-                title: OpenAIResponseOutputMessageContentOutputText
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output'
+                title: OpenAIResponseOutputMessageContentOutputText-Output
               - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
                 title: OpenAIResponseContentPartRefusal
               discriminator:
                 propertyName: type
                 mapping:
-                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output'
                   refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
-              title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
+              title: OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal
             type: array
-            title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
-          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
+            title: list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
         role:
           title: Role
           type: string
@@ -8941,6 +8954,88 @@ components:
         They are all under one type because the Responses API gives them all
         the same "type" value, and there is no way to tell them apart in certain
         scenarios.
+    OpenAIResponseOutputMessageContentOutputText-Input:
+      properties:
+        text:
+          type: string
+          title: Text
+        type:
+          type: string
+          const: output_text
+          title: Type
+          default: output_text
+        annotations:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              title: OpenAIResponseAnnotationFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              title: OpenAIResponseAnnotationCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              title: OpenAIResponseAnnotationContainerFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+              title: OpenAIResponseAnnotationFilePath
+            discriminator:
+              propertyName: type
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
+          type: array
+          title: Annotations
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+      type: object
+      required:
+      - text
+      title: OpenAIResponseOutputMessageContentOutputText
+    OpenAIResponseOutputMessageContentOutputText-Output:
+      properties:
+        text:
+          type: string
+          title: Text
+        type:
+          type: string
+          const: output_text
+          title: Type
+          default: output_text
+        annotations:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              title: OpenAIResponseAnnotationFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              title: OpenAIResponseAnnotationCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              title: OpenAIResponseAnnotationContainerFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+              title: OpenAIResponseAnnotationFilePath
+            discriminator:
+              propertyName: type
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
+          type: array
+          title: Annotations
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+      type: object
+      required:
+      - text
+      title: OpenAIResponseOutputMessageContentOutputText
     OpenAIResponseOutputMessageFileSearchToolCallResults:
       properties:
         attributes:
@@ -9100,6 +9195,18 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ResponseItemInclude:
+      type: string
+      enum:
+      - web_search_call.action.sources
+      - code_interpreter_call.outputs
+      - computer_call_output.output.image_url
+      - file_search_call.results
+      - message.input_image.image_url
+      - message.output_text.logprobs
+      - reasoning.encrypted_content
+      title: ResponseItemInclude
+      description: Specify additional output data to include in the model response.
     SearchRankingOptions:
       properties:
         ranker:

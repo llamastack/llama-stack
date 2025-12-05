@@ -10,6 +10,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import TypedDict
 
+from llama_stack_api.inference import OpenAITokenLogProb
 from llama_stack_api.schema_utils import json_schema_type, register_schema
 from llama_stack_api.vector_io import SearchRankingOptions as FileSearchRankingOptions
 
@@ -173,6 +174,7 @@ class OpenAIResponseOutputMessageContentOutputText(BaseModel):
     text: str
     type: Literal["output_text"] = "output_text"
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
+    logprobs: list[OpenAITokenLogProb] | None = None
 
 
 @json_schema_type
@@ -746,6 +748,7 @@ class OpenAIResponseObjectStreamResponseOutputTextDelta(BaseModel):
     :param content_index: Index position within the text content
     :param delta: Incremental text content being added
     :param item_id: Unique identifier of the output item being updated
+    :param logprobs: (Optional) Token log probability details
     :param output_index: Index position of the item in the output list
     :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.output_text.delta"
@@ -754,6 +757,7 @@ class OpenAIResponseObjectStreamResponseOutputTextDelta(BaseModel):
     content_index: int
     delta: str
     item_id: str
+    logprobs: list[OpenAITokenLogProb] | None = None
     output_index: int
     sequence_number: int
     type: Literal["response.output_text.delta"] = "response.output_text.delta"
@@ -944,7 +948,7 @@ class OpenAIResponseContentPartOutputText(BaseModel):
     type: Literal["output_text"] = "output_text"
     text: str
     annotations: list[OpenAIResponseAnnotations] = Field(default_factory=list)
-    logprobs: list[dict[str, Any]] | None = None
+    logprobs: list[OpenAITokenLogProb] | None = None
 
 
 @json_schema_type

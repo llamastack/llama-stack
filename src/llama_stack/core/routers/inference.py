@@ -43,6 +43,8 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
+    OpenAITokenLogProb,
+    OpenAITopLogProb,
     Order,
     RerankResponse,
     RoutingTable,
@@ -342,8 +344,34 @@ class InferenceRouter(Inference):
                                             )
                         if choice_delta.finish_reason:
                             current_choice_data["finish_reason"] = choice_delta.finish_reason
+
+                        # Convert logprobs from chat completion format to responses format
+                        # Chat completion returns list of ChatCompletionTokenLogprob, but
+                        # expecting list of OpenAITokenLogProb in OpenAIChoice
                         if choice_delta.logprobs and choice_delta.logprobs.content:
-                            current_choice_data["logprobs_content_parts"].extend(choice_delta.logprobs.content)
+                            converted_logprobs = []
+                            for token_logprob in choice_delta.logprobs.content:
+                                top_logprobs = None
+                                if token_logprob.top_logprobs:
+                                    top_logprobs = [
+                                        OpenAITopLogProb(
+                                            token=tlp.token,
+                                            bytes=tlp.bytes,
+                                            logprob=tlp.logprob,
+                                        )
+                                        for tlp in token_logprob.top_logprobs
+                                    ]
+                                converted_logprobs.append(
+                                    OpenAITokenLogProb(
+                                        token=token_logprob.token,
+                                        bytes=token_logprob.bytes,
+                                        logprob=token_logprob.logprob,
+                                        top_logprobs=top_logprobs,
+                                    )
+                                )
+                            # Update choice delta with the newly formatted logprobs object
+                            choice_delta.logprobs.content = converted_logprobs
+                            current_choice_data["logprobs_content_parts"].extend(converted_logprobs)
 
                 # Compute metrics on final chunk
                 if chunk.choices and chunk.choices[0].finish_reason:

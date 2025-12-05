@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 from collections.abc import AsyncIterator
+from enum import StrEnum
 from typing import Annotated, Protocol, runtime_checkable
 
 from pydantic import BaseModel
@@ -38,6 +39,20 @@ class ResponseGuardrailSpec(BaseModel):
 
 
 ResponseGuardrail = str | ResponseGuardrailSpec
+
+
+class ResponseItemInclude(StrEnum):
+    """
+    Specify additional output data to include in the model response.
+    """
+
+    web_search_call_action_sources = "web_search_call.action.sources"
+    code_interpreter_call_outputs = "code_interpreter_call.outputs"
+    computer_call_output_output_image_url = "computer_call_output.output.image_url"
+    file_search_call_results = "file_search_call.results"
+    message_input_image_image_url = "message.input_image.image_url"
+    message_output_text_logprobs = "message.output_text.logprobs"
+    reasoning_encrypted_content = "reasoning.encrypted_content"
 
 
 @runtime_checkable
@@ -80,7 +95,7 @@ class Agents(Protocol):
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
-        include: list[str] | None = None,
+        include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
         guardrails: Annotated[
             list[ResponseGuardrail] | None,
