@@ -22,6 +22,7 @@ from llama_stack_api import (
     Api,
     Benchmark,
     BenchmarkInput,
+    ConnectorInput,
     Dataset,
     DatasetInput,
     DatasetIO,
@@ -429,6 +430,7 @@ class RegisteredResources(BaseModel):
     scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
     benchmarks: list[BenchmarkInput] = Field(default_factory=list)
     tool_groups: list[ToolGroupInput] = Field(default_factory=list)
+    connectors: list[ConnectorInput] = Field(default_factory=list)
 
 
 class ServerConfig(BaseModel):
