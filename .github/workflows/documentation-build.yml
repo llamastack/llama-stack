@@ -1,0 +1,43 @@
+name: Documentation Build
+
+run-name: Ensure documentation can build successfully
+
+on:
+  pull_request:
+    - main
+    - 'release-[0-9]+.[0-9]+.x'
+  push:
+    - main
+    - 'release-[0-9]+.[0-9]+.x'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-build:
+    name: Build Docs
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run gen-api-docs
+        run: npm run gen-api-docs all
+
+      - name: Build documentation
+        run: npm run build
