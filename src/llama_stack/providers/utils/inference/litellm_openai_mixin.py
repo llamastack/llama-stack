@@ -179,6 +179,19 @@ class LiteLLMOpenAIMixin(
         self,
         params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion:
+        # Inject stream_options when streaming and telemetry is active
+        stream_options = params.stream_options
+        if params.stream:
+            from opentelemetry import trace
+
+            span = trace.get_current_span()
+            if span.is_recording():
+                if stream_options is None:
+                    stream_options = {"include_usage": True}
+                else:
+                    # Active telemetry takes precedence - override caller preference for consistent observability otherwise incomplete metrics break observability
+                    stream_options = {**stream_options, "include_usage": True}
+
         if not self.model_store:
             raise ValueError("Model store is not initialized")
 
@@ -201,7 +214,7 @@ class LiteLLMOpenAIMixin(
             seed=params.seed,
             stop=params.stop,
             stream=params.stream,
-            stream_options=params.stream_options,
+            stream_options=stream_options,
             temperature=params.temperature,
             top_p=params.top_p,
             user=params.user,
@@ -216,14 +229,18 @@ class LiteLLMOpenAIMixin(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        # Add usage tracking for streaming when telemetry is active
-
+        # Inject stream_options when streaming and telemetry is active
         stream_options = params.stream_options
         if params.stream:
-            if stream_options is None:
-                stream_options = {"include_usage": True}
-            elif "include_usage" not in stream_options:
-                stream_options = {**stream_options, "include_usage": True}
+            from opentelemetry import trace
+
+            span = trace.get_current_span()
+            if span.is_recording():
+                if stream_options is None:
+                    stream_options = {"include_usage": True}
+                else:
+                    # Active telemetry takes precedence - override caller preference for consistent observability otherwise incomplete metrics break observability
+                    stream_options = {**stream_options, "include_usage": True}
 
         if not self.model_store:
             raise ValueError("Model store is not initialized")
