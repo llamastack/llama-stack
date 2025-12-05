@@ -126,8 +126,6 @@ registered_resources:
     provider_id: rag-runtime
 server:
   port: 8323
-telemetry:
-  enabled: true
 vector_stores:
   default_provider_id: chromadb
   default_embedding_model:

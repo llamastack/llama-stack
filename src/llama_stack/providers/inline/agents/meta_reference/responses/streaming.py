@@ -8,7 +8,8 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack.core.telemetry import tracing
+from opentelemetry import trace
+
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack_api import (
@@ -79,6 +80,7 @@ from .utils import (
 )
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
+tracer = trace.get_tracer(__name__)
 
 
 def convert_tooldef_to_chat_tool(tool_def):
@@ -118,6 +120,7 @@ class StreamingResponseOrchestrator:
         prompt: OpenAIResponsePrompt | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
+        metadata: dict[str, str] | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -135,6 +138,7 @@ class StreamingResponseOrchestrator:
         self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
+        self.metadata = metadata
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -162,6 +166,7 @@ class StreamingResponseOrchestrator:
             model=self.ctx.model,
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
+            metadata=self.metadata,
         )
 
         return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
@@ -197,6 +202,7 @@ class StreamingResponseOrchestrator:
             prompt=self.prompt,
             parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
+            metadata=self.metadata,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -1106,8 +1112,10 @@ class StreamingResponseOrchestrator:
                 "server_url": mcp_tool.server_url,
                 "mcp_list_tools_id": list_id,
             }
-            # List MCP tools with authorization from tool config
-            async with tracing.span("list_mcp_tools", attributes):
+
+            # TODO: follow semantic conventions for Open Telemetry tool spans
+            # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
+            with tracer.start_as_current_span("list_mcp_tools", attributes=attributes):
                 tool_defs = await list_mcp_tools(
                     endpoint=mcp_tool.server_url,
                     headers=mcp_tool.headers,
@@ -1183,9 +1191,9 @@ class StreamingResponseOrchestrator:
         if mcp_server.require_approval == "never":
             return False
         if isinstance(mcp_server, ApprovalFilter):
-            if tool_name in mcp_server.always:
+            if mcp_server.always and tool_name in mcp_server.always:
                 return True
-            if tool_name in mcp_server.never:
+            if mcp_server.never and tool_name in mcp_server.never:
                 return False
         return True
 

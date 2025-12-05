@@ -83,7 +83,7 @@ class TestProviderInitialization:
             new_callable=AsyncMock,
         ):
             # Should not raise any exception
-            provider = await get_provider_impl(config, mock_deps, policy=[], telemetry_enabled=False)
+            provider = await get_provider_impl(config, mock_deps, policy=[])
             assert provider is not None
 
     async def test_initialization_without_safety_api(self, mock_persistence_config, mock_deps):
@@ -97,7 +97,7 @@ class TestProviderInitialization:
             new_callable=AsyncMock,
         ):
             # Should not raise any exception
-            provider = await get_provider_impl(config, mock_deps, policy=[], telemetry_enabled=False)
+            provider = await get_provider_impl(config, mock_deps, policy=[])
             assert provider is not None
             assert provider.safety_api is None
 

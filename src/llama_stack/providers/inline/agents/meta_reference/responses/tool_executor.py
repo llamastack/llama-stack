@@ -9,7 +9,8 @@ import json
 from collections.abc import AsyncIterator
 from typing import Any
 
-from llama_stack.core.telemetry import tracing
+from opentelemetry import trace
+
 from llama_stack.log import get_logger
 from llama_stack_api import (
     ImageContentItem,
@@ -42,6 +43,7 @@ from llama_stack_api import (
 from .types import ChatCompletionContext, ToolExecutionResult
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
+tracer = trace.get_tracer(__name__)
 
 
 class ToolExecutor:
@@ -296,8 +298,9 @@ class ToolExecutor:
                     "server_url": mcp_tool.server_url,
                     "tool_name": function_name,
                 }
-                # Invoke MCP tool with authorization from tool config
-                async with tracing.span("invoke_mcp_tool", attributes):
+                # TODO: follow semantic conventions for Open Telemetry tool spans
+                # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
+                with tracer.start_as_current_span("invoke_mcp_tool", attributes=attributes):
                     result = await invoke_mcp_tool(
                         endpoint=mcp_tool.server_url,
                         tool_name=function_name,
@@ -318,7 +321,7 @@ class ToolExecutor:
                     # Use vector_stores.search API instead of knowledge_search tool
                     # to support filters and ranking_options
                     query = tool_kwargs.get("query", "")
-                    async with tracing.span("knowledge_search", {}):
+                    with tracer.start_as_current_span("knowledge_search"):
                         result = await self._execute_knowledge_search_via_vector_store(
                             query=query,
                             response_file_search_tool=response_file_search_tool,
@@ -327,7 +330,9 @@ class ToolExecutor:
                 attributes = {
                     "tool_name": function_name,
                 }
-                async with tracing.span("invoke_tool", attributes):
+                # TODO: follow semantic conventions for Open Telemetry tool spans
+                # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
+                with tracer.start_as_current_span("invoke_tool", attributes=attributes):
                     result = await self.tool_runtime_api.invoke_tool(
                         tool_name=function_name,
                         kwargs=tool_kwargs,

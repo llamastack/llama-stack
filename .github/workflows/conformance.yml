@@ -64,6 +64,7 @@ jobs:
           ref: ${{ github.event.pull_request.base.ref }}
           path: 'base'
 
+
       # Cache oasdiff to avoid checksum failures and speed up builds
       - name: Cache oasdiff
         if: steps.skip-check.outputs.skip != 'true'
@@ -135,6 +136,23 @@ jobs:
         if: steps.skip-check.outputs.skip != 'true'
         run: |
           oasdiff breaking --fail-on ERR $BASE_SPEC $CURRENT_SPEC --match-path '^/v1/'
+
+      # Run oasdiff to detect breaking changes in the API specification when compared to the OpenAI openAPI spec
+      - name: Run OpenAPI Breaking Change Diff Against OpenAI API
+        if: steps.skip-check.outputs.skip != 'true'
+        continue-on-error: true
+        shell: bash
+        run: |
+          OPENAI_SPEC=docs/static/openai-spec-2.3.0.yml
+          LLAMA_STACK_SPEC=docs/static/llama-stack-spec.yaml
+
+          # Compare Llama Stack spec against OpenAI spec.
+          # This finds breaking changes in our implementation of common endpoints.
+          # By using our spec as the base, we avoid errors for endpoints we don't implement.
+          oasdiff breaking --fail-on ERR \
+            "$LLAMA_STACK_SPEC" \
+            "$OPENAI_SPEC" \
+            --strip-prefix-base "/v1"
 
       # Report when test is skipped
       - name: Report skip reason
