@@ -13,8 +13,12 @@ import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from socketserver import ThreadingMixIn
 
-from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import ExportMetricsServiceRequest
-from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
+from opentelemetry.proto.collector.metrics.v1.metrics_service_pb2 import (
+    ExportMetricsServiceRequest,
+)
+from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
+    ExportTraceServiceRequest,
+)
 
 from .base import BaseTelemetryCollector, MetricStub, SpanStub, attributes_to_dict
 
@@ -137,6 +141,57 @@ class _CollectorHandler(BaseHTTPRequestHandler):
             request.ParseFromString(body)
             collector._handle_metrics(request)
             self._respond_ok()
+        elif self.path == "/clear":
+            # Clear all collected telemetry
+            collector.clear()
+            self._respond_json({"status": "cleared"})
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def do_GET(self) -> None:  # noqa: N802
+        """Handle GET requests for querying collected telemetry data."""
+        collector: OtlpHttpTestCollector = self.server.collector  # type: ignore[attr-defined]
+
+        if self.path == "/query/metrics":
+            # Return all collected metrics
+            with collector._lock:
+                metrics_data = [
+                    {
+                        "name": m.name,
+                        "value": m.value,
+                        "attributes": m.attributes or {},
+                    }
+                    for m in collector._metrics
+                ]
+            self._respond_json({"metrics": metrics_data})
+        elif self.path == "/query/metrics/count":
+            # Return count of collected metrics
+            with collector._lock:
+                count = len(collector._metrics)
+            self._respond_json({"count": count})
+        elif self.path == "/query/spans":
+            # Return all collected spans
+            with collector._lock:
+                spans_data = [
+                    {
+                        "name": s.name,
+                        "attributes": s.attributes or {},
+                        "resource_attributes": s.resource_attributes or {},
+                        "trace_id": s.trace_id,
+                        "span_id": s.span_id,
+                    }
+                    for s in collector._spans
+                ]
+            self._respond_json({"spans": spans_data})
+        elif self.path == "/query/spans/count":
+            # Return count of collected spans
+            with collector._lock:
+                count = len(collector._spans)
+            self._respond_json({"count": count})
+        elif self.path == "/":
+            # Health check
+            self._respond_json({"status": "ok"})
         else:
             self.send_response(404)
             self.end_headers()
@@ -144,3 +199,11 @@ class _CollectorHandler(BaseHTTPRequestHandler):
     def _respond_ok(self) -> None:
         self.send_response(200)
         self.end_headers()
+
+    def _respond_json(self, data: dict) -> None:
+        import json
+
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.end_headers()
+        self.wfile.write(json.dumps(data).encode())

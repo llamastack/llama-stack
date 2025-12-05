@@ -19,6 +19,14 @@ from llama_stack.core.datatypes import ModelWithOwner
 from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
+from llama_stack.telemetry.metrics import (
+    concurrent_requests,
+    create_metric_attributes,
+    inference_duration,
+    request_duration,
+    requests_total,
+    time_to_first_token,
+)
 from llama_stack_api import (
     HealthResponse,
     HealthStatus,
@@ -154,15 +162,72 @@ class InferenceRouter(Inference):
             f"InferenceRouter.openai_completion: model={params.model}, stream={params.stream}, prompt={params.prompt}",
         )
         request_model_id = params.model
-        provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
-        params.model = provider_resource_id
+        request_start_time = time.perf_counter()
+        metric_attrs = None
 
-        if params.stream:
-            return await provider.openai_completion(params)
+        try:
+            # Get provider inside try block to catch lookup errors
+            provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
+            params.model = provider_resource_id
 
-        response = await provider.openai_completion(params)
-        response.model = request_model_id
-        return response
+            # Create metric attributes with provider for all metrics
+            metric_attrs = create_metric_attributes(
+                model=request_model_id,
+                provider=provider.__provider_id__,
+                endpoint_type="completion",
+                stream=params.stream,
+            )
+
+            # Track concurrent requests
+            concurrent_requests.add(1, metric_attrs)
+            if params.stream:
+                # For streaming completions, we don't have a wrapper yet
+                # Just return the stream and track basic metrics
+                response = await provider.openai_completion(params)
+                # Note: For streaming, metrics will be incomplete
+                # TODO: Add streaming wrapper similar to chat completions
+                return response
+
+            # Non-streaming path
+            inference_start_time = time.perf_counter()
+            response = await provider.openai_completion(params)
+            inference_time = time.perf_counter() - inference_start_time
+            response.model = request_model_id
+
+            # Record token-level metrics if usage data is available
+            if response.usage:
+                inference_duration.record(inference_time, metric_attrs)
+
+            # Record success metrics
+            total_duration = time.perf_counter() - request_start_time
+            success_attrs = {**metric_attrs, "status": "success"}
+            requests_total.add(1, success_attrs)
+            request_duration.record(total_duration, success_attrs)
+
+            return response
+
+        except Exception:
+            # Record error metrics
+            total_duration = time.perf_counter() - request_start_time
+            if metric_attrs:
+                # Provider lookup succeeded, use those attrs
+                error_attrs = {**metric_attrs, "status": "error"}
+                concurrent_requests.add(-1, metric_attrs)
+            else:
+                # Provider lookup failed, create minimal attrs
+                error_attrs = create_metric_attributes(
+                    model=request_model_id,
+                    endpoint_type="completion",
+                    stream=params.stream,
+                    status="error",
+                )
+            requests_total.add(1, error_attrs)
+            request_duration.record(total_duration, error_attrs)
+            raise
+        finally:
+            # Decrement concurrent requests only if we incremented it (not for streaming)
+            if metric_attrs and not params.stream:
+                concurrent_requests.add(-1, metric_attrs)
 
     async def openai_chat_completion(
         self,
@@ -172,45 +237,98 @@ class InferenceRouter(Inference):
             f"InferenceRouter.openai_chat_completion: model={params.model}, stream={params.stream}, messages={params.messages}",
         )
         request_model_id = params.model
-        provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
-        params.model = provider_resource_id
+        request_start_time = time.perf_counter()
+        metric_attrs = None
 
-        # Use the OpenAI client for a bit of extra input validation without
-        # exposing the OpenAI client itself as part of our API surface
-        if params.tool_choice:
-            TypeAdapter(OpenAIChatCompletionToolChoiceOptionParam).validate_python(params.tool_choice)
-            if params.tools is None:
-                raise ValueError("'tool_choice' is only allowed when 'tools' is also provided")
-        if params.tools:
-            for tool in params.tools:
-                TypeAdapter(OpenAIChatCompletionToolParam).validate_python(tool)
+        try:
+            # Get provider inside try block to catch lookup errors
+            provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.llm)
+            params.model = provider_resource_id
 
-        # Some providers make tool calls even when tool_choice is "none"
-        # so just clear them both out to avoid unexpected tool calls
-        if params.tool_choice == "none" and params.tools is not None:
-            params.tool_choice = None
-            params.tools = None
-
-        if params.stream:
-            response_stream = await provider.openai_chat_completion(params)
-
-            # For streaming, the provider returns AsyncIterator[OpenAIChatCompletionChunk]
-            # We need to add metrics to each chunk and store the final completion
-            return self.stream_tokens_and_compute_metrics_openai_chat(
-                response=response_stream,
-                fully_qualified_model_id=request_model_id,
-                provider_id=provider.__provider_id__,
-                messages=params.messages,
+            # Create metric attributes with provider for all metrics
+            metric_attrs = create_metric_attributes(
+                model=request_model_id,
+                provider=provider.__provider_id__,
+                endpoint_type="chat_completion",
+                stream=params.stream,
             )
 
-        response = await self._nonstream_openai_chat_completion(provider, params)
-        response.model = request_model_id
+            # Track concurrent requests
+            concurrent_requests.add(1, metric_attrs)
+            # Use the OpenAI client for a bit of extra input validation without
+            # exposing the OpenAI client itself as part of our API surface
+            if params.tool_choice:
+                TypeAdapter(OpenAIChatCompletionToolChoiceOptionParam).validate_python(params.tool_choice)
+                if params.tools is None:
+                    raise ValueError("'tool_choice' is only allowed when 'tools' is also provided")
+            if params.tools:
+                for tool in params.tools:
+                    TypeAdapter(OpenAIChatCompletionToolParam).validate_python(tool)
 
-        # Store the response with the ID that will be returned to the client
-        if self.store:
-            asyncio.create_task(self.store.store_chat_completion(response, params.messages))
+            # Some providers make tool calls even when tool_choice is "none"
+            # so just clear them both out to avoid unexpected tool calls
+            if params.tool_choice == "none" and params.tools is not None:
+                params.tool_choice = None
+                params.tools = None
 
-        return response
+            if params.stream:
+                response_stream = await provider.openai_chat_completion(params)
+
+                # For streaming, the provider returns AsyncIterator[OpenAIChatCompletionChunk]
+                # We need to add metrics to each chunk and store the final completion
+                return self.stream_tokens_and_compute_metrics_openai_chat(
+                    response=response_stream,
+                    fully_qualified_model_id=request_model_id,
+                    provider_id=provider.__provider_id__,
+                    messages=params.messages,
+                    request_start_time=request_start_time,
+                    metric_attrs=metric_attrs,
+                )
+
+            # Non-streaming path
+            inference_start_time = time.perf_counter()
+            response = await self._nonstream_openai_chat_completion(provider, params)
+            inference_time = time.perf_counter() - inference_start_time
+            response.model = request_model_id
+
+            # Record token-level metrics if usage data is available
+            if response.usage:
+                inference_duration.record(inference_time, metric_attrs)
+
+            # Store the response with the ID that will be returned to the client
+            if self.store:
+                asyncio.create_task(self.store.store_chat_completion(response, params.messages))
+
+            # Record success metrics
+            total_duration = time.perf_counter() - request_start_time
+            success_attrs = {**metric_attrs, "status": "success"}
+            requests_total.add(1, success_attrs)
+            request_duration.record(total_duration, success_attrs)
+
+            return response
+
+        except Exception:
+            # Record error metrics
+            total_duration = time.perf_counter() - request_start_time
+            if metric_attrs:
+                # Provider lookup succeeded, use those attrs
+                error_attrs = {**metric_attrs, "status": "error"}
+                concurrent_requests.add(-1, metric_attrs)
+            else:
+                # Provider lookup failed, create minimal attrs
+                error_attrs = create_metric_attributes(
+                    model=request_model_id,
+                    endpoint_type="chat_completion",
+                    stream=params.stream,
+                    status="error",
+                )
+            requests_total.add(1, error_attrs)
+            request_duration.record(total_duration, error_attrs)
+            raise
+        finally:
+            # Decrement concurrent requests only if we incremented it
+            if metric_attrs:
+                concurrent_requests.add(-1, metric_attrs)
 
     async def openai_embeddings(
         self,
@@ -283,11 +401,14 @@ class InferenceRouter(Inference):
         fully_qualified_model_id: str,
         provider_id: str,
         messages: list[OpenAIMessageParam] | None = None,
+        request_start_time: float | None = None,
+        metric_attrs: dict[str, Any] | None = None,
     ) -> AsyncIterator[OpenAIChatCompletionChunk]:
         """Stream OpenAI chat completion chunks, compute metrics, and store the final completion."""
         id = None
         created = None
         choices_data: dict[int, dict[str, Any]] = {}
+        first_token_time = None
 
         try:
             async for chunk in response:
@@ -302,6 +423,16 @@ class InferenceRouter(Inference):
                     created = chunk.created
 
                 chunk.model = fully_qualified_model_id
+
+                # Track time to first token
+                if first_token_time is None and chunk.choices:
+                    for choice_delta in chunk.choices:
+                        if choice_delta.delta and choice_delta.delta.content:
+                            first_token_time = time.perf_counter()
+                            if request_start_time and metric_attrs:
+                                ttft = first_token_time - request_start_time
+                                time_to_first_token.record(ttft, metric_attrs)
+                            break
 
                 # Accumulate choice data for final assembly
                 if chunk.choices:
@@ -381,6 +512,21 @@ class InferenceRouter(Inference):
 
                 yield chunk
         finally:
+            # Record streaming metrics
+            if request_start_time and metric_attrs:
+                total_duration = time.perf_counter() - request_start_time
+
+                # Record request duration and success
+                success_attrs = {**metric_attrs, "status": "success"}
+                request_duration.record(total_duration, success_attrs)
+                requests_total.add(1, success_attrs)
+
+                # Record inference duration (same as total for streaming)
+                inference_duration.record(total_duration, metric_attrs)
+
+                # Decrement concurrent requests
+                concurrent_requests.add(-1, metric_attrs)
+
             # Store the final assembled completion
             if id and self.store and messages:
                 assembled_choices: list[OpenAIChoice] = []
@@ -404,7 +550,7 @@ class InferenceRouter(Inference):
                     message = OpenAIAssistantMessageParam(
                         role="assistant",
                         content=content_str if content_str else None,
-                        tool_calls=assembled_tool_calls if assembled_tool_calls else None,
+                        tool_calls=(assembled_tool_calls if assembled_tool_calls else None),
                     )
                     logprobs_content = choice_data["logprobs_content_parts"]
                     final_logprobs = OpenAIChoiceLogprobs(content=logprobs_content) if logprobs_content else None
