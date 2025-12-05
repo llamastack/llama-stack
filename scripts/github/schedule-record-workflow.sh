@@ -55,7 +55,7 @@ EOF
 #     - jq must be installed for JSON parsing
 #     - You must be in a git repository that is a fork or clone of llamastack/llama-stack
 #     - The branch must exist on the remote repository where you want to run the workflow
-#     - You must specify test subdirectories to run with -s/--test-subdirs
+#     - You must specify test subdirectories to run with -s/--subdirs
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do

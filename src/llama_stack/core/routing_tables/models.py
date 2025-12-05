@@ -7,11 +7,12 @@
 import time
 from typing import Any
 
+from llama_stack.core.access_control.access_control import is_action_allowed
 from llama_stack.core.datatypes import (
     ModelWithOwner,
     RegistryEntrySource,
 )
-from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData, get_authenticated_user
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
@@ -66,6 +67,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             return []
 
         dynamic_models = []
+        user = get_authenticated_user()
 
         for provider_id, provider in self.impls_by_provider_id.items():
             # Check if this provider supports provider_data
@@ -93,15 +95,32 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 if not models:
                     continue
 
-                # Ensure models have fully qualified identifiers with provider_id prefix
+                # Ensure models have fully qualified identifiers and apply RBAC filtering
                 for model in models:
                     # Only add prefix if model identifier doesn't already have it
                     if not model.identifier.startswith(f"{provider_id}/"):
                         model.identifier = f"{provider_id}/{model.provider_resource_id}"
 
-                    dynamic_models.append(model)
+                    # Convert to ModelWithOwner for RBAC check
+                    temp_model = ModelWithOwner(
+                        identifier=model.identifier,
+                        provider_id=provider_id,
+                        provider_resource_id=model.provider_resource_id,
+                        model_type=model.model_type,
+                        metadata=model.metadata,
+                    )
 
-                logger.debug(f"Fetched {len(models)} models from provider {provider_id} using provider_data")
+                    # Apply RBAC check - only include models user has read permission for
+                    if is_action_allowed(self.policy, "read", temp_model, user):
+                        dynamic_models.append(model)
+                    else:
+                        logger.debug(
+                            f"Access denied to dynamic model '{model.identifier}' for user {user.principal if user else 'anonymous'}"
+                        )
+
+                logger.debug(
+                    f"Fetched {len(dynamic_models)} accessible models from provider {provider_id} using provider_data"
+                )
 
             except Exception as e:
                 logger.debug(f"Failed to list models from provider {provider_id} with provider_data: {e}")

@@ -46,8 +46,6 @@ from llama_stack.core.request_headers import PROVIDER_DATA_VAR, request_provider
 from llama_stack.core.resolver import ProviderRegistry
 from llama_stack.core.server.routes import RouteImpls, find_matching_route, initialize_route_impls
 from llama_stack.core.stack import Stack, get_stack_run_config_from_distro, replace_env_vars
-from llama_stack.core.telemetry import Telemetry
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
@@ -204,13 +202,6 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         super().__init__()
         # Initialize logging from environment variables first
         setup_logging()
-
-        # when using the library client, we should not log to console since many
-        # of our logs are intended for server-side usage
-        if sinks_from_env := os.environ.get("TELEMETRY_SINKS", None):
-            current_sinks = sinks_from_env.strip().lower().split(",")
-            os.environ["TELEMETRY_SINKS"] = ",".join(sink for sink in current_sinks if sink != "console")
-
         if in_notebook():
             import nest_asyncio
 
@@ -295,8 +286,6 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             raise _e
 
         assert self.impls is not None
-        if self.config.telemetry.enabled:
-            setup_logger(Telemetry())
 
         if not os.environ.get("PYTEST_CURRENT_TEST"):
             console = Console()
@@ -392,13 +381,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         body, field_names = self._handle_file_uploads(options, body)
 
         body = self._convert_body(matched_func, body, exclude_params=set(field_names))
-
-        trace_path = webmethod.descriptive_name or route_path
-        await start_trace(trace_path, {"__location__": "library_client"})
-        try:
-            result = await matched_func(**body)
-        finally:
-            await end_trace()
+        result = await matched_func(**body)
 
         # Handle FastAPI Response objects (e.g., from file content retrieval)
         if isinstance(result, FastAPIResponse):
@@ -457,19 +440,13 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         # Prepare body for the function call (handles both Pydantic and traditional params)
         body = self._convert_body(func, body)
 
-        trace_path = webmethod.descriptive_name or route_path
-        await start_trace(trace_path, {"__location__": "library_client"})
-
         async def gen():
-            try:
-                async for chunk in await func(**body):
-                    data = json.dumps(convert_pydantic_to_json_value(chunk))
-                    sse_event = f"data: {data}\n\n"
-                    yield sse_event.encode("utf-8")
-            finally:
-                await end_trace()
+            async for chunk in await func(**body):
+                data = json.dumps(convert_pydantic_to_json_value(chunk))
+                sse_event = f"data: {data}\n\n"
+                yield sse_event.encode("utf-8")
 
-        wrapped_gen = preserve_contexts_async_generator(gen(), [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR])
+        wrapped_gen = preserve_contexts_async_generator(gen(), [PROVIDER_DATA_VAR])
 
         mock_response = httpx.Response(
             status_code=httpx.codes.OK,
