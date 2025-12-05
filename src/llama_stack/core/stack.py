@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 
+from llama_stack.core.admin import AdminImpl, AdminImplConfig
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
@@ -342,7 +343,7 @@ def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
 
 
 def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConfig) -> None:
-    """Add internal implementations (inspect and providers) to the implementations dictionary.
+    """Add internal implementations (inspect, providers, and admin) to the implementations dictionary.
 
     Args:
         impls: Dictionary of API implementations
@@ -359,6 +360,12 @@ def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConf
         deps=impls,
     )
     impls[Api.providers] = providers_impl
+
+    admin_impl = AdminImpl(
+        AdminImplConfig(run_config=run_config),
+        deps=impls,
+    )
+    impls[Api.admin] = admin_impl
 
     prompts_impl = PromptServiceImpl(
         PromptServiceConfig(run_config=run_config),

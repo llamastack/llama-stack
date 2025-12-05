@@ -139,6 +139,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
 
     # built-in API
     inspect = "inspect"
+    admin = "admin"
 
 
 @json_schema_type
