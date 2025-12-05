@@ -1,13 +1,23 @@
 # syntax=docker/dockerfile:1.6
 #
 # This Dockerfile is used to build the Llama Stack container image.
-# Example:
+# Supports multi-architecture builds: linux/amd64, linux/arm64, and more
+#
+# Single-architecture build example:
 # docker build \
 #   -f containers/Containerfile \
 #   --build-arg DISTRO_NAME=starter \
 #   --tag llama-stack:starter .
+#
+# Multi-arch build and push example (creates a container index / manifest list):
+# docker buildx build --platform linux/amd64,linux/arm64 \
+#   --push \
+#   -f containers/Containerfile \
+#   --build-arg DISTRO_NAME=starter \
+#   --tag docker.io/llamastack/distribution-starter:latest .
 
 ARG BASE_IMAGE=python:3.12-slim
+# Buildx automatically handles platform selection for the base image when --platform is specified
 FROM ${BASE_IMAGE}
 
 ARG INSTALL_MODE="pypi"

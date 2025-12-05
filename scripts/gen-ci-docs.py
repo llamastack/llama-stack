@@ -18,8 +18,9 @@ def parse_workflow_file(file_path):
         with open(file_path, encoding="utf-8") as f:
             content = yaml.safe_load(f)
 
-        name = content["name"]
-        run_name = content["run-name"]
+        name = content.get("name", "Unknown")
+        # run-name is optional in GitHub Actions workflows
+        run_name = content.get("run-name", name)
 
         return name, run_name
     except Exception as e:
