@@ -20,6 +20,7 @@ on:
       - 'pyproject.toml'
       - 'requirements.txt'
       - '.github/workflows/integration-auth-tests.yml' # This workflow
+      - 'scripts/integration-auth-tests.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
@@ -54,8 +55,10 @@ jobs:
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           kubectl create namespace llama-stack
-          kubectl create serviceaccount llama-stack-auth -n llama-stack
-          kubectl create token llama-stack-auth -n llama-stack > llama-stack-auth-token
+          for account in llama-stack-auth llama-stack-user1 llama-stack-user2; do
+            kubectl create serviceaccount $account -n llama-stack
+            kubectl create token $account -n llama-stack > $account-token
+          done
 
       - name: Set Kubernetes Config
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
@@ -74,9 +77,20 @@ jobs:
           run_dir=$(mktemp -d)
           cat <<EOF > $run_dir/config.yaml
           version: '2'
+          image_name: kube
           distro_name: kube
-          apis: []
-          providers: {}
+          apis:
+            - files
+            - inference
+          providers:
+            files:
+              - provider_id: meta-reference-files
+                provider_type: inline::localfs
+                config:
+                  storage_dir: $run_dir/files
+                  metadata_store:
+                    table_name: files_metadata
+                    backend: sql_default
           storage:
             backends:
               kv_default:
@@ -100,6 +114,21 @@ jobs:
                 backend: kv_default
           server:
             port: 8321
+            auth:
+              access_policy:
+                - permit:
+                    actions: [read, delete]
+                    resource: sql_record::openai_files::*
+                  when:
+                    - user with system:serviceaccount:llama-stack:llama-stack-user1 in roles
+                    - user in owners roles
+                  description: User1 can read and delete their Files
+                - permit:
+                    actions: [read]
+                    resource: sql_record::openai_files::*
+                  when:
+                    - user in owners roles
+                  description: Owners can read their Files
           EOF
           yq eval '.server.auth.provider_config.type = "${{ matrix.auth-provider }}"' -i $run_dir/config.yaml
           yq eval '.server.auth.provider_config.tls_cafile = "${{ env.KUBERNETES_CA_CERT_PATH }}"' -i $run_dir/config.yaml
@@ -137,40 +166,5 @@ jobs:
 
       - name: Test auth
         run: |
-          # Function to test API endpoint with authentication
-          # Usage: test_endpoint <curl_args> <user_token_file> <expected_status> [output_file]
-          test_endpoint() {
-              local curl_args="$1"
-              local user_token_file=$2
-              local expected_status=$3
-              local output_file=${4:-/dev/null}
-
-              local status
-              local extra_curl_args=(-s -L -o "$output_file" -w "%{http_code}")
-
-              if [ "$user_token_file" != "none" ]; then
-                  extra_curl_args+=(-H "Authorization: Bearer $(cat $user_token_file)")
-              fi
-
-              set -x
-              status=$(curl $curl_args "${extra_curl_args[@]}")
-              set +x
-
-              if [ "$status" = "$expected_status" ]; then
-                  echo "  ✓ Status: $status (expected $expected_status)"
-                  return 0
-              else
-                  echo "  ✗ Status: $status (expected $expected_status)"
-                  exit 1
-              fi
-          }
-
-          echo "Testing /v1/version without token (should succeed)..."
-          test_endpoint "http://127.0.0.1:8321/v1/version" "none" "200" || exit 1
-
-          echo "Testing /v1/providers without token (should fail with 401)..."
-          test_endpoint "http://127.0.0.1:8321/v1/providers" "none" "401" || exit 1
-
-          echo "Testing /v1/providers with valid token (should succeed)..."
-          test_endpoint "http://127.0.0.1:8321/v1/providers" "llama-stack-auth-token" "200" "providers.json" || exit 1
-          cat providers.json | jq . > /dev/null && echo "  ✓ Valid JSON response"
+          # Run the auth tests
+          ./scripts/integration-auth-tests.sh
