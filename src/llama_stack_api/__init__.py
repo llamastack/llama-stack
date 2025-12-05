@@ -204,7 +204,7 @@ from .inference import (
     TopPSamplingStrategy,
     UserMessage,
 )
-from .inspect import (
+from .inspect_api import (
     ApiFilter,
     HealthInfo,
     Inspect,

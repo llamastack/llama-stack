@@ -111,15 +111,14 @@ Did you mean one of these distributions?
 
 def _get_available_distros() -> list[str]:
     """Get list of available distro names."""
-    if not DISTRO_DIR.exists() and not DISTRIBS_BASE_DIR.exists():
-        return []
 
-    return list(
-        set(
-            [d.name for d in DISTRO_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")]
-            + [d.name for d in DISTRIBS_BASE_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")]
-        )
-    )
+    distros = []
+    if DISTRO_DIR.exists():
+        distros.extend([d.name for d in DISTRO_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")])
+    if DISTRIBS_BASE_DIR.exists():
+        distros.extend([d.name for d in DISTRIBS_BASE_DIR.iterdir() if d.is_dir() and not d.name.startswith(".")])
+
+    return list(set(distros))
 
 
 def _format_distro_suggestions(distros: list[str], user_input: str) -> str:

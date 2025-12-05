@@ -87,26 +87,26 @@ Here are some of the distributions we support:
 
 |               **Distribution**                |                                                                    **Llama Stack Docker**                                                                     |                                                 Start This Distribution                                                  |
 |:---------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------:|
-|                Starter Distribution           |           [llamastack/distribution-starter](https://hub.docker.com/repository/docker/llamastack/distribution-starter/general)                                 |      [Guide](https://llamastack.github.io/latest/distributions/self_hosted_distro/starter.html)                          |
-|                Meta Reference                 |           [llamastack/distribution-meta-reference-gpu](https://hub.docker.com/repository/docker/llamastack/distribution-meta-reference-gpu/general)           |      [Guide](https://llamastack.github.io/latest/distributions/self_hosted_distro/meta-reference-gpu.html)               |
-|                   PostgreSQL                  |            [llamastack/distribution-postgres-demo](https://hub.docker.com/repository/docker/llamastack/distribution-postgres-demo/general)                    |                                                                                                                          |
+|                Starter Distribution                 |           [llamastack/distribution-starter](https://hub.docker.com/repository/docker/llamastack/distribution-starter/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/starter)      |
+|                Meta Reference                 |           [llamastack/distribution-meta-reference-gpu](https://hub.docker.com/repository/docker/llamastack/distribution-meta-reference-gpu/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/meta-reference-gpu)      |
+|                   PostgreSQL                  |                [llamastack/distribution-postgres-demo](https://hub.docker.com/repository/docker/llamastack/distribution-postgres-demo/general)                |                  |
 
-For full documentation on the Llama Stack distributions see the [Distributions Overview](https://llamastack.github.io/docs/latest/distributions) page.
+For full documentation on the Llama Stack distributions see the [Distributions Overview](https://llamastack.github.io/docs/distributions) page.
 
 ### Documentation
 
-Please checkout our [Documentation](https://llamastack.github.io/latest/index.html) page for more details.
+Please checkout our [Documentation](https://llamastack.github.io/docs) page for more details.
 
 * CLI references
-    * [llama (server-side) CLI Reference](https://llamastack.github.io/latest/references/llama_cli_reference/index.html): Guide for using the `llama` CLI to work with Llama models (download, study prompts), and building/starting a Llama Stack distribution.
-    * [llama (client-side) CLI Reference](https://llamastack.github.io/latest/references/llama_stack_client_cli_reference.html): Guide for using the `llama-stack-client` CLI, which allows you to query information about the distribution.
+    * [llama (server-side) CLI Reference](https://llamastack.github.io/docs/references/llama_cli_reference): Guide for using the `llama` CLI to work with Llama models (download, study prompts), and building/starting a Llama Stack distribution.
+    * [llama (client-side) CLI Reference](https://llamastack.github.io/docs/references/llama_stack_client_cli_reference): Guide for using the `llama-stack-client` CLI, which allows you to query information about the distribution.
 * Getting Started
-    * [Quick guide to start a Llama Stack server](https://llamastack.github.io/latest/getting_started/index.html).
+    * [Quick guide to start a Llama Stack server](https://llamastack.github.io/docs/getting_started/quickstart).
     * [Jupyter notebook](./docs/getting_started.ipynb) to walk-through how to use simple text and vision inference llama_stack_client APIs
     * The complete Llama Stack lesson [Colab notebook](https://colab.research.google.com/drive/1dtVmxotBsI4cGZQNsJRYPrLiDeT0Wnwt) of the new [Llama 3.2 course on Deeplearning.ai](https://learn.deeplearning.ai/courses/introducing-multimodal-llama-3-2/lesson/8/llama-stack).
     * A [Zero-to-Hero Guide](https://github.com/meta-llama/llama-stack/tree/main/docs/zero_to_hero_guide) that guide you through all the key components of llama stack with code samples.
 * [Contributing](CONTRIBUTING.md)
-    * [Adding a new API Provider](https://llamastack.github.io/latest/contributing/new_api_provider.html) to walk-through how to add a new API provider.
+    * [Adding a new API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) to walk-through how to add a new API provider.
 
 ### Llama Stack Client SDKs
 

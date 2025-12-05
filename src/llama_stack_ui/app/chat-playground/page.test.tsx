@@ -34,6 +34,11 @@ const mockClient = {
   vectorDBs: {
     list: jest.fn(),
   },
+  toolRuntime: {
+    ragTool: {
+      insert: jest.fn(),
+    },
+  },
 };
 
 jest.mock("@/hooks/use-auth-client", () => ({
@@ -133,12 +138,16 @@ const mockAgents = [
 
 const mockModels = [
   {
-    identifier: "test-model-1",
-    model_type: "llm",
+    id: "test-model-1",
+    custom_metadata: {
+      model_type: "llm",
+    },
   },
   {
-    identifier: "test-model-2",
-    model_type: "llm",
+    id: "test-model-2",
+    custom_metadata: {
+      model_type: "llm",
+    },
   },
 ];
 
@@ -419,12 +428,16 @@ describe("ChatPlaygroundPage", () => {
         render(<ChatPlaygroundPage />);
       });
 
-      await waitFor(() => {
-        expect(mockClient.agents.session.create).toHaveBeenCalledWith(
-          "agent_123",
-          { session_name: "Default Session" }
-        );
-      });
+      // Wait for models to load and be filtered, then session should be created
+      await waitFor(
+        () => {
+          expect(mockClient.agents.session.create).toHaveBeenCalledWith(
+            "agent_123",
+            { session_name: "Default Session" }
+          );
+        },
+        { timeout: 3000 }
+      );
     });
 
     test("switches agent when different agent is selected", async () => {
@@ -605,14 +618,35 @@ describe("ChatPlaygroundPage", () => {
         onload: null,
         onerror: null,
       };
-      global.FileReader = jest.fn(() => mockFileReader);
+      global.FileReader = jest.fn(
+        () => mockFileReader
+      ) as unknown as typeof FileReader;
+      (
+        global.FileReader as unknown as {
+          EMPTY: number;
+          LOADING: number;
+          DONE: number;
+        }
+      ).EMPTY = 0;
+      (
+        global.FileReader as unknown as {
+          EMPTY: number;
+          LOADING: number;
+          DONE: number;
+        }
+      ).LOADING = 1;
+      (
+        global.FileReader as unknown as {
+          EMPTY: number;
+          LOADING: number;
+          DONE: number;
+        }
+      ).DONE = 2;
 
       mockRAGTool = {
         insert: jest.fn().mockResolvedValue({}),
       };
-      mockClient.toolRuntime = {
-        ragTool: mockRAGTool,
-      };
+      mockClient.toolRuntime.ragTool = mockRAGTool;
     });
 
     afterEach(() => {
@@ -762,7 +796,9 @@ describe("ChatPlaygroundPage", () => {
         reader.readAsDataURL(pdfFile);
 
         setTimeout(() => {
-          reader.onerror?.(new ProgressEvent("error"));
+          reader.onerror?.(
+            new ProgressEvent("error") as ProgressEvent<FileReader>
+          );
         }, 0);
       });
 

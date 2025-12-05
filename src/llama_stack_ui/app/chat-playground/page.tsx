@@ -19,6 +19,15 @@ import { VectorDBCreator } from "@/components/chat-playground/vector-db-creator"
 import { useAuthClient } from "@/hooks/use-auth-client";
 import type { Model } from "llama-stack-client/resources/models";
 import type { TurnCreateParams } from "llama-stack-client/resources/agents/turn";
+
+// Extended Model type to include properties from API response
+type ModelWithMetadata = Model & {
+  id: string;
+  custom_metadata?: {
+    model_type?: string;
+    [key: string]: unknown;
+  };
+};
 import {
   SessionUtils,
   type ChatSession,
@@ -680,9 +689,12 @@ export default function ChatPlaygroundPage() {
         setModels(modelList);
 
         // set default LLM model for chat
-        const llmModels = modelList.filter(model => model.model_type === "llm");
+        const llmModels = modelList.filter(
+          (model): model is ModelWithMetadata =>
+            (model as ModelWithMetadata).custom_metadata?.model_type === "llm"
+        );
         if (llmModels.length > 0) {
-          handleModelChange(llmModels[0].identifier);
+          handleModelChange(llmModels[0].id);
         }
       } catch (err) {
         console.error("Error fetching models:", err);
@@ -1444,13 +1456,14 @@ export default function ChatPlaygroundPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {models
-                      .filter(model => model.model_type === "llm")
+                      .filter(
+                        (model): model is ModelWithMetadata =>
+                          (model as ModelWithMetadata).custom_metadata
+                            ?.model_type === "llm"
+                      )
                       .map(model => (
-                        <SelectItem
-                          key={model.identifier}
-                          value={model.identifier}
-                        >
-                          {model.identifier}
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.id}
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -1663,13 +1676,14 @@ export default function ChatPlaygroundPage() {
                   </SelectTrigger>
                   <SelectContent>
                     {models
-                      .filter(model => model.model_type === "llm")
+                      .filter(
+                        (model): model is ModelWithMetadata =>
+                          (model as ModelWithMetadata).custom_metadata
+                            ?.model_type === "llm"
+                      )
                       .map(model => (
-                        <SelectItem
-                          key={model.identifier}
-                          value={model.identifier}
-                        >
-                          {model.identifier}
+                        <SelectItem key={model.id} value={model.id}>
+                          {model.id}
                         </SelectItem>
                       ))}
                   </SelectContent>

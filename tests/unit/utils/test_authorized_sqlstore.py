@@ -101,22 +101,32 @@ async def test_sql_policy_consistency(mock_get_authenticated_user):
         # Test scenarios with different access control patterns
         test_scenarios = [
             # Scenario 1: Public record (no access control - represents None user insert)
-            {"id": "1", "name": "public", "access_attributes": None},
+            {"id": "1", "name": "public", "owner_principal": "", "access_attributes": None},
             # Scenario 2: Record with roles requirement
-            {"id": "2", "name": "admin-only", "access_attributes": {"roles": ["admin"]}},
+            {"id": "2", "name": "admin-only", "owner_principal": "owner1", "access_attributes": {"roles": ["admin"]}},
             # Scenario 3: Record with multiple attribute categories
-            {"id": "3", "name": "admin-ml-team", "access_attributes": {"roles": ["admin"], "teams": ["ml-team"]}},
+            {
+                "id": "3",
+                "name": "admin-ml-team",
+                "owner_principal": "owner2",
+                "access_attributes": {"roles": ["admin"], "teams": ["ml-team"]},
+            },
             # Scenario 4: Record with teams only (missing roles category)
-            {"id": "4", "name": "ml-team-only", "access_attributes": {"teams": ["ml-team"]}},
+            {
+                "id": "4",
+                "name": "ml-team-only",
+                "owner_principal": "owner3",
+                "access_attributes": {"teams": ["ml-team"]},
+            },
             # Scenario 5: Record with roles and projects
             {
                 "id": "5",
                 "name": "admin-project-x",
+                "owner_principal": "owner4",
                 "access_attributes": {"roles": ["admin"], "projects": ["project-x"]},
             },
         ]
 
-        mock_get_authenticated_user.return_value = User("test-user", {"roles": ["admin"]})
         for scenario in test_scenarios:
             await base_sqlstore.insert("resources", scenario)
 
@@ -148,10 +158,16 @@ async def test_sql_policy_consistency(mock_get_authenticated_user):
             sql_ids = {row["id"] for row in sql_results.data}
             policy_ids = set()
             for scenario in test_scenarios:
+                # Create owner matching what was stored (None for public records)
+                owner = (
+                    User(principal=scenario["owner_principal"], attributes=scenario["access_attributes"])
+                    if scenario["owner_principal"]
+                    else None
+                )
                 sql_record = SqlRecord(
                     record_id=scenario["id"],
                     table_name="resources",
-                    owner=User(principal="test-user", attributes=scenario["access_attributes"]),
+                    owner=owner,
                 )
 
                 if is_action_allowed(policy, Action.READ, sql_record, user):

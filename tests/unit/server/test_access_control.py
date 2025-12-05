@@ -78,7 +78,7 @@ async def test_access_control_with_cache(mock_get_authenticated_user, test_setup
     with pytest.raises(ValueError):
         await routing_table.get_model("model-data-scientist")
 
-    mock_get_authenticated_user.return_value = User("test-user", {"roles": ["data-scientist"], "teams": ["other-team"]})
+    mock_get_authenticated_user.return_value = User("test-user", {"roles": ["user"], "teams": ["other-team"]})
     all_models = await routing_table.list_models()
     assert len(all_models.data) == 1
     assert all_models.data[0].identifier == "model-public"
@@ -154,16 +154,16 @@ async def test_access_control_empty_attributes(mock_get_authenticated_user, test
     )
     await registry.register(model)
     mock_get_authenticated_user.return_value = User(
-        "test-user",
+        "differentuser",
         {
             "roles": [],
         },
     )
-    result = await routing_table.get_model("model-empty-attrs")
-    assert result.identifier == "model-empty-attrs"
+    with pytest.raises(ValueError):
+        await routing_table.get_model("model-empty-attrs")
     all_models = await routing_table.list_models()
     model_ids = [m.identifier for m in all_models.data]
-    assert "model-empty-attrs" in model_ids
+    assert "model-empty-attrs" not in model_ids
 
 
 @patch("llama_stack.core.routing_tables.common.get_authenticated_user")
@@ -223,7 +223,7 @@ async def test_automatic_access_attributes(mock_get_authenticated_user, test_set
     assert registered_model.owner.attributes["projects"] == ["llama-3"]
 
     # Verify another user without matching attributes can't access it
-    mock_get_authenticated_user.return_value = User("test-user", {"roles": ["engineer"], "teams": ["infra-team"]})
+    mock_get_authenticated_user.return_value = User("test-user2", {"roles": ["engineer"], "teams": ["infra-team"]})
     with pytest.raises(ValueError):
         await routing_table.get_model("auto-access-model")
 
@@ -363,6 +363,7 @@ def test_permit_when():
 
 
 def test_permit_unless():
+    # permit unless both conditions are met
     config = """
     - permit:
         principal: user-1
@@ -377,10 +378,10 @@ def test_permit_unless():
         identifier="mymodel",
         provider_id="myprovider",
         model_type=ModelType.llm,
-        owner=User("testuser", {"namespaces": ["foo"]}),
+        owner=User("testuser", {"namespaces": ["foo"], "teams": ["ml-team"]}),
     )
     assert is_action_allowed(policy, "read", model, User("user-1", {"namespaces": ["foo"]}))
-    assert not is_action_allowed(policy, "read", model, User("user-1", {"namespaces": ["bar"]}))
+    assert not is_action_allowed(policy, "read", model, User("user-1", {"namespaces": ["bar"], "teams": ["ml-team"]}))
     assert not is_action_allowed(policy, "read", model, User("user-2", {"namespaces": ["foo"]}))
 
 
