@@ -18,7 +18,6 @@ from pydantic import TypeAdapter
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
     content_from_data_and_mime_type,
@@ -120,16 +119,11 @@ class OpenAIVectorStoreMixin(ABC):
         model = self.vector_stores_config.rewrite_query_params.model
         model_id = f"{model.provider_id}/{model.model_id}"
 
-        # Use custom prompt from config if provided, otherwise use built-in default
-        # Users only need to configure the model - prompt is automatic with optional override
-        custom_prompt = self.vector_stores_config.rewrite_query_params.prompt
-        if custom_prompt:
-            if "{query}" not in custom_prompt:
-                raise ValueError("'{query}' is required in the custom_prompt")
-
-            prompt = custom_prompt.format(query=query)
-        else:
-            prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query=query)
+        # Use the configured prompt (defaults to DEFAULT_QUERY_REWRITE_PROMPT if not overridden)
+        prompt_template = self.vector_stores_config.rewrite_query_params.prompt
+        if "{query}" not in prompt_template:
+            raise ValueError("'{query}' placeholder is required in the prompt template")
+        prompt = prompt_template.format(query=query)
 
         request = OpenAIChatCompletionRequestWithExtraBody(
             model=model_id,
@@ -138,13 +132,18 @@ class OpenAIVectorStoreMixin(ABC):
             temperature=self.vector_stores_config.rewrite_query_params.temperature or 0.3,
         )
 
-        response = await self.inference_api.openai_chat_completion(request)  # type: ignore
-        content = response.choices[0].message.content
-        if content is None:
-            raise ValueError("LLM response content is None - cannot rewrite query")
-        rewritten_query: str = content.strip()
-        logger.debug(f"Query rewritten: '{query}' → '{rewritten_query}'")
-        return rewritten_query
+        try:
+            response = await self.inference_api.openai_chat_completion(request)  # type: ignore
+            content = response.choices[0].message.content
+            if content is None:
+                logger.error(f"LLM returned None content for query rewriting. Model: {model_id}")
+                raise RuntimeError("Query rewrite failed due to an internal error")
+            rewritten_query: str = content.strip()
+            logger.debug("Query rewrite succeeded for vector search")
+            return rewritten_query
+        except Exception as e:
+            logger.error(f"Query rewrite failed with LLM call error. Model: {model_id}, Error: {e}")
+            raise RuntimeError("Query rewrite failed due to an internal error") from e
 
     async def _save_openai_vector_store(self, store_id: str, store_info: dict[str, Any]) -> None:
         """Save vector store metadata to persistent storage."""
