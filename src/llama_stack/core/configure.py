@@ -63,7 +63,7 @@ def configure_api_providers(config: StackConfig, build_spec: DistributionSpec) -
     if config.apis:
         apis_to_serve = config.apis
     else:
-        apis_to_serve = [a.value for a in Api if a not in (Api.inspect, Api.providers)]
+        apis_to_serve = [a.value for a in Api if a not in (Api.inspect, Api.providers, Api.admin)]
 
     for api_str in apis_to_serve:
         api = Api(api_str)

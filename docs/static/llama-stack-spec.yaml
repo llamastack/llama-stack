@@ -11268,26 +11268,64 @@ components:
       - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
         title: OpenAIResponseContentPartReasoningText
       title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
-    MetricInResponse:
-      description: A metric value included in API responses.
+    ListBenchmarksRequest:
+      description: Request model for listing benchmarks.
+      properties: {}
+      title: ListBenchmarksRequest
+      type: object
+    GetBenchmarkRequest:
+      description: Request model for getting a benchmark.
       properties:
-        metric:
-          title: Metric
+        benchmark_id:
+          description: The ID of the benchmark to get.
+          title: Benchmark Id
           type: string
-        value:
-          anyOf:
-          - type: integer
-          - type: number
-          title: integer | number
-        unit:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
       required:
-      - metric
-      - value
-      title: MetricInResponse
+      - benchmark_id
+      title: GetBenchmarkRequest
+      type: object
+    UnregisterBenchmarkRequest:
+      description: Request model for unregistering a benchmark.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark to unregister.
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: UnregisterBenchmarkRequest
+      type: object
+    GetDatasetRequest:
+      description: Request model for getting a dataset by ID.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: GetDatasetRequest
+      type: object
+    UnregisterDatasetRequest:
+      description: Request model for unregistering a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: UnregisterDatasetRequest
+      type: object
+    DialogType:
+      description: Parameter type for dialog data with semantic output labels.
+      properties:
+        type:
+          const: dialog
+          default: dialog
+          title: Type
+          type: string
+      title: DialogType
       type: object
     TextDelta:
       description: A text content delta for streaming responses.
@@ -11319,6 +11357,359 @@ components:
       required:
       - image
       title: ImageDelta
+      type: object
+    ToolGroupInput:
+      description: Input data for registering a tool group.
+      properties:
+        toolgroup_id:
+          title: Toolgroup Id
+          type: string
+        provider_id:
+          title: Provider Id
+          type: string
+        args:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        mcp_endpoint:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+            title: URL
+          - type: 'null'
+          nullable: true
+          title: URL
+      required:
+      - toolgroup_id
+      - provider_id
+      title: ToolGroupInput
+      type: object
+    Api:
+      description: Enumeration of all available APIs in the Llama Stack system.
+      enum:
+      - providers
+      - inference
+      - safety
+      - agents
+      - batches
+      - vector_io
+      - datasetio
+      - scoring
+      - eval
+      - post_training
+      - tool_runtime
+      - models
+      - shields
+      - vector_stores
+      - datasets
+      - scoring_functions
+      - benchmarks
+      - tool_groups
+      - files
+      - prompts
+      - conversations
+      - connectors
+      - inspect
+      - admin
+      title: Api
+      type: string
+    ProviderSpec:
+      properties:
+        api:
+          $ref: '#/components/schemas/Api'
+        provider_type:
+          title: Provider Type
+          type: string
+        config_class:
+          description: Fully-qualified classname of the config for this provider
+          title: Config Class
+          type: string
+        api_dependencies:
+          description: Higher-level API surfaces may depend on other providers to provide their functionality
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Api Dependencies
+          type: array
+        optional_api_dependencies:
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Optional Api Dependencies
+          type: array
+        deprecation_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated, specify the warning message here
+          nullable: true
+        deprecation_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated and does NOT work, specify the error message here
+          nullable: true
+        module:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2-
+
+             Fully-qualified name of the module to import. The module is expected to have:
+
+              - `get_adapter_impl(config, deps)`: returns the adapter implementation
+
+              Example: `module: ramalama_stack`
+          nullable: true
+        pip_packages:
+          description: The pip dependencies needed for this implementation
+          items:
+            type: string
+          title: Pip Packages
+          type: array
+        provider_data_validator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        is_external:
+          default: false
+          description: Notes whether this provider is an external provider.
+          title: Is External
+          type: boolean
+        deps__:
+          items:
+            type: string
+          title: Deps
+          type: array
+      required:
+      - api
+      - provider_type
+      - config_class
+      title: ProviderSpec
+      type: object
+    InlineProviderSpec:
+      properties:
+        api:
+          $ref: '#/components/schemas/Api'
+        provider_type:
+          title: Provider Type
+          type: string
+        config_class:
+          description: Fully-qualified classname of the config for this provider
+          title: Config Class
+          type: string
+        api_dependencies:
+          description: Higher-level API surfaces may depend on other providers to provide their functionality
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Api Dependencies
+          type: array
+        optional_api_dependencies:
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Optional Api Dependencies
+          type: array
+        deprecation_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated, specify the warning message here
+          nullable: true
+        deprecation_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated and does NOT work, specify the error message here
+          nullable: true
+        module:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2-
+
+             Fully-qualified name of the module to import. The module is expected to have:
+
+              - `get_adapter_impl(config, deps)`: returns the adapter implementation
+
+              Example: `module: ramalama_stack`
+          nullable: true
+        pip_packages:
+          description: The pip dependencies needed for this implementation
+          items:
+            type: string
+          title: Pip Packages
+          type: array
+        provider_data_validator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        is_external:
+          default: false
+          description: Notes whether this provider is an external provider.
+          title: Is External
+          type: boolean
+        deps__:
+          items:
+            type: string
+          title: Deps
+          type: array
+        container_image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2
+
+            The container image to use for this implementation. If one is provided, pip_packages will be ignored.
+            If a provider depends on other providers, the dependencies MUST NOT specify a container image.
+          nullable: true
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2
+
+            A description of the provider. This is used to display in the documentation.
+          nullable: true
+      required:
+      - api
+      - provider_type
+      - config_class
+      title: InlineProviderSpec
+      type: object
+    RemoteProviderSpec:
+      properties:
+        api:
+          $ref: '#/components/schemas/Api'
+        provider_type:
+          title: Provider Type
+          type: string
+        config_class:
+          description: Fully-qualified classname of the config for this provider
+          title: Config Class
+          type: string
+        api_dependencies:
+          description: Higher-level API surfaces may depend on other providers to provide their functionality
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Api Dependencies
+          type: array
+        optional_api_dependencies:
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Optional Api Dependencies
+          type: array
+        deprecation_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated, specify the warning message here
+          nullable: true
+        deprecation_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated and does NOT work, specify the error message here
+          nullable: true
+        module:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2-
+
+             Fully-qualified name of the module to import. The module is expected to have:
+
+              - `get_adapter_impl(config, deps)`: returns the adapter implementation
+
+              Example: `module: ramalama_stack`
+          nullable: true
+        pip_packages:
+          description: The pip dependencies needed for this implementation
+          items:
+            type: string
+          title: Pip Packages
+          type: array
+        provider_data_validator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        is_external:
+          default: false
+          description: Notes whether this provider is an external provider.
+          title: Is External
+          type: boolean
+        deps__:
+          items:
+            type: string
+          title: Deps
+          type: array
+        adapter_type:
+          description: Unique identifier for this adapter
+          title: Adapter Type
+          type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2
+
+            A description of the provider. This is used to display in the documentation.
+          nullable: true
+      required:
+      - api
+      - provider_type
+      - config_class
+      - adapter_type
+      title: RemoteProviderSpec
+      type: object
+    ListRoutesRequest:
+      description: Request to list API routes.
+      properties:
+        api_filter:
+          anyOf:
+          - enum:
+            - v1
+            - v1alpha
+            - v1beta
+            - deprecated
+            type: string
+          - type: 'null'
+          description: Filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
+          nullable: true
+      title: ListRoutesRequest
+      type: object
+    InspectProviderRequest:
+      description: Request to inspect a specific provider.
+      properties:
+        provider_id:
+          description: The ID of the provider to inspect.
+          title: Provider Id
+          type: string
+      required:
+      - provider_id
+      title: InspectProviderRequest
+      type: object
+    MetricInResponse:
+      description: A metric value included in API responses.
+      properties:
+        metric:
+          title: Metric
+          type: string
+        value:
+          anyOf:
+          - type: integer
+          - type: number
+          title: integer | number
+        unit:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+      required:
+      - metric
+      - value
+      title: MetricInResponse
       type: object
     Fp8QuantizationConfig:
       description: Configuration for 8-bit floating point quantization.
@@ -11665,70 +12056,6 @@ components:
       - batch_id
       title: CancelBatchRequest
       type: object
-    ListBenchmarksRequest:
-      description: Request model for listing benchmarks.
-      properties: {}
-      title: ListBenchmarksRequest
-      type: object
-    GetBenchmarkRequest:
-      description: Request model for getting a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to get.
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: GetBenchmarkRequest
-      type: object
-    UnregisterBenchmarkRequest:
-      description: Request model for unregistering a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to unregister.
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: UnregisterBenchmarkRequest
-      type: object
-    DialogType:
-      description: Parameter type for dialog data with semantic output labels.
-      properties:
-        type:
-          const: dialog
-          default: dialog
-          title: Type
-          type: string
-      title: DialogType
-      type: object
-    ToolGroupInput:
-      description: Input data for registering a tool group.
-      properties:
-        toolgroup_id:
-          title: Toolgroup Id
-          type: string
-        provider_id:
-          title: Provider Id
-          type: string
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          nullable: true
-          title: URL
-      required:
-      - toolgroup_id
-      - provider_id
-      title: ToolGroupInput
-      type: object
     ConnectorInput:
       description: Input for creating a connector
       properties:
@@ -11843,305 +12170,6 @@ components:
       - items
       title: ConversationItemCreateRequest
       type: object
-    GetDatasetRequest:
-      description: Request model for getting a dataset by ID.
-      properties:
-        dataset_id:
-          description: The ID of the dataset to get.
-          title: Dataset Id
-          type: string
-      required:
-      - dataset_id
-      title: GetDatasetRequest
-      type: object
-    UnregisterDatasetRequest:
-      description: Request model for unregistering a dataset.
-      properties:
-        dataset_id:
-          description: The ID of the dataset to unregister.
-          title: Dataset Id
-          type: string
-      required:
-      - dataset_id
-      title: UnregisterDatasetRequest
-      type: object
-    Api:
-      description: Enumeration of all available APIs in the Llama Stack system.
-      enum:
-      - providers
-      - inference
-      - safety
-      - agents
-      - batches
-      - vector_io
-      - datasetio
-      - scoring
-      - eval
-      - post_training
-      - tool_runtime
-      - models
-      - shields
-      - vector_stores
-      - datasets
-      - scoring_functions
-      - benchmarks
-      - tool_groups
-      - files
-      - prompts
-      - conversations
-      - connectors
-      - inspect
-      title: Api
-      type: string
-    ProviderSpec:
-      properties:
-        api:
-          $ref: '#/components/schemas/Api'
-        provider_type:
-          title: Provider Type
-          type: string
-        config_class:
-          description: Fully-qualified classname of the config for this provider
-          title: Config Class
-          type: string
-        api_dependencies:
-          description: Higher-level API surfaces may depend on other providers to provide their functionality
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Api Dependencies
-          type: array
-        optional_api_dependencies:
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Optional Api Dependencies
-          type: array
-        deprecation_warning:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated, specify the warning message here
-          nullable: true
-        deprecation_error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated and does NOT work, specify the error message here
-          nullable: true
-        module:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2-
-
-             Fully-qualified name of the module to import. The module is expected to have:
-
-              - `get_adapter_impl(config, deps)`: returns the adapter implementation
-
-              Example: `module: ramalama_stack`
-          nullable: true
-        pip_packages:
-          description: The pip dependencies needed for this implementation
-          items:
-            type: string
-          title: Pip Packages
-          type: array
-        provider_data_validator:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        is_external:
-          default: false
-          description: Notes whether this provider is an external provider.
-          title: Is External
-          type: boolean
-        deps__:
-          items:
-            type: string
-          title: Deps
-          type: array
-      required:
-      - api
-      - provider_type
-      - config_class
-      title: ProviderSpec
-      type: object
-    InlineProviderSpec:
-      properties:
-        api:
-          $ref: '#/components/schemas/Api'
-        provider_type:
-          title: Provider Type
-          type: string
-        config_class:
-          description: Fully-qualified classname of the config for this provider
-          title: Config Class
-          type: string
-        api_dependencies:
-          description: Higher-level API surfaces may depend on other providers to provide their functionality
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Api Dependencies
-          type: array
-        optional_api_dependencies:
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Optional Api Dependencies
-          type: array
-        deprecation_warning:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated, specify the warning message here
-          nullable: true
-        deprecation_error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated and does NOT work, specify the error message here
-          nullable: true
-        module:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2-
-
-             Fully-qualified name of the module to import. The module is expected to have:
-
-              - `get_adapter_impl(config, deps)`: returns the adapter implementation
-
-              Example: `module: ramalama_stack`
-          nullable: true
-        pip_packages:
-          description: The pip dependencies needed for this implementation
-          items:
-            type: string
-          title: Pip Packages
-          type: array
-        provider_data_validator:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        is_external:
-          default: false
-          description: Notes whether this provider is an external provider.
-          title: Is External
-          type: boolean
-        deps__:
-          items:
-            type: string
-          title: Deps
-          type: array
-        container_image:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2
-
-            The container image to use for this implementation. If one is provided, pip_packages will be ignored.
-            If a provider depends on other providers, the dependencies MUST NOT specify a container image.
-          nullable: true
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2
-
-            A description of the provider. This is used to display in the documentation.
-          nullable: true
-      required:
-      - api
-      - provider_type
-      - config_class
-      title: InlineProviderSpec
-      type: object
-    RemoteProviderSpec:
-      properties:
-        api:
-          $ref: '#/components/schemas/Api'
-        provider_type:
-          title: Provider Type
-          type: string
-        config_class:
-          description: Fully-qualified classname of the config for this provider
-          title: Config Class
-          type: string
-        api_dependencies:
-          description: Higher-level API surfaces may depend on other providers to provide their functionality
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Api Dependencies
-          type: array
-        optional_api_dependencies:
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Optional Api Dependencies
-          type: array
-        deprecation_warning:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated, specify the warning message here
-          nullable: true
-        deprecation_error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated and does NOT work, specify the error message here
-          nullable: true
-        module:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2-
-
-             Fully-qualified name of the module to import. The module is expected to have:
-
-              - `get_adapter_impl(config, deps)`: returns the adapter implementation
-
-              Example: `module: ramalama_stack`
-          nullable: true
-        pip_packages:
-          description: The pip dependencies needed for this implementation
-          items:
-            type: string
-          title: Pip Packages
-          type: array
-        provider_data_validator:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        is_external:
-          default: false
-          description: Notes whether this provider is an external provider.
-          title: Is External
-          type: boolean
-        deps__:
-          items:
-            type: string
-          title: Deps
-          type: array
-        adapter_type:
-          description: Unique identifier for this adapter
-          title: Adapter Type
-          type: string
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2
-
-            A description of the provider. This is used to display in the documentation.
-          nullable: true
-      required:
-      - api
-      - provider_type
-      - config_class
-      - adapter_type
-      title: RemoteProviderSpec
-      type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.
       properties:
@@ -12206,17 +12234,6 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
-      type: object
-    InspectProviderRequest:
-      description: Request model for inspecting a provider by ID.
-      properties:
-        provider_id:
-          description: The ID of the provider to inspect.
-          title: Provider Id
-          type: string
-      required:
-      - provider_id
-      title: InspectProviderRequest
       type: object
   responses:
     BadRequest400:
