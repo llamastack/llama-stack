@@ -4,64 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-from pydantic import BaseModel
-
-from llama_stack_api.datatypes import HealthStatus
-from llama_stack_api.schema_utils import json_schema_type, webmethod
-from llama_stack_api.version import (
-    LLAMA_STACK_API_V1,
+# Import types from admin module to avoid duplication
+from llama_stack_api.admin.models import (
+    ApiFilter,
+    HealthInfo,
+    ListRoutesResponse,
+    VersionInfo,
 )
-
-# Valid values for the route filter parameter.
-# Actual API levels: v1, v1alpha, v1beta (filters by level, excludes deprecated)
-# Special filter value: "deprecated" (shows deprecated routes regardless of level)
-ApiFilter = Literal["v1", "v1alpha", "v1beta", "deprecated"]
-
-
-@json_schema_type
-class RouteInfo(BaseModel):
-    """Information about an API route including its path, method, and implementing providers.
-
-    :param route: The API endpoint path
-    :param method: HTTP method for the route
-    :param provider_types: List of provider types that implement this route
-    """
-
-    route: str
-    method: str
-    provider_types: list[str]
-
-
-@json_schema_type
-class HealthInfo(BaseModel):
-    """Health status information for the service.
-
-    :param status: Current health status of the service
-    """
-
-    status: HealthStatus
-
-
-@json_schema_type
-class VersionInfo(BaseModel):
-    """Version information for the service.
-
-    :param version: Version number of the service
-    """
-
-    version: str
-
-
-@json_schema_type
-class ListRoutesResponse(BaseModel):
-    """Response containing a list of all available API routes.
-
-    :param data: List of available route information objects
-    """
-
-    data: list[RouteInfo]
+from llama_stack_api.schema_utils import webmethod
+from llama_stack_api.version import LLAMA_STACK_API_V1
 
 
 @runtime_checkable
@@ -71,7 +24,7 @@ class Inspect(Protocol):
     APIs for inspecting the Llama Stack service, including health status, available API routes with methods and implementing providers.
     """
 
-    @webmethod(route="/inspect/routes", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/inspect/routes", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def list_routes(self, api_filter: ApiFilter | None = None) -> ListRoutesResponse:
         """List routes.
 
@@ -82,7 +35,7 @@ class Inspect(Protocol):
         """
         ...
 
-    @webmethod(route="/health", method="GET", level=LLAMA_STACK_API_V1, require_authentication=False)
+    @webmethod(route="/health", method="GET", level=LLAMA_STACK_API_V1, require_authentication=False, deprecated=True)
     async def health(self) -> HealthInfo:
         """Get health status.
 
@@ -92,7 +45,7 @@ class Inspect(Protocol):
         """
         ...
 
-    @webmethod(route="/version", method="GET", level=LLAMA_STACK_API_V1, require_authentication=False)
+    @webmethod(route="/version", method="GET", level=LLAMA_STACK_API_V1, require_authentication=False, deprecated=True)
     async def version(self) -> VersionInfo:
         """Get version.
 
