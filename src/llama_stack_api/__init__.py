@@ -40,7 +40,11 @@ from .benchmarks import (
     BenchmarkInput,
     Benchmarks,
     CommonBenchmarkFields,
+    GetBenchmarkRequest,
+    ListBenchmarksRequest,
     ListBenchmarksResponse,
+    RegisterBenchmarkRequest,
+    UnregisterBenchmarkRequest,
 )
 
 # Import commonly used types from common submodule
@@ -567,7 +571,11 @@ __all__ = [
     "LLMRAGQueryGeneratorConfig",
     "ListBatchesResponse",
     "RetrieveBatchRequest",
+    "GetBenchmarkRequest",
+    "ListBenchmarksRequest",
     "ListBenchmarksResponse",
+    "RegisterBenchmarkRequest",
+    "UnregisterBenchmarkRequest",
     "ListDatasetsResponse",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
