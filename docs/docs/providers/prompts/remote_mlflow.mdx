@@ -1,0 +1,751 @@
+---
+description: |
+  [MLflow](https://mlflow.org/) is a remote provider for centralized prompt management and versioning
+  using MLflow's Prompt Registry (available in MLflow 3.4+). It allows you to store, version, and manage
+  prompts in a centralized MLflow server, enabling team collaboration and prompt lifecycle management.
+ 
+  See [MLflow's documentation](https://mlflow.org/docs/latest/prompts.html) for more details about MLflow Prompt Registry.
+
+sidebar_label: Remote - MLflow
+title: remote::mlflow
+---
+
+# remote::mlflow
+
+## Description
+
+[MLflow](https://mlflow.org/) is a remote provider for centralized prompt management and versioning
+using MLflow's Prompt Registry (available in MLflow 3.4+). It allows you to store, version, and manage
+prompts in a centralized MLflow server, enabling team collaboration and prompt lifecycle management.
+
+## Features
+MLflow Prompts Provider supports:
+- Create and store prompts with automatic versioning
+- Retrieve prompts by ID and version
+- Update prompts (creates new immutable versions)
+- List all prompts or all versions of a specific prompt
+- Set default version for a prompt
+- Automatic variable extraction from templates
+- Metadata storage and retrieval
+- Centralized prompt management across teams
+
+## Key Capabilities
+- **Version Control**: Immutable versioning ensures prompt history is preserved
+- **Default Version Management**: Easily switch between prompt versions
+- **Variable Auto-Extraction**: Automatically detects `{{ variable }}` placeholders
+- **Metadata Tags**: Stores Llama Stack metadata for seamless integration
+- **Team Collaboration**: Centralized MLflow server enables multi-user access
+
+## Usage
+
+To use MLflow Prompts Provider in your Llama Stack project:
+
+1. Install MLflow 3.4 or later
+2. Start an MLflow server (local or remote)
+3. Configure your Llama Stack project to use the MLflow provider
+4. Start creating and managing prompts
+
+## Installation
+
+Install MLflow using pip or uv:
+
+```bash
+pip install 'mlflow>=3.4.0'
+# or
+uv pip install 'mlflow>=3.4.0'
+```
+
+## Quick Start
+
+### 1. Start MLflow Server
+
+**Local server** (for development):
+```bash
+mlflow server --host 127.0.0.1 --port 5555
+```
+
+**Remote server** (for production):
+```bash
+mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri postgresql://user:pass@host/db
+```
+
+### 2. Configure Llama Stack
+
+Add to your Llama Stack configuration:
+
+```yaml
+prompts:
+  - provider_id: mlflow-prompts
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: http://localhost:5555
+      experiment_name: llama-stack-prompts
+```
+
+### 3. Use the Prompts API
+
+```python
+from llama_stack_client import LlamaStackClient
+
+client = LlamaStackClient(base_url="http://localhost:5000")
+
+# Create a prompt
+prompt = client.prompts.create(
+    prompt="Summarize the following text in {{ num_sentences }} sentences:\n\n{{ text }}",
+    variables=["num_sentences", "text"]
+)
+print(f"Created prompt: {prompt.prompt_id} (v{prompt.version})")
+
+# Retrieve prompt
+retrieved = client.prompts.get(prompt_id=prompt.prompt_id)
+print(f"Retrieved: {retrieved.prompt}")
+
+# Update prompt (creates version 2)
+updated = client.prompts.update(
+    prompt_id=prompt.prompt_id,
+    prompt="Summarize in exactly {{ num_sentences }} sentences:\n\n{{ text }}",
+    version=1,
+    set_as_default=True
+)
+print(f"Updated to version: {updated.version}")
+
+# List all prompts
+prompts = client.prompts.list()
+print(f"Found {len(prompts.data)} prompts")
+```
+
+## Configuration Examples
+
+### Local Development
+
+For local development with filesystem storage:
+
+```yaml
+prompts:
+  - provider_id: mlflow-local
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: http://localhost:5555
+      experiment_name: dev-prompts
+      timeout_seconds: 30
+```
+
+### Remote MLflow Server
+
+For production with a remote MLflow server:
+
+```yaml
+prompts:
+  - provider_id: mlflow-production
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: ${env.MLFLOW_TRACKING_URI}
+      experiment_name: production-prompts
+      timeout_seconds: 60
+```
+
+### Advanced Configuration
+
+With custom settings:
+
+```yaml
+prompts:
+  - provider_id: mlflow-custom
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: https://mlflow.example.com
+      experiment_name: team-prompts
+      timeout_seconds: 45
+```
+
+## Authentication
+
+The MLflow provider supports three authentication methods with the following precedence (highest to lowest):
+
+1. **Per-Request Provider Data** (via headers)
+2. **Configuration Auth Credential** (in config file)
+3. **Environment Variables** (MLflow defaults)
+
+### Method 1: Per-Request Provider Data (Recommended for Multi-Tenant)
+
+For multi-tenant deployments where each user has their own credentials:
+
+**Configuration**:
+```yaml
+prompts:
+  - provider_id: mlflow-prompts
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: http://mlflow.company.com
+      experiment_name: production-prompts
+      # No auth_credential - use per-request tokens
+```
+
+**Client Usage**:
+```python
+from llama_stack_client import LlamaStackClient
+
+client = LlamaStackClient(base_url="http://localhost:5000")
+
+# User 1 with their own token
+prompts_user1 = client.prompts.list(
+    extra_headers={
+        "x-llamastack-provider-data": '{"mlflow_api_token": "user1-token"}'
+    }
+)
+
+# User 2 with their own token
+prompts_user2 = client.prompts.list(
+    extra_headers={
+        "x-llamastack-provider-data": '{"mlflow_api_token": "user2-token"}'
+    }
+)
+```
+
+**Benefits**:
+- Per-user authentication and authorization
+- No shared credentials
+- Ideal for SaaS deployments
+- Supports user-specific MLflow experiments
+
+### Method 2: Configuration Auth Credential (Server-Level)
+
+For server-level authentication where all requests use the same credentials:
+
+**Using Environment Variable** (recommended):
+```yaml
+prompts:
+  - provider_id: mlflow-prompts
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: http://mlflow.company.com
+      experiment_name: production-prompts
+      auth_credential: ${env.MLFLOW_TRACKING_TOKEN}
+```
+
+**Using Direct Value** (not recommended for production):
+```yaml
+prompts:
+  - provider_id: mlflow-prompts
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: http://mlflow.company.com
+      experiment_name: production-prompts
+      auth_credential: "mlflow-server-token"
+```
+
+**Client Usage**:
+```python
+# No extra headers needed - server handles authentication
+client = LlamaStackClient(base_url="http://localhost:5000")
+prompts = client.prompts.list()
+```
+
+**Benefits**:
+- Simple configuration
+- Single point of credential management
+- Good for single-tenant deployments
+
+### Method 3: Environment Variables (MLflow Default)
+
+MLflow reads standard environment variables automatically:
+
+**Set before starting Llama Stack**:
+```bash
+export MLFLOW_TRACKING_TOKEN="your-token"
+export MLFLOW_TRACKING_USERNAME="user"  # Optional: Basic auth
+export MLFLOW_TRACKING_PASSWORD="pass"  # Optional: Basic auth
+llama stack run my-config.yaml
+```
+
+**Configuration** (no auth_credential needed):
+```yaml
+prompts:
+  - provider_id: mlflow-prompts
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: http://mlflow.company.com
+      experiment_name: production-prompts
+```
+
+**Benefits**:
+- Standard MLflow behavior
+- No configuration changes needed
+- Good for containerized deployments
+
+### Databricks Authentication
+
+For Databricks-managed MLflow:
+
+**Configuration**:
+```yaml
+prompts:
+  - provider_id: databricks-prompts
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: databricks
+      # Or with workspace URL:
+      # mlflow_tracking_uri: databricks://profile-name
+      experiment_name: /Shared/llama-stack-prompts
+      auth_credential: ${env.DATABRICKS_TOKEN}
+```
+
+**Environment Setup**:
+```bash
+export DATABRICKS_TOKEN="dapi..."
+export DATABRICKS_HOST="https://your-workspace.cloud.databricks.com"
+```
+
+**Client Usage**:
+```python
+from llama_stack_client import LlamaStackClient
+
+client = LlamaStackClient(base_url="http://localhost:5000")
+
+# Create prompt in Databricks MLflow
+prompt = client.prompts.create(
+    prompt="Analyze {{ topic }} with focus on {{ aspect }}",
+    variables=["topic", "aspect"]
+)
+
+# View in Databricks UI:
+# https://workspace.cloud.databricks.com/#mlflow/experiments/<experiment-id>
+```
+
+### Enterprise MLflow with Authentication
+
+Example for enterprise MLflow server with API key authentication:
+
+**Configuration**:
+```yaml
+prompts:
+  - provider_id: enterprise-mlflow
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: https://mlflow.enterprise.com
+      experiment_name: production-prompts
+      auth_credential: ${env.MLFLOW_API_KEY}
+      timeout_seconds: 60
+```
+
+**Client Usage**:
+```python
+from llama_stack_client import LlamaStackClient
+
+# Option A: Use server's configured credential
+client = LlamaStackClient(base_url="http://localhost:5000")
+prompt = client.prompts.create(
+    prompt="Classify sentiment: {{ text }}",
+    variables=["text"]
+)
+
+# Option B: Override with per-request credential
+prompt = client.prompts.create(
+    prompt="Classify sentiment: {{ text }}",
+    variables=["text"],
+    extra_headers={
+        "x-llamastack-provider-data": '{"mlflow_api_token": "user-specific-key"}'
+    }
+)
+```
+
+### Authentication Precedence
+
+When multiple authentication methods are configured, the provider uses this precedence:
+
+1. **Per-request provider data** (from `x-llamastack-provider-data` header)
+   - Highest priority
+   - Overrides all other methods
+   - Used for multi-tenant scenarios
+
+2. **Configuration auth_credential** (from config file)
+   - Medium priority
+   - Fallback if no provider data header
+   - Good for server-level auth
+
+3. **Environment variables** (MLflow standard)
+   - Lowest priority
+   - Used if no other credentials provided
+   - Standard MLflow behavior
+
+**Example showing precedence**:
+```yaml
+# Config file
+prompts:
+  - provider_id: mlflow
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: http://mlflow.company.com
+      auth_credential: ${env.MLFLOW_TRACKING_TOKEN}  # Fallback
+```
+
+```bash
+# Environment variable
+export MLFLOW_TRACKING_TOKEN="server-token"  # Lowest priority
+```
+
+```python
+# Client code
+client.prompts.create(
+    prompt="Test",
+    extra_headers={
+        # This takes precedence over config and env vars
+        "x-llamastack-provider-data": '{"mlflow_api_token": "user-token"}'
+    }
+)
+```
+
+### Security Best Practices
+
+1. **Never hardcode tokens** in configuration files:
+   ```yaml
+   # Bad - hardcoded credential
+   auth_credential: "my-secret-token"
+
+   # Good - use environment variable
+   auth_credential: ${env.MLFLOW_TRACKING_TOKEN}
+   ```
+
+2. **Use per-request credentials** for multi-tenant deployments:
+   ```python
+   # Good - each user provides their own token
+   headers = {
+       "x-llamastack-provider-data": f'{{"mlflow_api_token": "{user_token}"}}'
+   }
+   client.prompts.list(extra_headers=headers)
+   ```
+
+3. **Rotate credentials regularly** in production environments
+
+4. **Use HTTPS** for MLflow tracking URI in production:
+   ```yaml
+   mlflow_tracking_uri: https://mlflow.company.com  # Good
+   # Not: http://mlflow.company.com  # Bad for production
+   ```
+
+5. **Store secrets in secure vaults** (AWS Secrets Manager, HashiCorp Vault, etc.)
+
+## API Reference
+
+### Create Prompt
+
+Creates a new prompt (version 1) or registers a prompt in MLflow:
+
+```python
+prompt = client.prompts.create(
+    prompt="You are a {{ role }} assistant. {{ instruction }}",
+    variables=["role", "instruction"]  # Optional - auto-extracted if omitted
+)
+```
+
+**Auto-extraction**: If `variables` is not provided, the provider automatically extracts variables from `{{ variable }}` placeholders.
+
+### Retrieve Prompt
+
+Get a prompt by ID (retrieves default version):
+
+```python
+prompt = client.prompts.get(prompt_id="pmpt_abc123...")
+```
+
+Get a specific version:
+
+```python
+prompt = client.prompts.get(prompt_id="pmpt_abc123...", version=2)
+```
+
+### Update Prompt
+
+Creates a new version of an existing prompt:
+
+```python
+updated = client.prompts.update(
+    prompt_id="pmpt_abc123...",
+    prompt="Updated template with {{ variable }}",
+    version=1,  # Must be the latest version
+    set_as_default=True  # Make this the new default
+)
+```
+
+**Important**: You must provide the current latest version number. The update creates a new version (e.g., version 2).
+
+### List Prompts
+
+List all prompts (returns default versions only):
+
+```python
+response = client.prompts.list()
+for prompt in response.data:
+    print(f"{prompt.prompt_id}: v{prompt.version} (default)")
+```
+
+### List Prompt Versions
+
+List all versions of a specific prompt:
+
+```python
+response = client.prompts.list_versions(prompt_id="pmpt_abc123...")
+for prompt in response.data:
+    default = " (default)" if prompt.is_default else ""
+    print(f"Version {prompt.version}{default}")
+```
+
+### Set Default Version
+
+Change which version is the default:
+
+```python
+client.prompts.set_default_version(
+    prompt_id="pmpt_abc123...",
+    version=2
+)
+```
+
+## ID Mapping
+
+The MLflow provider uses deterministic bidirectional ID mapping:
+
+- **Llama Stack format**: `pmpt_<48-hex-chars>`
+- **MLflow format**: `llama_prompt_<48-hex-chars>`
+
+Example:
+- Llama Stack ID: `pmpt_8c2bf57972a215cd0413e399d03b901cce93815448173c1c`
+- MLflow name: `llama_prompt_8c2bf57972a215cd0413e399d03b901cce93815448173c1c`
+
+This ensures prompts created through Llama Stack are easily identifiable in MLflow.
+
+## Version Management
+
+MLflow Prompts Provider implements immutable versioning:
+
+1. **Create**: Creates version 1
+2. **Update**: Creates a new version (2, 3, 4, ...)
+3. **Default**: The "default" alias points to the current default version
+4. **History**: All versions are preserved and retrievable
+
+```
+pmpt_abc123
+├── Version 1 (Original)
+├── Version 2 (Updated)
+└── Version 3 (Latest, Default) ← Default alias points here
+```
+
+## Troubleshooting
+
+### MLflow Server Not Available
+
+**Error**: `Failed to connect to MLflow server`
+
+**Solutions**:
+1. Verify MLflow server is running: `curl http://localhost:5555/health`
+2. Check `mlflow_tracking_uri` in configuration
+3. Ensure network connectivity to remote server
+4. Check firewall settings
+
+### Version Mismatch Error
+
+**Error**: `Version X is not the latest version. Use latest version Y to update.`
+
+**Cause**: Attempting to update an outdated version
+
+**Solution**: Always use the latest version number when updating:
+```python
+# Get latest version
+versions = client.prompts.list_versions(prompt_id)
+latest_version = max(v.version for v in versions.data)
+
+# Use latest version for update
+client.prompts.update(prompt_id=prompt_id, version=latest_version, ...)
+```
+
+### Variable Validation Error
+
+**Error**: `Template contains undeclared variables: ['var2']`
+
+**Cause**: Template has `{{ var2 }}` but `variables` list doesn't include it
+
+**Solution**: Either add missing variable or let the provider auto-extract:
+```python
+# Option 1: Add missing variable
+client.prompts.create(
+    prompt="Template with {{ var1 }} and {{ var2 }}",
+    variables=["var1", "var2"]
+)
+
+# Option 2: Let provider auto-extract (recommended)
+client.prompts.create(
+    prompt="Template with {{ var1 }} and {{ var2 }}"
+)
+```
+
+### Timeout Errors
+
+**Error**: Connection timeout when communicating with MLflow
+
+**Solutions**:
+1. Increase `timeout_seconds` in configuration:
+   ```yaml
+   config:
+     timeout_seconds: 60  # Default: 30
+   ```
+2. Check network latency to MLflow server
+3. Verify MLflow server is responsive
+
+### Prompt Not Found
+
+**Error**: `Prompt pmpt_abc123... not found`
+
+**Possible causes**:
+1. Prompt ID is incorrect
+2. Prompt was created in a different MLflow server/experiment
+3. Experiment name mismatch in configuration
+
+**Solution**: Verify prompt exists in MLflow UI at `http://localhost:5555`
+
+## Limitations
+
+### No Deletion Support
+
+**MLflow does not support deleting prompts or versions**. The `delete_prompt()` method raises `NotImplementedError`.
+
+**Workaround**: Mark prompts as deprecated using naming conventions or set a different version as default.
+
+### Experiment Required
+
+All prompts are stored within an MLflow experiment. The experiment is created automatically if it doesn't exist.
+
+### ID Format Constraints
+
+- Prompt IDs must follow the format: `pmpt_<48-hex-chars>`
+- MLflow names use the prefix: `llama_prompt_`
+- Manual creation in MLflow with different names won't be recognized
+
+### Version Numbering
+
+- Versions are sequential integers (1, 2, 3, ...)
+- You cannot skip version numbers
+- You cannot manually set version numbers
+
+## Best Practices
+
+### 1. Use Environment Variables
+
+Store MLflow URIs in environment variables:
+
+```yaml
+config:
+  mlflow_tracking_uri: ${env.MLFLOW_TRACKING_URI:=http://localhost:5555}
+```
+
+### 2. Auto-Extract Variables
+
+Let the provider auto-extract variables to avoid validation errors:
+
+```python
+# Recommended
+prompt = client.prompts.create(
+    prompt="Summarize {{ text }} in {{ format }}"
+)
+```
+
+### 3. Organize by Experiment
+
+Use different experiments for different environments:
+
+- `dev-prompts` for development
+- `staging-prompts` for staging
+- `production-prompts` for production
+
+### 4. Version Management
+
+- Always retrieve latest version before updating
+- Use `set_as_default=True` when updating to make new version active
+- Keep version history for audit trail
+
+### 5. Use Meaningful Templates
+
+Include context in your templates:
+
+```python
+# Good
+prompt = """You are a {{ role }} assistant specialized in {{ domain }}.
+
+Task: {{ task }}
+
+Output format: {{ format }}"""
+
+# Less clear
+prompt = "Do {{ task }} as {{ role }}"
+```
+
+### 6. Monitor MLflow Server
+
+- Use MLflow UI to visualize prompts: `http://your-server:5555`
+- Monitor experiment metrics and prompt versions
+- Set up alerts for MLflow server health
+
+## Production Deployment
+
+### Database Backend
+
+For production, use a database backend instead of filesystem:
+
+```bash
+mlflow server \
+  --host 0.0.0.0 \
+  --port 5000 \
+  --backend-store-uri postgresql://user:pass@host:5432/mlflow \
+  --default-artifact-root s3://my-bucket/mlflow-artifacts
+```
+
+### High Availability
+
+- Deploy multiple MLflow server instances behind a load balancer
+- Use managed database (RDS, Cloud SQL, etc.)
+- Store artifacts in object storage (S3, GCS, Azure Blob)
+
+### Security
+
+- Enable authentication on MLflow server
+- Use HTTPS for MLflow tracking URI
+- Restrict network access with firewall rules
+- Use IAM roles for cloud deployments
+
+### Monitoring
+
+Set up monitoring for:
+- MLflow server availability
+- Database connection pool
+- API response times
+- Prompt creation/retrieval rates
+
+## Documentation
+See [MLflow's documentation](https://mlflow.org/docs/latest/prompts.html) for more details about MLflow Prompt Registry.
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `mlflow_tracking_uri` | `str` | No | http://localhost:5000 | MLflow tracking server URI |
+| `mlflow_registry_uri` | `str \| None` | No | None | MLflow model registry URI (defaults to tracking URI if not set) |
+| `experiment_name` | `str` | No | llama-stack-prompts | MLflow experiment name for storing prompts |
+| `auth_credential` | `SecretStr \| None` | No | None | MLflow API token for authentication. Can be overridden via provider data header. |
+| `timeout_seconds` | `int` | No | 30 | Timeout for MLflow API calls (1-300 seconds) |
+
+## Sample Configuration
+
+**Without authentication** (local development):
+```yaml
+mlflow_tracking_uri: http://localhost:5555
+experiment_name: llama-stack-prompts
+timeout_seconds: 30
+```
+
+**With authentication** (production):
+```yaml
+mlflow_tracking_uri: ${env.MLFLOW_TRACKING_URI:=http://localhost:5000}
+experiment_name: llama-stack-prompts
+auth_credential: ${env.MLFLOW_TRACKING_TOKEN:=}
+timeout_seconds: 30
+```
