@@ -153,3 +153,156 @@ async def test_create_vector_store_with_wrong_model_type_raises_error():
 
     with pytest.raises(ModelTypeError, match="Model 'text-model' is of type"):
         await router.openai_create_vector_store(request)
+
+
+async def test_query_rewrite_functionality():
+    """Test query rewriting at the router level."""
+    from unittest.mock import MagicMock
+
+    from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams, VectorStoresConfig
+    from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
+    from llama_stack_api import VectorStoreSearchResponsePage
+
+    mock_routing_table = Mock()
+
+    # Mock provider that returns search results
+    mock_provider = Mock()
+    mock_search_response = VectorStoreSearchResponsePage(search_query=["rewritten test query"], data=[], has_more=False)
+    mock_provider.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
+    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+
+    # Mock inference API for query rewriting
+    mock_inference_api = Mock()
+    mock_inference_api.openai_chat_completion = AsyncMock(
+        return_value=MagicMock(choices=[MagicMock(message=MagicMock(content="rewritten test query"))])
+    )
+
+    # Create config with rewrite params
+    vector_stores_config = VectorStoresConfig(
+        rewrite_query_params=RewriteQueryParams(
+            model=QualifiedModel(provider_id="test", model_id="llama"),
+            max_tokens=100,
+            temperature=0.3,
+        )
+    )
+
+    router = VectorIORouter(mock_routing_table, vector_stores_config, mock_inference_api)
+
+    # Test query rewrite with rewrite_query=True
+    result = await router.openai_search_vector_store(
+        vector_store_id="vs_123",
+        query="test query",
+        rewrite_query=True,
+        max_num_results=5,
+    )
+
+    # Verify chat completion was called for query rewriting
+    assert mock_inference_api.openai_chat_completion.called
+    chat_call_args = mock_inference_api.openai_chat_completion.call_args[0][0]
+    assert chat_call_args.model == "test/llama"
+
+    # Verify default prompt is used
+    prompt_text = chat_call_args.messages[0].content
+    expected_prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query="test query")
+    assert prompt_text == expected_prompt
+
+    # Verify provider was called with rewritten query and rewrite_query=False
+    mock_provider.openai_search_vector_store.assert_called_once()
+    call_kwargs = mock_provider.openai_search_vector_store.call_args.kwargs
+    assert call_kwargs["query"] == "rewritten test query"
+    assert call_kwargs["rewrite_query"] is False  # Should be False since router handled it
+
+    assert result is not None
+
+
+async def test_query_rewrite_error_when_not_configured():
+    """Test that query rewriting fails with proper error when not configured."""
+    mock_routing_table = Mock()
+    mock_provider = Mock()
+    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+
+    # No config or inference API
+    router = VectorIORouter(mock_routing_table)
+
+    with pytest.raises(ValueError, match="Query rewriting is not available"):
+        await router.openai_search_vector_store(
+            vector_store_id="vs_123",
+            query="test query",
+            rewrite_query=True,
+            max_num_results=5,
+        )
+
+
+async def test_query_rewrite_with_custom_prompt():
+    """Test query rewriting with custom prompt."""
+    from unittest.mock import MagicMock
+
+    from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams, VectorStoresConfig
+    from llama_stack_api import VectorStoreSearchResponsePage
+
+    mock_routing_table = Mock()
+
+    mock_provider = Mock()
+    mock_search_response = VectorStoreSearchResponsePage(search_query=["custom rewrite"], data=[], has_more=False)
+    mock_provider.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
+    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+
+    mock_inference_api = Mock()
+    mock_inference_api.openai_chat_completion = AsyncMock(
+        return_value=MagicMock(choices=[MagicMock(message=MagicMock(content="custom rewrite"))])
+    )
+
+    vector_stores_config = VectorStoresConfig(
+        rewrite_query_params=RewriteQueryParams(
+            model=QualifiedModel(provider_id="test", model_id="llama"),
+            prompt="Custom prompt: {query}",
+            max_tokens=150,
+            temperature=0.7,
+        )
+    )
+
+    router = VectorIORouter(mock_routing_table, vector_stores_config, mock_inference_api)
+
+    await router.openai_search_vector_store(
+        vector_store_id="vs_123",
+        query="test query",
+        rewrite_query=True,
+        max_num_results=5,
+    )
+
+    # Verify custom prompt was used
+    chat_call_args = mock_inference_api.openai_chat_completion.call_args[0][0]
+    assert chat_call_args.messages[0].content == "Custom prompt: test query"
+    assert chat_call_args.max_tokens == 150
+    assert chat_call_args.temperature == 0.7
+
+
+async def test_search_without_rewrite():
+    """Test that search without rewrite_query doesn't call inference API."""
+    from llama_stack_api import VectorStoreSearchResponsePage
+
+    mock_routing_table = Mock()
+
+    mock_provider = Mock()
+    mock_search_response = VectorStoreSearchResponsePage(search_query=["test query"], data=[], has_more=False)
+    mock_provider.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
+    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+
+    mock_inference_api = Mock()
+    mock_inference_api.openai_chat_completion = AsyncMock()
+
+    router = VectorIORouter(mock_routing_table, inference_api=mock_inference_api)
+
+    await router.openai_search_vector_store(
+        vector_store_id="vs_123",
+        query="test query",
+        rewrite_query=False,
+        max_num_results=5,
+    )
+
+    # Verify inference API was NOT called
+    assert not mock_inference_api.openai_chat_completion.called
+
+    # Verify provider was called with original query
+    call_kwargs = mock_provider.openai_search_vector_store.call_args.kwargs
+    assert call_kwargs["query"] == "test query"
