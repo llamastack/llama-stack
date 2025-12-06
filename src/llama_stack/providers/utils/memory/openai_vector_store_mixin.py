@@ -112,9 +112,10 @@ class OpenAIVectorStoreMixin(ABC):
             or not self.vector_stores_config.rewrite_query_params
             or not self.vector_stores_config.rewrite_query_params.model
         ):
-            raise ValueError(
-                "Query rewriting requested but not configured. Please configure rewrite_query_params.model in vector_stores config."
+            logger.warning(
+                "User is trying to use vector_store query rewriting, but it is not configured. Please configure rewrite_query_params.model in vector_stores config."
             )
+            raise ValueError("Query rewriting is not available")
 
         model = self.vector_stores_config.rewrite_query_params.model
         model_id = f"{model.provider_id}/{model.model_id}"

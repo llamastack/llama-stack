@@ -1232,8 +1232,8 @@ async def test_embedding_config_required_model_missing(vector_io_adapter):
         await vector_io_adapter.openai_create_vector_store(params)
 
 
-async def test_query_expansion_functionality(vector_io_adapter):
-    """Test query expansion with instance-based configuration approach."""
+async def test_query_rewrite_functionality(vector_io_adapter):
+    """Test query rewrite with instance-based configuration approach."""
     from unittest.mock import MagicMock
 
     from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams
@@ -1261,10 +1261,10 @@ async def test_query_expansion_functionality(vector_io_adapter):
 
     # Mock chat completion for query rewriting
     vector_io_adapter.inference_api.openai_chat_completion = AsyncMock(
-        return_value=MagicMock(choices=[MagicMock(message=MagicMock(content="expanded test query"))])
+        return_value=MagicMock(choices=[MagicMock(message=MagicMock(content="rewritten test query"))])
     )
 
-    # Test 1: Query expansion with default prompt (no custom prompt configured)
+    # Test 1: Query rewrite with default prompt (no custom prompt configured)
     mock_vector_stores_config = MagicMock()
     mock_vector_stores_config.rewrite_query_params = RewriteQueryParams(
         model=QualifiedModel(provider_id="test", model_id="llama"), max_tokens=100, temperature=0.3
@@ -1295,7 +1295,7 @@ async def test_query_expansion_functionality(vector_io_adapter):
     # Verify the adapter's query_chunks was called with rewritten query
     assert result is not None  # Search should return a result
 
-    # Test 1b: Query expansion with custom prompt override and inference parameters
+    # Test 1b: Query rewrite with custom prompt override and inference parameters
 
     mock_vector_stores_config.rewrite_query_params = RewriteQueryParams(
         model=QualifiedModel(provider_id="test", model_id="llama"),
@@ -1325,7 +1325,7 @@ async def test_query_expansion_functionality(vector_io_adapter):
     # Clear config on the adapter
     vector_io_adapter.vector_stores_config = None
 
-    with pytest.raises(ValueError, match="Query rewriting requested but not configured"):
+    with pytest.raises(ValueError, match="Query rewriting is not available"):
         await vector_io_adapter.openai_search_vector_store(
             vector_store_id=vector_store_id, query="test query", rewrite_query=True, max_num_results=5
         )
