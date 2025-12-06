@@ -718,7 +718,7 @@ paths:
     get:
       responses:
         '200':
-          description: An ListOpenAIFileResponse containing the list of files.
+          description: The list of files.
           content:
             application/json:
               schema:
@@ -737,12 +737,9 @@ paths:
           description: Default Response
       tags:
       - Files
-      summary: Openai List Files
-      description: |-
-        List files.
-
-        Returns a list of files that belong to the user's organization.
-      operationId: openai_list_files_v1_files_get
+      summary: List files
+      description: List files
+      operationId: list_files_v1_files_get
       parameters:
       - name: after
         in: query
@@ -751,7 +748,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
+          description: A cursor for pagination. Returns files after this ID.
           title: After
+        description: A cursor for pagination. Returns files after this ID.
       - name: limit
         in: query
         required: false
@@ -759,8 +758,10 @@ paths:
           anyOf:
           - type: integer
           - type: 'null'
+          description: Maximum number of files to return (1-10,000).
           default: 10000
           title: Limit
+        description: Maximum number of files to return (1-10,000).
       - name: order
         in: query
         required: false
@@ -768,8 +769,10 @@ paths:
           anyOf:
           - $ref: '#/components/schemas/Order'
           - type: 'null'
+          description: Sort order by created_at timestamp ('asc' or 'desc').
           default: desc
           title: Order
+        description: Sort order by created_at timestamp ('asc' or 'desc').
       - name: purpose
         in: query
         required: false
@@ -777,11 +780,13 @@ paths:
           anyOf:
           - $ref: '#/components/schemas/OpenAIFilePurpose'
           - type: 'null'
+          description: Filter files by purpose.
           title: Purpose
+        description: Filter files by purpose.
     post:
       responses:
         '200':
-          description: An OpenAIFileObject representing the uploaded file.
+          description: The uploaded file.
           content:
             application/json:
               schema:
@@ -800,91 +805,84 @@ paths:
           description: Default Response
       tags:
       - Files
-      summary: Openai Upload File
-      description: |-
-        Upload file.
-
-        Upload a file that can be used across various endpoints.
-
-        The file upload should be a multipart form request with:
-        - file: The File object (not file name) to be uploaded.
-        - purpose: The intended purpose of the uploaded file.
-        - expires_after: Optional form values describing expiration for the file.
-      operationId: openai_upload_file_v1_files_post
+      summary: Upload file
+      description: Upload a file.
+      operationId: upload_file_v1_files_post
       requestBody:
         required: true
         content:
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Body_openai_upload_file_v1_files_post'
+              $ref: '#/components/schemas/Body_upload_file_v1_files_post'
   /v1/files/{file_id}:
     get:
       responses:
         '200':
-          description: An OpenAIFileObject containing file information.
+          description: The file.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIFileObject'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Files
-      summary: Openai Retrieve File
-      description: |-
-        Retrieve file.
-
-        Returns information about a specific file.
-      operationId: openai_retrieve_file_v1_files__file_id__get
+      summary: Get file
+      description: Get file
+      operationId: get_file_v1_files__file_id__get
       parameters:
       - name: file_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: file_id'
+          description: The ID of the file to retrieve.
+          title: File Id
+        description: The ID of the file to retrieve.
     delete:
       responses:
         '200':
-          description: An OpenAIFileDeleteResponse indicating successful deletion.
+          description: The file was deleted.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/OpenAIFileDeleteResponse'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Files
-      summary: Openai Delete File
-      description: Delete file.
-      operationId: openai_delete_file_v1_files__file_id__delete
+      summary: Delete file
+      description: Delete file
+      operationId: delete_file_v1_files__file_id__delete
       parameters:
       - name: file_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: file_id'
+          description: The ID of the file to delete.
+          title: File Id
+        description: The ID of the file to delete.
   /v1/files/{file_id}/content:
     get:
       responses:
@@ -895,32 +893,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/Response'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Files
-      summary: Openai Retrieve File Content
-      description: |-
-        Retrieve file content.
-
-        Returns the contents of the specified file.
-      operationId: openai_retrieve_file_content_v1_files__file_id__content_get
+      summary: Retrieve file content
+      description: Retrieve file content
+      operationId: retrieve_file_content_v1_files__file_id__content_get
       parameters:
       - name: file_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: file_id'
+          description: The ID of the file to retrieve content from.
+          title: File Id
+        description: The ID of the file to retrieve content from.
   /v1/health:
     get:
       responses:
@@ -6414,19 +6411,24 @@ components:
             $ref: '#/components/schemas/OpenAIFileObject'
           type: array
           title: Data
+          description: The list of files.
         has_more:
           type: boolean
           title: Has More
+          description: Whether there are more files available beyond this page.
         first_id:
           type: string
           title: First Id
+          description: The ID of the first file in the list for pagination.
         last_id:
           type: string
           title: Last Id
+          description: The ID of the last file in the list for pagination.
         object:
           type: string
           const: list
           title: Object
+          description: The object type, which is always 'list'.
           default: list
       type: object
       required:
@@ -6442,24 +6444,31 @@ components:
           type: string
           const: file
           title: Object
+          description: The object type, which is always 'file'.
           default: file
         id:
           type: string
           title: Id
+          description: The file identifier, which can be referenced in the API endpoints.
         bytes:
           type: integer
           title: Bytes
+          description: The size of the file, in bytes.
         created_at:
           type: integer
           title: Created At
+          description: The Unix timestamp (in seconds) for when the file was created.
         expires_at:
           type: integer
           title: Expires At
+          description: The Unix timestamp (in seconds) for when the file expires.
         filename:
           type: string
           title: Filename
+          description: The name of the file.
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the file.
       type: object
       required:
       - id
@@ -6476,35 +6485,35 @@ components:
           type: string
           const: created_at
           title: Anchor
+          description: The anchor point for expiration, must be 'created_at'.
         seconds:
           type: integer
           maximum: 2592000.0
           minimum: 3600.0
           title: Seconds
+          description: Seconds until expiration, between 3600 (1 hour) and 2592000 (30 days).
       type: object
       required:
       - anchor
       - seconds
       title: ExpiresAfter
-      description: |-
-        Control expiration of uploaded files.
-
-        Params:
-         - anchor, must be "created_at"
-         - seconds, must be int between 3600 and 2592000 (1 hour to 30 days)
+      description: Control expiration of uploaded files.
     OpenAIFileDeleteResponse:
       properties:
         id:
           type: string
           title: Id
+          description: The file identifier that was deleted.
         object:
           type: string
           const: file
           title: Object
+          description: The object type, which is always 'file'.
           default: file
         deleted:
           type: boolean
           title: Deleted
+          description: Whether the file was successfully deleted.
       type: object
       required:
       - id
@@ -11968,25 +11977,28 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
-    Body_openai_upload_file_v1_files_post:
+    Body_upload_file_v1_files_post:
       properties:
         file:
           type: string
           format: binary
           title: File
+          description: The file to upload.
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the uploaded file.
         expires_after:
           anyOf:
           - $ref: '#/components/schemas/ExpiresAfter'
             title: ExpiresAfter
           - type: 'null'
+          description: Optional expiration settings.
           title: ExpiresAfter
       type: object
       required:
       - file
       - purpose
-      title: Body_openai_upload_file_v1_files_post
+      title: Body_upload_file_v1_files_post
     Chunk-Input:
       properties:
         content:
@@ -14023,6 +14035,90 @@ components:
       - chunks
       - metadata
       title: ProcessFileResponse
+      type: object
+    ListFilesRequest:
+      description: Request model for listing files.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: A cursor for pagination. Returns files after this ID.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 10000
+          description: Maximum number of files to return (1-10,000).
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: Sort order by created_at timestamp ('asc' or 'desc').
+          title: Order
+        purpose:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIFilePurpose'
+            title: OpenAIFilePurpose
+          - type: 'null'
+          description: Filter files by purpose.
+          nullable: true
+          title: OpenAIFilePurpose
+      title: ListFilesRequest
+      type: object
+    RetrieveFileRequest:
+      description: Request model for retrieving a file.
+      properties:
+        file_id:
+          description: The ID of the file to retrieve.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: RetrieveFileRequest
+      type: object
+    DeleteFileRequest:
+      description: Request model for deleting a file.
+      properties:
+        file_id:
+          description: The ID of the file to delete.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: DeleteFileRequest
+      type: object
+    RetrieveFileContentRequest:
+      description: Request model for retrieving file content.
+      properties:
+        file_id:
+          description: The ID of the file to retrieve content from.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: RetrieveFileContentRequest
+      type: object
+    UploadFileRequest:
+      description: Request model for uploading a file.
+      properties:
+        purpose:
+          $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the uploaded file.
+        expires_after:
+          anyOf:
+          - $ref: '#/components/schemas/ExpiresAfter'
+            title: ExpiresAfter
+          - type: 'null'
+          description: Optional expiration settings for the file.
+          nullable: true
+          title: ExpiresAfter
+      required:
+      - purpose
+      title: UploadFileRequest
       type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.

@@ -146,12 +146,17 @@ from .datatypes import (
 from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
 from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
+    DeleteFileRequest,
     ExpiresAfter,
     Files,
+    ListFilesRequest,
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
     OpenAIFileObject,
     OpenAIFilePurpose,
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+    UploadFileRequest,
 )
 from .inference import (
     Bf16QuantizationConfig,
@@ -552,6 +557,7 @@ __all__ = [
     "Datasets",
     "DatasetsProtocolPrivate",
     "DefaultRAGQueryGeneratorConfig",
+    "DeleteFileRequest",
     "Docstring",
     "DynamicApiMeta",
     "EfficiencyConfig",
@@ -612,6 +618,7 @@ __all__ = [
     "UnregisterBenchmarkRequest",
     "ListConnectorsResponse",
     "ListDatasetsResponse",
+    "ListFilesRequest",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
     "ListOpenAIFileResponse",
@@ -836,6 +843,8 @@ __all__ = [
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
     "ResponseItemInclude",
+    "RetrieveFileContentRequest",
+    "RetrieveFileRequest",
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",
@@ -892,6 +901,7 @@ __all__ = [
     "unwrap_generic_list",
     "unwrap_optional_type",
     "unwrap_union_types",
+    "UploadFileRequest",
     "URIDataSource",
     "URL",
     "_URLOrData",

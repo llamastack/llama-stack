@@ -53,6 +53,10 @@ from llama_stack_api import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
+from llama_stack_api.files.models import (
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+)
 from llama_stack_api.internal.kvstore import KVStore
 
 EMBEDDING_DIMENSION = 768
@@ -796,9 +800,11 @@ class OpenAIVectorStoreMixin(ABC):
             chunk_overlap_tokens = 400
 
         try:
-            file_response = await self.files_api.openai_retrieve_file(file_id)
+            file_response = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
             mime_type, _ = mimetypes.guess_type(file_response.filename)
-            content_response = await self.files_api.openai_retrieve_file_content(file_id)
+            content_response = await self.files_api.openai_retrieve_file_content(
+                RetrieveFileContentRequest(file_id=file_id)
+            )
 
             content = content_from_data_and_mime_type(content_response.body, mime_type)
 
