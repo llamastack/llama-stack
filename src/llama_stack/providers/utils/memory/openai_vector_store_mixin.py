@@ -15,7 +15,6 @@ from typing import Annotated, Any
 from fastapi import Body
 from pydantic import TypeAdapter
 
-from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.vector_store import (
@@ -26,11 +25,9 @@ from llama_stack.providers.utils.memory.vector_store import (
 from llama_stack_api import (
     Chunk,
     Files,
-    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     OpenAIFileObject,
-    OpenAIUserMessageParam,
     QueryChunksResponse,
     SearchRankingOptions,
     VectorStore,
@@ -88,13 +85,11 @@ class OpenAIVectorStoreMixin(ABC):
         self,
         files_api: Files | None = None,
         kvstore: KVStore | None = None,
-        vector_stores_config: VectorStoresConfig | None = None,
     ):
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.files_api = files_api
         self.kvstore = kvstore
-        self.vector_stores_config = vector_stores_config
         self._last_file_batch_cleanup_time = 0
         self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
         self._vector_store_locks: dict[str, asyncio.Lock] = {}
@@ -104,43 +99,6 @@ class OpenAIVectorStoreMixin(ABC):
         if vector_store_id not in self._vector_store_locks:
             self._vector_store_locks[vector_store_id] = asyncio.Lock()
         return self._vector_store_locks[vector_store_id]
-
-    async def _rewrite_query_for_search(self, query: str) -> str:
-        """Rewrite a search query using the configured LLM model for better retrieval results."""
-        if (
-            not self.vector_stores_config
-            or not self.vector_stores_config.rewrite_query_params
-            or not self.vector_stores_config.rewrite_query_params.model
-        ):
-            logger.warning(
-                "User is trying to use vector_store query rewriting, but it is not configured. Please configure rewrite_query_params.model in vector_stores config."
-            )
-            raise ValueError("Query rewriting is not available")
-
-        model = self.vector_stores_config.rewrite_query_params.model
-        model_id = f"{model.provider_id}/{model.model_id}"
-
-        prompt = self.vector_stores_config.rewrite_query_params.prompt.format(query=query)
-
-        request = OpenAIChatCompletionRequestWithExtraBody(
-            model=model_id,
-            messages=[OpenAIUserMessageParam(role="user", content=prompt)],
-            max_tokens=self.vector_stores_config.rewrite_query_params.max_tokens or 100,
-            temperature=self.vector_stores_config.rewrite_query_params.temperature or 0.3,
-        )
-
-        try:
-            response = await self.inference_api.openai_chat_completion(request)  # type: ignore
-            content = response.choices[0].message.content
-            if content is None:
-                logger.error(f"LLM returned None content for query rewriting. Model: {model_id}")
-                raise RuntimeError("Query rewrite failed due to an internal error")
-            rewritten_query: str = content.strip()
-            logger.debug("Query rewrite succeeded for vector search")
-            return rewritten_query
-        except Exception as e:
-            logger.error(f"Query rewrite failed with LLM call error. Model: {model_id}, Error: {e}")
-            raise RuntimeError("Query rewrite failed due to an internal error") from e
 
     async def _save_openai_vector_store(self, store_id: str, store_info: dict[str, Any]) -> None:
         """Save vector store metadata to persistent storage."""
@@ -634,7 +592,11 @@ class OpenAIVectorStoreMixin(ABC):
             str | None
         ) = "vector",  # Using str instead of Literal due to OpenAPI schema generator limitations
     ) -> VectorStoreSearchResponsePage:
-        """Search for chunks in a vector store."""
+        """Search for chunks in a vector store.
+
+        Note: Query rewriting is handled at the router level, not here.
+        The rewrite_query parameter is kept for API compatibility but is ignored.
+        """
         max_num_results = max_num_results or 10
 
         # Validate search_mode
@@ -649,9 +611,6 @@ class OpenAIVectorStoreMixin(ABC):
             search_query = " ".join(query)
         else:
             search_query = query
-
-        if rewrite_query:
-            search_query = await self._rewrite_query_for_search(search_query)
 
         try:
             score_threshold = (

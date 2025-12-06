@@ -402,6 +402,7 @@ async def instantiate_provider(
     impl.__provider_spec__ = provider_spec
     impl.__provider_config__ = config
 
+    # TODO: confirm this is needed given the `api_to_dep_impl["vector_stores_config"] = run_config.vector_stores` in `get_auto_router_impl`
     if provider_spec.api == Api.vector_io and hasattr(impl, "vector_stores_config"):
         impl.vector_stores_config = run_config.vector_stores
 

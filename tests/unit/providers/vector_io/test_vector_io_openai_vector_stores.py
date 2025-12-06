@@ -1232,12 +1232,8 @@ async def test_embedding_config_required_model_missing(vector_io_adapter):
         await vector_io_adapter.openai_create_vector_store(params)
 
 
-async def test_query_rewrite_functionality(vector_io_adapter):
-    """Test query rewrite with instance-based configuration approach."""
-    from unittest.mock import MagicMock
-
-    from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams
-    from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
+async def test_search_vector_store_ignores_rewrite_query(vector_io_adapter):
+    """Test that the mixin ignores rewrite_query parameter since rewriting is done at router level."""
     from llama_stack_api import QueryChunksResponse
 
     # Create an OpenAI vector store for testing directly in the adapter's cache
@@ -1245,7 +1241,7 @@ async def test_query_rewrite_functionality(vector_io_adapter):
     openai_vector_store = {
         "id": vector_store_id,
         "name": "Test Store",
-        "description": "A test OpenAI vector store for query rewriting",
+        "description": "A test OpenAI vector store",
         "vector_store_id": "test_db",
         "embedding_model": "test/embedding",
     }
@@ -1259,88 +1255,15 @@ async def test_query_rewrite_functionality(vector_io_adapter):
 
     vector_io_adapter.query_chunks = mock_query_chunks
 
-    # Mock chat completion for query rewriting
-    vector_io_adapter.inference_api.openai_chat_completion = AsyncMock(
-        return_value=MagicMock(choices=[MagicMock(message=MagicMock(content="rewritten test query"))])
-    )
-
-    # Test 1: Query rewrite with default prompt (no custom prompt configured)
-    mock_vector_stores_config = MagicMock()
-    mock_vector_stores_config.rewrite_query_params = RewriteQueryParams(
-        model=QualifiedModel(provider_id="test", model_id="llama"), max_tokens=100, temperature=0.3
-    )
-
-    # Set config directly on the adapter (no more globals!)
-    vector_io_adapter.vector_stores_config = mock_vector_stores_config
-
-    # Now test via the OpenAI search endpoint (which goes through the mixin)
+    # Test that rewrite_query=True doesn't cause an error (it's ignored at mixin level)
+    # The mixin should process the search request without attempting to rewrite the query
     result = await vector_io_adapter.openai_search_vector_store(
-        vector_store_id=vector_store_id, query="test query", rewrite_query=True, max_num_results=5
-    )
-
-    # Verify chat completion was called for query rewriting
-    assert vector_io_adapter.inference_api.openai_chat_completion.called
-    chat_call_args = vector_io_adapter.inference_api.openai_chat_completion.call_args[0][0]
-    assert chat_call_args.model == "test/llama"
-
-    # Verify default prompt is used (contains our built-in prompt text)
-    prompt_text = chat_call_args.messages[0].content
-    expected_prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query="test query")
-    assert prompt_text == expected_prompt
-
-    # Verify default inference parameters are used
-    assert chat_call_args.max_tokens == 100  # Default value
-    assert chat_call_args.temperature == 0.3  # Default value
-
-    # Verify the adapter's query_chunks was called with rewritten query
-    assert result is not None  # Search should return a result
-
-    # Test 1b: Query rewrite with custom prompt override and inference parameters
-
-    mock_vector_stores_config.rewrite_query_params = RewriteQueryParams(
-        model=QualifiedModel(provider_id="test", model_id="llama"),
-        prompt="Custom prompt for rewriting: {query}",
-        max_tokens=150,
-        temperature=0.7,
-    )
-    vector_io_adapter.vector_stores_config = mock_vector_stores_config
-
-    await vector_io_adapter.openai_search_vector_store(
-        vector_store_id=vector_store_id, query="test query", rewrite_query=True, max_num_results=5
-    )
-
-    # Verify custom prompt and parameters are used
-    assert vector_io_adapter.inference_api.openai_chat_completion.called
-    # Get the latest call (second call with custom prompt)
-    chat_call_args = vector_io_adapter.inference_api.openai_chat_completion.call_args[0][0]
-    prompt_text = chat_call_args.messages[0].content
-    assert prompt_text == "Custom prompt for rewriting: test query"
-    assert "Expand this query with relevant synonyms" not in prompt_text  # Default not used
-
-    # Verify custom inference parameters
-    assert chat_call_args.max_tokens == 150
-    assert chat_call_args.temperature == 0.7
-
-    # Test 2: Error when query rewriting is requested but no model is configured
-    # Clear config on the adapter
-    vector_io_adapter.vector_stores_config = None
-
-    with pytest.raises(ValueError, match="Query rewriting is not available"):
-        await vector_io_adapter.openai_search_vector_store(
-            vector_store_id=vector_store_id, query="test query", rewrite_query=True, max_num_results=5
-        )
-
-    # Test 3: Normal behavior without rewrite_query parameter
-
-    result3 = await vector_io_adapter.openai_search_vector_store(
         vector_store_id=vector_store_id,
         query="test query",
-        rewrite_query=False,  # No rewriting
+        rewrite_query=True,  # This should be ignored at mixin level
         max_num_results=5,
     )
 
-    # Chat completion should not be called for this case (but was called for previous tests)
-    # We check that the call count didn't increase beyond the 2 previous calls
-    call_count = vector_io_adapter.inference_api.openai_chat_completion.call_count
-    assert call_count == 2  # Should still be 2 from the previous tests
-    assert result3 is not None  # Search should still return a result
+    # Search should succeed - the mixin ignores rewrite_query and just does the search
+    assert result is not None
+    assert result.search_query == ["test query"]  # Original query preserved
