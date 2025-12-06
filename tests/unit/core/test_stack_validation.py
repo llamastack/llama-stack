@@ -10,7 +10,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.core.datatypes import QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
+from llama_stack.core.datatypes import (
+    QualifiedModel,
+    RewriteQueryParams,
+    SafetyConfig,
+    StackConfig,
+    VectorStoresConfig,
+)
 from llama_stack.core.stack import validate_safety_config, validate_vector_stores_config
 from llama_stack.core.storage.datatypes import ServerStoresConfig, StorageConfig
 from llama_stack_api import Api, ListModelsResponse, ListShieldsResponse, Model, ModelType, Shield
@@ -81,6 +87,17 @@ class TestVectorStoresValidation:
         )
 
         await validate_vector_stores_config(run_config.vector_stores, {Api.models: mock_models})
+
+    async def test_validate_rewrite_query_prompt_missing_placeholder(self):
+        """Test validation fails when prompt template is missing {query} placeholder."""
+        config = VectorStoresConfig(
+            rewrite_query_params=RewriteQueryParams(
+                prompt="This prompt has no placeholder",
+            ),
+        )
+
+        with pytest.raises(ValueError, match="'\\{query\\}' placeholder is required"):
+            await validate_vector_stores_config(config, {})
 
 
 class TestSafetyConfigValidation:

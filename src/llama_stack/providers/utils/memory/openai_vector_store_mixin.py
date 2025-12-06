@@ -120,11 +120,7 @@ class OpenAIVectorStoreMixin(ABC):
         model = self.vector_stores_config.rewrite_query_params.model
         model_id = f"{model.provider_id}/{model.model_id}"
 
-        # Use the configured prompt (defaults to DEFAULT_QUERY_REWRITE_PROMPT if not overridden)
-        prompt_template = self.vector_stores_config.rewrite_query_params.prompt
-        if "{query}" not in prompt_template:
-            raise ValueError("'{query}' placeholder is required in the prompt template")
-        prompt = prompt_template.format(query=query)
+        prompt = self.vector_stores_config.rewrite_query_params.prompt.format(query=query)
 
         request = OpenAIChatCompletionRequestWithExtraBody(
             model=model_id,
