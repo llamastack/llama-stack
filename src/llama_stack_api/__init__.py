@@ -133,12 +133,17 @@ from .datatypes import (
 )
 from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
 from .files import (
+    DeleteFileRequest,
     ExpiresAfter,
     Files,
+    ListFilesRequest,
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
     OpenAIFileObject,
     OpenAIFilePurpose,
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+    UploadFileRequest,
 )
 from .inference import (
     Bf16QuantizationConfig,
