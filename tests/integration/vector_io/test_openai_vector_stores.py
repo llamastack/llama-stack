@@ -1750,4 +1750,4 @@ def test_openai_vector_store_search_with_rewrite_query(
 
     # Verify the error message indicates missing query rewriting configuration
     error_message = str(exc_info.value)
-    assert "Query rewriting requested but not configured" in error_message
+    assert "Query rewriting is not available" in error_message
