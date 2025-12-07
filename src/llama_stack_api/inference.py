@@ -1024,7 +1024,7 @@ class InferenceProvider(Protocol):
         """Create completion.
 
         Generate an OpenAI-compatible completion for the given prompt using the specified model.
-        :returns: An OpenAICompletion or an async iterator of OpenAICompletion chunks when streaming.
+        :returns: An OpenAICompletion. When streaming, returns Server-Sent Events (SSE) with OpenAICompletion chunks.
         """
         ...
 
@@ -1036,7 +1036,7 @@ class InferenceProvider(Protocol):
         """Create chat completions.
 
         Generate an OpenAI-compatible chat completion for the given messages using the specified model.
-        :returns: An OpenAIChatCompletion.
+        :returns: An OpenAIChatCompletion. When streaming, returns Server-Sent Events (SSE) with OpenAIChatCompletionChunk objects.
         """
         ...
 
