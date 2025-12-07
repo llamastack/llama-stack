@@ -62,7 +62,9 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
             return file_data, mime_type
         if doc.content.uri.startswith("file://"):
             if not ALLOW_FILE_URI:
-                raise ValueError("file:// URIs disabled. Use Files API (/v1/files) instead, or set LLAMA_STACK_ALLOW_FILE_URI=true.")
+                raise ValueError(
+                    "file:// URIs disabled. Use Files API (/v1/files) instead, or set LLAMA_STACK_ALLOW_FILE_URI=true."
+                )
             content, guessed_mime = await read_file_uri(doc.content.uri)
             return content, guessed_mime or "application/octet-stream"
         async with httpx.AsyncClient() as client:

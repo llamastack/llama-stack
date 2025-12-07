@@ -223,7 +223,6 @@ async def test_memory_tool_error_handling():
     assert memory_tool.vector_io_api.openai_attach_file_to_vector_store.call_count == 2
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "content_factory",
     [
@@ -263,7 +262,6 @@ async def test_file_uri_rejected_by_default(monkeypatch, content_factory):
         os.unlink(temp_path)
 
 
-@pytest.mark.asyncio
 async def test_file_uri_allowed_when_enabled(monkeypatch, tmp_path):
     """Test that file:// URIs work when ALLOW_FILE_URI=true."""
     monkeypatch.setenv("LLAMA_STACK_ALLOW_FILE_URI", "true")
