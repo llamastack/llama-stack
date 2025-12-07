@@ -16,7 +16,7 @@ from pydantic import TypeAdapter
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
-from llama_stack.providers.utils.memory.vector_store import parse_data_url, read_file_uri
+from llama_stack.providers.utils.memory.vector_store import ALLOW_FILE_URI, parse_data_url, read_file_uri
 from llama_stack_api import (
     URL,
     Files,
@@ -61,6 +61,8 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
 
             return file_data, mime_type
         if doc.content.uri.startswith("file://"):
+            if not ALLOW_FILE_URI:
+                raise ValueError("file:// URIs disabled. Use Files API (/v1/files) instead, or set LLAMA_STACK_ALLOW_FILE_URI=true.")
             content, guessed_mime = await read_file_uri(doc.content.uri)
             return content, guessed_mime or "application/octet-stream"
         async with httpx.AsyncClient() as client:

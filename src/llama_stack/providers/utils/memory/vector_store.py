@@ -60,6 +60,7 @@ RERANKER_TYPE_NORMALIZED = "normalized"
 
 # Maximum file size for file:// URIs (default 100MB, configurable via env)
 MAX_FILE_URI_SIZE_BYTES = int(os.environ.get("LLAMA_STACK_MAX_FILE_URI_SIZE_MB", "100")) * 1024 * 1024
+ALLOW_FILE_URI = os.environ.get("LLAMA_STACK_ALLOW_FILE_URI", "false").lower() in ("true", "1", "yes")
 
 
 def parse_pdf(data: bytes) -> str:
@@ -161,39 +162,35 @@ async def read_file_uri(uri: str, max_size: int | None = None) -> tuple[bytes, s
 
 async def content_from_doc(doc: RAGDocument) -> str:
     if isinstance(doc.content, URL):
-        if doc.content.uri.startswith("data:"):
-            return content_from_data(doc.content.uri)
-        if doc.content.uri.startswith("file://"):
-            content, guessed_mime = await read_file_uri(doc.content.uri)
-            mime = doc.mime_type or guessed_mime
-            if mime == "application/pdf":
-                return parse_pdf(content)
-            return content.decode("utf-8")
+        uri = doc.content.uri
+    elif isinstance(doc.content, str):
+        uri = doc.content
+    else:
+        return interleaved_content_as_str(doc.content)
+
+    if uri.startswith("data:"):
+        return content_from_data(uri)
+
+    if uri.startswith("file://"):
+        if not ALLOW_FILE_URI:
+            raise ValueError(
+                "file:// URIs disabled. Use Files API (/v1/files) instead, or set LLAMA_STACK_ALLOW_FILE_URI=true."
+            )
+        content, guessed_mime = await read_file_uri(uri)
+        mime = doc.mime_type or guessed_mime
+        return parse_pdf(content) if mime == "application/pdf" else content.decode("utf-8")
+
+    if uri.startswith("http://") or uri.startswith("https://"):
         async with httpx.AsyncClient() as client:
-            r = await client.get(doc.content.uri)
+            r = await client.get(uri)
         if doc.mime_type == "application/pdf":
             return parse_pdf(r.content)
         return r.text
-    elif isinstance(doc.content, str):
-        pattern = re.compile("^(https?://|file://|data:)")
-        if pattern.match(doc.content):
-            if doc.content.startswith("data:"):
-                return content_from_data(doc.content)
-            if doc.content.startswith("file://"):
-                content, guessed_mime = await read_file_uri(doc.content)
-                mime = doc.mime_type or guessed_mime
-                if mime == "application/pdf":
-                    return parse_pdf(content)
-                return content.decode("utf-8")
-            async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content)
-            if doc.mime_type == "application/pdf":
-                return parse_pdf(r.content)
-            return r.text
+
+    if isinstance(doc.content, str):
         return doc.content
-    else:
-        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
-        return interleaved_content_as_str(doc.content)
+
+    raise ValueError(f"Unsupported URL scheme: {uri}")
 
 
 def make_overlapped_chunks(
