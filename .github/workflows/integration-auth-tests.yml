@@ -72,7 +72,7 @@ jobs:
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           run_dir=$(mktemp -d)
-          cat <<'EOF' > $run_dir/run.yaml
+          cat <<EOF > $run_dir/run.yaml
           version: '2'
           image_name: kube
           apis: []
@@ -137,27 +137,40 @@ jobs:
 
       - name: Test auth
         run: |
+          # Function to test API endpoint with authentication
+          # Usage: test_endpoint <curl_args> <user_token_file> <expected_status> [output_file]
+          test_endpoint() {
+              local curl_args="$1"
+              local user_token_file=$2
+              local expected_status=$3
+              local output_file=${4:-/dev/null}
+
+              local status
+              local extra_curl_args=(-s -L -o "$output_file" -w "%{http_code}")
+
+              if [ "$user_token_file" != "none" ]; then
+                  extra_curl_args+=(-H "Authorization: Bearer $(cat $user_token_file)")
+              fi
+
+              set -x
+              status=$(curl $curl_args "${extra_curl_args[@]}")
+              set +x
+
+              if [ "$status" = "$expected_status" ]; then
+                  echo "  ✓ Status: $status (expected $expected_status)"
+                  return 0
+              else
+                  echo "  ✗ Status: $status (expected $expected_status)"
+                  exit 1
+              fi
+          }
+
           echo "Testing /v1/version without token (should succeed)..."
-          if curl -s -L -o /dev/null -w "%{http_code}" http://127.0.0.1:8321/v1/version | grep -q "200"; then
-            echo "/v1/version accessible without token (200)"
-          else
-            echo "/v1/version returned non-200 status without token"
-            exit 1
-          fi
+          test_endpoint "http://127.0.0.1:8321/v1/version" "none" "200" || exit 1
 
           echo "Testing /v1/providers without token (should fail with 401)..."
-          if curl -s -L -o /dev/null -w "%{http_code}" http://127.0.0.1:8321/v1/providers | grep -q "401"; then
-            echo "/v1/providers blocked without token (401)"
-          else
-            echo "/v1/providers did not return 401 without token"
-            exit 1
-          fi
+          test_endpoint "http://127.0.0.1:8321/v1/providers" "none" "401" || exit 1
 
           echo "Testing /v1/providers with valid token (should succeed)..."
-          curl -s -L -H "Authorization: Bearer $(cat llama-stack-auth-token)" http://127.0.0.1:8321/v1/providers | jq
-          if [ $? -eq 0 ]; then
-            echo "/v1/providers accessible with valid token"
-          else
-            echo "/v1/providers failed with valid token"
-            exit 1
-          fi
+          test_endpoint "http://127.0.0.1:8321/v1/providers" "llama-stack-auth-token" "200" "providers.json" || exit 1
+          cat providers.json | jq . > /dev/null && echo "  ✓ Valid JSON response"

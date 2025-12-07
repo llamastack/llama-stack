@@ -44,23 +44,21 @@ from llama_stack.core.request_headers import (
     request_provider_data_context,
     user_from_scope,
 )
+from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
     cast_image_name_to_string,
     replace_env_vars,
 )
-from llama_stack.core.telemetry import Telemetry
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, setup_logger
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
-from llama_stack.log import LoggingConfig, get_logger, setup_logging
+from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
-from .tracing import TracingMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
@@ -87,7 +85,7 @@ def create_sse_event(data: Any) -> str:
 
 
 async def global_exception_handler(request: Request, exc: Exception):
-    traceback.print_exception(exc)
+    traceback.print_exception(type(exc), exc, exc.__traceback__)
     http_exc = translate_exception(exc)
 
     return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
@@ -263,7 +261,7 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
 
             try:
                 if is_streaming:
-                    context_vars = [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR]
+                    context_vars = [PROVIDER_DATA_VAR]
                     if test_context_var is not None:
                         context_vars.append(test_context_var)
                     gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
@@ -367,9 +365,6 @@ def create_app() -> StackApp:
     Returns:
         Configured StackApp instance.
     """
-    # Initialize logging from environment variables first
-    setup_logging()
-
     config_file = os.getenv("LLAMA_STACK_CONFIG")
     if config_file is None:
         raise ValueError("LLAMA_STACK_CONFIG environment variable is required")
@@ -441,9 +436,6 @@ def create_app() -> StackApp:
         if cors_config:
             app.add_middleware(CORSMiddleware, **cors_config.model_dump())
 
-    if config.telemetry.enabled:
-        setup_logger(Telemetry())
-
     # Load external APIs if configured
     external_apis = load_external_apis(config)
     all_routes = get_all_api_routes(external_apis)
@@ -463,15 +455,22 @@ def create_app() -> StackApp:
     apis_to_serve.add("providers")
     apis_to_serve.add("prompts")
     apis_to_serve.add("conversations")
+
     for api_str in apis_to_serve:
         api = Api(api_str)
 
-        routes = all_routes[api]
-        try:
-            impl = impls[api]
-        except KeyError as e:
-            raise ValueError(f"Could not find provider implementation for {api} API") from e
+        # Try to discover and use a router factory from the API package
+        impl = impls[api]
+        router = build_fastapi_router(api, impl)
+        if router:
+            app.include_router(router)
+            logger.debug(f"Registered FastAPIrouter for {api} API")
+            continue
 
+        # Fall back to old webmethod-based route discovery until the migration is complete
+        impl = impls[api]
+
+        routes = all_routes[api]
         for route, _ in routes:
             if not hasattr(impl, route.name):
                 # ideally this should be a typing violation already
@@ -497,11 +496,16 @@ def create_app() -> StackApp:
 
     logger.debug(f"serving APIs: {apis_to_serve}")
 
+    # Register specific exception handlers before the generic Exception handler
+    # This prevents the re-raising behavior that causes connection resets
     app.exception_handler(RequestValidationError)(global_exception_handler)
+    app.exception_handler(ConflictError)(global_exception_handler)
+    app.exception_handler(ResourceNotFoundError)(global_exception_handler)
+    app.exception_handler(AuthenticationRequiredError)(global_exception_handler)
+    app.exception_handler(AccessDeniedError)(global_exception_handler)
+    app.exception_handler(BadRequestError)(global_exception_handler)
+    # Generic Exception handler should be last
     app.exception_handler(Exception)(global_exception_handler)
-
-    if config.telemetry.enabled:
-        app.add_middleware(TracingMiddleware, impls=impls, external_apis=external_apis)
 
     return app
 
