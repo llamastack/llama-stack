@@ -87,14 +87,14 @@ jobs:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 2
 
       - name: Run preview builds
-        uses: stainless-api/upload-openapi-spec-action/preview@9133735bca5ce0a1df7d3b26e75364e26137a016 # 1.7.0
+        uses: stainless-api/upload-openapi-spec-action/preview@a4d631c1e9ef9130430c1df7d25fba1ff6bddafd # 1.7.1
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
@@ -119,7 +119,7 @@ jobs:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.sha }}
@@ -132,7 +132,7 @@ jobs:
       # against the preview branch to complete, but assuming that
       # the preview job happens before the PR merge, it should be fine.
       - name: Run merge build
-        uses: stainless-api/upload-openapi-spec-action/merge@9133735bca5ce0a1df7d3b26e75364e26137a016 # 1.7.0
+        uses: stainless-api/upload-openapi-spec-action/merge@a4d631c1e9ef9130430c1df7d25fba1ff6bddafd # 1.7.1
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
