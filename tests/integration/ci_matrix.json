@@ -6,6 +6,9 @@
     {"suite": "responses", "setup": "gpt"},
     {"suite": "base-vllm-subset", "setup": "vllm"}
   ],
+  "stainless": [
+    {"suite": "base", "setup": "ollama", "allowed_clients": ["library"]}
+  ],
   "schedules": {
     "1 0 * * 0": [
       {"suite": "base", "setup": "vllm"}
