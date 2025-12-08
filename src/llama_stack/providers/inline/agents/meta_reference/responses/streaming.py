@@ -258,6 +258,8 @@ class StreamingResponseOrchestrator:
             yield stream_event
 
         chat_tool_choice = None
+        # Track allowed tools for filtering (persists across iterations)
+        allowed_tool_names: set[str] | None = None
         if self.ctx.tool_choice and len(self.ctx.chat_tools) > 0:
             processed_tool_choice = await _process_tool_choice(
                 self.ctx.chat_tools,
@@ -267,6 +269,17 @@ class StreamingResponseOrchestrator:
             # chat_tool_choice can be str, dict-like object, or None
             if isinstance(processed_tool_choice, str | type(None)):
                 chat_tool_choice = processed_tool_choice
+            elif isinstance(processed_tool_choice, OpenAIChatCompletionToolChoiceAllowedTools):
+                # For allowed_tools: filter the tools list instead of using tool_choice
+                # This maintains the constraint across all iterations while letting model
+                # decide freely whether to call a tool or respond
+                allowed_tool_names = {
+                    tool["function"]["name"]
+                    for tool in processed_tool_choice.tools
+                    if tool.get("type") == "function" and "function" in tool
+                }
+                # Use the mode (e.g., "required") for first iteration, then "auto"
+                chat_tool_choice = processed_tool_choice.mode if processed_tool_choice.mode else "auto"
             else:
                 chat_tool_choice = processed_tool_choice.model_dump()
 
@@ -282,7 +295,15 @@ class StreamingResponseOrchestrator:
                 response_format = (
                     None if getattr(self.ctx.response_format, "type", None) == "text" else self.ctx.response_format
                 )
-                logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
+                # Filter tools to only allowed ones if tool_choice specified an allowed list
+                effective_tools = self.ctx.chat_tools
+                if allowed_tool_names is not None:
+                    effective_tools = [
+                        tool
+                        for tool in self.ctx.chat_tools
+                        if tool.get("function", {}).get("name") in allowed_tool_names
+                    ]
+                logger.debug(f"calling openai_chat_completion with tools: {effective_tools}")
 
                 logprobs = (
                     True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
@@ -292,7 +313,7 @@ class StreamingResponseOrchestrator:
                     model=self.ctx.model,
                     messages=messages,
                     # Pydantic models are dict-compatible but mypy treats them as distinct types
-                    tools=self.ctx.chat_tools,  # type: ignore[arg-type]
+                    tools=effective_tools,  # type: ignore[arg-type]
                     tool_choice=chat_tool_choice,
                     stream=True,
                     temperature=self.ctx.temperature,
@@ -373,8 +394,12 @@ class StreamingResponseOrchestrator:
                 n_iter += 1
                 # After first iteration, reset tool_choice to "auto" to let model decide freely
                 # based on tool results (prevents infinite loops when forcing specific tools)
-                if n_iter == 1 and chat_tool_choice:
+                # Note: When allowed_tool_names is set, tools are already filtered so model
+                # can only call allowed tools - we just need to let it decide whether to call
+                # a tool or respond (hence "auto" mode)
+                if n_iter == 1 and chat_tool_choice and chat_tool_choice != "auto":
                     chat_tool_choice = "auto"
+
                 if n_iter >= self.max_infer_iters:
                     logger.info(
                         f"Exiting inference loop since iteration count({n_iter}) exceeds {self.max_infer_iters=}"
