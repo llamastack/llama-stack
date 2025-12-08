@@ -68,9 +68,7 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
                 log.warning(
                     f"Attempt to use file:// URI blocked. LLAMA_STACK_ALLOW_FILE_URI is not set. URI: {doc.content.uri}"
                 )
-                raise ValueError(
-                    "file:// URIs are not allowed. Please use the Files API (/v1/files) to upload files."
-                )
+                raise ValueError("file:// URIs are not allowed. Please use the Files API (/v1/files) to upload files.")
             content, guessed_mime = await read_file_uri(doc.content.uri)
             return content, guessed_mime or "application/octet-stream"
         elif parsed.scheme in ("http", "https"):

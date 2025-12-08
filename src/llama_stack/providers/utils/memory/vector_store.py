@@ -146,7 +146,11 @@ async def read_file_uri(uri: str, max_size: int | None = None) -> tuple[bytes, s
     real_path = os.path.realpath(file_path)
     filename = os.path.basename(real_path)
 
-    file_stat = os.stat(real_path)
+    try:
+        file_stat = os.stat(real_path)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"File not found: {filename}") from None
+
     if stat.S_ISDIR(file_stat.st_mode):
         raise IsADirectoryError(f"Cannot read directory: {filename}")
     if not stat.S_ISREG(file_stat.st_mode):
