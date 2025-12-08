@@ -9,6 +9,7 @@ import base64
 import io
 import mimetypes
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import UploadFile
@@ -49,7 +50,9 @@ log = get_logger(name=__name__, category="tool_runtime")
 async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
     """Get raw binary data and mime type from a RAGDocument for file upload."""
     if isinstance(doc.content, URL):
-        if doc.content.uri.startswith("data:"):
+        parsed = urlparse(doc.content.uri)
+        
+        if parsed.scheme == "data":
             parts = parse_data_url(doc.content.uri)
             mime_type = parts["mimetype"]
             data = parts["data"]
@@ -60,18 +63,24 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
                 file_data = data.encode("utf-8")
 
             return file_data, mime_type
-        if doc.content.uri.startswith("file://"):
+        elif parsed.scheme == "file":
             if not ALLOW_FILE_URI:
+                log.warning(
+                    f"Attempt to use file:// URI blocked. LLAMA_STACK_ALLOW_FILE_URI is not set. URI: {doc.content.uri}"
+                )
                 raise ValueError(
-                    "file:// URIs disabled. Use Files API (/v1/files) instead, or set LLAMA_STACK_ALLOW_FILE_URI=true."
+                    "file:// URIs are not allowed. Please use the Files API (/v1/files) to upload files."
                 )
             content, guessed_mime = await read_file_uri(doc.content.uri)
             return content, guessed_mime or "application/octet-stream"
-        async with httpx.AsyncClient() as client:
-            r = await client.get(doc.content.uri)
-            r.raise_for_status()
-            mime_type = r.headers.get("content-type", "application/octet-stream")
-            return r.content, mime_type
+        elif parsed.scheme in ("http", "https"):
+            async with httpx.AsyncClient() as client:
+                r = await client.get(doc.content.uri)
+                r.raise_for_status()
+                mime_type = r.headers.get("content-type", "application/octet-stream")
+                return r.content, mime_type
+        else:
+            raise ValueError(f"Unsupported URI scheme: {parsed.scheme}")
     else:
         if isinstance(doc.content, str):
             content_str = doc.content

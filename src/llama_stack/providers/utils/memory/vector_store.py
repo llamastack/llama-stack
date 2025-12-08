@@ -9,6 +9,7 @@ import io
 import mimetypes
 import os
 import re
+import stat
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -145,12 +146,13 @@ async def read_file_uri(uri: str, max_size: int | None = None) -> tuple[bytes, s
     real_path = os.path.realpath(file_path)
     filename = os.path.basename(real_path)
 
-    if os.path.isdir(real_path):
+    file_stat = os.stat(real_path)
+    if stat.S_ISDIR(file_stat.st_mode):
         raise IsADirectoryError(f"Cannot read directory: {filename}")
-    if not os.path.isfile(real_path):
-        raise FileNotFoundError(f"File not found: {filename}")
+    if not stat.S_ISREG(file_stat.st_mode):
+        raise ValueError(f"Not a regular file: {filename}")
 
-    file_size = os.path.getsize(real_path)
+    file_size = file_stat.st_size
     size_limit = max_size if max_size is not None else MAX_FILE_URI_SIZE_BYTES
     if file_size > size_limit:
         raise ValueError(f"File too large: {file_size} bytes exceeds limit of {size_limit} bytes")
