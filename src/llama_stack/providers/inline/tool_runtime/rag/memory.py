@@ -51,7 +51,7 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
     """Get raw binary data and mime type from a RAGDocument for file upload."""
     if isinstance(doc.content, URL):
         parsed = urlparse(doc.content.uri)
-        
+
         if parsed.scheme == "data":
             parts = parse_data_url(doc.content.uri)
             mime_type = parts["mimetype"]
