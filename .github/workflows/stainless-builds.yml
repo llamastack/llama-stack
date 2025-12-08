@@ -15,6 +15,7 @@ on:
       - closed
     paths:
       - "client-sdks/stainless/**"
+      - ".github/workflows/stainless-builds.yml" # this workflow
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
@@ -83,6 +84,8 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    outputs:
+      python_url: ${{ steps.run-preview.outputs.outcomes.python.install_url }}
     steps:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
@@ -94,6 +97,7 @@ jobs:
           fetch-depth: 2
 
       - name: Run preview builds
+        id: run-preview
         uses: stainless-api/upload-openapi-spec-action/preview@a4d631c1e9ef9130430c1df7d25fba1ff6bddafd # 1.7.1
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
@@ -107,6 +111,15 @@ jobs:
           head_sha: ${{ github.event.pull_request.head.sha }}
           branch: ${{ needs.compute-branch.outputs.preview_branch }}
           base_branch: ${{ needs.compute-branch.outputs.base_branch }}
+
+  run-integration-tests:
+    needs: preview
+    if: github.event.action != 'closed'
+    uses: ./.github/workflows/integration-tests.yml
+    with:
+      python_url: ${{ needs.preview.outputs.python_url }}
+      matrix_key: 'stainless'
+      test-all-client-versions: false
 
   merge:
     needs: compute-branch
