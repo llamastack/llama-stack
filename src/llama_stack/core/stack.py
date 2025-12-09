@@ -131,6 +131,12 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
     Uses get_type_hints() to resolve forward references (e.g., "ListBenchmarksRequest" -> actual class).
 
+    Handles methods with:
+    - No parameters: calls without arguments
+    - One or more request model parameters: creates empty instances for each
+    - Mixed parameters: creates request models, uses defaults for others
+    - Required non-request-model parameters without defaults: falls back to calling without arguments
+
     Args:
         method: The method to invoke
 
@@ -146,19 +152,36 @@ async def invoke_with_optional_request(method: Any) -> Any:
     params = list(inspect.signature(method).parameters.values())
     params = [p for p in params if p.name != "self"]
 
-    # If the method has exactly one parameter and it's a request model, create an empty request
-    if len(params) == 1:
-        param = params[0]
-        model = hints.get(param.name)
+    if not params:
+        return await method()
 
-        if model and is_request_model(model):
+    # Build arguments for the method call
+    args: dict[str, Any] = {}
+    can_call = True
+
+    for param in params:
+        param_type = hints.get(param.name)
+
+        # If it's a request model, try to create an empty instance
+        if param_type and is_request_model(param_type):
             try:
-                instance = model()
-                return await method(instance)
+                args[param.name] = param_type()
             except Exception:
-                # Request model requires arguments, fall back
-                pass
+                # Request model requires arguments, can't create empty instance
+                can_call = False
+                break
+        # If it has a default value, we can skip it (will use default)
+        elif param.default != inspect.Parameter.empty:
+            continue
+        # Required parameter that's not a request model - can't provide it
+        else:
+            can_call = False
+            break
 
+    if can_call and args:
+        return await method(**args)
+
+    # Fall back to calling without arguments for backward compatibility
     return await method()
 
 
