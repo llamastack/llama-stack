@@ -49,6 +49,9 @@ env:
   # Options: "never" | "note" | "warning" | "error" | "fatal".
   FAIL_ON: error
 
+  # testing
+  FOO: bar
+
   # In your repo secrets, configure:
   # - STAINLESS_API_KEY: a Stainless API key, which you can generate on the
   #   Stainless organization dashboard
