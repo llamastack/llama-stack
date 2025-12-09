@@ -8,7 +8,6 @@
 Schema discovery and collection for OpenAPI generation.
 """
 
-import importlib
 from typing import Any
 
 
@@ -18,23 +17,6 @@ def _ensure_components_schemas(openapi_schema: dict[str, Any]) -> None:
         openapi_schema["components"] = {}
     if "schemas" not in openapi_schema["components"]:
         openapi_schema["components"]["schemas"] = {}
-
-
-def _load_extra_schema_modules() -> None:
-    """
-    Import modules outside llama_stack_api that use schema_utils to register schemas.
-
-    The API package already imports its submodules via __init__, but server-side modules
-    like telemetry need to be imported explicitly so their decorator side effects run.
-    """
-    extra_modules = [
-        "llama_stack.core.telemetry.telemetry",
-    ]
-    for module_name in extra_modules:
-        try:
-            importlib.import_module(module_name)
-        except ImportError:
-            continue
 
 
 def _extract_and_fix_defs(schema: dict[str, Any], openapi_schema: dict[str, Any]) -> None:
@@ -78,9 +60,6 @@ def _ensure_json_schema_types_included(openapi_schema: dict[str, Any]) -> dict[s
         iter_json_schema_types,
         iter_registered_schema_types,
     )
-
-    # Import extra modules (e.g., telemetry) whose schema registrations live outside llama_stack_api
-    _load_extra_schema_modules()
 
     # Handle explicitly registered schemas first (union types, Annotated structs, etc.)
     for registration_info in iter_registered_schema_types():

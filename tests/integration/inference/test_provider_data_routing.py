@@ -17,7 +17,6 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
-from llama_stack.core.telemetry.telemetry import MetricEvent
 from llama_stack_api import (
     Api,
     OpenAIAssistantMessageParam,
@@ -25,10 +24,6 @@ from llama_stack_api import (
     OpenAIChatCompletionUsage,
     OpenAIChoice,
 )
-
-
-class OpenAIChatCompletionWithMetrics(OpenAIChatCompletion):
-    metrics: list[MetricEvent] | None = None
 
 
 def test_unregistered_model_routing_with_provider_data(client_with_models):
@@ -72,7 +67,7 @@ def test_unregistered_model_routing_with_provider_data(client_with_models):
     # The inference router's routing_table.impls_by_provider_id should have anthropic
     # Let's patch the anthropic provider's openai_chat_completion method
     # to avoid making real API calls
-    mock_response = OpenAIChatCompletionWithMetrics(
+    mock_response = OpenAIChatCompletion(
         id="chatcmpl-test-123",
         created=1234567890,
         model="claude-3-5-sonnet-20241022",

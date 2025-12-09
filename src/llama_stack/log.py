@@ -37,7 +37,6 @@ CATEGORIES = [
     "eval",
     "tools",
     "client",
-    "telemetry",
     "openai",
     "openai_responses",
     "openai_conversations",

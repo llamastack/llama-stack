@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from typing_extensions import runtime_checkable
 
 from llama_stack_api.common.content_types import URL, InterleavedContent
-from llama_stack_api.common.tracing import telemetry_traceable
 from llama_stack_api.resource import Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1
@@ -109,7 +108,6 @@ class ListToolDefsResponse(BaseModel):
 
 
 @runtime_checkable
-@telemetry_traceable
 class ToolGroups(Protocol):
     @webmethod(route="/toolgroups", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     async def register_tool_group(
@@ -128,7 +126,7 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def get_tool_group(
         self,
         toolgroup_id: str,
@@ -140,7 +138,7 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/toolgroups", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/toolgroups", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def list_tool_groups(self) -> ListToolGroupsResponse:
         """List tool groups with optional provider.
 
@@ -148,7 +146,7 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/tools", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/tools", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def list_tools(self, toolgroup_id: str | None = None) -> ListToolDefsResponse:
         """List tools with optional tool group.
 
@@ -157,7 +155,7 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/tools/{tool_name:path}", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/tools/{tool_name:path}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def get_tool(
         self,
         tool_name: str,
@@ -191,12 +189,11 @@ class SpecialToolGroup(Enum):
 
 
 @runtime_checkable
-@telemetry_traceable
 class ToolRuntime(Protocol):
     tool_store: ToolStore | None = None
 
     # TODO: This needs to be renamed once OPEN API generator name conflict issue is fixed.
-    @webmethod(route="/tool-runtime/list-tools", method="GET", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/tool-runtime/list-tools", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def list_runtime_tools(
         self,
         tool_group_id: str | None = None,
@@ -212,7 +209,7 @@ class ToolRuntime(Protocol):
         """
         ...
 
-    @webmethod(route="/tool-runtime/invoke", method="POST", level=LLAMA_STACK_API_V1)
+    @webmethod(route="/tool-runtime/invoke", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     async def invoke_tool(
         self,
         tool_name: str,

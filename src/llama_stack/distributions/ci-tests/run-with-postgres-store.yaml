@@ -281,8 +281,6 @@ registered_resources:
     provider_id: rag-runtime
 server:
   port: 8321
-telemetry:
-  enabled: true
 vector_stores:
   default_provider_id: faiss
   default_embedding_model:

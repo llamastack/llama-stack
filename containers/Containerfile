@@ -120,6 +120,11 @@ RUN set -eux; \
         printf '%s\n' "$deps" | xargs -L1 uv pip install --no-cache; \
     fi
 
+# Install OpenTelemetry auto-instrumentation support
+RUN set -eux; \
+    pip install --no-cache opentelemetry-distro opentelemetry-exporter-otlp; \
+    opentelemetry-bootstrap -a install
+
 # Cleanup
 RUN set -eux; \
     pip uninstall -y uv; \
@@ -135,15 +140,21 @@ RUN cat <<'EOF' >/usr/local/bin/llama-stack-entrypoint.sh
 #!/bin/sh
 set -e
 
+# Enable OpenTelemetry auto-instrumentation if any OTEL_* variable is set
+CMD_PREFIX=""
+if env | grep -q '^OTEL_'; then
+  CMD_PREFIX="opentelemetry-instrument"
+fi
+
 if [ -n "$RUN_CONFIG_PATH" ] && [ -f "$RUN_CONFIG_PATH" ]; then
-  exec llama stack run "$RUN_CONFIG_PATH" "$@"
+  exec $CMD_PREFIX llama stack run "$RUN_CONFIG_PATH" "$@"
 fi
 
 if [ -n "$DISTRO_NAME" ]; then
-  exec llama stack run "$DISTRO_NAME" "$@"
+  exec $CMD_PREFIX llama stack run "$DISTRO_NAME" "$@"
 fi
 
-exec llama stack run "$@"
+exec $CMD_PREFIX llama stack run "$@"
 EOF
 RUN chmod +x /usr/local/bin/llama-stack-entrypoint.sh
 

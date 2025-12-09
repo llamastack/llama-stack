@@ -27,7 +27,7 @@ If you have built a container image and want to deploy it in a Kubernetes cluste
 
 Control log output via environment variables before starting the server.
 
-- `LLAMA_STACK_LOGGING` sets per-component levels, e.g. `LLAMA_STACK_LOGGING=server=debug;core=info`.
+- `LLAMA_STACK_LOGGING` sets per-component levels, e.g. `LLAMA_STACK_LOGGING=server=debug,core=info`.
 - Supported categories: `all`, `core`, `server`, `router`, `inference`, `agents`, `safety`, `eval`, `tools`, `client`.
 - Levels: `debug`, `info`, `warning`, `error`, `critical` (default is `info`). Use `all=<level>` to apply globally.
 - `LLAMA_STACK_LOG_FILE=/path/to/log` mirrors logs to a file while still printing to stdout.
