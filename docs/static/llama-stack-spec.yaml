@@ -9090,9 +9090,11 @@ components:
           type: string
           const: dataset
           title: Type
+          description: Type of resource, always 'dataset' for datasets
           default: dataset
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
+          description: Purpose of the dataset indicating its intended use
         source:
           oneOf:
           - $ref: '#/components/schemas/URIDataSource'
@@ -9100,6 +9102,7 @@ components:
           - $ref: '#/components/schemas/RowsDataSource'
             title: RowsDataSource
           title: URIDataSource | RowsDataSource
+          description: Data source configuration for the dataset
           discriminator:
             propertyName: type
             mapping:
@@ -9124,6 +9127,7 @@ components:
           type: string
           const: rows
           title: Type
+          description: The type of data source.
           default: rows
         rows:
           items:
@@ -9131,6 +9135,7 @@ components:
             type: object
           type: array
           title: Rows
+          description: 'The dataset is stored in rows. E.g. [{"messages": [{"role": "user", "content": "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}]}]'
       type: object
       required:
       - rows
@@ -9142,10 +9147,12 @@ components:
           type: string
           const: uri
           title: Type
+          description: The type of data source.
           default: uri
         uri:
           type: string
           title: Uri
+          description: The dataset can be obtained from a URI. E.g. "https://mywebsite.com/mydata.jsonl", "lsfs://mydata.jsonl", "data:csv;base64,{base64_content}"
       type: object
       required:
       - uri
@@ -9158,6 +9165,7 @@ components:
             $ref: '#/components/schemas/Dataset'
           type: array
           title: Data
+          description: List of datasets
       type: object
       required:
       - data
@@ -9869,6 +9877,41 @@ components:
       - $ref: '#/components/schemas/RowsDataSource'
         title: RowsDataSource
       title: URIDataSource | RowsDataSource
+    RegisterDatasetRequest:
+      properties:
+        purpose:
+          $ref: '#/components/schemas/DatasetPurpose'
+          description: The purpose of the dataset.
+        source:
+          oneOf:
+          - $ref: '#/components/schemas/URIDataSource'
+            title: URIDataSource
+          - $ref: '#/components/schemas/RowsDataSource'
+            title: RowsDataSource
+          title: URIDataSource | RowsDataSource
+          description: The data source of the dataset.
+          discriminator:
+            propertyName: type
+            mapping:
+              rows: '#/components/schemas/RowsDataSource'
+              uri: '#/components/schemas/URIDataSource'
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: The metadata for the dataset.
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the dataset. If not provided, an ID will be generated.
+      type: object
+      required:
+      - purpose
+      - source
+      title: RegisterDatasetRequest
+      description: Request model for registering a dataset.
     RegisterBenchmarkRequest:
       properties:
         benchmark_id:
@@ -11468,6 +11511,28 @@ components:
       required:
       - items
       title: ConversationItemCreateRequest
+      type: object
+    GetDatasetRequest:
+      description: Request model for getting a dataset by ID.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: GetDatasetRequest
+      type: object
+    UnregisterDatasetRequest:
+      description: Request model for unregistering a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: UnregisterDatasetRequest
       type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.

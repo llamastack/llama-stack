@@ -3268,7 +3268,7 @@ paths:
     get:
       responses:
         '200':
-          description: A ListDatasetsResponse.
+          description: A list of dataset objects.
           content:
             application/json:
               schema:
@@ -3287,13 +3287,13 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Datasets
-      summary: List Datasets
+      summary: List all datasets.
       description: List all datasets.
       operationId: list_datasets_v1beta_datasets_get
     post:
       responses:
         '200':
-          description: A Dataset.
+          description: The registered dataset object.
           content:
             application/json:
               schema:
@@ -3312,7 +3312,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Datasets
-      summary: Register Dataset
+      summary: Register a new dataset.
       description: Register a new dataset.
       operationId: register_dataset_v1beta_datasets_post
       requestBody:
@@ -3326,26 +3326,26 @@ paths:
     get:
       responses:
         '200':
-          description: A Dataset.
+          description: The dataset object.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Dataset'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Datasets
-      summary: Get Dataset
+      summary: Get a dataset by its ID.
       description: Get a dataset by its ID.
       operationId: get_dataset_v1beta_datasets__dataset_id__get
       parameters:
@@ -3354,26 +3354,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: dataset_id'
+          description: The ID of the dataset to get.
+          title: Dataset Id
+        description: The ID of the dataset to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The dataset was successfully unregistered.
       tags:
       - Datasets
-      summary: Unregister Dataset
+      summary: Unregister a dataset by its ID.
       description: Unregister a dataset by its ID.
       operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
       parameters:
@@ -3382,7 +3384,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: dataset_id'
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+        description: The ID of the dataset to unregister.
       deprecated: true
   /v1alpha/eval/benchmarks:
     get:
@@ -10474,9 +10478,11 @@ components:
           type: string
           const: dataset
           title: Type
+          description: Type of resource, always 'dataset' for datasets
           default: dataset
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
+          description: Purpose of the dataset indicating its intended use
         source:
           oneOf:
           - $ref: '#/components/schemas/URIDataSource'
@@ -10484,6 +10490,7 @@ components:
           - $ref: '#/components/schemas/RowsDataSource'
             title: RowsDataSource
           title: URIDataSource | RowsDataSource
+          description: Data source configuration for the dataset
           discriminator:
             propertyName: type
             mapping:
@@ -10508,6 +10515,7 @@ components:
           type: string
           const: rows
           title: Type
+          description: The type of data source.
           default: rows
         rows:
           items:
@@ -10515,6 +10523,7 @@ components:
             type: object
           type: array
           title: Rows
+          description: 'The dataset is stored in rows. E.g. [{"messages": [{"role": "user", "content": "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}]}]'
       type: object
       required:
       - rows
@@ -10526,10 +10535,12 @@ components:
           type: string
           const: uri
           title: Type
+          description: The type of data source.
           default: uri
         uri:
           type: string
           title: Uri
+          description: The dataset can be obtained from a URI. E.g. "https://mywebsite.com/mydata.jsonl", "lsfs://mydata.jsonl", "data:csv;base64,{base64_content}"
       type: object
       required:
       - uri
@@ -10542,6 +10553,7 @@ components:
             $ref: '#/components/schemas/Dataset'
           type: array
           title: Data
+          description: List of datasets
       type: object
       required:
       - data
@@ -11539,27 +11551,37 @@ components:
       properties:
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
+          description: The purpose of the dataset.
         source:
-          anyOf:
+          oneOf:
           - $ref: '#/components/schemas/URIDataSource'
             title: URIDataSource
           - $ref: '#/components/schemas/RowsDataSource'
             title: RowsDataSource
           title: URIDataSource | RowsDataSource
+          description: The data source of the dataset.
+          discriminator:
+            propertyName: type
+            mapping:
+              rows: '#/components/schemas/RowsDataSource'
+              uri: '#/components/schemas/URIDataSource'
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The metadata for the dataset.
         dataset_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the dataset. If not provided, an ID will be generated.
       type: object
       required:
       - purpose
       - source
       title: RegisterDatasetRequest
+      description: Request model for registering a dataset.
     RegisterBenchmarkRequest:
       properties:
         benchmark_id:
@@ -13159,6 +13181,28 @@ components:
       required:
       - items
       title: ConversationItemCreateRequest
+      type: object
+    GetDatasetRequest:
+      description: Request model for getting a dataset by ID.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: GetDatasetRequest
+      type: object
+    UnregisterDatasetRequest:
+      description: Request model for unregistering a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: UnregisterDatasetRequest
       type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
