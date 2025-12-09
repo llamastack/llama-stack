@@ -11,6 +11,7 @@ from typing import Annotated
 
 from fastapi import Depends, File, Form, Response, UploadFile
 
+from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
@@ -72,12 +73,12 @@ class LocalfsFilesImpl(Files):
         """Get the filesystem path for a file ID."""
         return Path(self.config.storage_dir) / file_id
 
-    async def _lookup_file_id(self, file_id: str) -> tuple[OpenAIFileObject, Path]:
+    async def _lookup_file_id(self, file_id: str, action: Action = Action.READ) -> tuple[OpenAIFileObject, Path]:
         """Look up a OpenAIFileObject and filesystem path from its ID."""
         if not self.sql_store:
             raise RuntimeError("Files provider not initialized")
 
-        row = await self.sql_store.fetch_one("openai_files", where={"id": file_id})
+        row = await self.sql_store.fetch_one("openai_files", where={"id": file_id}, action=action)
         if not row:
             raise ResourceNotFoundError(file_id, "File", "client.files.list()")
 
@@ -188,7 +189,7 @@ class LocalfsFilesImpl(Files):
     async def openai_delete_file(self, file_id: str) -> OpenAIFileDeleteResponse:
         """Delete a file."""
         # Delete physical file
-        _, file_path = await self._lookup_file_id(file_id)
+        _, file_path = await self._lookup_file_id(file_id, action=Action.DELETE)
         if file_path.exists():
             file_path.unlink()
 
