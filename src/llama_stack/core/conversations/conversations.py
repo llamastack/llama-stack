@@ -6,7 +6,7 @@
 
 import secrets
 import time
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 
@@ -14,15 +14,21 @@ from llama_stack.core.datatypes import AccessRule, StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
-from llama_stack_api import (
+from llama_stack_api.conversations import (
+    AddItemsRequest,
     Conversation,
     ConversationDeletedResource,
     ConversationItem,
     ConversationItemDeletedResource,
-    ConversationItemInclude,
     ConversationItemList,
     Conversations,
-    Metadata,
+    CreateConversationRequest,
+    DeleteConversationRequest,
+    DeleteItemRequest,
+    GetConversationRequest,
+    ListItemsRequest,
+    RetrieveItemRequest,
+    UpdateConversationRequest,
 )
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
@@ -85,9 +91,7 @@ class ConversationServiceImpl(Conversations):
             },
         )
 
-    async def create_conversation(
-        self, items: list[ConversationItem] | None = None, metadata: Metadata | None = None
-    ) -> Conversation:
+    async def create_conversation(self, request: CreateConversationRequest) -> Conversation:
         """Create a conversation."""
         random_bytes = secrets.token_bytes(24)
         conversation_id = f"conv_{random_bytes.hex()}"
@@ -97,7 +101,7 @@ class ConversationServiceImpl(Conversations):
             "id": conversation_id,
             "created_at": created_at,
             "items": [],
-            "metadata": metadata,
+            "metadata": request.metadata,
         }
 
         await self.sql_store.insert(
@@ -105,9 +109,9 @@ class ConversationServiceImpl(Conversations):
             data=record_data,
         )
 
-        if items:
+        if request.items:
             item_records = []
-            for item in items:
+            for item in request.items:
                 item_dict = item.model_dump()
                 item_id = self._get_or_generate_item_id(item, item_dict)
 
@@ -125,38 +129,38 @@ class ConversationServiceImpl(Conversations):
         conversation = Conversation(
             id=conversation_id,
             created_at=created_at,
-            metadata=metadata,
+            metadata=request.metadata,
             object="conversation",
         )
 
         logger.debug(f"Created conversation {conversation_id}")
         return conversation
 
-    async def get_conversation(self, conversation_id: str) -> Conversation:
+    async def get_conversation(self, request: GetConversationRequest) -> Conversation:
         """Get a conversation with the given ID."""
-        record = await self.sql_store.fetch_one(table="openai_conversations", where={"id": conversation_id})
+        record = await self.sql_store.fetch_one(table="openai_conversations", where={"id": request.conversation_id})
 
         if record is None:
-            raise ValueError(f"Conversation {conversation_id} not found")
+            raise ValueError(f"Conversation {request.conversation_id} not found")
 
         return Conversation(
             id=record["id"], created_at=record["created_at"], metadata=record.get("metadata"), object="conversation"
         )
 
-    async def update_conversation(self, conversation_id: str, metadata: Metadata) -> Conversation:
+    async def update_conversation(self, conversation_id: str, request: UpdateConversationRequest) -> Conversation:
         """Update a conversation's metadata with the given ID"""
         await self.sql_store.update(
-            table="openai_conversations", data={"metadata": metadata}, where={"id": conversation_id}
+            table="openai_conversations", data={"metadata": request.metadata}, where={"id": conversation_id}
         )
 
-        return await self.get_conversation(conversation_id)
+        return await self.get_conversation(GetConversationRequest(conversation_id=conversation_id))
 
-    async def openai_delete_conversation(self, conversation_id: str) -> ConversationDeletedResource:
+    async def openai_delete_conversation(self, request: DeleteConversationRequest) -> ConversationDeletedResource:
         """Delete a conversation with the given ID."""
-        await self.sql_store.delete(table="openai_conversations", where={"id": conversation_id})
+        await self.sql_store.delete(table="openai_conversations", where={"id": request.conversation_id})
 
-        logger.debug(f"Deleted conversation {conversation_id}")
-        return ConversationDeletedResource(id=conversation_id)
+        logger.debug(f"Deleted conversation {request.conversation_id}")
+        return ConversationDeletedResource(id=request.conversation_id)
 
     def _validate_conversation_id(self, conversation_id: str) -> None:
         """Validate conversation ID format."""
@@ -180,16 +184,16 @@ class ConversationServiceImpl(Conversations):
     async def _get_validated_conversation(self, conversation_id: str) -> Conversation:
         """Validate conversation ID and return the conversation if it exists."""
         self._validate_conversation_id(conversation_id)
-        return await self.get_conversation(conversation_id)
+        return await self.get_conversation(GetConversationRequest(conversation_id=conversation_id))
 
-    async def add_items(self, conversation_id: str, items: list[ConversationItem]) -> ConversationItemList:
+    async def add_items(self, conversation_id: str, request: AddItemsRequest) -> ConversationItemList:
         """Create (add) items to a conversation."""
         await self._get_validated_conversation(conversation_id)
 
         created_items = []
         base_time = int(time.time())
 
-        for i, item in enumerate(items):
+        for i, item in enumerate(request.items):
             item_dict = item.model_dump()
             item_id = self._get_or_generate_item_id(item, item_dict)
 
@@ -224,48 +228,47 @@ class ConversationServiceImpl(Conversations):
             has_more=False,
         )
 
-    async def retrieve(self, conversation_id: str, item_id: str) -> ConversationItem:
+    async def retrieve(self, request: RetrieveItemRequest) -> ConversationItem:
         """Retrieve a conversation item."""
-        if not conversation_id:
-            raise ValueError(f"Expected a non-empty value for `conversation_id` but received {conversation_id!r}")
-        if not item_id:
-            raise ValueError(f"Expected a non-empty value for `item_id` but received {item_id!r}")
+        if not request.conversation_id:
+            raise ValueError(
+                f"Expected a non-empty value for `conversation_id` but received {request.conversation_id!r}"
+            )
+        if not request.item_id:
+            raise ValueError(f"Expected a non-empty value for `item_id` but received {request.item_id!r}")
 
         # Get item from conversation_items table
         record = await self.sql_store.fetch_one(
-            table="conversation_items", where={"id": item_id, "conversation_id": conversation_id}
+            table="conversation_items", where={"id": request.item_id, "conversation_id": request.conversation_id}
         )
 
         if record is None:
-            raise ValueError(f"Item {item_id} not found in conversation {conversation_id}")
+            raise ValueError(f"Item {request.item_id} not found in conversation {request.conversation_id}")
 
         adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
         return adapter.validate_python(record["item_data"])
 
-    async def list_items(
-        self,
-        conversation_id: str,
-        after: str | None = None,
-        include: list[ConversationItemInclude] | None = None,
-        limit: int | None = None,
-        order: Literal["asc", "desc"] | None = None,
-    ) -> ConversationItemList:
+    async def list_items(self, request: ListItemsRequest) -> ConversationItemList:
         """List items in the conversation."""
-        if not conversation_id:
-            raise ValueError(f"Expected a non-empty value for `conversation_id` but received {conversation_id!r}")
+        if not request.conversation_id:
+            raise ValueError(
+                f"Expected a non-empty value for `conversation_id` but received {request.conversation_id!r}"
+            )
 
         # check if conversation exists
-        await self.get_conversation(conversation_id)
+        await self.get_conversation(GetConversationRequest(conversation_id=request.conversation_id))
 
-        result = await self.sql_store.fetch_all(table="conversation_items", where={"conversation_id": conversation_id})
+        result = await self.sql_store.fetch_all(
+            table="conversation_items", where={"conversation_id": request.conversation_id}
+        )
         records = result.data
 
-        if order is not None and order == "asc":
+        if request.order is not None and request.order == "asc":
             records.sort(key=lambda x: x["created_at"])
         else:
             records.sort(key=lambda x: x["created_at"], reverse=True)
 
-        actual_limit = limit or 20
+        actual_limit = request.limit or 20
 
         records = records[:actual_limit]
         items = [record["item_data"] for record in records]
@@ -283,30 +286,30 @@ class ConversationServiceImpl(Conversations):
             has_more=False,
         )
 
-    async def openai_delete_conversation_item(
-        self, conversation_id: str, item_id: str
-    ) -> ConversationItemDeletedResource:
+    async def openai_delete_conversation_item(self, request: DeleteItemRequest) -> ConversationItemDeletedResource:
         """Delete a conversation item."""
-        if not conversation_id:
-            raise ValueError(f"Expected a non-empty value for `conversation_id` but received {conversation_id!r}")
-        if not item_id:
-            raise ValueError(f"Expected a non-empty value for `item_id` but received {item_id!r}")
+        if not request.conversation_id:
+            raise ValueError(
+                f"Expected a non-empty value for `conversation_id` but received {request.conversation_id!r}"
+            )
+        if not request.item_id:
+            raise ValueError(f"Expected a non-empty value for `item_id` but received {request.item_id!r}")
 
-        _ = await self._get_validated_conversation(conversation_id)
+        _ = await self._get_validated_conversation(request.conversation_id)
 
         record = await self.sql_store.fetch_one(
-            table="conversation_items", where={"id": item_id, "conversation_id": conversation_id}
+            table="conversation_items", where={"id": request.item_id, "conversation_id": request.conversation_id}
         )
 
         if record is None:
-            raise ValueError(f"Item {item_id} not found in conversation {conversation_id}")
+            raise ValueError(f"Item {request.item_id} not found in conversation {request.conversation_id}")
 
         await self.sql_store.delete(
-            table="conversation_items", where={"id": item_id, "conversation_id": conversation_id}
+            table="conversation_items", where={"id": request.item_id, "conversation_id": request.conversation_id}
         )
 
-        logger.debug(f"Deleted item {item_id} from conversation {conversation_id}")
-        return ConversationItemDeletedResource(id=item_id)
+        logger.debug(f"Deleted item {request.item_id} from conversation {request.conversation_id}")
+        return ConversationItemDeletedResource(id=request.item_id)
 
     async def shutdown(self) -> None:
         pass
