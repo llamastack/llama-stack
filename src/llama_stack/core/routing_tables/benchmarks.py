@@ -9,10 +9,12 @@ from llama_stack.core.datatypes import (
     BenchmarkWithOwner,
 )
 from llama_stack.log import get_logger
-from llama_stack_api import Benchmark, Benchmarks, ListBenchmarksResponse
-from llama_stack_api.benchmarks.models import (
+from llama_stack_api import (
+    Benchmark,
+    Benchmarks,
     GetBenchmarkRequest,
     ListBenchmarksRequest,
+    ListBenchmarksResponse,
     RegisterBenchmarkRequest,
     UnregisterBenchmarkRequest,
 )
