@@ -201,7 +201,11 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
             vector_store = VectorStore.model_validate_json(vector_store_data)
             index = VectorStoreWithIndex(
                 vector_store,
-                await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
+                await FaissIndex.create(
+                    vector_store.embedding_dimension,
+                    self.kvstore,
+                    vector_store.provider_resource_id or vector_store.identifier,
+                ),
                 self.inference_api,
             )
             self.cache[vector_store.identifier] = index
@@ -239,7 +243,11 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         # Store in cache
         self.cache[vector_store.identifier] = VectorStoreWithIndex(
             vector_store=vector_store,
-            index=await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
+            index=await FaissIndex.create(
+                vector_store.embedding_dimension,
+                self.kvstore,
+                vector_store.provider_resource_id or vector_store.identifier,
+            ),
             inference_api=self.inference_api,
         )
 
@@ -272,7 +280,11 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         vector_store = VectorStore.model_validate_json(vector_store_data)
         index = VectorStoreWithIndex(
             vector_store=vector_store,
-            index=await FaissIndex.create(vector_store.embedding_dimension, self.kvstore, vector_store.identifier),
+            index=await FaissIndex.create(
+                vector_store.embedding_dimension,
+                self.kvstore,
+                vector_store.provider_resource_id or vector_store.identifier,
+            ),
             inference_api=self.inference_api,
         )
         self.cache[vector_store_id] = index

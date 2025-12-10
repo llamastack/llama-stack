@@ -1704,3 +1704,83 @@ def test_openai_vector_store_file_contents_with_extra_query(
     assert with_flags_embedding is not None, "Embeddings should be included when include_embeddings=True"
     assert len(with_flags_embedding) > 0, "Embedding should be a non-empty list"
     assert without_flags_embedding is None, "Embeddings should not be included when include_embeddings=False"
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_custom_collection_name(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    """Test creating a vector store with a custom collection name."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    client = compat_client_with_empty_stores
+
+    # Create vector store with custom collection name
+    vector_store = client.vector_stores.create(
+        name="Test Custom Collection",
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+            "collection_name": "my_custom_collection",
+        },
+    )
+
+    assert vector_store is not None
+    assert vector_store.id.startswith("vs_")
+    assert "provider_vector_store_id" in vector_store.metadata
+    assert vector_store.metadata["provider_vector_store_id"] == "my_custom_collection"
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_collection_name_validation(
+    compat_client_with_empty_stores, client_with_models, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    """Test that invalid collection names are rejected."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    client = compat_client_with_empty_stores
+
+    # Test invalid collection names
+    invalid_names = ["with spaces", "with/slashes", "with@special", ""]
+
+    for invalid_name in invalid_names:
+        with pytest.raises((BadRequestError, ValueError)):
+            client.vector_stores.create(
+                name="Test Invalid",
+                extra_body={
+                    "embedding_model": embedding_model_id,
+                    "provider_id": vector_io_provider_id,
+                    "collection_name": invalid_name,
+                },
+            )
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_collection_name_with_data(
+    compat_client_with_empty_stores, client_with_models, sample_chunks, embedding_model_id, embedding_dimension, vector_io_provider_id
+):
+    """Test that custom collection names work with data insertion and search."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    compat_client = compat_client_with_empty_stores
+    llama_client = client_with_models
+
+    # Create vector store with custom collection name
+    vector_store = compat_client.vector_stores.create(
+        name="Data Test Collection",
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+            "collection_name": "test_data_collection",
+        },
+    )
+
+    # Insert and search data
+    llama_client.vector_io.insert(vector_store_id=vector_store.id, chunks=sample_chunks[:2])
+
+    search_response = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="What is Python?",
+        max_num_results=2,
+    )
+
+    assert search_response is not None
+    assert len(search_response.data) > 0
+    assert search_response.data[0].attributes["document_id"] == "doc1"
