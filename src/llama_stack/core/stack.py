@@ -6,15 +6,17 @@
 
 import asyncio
 import importlib.resources
+import inspect
 import os
 import re
 import tempfile
-from typing import Any
+from typing import Any, get_type_hints
 
 import yaml
+from pydantic import BaseModel
 
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, SafetyConfig, StackConfig, VectorStoresConfig
+from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -108,6 +110,81 @@ REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
 
+def is_request_model(t: Any) -> bool:
+    """Check if a type is a request model (Pydantic BaseModel).
+
+    Args:
+        t: The type to check
+
+    Returns:
+        True if the type is a Pydantic BaseModel subclass, False otherwise
+    """
+
+    return inspect.isclass(t) and issubclass(t, BaseModel)
+
+
+async def invoke_with_optional_request(method: Any) -> Any:
+    """Invoke a method, automatically creating a request instance if needed.
+
+    For APIs that use request models, this will create an empty request object.
+    For backward compatibility, falls back to calling without arguments.
+
+    Uses get_type_hints() to resolve forward references (e.g., "ListBenchmarksRequest" -> actual class).
+
+    Handles methods with:
+    - No parameters: calls without arguments
+    - One or more request model parameters: creates empty instances for each
+    - Mixed parameters: creates request models, uses defaults for others
+    - Required non-request-model parameters without defaults: falls back to calling without arguments
+
+    Args:
+        method: The method to invoke
+
+    Returns:
+        The result of calling the method
+    """
+    try:
+        hints = get_type_hints(method)
+    except Exception:
+        # Forward references can't be resolved, fall back to calling without request
+        return await method()
+
+    params = list(inspect.signature(method).parameters.values())
+    params = [p for p in params if p.name != "self"]
+
+    if not params:
+        return await method()
+
+    # Build arguments for the method call
+    args: dict[str, Any] = {}
+    can_call = True
+
+    for param in params:
+        param_type = hints.get(param.name)
+
+        # If it's a request model, try to create an empty instance
+        if param_type and is_request_model(param_type):
+            try:
+                args[param.name] = param_type()
+            except Exception:
+                # Request model requires arguments, can't create empty instance
+                can_call = False
+                break
+        # If it has a default value, we can skip it (will use default)
+        elif param.default != inspect.Parameter.empty:
+            continue
+        # Required parameter that's not a request model - can't provide it
+        else:
+            can_call = False
+            break
+
+    if can_call and args:
+        return await method(**args)
+
+    # Fall back to calling without arguments for backward compatibility
+    return await method()
+
+
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
     for rsrc, api, register_method, list_method in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
@@ -129,7 +206,7 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
 
         method = getattr(impls[api], list_method)
-        response = await method()
+        response = await invoke_with_optional_request(method)
 
         objects_to_process = response.data if hasattr(response, "data") else response
 
@@ -144,35 +221,71 @@ async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig
     if vector_stores_config is None:
         return
 
-    default_embedding_model = vector_stores_config.default_embedding_model
-    if default_embedding_model is None:
-        return
+    # Validate default embedding model
+    if vector_stores_config.default_embedding_model is not None:
+        await _validate_embedding_model(vector_stores_config.default_embedding_model, impls)
 
-    provider_id = default_embedding_model.provider_id
-    model_id = default_embedding_model.model_id
-    default_model_id = f"{provider_id}/{model_id}"
+    # Validate rewrite query params
+    if vector_stores_config.rewrite_query_params:
+        if vector_stores_config.rewrite_query_params.model:
+            await _validate_rewrite_query_model(vector_stores_config.rewrite_query_params.model, impls)
+        if "{query}" not in vector_stores_config.rewrite_query_params.prompt:
+            raise ValueError("'{query}' placeholder is required in the prompt template")
+
+
+async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict[Api, Any]) -> None:
+    """Validate that an embedding model exists and has required metadata."""
+    provider_id = embedding_model.provider_id
+    model_id = embedding_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
 
     if Api.models not in impls:
-        raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{model_identifier}'")
 
     models_impl = impls[Api.models]
     response = await models_impl.list_models()
     models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
 
-    default_model = models_list.get(default_model_id)
-    if default_model is None:
-        raise ValueError(f"Embedding model '{default_model_id}' not found. Available embedding models: {models_list}")
+    model = models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Embedding model '{model_identifier}' not found. Available embedding models: {list(models_list.keys())}"
+        )
 
-    embedding_dimension = default_model.metadata.get("embedding_dimension")
+    embedding_dimension = model.metadata.get("embedding_dimension")
     if embedding_dimension is None:
-        raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
+        raise ValueError(f"Embedding model '{model_identifier}' is missing 'embedding_dimension' in metadata")
 
     try:
         int(embedding_dimension)
     except ValueError as err:
         raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
-    logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
+    logger.debug(f"Validated embedding model: {model_identifier} (dimension: {embedding_dimension})")
+
+
+async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, impls: dict[Api, Any]) -> None:
+    """Validate that a rewrite query model exists and is accessible."""
+    provider_id = rewrite_query_model.provider_id
+    model_id = rewrite_query_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
+
+    if Api.models not in impls:
+        raise ValueError(
+            f"Models API is not available but vector_stores config requires rewrite query model '{model_identifier}'"
+        )
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    llm_models_list = {m.identifier: m for m in response.data if m.model_type == "llm"}
+
+    model = llm_models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Rewrite query model '{model_identifier}' not found. Available LLM models: {list(llm_models_list.keys())}"
+        )
+
+    logger.debug(f"Validated rewrite query model: {model_identifier}")
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):

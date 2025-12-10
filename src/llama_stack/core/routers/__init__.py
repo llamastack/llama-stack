@@ -87,6 +87,7 @@ async def get_auto_router_impl(
         api_to_dep_impl["store"] = inference_store
     elif api == Api.vector_io:
         api_to_dep_impl["vector_stores_config"] = run_config.vector_stores
+        api_to_dep_impl["inference_api"] = deps.get(Api.inference)
     elif api == Api.safety:
         api_to_dep_impl["safety_config"] = run_config.safety
 

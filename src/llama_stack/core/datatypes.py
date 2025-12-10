@@ -18,6 +18,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
+from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
 from llama_stack_api import (
     Api,
     Benchmark,
@@ -349,6 +350,27 @@ class QualifiedModel(BaseModel):
     model_id: str
 
 
+class RewriteQueryParams(BaseModel):
+    """Parameters for query rewriting/expansion."""
+
+    model: QualifiedModel | None = Field(
+        default=None,
+        description="LLM model for query rewriting/expansion in vector search.",
+    )
+    prompt: str = Field(
+        default=DEFAULT_QUERY_REWRITE_PROMPT,
+        description="Prompt template for query rewriting. Use {query} as placeholder for the original query.",
+    )
+    max_tokens: int = Field(
+        default=100,
+        description="Maximum number of tokens for query expansion responses.",
+    )
+    temperature: float = Field(
+        default=0.3,
+        description="Temperature for query expansion model (0.0 = deterministic, 1.0 = creative).",
+    )
+
+
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
 
@@ -359,6 +381,10 @@ class VectorStoresConfig(BaseModel):
     default_embedding_model: QualifiedModel | None = Field(
         default=None,
         description="Default embedding model configuration for vector stores.",
+    )
+    rewrite_query_params: RewriteQueryParams | None = Field(
+        default=None,
+        description="Parameters for query rewriting/expansion. None disables query rewriting.",
     )
 
 
