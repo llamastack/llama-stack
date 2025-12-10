@@ -44,6 +44,33 @@ class ElasticsearchIndex(EmbeddingIndex):
         self.client = client
         self.collection_name = collection_name
 
+    # Check if the rerank_params contains contains the following structure:
+    # {
+    #   "retrievers": {
+    #       "standard": {"weight": 0.7},
+    #       "knn": {"weight": 0.3}
+    #   }
+    # }
+    async def _is_rerank_linear_param_valid(self, value: dict) -> bool:
+        if not isinstance(value.get("retrievers"), dict):
+            return False
+
+        retrievers = value["retrievers"]
+
+        if not isinstance(retrievers.get("standard"), dict):
+            return False
+
+        if not isinstance(retrievers.get("knn"), dict):
+            return False
+
+        if "weight" not in retrievers["standard"]:
+            return False
+
+        if "weight" not in retrievers["knn"]:
+            return False
+
+        return True
+
     async def initialize(self) -> None:
         # Elasticsearch collections (indexes) are created on-demand in add_chunks
         # If the index does not exist, it will be created in add_chunks.
@@ -56,18 +83,22 @@ class ElasticsearchIndex(EmbeddingIndex):
             f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
         )
 
-        if not await self.client.indices.exists(self.collection_name):
-            await self.client.indices.create(
-                index=self.collection_name,
-                body={
-                    "mappings": {
-                        "properties": {
-                            "vector": {"type": "dense_vector", "dims": len(embeddings[0])},
-                            "chunk_content": {"type": "object"},
+        try:
+            if not await self.client.indices.exists(self.collection_name):
+                await self.client.indices.create(
+                    index=self.collection_name,
+                    body={
+                        "mappings": {
+                            "properties": {
+                                "vector": {"type": "dense_vector", "dims": len(embeddings[0])},
+                                "chunk_content": {"type": "object"},
+                            }
                         }
-                    }
-                },
-            )
+                    },
+                )
+        except Exception as e:
+            log.error(f"Error creating Elasticsearch index {self.collection_name}: {e}")
+            raise
 
         actions = []
         for chunk, embedding in zip(chunks, embeddings, strict=False):
@@ -119,19 +150,20 @@ class ElasticsearchIndex(EmbeddingIndex):
         """Convert search results to QueryChunksResponse."""
 
         chunks, scores = [], []
-        for result in results["hits"]["hits"]:
+        for result in results.get("hits", {}).get("hits", []):
             try:
+                source = result.get("_source", {})
                 chunk = Chunk(
-                    content=result["_source"]["chunk_content"],
-                    stored_chunk_id=result["_id"],
-                    embedding=result["_source"]["vector"],
+                    content=source.get("chunk_content"),
+                    stored_chunk_id=result.get("_id"),
+                    embedding=source.get("vector"),
                 )
             except Exception:
                 log.exception("Failed to parse chunk")
                 continue
 
             chunks.append(chunk)
-            scores.append(result["_score"])
+            scores.append(result.get("_score"))
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
@@ -184,32 +216,33 @@ class ElasticsearchIndex(EmbeddingIndex):
             reranker_type: {
                 "retrievers": [
                     {"retriever": {"standard": {"query": {"match": {"chunk_content": query_string}}}}},
-                    {"knn": {"field": "vector", "query_vector": embedding.tolist(), "k": k}},
+                    {"retriever": {"knn": {"field": "vector", "query_vector": embedding.tolist(), "k": k}}},
                 ]
             }
         }
 
-        # Add reranker parameters if provided for RRF (e.g. rank_constant)
+        # Add reranker parameters if provided for RRF (e.g. rank_constant, rank_window_size, filter)
         # see https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrievers/rrf-retriever
         if reranker_type == "rrf" and reranker_params is not None:
+            allowed_rrf_params = {"rank_constant", "rank_windows_size", "filter"}
+            extra_keys = set(reranker_params.keys()) - allowed_rrf_params
+            if extra_keys:
+                raise ValueError(
+                    f"Unsupported RRF reranker parameters: {extra_keys}. Allowed parameters are: {allowed_rrf_params}"
+                )
             retriever["rrf"].update(reranker_params)
-        # Add reranker parameters if provided for Linear (e.g. weights)
-        # see https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrievers/linear-retriever
-        # Since the weights are per retriever, we need to update them separately, using the following syntax
-        # reranker_params = {
-        #     "retrievers": {
-        #         "standard": {"weight": 0.7},
-        #         "knn": {"weight": 0.3}
-        #     }
-        # }
         elif reranker_type == "linear" and reranker_params is not None:
-            retrievers_params = reranker_params.get("retrievers")
-            if retrievers_params is not None:
-                for i in range(0, len(retriever["linear"]["retrievers"])):
-                    retr_type = list(retriever["linear"]["retrievers"][i].keys())[0]
-                    retriever["linear"]["retrievers"][i].update(retrievers_params["retrievers"][retr_type])
-                del reranker_params["retrievers"]
-            retriever["linear"].update(reranker_params)
+            # Add reranker parameters (i.e. weights) for linear
+            # see https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrievers/linear-retriever
+            if await self._is_rerank_linear_param_valid(reranker_params) is False:
+                raise ValueError(
+                    "Invalid linear reranker parameters. Expected structure: "
+                    '{ "retrievers": { "standard": {"weight": float}, "knn": {"weight": float} } }'
+                )
+            # The first retriever is standard (see retriever variable above)
+            retriever["linear"]["retrievers"][0].update(reranker_params["retrievers"]["standard"])
+            # The second retriever is knn (see retriever variable above)
+            retriever["linear"]["retrievers"][1].update(reranker_params["retrievers"]["knn"])
 
         try:
             results = await self.client.search(
