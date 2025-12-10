@@ -7,7 +7,7 @@ from typing import Any, Literal, Protocol, runtime_checkable
 
 from pydantic import BaseModel, Field
 
-from llama_stack_api.resource import Resource, ResourceType
+from llama_stack_api.resource import ListResourcesResponse, Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
 
@@ -49,8 +49,8 @@ class BenchmarkInput(CommonBenchmarkFields, BaseModel):
 
 
 @json_schema_type
-class ListBenchmarksResponse(BaseModel):
-    data: list[Benchmark]
+class ListBenchmarksResponse(ListResourcesResponse[Benchmark]):
+    pass
 
 
 @runtime_checkable
