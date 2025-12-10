@@ -22,20 +22,18 @@ from llama_stack_api import (
     Api,
     Dataset,
     DatasetPurpose,
+    ListBenchmarksRequest,
     ListToolDefsResponse,
     Model,
     ModelNotFoundError,
     ModelType,
     NumberType,
+    RegisterBenchmarkRequest,
     Shield,
     ToolDef,
     ToolGroup,
-    URIDataSource,
-)
-from llama_stack_api.benchmarks.models import (
-    ListBenchmarksRequest,
-    RegisterBenchmarkRequest,
     UnregisterBenchmarkRequest,
+    URIDataSource,
 )
 
 
