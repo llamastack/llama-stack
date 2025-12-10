@@ -199,6 +199,13 @@ def specs_for_autorouted_apis(apis_to_serve: list[str] | set[str]) -> dict[str, 
             )
         }
 
+        # Add inference as an optional dependency for vector_io to enable query rewriting
+        optional_deps = []
+        deps_list = [info.routing_table_api.value]
+        if info.router_api == Api.vector_io:
+            optional_deps = [Api.inference]
+            deps_list.append(Api.inference.value)
+
         specs[info.router_api.value] = {
             "__builtin__": ProviderWithSpec(
                 provider_id="__autorouted__",
@@ -209,7 +216,8 @@ def specs_for_autorouted_apis(apis_to_serve: list[str] | set[str]) -> dict[str, 
                     module="llama_stack.core.routers",
                     routing_table_api=info.routing_table_api,
                     api_dependencies=[info.routing_table_api],
-                    deps__=([info.routing_table_api.value]),
+                    optional_api_dependencies=optional_deps,
+                    deps__=deps_list,
                 ),
             )
         }
@@ -314,6 +322,13 @@ async def instantiate_providers(
         else:
             api = Api(api_str)
             impls[api] = impl
+
+    # Post-instantiation: Inject VectorIORouter into VectorStoresRoutingTable
+    if Api.vector_io in impls and Api.vector_stores in impls:
+        vector_io_router = impls[Api.vector_io]
+        vector_stores_routing_table = impls[Api.vector_stores]
+        if hasattr(vector_stores_routing_table, "vector_io_router"):
+            vector_stores_routing_table.vector_io_router = vector_io_router
 
     return impls
 

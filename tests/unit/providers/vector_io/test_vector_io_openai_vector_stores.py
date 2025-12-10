@@ -1230,3 +1230,40 @@ async def test_embedding_config_required_model_missing(vector_io_adapter):
 
     with pytest.raises(ValueError, match="embedding_model is required"):
         await vector_io_adapter.openai_create_vector_store(params)
+
+
+async def test_search_vector_store_ignores_rewrite_query(vector_io_adapter):
+    """Test that the mixin ignores rewrite_query parameter since rewriting is done at router level."""
+    from llama_stack_api import QueryChunksResponse
+
+    # Create an OpenAI vector store for testing directly in the adapter's cache
+    vector_store_id = "test_store_rewrite"
+    openai_vector_store = {
+        "id": vector_store_id,
+        "name": "Test Store",
+        "description": "A test OpenAI vector store",
+        "vector_store_id": "test_db",
+        "embedding_model": "test/embedding",
+    }
+    vector_io_adapter.openai_vector_stores[vector_store_id] = openai_vector_store
+
+    # Mock query_chunks response from adapter
+    mock_response = QueryChunksResponse(chunks=[], scores=[])
+
+    async def mock_query_chunks(*args, **kwargs):
+        return mock_response
+
+    vector_io_adapter.query_chunks = mock_query_chunks
+
+    # Test that rewrite_query=True doesn't cause an error (it's ignored at mixin level)
+    # The mixin should process the search request without attempting to rewrite the query
+    result = await vector_io_adapter.openai_search_vector_store(
+        vector_store_id=vector_store_id,
+        query="test query",
+        rewrite_query=True,  # This should be ignored at mixin level
+        max_num_results=5,
+    )
+
+    # Search should succeed - the mixin ignores rewrite_query and just does the search
+    assert result is not None
+    assert result.search_query == ["test query"]  # Original query preserved

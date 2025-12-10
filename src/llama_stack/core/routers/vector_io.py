@@ -16,12 +16,15 @@ from llama_stack_api import (
     Chunk,
     HealthResponse,
     HealthStatus,
+    Inference,
     InterleavedContent,
     ModelNotFoundError,
     ModelType,
     ModelTypeError,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAIUserMessageParam,
     QueryChunksResponse,
     RoutingTable,
     SearchRankingOptions,
@@ -51,10 +54,11 @@ class VectorIORouter(VectorIO):
         self,
         routing_table: RoutingTable,
         vector_stores_config: VectorStoresConfig | None = None,
+        inference_api: Inference | None = None,
     ) -> None:
-        logger.debug("Initializing VectorIORouter")
         self.routing_table = routing_table
         self.vector_stores_config = vector_stores_config
+        self.inference_api = inference_api
 
     async def initialize(self) -> None:
         logger.debug("VectorIORouter.initialize")
@@ -63,6 +67,46 @@ class VectorIORouter(VectorIO):
     async def shutdown(self) -> None:
         logger.debug("VectorIORouter.shutdown")
         pass
+
+    async def _rewrite_query_for_search(self, query: str) -> str:
+        """Rewrite a search query using the configured LLM model for better retrieval results."""
+        if (
+            not self.vector_stores_config
+            or not self.vector_stores_config.rewrite_query_params
+            or not self.vector_stores_config.rewrite_query_params.model
+        ):
+            logger.warning(
+                "User is trying to use vector_store query rewriting, but it is not configured. Please configure rewrite_query_params.model in vector_stores config."
+            )
+            raise ValueError("Query rewriting is not available")
+
+        if not self.inference_api:
+            logger.warning("Query rewriting requires inference API but it is not available")
+            raise ValueError("Query rewriting is not available")
+
+        model = self.vector_stores_config.rewrite_query_params.model
+        model_id = f"{model.provider_id}/{model.model_id}"
+
+        prompt = self.vector_stores_config.rewrite_query_params.prompt.format(query=query)
+
+        request = OpenAIChatCompletionRequestWithExtraBody(
+            model=model_id,
+            messages=[OpenAIUserMessageParam(role="user", content=prompt)],
+            max_tokens=self.vector_stores_config.rewrite_query_params.max_tokens or 100,
+            temperature=self.vector_stores_config.rewrite_query_params.temperature or 0.3,
+        )
+
+        try:
+            response = await self.inference_api.openai_chat_completion(request)
+            content = response.choices[0].message.content
+            if content is None:
+                logger.error(f"LLM returned None content for query rewriting. Model: {model_id}")
+                raise RuntimeError("Query rewrite failed due to an internal error")
+            rewritten_query: str = content.strip()
+            return rewritten_query
+        except Exception as e:
+            logger.error(f"Query rewrite failed with LLM call error. Model: {model_id}, Error: {e}")
+            raise RuntimeError("Query rewrite failed due to an internal error") from e
 
     async def _get_embedding_model_dimension(self, embedding_model_id: str) -> int:
         """Get the embedding dimension for a specific embedding model."""
@@ -292,14 +336,24 @@ class VectorIORouter(VectorIO):
         search_mode: str | None = "vector",
     ) -> VectorStoreSearchResponsePage:
         logger.debug(f"VectorIORouter.openai_search_vector_store: {vector_store_id}")
+
+        # Handle query rewriting at the router level
+        search_query = query
+        if rewrite_query:
+            if isinstance(query, list):
+                original_query = " ".join(query)
+            else:
+                original_query = query
+            search_query = await self._rewrite_query_for_search(original_query)
+
         provider = await self.routing_table.get_provider_impl(vector_store_id)
         return await provider.openai_search_vector_store(
             vector_store_id=vector_store_id,
-            query=query,
+            query=search_query,
             filters=filters,
             max_num_results=max_num_results,
             ranking_options=ranking_options,
-            rewrite_query=rewrite_query,
+            rewrite_query=False,  # Already handled at router level
             search_mode=search_mode,
         )
 

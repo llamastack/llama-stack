@@ -592,7 +592,11 @@ class OpenAIVectorStoreMixin(ABC):
             str | None
         ) = "vector",  # Using str instead of Literal due to OpenAPI schema generator limitations
     ) -> VectorStoreSearchResponsePage:
-        """Search for chunks in a vector store."""
+        """Search for chunks in a vector store.
+
+        Note: Query rewriting is handled at the router level, not here.
+        The rewrite_query parameter is kept for API compatibility but is ignored.
+        """
         max_num_results = max_num_results or 10
 
         # Validate search_mode

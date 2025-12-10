@@ -16,7 +16,7 @@ import yaml
 from pydantic import BaseModel
 
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, SafetyConfig, StackConfig, VectorStoresConfig
+from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -221,35 +221,71 @@ async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig
     if vector_stores_config is None:
         return
 
-    default_embedding_model = vector_stores_config.default_embedding_model
-    if default_embedding_model is None:
-        return
+    # Validate default embedding model
+    if vector_stores_config.default_embedding_model is not None:
+        await _validate_embedding_model(vector_stores_config.default_embedding_model, impls)
 
-    provider_id = default_embedding_model.provider_id
-    model_id = default_embedding_model.model_id
-    default_model_id = f"{provider_id}/{model_id}"
+    # Validate rewrite query params
+    if vector_stores_config.rewrite_query_params:
+        if vector_stores_config.rewrite_query_params.model:
+            await _validate_rewrite_query_model(vector_stores_config.rewrite_query_params.model, impls)
+        if "{query}" not in vector_stores_config.rewrite_query_params.prompt:
+            raise ValueError("'{query}' placeholder is required in the prompt template")
+
+
+async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict[Api, Any]) -> None:
+    """Validate that an embedding model exists and has required metadata."""
+    provider_id = embedding_model.provider_id
+    model_id = embedding_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
 
     if Api.models not in impls:
-        raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{model_identifier}'")
 
     models_impl = impls[Api.models]
     response = await models_impl.list_models()
     models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
 
-    default_model = models_list.get(default_model_id)
-    if default_model is None:
-        raise ValueError(f"Embedding model '{default_model_id}' not found. Available embedding models: {models_list}")
+    model = models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Embedding model '{model_identifier}' not found. Available embedding models: {list(models_list.keys())}"
+        )
 
-    embedding_dimension = default_model.metadata.get("embedding_dimension")
+    embedding_dimension = model.metadata.get("embedding_dimension")
     if embedding_dimension is None:
-        raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
+        raise ValueError(f"Embedding model '{model_identifier}' is missing 'embedding_dimension' in metadata")
 
     try:
         int(embedding_dimension)
     except ValueError as err:
         raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
-    logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
+    logger.debug(f"Validated embedding model: {model_identifier} (dimension: {embedding_dimension})")
+
+
+async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, impls: dict[Api, Any]) -> None:
+    """Validate that a rewrite query model exists and is accessible."""
+    provider_id = rewrite_query_model.provider_id
+    model_id = rewrite_query_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
+
+    if Api.models not in impls:
+        raise ValueError(
+            f"Models API is not available but vector_stores config requires rewrite query model '{model_identifier}'"
+        )
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    llm_models_list = {m.identifier: m for m in response.data if m.model_type == "llm"}
+
+    model = llm_models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Rewrite query model '{model_identifier}' not found. Available LLM models: {list(llm_models_list.keys())}"
+        )
+
+    logger.debug(f"Validated rewrite query model: {model_identifier}")
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
