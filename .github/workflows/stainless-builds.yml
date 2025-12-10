@@ -15,9 +15,16 @@ on:
       - closed
     paths:
       - "client-sdks/stainless/**"
+      - ".github/workflows/stainless-builds.yml" # this workflow
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to run Stainless build for'
+        required: true
+        type: number
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}
   cancel-in-progress: true
 
 env:
@@ -49,14 +56,45 @@ jobs:
       preview_branch: ${{ steps.compute.outputs.preview_branch }}
       base_branch: ${{ steps.compute.outputs.base_branch }}
       merge_branch: ${{ steps.compute.outputs.merge_branch }}
+      pr_head_repo: ${{ steps.compute.outputs.pr_head_repo }}
+      pr_head_ref: ${{ steps.compute.outputs.pr_head_ref }}
+      pr_head_sha: ${{ steps.compute.outputs.pr_head_sha }}
+      pr_base_sha: ${{ steps.compute.outputs.pr_base_sha }}
+      pr_base_ref: ${{ steps.compute.outputs.pr_base_ref }}
     steps:
+      - name: Fetch PR details for workflow_dispatch
+        if: github.event_name == 'workflow_dispatch'
+        id: fetch-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_DATA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRefOid,baseRefName,baseRefOid,headRepositoryOwner)
+          echo "pr_data=$PR_DATA" >> $GITHUB_OUTPUT
+
       - name: Compute branch names
         id: compute
         run: |
-          HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            # Extract from fetched PR data
+            PR_DATA='${{ steps.fetch-pr.outputs.pr_data }}'
+            FORK_OWNER=$(echo "$PR_DATA" | jq -r '.headRepositoryOwner.login')
+            REPO_NAME=$(echo "$PR_DATA" | jq -r '.headRepository.name')
+            HEAD_REPO="${FORK_OWNER}/${REPO_NAME}"
+            BRANCH_NAME=$(echo "$PR_DATA" | jq -r '.headRefName')
+            HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
+            BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid')
+            BASE_REF=$(echo "$PR_DATA" | jq -r '.baseRefName')
+          else
+            # Use pull_request_target event data
+            HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
+            BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
+            FORK_OWNER="${{ github.event.pull_request.head.repo.owner.login }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+          fi
+
           BASE_REPO="${{ github.repository }}"
-          BRANCH_NAME="${{ github.event.pull_request.head.ref }}"
-          FORK_OWNER="${{ github.event.pull_request.head.repo.owner.login }}"
 
           if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
             # Fork PR: prefix with fork owner for isolation
@@ -75,10 +113,15 @@ jobs:
           echo "preview_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
           echo "base_branch=${BASE_BRANCH}" >> $GITHUB_OUTPUT
           echo "merge_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
+          echo "pr_head_repo=${HEAD_REPO}" >> $GITHUB_OUTPUT
+          echo "pr_head_ref=${BRANCH_NAME}" >> $GITHUB_OUTPUT
+          echo "pr_head_sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
+          echo "pr_base_sha=${BASE_SHA}" >> $GITHUB_OUTPUT
+          echo "pr_base_ref=${BASE_REF}" >> $GITHUB_OUTPUT
 
   preview:
     needs: compute-branch
-    if: github.event.action != 'closed'
+    if: github.event_name == 'workflow_dispatch' || github.event.action != 'closed'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -89,8 +132,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ needs.compute-branch.outputs.pr_head_repo }}
+          ref: ${{ needs.compute-branch.outputs.pr_head_sha }}
           fetch-depth: 2
 
       - name: Run preview builds
@@ -102,15 +145,15 @@ jobs:
           oas_path: ${{ env.OAS_PATH }}
           config_path: ${{ env.CONFIG_PATH }}
           fail_on: ${{ env.FAIL_ON }}
-          base_sha: ${{ github.event.pull_request.base.sha }}
-          base_ref: ${{ github.event.pull_request.base.ref }}
-          head_sha: ${{ github.event.pull_request.head.sha }}
+          base_sha: ${{ needs.compute-branch.outputs.pr_base_sha }}
+          base_ref: ${{ needs.compute-branch.outputs.pr_base_ref }}
+          head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
           branch: ${{ needs.compute-branch.outputs.preview_branch }}
           base_branch: ${{ needs.compute-branch.outputs.base_branch }}
 
   merge:
     needs: compute-branch
-    if: github.event.action == 'closed' && github.event.pull_request.merged == true
+    if: github.event_name == 'pull_request_target' && github.event.action == 'closed' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -121,8 +164,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.sha }}
+          repository: ${{ needs.compute-branch.outputs.pr_head_repo }}
+          ref: ${{ needs.compute-branch.outputs.pr_head_sha }}
           fetch-depth: 2
 
       # Note that this only merges in changes that happened on the last build on
@@ -140,7 +183,7 @@ jobs:
           oas_path: ${{ env.OAS_PATH }}
           config_path: ${{ env.CONFIG_PATH }}
           fail_on: ${{ env.FAIL_ON }}
-          base_sha: ${{ github.event.pull_request.base.sha }}
-          base_ref: ${{ github.event.pull_request.base.ref }}
-          head_sha: ${{ github.event.pull_request.head.sha }}
+          base_sha: ${{ needs.compute-branch.outputs.pr_base_sha }}
+          base_ref: ${{ needs.compute-branch.outputs.pr_base_ref }}
+          head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
           merge_branch: ${{ needs.compute-branch.outputs.merge_branch }}
