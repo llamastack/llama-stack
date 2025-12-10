@@ -56,7 +56,6 @@ class VectorIORouter(VectorIO):
         vector_stores_config: VectorStoresConfig | None = None,
         inference_api: Inference | None = None,
     ) -> None:
-        logger.debug("Initializing VectorIORouter")
         self.routing_table = routing_table
         self.vector_stores_config = vector_stores_config
         self.inference_api = inference_api
@@ -104,7 +103,6 @@ class VectorIORouter(VectorIO):
                 logger.error(f"LLM returned None content for query rewriting. Model: {model_id}")
                 raise RuntimeError("Query rewrite failed due to an internal error")
             rewritten_query: str = content.strip()
-            logger.debug("Query rewrite succeeded for vector search")
             return rewritten_query
         except Exception as e:
             logger.error(f"Query rewrite failed with LLM call error. Model: {model_id}, Error: {e}")
@@ -346,8 +344,7 @@ class VectorIORouter(VectorIO):
                 original_query = " ".join(query)
             else:
                 original_query = query
-            rewritten = await self._rewrite_query_for_search(original_query)
-            search_query = rewritten
+            search_query = await self._rewrite_query_for_search(original_query)
 
         provider = await self.routing_table.get_provider_impl(vector_store_id)
         return await provider.openai_search_vector_store(
