@@ -128,3 +128,96 @@ export interface InputItemListResponse {
   data: ResponseInput[];
   object: "list";
 }
+
+// Files API Types (based on LlamaStack Files API)
+export interface FileResource {
+  id: string;
+  bytes: number;
+  created_at: number;
+  expires_at: number;
+  filename: string;
+  purpose:
+    | "fine-tune"
+    | "assistants"
+    | "user_data"
+    | "batch"
+    | "vision"
+    | "evals";
+  object?: "file";
+}
+
+export interface ListFilesResponse {
+  data: FileResource[];
+  first_id: string;
+  has_more: boolean;
+  last_id: string;
+  object: "list";
+}
+
+export interface DeleteFileResponse {
+  id: string;
+  deleted: boolean;
+  object?: "file";
+}
+
+export interface FileCreateParams {
+  file: File; // Browser File object
+  purpose:
+    | "fine-tune"
+    | "assistants"
+    | "user_data"
+    | "batch"
+    | "vision"
+    | "evals";
+  expires_after?: {
+    anchor: "created_at";
+    seconds: number;
+  } | null;
+}
+
+export interface FileUploadFormData {
+  purpose:
+    | "fine-tune"
+    | "assistants"
+    | "user_data"
+    | "batch"
+    | "vision"
+    | "evals";
+  expiresAfter?: number; // seconds
+  fileName?: string;
+}
+
+export interface FileValidationError {
+  field: string;
+  message: string;
+}
+
+// File type mappings for UI
+export const SUPPORTED_FILE_TYPES = [
+  "application/pdf",
+  "text/plain",
+  "text/markdown",
+  "text/html",
+  "text/csv",
+  "application/json",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+] as const;
+
+export const FILE_TYPE_EXTENSIONS = {
+  "application/pdf": ".pdf",
+  "text/plain": ".txt",
+  "text/markdown": ".md",
+  "text/html": ".html",
+  "text/csv": ".csv",
+  "application/json": ".json",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    ".docx",
+  "application/msword": ".doc",
+} as const;
+
+export type SupportedFileType = (typeof SUPPORTED_FILE_TYPES)[number];
+
+// Constants for file upload
+export const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
+export const DEFAULT_EXPIRES_AFTER = 24 * 60 * 60; // 24 hours

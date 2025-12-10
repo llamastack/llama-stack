@@ -111,7 +111,7 @@ def get_distribution_template() -> DistributionTemplate:
         container_image=None,
         providers=providers,
         run_configs={
-            "run.yaml": RunConfigSettings(
+            "config.yaml": RunConfigSettings(
                 provider_overrides={
                     "inference": [inference_provider, embedding_provider],
                     "vector_io": [chromadb_provider],
