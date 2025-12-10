@@ -80,6 +80,7 @@ class OpenAIResponsesImpl:
         conversations_api: Conversations,
         prompts_api: Prompts,
         files_api: Files,
+        vector_stores_config=None,
     ):
         self.inference_api = inference_api
         self.tool_groups_api = tool_groups_api
@@ -92,6 +93,7 @@ class OpenAIResponsesImpl:
             tool_groups_api=tool_groups_api,
             tool_runtime_api=tool_runtime_api,
             vector_io_api=vector_io_api,
+            vector_stores_config=vector_stores_config,
         )
         self.prompts_api = prompts_api
         self.files_api = files_api

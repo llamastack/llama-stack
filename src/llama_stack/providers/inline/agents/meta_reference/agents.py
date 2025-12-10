@@ -78,6 +78,7 @@ class MetaReferenceAgentsImpl(Agents):
             conversations_api=self.conversations_api,
             prompts_api=self.prompts_api,
             files_api=self.files_api,
+            vector_stores_config=self.config.vector_stores_config,
         )
 
     async def shutdown(self) -> None:

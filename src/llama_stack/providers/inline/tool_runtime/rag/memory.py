@@ -16,6 +16,12 @@ from pydantic import TypeAdapter
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
+from llama_stack.providers.utils.memory.constants import (
+    DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
+    DEFAULT_CONTEXT_TEMPLATE,
+    DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
+    DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
+)
 from llama_stack.providers.utils.memory.vector_store import parse_data_url
 from llama_stack_api import (
     URL,
@@ -221,11 +227,20 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         chunks = chunks[: query_config.max_chunks]
 
         tokens = 0
-        picked: list[InterleavedContentItem] = [
-            TextContentItem(
-                text=f"knowledge_search tool found {len(chunks)} chunks:\nBEGIN of knowledge_search tool results.\n"
-            )
-        ]
+
+        # Get templates from vector stores config, fallback to constants
+
+        # Get templates with fallback to defaults
+        vector_stores_config = self.config.vector_stores_config
+        file_search_params = getattr(vector_stores_config, "file_search_params", None)
+        header_template = getattr(file_search_params, "header_template", DEFAULT_FILE_SEARCH_HEADER_TEMPLATE)
+        footer_template = getattr(file_search_params, "footer_template", DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE)
+
+        context_prompt_params = getattr(vector_stores_config, "context_prompt_params", None)
+        chunk_template = getattr(context_prompt_params, "chunk_annotation_template", DEFAULT_CHUNK_ANNOTATION_TEMPLATE)
+        context_template = getattr(context_prompt_params, "context_template", DEFAULT_CONTEXT_TEMPLATE)
+
+        picked: list[InterleavedContentItem] = [TextContentItem(text=header_template.format(num_chunks=len(chunks)))]
         for i, chunk in enumerate(chunks):
             metadata = chunk.metadata
             tokens += metadata.get("token_count", 0)
@@ -255,13 +270,13 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
                 if k not in metadata_keys_to_exclude_from_context:
                     metadata_for_context[k] = metadata[k]
 
-            text_content = query_config.chunk_template.format(index=i + 1, chunk=chunk, metadata=metadata_for_context)
+            text_content = chunk_template.format(index=i + 1, chunk=chunk, metadata=metadata_for_context)
             picked.append(TextContentItem(text=text_content))
 
-        picked.append(TextContentItem(text="END of knowledge_search tool results.\n"))
+        picked.append(TextContentItem(text=footer_template))
         picked.append(
             TextContentItem(
-                text=f'The above results were retrieved to help answer the user\'s query: "{interleaved_content_as_str(content)}". Use them as supporting information only in answering this query.\n',
+                text=context_template.format(query=interleaved_content_as_str(content), annotation_instruction="")
             )
         )
 

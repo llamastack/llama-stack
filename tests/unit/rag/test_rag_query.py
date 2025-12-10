@@ -21,8 +21,12 @@ class TestRagQuery:
             await rag_tool.query(content=MagicMock(), vector_store_ids=[])
 
     async def test_query_chunk_metadata_handling(self):
+        # Create a proper config mock that returns None for vector_stores_config to use constants
+        config_mock = MagicMock()
+        config_mock.vector_stores_config = None
+
         rag_tool = MemoryToolRuntimeImpl(
-            config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
+            config=config_mock, vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         content = "test query content"
         vector_store_ids = ["db1"]
@@ -33,9 +37,8 @@ class TestRagQuery:
             source="test_source",
             metadata_token_count=5,
         )
-        interleaved_content = MagicMock()
         chunk = Chunk(
-            content=interleaved_content,
+            content="This is test chunk content from document 1",
             chunk_id="chunk1",
             metadata={
                 "key1": "value1",
@@ -78,8 +81,12 @@ class TestRagQuery:
             RAGQueryConfig(mode="wrong_mode")
 
     async def test_query_adds_vector_store_id_to_chunk_metadata(self):
+        # Create a proper config mock that returns None for vector_stores_config to use constants
+        config_mock = MagicMock()
+        config_mock.vector_stores_config = None
+
         rag_tool = MemoryToolRuntimeImpl(
-            config=MagicMock(),
+            config=config_mock,
             vector_io_api=MagicMock(),
             inference_api=MagicMock(),
             files_api=MagicMock(),
