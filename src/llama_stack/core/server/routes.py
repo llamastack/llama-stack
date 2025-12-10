@@ -13,6 +13,11 @@ from aiohttp import hdrs
 from starlette.routing import Route
 
 from llama_stack.core.resolver import api_protocol_map
+from llama_stack.core.server.fastapi_router_registry import (
+    _ROUTER_FACTORIES,
+    build_fastapi_router,
+    get_router_routes,
+)
 from llama_stack_api import Api, ExternalApiSpec, WebMethod
 
 EndpointFunc = Callable[..., Any]
@@ -85,7 +90,53 @@ def initialize_route_impls(impls, external_apis: dict[Api, ExternalApiSpec] | No
 
         return f"^{pattern}$"
 
+    # Process routes from FastAPI routers
+    for api_name in _ROUTER_FACTORIES.keys():
+        api = Api(api_name)
+        if api not in impls:
+            continue
+        impl = impls[api]
+        router = build_fastapi_router(api, impl)
+        if router:
+            router_routes = get_router_routes(router)
+            for route in router_routes:
+                # Get the endpoint function from the route
+                # For FastAPI routes, the endpoint is the actual function
+                func = route.endpoint
+                if func is None:
+                    continue
+
+                # Get the first (and typically only) method from the set, filtering out HEAD
+                available_methods = [m for m in (route.methods or []) if m != "HEAD"]
+                if not available_methods:
+                    continue  # Skip if only HEAD method is available
+                method = available_methods[0].lower()
+
+                if method not in route_impls:
+                    route_impls[method] = {}
+
+                # Create a minimal WebMethod for router routes (needed for RouteMatch tuple)
+                # We don't have webmethod metadata for router routes, so create a minimal one
+                # that has the attributes used by the library client (descriptive_name for tracing)
+                #
+                # TODO: Long-term migration plan (once all APIs are migrated to FastAPI routers):
+                #   - Extract summary from APIRoute: route.summary (available on FastAPI APIRoute objects)
+                #   - Pass summary directly in RouteMatch instead of WebMethod
+                #   - Remove this WebMethod() instantiation entirely
+                #   - Update library_client.py to use the extracted summary instead of webmethod.descriptive_name
+                webmethod = WebMethod(descriptive_name=None)
+                route_impls[method][_convert_path_to_regex(route.path)] = (
+                    func,
+                    route.path,
+                    webmethod,
+                )
+
+    # Process routes from legacy webmethod-based APIs
     for api, api_routes in api_to_routes.items():
+        # Skip APIs that have routers (already processed above)
+        if api.value in _ROUTER_FACTORIES:
+            continue
+
         if api not in impls:
             continue
         for route, webmethod in api_routes:

@@ -222,22 +222,21 @@ def get_provider_spec() -> ProviderSpec:
 
 [ramalama-stack](https://github.com/containers/ramalama-stack) is a recognized external provider that supports installation via module.
 
-To install Llama Stack with this external provider a user can provider the following build.yaml:
+To install Llama Stack with this external provider a user can provider the following config.yaml:
 
 ```yaml
 version: 2
-distribution_spec:
-  description: Use (an external) Ramalama server for running LLM inference
-  container_image: null
-  providers:
-    inference:
-    - provider_type: remote::ramalama
-      module: ramalama_stack==0.3.0a0
-image_type: venv
-image_name: null
-additional_pip_packages:
-- aiosqlite
-- sqlalchemy[asyncio]
+image_name: ramalama
+apis:
+- inference
+providers:
+  inference:
+  - provider_id: ramalama
+    provider_type: remote::ramalama
+    module: ramalama_stack==0.3.0a0
+    config: {}
+server:
+  port: 8321
 ```
 
 No other steps are required beyond installing dependencies with `llama stack list-deps <distro> | xargs -L1 uv pip install` and then running `llama stack run`. The CLI will use `module` to install the provider dependencies, retrieve the spec, etc.

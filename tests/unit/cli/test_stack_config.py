@@ -299,7 +299,7 @@ def test_providers_flag_generates_config_with_api_keys():
     # Read the generated config file
     from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 
-    config_file = DISTRIBS_BASE_DIR / "providers-run" / "run.yaml"
+    config_file = DISTRIBS_BASE_DIR / "providers-run" / "config.yaml"
     with open(config_file) as f:
         config_dict = yaml.safe_load(f)
 

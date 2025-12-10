@@ -23,17 +23,26 @@ logger = get_logger(name=__name__, category="providers::utils")
 # WARNING: If default_policy() changes, this constant must be updated accordingly
 # or SQL filtering will fall back to conservative mode (safe but less performant)
 #
-# This policy represents: "Permit all actions when user is in owners list for ALL attribute categories"
+# This policy represents: "Permit all actions when user is in owners list for ANY attribute category"
 # The corresponding SQL logic is implemented in _build_default_policy_where_clause():
 # - Public records (no access_attributes) are always accessible
-# - Records with access_attributes require user to match ALL categories that exist in the resource
-# - Missing categories in the resource are treated as "no restriction" (allow)
+# - Records with access_attributes require user to match ANY category that exists in the resource
 # - Within each category, user needs ANY matching value (OR logic)
-# - Between categories, user needs ALL categories to match (AND logic)
+# - Between categories, user needs ANY category to match (OR logic)
 SQL_OPTIMIZED_POLICY = [
     AccessRule(
         permit=Scope(actions=list(Action)),
-        when=["user in owners roles", "user in owners teams", "user in owners projects", "user in owners namespaces"],
+        when=["user in owners " + name],
+    )
+    for name in ["roles", "teams", "projects", "namespaces"]
+] + [
+    AccessRule(
+        permit=Scope(actions=list(Action)),
+        when=["user is owner"],
+    ),
+    AccessRule(
+        permit=Scope(actions=list(Action)),
+        when=["resource is unowned"],
     ),
 ]
 
@@ -279,53 +288,40 @@ class AuthorizedSqlStore:
 
         Public records are those with:
         - owner_principal = '' (empty string)
-        - access_attributes is either SQL NULL or JSON null
 
-        Note: Different databases serialize None differently:
-        - SQLite: None → JSON null (text = 'null')
-        - Postgres: None → SQL NULL (IS NULL)
+        The policy "resource is unowned" only checks if owner_principal is empty,
+        regardless of access_attributes.
         """
-        conditions = ["owner_principal = ''"]
-        if self.database_type == StorageBackendType.SQL_POSTGRES.value:
-            # Accept both SQL NULL and JSON null for Postgres compatibility
-            # This handles both old rows (SQL NULL) and new rows (JSON null)
-            conditions.append("(access_attributes IS NULL OR access_attributes::text = 'null')")
-        elif self.database_type == StorageBackendType.SQL_SQLITE.value:
-            # SQLite serializes None as JSON null
-            conditions.append("(access_attributes IS NULL OR access_attributes = 'null')")
-        else:
-            raise ValueError(f"Unsupported database type: {self.database_type}")
-        return conditions
+        return ["owner_principal = ''"]
 
     def _build_default_policy_where_clause(self, current_user: User | None) -> str:
         """Build SQL WHERE clause for the default policy.
 
         Default policy: permit all actions when user in owners [roles, teams, projects, namespaces]
-        This means user must match ALL attribute categories that exist in the resource.
+        This means user must match ANY attribute category that exists in the resource (OR logic).
         """
         base_conditions = self._get_public_access_conditions()
-        user_attr_conditions = []
 
-        if current_user and current_user.attributes:
-            for attr_key, user_values in current_user.attributes.items():
-                if user_values:
-                    value_conditions = []
-                    for value in user_values:
-                        # Check if JSON array contains the value
-                        escaped_value = value.replace("'", "''")
-                        json_text = self._json_extract_text("access_attributes", attr_key)
-                        value_conditions.append(f"({json_text} LIKE '%\"{escaped_value}\"%')")
+        if current_user:
+            # Add "user is owner" condition - user's principal matches owner_principal
+            escaped_principal = current_user.principal.replace("'", "''")
+            base_conditions.append(f"owner_principal = '{escaped_principal}'")
 
-                    if value_conditions:
-                        # Check if the category is missing (NULL)
-                        category_missing = f"{self._json_extract('access_attributes', attr_key)} IS NULL"
-                        user_matches_category = f"({' OR '.join(value_conditions)})"
-                        user_attr_conditions.append(f"({category_missing} OR {user_matches_category})")
+            # Add "user in owners" conditions for attribute matching
+            if current_user.attributes:
+                for attr_key, user_values in current_user.attributes.items():
+                    if user_values:
+                        value_conditions = []
+                        for value in user_values:
+                            # Check if JSON array contains the value
+                            escaped_value = value.replace("'", "''")
+                            json_text = self._json_extract_text("access_attributes", attr_key)
+                            value_conditions.append(f"({json_text} LIKE '%\"{escaped_value}\"%')")
 
-            if user_attr_conditions:
-                all_requirements_met = f"({' AND '.join(user_attr_conditions)})"
-                base_conditions.append(all_requirements_met)
-
+                        if value_conditions:
+                            # User matches this category if any of their values match
+                            user_matches_category = f"({' OR '.join(value_conditions)})"
+                            base_conditions.append(user_matches_category)
         return f"({' OR '.join(base_conditions)})"
 
     def _build_conservative_where_clause(self) -> str:

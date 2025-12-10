@@ -66,7 +66,17 @@ def default_policy() -> list[AccessRule]:
     return [
         AccessRule(
             permit=Scope(actions=list(Action)),
-            when=["user in owners " + name for name in ["roles", "teams", "projects", "namespaces"]],
+            when=["user in owners " + name],
+        )
+        for name in ["roles", "teams", "projects", "namespaces"]
+    ] + [
+        AccessRule(
+            permit=Scope(actions=list(Action)),
+            when=["user is owner"],
+        ),
+        AccessRule(
+            permit=Scope(actions=list(Action)),
+            when=["resource is unowned"],
         ),
     ]
 

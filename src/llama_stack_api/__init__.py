@@ -40,7 +40,11 @@ from .benchmarks import (
     BenchmarkInput,
     Benchmarks,
     CommonBenchmarkFields,
+    GetBenchmarkRequest,
+    ListBenchmarksRequest,
     ListBenchmarksResponse,
+    RegisterBenchmarkRequest,
+    UnregisterBenchmarkRequest,
 )
 
 # Import commonly used types from common submodule
@@ -204,7 +208,7 @@ from .inference import (
     TopPSamplingStrategy,
     UserMessage,
 )
-from .inspect import (
+from .inspect_api import (
     ApiFilter,
     HealthInfo,
     Inspect,
@@ -567,7 +571,11 @@ __all__ = [
     "LLMRAGQueryGeneratorConfig",
     "ListBatchesResponse",
     "RetrieveBatchRequest",
+    "GetBenchmarkRequest",
+    "ListBenchmarksRequest",
     "ListBenchmarksResponse",
+    "RegisterBenchmarkRequest",
+    "UnregisterBenchmarkRequest",
     "ListDatasetsResponse",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",

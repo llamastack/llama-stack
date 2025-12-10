@@ -28,6 +28,7 @@ export interface PaginationReturn<T> {
   hasMore: boolean;
   error: Error | null;
   loadMore: () => void;
+  refetch: () => void;
 }
 
 interface UsePaginationParams<T> extends UsePaginationOptions {
@@ -144,6 +145,13 @@ export function usePagination<T>({
     }
   }, [fetchData]);
 
+  /**
+   * Refetches data from the beginning (resets pagination)
+   */
+  const refetch = useCallback(() => {
+    fetchData();
+  }, [fetchData]);
+
   // Auto-load initial data on mount when enabled
   useEffect(() => {
     // If using auth, wait for session to load
@@ -169,5 +177,6 @@ export function usePagination<T>({
     hasMore: state.hasMore,
     error: state.error,
     loadMore,
+    refetch,
   };
 }
