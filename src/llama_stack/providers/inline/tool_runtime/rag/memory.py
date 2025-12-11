@@ -9,7 +9,6 @@ import base64
 import io
 import mimetypes
 from typing import Any
-from urllib.parse import urlparse
 
 import httpx
 from fastapi import UploadFile
@@ -17,7 +16,7 @@ from pydantic import TypeAdapter
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
-from llama_stack.providers.utils.memory.vector_store import ALLOW_FILE_URI, parse_data_url, read_file_uri
+from llama_stack.providers.utils.memory.vector_store import parse_data_url
 from llama_stack_api import (
     URL,
     Files,
@@ -50,10 +49,13 @@ log = get_logger(name=__name__, category="tool_runtime")
 async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
     """Get raw binary data and mime type from a RAGDocument for file upload."""
     if isinstance(doc.content, URL):
-        parsed = urlparse(doc.content.uri)
-
-        if parsed.scheme == "data":
-            parts = parse_data_url(doc.content.uri)
+        uri = doc.content.uri
+        if uri.startswith("file://"):
+            raise ValueError(
+                "file:// URIs are not supported. Please use the Files API (/v1/files) to upload files."
+            )
+        if uri.startswith("data:"):
+            parts = parse_data_url(uri)
             mime_type = parts["mimetype"]
             data = parts["data"]
 
@@ -63,28 +65,22 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
                 file_data = data.encode("utf-8")
 
             return file_data, mime_type
-        elif parsed.scheme == "file":
-            if not ALLOW_FILE_URI:
-                log.warning(
-                    f"Attempt to use file:// URI blocked. LLAMA_STACK_ALLOW_FILE_URI is not set. URI: {doc.content.uri}"
-                )
-                raise ValueError("file:// URIs are not allowed. Please use the Files API (/v1/files) to upload files.")
-            content, guessed_mime = await read_file_uri(doc.content.uri)
-            return content, guessed_mime or "application/octet-stream"
-        elif parsed.scheme in ("http", "https"):
+        else:
             async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content.uri)
+                r = await client.get(uri)
                 r.raise_for_status()
                 mime_type = r.headers.get("content-type", "application/octet-stream")
                 return r.content, mime_type
-        else:
-            raise ValueError(f"Unsupported URI scheme: {parsed.scheme}")
     else:
         if isinstance(doc.content, str):
             content_str = doc.content
         else:
             content_str = interleaved_content_as_str(doc.content)
 
+        if content_str.startswith("file://"):
+            raise ValueError(
+                "file:// URIs are not supported. Please use the Files API (/v1/files) to upload files."
+            )
         if content_str.startswith("data:"):
             parts = parse_data_url(content_str)
             mime_type = parts["mimetype"]

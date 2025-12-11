@@ -3,19 +3,14 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-import asyncio
 import base64
 import io
-import mimetypes
-import os
 import re
-import stat
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote
 
 import httpx
 import numpy as np
@@ -58,10 +53,6 @@ class ChunkForDeletion(BaseModel):
 RERANKER_TYPE_RRF = "rrf"
 RERANKER_TYPE_WEIGHTED = "weighted"
 RERANKER_TYPE_NORMALIZED = "normalized"
-
-# Maximum file size for file:// URIs (default 100MB, configurable via env)
-MAX_FILE_URI_SIZE_BYTES = int(os.environ.get("LLAMA_STACK_MAX_FILE_URI_SIZE_MB", "100")) * 1024 * 1024
-ALLOW_FILE_URI = os.environ.get("LLAMA_STACK_ALLOW_FILE_URI", "false").lower() in ("true", "1", "yes")
 
 
 def parse_pdf(data: bytes) -> str:
@@ -140,63 +131,38 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
         return ""
 
 
-async def read_file_uri(uri: str, max_size: int | None = None) -> tuple[bytes, str | None]:
-    parsed = urlparse(uri)
-    file_path = unquote(parsed.path)
-    real_path = os.path.realpath(file_path)
-    filename = os.path.basename(real_path)
-
-    try:
-        file_stat = os.stat(real_path)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"File not found: {filename}") from None
-
-    if stat.S_ISDIR(file_stat.st_mode):
-        raise IsADirectoryError(f"Cannot read directory: {filename}")
-    if not stat.S_ISREG(file_stat.st_mode):
-        raise ValueError(f"Not a regular file: {filename}")
-
-    file_size = file_stat.st_size
-    size_limit = max_size if max_size is not None else MAX_FILE_URI_SIZE_BYTES
-    if file_size > size_limit:
-        raise ValueError(f"File too large: {file_size} bytes exceeds limit of {size_limit} bytes")
-
-    content = await asyncio.to_thread(Path(real_path).read_bytes)
-    mime_type, _ = mimetypes.guess_type(real_path)
-    return content, mime_type
-
-
 async def content_from_doc(doc: RAGDocument) -> str:
     if isinstance(doc.content, URL):
         uri = doc.content.uri
-    elif isinstance(doc.content, str):
-        uri = doc.content
-    else:
-        return interleaved_content_as_str(doc.content)
-
-    if uri.startswith("data:"):
-        return content_from_data(uri)
-
-    if uri.startswith("file://"):
-        if not ALLOW_FILE_URI:
+        if uri.startswith("file://"):
             raise ValueError(
-                "file:// URIs disabled. Use Files API (/v1/files) instead, or set LLAMA_STACK_ALLOW_FILE_URI=true."
+                "file:// URIs are not supported. Please use the Files API (/v1/files) to upload files."
             )
-        content, guessed_mime = await read_file_uri(uri)
-        mime = doc.mime_type or guessed_mime
-        return parse_pdf(content) if mime == "application/pdf" else content.decode("utf-8")
-
-    if uri.startswith("http://") or uri.startswith("https://"):
+        if uri.startswith("data:"):
+            return content_from_data(uri)
         async with httpx.AsyncClient() as client:
             r = await client.get(uri)
         if doc.mime_type == "application/pdf":
             return parse_pdf(r.content)
         return r.text
-
-    if isinstance(doc.content, str):
+    elif isinstance(doc.content, str):
+        if doc.content.startswith("file://"):
+            raise ValueError(
+                "file:// URIs are not supported. Please use the Files API (/v1/files) to upload files."
+            )
+        pattern = re.compile("^(https?://|data:)")
+        if pattern.match(doc.content):
+            if doc.content.startswith("data:"):
+                return content_from_data(doc.content)
+            async with httpx.AsyncClient() as client:
+                r = await client.get(doc.content)
+            if doc.mime_type == "application/pdf":
+                return parse_pdf(r.content)
+            return r.text
         return doc.content
-
-    raise ValueError(f"Unsupported URL scheme: {uri}")
+    else:
+        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
+        return interleaved_content_as_str(doc.content)
 
 
 def make_overlapped_chunks(

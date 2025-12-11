@@ -4,17 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import os
-import tempfile
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from llama_stack.providers.utils.memory.vector_store import (
-    content_from_data_and_mime_type,
-    content_from_doc,
-    read_file_uri,
-)
+from llama_stack.providers.utils.memory.vector_store import content_from_data_and_mime_type, content_from_doc
 from llama_stack_api import URL, RAGDocument, TextContentItem
 
 
@@ -221,134 +215,3 @@ async def test_memory_tool_error_handling():
     # processed 2 documents successfully, skipped 1
     assert memory_tool.files_api.openai_upload_file.call_count == 2
     assert memory_tool.vector_io_api.openai_attach_file_to_vector_store.call_count == 2
-
-
-@pytest.mark.parametrize(
-    "content_factory",
-    [
-        lambda uri: uri,  # string content
-        lambda uri: URL(uri=uri),  # URL object content
-    ],
-    ids=["string_content", "url_object_content"],
-)
-async def test_file_uri_rejected_by_default(monkeypatch, content_factory):
-    """Test that file:// URIs are rejected when ALLOW_FILE_URI is not set (both string and URL object)."""
-    monkeypatch.delenv("LLAMA_STACK_ALLOW_FILE_URI", raising=False)
-
-    # Need to reimport to pick up env change
-    import importlib
-
-    from llama_stack.providers.utils.memory import vector_store
-
-    importlib.reload(vector_store)
-
-    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-        f.write("Test content")
-        temp_path = f.name
-
-    try:
-        file_uri = f"file://{temp_path}"
-        mock_doc = RAGDocument(document_id="test", content=content_factory(file_uri))
-
-        with pytest.raises(ValueError) as exc_info:
-            await vector_store.content_from_doc(mock_doc)
-
-        error_message = str(exc_info.value)
-        assert "file:// URIs disabled" in error_message
-        assert "Files API" in error_message
-        assert "/v1/files" in error_message
-        assert "LLAMA_STACK_ALLOW_FILE_URI" in error_message
-    finally:
-        os.unlink(temp_path)
-
-
-async def test_file_uri_allowed_when_enabled(monkeypatch, tmp_path):
-    """Test that file:// URIs work when ALLOW_FILE_URI=true."""
-    monkeypatch.setenv("LLAMA_STACK_ALLOW_FILE_URI", "true")
-
-    # Need to reimport to pick up env change
-    import importlib
-
-    from llama_stack.providers.utils.memory import vector_store
-
-    importlib.reload(vector_store)
-
-    # Create a temp file
-    test_file = tmp_path / "test.txt"
-    test_file.write_text("Hello from allowed file URI!")
-
-    file_uri = f"file://{test_file}"
-    mock_doc = RAGDocument(document_id="test", content=file_uri)
-
-    result = await vector_store.content_from_doc(mock_doc)
-    assert result == "Hello from allowed file URI!"
-
-
-class TestReadFileUri:
-    async def test_read_file_uri_basic(self, monkeypatch):
-        monkeypatch.setenv("LLAMA_STACK_ALLOW_FILE_URI", "true")
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-            f.write("Hello from file URI!")
-            temp_path = f.name
-
-        try:
-            content, mime_type = await read_file_uri(f"file://{temp_path}")
-            assert content == b"Hello from file URI!"
-            assert mime_type == "text/plain"
-        finally:
-            os.unlink(temp_path)
-
-    async def test_read_file_uri_with_spaces(self, monkeypatch):
-        monkeypatch.setenv("LLAMA_STACK_ALLOW_FILE_URI", "true")
-
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, prefix="test file ") as f:
-            f.write("Content with spaces in path")
-            temp_path = f.name
-
-        try:
-            encoded_uri = f"file://{temp_path.replace(' ', '%20')}"
-            content, mime_type = await read_file_uri(encoded_uri)
-            assert content == b"Content with spaces in path"
-        finally:
-            os.unlink(temp_path)
-
-    async def test_read_file_uri_file_not_found(self, monkeypatch):
-        """Test FileNotFoundError with sanitized message (no path disclosure)."""
-        monkeypatch.setenv("LLAMA_STACK_ALLOW_FILE_URI", "true")
-
-        with pytest.raises(FileNotFoundError) as exc_info:
-            await read_file_uri("file:///nonexistent/path/to/secret/file.txt")
-
-        error_message = str(exc_info.value)
-        assert "file.txt" in error_message
-        assert "/nonexistent/path/to/secret" not in error_message
-
-    async def test_read_file_uri_directory_error(self, monkeypatch):
-        monkeypatch.setenv("LLAMA_STACK_ALLOW_FILE_URI", "true")
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with pytest.raises(IsADirectoryError) as exc_info:
-                await read_file_uri(f"file://{temp_dir}")
-
-            error_message = str(exc_info.value)
-            dir_name = os.path.basename(temp_dir)
-            assert dir_name in error_message
-
-    async def test_read_file_uri_size_limit(self, monkeypatch):
-        monkeypatch.setenv("LLAMA_STACK_ALLOW_FILE_URI", "true")
-
-        with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
-            f.write(b"x" * 1000)  # 1KB file
-            temp_path = f.name
-
-        try:
-            with pytest.raises(ValueError) as exc_info:
-                await read_file_uri(f"file://{temp_path}", max_size=500)
-
-            error_message = str(exc_info.value)
-            assert "too large" in error_message
-            assert "1000 bytes" in error_message
-            assert "500 bytes" in error_message
-        finally:
-            os.unlink(temp_path)
