@@ -18,6 +18,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
+from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
 from llama_stack_api import (
     Api,
     Benchmark,
@@ -349,6 +350,27 @@ class QualifiedModel(BaseModel):
     model_id: str
 
 
+class RewriteQueryParams(BaseModel):
+    """Parameters for query rewriting/expansion."""
+
+    model: QualifiedModel | None = Field(
+        default=None,
+        description="LLM model for query rewriting/expansion in vector search.",
+    )
+    prompt: str = Field(
+        default=DEFAULT_QUERY_REWRITE_PROMPT,
+        description="Prompt template for query rewriting. Use {query} as placeholder for the original query.",
+    )
+    max_tokens: int = Field(
+        default=100,
+        description="Maximum number of tokens for query expansion responses.",
+    )
+    temperature: float = Field(
+        default=0.3,
+        description="Temperature for query expansion model (0.0 = deterministic, 1.0 = creative).",
+    )
+
+
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
 
@@ -359,6 +381,10 @@ class VectorStoresConfig(BaseModel):
     default_embedding_model: QualifiedModel | None = Field(
         default=None,
         description="Default embedding model configuration for vector stores.",
+    )
+    rewrite_query_params: RewriteQueryParams | None = Field(
+        default=None,
+        description="Parameters for query rewriting/expansion. None disables query rewriting.",
     )
 
 
@@ -474,7 +500,7 @@ class ServerConfig(BaseModel):
     )
 
 
-class StackRunConfig(BaseModel):
+class StackConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
     image_name: str = Field(
@@ -501,6 +527,7 @@ can be instantiated multiple times (with different configs) if necessary.
 """,
     )
     storage: StorageConfig = Field(
+        default_factory=StorageConfig,
         description="Catalog of named storage backends and references available to the stack",
     )
 
@@ -546,7 +573,7 @@ can be instantiated multiple times (with different configs) if necessary.
         return v
 
     @model_validator(mode="after")
-    def validate_server_stores(self) -> "StackRunConfig":
+    def validate_server_stores(self) -> "StackConfig":
         backend_map = self.storage.backends
         stores = self.storage.stores
         kv_backends = {
@@ -588,39 +615,3 @@ can be instantiated multiple times (with different configs) if necessary.
         _ensure_backend(stores.responses, sql_backends, "storage.stores.responses")
         _ensure_backend(stores.prompts, kv_backends, "storage.stores.prompts")
         return self
-
-
-class BuildConfig(BaseModel):
-    version: int = LLAMA_STACK_BUILD_CONFIG_VERSION
-
-    distribution_spec: DistributionSpec = Field(description="The distribution spec to build including API providers. ")
-    image_type: str = Field(
-        default="venv",
-        description="Type of package to build (container | venv)",
-    )
-    image_name: str | None = Field(
-        default=None,
-        description="Name of the distribution to build",
-    )
-    external_providers_dir: Path | None = Field(
-        default=None,
-        description="Path to directory containing external provider implementations. The providers packages will be resolved from this directory. "
-        "pip_packages MUST contain the provider package name.",
-    )
-    additional_pip_packages: list[str] = Field(
-        default_factory=list,
-        description="Additional pip packages to install in the distribution. These packages will be installed in the distribution environment.",
-    )
-    external_apis_dir: Path | None = Field(
-        default=None,
-        description="Path to directory containing external API implementations. The APIs code and dependencies must be installed on the system.",
-    )
-
-    @field_validator("external_providers_dir")
-    @classmethod
-    def validate_external_providers_dir(cls, v):
-        if v is None:
-            return None
-        if isinstance(v, str):
-            return Path(v)
-        return v

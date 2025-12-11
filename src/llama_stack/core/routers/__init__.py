@@ -9,8 +9,8 @@ from typing import Any
 from llama_stack.core.datatypes import (
     AccessRule,
     RoutedProtocol,
+    StackConfig,
 )
-from llama_stack.core.stack import StackRunConfig
 from llama_stack.core.store import DistributionRegistry
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import Api, RoutingTable
@@ -51,7 +51,7 @@ async def get_routing_table_impl(
 
 
 async def get_auto_router_impl(
-    api: Api, routing_table: RoutingTable, deps: dict[str, Any], run_config: StackRunConfig, policy: list[AccessRule]
+    api: Api, routing_table: RoutingTable, deps: dict[str, Any], run_config: StackConfig, policy: list[AccessRule]
 ) -> Any:
     from .datasets import DatasetIORouter
     from .eval_scoring import EvalRouter, ScoringRouter
@@ -87,6 +87,7 @@ async def get_auto_router_impl(
         api_to_dep_impl["store"] = inference_store
     elif api == Api.vector_io:
         api_to_dep_impl["vector_stores_config"] = run_config.vector_stores
+        api_to_dep_impl["inference_api"] = deps.get(Api.inference)
     elif api == Api.safety:
         api_to_dep_impl["safety_config"] = run_config.safety
 

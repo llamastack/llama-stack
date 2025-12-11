@@ -141,14 +141,14 @@ docker run \
   --pull always \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v $HOME/.llama:/root/.llama \
-  -v ./llama_stack/distributions/tgi/run-with-safety.yaml:/root/my-run.yaml \
+  -v ./llama_stack/distributions/tgi/run-with-safety.yaml:/root/my-config.yaml \
   -e INFERENCE_MODEL=$INFERENCE_MODEL \
   -e DEH_URL=$DEH_URL \
   -e SAFETY_MODEL=$SAFETY_MODEL \
   -e DEH_SAFETY_URL=$DEH_SAFETY_URL \
   -e CHROMA_URL=$CHROMA_URL \
   llamastack/distribution-{{ name }} \
-  --config /root/my-run.yaml \
+  --config /root/my-config.yaml \
   --port $LLAMA_STACK_PORT
 ```
 
@@ -157,16 +157,16 @@ docker run \
 You can also run the Docker container with a custom run configuration file by mounting it into the container:
 
 ```bash
-# Set the path to your custom run.yaml file
-CUSTOM_RUN_CONFIG=/path/to/your/custom-run.yaml
+# Set the path to your custom config.yaml file
+CUSTOM_RUN_CONFIG=/path/to/your/custom-config.yaml
 
 docker run -it \
   --pull always \
   --network host \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
   -v $HOME/.llama:/root/.llama \
-  -v $CUSTOM_RUN_CONFIG:/app/custom-run.yaml \
-  -e RUN_CONFIG_PATH=/app/custom-run.yaml \
+  -v $CUSTOM_RUN_CONFIG:/app/custom-config.yaml \
+  -e RUN_CONFIG_PATH=/app/custom-config.yaml \
   -e INFERENCE_MODEL=$INFERENCE_MODEL \
   -e DEH_URL=$DEH_URL \
   -e CHROMA_URL=$CHROMA_URL \

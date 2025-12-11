@@ -337,7 +337,7 @@ uv pip install -e .
 7. Configure Llama Stack to use the provider:
 
 ```yaml
-# ~/.llama/run-byoa.yaml
+# ~/.llama/config.yaml
 version: "2"
 image_name: "llama-stack-api-weather"
 apis:
@@ -356,7 +356,7 @@ server:
 8. Run the server:
 
 ```bash
-llama stack run ~/.llama/run-byoa.yaml
+llama stack run ~/.llama/config.yaml
 ```
 
 9. Test the API:

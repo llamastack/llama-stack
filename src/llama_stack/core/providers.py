@@ -12,14 +12,14 @@ from pydantic import BaseModel
 from llama_stack.log import get_logger
 from llama_stack_api import HealthResponse, HealthStatus, ListProvidersResponse, ProviderInfo, Providers
 
-from .datatypes import StackRunConfig
+from .datatypes import StackConfig
 from .utils.config import redact_sensitive_fields
 
 logger = get_logger(name=__name__, category="core")
 
 
 class ProviderImplConfig(BaseModel):
-    run_config: StackRunConfig
+    config: StackConfig
 
 
 async def get_provider_impl(config, deps):
@@ -30,7 +30,7 @@ async def get_provider_impl(config, deps):
 
 class ProviderImpl(Providers):
     def __init__(self, config, deps):
-        self.config = config
+        self.stack_config = config.config
         self.deps = deps
 
     async def initialize(self) -> None:
@@ -41,8 +41,8 @@ class ProviderImpl(Providers):
         pass
 
     async def list_providers(self) -> ListProvidersResponse:
-        run_config = self.config.run_config
-        safe_config = StackRunConfig(**redact_sensitive_fields(run_config.model_dump()))
+        run_config = self.stack_config
+        safe_config = StackConfig(**redact_sensitive_fields(run_config.model_dump()))
         providers_health = await self.get_providers_health()
         ret = []
         for api, providers in safe_config.providers.items():
