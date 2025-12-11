@@ -66,14 +66,6 @@ class InferenceStore:
             },
         )
 
-        if self.enable_write_queue:
-            self._queue = asyncio.Queue(maxsize=self._max_write_queue_size)
-            for _ in range(self._num_writers):
-                self._worker_tasks.append(asyncio.create_task(self._worker_loop()))
-            logger.debug(
-                f"Inference store write queue enabled with {self._num_writers} writers, max queue size {self._max_write_queue_size}"
-            )
-
     async def shutdown(self) -> None:
         if not self._worker_tasks:
             return
