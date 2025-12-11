@@ -138,7 +138,7 @@ jobs:
       contents: read
       pull-requests: write
     outputs:
-      python_url: ${{ steps.run-preview.outputs.outcomes && fromJSON(steps.run-preview.outputs.outcomes).python.install_url || '' }}
+      python_url: ${{ fromJSON(steps.run-preview.outputs.outcomes || '{}').python.install_url || '' }}
     steps:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
@@ -153,7 +153,7 @@ jobs:
         id: run-preview
         uses: stainless-api/upload-openapi-spec-action/preview@979824f1ea5f44334940f0768d04642b6cdaa0d1 # 1.8.1
         env:
-          PR_NUMBER: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.pull_request.number }}
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
@@ -167,7 +167,7 @@ jobs:
           branch: ${{ needs.compute-branch.outputs.preview_branch }}
           base_branch: ${{ needs.compute-branch.outputs.base_branch }}
           commit_message: ${{ needs.compute-branch.outputs.pr_title }}
-          make_comment: ${{ github.event_name == 'pull_request_target' }}
+          make_comment: true
 
   run-integration-tests:
     needs: [compute-branch, preview]
