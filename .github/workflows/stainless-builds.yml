@@ -65,6 +65,7 @@ jobs:
       pr_head_sha: ${{ steps.compute.outputs.pr_head_sha }}
       pr_base_sha: ${{ steps.compute.outputs.pr_base_sha }}
       pr_base_ref: ${{ steps.compute.outputs.pr_base_ref }}
+      pr_title: ${{ steps.compute.outputs.pr_title }}
     steps:
       - name: Fetch PR details for workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
@@ -72,7 +73,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PR_DATA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRefOid,baseRefName,baseRefOid,headRepositoryOwner)
+          PR_DATA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRefOid,baseRefName,baseRefOid,headRepositoryOwner,title)
           echo "pr_data=$PR_DATA" >> $GITHUB_OUTPUT
 
       - name: Compute branch names
@@ -88,6 +89,7 @@ jobs:
             HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
             BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid')
             BASE_REF=$(echo "$PR_DATA" | jq -r '.baseRefName')
+            PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
           else
             # Use pull_request_target event data
             HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
@@ -96,6 +98,7 @@ jobs:
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
             BASE_REF="${{ github.event.pull_request.base.ref }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
           fi
 
           BASE_REPO="${{ github.repository }}"
@@ -122,6 +125,7 @@ jobs:
           echo "pr_head_sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
           echo "pr_base_sha=${BASE_SHA}" >> $GITHUB_OUTPUT
           echo "pr_base_ref=${BASE_REF}" >> $GITHUB_OUTPUT
+          echo "pr_title=${PR_TITLE}" >> $GITHUB_OUTPUT
 
   preview:
     needs: compute-branch
@@ -134,7 +138,7 @@ jobs:
       contents: read
       pull-requests: write
     outputs:
-      python_url: ${{ steps.run-preview.outputs.outcomes.python.install_url }}
+      python_url: ${{ steps.run-preview.outputs.outcomes && fromJSON(steps.run-preview.outputs.outcomes).python.install_url || '' }}
     steps:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
@@ -148,6 +152,8 @@ jobs:
       - name: Run preview builds
         id: run-preview
         uses: stainless-api/upload-openapi-spec-action/preview@979824f1ea5f44334940f0768d04642b6cdaa0d1 # 1.8.1
+        env:
+          PR_NUMBER: ${{ github.event_name == 'workflow_dispatch' && inputs.pr_number || github.event.pull_request.number }}
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
@@ -160,6 +166,8 @@ jobs:
           head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
           branch: ${{ needs.compute-branch.outputs.preview_branch }}
           base_branch: ${{ needs.compute-branch.outputs.base_branch }}
+          commit_message: ${{ needs.compute-branch.outputs.pr_title }}
+          make_comment: ${{ github.event_name == 'pull_request_target' }}
 
   run-integration-tests:
     needs: [compute-branch, preview]
