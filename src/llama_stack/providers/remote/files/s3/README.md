@@ -213,9 +213,9 @@ config:
 ### Using OCI Object Storage with S3 Compatibility
 [Official Object Storage Amazon S3 Compatibility API Documentation](https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/s3compatibleapi.htm)
 
-OCI Object Storage can be utilized through the OCI S3 Compatibility API. Simply Update the `run.yaml` and set the env-vars as below.
+OCI Object Storage can be utilized through the OCI S3 Compatibility API. Simply Update the `config.yaml` and set the env-vars as below.
 
-#### run.yaml
+#### config.yaml
 ```yaml
 provider_type: remote::s3
 config:

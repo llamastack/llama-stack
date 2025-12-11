@@ -14,8 +14,6 @@ from fastapi import Depends, File, Form, Response, UploadFile
 
 if TYPE_CHECKING:
     from mypy_boto3_s3.client import S3Client
-else:
-    S3Client = Any
 
 from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import AccessRule
