@@ -22,14 +22,17 @@ from llama_stack_api import (
     Api,
     Dataset,
     DatasetPurpose,
+    ListBenchmarksRequest,
     ListToolDefsResponse,
     Model,
     ModelNotFoundError,
     ModelType,
     NumberType,
+    RegisterBenchmarkRequest,
     Shield,
     ToolDef,
     ToolGroup,
+    UnregisterBenchmarkRequest,
     URIDataSource,
 )
 
@@ -420,24 +423,26 @@ async def test_benchmarks_routing_table(cached_disk_dist_registry):
 
     # Register multiple benchmarks and verify listing
     await table.register_benchmark(
-        benchmark_id="test-benchmark",
-        dataset_id="test-dataset",
-        scoring_functions=["test-scoring-fn", "test-scoring-fn-2"],
+        RegisterBenchmarkRequest(
+            benchmark_id="test-benchmark",
+            dataset_id="test-dataset",
+            scoring_functions=["test-scoring-fn", "test-scoring-fn-2"],
+        )
     )
-    benchmarks = await table.list_benchmarks()
+    benchmarks = await table.list_benchmarks(ListBenchmarksRequest())
 
     assert len(benchmarks.data) == 1
     benchmark_ids = {b.identifier for b in benchmarks.data}
     assert "test-benchmark" in benchmark_ids
 
     # Unregister the benchmark and verify removal
-    await table.unregister_benchmark(benchmark_id="test-benchmark")
-    benchmarks_after = await table.list_benchmarks()
+    await table.unregister_benchmark(UnregisterBenchmarkRequest(benchmark_id="test-benchmark"))
+    benchmarks_after = await table.list_benchmarks(ListBenchmarksRequest())
     assert len(benchmarks_after.data) == 0
 
     # Unregistering a non-existent benchmark should raise a clear error
     with pytest.raises(ValueError, match="Benchmark 'dummy_benchmark' not found"):
-        await table.unregister_benchmark(benchmark_id="dummy_benchmark")
+        await table.unregister_benchmark(UnregisterBenchmarkRequest(benchmark_id="dummy_benchmark"))
 
 
 async def test_tool_groups_routing_table(cached_disk_dist_registry):
