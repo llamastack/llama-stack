@@ -67,8 +67,6 @@ def mixin():
 
 
 class TestIssue3185Regression:
-
-    @pytest.mark.asyncio
     async def test_streaming_result_has_aclose(self, mixin):
         mock_stream = MockAsyncStream([MockChunk("1")])
 
@@ -80,7 +78,6 @@ class TestIssue3185Regression:
         assert inspect.isasyncgen(result)
         assert isinstance(result, AsyncIterator)
 
-    @pytest.mark.asyncio
     async def test_streaming_yields_all_chunks(self, mixin):
         chunks = [MockChunk("1", "a"), MockChunk("2", "b")]
         mock_stream = MockAsyncStream(chunks)
@@ -92,7 +89,6 @@ class TestIssue3185Regression:
         assert received[0].content == "a"
         assert received[1].content == "b"
 
-    @pytest.mark.asyncio
     async def test_non_streaming_returns_directly(self, mixin):
         mock_response = MagicMock()
         mock_response.id = "test-id"
@@ -104,8 +100,6 @@ class TestIssue3185Regression:
 
 
 class TestIdOverwriting:
-
-    @pytest.mark.asyncio
     async def test_ids_overwritten_when_enabled(self):
         config = RemoteInferenceProviderConfig()
         mixin = OpenAIMixinTestImpl(config=config)
@@ -118,7 +112,6 @@ class TestIdOverwriting:
         assert all(c.id.startswith("cltsd-") for c in received)
         assert received[0].id == received[1].id  # Same ID for all chunks
 
-    @pytest.mark.asyncio
     async def test_ids_preserved_when_disabled(self):
         config = RemoteInferenceProviderConfig()
         mixin = OpenAIMixinTestImpl(config=config)
