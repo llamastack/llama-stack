@@ -56,7 +56,7 @@ class InferenceStore:
             logger.debug("Write queue disabled for SQLite (WAL mode handles concurrency)")
 
         await self.sql_store.create_table(
-            "chat_completions",
+            self.reference.table_name,
             {
                 "id": ColumnDefinition(type=ColumnType.STRING, primary_key=True),
                 "created": ColumnType.INTEGER,
@@ -161,7 +161,7 @@ class InferenceStore:
 
         try:
             await self.sql_store.insert(
-                table="chat_completions",
+                table=self.reference.table_name,
                 data=record_data,
             )
         except IntegrityError as e:
@@ -173,7 +173,7 @@ class InferenceStore:
             error_message = str(e.orig) if e.orig else str(e)
             if self._is_unique_constraint_error(error_message):
                 # Update the existing record instead
-                await self.sql_store.update(table="chat_completions", data=record_data, where={"id": data["id"]})
+                await self.sql_store.update(table=self.reference.table_name, data=record_data, where={"id": data["id"]})
             else:
                 # Re-raise if it's not a unique constraint error
                 raise
@@ -217,7 +217,7 @@ class InferenceStore:
             where_conditions["model"] = model
 
         paginated_result = await self.sql_store.fetch_all(
-            table="chat_completions",
+            table=self.reference.table_name,
             where=where_conditions if where_conditions else None,
             order_by=[("created", order.value)],
             cursor=("id", after) if after else None,
@@ -246,7 +246,7 @@ class InferenceStore:
             raise ValueError("Inference store is not initialized")
 
         row = await self.sql_store.fetch_one(
-            table="chat_completions",
+            table=self.reference.table_name,
             where={"id": completion_id},
         )
 
