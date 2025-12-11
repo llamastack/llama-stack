@@ -110,6 +110,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar benchmarks: Benchmark suite management
     :cvar tool_groups: Tool group organization
     :cvar files: File storage and management
+    :cvar file_processors: File parsing and processing operations
     :cvar prompts: Prompt versions and management
     :cvar inspect: Built-in system inspection and introspection
     """
@@ -134,6 +135,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     benchmarks = "benchmarks"
     tool_groups = "tool_groups"
     files = "files"
+    file_processors = "file_processors"
     prompts = "prompts"
     conversations = "conversations"
 
