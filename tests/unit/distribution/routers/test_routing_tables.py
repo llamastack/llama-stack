@@ -35,6 +35,10 @@ from llama_stack_api import (
     UnregisterBenchmarkRequest,
     URIDataSource,
 )
+from llama_stack_api.datasets import (
+    RegisterDatasetRequest,
+    UnregisterDatasetRequest,
+)
 
 
 class Impl:
@@ -261,10 +265,18 @@ async def test_datasets_routing_table(cached_disk_dist_registry):
 
     # Register multiple datasets and verify listing
     await table.register_dataset(
-        dataset_id="test-dataset", purpose=DatasetPurpose.eval_messages_answer, source=URIDataSource(uri="test-uri")
+        RegisterDatasetRequest(
+            dataset_id="test-dataset",
+            purpose=DatasetPurpose.eval_messages_answer,
+            source=URIDataSource(uri="test-uri"),
+        )
     )
     await table.register_dataset(
-        dataset_id="test-dataset-2", purpose=DatasetPurpose.eval_messages_answer, source=URIDataSource(uri="test-uri-2")
+        RegisterDatasetRequest(
+            dataset_id="test-dataset-2",
+            purpose=DatasetPurpose.eval_messages_answer,
+            source=URIDataSource(uri="test-uri-2"),
+        )
     )
     datasets = await table.list_datasets()
 
@@ -273,8 +285,8 @@ async def test_datasets_routing_table(cached_disk_dist_registry):
     assert "test-dataset" in dataset_ids
     assert "test-dataset-2" in dataset_ids
 
-    await table.unregister_dataset(dataset_id="test-dataset")
-    await table.unregister_dataset(dataset_id="test-dataset-2")
+    await table.unregister_dataset(UnregisterDatasetRequest(dataset_id="test-dataset"))
+    await table.unregister_dataset(UnregisterDatasetRequest(dataset_id="test-dataset-2"))
 
     datasets = await table.list_datasets()
     assert len(datasets.data) == 0
