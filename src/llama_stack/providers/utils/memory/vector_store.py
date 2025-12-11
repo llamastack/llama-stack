@@ -135,9 +135,7 @@ async def content_from_doc(doc: RAGDocument) -> str:
     if isinstance(doc.content, URL):
         uri = doc.content.uri
         if uri.startswith("file://"):
-            raise ValueError(
-                "file:// URIs are not supported. Please use the Files API (/v1/files) to upload files."
-            )
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
         if uri.startswith("data:"):
             return content_from_data(uri)
         async with httpx.AsyncClient() as client:
@@ -147,9 +145,7 @@ async def content_from_doc(doc: RAGDocument) -> str:
         return r.text
     elif isinstance(doc.content, str):
         if doc.content.startswith("file://"):
-            raise ValueError(
-                "file:// URIs are not supported. Please use the Files API (/v1/files) to upload files."
-            )
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
         pattern = re.compile("^(https?://|data:)")
         if pattern.match(doc.content):
             if doc.content.startswith("data:"):
