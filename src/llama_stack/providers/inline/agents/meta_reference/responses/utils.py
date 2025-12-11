@@ -115,10 +115,17 @@ async def convert_chat_choice_to_response_message(
         )
 
     annotations, clean_text = _extract_citations_from_text(output_content, citation_files or {})
+    logprobs = choice.logprobs.content if choice.logprobs and choice.logprobs.content else None
 
     return OpenAIResponseMessage(
         id=message_id or f"msg_{uuid.uuid4()}",
-        content=[OpenAIResponseOutputMessageContentOutputText(text=clean_text, annotations=list(annotations))],
+        content=[
+            OpenAIResponseOutputMessageContentOutputText(
+                text=clean_text,
+                annotations=list(annotations),
+                logprobs=logprobs,
+            )
+        ],
         status="completed",
         role="assistant",
     )
