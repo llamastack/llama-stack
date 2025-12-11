@@ -355,7 +355,7 @@ The purpose of scoring function is to calculate the score for each example based
 Firstly, you can see if the existing [llama stack scoring functions](https://github.com/meta-llama/llama-stack/tree/main/llama_stack/providers/inline/scoring) can fulfill your need. If not, you need to write a new scoring function based on what benchmark author / other open source repo describe.
 
 ### Add new benchmark into template
-Firstly, you need to add the evaluation dataset associated with your benchmark under `datasets` resource in the [open-benchmark](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/distributions/open-benchmark/run.yaml)
+Firstly, you need to add the evaluation dataset associated with your benchmark under `datasets` resource in the [open-benchmark](https://github.com/meta-llama/llama-stack/blob/main/llama_stack/distributions/open-benchmark/config.yaml)
 
 Secondly, you need to add the new benchmark you just created under the `benchmarks` resource in the same template. To add the new benchmark, you need to have
 - `benchmark_id`: identifier of the benchmark
@@ -366,7 +366,7 @@ Secondly, you need to add the new benchmark you just created under the `benchmar
 
 Spin up llama stack server with 'open-benchmark' templates
 ```bash
-llama stack run llama_stack/distributions/open-benchmark/run.yaml
+llama stack run llama_stack/distributions/open-benchmark/config.yaml
 ```
 
 Run eval benchmark CLI with your new benchmark id

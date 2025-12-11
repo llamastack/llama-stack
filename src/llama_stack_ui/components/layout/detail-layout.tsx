@@ -7,7 +7,7 @@ export function DetailLoadingView() {
     <>
       <Skeleton className="h-8 w-3/4 mb-6" /> {/* Title Skeleton */}
       <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-grow md:w-2/3 space-y-6">
+        <div className="flex-1 min-w-0 space-y-6">
           {[...Array(2)].map((_, i) => (
             <Card key={`main-skeleton-card-${i}`}>
               <CardHeader>
@@ -23,7 +23,7 @@ export function DetailLoadingView() {
             </Card>
           ))}
         </div>
-        <div className="md:w-1/3">
+        <div className="w-80 flex-shrink-0">
           <div className="p-4 border rounded-lg shadow-sm bg-white space-y-3">
             <Skeleton className="h-6 w-1/3 mb-3" />{" "}
             {/* Properties Title Skeleton */}
@@ -137,8 +137,10 @@ export function DetailLayout({
     <>
       <h1 className="text-2xl font-bold mb-6">{title}</h1>
       <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-grow md:w-2/3 space-y-6">{mainContent}</div>
-        <div className="md:w-1/3">{sidebar}</div>
+        <div className="flex-1 min-w-0 space-y-6 overflow-x-hidden">
+          {mainContent}
+        </div>
+        <div className="w-80 flex-shrink-0">{sidebar}</div>
       </div>
     </>
   );

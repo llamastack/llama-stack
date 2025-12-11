@@ -243,7 +243,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         existing_models = await self.get_all_with_type("model")
 
         # we may have an alias for the model registered by the user (or during initialization
-        # from run.yaml) that we need to keep track of
+        # from config.yaml) that we need to keep track of
         model_ids = {}
         for model in existing_models:
             if model.provider_id != provider_id:

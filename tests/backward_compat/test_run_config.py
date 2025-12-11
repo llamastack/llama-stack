@@ -5,10 +5,10 @@
 # the root directory of this source tree.
 
 """
-Backward compatibility test for run.yaml files.
+Backward compatibility test for config.yaml files.
 
 This test ensures that changes to StackRunConfig don't break
-existing run.yaml files from previous versions.
+existing config.yaml files from previous versions.
 """
 
 import os
@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from llama_stack.core.datatypes import StackRunConfig
+from llama_stack.core.datatypes import StackConfig
 
 
 def get_test_configs():
@@ -36,10 +36,10 @@ def get_test_configs():
     else:
         # Local mode: test current distribution configs
         repo_root = Path(__file__).parent.parent.parent
-        config_files = sorted((repo_root / "src" / "llama_stack" / "distributions").glob("*/run.yaml"))
+        config_files = sorted((repo_root / "src" / "llama_stack" / "distributions").glob("*/config.yaml"))
 
         if not config_files:
-            pytest.skip("No run.yaml files found in distributions/")
+            pytest.skip("No config.yaml files found in distributions/")
 
         return config_files
 
@@ -49,4 +49,4 @@ def test_load_run_config(config_file):
     with open(config_file) as f:
         config_data = yaml.safe_load(f)
 
-    StackRunConfig.model_validate(config_data)
+    StackConfig.model_validate(config_data)

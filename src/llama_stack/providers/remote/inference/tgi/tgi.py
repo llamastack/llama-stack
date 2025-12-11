@@ -51,7 +51,9 @@ class _HfAdapter(OpenAIMixin):
 class TGIAdapter(_HfAdapter):
     async def initialize(self, config: TGIImplConfig) -> None:
         if not config.base_url:
-            raise ValueError("You must provide a URL in run.yaml (or via the TGI_URL environment variable) to use TGI.")
+            raise ValueError(
+                "You must provide a URL in config.yaml (or via the TGI_URL environment variable) to use TGI."
+            )
         log.info(f"Initializing TGI client with url={config.base_url}")
         # Extract base URL without /v1 for HF client initialization
         base_url_str = str(config.base_url).rstrip("/")

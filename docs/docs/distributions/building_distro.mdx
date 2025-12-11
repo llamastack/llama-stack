@@ -12,7 +12,7 @@ This guide walks you through inspecting existing distributions, customising thei
 All first-party distributions live under `llama_stack/distributions/`. Each directory contains:
 
 - `build.yaml` – the distribution specification (providers, additional dependencies, optional external provider directories).
-- `run.yaml` – sample run configuration (when provided).
+- `config.yaml` – sample run configuration (when provided).
 - Documentation fragments that power this site.
 
 Browse that folder to understand available providers and copy a distribution to use as a starting point. When creating a new stack, duplicate an existing directory, rename it, and adjust the `build.yaml` file to match your requirements.
@@ -35,7 +35,7 @@ docker build . \
 Handy build arguments:
 
 - `DISTRO_NAME` – distribution directory name (defaults to `starter`).
-- `RUN_CONFIG_PATH` – absolute path inside the build context for a run config that should be baked into the image (e.g. `/workspace/run.yaml`).
+- `RUN_CONFIG_PATH` – absolute path inside the build context for a run config that should be baked into the image (e.g. `/workspace/config.yaml`).
 - `INSTALL_MODE=editable` – install the repository copied into `/workspace` with `uv pip install -e`. Pair it with `--build-arg LLAMA_STACK_DIR=/workspace`.
 - `LLAMA_STACK_CLIENT_DIR` – optional editable install of the Python client.
 - `PYPI_VERSION` / `TEST_PYPI_VERSION` – pin specific releases when not using editable installs.
@@ -50,7 +50,7 @@ External providers live outside the main repository but can be bundled by pointi
 
 1. Copy providers into the build context, for example `cp -R path/to/providers providers.d`.
 2. Update `build.yaml` with the directory and provider entries.
-3. Adjust run configs to use the in-container path (usually `/.llama/providers.d`). Pass `--build-arg RUN_CONFIG_PATH=/workspace/run.yaml` if you want to bake the config.
+3. Adjust run configs to use the in-container path (usually `/.llama/providers.d`). Pass `--build-arg RUN_CONFIG_PATH=/workspace/config.yaml` if you want to bake the config.
 
 Example `build.yaml` excerpt for a custom Ollama provider:
 
@@ -142,7 +142,7 @@ If you prepared a custom run config, mount it into the container and reference i
 ```bash
 docker run \
   -p $LLAMA_STACK_PORT:$LLAMA_STACK_PORT \
-  -v $(pwd)/run.yaml:/app/run.yaml \
+  -v $(pwd)/config.yaml:/app/config.yaml \
   llama-stack:starter \
-  /app/run.yaml
+  /app/config.yaml
 ```

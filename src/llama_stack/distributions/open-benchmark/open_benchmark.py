@@ -261,7 +261,7 @@ def get_distribution_template() -> DistributionTemplate:
         providers=providers,
         available_models_by_provider=available_models,
         run_configs={
-            "run.yaml": RunConfigSettings(
+            "config.yaml": RunConfigSettings(
                 provider_overrides={
                     "inference": inference_providers,
                     "vector_io": vector_io_providers,

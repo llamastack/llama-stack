@@ -15,8 +15,10 @@ Unlike OpenAI's vector stores which use a fixed embedding model, Llama Stack all
 # Create vector store with specific embedding model
 vector_store = client.vector_stores.create(
     name="my_documents",
-    embedding_model="all-MiniLM-L6-v2",  # Specify your preferred model
-    embedding_dimension=384,
+    extra_body={
+        "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",  # Specify your preferred model
+        "embedding_dimension": 384,  # Optional: will be auto-detected if not provided
+    }
 )
 ```
 
@@ -64,9 +66,16 @@ Choose from multiple vector store providers based on your specific needs:
 ```python
 # Specify provider when creating vector store
 vector_store = client.vector_stores.create(
-    name="my_documents", provider_id="sqlite-vec"  # Choose your preferred provider
+    name="my_documents",
+    extra_body={
+        "provider_id": "sqlite-vec",  # Choose your preferred provider
+        "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",  # Optional: specify embedding model
+        "embedding_dimension": 384,  # Optional: will be auto-detected if not provided
+    }
 )
 ```
+
+**Note**: All Llama Stack-specific parameters (`provider_id`, `embedding_model`, and `embedding_dimension`) must be specified in the `extra_body` parameter when creating vector stores.
 
 ## How It Works
 
@@ -113,7 +122,8 @@ with open("document.pdf", "rb") as f:
 ### 2. Attach to Vector Store
 
 ```python
-# Create a vector store
+# Create a vector store (uses defaults if configured)
+# You can also specify embedding_model, embedding_dimension, and provider_id in extra_body
 vector_store = client.vector_stores.create(name="my_documents")
 
 # Attach the file to the vector store
@@ -367,7 +377,8 @@ results = await client.vector_stores.search(
 ```python
 # Build a RAG system with file uploads
 async def build_rag_system():
-    # Create vector store
+    # Create vector store (uses defaults if configured)
+    # You can specify embedding_model, embedding_dimension, and provider_id in extra_body if needed
     vector_store = client.vector_stores.create(name="knowledge_base")
 
     # Upload and process documents
