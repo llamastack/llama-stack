@@ -227,7 +227,7 @@ paths:
     post:
       responses:
         '200':
-          description: An OpenAIChatCompletion.
+          description: An OpenAIChatCompletion. When streaming, returns Server-Sent Events (SSE) with OpenAIChatCompletionChunk objects.
           content:
             application/json:
               schema:
@@ -301,7 +301,7 @@ paths:
     post:
       responses:
         '200':
-          description: An OpenAICompletion or an async iterator of OpenAICompletion chunks when streaming.
+          description: An OpenAICompletion. When streaming, returns Server-Sent Events (SSE) with OpenAICompletion chunks.
           content:
             application/json:
               schema:
