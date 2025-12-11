@@ -29,7 +29,7 @@ class CommonConnectorFields(BaseModel):
     :param connector_type: Type of connector
     :param connector_id: Identifier for the connector
     :param url: URL of the connector
-    :param server_label: Label of the server
+    :param server_label: (Optional) Label of the server
     """
 
     connector_type: ConnectorType = Field(default=ConnectorType.MCP)
@@ -43,12 +43,7 @@ class Connector(CommonConnectorFields, Resource):
     """A connector resource representing a connector registered in Llama Stack.
 
     :param type: Type of resource, always 'connector' for connectors
-    :param connector_type: Type of connector (e.g., MCP)
-    :param connector_id: Identifier for the connector
-    :param url: URL of the connector
-    :param created_at: Timestamp of creation
-    :param updated_at: Timestamp of last update
-    :param server_label: (Optional) Label of the server
+    :param server_name: (Optional) Name of the server
     :param server_description: (Optional) Description of the server
     """
 
@@ -60,7 +55,10 @@ class Connector(CommonConnectorFields, Resource):
 
 @json_schema_type
 class ConnectorInput(CommonConnectorFields):
-    """Input for creating a connector"""
+    """Input for creating a connector
+
+    :param type: Type of resource, always 'connector' for connectors
+    """
 
     type: Literal[ResourceType.connector] = ResourceType.connector
 
@@ -141,6 +139,8 @@ class Connectors(Protocol):
         """Get a connector by its ID.
 
         :param connector_id: The ID of the connector to get.
+        :param authorization: (Optional) OAuth access token for authenticating with the MCP server.
+
         :returns: A Connector.
         """
         ...
