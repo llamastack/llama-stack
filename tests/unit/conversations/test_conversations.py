@@ -25,6 +25,14 @@ from llama_stack.core.storage.datatypes import (
 )
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack_api import OpenAIResponseInputMessageContentText, OpenAIResponseMessage
+from llama_stack_api.conversations import (
+    AddItemsRequest,
+    CreateConversationRequest,
+    DeleteConversationRequest,
+    GetConversationRequest,
+    ListItemsRequest,
+    RetrieveItemRequest,
+)
 
 
 @pytest.fixture
@@ -53,20 +61,20 @@ async def service():
 
 
 async def test_conversation_lifecycle(service):
-    conversation = await service.create_conversation(metadata={"test": "data"})
+    conversation = await service.create_conversation(CreateConversationRequest(metadata={"test": "data"}))
 
     assert conversation.id.startswith("conv_")
     assert conversation.metadata == {"test": "data"}
 
-    retrieved = await service.get_conversation(conversation.id)
+    retrieved = await service.get_conversation(GetConversationRequest(conversation_id=conversation.id))
     assert retrieved.id == conversation.id
 
-    deleted = await service.openai_delete_conversation(conversation.id)
+    deleted = await service.openai_delete_conversation(DeleteConversationRequest(conversation_id=conversation.id))
     assert deleted.id == conversation.id
 
 
 async def test_conversation_items(service):
-    conversation = await service.create_conversation()
+    conversation = await service.create_conversation(CreateConversationRequest())
 
     items = [
         OpenAIResponseMessage(
@@ -77,13 +85,13 @@ async def test_conversation_items(service):
             status="completed",
         )
     ]
-    item_list = await service.add_items(conversation.id, items)
+    item_list = await service.add_items(conversation.id, AddItemsRequest(items=items))
 
     assert len(item_list.data) == 1
     assert item_list.data[0].id == "msg_test123"
 
-    items = await service.list_items(conversation.id)
-    assert len(items.data) == 1
+    items_result = await service.list_items(ListItemsRequest(conversation_id=conversation.id))
+    assert len(items_result.data) == 1
 
 
 async def test_invalid_conversation_id(service):
@@ -93,11 +101,11 @@ async def test_invalid_conversation_id(service):
 
 async def test_empty_parameter_validation(service):
     with pytest.raises(ValueError, match="Expected a non-empty value"):
-        await service.retrieve("", "item_123")
+        await service.retrieve(RetrieveItemRequest(conversation_id="", item_id="item_123"))
 
 
 async def test_openai_type_compatibility(service):
-    conversation = await service.create_conversation(metadata={"test": "value"})
+    conversation = await service.create_conversation(CreateConversationRequest(metadata={"test": "value"}))
 
     conversation_dict = conversation.model_dump()
     openai_conversation = OpenAIConversation.model_validate(conversation_dict)
@@ -114,14 +122,14 @@ async def test_openai_type_compatibility(service):
             status="completed",
         )
     ]
-    item_list = await service.add_items(conversation.id, items)
+    item_list = await service.add_items(conversation.id, AddItemsRequest(items=items))
 
     for attr in ["object", "data", "first_id", "last_id", "has_more"]:
         assert hasattr(item_list, attr)
     assert item_list.object == "list"
 
-    items = await service.list_items(conversation.id)
-    item = await service.retrieve(conversation.id, items.data[0].id)
+    items_result = await service.list_items(ListItemsRequest(conversation_id=conversation.id))
+    item = await service.retrieve(RetrieveItemRequest(conversation_id=conversation.id, item_id=items_result.data[0].id))
     item_dict = item.model_dump()
 
     openai_item_adapter = TypeAdapter(OpenAIConversationItem)
