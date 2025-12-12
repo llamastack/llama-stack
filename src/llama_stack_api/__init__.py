@@ -70,6 +70,9 @@ from .common.content_types import (
 )
 from .common.errors import (
     ConflictError,
+    ConnectorAlreadyRegisteredError,
+    ConnectorNotFoundError,
+    ConnectorToolNotFoundError,
     DatasetNotFoundError,
     InvalidConversationIdError,
     ModelNotFoundError,
@@ -543,6 +546,9 @@ __all__ = [
     "CompletionInputType",
     "CompletionRequest",
     "Connector",
+    "ConnectorAlreadyRegisteredError",
+    "ConnectorNotFoundError",
+    "ConnectorToolNotFoundError",
     "ConnectorInput",
     "Connectors",
     "ConnectorType",
