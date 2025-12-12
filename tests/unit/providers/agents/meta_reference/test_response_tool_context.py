@@ -517,3 +517,43 @@ class TestProcessToolChoice:
         result_b = await _process_tool_choice(chat_tools, tool_choice_b, server_label_to_tools)
         assert isinstance(result_b, OpenAIChatCompletionToolChoiceAllowedTools)
         assert len(result_b.allowed_tools.tools) == 2
+
+    async def test_allowed_tools_filters_effective_tools_correctly(self):
+        """Test that allowed_tools properly filters effective_tools in streaming loop.
+
+        This verifies the filtering logic used in streaming.py:
+        1. Extract allowed tool names from processed_tool_choice
+        2. Filter chat_tools to only include tools with names in allowed set
+        3. Tools specified in allowed_tools but not in chat_tools are excluded
+        """
+        # Limited chat_tools - simulates what's actually available
+        chat_tools = [
+            {"type": "function", "function": {"name": "get_weather"}},
+            {"type": "function", "function": {"name": "calculate"}},
+        ]
+
+        # Request includes a tool that doesn't exist in chat_tools
+        tool_choice = OpenAIResponseInputToolChoiceAllowedTools(
+            mode="required",
+            tools=[
+                {"type": "function", "name": "get_weather"},
+                {"type": "function", "name": "nonexistent_tool"},  # Not in chat_tools
+            ],
+        )
+
+        result = await _process_tool_choice(chat_tools, tool_choice, self.server_label_to_tools)
+        assert isinstance(result, OpenAIChatCompletionToolChoiceAllowedTools)
+
+        # Extract allowed tool names (mirrors streaming.py logic)
+        allowed_tool_names = {
+            tool["function"]["name"]
+            for tool in result.allowed_tools.tools
+            if tool.get("type") == "function" and "function" in tool
+        }
+
+        # Filter effective_tools (mirrors streaming.py logic)
+        effective_tools = [tool for tool in chat_tools if tool.get("function", {}).get("name") in allowed_tool_names]
+
+        # Should only have get_weather since nonexistent_tool isn't in chat_tools
+        assert len(effective_tools) == 1
+        assert effective_tools[0]["function"]["name"] == "get_weather"
