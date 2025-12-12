@@ -632,6 +632,161 @@ paths:
             schema:
               $ref: '#/components/schemas/SupervisedFineTuneRequest'
         required: true
+  /v1alpha/connectors/{connector_id}:
+    get:
+      responses:
+        '200':
+          description: A Connector.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connector'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Connectors
+      summary: Get Connector
+      description: Get a connector by its ID.
+      operationId: get_connector_v1alpha_connectors__connector_id__get
+      parameters:
+      - name: authorization
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: connector_id'
+  /v1alpha/connectors/{connector_id}/tools/{tool_name}:
+    get:
+      responses:
+        '200':
+          description: A ToolDef.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolDef'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Connectors
+      summary: Get Connector Tool
+      description: Get a tool definition by its name from a connector.
+      operationId: get_connector_tool_v1alpha_connectors__connector_id__tools__tool_name__get
+      parameters:
+      - name: authorization
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: connector_id'
+      - name: tool_name
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: tool_name'
+  /v1alpha/connectors/{connector_id}/tools:
+    get:
+      responses:
+        '200':
+          description: A ListToolsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Connectors
+      summary: List Connector Tools
+      description: List tools available from a connector.
+      operationId: list_connector_tools_v1alpha_connectors__connector_id__tools_get
+      parameters:
+      - name: authorization
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: 'Path parameter: connector_id'
+  /v1alpha/connectors:
+    get:
+      responses:
+        '200':
+          description: A ListConnectorsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListConnectorsResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Connectors
+      summary: List Connectors
+      description: List all configured connectors.
+      operationId: list_connectors_v1alpha_connectors_get
 components:
   schemas:
     Error:
@@ -1194,15 +1349,15 @@ components:
           type: number
           title: Logprob
         top_logprobs:
-          items:
-            $ref: '#/components/schemas/OpenAITopLogProb'
-          type: array
-          title: Top Logprobs
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITopLogProb'
+            type: array
+          - type: 'null'
       type: object
       required:
       - token
       - logprob
-      - top_logprobs
       title: OpenAITokenLogProb
       description: |-
         The log probability for a token from an OpenAI-compatible chat completion response.
@@ -2290,15 +2445,22 @@ components:
     OpenAIResponseOutputMessageContentOutputText:
       properties:
         text:
-          type: string
           title: Text
-        type:
           type: string
+        type:
           const: output_text
-          title: Type
           default: output_text
+          title: Type
+          type: string
         annotations:
           items:
+            discriminator:
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              propertyName: type
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
               title: OpenAIResponseAnnotationFileCitation
@@ -2308,20 +2470,20 @@ components:
               title: OpenAIResponseAnnotationContainerFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
               title: OpenAIResponseAnnotationFilePath
-            discriminator:
-              propertyName: type
-              mapping:
-                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
             title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
-          type: array
           title: Annotations
-      type: object
+          type: array
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+          nullable: true
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
+      type: object
     OpenAIResponseOutputMessageFileSearchToolCall:
       properties:
         id:
@@ -3828,8 +3990,7 @@ components:
         logprobs:
           anyOf:
           - items:
-              additionalProperties: true
-              type: object
+              $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
           nullable: true
@@ -4591,6 +4752,13 @@ components:
         item_id:
           title: Item Id
           type: string
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+          nullable: true
         output_index:
           title: Output Index
           type: integer
@@ -7539,6 +7707,66 @@ components:
       - chunk_id
       title: Chunk
       description: A chunk of content that can be inserted into a vector database.
+    Connector:
+      properties:
+        identifier:
+          type: string
+          title: Identifier
+          description: Unique identifier for this resource in llama stack
+        provider_resource_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Unique identifier for this resource in the provider
+        provider_id:
+          type: string
+          title: Provider Id
+          description: ID of the provider that owns this resource
+        type:
+          type: string
+          const: connector
+          title: Type
+          default: connector
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          type: string
+          title: Connector Id
+          description: Identifier for the connector
+        url:
+          type: string
+          title: Url
+          description: URL of the connector
+        server_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Label of the server
+        server_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Name of the server
+        server_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Description of the server
+      type: object
+      required:
+      - identifier
+      - provider_id
+      - connector_id
+      - url
+      title: Connector
+      description: A connector resource representing a connector registered in Llama Stack.
+    ConnectorType:
+      type: string
+      enum:
+      - mcp
+      title: ConnectorType
+      description: Type of connector.
     DatasetPurpose:
       type: string
       enum:
@@ -7617,6 +7845,30 @@ components:
       - cancelled
       title: JobStatus
       description: Status of a job execution.
+    ListConnectorsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Connector'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListConnectorsResponse
+      description: Response containing a list of connectors.
+    ListToolsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ToolDef'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListToolsResponse
+      description: Response containing a list of tools.
     MCPListToolsTool:
       properties:
         input_schema:
@@ -7736,19 +7988,19 @@ components:
             title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
           - items:
               oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
-                title: OpenAIResponseOutputMessageContentOutputText
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output'
+                title: OpenAIResponseOutputMessageContentOutputText-Output
               - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
                 title: OpenAIResponseContentPartRefusal
               discriminator:
                 propertyName: type
                 mapping:
-                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output'
                   refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
-              title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
+              title: OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal
             type: array
-            title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
-          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
+            title: list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
         role:
           title: Role
           type: string
@@ -7781,6 +8033,47 @@ components:
         They are all under one type because the Responses API gives them all
         the same "type" value, and there is no way to tell them apart in certain
         scenarios.
+    OpenAIResponseOutputMessageContentOutputText-Output:
+      properties:
+        text:
+          type: string
+          title: Text
+        type:
+          type: string
+          const: output_text
+          title: Type
+          default: output_text
+        annotations:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              title: OpenAIResponseAnnotationFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              title: OpenAIResponseAnnotationCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              title: OpenAIResponseAnnotationContainerFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+              title: OpenAIResponseAnnotationFilePath
+            discriminator:
+              propertyName: type
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
+          type: array
+          title: Annotations
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+      type: object
+      required:
+      - text
+      title: OpenAIResponseOutputMessageContentOutputText
     OpenAIResponseOutputMessageFileSearchToolCallResults:
       properties:
         attributes:
@@ -8478,6 +8771,63 @@ components:
           type: string
       title: DialogType
       type: object
+    ToolGroupInput:
+      description: Input data for registering a tool group.
+      properties:
+        toolgroup_id:
+          title: Toolgroup Id
+          type: string
+        provider_id:
+          title: Provider Id
+          type: string
+        args:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        mcp_endpoint:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+            title: URL
+          - type: 'null'
+          nullable: true
+          title: URL
+      required:
+      - toolgroup_id
+      - provider_id
+      title: ToolGroupInput
+      type: object
+    ConnectorInput:
+      description: Input for creating a connector
+      properties:
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+        url:
+          description: URL of the connector
+          title: Url
+          type: string
+        server_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Label of the server
+          nullable: true
+        type:
+          const: connector
+          default: connector
+          title: Type
+          type: string
+      required:
+      - connector_id
+      - url
+      title: ConnectorInput
+      type: object
     ConversationMessage:
       description: OpenAI-compatible message item for conversations.
       properties:
@@ -8562,33 +8912,6 @@ components:
       - items
       title: ConversationItemCreateRequest
       type: object
-    ToolGroupInput:
-      description: Input data for registering a tool group.
-      properties:
-        toolgroup_id:
-          title: Toolgroup Id
-          type: string
-        provider_id:
-          title: Provider Id
-          type: string
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          nullable: true
-          title: URL
-      required:
-      - toolgroup_id
-      - provider_id
-      title: ToolGroupInput
-      type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
       enum:
@@ -8613,6 +8936,7 @@ components:
       - files
       - prompts
       - conversations
+      - connectors
       - inspect
       title: Api
       type: string
