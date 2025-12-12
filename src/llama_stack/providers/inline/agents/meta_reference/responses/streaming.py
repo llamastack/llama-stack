@@ -275,11 +275,13 @@ class StreamingResponseOrchestrator:
                 # decide freely whether to call a tool or respond
                 allowed_tool_names = {
                     tool["function"]["name"]
-                    for tool in processed_tool_choice.tools
+                    for tool in processed_tool_choice.allowed_tools.tools
                     if tool.get("type") == "function" and "function" in tool
                 }
                 # Use the mode (e.g., "required") for first iteration, then "auto"
-                chat_tool_choice = processed_tool_choice.mode if processed_tool_choice.mode else "auto"
+                chat_tool_choice = (
+                    processed_tool_choice.allowed_tools.mode if processed_tool_choice.allowed_tools.mode else "auto"
+                )
             else:
                 chat_tool_choice = processed_tool_choice.model_dump()
 
