@@ -83,6 +83,11 @@ class ListToolsResponse(BaseModel):
 
 @runtime_checkable
 class Connectors(Protocol):
+    """Connectors
+
+    APIs for managing connectors.
+    """
+
     # NOTE: Route order matters! More specific routes must come before less specific ones.
     # Routes with {param:path} are greedy and will match everything including slashes.
 
