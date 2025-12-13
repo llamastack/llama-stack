@@ -991,6 +991,13 @@ components:
       - object
       - status
       title: Batch
+    Order:
+      type: string
+      enum:
+      - asc
+      - desc
+      title: Order
+      description: Sort order for paginated responses.
     ListOpenAIChatCompletionResponse:
       properties:
         data:
@@ -3736,15 +3743,15 @@ components:
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
     ResponseGuardrailSpec:
-      description: Specification for a guardrail to apply during response generation.
       properties:
         type:
-          title: Type
           type: string
+          title: Type
+      type: object
       required:
       - type
       title: ResponseGuardrailSpec
-      type: object
+      description: Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       discriminator:
         mapping:
@@ -7767,6 +7774,174 @@ components:
       - mcp
       title: ConnectorType
       description: Type of connector.
+    CreateResponseRequest:
+      properties:
+        input:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - oneOf:
+                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                  title: OpenAIResponseMessage-Input
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                  title: OpenAIResponseOutputMessageWebSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  title: OpenAIResponseOutputMessageFileSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  title: OpenAIResponseOutputMessageFunctionToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  title: OpenAIResponseOutputMessageMCPCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  title: OpenAIResponseOutputMessageMCPListTools
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  title: OpenAIResponseMCPApprovalRequest
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                title: OpenAIResponseMessage-Input | ... (7 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                title: OpenAIResponseInputFunctionToolCallOutput
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                title: OpenAIResponseMCPApprovalResponse
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                title: OpenAIResponseMessage-Input
+              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
+            type: array
+            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          description: Input message(s) to create the response.
+        model:
+          type: string
+          title: Model
+          description: The underlying LLM used for completions.
+        prompt:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponsePrompt'
+            title: OpenAIResponsePrompt
+          - type: 'null'
+          description: Prompt object with ID, version, and variables.
+          title: OpenAIResponsePrompt
+        instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Instructions to guide the model's behavior.
+        parallel_tool_calls:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to enable parallel tool calls.
+          default: true
+        previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional ID of a previous response to continue from.
+        conversation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional ID of a conversation to add the response to.
+        store:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to store the response in the database.
+          default: true
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to stream the response.
+          default: false
+        temperature:
+          anyOf:
+          - type: number
+          - type: 'null'
+          description: Sampling temperature.
+        text:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseText'
+            title: OpenAIResponseText
+          - type: 'null'
+          description: Configuration for text response generation.
+          title: OpenAIResponseText
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                title: OpenAIResponseInputToolWebSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                title: OpenAIResponseInputToolFileSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+                title: OpenAIResponseInputToolFunction
+              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+                title: OpenAIResponseInputToolMCP
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+            type: array
+          - type: 'null'
+          description: List of tools available to the model.
+        include:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ResponseItemInclude'
+            type: array
+          - type: 'null'
+          description: Additional fields to include in the response.
+        max_infer_iters:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Maximum number of inference iterations.
+          default: 10
+        guardrails:
+          anyOf:
+          - items:
+              anyOf:
+              - type: string
+              - $ref: '#/components/schemas/ResponseGuardrailSpec'
+                title: ResponseGuardrailSpec
+              title: string | ResponseGuardrailSpec
+            type: array
+          - type: 'null'
+          description: List of guardrails to apply during response generation.
+        max_tool_calls:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Max number of total calls to built-in tools that can be processed in a response.
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          description: Dictionary of metadata key-value pairs to attach to the response.
+      type: object
+      required:
+      - input
+      - model
+      title: CreateResponseRequest
+      description: Request model for creating a response.
     DatasetPurpose:
       type: string
       enum:
@@ -7964,6 +8139,75 @@ components:
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
+    OpenAIResponseMessage-Input:
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
+                title: OpenAIResponseInputMessageContentText
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                title: OpenAIResponseInputMessageContentImage
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                title: OpenAIResponseInputMessageContentFile
+              discriminator:
+                propertyName: type
+                mapping:
+                  input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                  input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                  input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
+              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
+            type: array
+            title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input'
+                title: OpenAIResponseOutputMessageContentOutputText-Input
+              - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
+                title: OpenAIResponseContentPartRefusal
+              discriminator:
+                propertyName: type
+                mapping:
+                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input'
+                  refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
+              title: OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal
+            type: array
+            title: list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
+        role:
+          title: Role
+          type: string
+          enum:
+          - system
+          - developer
+          - user
+          - assistant
+          default: system
+        type:
+          type: string
+          const: message
+          title: Type
+          default: message
+        id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - content
+      - role
+      title: OpenAIResponseMessage
+      description: |-
+        Corresponds to the various Message types in the Responses API.
+        They are all under one type because the Responses API gives them all
+        the same "type" value, and there is no way to tell them apart in certain
+        scenarios.
     OpenAIResponseMessage-Output:
       properties:
         content:
@@ -8033,6 +8277,47 @@ components:
         They are all under one type because the Responses API gives them all
         the same "type" value, and there is no way to tell them apart in certain
         scenarios.
+    OpenAIResponseOutputMessageContentOutputText-Input:
+      properties:
+        text:
+          type: string
+          title: Text
+        type:
+          type: string
+          const: output_text
+          title: Type
+          default: output_text
+        annotations:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              title: OpenAIResponseAnnotationFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              title: OpenAIResponseAnnotationCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              title: OpenAIResponseAnnotationContainerFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+              title: OpenAIResponseAnnotationFilePath
+            discriminator:
+              propertyName: type
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
+          type: array
+          title: Annotations
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+      type: object
+      required:
+      - text
+      title: OpenAIResponseOutputMessageContentOutputText
     OpenAIResponseOutputMessageContentOutputText-Output:
       properties:
         text:
@@ -8233,6 +8518,18 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ResponseItemInclude:
+      type: string
+      enum:
+      - web_search_call.action.sources
+      - code_interpreter_call.outputs
+      - computer_call_output.output.image_url
+      - file_search_call.results
+      - message.input_image.image_url
+      - message.output_text.logprobs
+      - reasoning.encrypted_content
+      title: ResponseItemInclude
+      description: Specify additional output data to include in the model response.
     SearchRankingOptions:
       properties:
         ranker:
@@ -8695,6 +8992,104 @@ components:
       required:
       - query
       title: VectorStoreSearchRequest
+      type: object
+    RetrieveResponseRequest:
+      description: Request model for retrieving a response.
+      properties:
+        response_id:
+          description: The ID of the OpenAI response to retrieve.
+          title: Response Id
+          type: string
+      required:
+      - response_id
+      title: RetrieveResponseRequest
+      type: object
+    ListResponsesRequest:
+      description: Request model for listing responses.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the last response to return.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 50
+          description: The number of responses to return.
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The model to filter responses by.
+          nullable: true
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: The order to sort responses by when sorted by created_at ('asc' or 'desc').
+          title: Order
+      title: ListResponsesRequest
+      type: object
+    ListResponseInputItemsRequest:
+      description: Request model for listing input items of a response.
+      properties:
+        response_id:
+          description: The ID of the response to retrieve input items for.
+          title: Response Id
+          type: string
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: An item ID to list items after, used for pagination.
+          nullable: true
+        before:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: An item ID to list items before, used for pagination.
+          nullable: true
+        include:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Additional fields to include in the response.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 20
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: The order to return the input items in.
+          title: Order
+      required:
+      - response_id
+      title: ListResponseInputItemsRequest
+      type: object
+    DeleteResponseRequest:
+      description: Request model for deleting a response.
+      properties:
+        response_id:
+          description: The ID of the OpenAI response to delete.
+          title: Response Id
+          type: string
+      required:
+      - response_id
+      title: DeleteResponseRequest
       type: object
     ListBatchesRequest:
       description: Request model for listing batches.

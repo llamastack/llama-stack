@@ -9,22 +9,24 @@ from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.kvstore import InmemoryKVStoreImpl, kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
+from collections.abc import AsyncIterator
+
 from llama_stack_api import (
     Agents,
     Conversations,
+    CreateResponseRequest,
+    DeleteResponseRequest,
     Files,
     Inference,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
+    ListResponseInputItemsRequest,
+    ListResponsesRequest,
     OpenAIDeleteResponseObject,
-    OpenAIResponseInput,
-    OpenAIResponseInputTool,
     OpenAIResponseObject,
-    OpenAIResponsePrompt,
-    OpenAIResponseText,
-    Order,
+    OpenAIResponseObjectStream,
     Prompts,
-    ResponseGuardrail,
+    RetrieveResponseRequest,
     Safety,
     ToolGroups,
     ToolRuntime,
@@ -86,77 +88,63 @@ class MetaReferenceAgentsImpl(Agents):
     # OpenAI responses
     async def get_openai_response(
         self,
-        response_id: str,
+        request: RetrieveResponseRequest,
     ) -> OpenAIResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
-        return await self.openai_responses_impl.get_openai_response(response_id)
+        return await self.openai_responses_impl.get_openai_response(request.response_id)
 
     async def create_openai_response(
         self,
-        input: str | list[OpenAIResponseInput],
-        model: str,
-        prompt: OpenAIResponsePrompt | None = None,
-        instructions: str | None = None,
-        parallel_tool_calls: bool | None = True,
-        previous_response_id: str | None = None,
-        conversation: str | None = None,
-        store: bool | None = True,
-        stream: bool | None = False,
-        temperature: float | None = None,
-        text: OpenAIResponseText | None = None,
-        tools: list[OpenAIResponseInputTool] | None = None,
-        include: list[str] | None = None,
-        max_infer_iters: int | None = 10,
-        guardrails: list[ResponseGuardrail] | None = None,
-        max_tool_calls: int | None = None,
-        metadata: dict[str, str] | None = None,
-    ) -> OpenAIResponseObject:
+        request: CreateResponseRequest,
+    ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         result = await self.openai_responses_impl.create_openai_response(
-            input,
-            model,
-            prompt,
-            instructions,
-            previous_response_id,
-            conversation,
-            store,
-            stream,
-            temperature,
-            text,
-            tools,
-            include,
-            max_infer_iters,
-            guardrails,
-            parallel_tool_calls,
-            max_tool_calls,
-            metadata,
+            request.input,
+            request.model,
+            request.prompt,
+            request.instructions,
+            request.previous_response_id,
+            request.conversation,
+            request.store,
+            request.stream,
+            request.temperature,
+            request.text,
+            request.tools,
+            request.include,
+            request.max_infer_iters,
+            request.guardrails,
+            request.parallel_tool_calls,
+            request.max_tool_calls,
+            request.metadata,
         )
-        return result  # type: ignore[no-any-return]
+        return result
 
     async def list_openai_responses(
         self,
-        after: str | None = None,
-        limit: int | None = 50,
-        model: str | None = None,
-        order: Order | None = Order.desc,
+        request: ListResponsesRequest,
     ) -> ListOpenAIResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
-        return await self.openai_responses_impl.list_openai_responses(after, limit, model, order)
+        return await self.openai_responses_impl.list_openai_responses(
+            request.after, request.limit, request.model, request.order
+        )
 
     async def list_openai_response_input_items(
         self,
-        response_id: str,
-        after: str | None = None,
-        before: str | None = None,
-        include: list[str] | None = None,
-        limit: int | None = 20,
-        order: Order | None = Order.desc,
+        request: ListResponseInputItemsRequest,
     ) -> ListOpenAIResponseInputItem:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         return await self.openai_responses_impl.list_openai_response_input_items(
-            response_id, after, before, include, limit, order
+            request.response_id,
+            request.after,
+            request.before,
+            request.include,
+            request.limit,
+            request.order,
         )
 
-    async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
+    async def delete_openai_response(
+        self,
+        request: DeleteResponseRequest,
+    ) -> OpenAIDeleteResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
-        return await self.openai_responses_impl.delete_openai_response(response_id)
+        return await self.openai_responses_impl.delete_openai_response(request.response_id)
