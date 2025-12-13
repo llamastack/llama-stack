@@ -1437,6 +1437,7 @@ paths:
 
         List all available providers.
       operationId: list_providers_v1_providers_get
+      deprecated: True
   /v1/providers/{provider_id}:
     get:
       responses:
