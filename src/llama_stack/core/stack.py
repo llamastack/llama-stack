@@ -15,6 +15,7 @@ from typing import Any, get_type_hints
 import yaml
 from pydantic import BaseModel
 
+from llama_stack.core.connectors.connectors import ConnectorServiceConfig, ConnectorServiceImpl
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
@@ -41,6 +42,7 @@ from llama_stack_api import (
     Api,
     Batches,
     Benchmarks,
+    Connectors,
     Conversations,
     DatasetIO,
     Datasets,
@@ -86,6 +88,7 @@ class LlamaStack(
     Files,
     Prompts,
     Conversations,
+    Connectors,
 ):
     pass
 
@@ -102,6 +105,7 @@ RESOURCES = [
     ),
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
     ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
+    ("connectors", Api.connectors, "register_connector", "list_connectors"),
 ]
 
 
@@ -485,6 +489,11 @@ def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> 
     )
     impls[Api.conversations] = conversations_impl
 
+    connectors_impl = ConnectorServiceImpl(
+        ConnectorServiceConfig(config=config),
+    )
+    impls[Api.connectors] = connectors_impl
+
 
 def _initialize_storage(run_config: StackConfig):
     kv_backends: dict[str, StorageBackendConfig] = {}
@@ -545,6 +554,8 @@ class Stack:
             await impls[Api.prompts].initialize()
         if Api.conversations in impls:
             await impls[Api.conversations].initialize()
+        if Api.connectors in impls:
+            await impls[Api.connectors].initialize()
 
         await register_resources(self.run_config, impls)
         await refresh_registry_once(impls)
@@ -679,6 +690,7 @@ def run_config_from_adhoc_config_spec(
                 inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
                 conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
                 prompts=KVStoreReference(backend="kv_default", namespace="prompts"),
+                connectors=KVStoreReference(backend="kv_default", namespace="connectors"),
             ),
         ),
     )

@@ -45,22 +45,20 @@ class Connector(CommonConnectorFields, Resource):
     :param type: Type of resource, always 'connector' for connectors
     :param server_name: (Optional) Name of the server
     :param server_description: (Optional) Description of the server
+    :param server_version: (Optional) Version of the server
+    :param type: Type of resource, always 'connector' for connectors
     """
 
     model_config = {"populate_by_name": True}
     type: Literal[ResourceType.connector] = ResourceType.connector
     server_name: str | None = Field(default=None, description="Name of the server")
     server_description: str | None = Field(default=None, description="Description of the server")
+    server_version: str | None = Field(default=None, description="Version of the server")
 
 
 @json_schema_type
 class ConnectorInput(CommonConnectorFields):
-    """Input for creating a connector
-
-    :param type: Type of resource, always 'connector' for connectors
-    """
-
-    type: Literal[ResourceType.connector] = ResourceType.connector
+    """Input for creating a connector"""
 
 
 @json_schema_type
@@ -85,6 +83,11 @@ class ListToolsResponse(BaseModel):
 
 @runtime_checkable
 class Connectors(Protocol):
+    """Connectors
+
+    APIs for managing connectors.
+    """
+
     # NOTE: Route order matters! More specific routes must come before less specific ones.
     # Routes with {param:path} are greedy and will match everything including slashes.
 

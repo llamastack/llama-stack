@@ -3776,9 +3776,14 @@ components:
         server_label:
           type: string
           title: Server Label
+        connector_id:
+          anyOf:
+          - type: string
+          - type: 'null'
         server_url:
-          type: string
-          title: Server Url
+          anyOf:
+          - type: string
+          - type: 'null'
         headers:
           anyOf:
           - additionalProperties: true
@@ -3811,7 +3816,6 @@ components:
       type: object
       required:
       - server_label
-      - server_url
       title: OpenAIResponseInputToolMCP
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseObject:
@@ -7753,6 +7757,11 @@ components:
           - type: string
           - type: 'null'
           description: Description of the server
+        server_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Version of the server
       type: object
       required:
       - identifier
@@ -8818,11 +8827,6 @@ components:
           - type: 'null'
           description: Label of the server
           nullable: true
-        type:
-          const: connector
-          default: connector
-          title: Type
-          type: string
       required:
       - connector_id
       - url
