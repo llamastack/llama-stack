@@ -210,6 +210,12 @@ ALL_RESOURCES = {
             "sampling_params": "SamplingParams",
             "scoring_result": "ScoringResult",
             "system_message": "SystemMessage",
+            "health_info": "HealthInfo",
+            "provider_info": "ProviderInfo",
+            "list_providers_response": "ListProvidersResponse",
+            "route_info": "RouteInfo",
+            "list_routes_response": "ListRoutesResponse",
+            "version_info": "VersionInfo",
         }
     },
     "toolgroups": {
@@ -335,12 +341,6 @@ ALL_RESOURCES = {
         },
     },
     "inspect": {
-        "models": {
-            "healthInfo": "HealthInfo",
-            "providerInfo": "ProviderInfo",
-            "routeInfo": "RouteInfo",
-            "versionInfo": "VersionInfo",
-        },
         "methods": {"health": "get /v1/health", "version": "get /v1/version"},
     },
     "embeddings": {
@@ -444,14 +444,12 @@ ALL_RESOURCES = {
         "subresources": {"openai": {"methods": {"list": {"paginated": False, "endpoint": "get /v1/models"}}}},
     },
     "providers": {
-        "models": {"list_providers_response": "ListProvidersResponse"},
         "methods": {
             "list": {"paginated": False, "endpoint": "get /v1/providers"},
             "retrieve": "get /v1/providers/{provider_id}",
         },
     },
     "routes": {
-        "models": {"list_routes_response": "ListRoutesResponse"},
         "methods": {"list": {"paginated": False, "endpoint": "get /v1/inspect/routes"}},
     },
     "moderations": {
@@ -574,6 +572,15 @@ ALL_RESOURCES = {
                             "retrieve": "get /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result",
                         }
                     }
+                },
+            },
+            "admin": {
+                "methods": {
+                    "list_providers": "get /v1alpha/admin/providers",
+                    "inspect_provider": "get /v1alpha/admin/providers/{provider_id}",
+                    "list_routes": "get /v1alpha/admin/inspect/routes",
+                    "health": "get /v1alpha/admin/health",
+                    "version": "get /v1alpha/admin/version",
                 },
             },
         }

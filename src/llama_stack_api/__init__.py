@@ -23,6 +23,18 @@ __version__ = "0.4.0.dev0"
 
 # Import submodules for those who need them
 from . import common  # noqa: F401
+from .admin import (
+    Admin,
+    ApiFilter,
+    HealthInfo,
+    InspectProviderRequest,
+    ListProvidersResponse,
+    ListRoutesRequest,
+    ListRoutesResponse,
+    ProviderInfo,
+    RouteInfo,
+    VersionInfo,
+)
 
 # Import all public API symbols
 from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
@@ -216,14 +228,7 @@ from .inference import (
     TopPSamplingStrategy,
     UserMessage,
 )
-from .inspect_api import (
-    ApiFilter,
-    HealthInfo,
-    Inspect,
-    ListRoutesResponse,
-    RouteInfo,
-    VersionInfo,
-)
+from .inspect_api import Inspect
 from .models import (
     CommonModelFields,
     ListModelsResponse,
@@ -346,7 +351,7 @@ from .post_training import (
     TrainingConfig,
 )
 from .prompts import ListPromptsResponse, Prompt, Prompts
-from .providers import ListProvidersResponse, ProviderInfo, Providers
+from .providers import Providers
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
     LLMRAGQueryGeneratorConfig,
@@ -560,6 +565,8 @@ __all__ = [
     "InferenceProvider",
     "InlineProviderSpec",
     "Inspect",
+    "InspectProviderRequest",
+    "Admin",
     "Int4QuantizationConfig",
     "InterleavedContent",
     "InterleavedContentItem",
@@ -598,6 +605,7 @@ __all__ = [
     "ListPostTrainingJobsResponse",
     "ListPromptsResponse",
     "ListProvidersResponse",
+    "ListRoutesRequest",
     "ListRoutesResponse",
     "ListScoringFunctionsResponse",
     "ListShieldsResponse",

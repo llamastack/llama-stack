@@ -25,7 +25,7 @@ from llama_stack_api import (
 logger = get_logger(name=__name__, category="core")
 
 
-INTERNAL_APIS = {Api.inspect, Api.providers, Api.prompts, Api.conversations, Api.connectors}
+INTERNAL_APIS = {Api.inspect, Api.providers, Api.prompts, Api.conversations, Api.connectors, Api.admin}
 
 
 def stack_apis() -> list[Api]:
