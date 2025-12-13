@@ -229,8 +229,6 @@ async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig
     if vector_stores_config.rewrite_query_params:
         if vector_stores_config.rewrite_query_params.model:
             await _validate_rewrite_query_model(vector_stores_config.rewrite_query_params.model, impls)
-        if "{query}" not in vector_stores_config.rewrite_query_params.prompt:
-            raise ValueError("'{query}' placeholder is required in the prompt template")
 
 
 async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict[Api, Any]) -> None:

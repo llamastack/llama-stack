@@ -90,14 +90,12 @@ class TestVectorStoresValidation:
 
     async def test_validate_rewrite_query_prompt_missing_placeholder(self):
         """Test validation fails when prompt template is missing {query} placeholder."""
-        config = VectorStoresConfig(
-            rewrite_query_params=RewriteQueryParams(
-                prompt="This prompt has no placeholder",
-            ),
-        )
+        from pydantic import ValidationError
 
-        with pytest.raises(ValueError, match="'\\{query\\}' placeholder is required"):
-            await validate_vector_stores_config(config, {})
+        with pytest.raises(ValidationError, match=r"prompt must contain \{query\} placeholder"):
+            RewriteQueryParams(
+                prompt="This prompt has no placeholder",
+            )
 
 
 class TestSafetyConfigValidation:
