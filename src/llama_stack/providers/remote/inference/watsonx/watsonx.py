@@ -14,6 +14,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
+from llama_stack.providers.utils.inference.stream_utils import wrap_async_stream
 from llama_stack_api import (
     Model,
     ModelType,
@@ -177,7 +178,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         """
         Override parent method to add watsonx-specific parameters.
         """
@@ -210,7 +211,12 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
             timeout=self.config.timeout,
             project_id=self.config.project_id,
         )
-        return await litellm.atext_completion(**request_params)
+        result = await litellm.atext_completion(**request_params)
+
+        if params.stream:
+            return wrap_async_stream(result)  # type: ignore[arg-type]  # LiteLLM streaming types
+
+        return result  # type: ignore[return-value]  # external lib lacks type stubs
 
     async def openai_embeddings(
         self,
