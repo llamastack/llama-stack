@@ -102,6 +102,14 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
         },
     ),
+    "bedrock": Setup(
+        name="bedrock",
+        description="AWS Bedrock provider with OpenAI GPT-OSS model (us-west-2)",
+        defaults={
+            "text_model": "bedrock/openai.gpt-oss-20b-1:0",
+            "embedding_model": "",  # Bedrock doesn't support embeddings
+        },
+    ),
     "gpt": Setup(
         name="gpt",
         description="OpenAI GPT models for high-quality responses and tool calling",
@@ -203,5 +211,15 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="vision",
         roots=["tests/integration/inference/test_vision_inference.py"],
         default_setup="ollama-vision",
+    ),
+    # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
+    "bedrock": Suite(
+        name="bedrock",
+        roots=[
+            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming",
+            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming",
+            "tests/integration/inference/test_openai_completion.py::test_inference_store",
+        ],
+        default_setup="bedrock",
     ),
 }

@@ -77,15 +77,29 @@ def _normalize_numeric_literal_strings(value: str) -> str:
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
 
 
-def _normalize_body_for_hash(value: Any) -> Any:
-    """Recursively normalize a JSON-like value to improve hash stability."""
+# Keys to exclude from hash computation - these are infrastructure/telemetry fields
+# that don't affect the logical request identity
+_HASH_EXCLUDED_KEYS = {"stream_options"}
+
+
+def _normalize_body_for_hash(value: Any, is_top_level: bool = True) -> Any:
+    """Recursively normalize a JSON-like value to improve hash stability.
+
+    Args:
+        value: The value to normalize
+        is_top_level: Whether this is the top-level body dict (for key exclusion)
+    """
 
     if isinstance(value, dict):
-        return {key: _normalize_body_for_hash(item) for key, item in value.items()}
+        return {
+            key: _normalize_body_for_hash(item, is_top_level=False)
+            for key, item in value.items()
+            if not (is_top_level and key in _HASH_EXCLUDED_KEYS)
+        }
     if isinstance(value, list):
-        return [_normalize_body_for_hash(item) for item in value]
+        return [_normalize_body_for_hash(item, is_top_level=False) for item in value]
     if isinstance(value, tuple):
-        return tuple(_normalize_body_for_hash(item) for item in value)
+        return tuple(_normalize_body_for_hash(item, is_top_level=False) for item in value)
     if isinstance(value, float):
         return round(value, 5)
     if isinstance(value, str):
