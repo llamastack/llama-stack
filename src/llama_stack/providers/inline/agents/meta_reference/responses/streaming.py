@@ -1179,9 +1179,7 @@ class StreamingResponseOrchestrator:
         from llama_stack.providers.utils.tools.mcp import list_mcp_tools
 
         # Resolve connector_id to server_url if provided
-        if mcp_tool.connector_id and not mcp_tool.server_url:
-            connector = await self.connectors_api.get_connector(mcp_tool.connector_id)
-            mcp_tool = mcp_tool.model_copy(update={"server_url": connector.url})
+        mcp_tool = await resolve_mcp_connector_id(mcp_tool, self.connectors_api)
 
         # Emit mcp_list_tools.in_progress
         self.sequence_number += 1
@@ -1493,3 +1491,29 @@ async def _process_tool_choice(
                         tools=tool_choice,
                         mode="required",
                     )
+async def resolve_mcp_connector_id(
+    mcp_tool: OpenAIResponseInputToolMCP,
+    connectors_api: Connectors | None,
+) -> OpenAIResponseInputToolMCP:
+    """Resolve connector_id to server_url for an MCP tool.
+
+    If the mcp_tool has a connector_id but no server_url, this function
+    looks up the connector and populates the server_url from it.
+
+    Args:
+        mcp_tool: The MCP tool configuration to resolve
+        connectors_api: The connectors API for looking up connectors
+
+    Returns:
+        The mcp_tool with server_url populated (may be same instance if already set)
+
+    Raises:
+        ValueError: If connector_id is provided but connectors_api is not available
+        ConnectorNotFoundError: If the connector_id doesn't exist
+    """
+    if mcp_tool.connector_id and not mcp_tool.server_url:
+        if not connectors_api:
+            raise ValueError("Connectors API not available to resolve connector_id")
+        connector = await connectors_api.get_connector(mcp_tool.connector_id)
+        return mcp_tool.model_copy(update={"server_url": connector.url})
+    return mcp_tool
