@@ -102,14 +102,6 @@ class ConnectorNotFoundError(ResourceNotFoundError):
         super().__init__(connector_id, "Connector", "client.connectors.list()")
 
 
-class ConnectorAlreadyRegisteredError(ConflictError):
-    """raised when a connector is already registered"""
-
-    def __init__(self, connector_id: str) -> None:
-        message = f"Connector '{connector_id}' already registered. Use 'client.connectors.get(\"{connector_id}\")' to get the connector."
-        super().__init__(message)
-
-
 class ConnectorToolNotFoundError(ValueError):
     """raised when Llama Stack cannot find a referenced tool in a connector"""
 
