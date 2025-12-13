@@ -44,6 +44,7 @@ from llama_stack_api.batches.models import (
     ListBatchesRequest,
     RetrieveBatchRequest,
 )
+from llama_stack_api.files.models import UploadFileRequest
 
 from .config import ReferenceBatchesImplConfig
 
@@ -683,5 +684,8 @@ class ReferenceBatchesImpl(Batches):
 
         with AsyncBytesIO("\n".join(output_lines).encode("utf-8")) as file_buffer:
             file_buffer.filename = f"{batch_id}_{file_type}.jsonl"
-            uploaded_file = await self.files_api.openai_upload_file(file=file_buffer, purpose=OpenAIFilePurpose.BATCH)
+            uploaded_file = await self.files_api.openai_upload_file(
+                request=UploadFileRequest(purpose=OpenAIFilePurpose.BATCH),
+                file=file_buffer,
+            )
             return uploaded_file.id

@@ -39,6 +39,7 @@ from llama_stack_api import (
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
 )
+from llama_stack_api.files.models import UploadFileRequest
 
 from .config import RagToolRuntimeConfig
 from .context_retriever import generate_rag_query
@@ -139,7 +140,8 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
 
                 try:
                     created_file = await self.files_api.openai_upload_file(
-                        file=upload_file, purpose=OpenAIFilePurpose.ASSISTANTS
+                        request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
+                        file=upload_file,
                     )
                 except Exception as e:
                     log.error(f"Failed to upload file for document {doc.document_id}: {e}")
