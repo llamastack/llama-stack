@@ -20,6 +20,7 @@ from .openai_responses import (
     OpenAIDeleteResponseObject,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
     OpenAIResponsePrompt,
@@ -94,6 +95,7 @@ class Agents(Protocol):
         stream: bool | None = False,
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
