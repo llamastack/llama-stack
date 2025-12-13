@@ -16,7 +16,10 @@ from pydantic import BaseModel, ConfigDict
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
-from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
+from llama_stack.providers.utils.inference.openai_compat import (
+    get_stream_options_for_telemetry,
+    prepare_openai_completion_params,
+)
 from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 from llama_stack_api import (
     Model,
@@ -271,6 +274,12 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI completion API call.
         """
+        # Inject stream_options when streaming and telemetry is active
+        stream_options = get_stream_options_for_telemetry(params.stream_options, params.stream or False)
+        if stream_options != params.stream_options:
+            params = params.model_copy()
+            params.stream_options = stream_options
+
         # TODO: fix openai_completion to return type compatible with OpenAI's API response
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
@@ -308,6 +317,12 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI chat completion API call.
         """
+        # Inject stream_options when streaming and telemetry is active
+        stream_options = get_stream_options_for_telemetry(params.stream_options, params.stream or False)
+        if stream_options != params.stream_options:
+            params = params.model_copy()
+            params.stream_options = stream_options
+
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
 
