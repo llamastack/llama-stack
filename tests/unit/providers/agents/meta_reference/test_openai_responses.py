@@ -122,6 +122,12 @@ def mock_files_api():
 
 
 @pytest.fixture
+def mock_connectors_api():
+    connectors_api = AsyncMock()
+    return connectors_api
+
+
+@pytest.fixture
 def openai_responses_impl(
     mock_inference_api,
     mock_tool_groups_api,
@@ -132,6 +138,7 @@ def openai_responses_impl(
     mock_conversations_api,
     mock_prompts_api,
     mock_files_api,
+    mock_connectors_api,
 ):
     return OpenAIResponsesImpl(
         inference_api=mock_inference_api,
@@ -143,6 +150,7 @@ def openai_responses_impl(
         conversations_api=mock_conversations_api,
         prompts_api=mock_prompts_api,
         files_api=mock_files_api,
+        connectors_api=mock_connectors_api,
     )
 
 
