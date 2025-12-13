@@ -11,7 +11,7 @@ from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
 from openai import AsyncOpenAI
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, SecretStr
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -210,6 +210,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             provider_data = self.get_request_provider_data()
             if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
                 api_key = getattr(provider_data, self.provider_data_api_key_field)
+                if isinstance(api_key, SecretStr):
+                    api_key = api_key.get_secret_value()
 
         return api_key
 
