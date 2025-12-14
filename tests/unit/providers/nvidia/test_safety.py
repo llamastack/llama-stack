@@ -152,8 +152,9 @@ async def test_run_shield_allowed(nvidia_adapter, mock_guardrails_post):
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(
-        path="/v1/chat/completions",
+        path="/v1/guardrail/chat/completions",
         data={
+            "model": "test-model",
             "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
@@ -167,7 +168,66 @@ async def test_run_shield_allowed(nvidia_adapter, mock_guardrails_post):
     assert result.violation is None
 
 
-async def test_run_shield_blocked(nvidia_adapter, mock_guardrails_post):
+async def test_run_shield_blocked_with_error_object(nvidia_adapter, mock_guardrails_post):
+    """Test that shield correctly detects blocks via NeMo Guardrails error object format."""
+    adapter = nvidia_adapter
+
+    shield_id = "test-shield"
+    shield = Shield(
+        provider_id="nvidia",
+        type=ResourceType.shield,
+        identifier=shield_id,
+        provider_resource_id="test-model",
+    )
+    adapter.shield_store.get_shield.return_value = shield
+
+    # Mock Guardrails API response with error object (NeMo Guardrails v25.06 format)
+    mock_guardrails_post.return_value = {
+        "error": {
+            "message": "Blocked by content-moderation rails.",
+            "type": "guardrails_violation",
+            "param": "content-moderation",
+            "code": "content_blocked",
+        }
+    }
+
+    messages = [
+        OpenAIUserMessageParam(content="Hello, how are you?"),
+        OpenAIAssistantMessageParam(
+            content="I'm doing well, thank you for asking!",
+            tool_calls=[],
+        ),
+    ]
+    result = await adapter.run_shield(shield_id, messages)
+
+    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+
+    mock_guardrails_post.assert_called_once_with(
+        path="/v1/guardrail/chat/completions",
+        data={
+            "model": "test-model",
+            "config_id": "self-check",
+            "messages": [
+                {"role": "user", "content": "Hello, how are you?"},
+                {"role": "assistant", "content": "I'm doing well, thank you for asking!"},
+            ],
+        },
+    )
+
+    assert result.violation is not None
+    assert isinstance(result, RunShieldResponse)
+    assert result.violation.user_message == "Blocked by content-moderation rails."
+    assert result.violation.violation_level == ViolationLevel.ERROR
+    assert result.violation.metadata == {
+        "error_type": "guardrails_violation",
+        "error_code": "content_blocked",
+        "rail_name": "content-moderation",
+        "detection_method": "error_object",
+    }
+
+
+async def test_run_shield_blocked_with_status(nvidia_adapter, mock_guardrails_post):
+    """Test that shield correctly detects blocks via status field (legacy format)."""
     adapter = nvidia_adapter
 
     # Set up the shield
@@ -180,7 +240,7 @@ async def test_run_shield_blocked(nvidia_adapter, mock_guardrails_post):
     )
     adapter.shield_store.get_shield.return_value = shield
 
-    # Mock Guardrails API response
+    # Mock Guardrails API response with status field (legacy format)
     mock_guardrails_post.return_value = {"status": "blocked", "rails_status": {"reason": "harmful_content"}}
 
     messages = [
@@ -197,8 +257,9 @@ async def test_run_shield_blocked(nvidia_adapter, mock_guardrails_post):
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(
-        path="/v1/chat/completions",
+        path="/v1/guardrail/chat/completions",
         data={
+            "model": "test-model",
             "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
@@ -210,7 +271,7 @@ async def test_run_shield_blocked(nvidia_adapter, mock_guardrails_post):
     # Verify the result
     assert result.violation is not None
     assert isinstance(result, RunShieldResponse)
-    assert result.violation.user_message == "Sorry I cannot do this."
+    assert result.violation.user_message == "Content blocked by guardrails"
     assert result.violation.violation_level == ViolationLevel.ERROR
     assert result.violation.metadata == {"reason": "harmful_content"}
 
@@ -268,8 +329,9 @@ async def test_run_shield_http_error(nvidia_adapter, mock_guardrails_post):
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(
-        path="/v1/chat/completions",
+        path="/v1/guardrail/chat/completions",
         data={
+            "model": "test-model",
             "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},

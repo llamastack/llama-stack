@@ -150,46 +150,54 @@ class NeMoGuardrails:
         }
         response = await self._guardrails_post(path="/v1/guardrail/chat/completions", data=request_data)
 
-        # Support legacy format with explicit status field
+        # Detection method 1: Check for error object with guardrails_violation
+        # NeMo Guardrails returns this format when content is blocked:
+        # {"error": {"message": "Blocked by <rail-name> rails.", "type": "guardrails_violation",
+        #            "param": "<rail-name>", "code": "content_blocked"}}
+        error = response.get("error")
+        if error:
+            error_type = error.get("type", "")
+            error_code = error.get("code", "")
+            if error_type == "guardrails_violation" or error_code == "content_blocked":
+                return RunShieldResponse(
+                    violation=SafetyViolation(
+                        user_message=error.get("message", "Content blocked by guardrails"),
+                        violation_level=ViolationLevel.ERROR,
+                        metadata={
+                            "error_type": error_type,
+                            "error_code": error_code,
+                            "rail_name": error.get("param", "unknown"),
+                            "detection_method": "error_object",
+                        },
+                    )
+                )
+
+        # Detection method 2: Check for exception message with InputRailException
+        # When enable_rails_exceptions is True, NeMo returns: {"role": "exception", "type": "InputRailException"}
+        response_messages = response.get("messages", [])
+        for msg in response_messages:
+            if msg.get("role") == "exception":
+                exception_type = msg.get("type", "RailException")
+                return RunShieldResponse(
+                    violation=SafetyViolation(
+                        user_message=msg.get("content", "Content blocked by guardrails"),
+                        violation_level=ViolationLevel.ERROR,
+                        metadata={
+                            "exception_type": exception_type,
+                            "detection_method": "exception_message",
+                        },
+                    )
+                )
+
+        # Detection method 3: Legacy format with explicit status field
         if "status" in response and response["status"] == "blocked":
             return RunShieldResponse(
                 violation=SafetyViolation(
-                    user_message="Sorry I cannot do this.",
+                    user_message="Content blocked by guardrails",
                     violation_level=ViolationLevel.ERROR,
                     metadata=response.get("rails_status", {}),
                 )
             )
 
-        # NOTE: The implementation targets the actual behavior of the NeMo Guardrails server
-        # as defined in 'nemoguardrails/server/api.py'. The 'RequestBody' class accepts
-        # 'config_id' at the top level, and 'ResponseBody' returns a 'messages' array,
-        # distinct from the OpenAI 'choices' format often referenced in documentation.
-
-        response_messages = response.get("messages", [])
-        if response_messages:
-            content = response_messages[0].get("content", "").strip()
-        else:
-            choices = response.get("choices", [])
-            if choices:
-                content = choices[0].get("message", {}).get("content", "").strip()
-            else:
-                content = ""
-
-        refusal_phrases = [
-            "sorry i cannot do this",
-            "i cannot help with that",
-            "i can't assist with that",
-            "i'm sorry, i can't respond to that",
-            "i can't respond to that",
-        ]
-        is_blocked = not content or any(phrase in content.lower() for phrase in refusal_phrases)
-
-        return RunShieldResponse(
-            violation=SafetyViolation(
-                user_message="Sorry I cannot do this.",
-                violation_level=ViolationLevel.ERROR,
-                metadata={"reason": "Content violates safety guidelines", "response": content or "(empty)"},
-            )
-            if is_blocked
-            else None
-        )
+        # No violation detected
+        return RunShieldResponse(violation=None)
