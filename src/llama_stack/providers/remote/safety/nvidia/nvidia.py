@@ -69,7 +69,14 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
         if not shield:
             raise ValueError(f"Shield {shield_id} not found")
 
-        self.shield = NeMoGuardrails(self.config, shield.shield_id)
+        shield_params = shield.params or {}
+        model = shield_params.get("model") or shield.provider_resource_id
+        if not model:
+            raise ValueError(
+                f"Shield {shield_id} does not have a model configured. Set 'model' in params or provider_resource_id."
+            )
+
+        self.shield = NeMoGuardrails(self.config, model)
         return await self.shield.run(messages)
 
     async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
@@ -125,7 +132,7 @@ class NeMoGuardrails:
 
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         """
-        Queries the /v1/chat/completions endpoint of the NeMo guardrails deployed API.
+        Queries the /v1/guardrail/chat/completions endpoint of the NeMo guardrails deployed API.
 
         Args:
             messages (List[Message]): A list of Message objects to be checked for safety violations.
@@ -138,9 +145,10 @@ class NeMoGuardrails:
         """
         request_data = {
             "config_id": self.config_id,
+            "model": self.model,
             "messages": [{"role": message.role, "content": message.content} for message in messages],
         }
-        response = await self._guardrails_post(path="/v1/chat/completions", data=request_data)
+        response = await self._guardrails_post(path="/v1/guardrail/chat/completions", data=request_data)
 
         # Support legacy format with explicit status field
         if "status" in response and response["status"] == "blocked":
@@ -167,7 +175,13 @@ class NeMoGuardrails:
             else:
                 content = ""
 
-        refusal_phrases = ["sorry i cannot do this", "i cannot help with that", "i can't assist with that"]
+        refusal_phrases = [
+            "sorry i cannot do this",
+            "i cannot help with that",
+            "i can't assist with that",
+            "i'm sorry, i can't respond to that",
+            "i can't respond to that",
+        ]
         is_blocked = not content or any(phrase in content.lower() for phrase in refusal_phrases)
 
         return RunShieldResponse(
