@@ -28,6 +28,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseTool,
     OpenAIResponseToolMCP,
+    OpenAITokenLogProb,
 )
 
 
@@ -54,6 +55,7 @@ class ChatCompletionResult:
     message_item_id: str  # For streaming events
     tool_call_item_ids: dict[int, str]  # For streaming events
     content_part_emitted: bool  # Tracking state
+    logprobs: list[OpenAITokenLogProb] | None = None
 
     @property
     def content_text(self) -> str:

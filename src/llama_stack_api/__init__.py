@@ -25,7 +25,7 @@ __version__ = "0.4.0.dev0"
 from . import common  # noqa: F401
 
 # Import all public API symbols
-from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec
+from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
 from .batches import (
     Batches,
     BatchObject,
@@ -40,7 +40,11 @@ from .benchmarks import (
     BenchmarkInput,
     Benchmarks,
     CommonBenchmarkFields,
+    GetBenchmarkRequest,
+    ListBenchmarksRequest,
     ListBenchmarksResponse,
+    RegisterBenchmarkRequest,
+    UnregisterBenchmarkRequest,
 )
 
 # Import commonly used types from common submodule
@@ -73,6 +77,14 @@ from .common.type_system import (
     NumberType,
     ParamType,
     StringType,
+)
+from .connectors import (
+    Connector,
+    ConnectorInput,
+    Connectors,
+    ConnectorType,
+    ListConnectorsResponse,
+    ListToolsResponse,
 )
 from .conversations import (
     Conversation,
@@ -493,6 +505,10 @@ __all__ = [
     "CommonShieldFields",
     "CompletionInputType",
     "CompletionRequest",
+    "Connector",
+    "ConnectorInput",
+    "Connectors",
+    "ConnectorType",
     "Conversation",
     "ConversationDeletedResource",
     "ConversationItem",
@@ -567,7 +583,12 @@ __all__ = [
     "LLMRAGQueryGeneratorConfig",
     "ListBatchesResponse",
     "RetrieveBatchRequest",
+    "GetBenchmarkRequest",
+    "ListBenchmarksRequest",
     "ListBenchmarksResponse",
+    "RegisterBenchmarkRequest",
+    "UnregisterBenchmarkRequest",
+    "ListConnectorsResponse",
     "ListDatasetsResponse",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
@@ -582,6 +603,7 @@ __all__ = [
     "ListShieldsResponse",
     "ListToolDefsResponse",
     "ListToolGroupsResponse",
+    "ListToolsResponse",
     "LogProbConfig",
     "LoraFinetuningConfig",
     "MCPListToolsTool",
@@ -776,6 +798,7 @@ __all__ = [
     "ResponseFormatType",
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
+    "ResponseItemInclude",
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",

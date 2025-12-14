@@ -69,7 +69,7 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         template_path=None,
         providers=providers,
         run_configs={
-            "run.yaml": RunConfigSettings(
+            "config.yaml": RunConfigSettings(
                 provider_overrides={
                     "inference": [inference_provider],
                     "files": [files_provider],

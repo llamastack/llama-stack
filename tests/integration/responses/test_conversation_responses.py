@@ -43,19 +43,18 @@ class TestConversationResponses:
             conversation=conversation.id,
         )
 
-        # Second turn with streaming
-        response_stream = openai_client.responses.create(
+        # Second turn with streaming - use context manager to ensure proper connection cleanup
+        with openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "Say goodbye"}],
             conversation=conversation.id,
             stream=True,
-        )
-
-        final_response = None
-        for chunk in response_stream:
-            if chunk.type == "response.completed":
-                final_response = chunk.response
-                break
+        ) as response_stream:
+            final_response = None
+            for chunk in response_stream:
+                if chunk.type == "response.completed":
+                    final_response = chunk.response
+                    break
 
         assert response1.id != final_response.id
         assert len(response1.output_text.strip()) > 0
@@ -67,12 +66,7 @@ class TestConversationResponses:
 
     @pytest.mark.timeout(60, method="thread")
     def test_conversation_context_loading(self, openai_client, text_model_id):
-        """Test that conversation context is properly loaded for responses.
-
-        Note: 60s timeout added due to CI-specific deadlock in pytest/OpenAI client/httpx
-        after running 25+ tests. Hangs before first HTTP request is made. Works fine locally.
-        Investigation needed: connection pool exhaustion or event loop state issue.
-        """
+        """Test that conversation context is properly loaded for responses."""
         conversation = openai_client.conversations.create(
             items=[
                 {"type": "message", "role": "user", "content": "My name is Alice. I like to eat apples."},
