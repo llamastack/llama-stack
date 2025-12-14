@@ -24,6 +24,7 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionToolCall,
     OpenAIChoice,
+    OpenAIChoiceLogprobs,
     OpenAIMessageParam,
     OpenAIResponseContentPartOutputText,
     OpenAIResponseContentPartReasoningText,
@@ -68,6 +69,7 @@ from llama_stack_api import (
     OpenAIResponseUsageInputTokensDetails,
     OpenAIResponseUsageOutputTokensDetails,
     OpenAIToolMessageParam,
+    ResponseItemInclude,
     Safety,
     WebSearchToolTypes,
 )
@@ -121,6 +123,7 @@ class StreamingResponseOrchestrator:
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
+        include: list[ResponseItemInclude] | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -139,6 +142,7 @@ class StreamingResponseOrchestrator:
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
         self.metadata = metadata
+        self.include = include
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -245,6 +249,10 @@ class StreamingResponseOrchestrator:
                 )
                 logger.debug(f"calling openai_chat_completion with tools: {self.ctx.chat_tools}")
 
+                logprobs = (
+                    True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
+                )
+
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
@@ -256,6 +264,7 @@ class StreamingResponseOrchestrator:
                     stream_options={
                         "include_usage": True,
                     },
+                    logprobs=logprobs,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -577,6 +586,7 @@ class StreamingResponseOrchestrator:
         chunk_created = 0
         chunk_model = ""
         chunk_finish_reason = ""
+        chat_response_logprobs = []
 
         # Create a placeholder message item for delta events
         message_item_id = f"msg_{uuid.uuid4()}"
@@ -606,6 +616,12 @@ class StreamingResponseOrchestrator:
             chunk_events: list[OpenAIResponseObjectStream] = []
 
             for chunk_choice in chunk.choices:
+                # Collect logprobs if present
+                chunk_logprobs = None
+                if chunk_choice.logprobs and chunk_choice.logprobs.content:
+                    chunk_logprobs = chunk_choice.logprobs.content
+                    chat_response_logprobs.extend(chunk_logprobs)
+
                 # Emit incremental text content as delta events
                 if chunk_choice.delta.content:
                     # Emit output_item.added for the message on first content
@@ -645,6 +661,7 @@ class StreamingResponseOrchestrator:
                         content_index=content_index,
                         delta=chunk_choice.delta.content,
                         item_id=message_item_id,
+                        logprobs=chunk_logprobs,
                         output_index=message_output_index,
                         sequence_number=self.sequence_number,
                     )
@@ -848,6 +865,7 @@ class StreamingResponseOrchestrator:
                     OpenAIResponseOutputMessageContentOutputText(
                         text=final_text,
                         annotations=[],
+                        logprobs=chat_response_logprobs if chat_response_logprobs else None,
                     )
                 )
 
@@ -875,6 +893,7 @@ class StreamingResponseOrchestrator:
             message_item_id=message_item_id,
             tool_call_item_ids=tool_call_item_ids,
             content_part_emitted=content_part_emitted,
+            logprobs=OpenAIChoiceLogprobs(content=chat_response_logprobs) if chat_response_logprobs else None,
         )
 
     def _build_chat_completion(self, result: ChatCompletionResult) -> OpenAIChatCompletion:
@@ -896,6 +915,7 @@ class StreamingResponseOrchestrator:
                     message=assistant_message,
                     finish_reason=result.finish_reason,
                     index=0,
+                    logprobs=result.logprobs,
                 )
             ],
             created=result.created,

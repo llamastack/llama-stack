@@ -24,3 +24,50 @@ Furthermore, we allow these resources to be **federated** across multiple provid
 Given this architecture, it is necessary for the Stack to know which provider to use for a given resource. This means you need to explicitly _register_ resources (including models) before you can use them with the associated APIs.
 
 :::
+
+## Automatic vs Explicit Model Registration
+
+Model registration behavior varies by provider:
+
+### Automatic Discovery
+
+Some providers automatically discover and register models during initialization:
+
+- **Remote providers** (e.g., `remote::openai`, `remote::vllm`, `remote::tgi`) can automatically discover models from their API endpoints
+- Models are discovered via the provider's `list_models()` method during the initial refresh
+- For remote providers that use `RemoteInferenceProviderConfig` (most remote inference providers), you can enable periodic refresh by setting `refresh_models: true` in the provider's configuration:
+
+```yaml
+providers:
+  inference:
+  - provider_id: vllm-inference
+    provider_type: remote::vllm
+    config:
+      url: ${env.VLLM_URL:=http://localhost:8000/v1}
+      refresh_models: true  # Enable periodic model refresh
+```
+
+### Explicit Registration Required
+
+Some providers require explicit registration of models in `registered_resources.models`:
+
+- **Inline providers** like `inline::sentence-transformers` have a hardcoded list of default models
+- Custom models that aren't in the provider's default list must be explicitly registered
+- These providers accept model registrations but don't automatically discover all available models
+
+### Example: Custom Embedding Model
+
+For the `sentence-transformers` provider, only the default model (`nomic-ai/nomic-embed-text-v1.5`) is automatically registered. To use a custom embedding model, you must register it explicitly:
+
+```yaml
+registered_resources:
+  models:
+  - provider_id: sentence-transformers
+    model_id: granite-embedding-125m
+    provider_model_id: ibm-granite/granite-embedding-125m-english
+    model_type: embedding
+    metadata:
+      embedding_dimension: 768
+```
+
+See the [Configuration Guide](../distributions/configuration.mdx#resources) for more details on model registration.

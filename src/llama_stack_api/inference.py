@@ -582,7 +582,7 @@ class OpenAITokenLogProb(BaseModel):
     token: str
     bytes: list[int] | None = None
     logprob: float
-    top_logprobs: list[OpenAITopLogProb]
+    top_logprobs: list[OpenAITopLogProb] | None = None
 
 
 @json_schema_type
