@@ -5615,6 +5615,38 @@ components:
               title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         truncation:
           anyOf:
           - type: string
@@ -6002,6 +6034,38 @@ components:
             title: OpenAIResponseText
           - type: 'null'
           title: OpenAIResponseText
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         tools:
           anyOf:
           - items:
@@ -6161,6 +6225,38 @@ components:
               title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         truncation:
           anyOf:
           - type: string
@@ -9090,9 +9186,11 @@ components:
           type: string
           const: dataset
           title: Type
+          description: Type of resource, always 'dataset' for datasets
           default: dataset
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
+          description: Purpose of the dataset indicating its intended use
         source:
           oneOf:
           - $ref: '#/components/schemas/URIDataSource'
@@ -9100,6 +9198,7 @@ components:
           - $ref: '#/components/schemas/RowsDataSource'
             title: RowsDataSource
           title: URIDataSource | RowsDataSource
+          description: Data source configuration for the dataset
           discriminator:
             propertyName: type
             mapping:
@@ -9124,6 +9223,7 @@ components:
           type: string
           const: rows
           title: Type
+          description: The type of data source.
           default: rows
         rows:
           items:
@@ -9131,6 +9231,7 @@ components:
             type: object
           type: array
           title: Rows
+          description: 'The dataset is stored in rows. E.g. [{"messages": [{"role": "user", "content": "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}]}]'
       type: object
       required:
       - rows
@@ -9142,10 +9243,12 @@ components:
           type: string
           const: uri
           title: Type
+          description: The type of data source.
           default: uri
         uri:
           type: string
           title: Uri
+          description: The dataset can be obtained from a URI. E.g. "https://mywebsite.com/mydata.jsonl", "lsfs://mydata.jsonl", "data:csv;base64,{base64_content}"
       type: object
       required:
       - uri
@@ -9158,6 +9261,7 @@ components:
             $ref: '#/components/schemas/Dataset'
           type: array
           title: Data
+          description: List of datasets
       type: object
       required:
       - data
@@ -9869,6 +9973,41 @@ components:
       - $ref: '#/components/schemas/RowsDataSource'
         title: RowsDataSource
       title: URIDataSource | RowsDataSource
+    RegisterDatasetRequest:
+      properties:
+        purpose:
+          $ref: '#/components/schemas/DatasetPurpose'
+          description: The purpose of the dataset.
+        source:
+          oneOf:
+          - $ref: '#/components/schemas/URIDataSource'
+            title: URIDataSource
+          - $ref: '#/components/schemas/RowsDataSource'
+            title: RowsDataSource
+          title: URIDataSource | RowsDataSource
+          description: The data source of the dataset.
+          discriminator:
+            propertyName: type
+            mapping:
+              rows: '#/components/schemas/RowsDataSource'
+              uri: '#/components/schemas/URIDataSource'
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: The metadata for the dataset.
+        dataset_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the dataset. If not provided, an ID will be generated.
+      type: object
+      required:
+      - purpose
+      - source
+      title: RegisterDatasetRequest
+      description: Request model for registering a dataset.
     RegisterBenchmarkRequest:
       properties:
         benchmark_id:
@@ -10399,6 +10538,112 @@ components:
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
+    OpenAIResponseInputToolChoiceAllowedTools:
+      properties:
+        mode:
+          type: string
+          enum:
+          - auto
+          - required
+          title: Mode
+          default: auto
+        tools:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          type: array
+          title: Tools
+        type:
+          type: string
+          const: allowed_tools
+          title: Type
+          default: allowed_tools
+      type: object
+      required:
+      - tools
+      title: OpenAIResponseInputToolChoiceAllowedTools
+      description: Constrains the tools available to the model to a pre-defined set.
+    OpenAIResponseInputToolChoiceCustomTool:
+      properties:
+        type:
+          type: string
+          const: custom
+          title: Type
+          default: custom
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - name
+      title: OpenAIResponseInputToolChoiceCustomTool
+      description: Forces the model to call a custom tool.
+    OpenAIResponseInputToolChoiceFileSearch:
+      properties:
+        type:
+          type: string
+          const: file_search
+          title: Type
+          default: file_search
+      type: object
+      title: OpenAIResponseInputToolChoiceFileSearch
+      description: Indicates that the model should use file search to generate a response.
+    OpenAIResponseInputToolChoiceFunctionTool:
+      properties:
+        name:
+          type: string
+          title: Name
+        type:
+          type: string
+          const: function
+          title: Type
+          default: function
+      type: object
+      required:
+      - name
+      title: OpenAIResponseInputToolChoiceFunctionTool
+      description: Forces the model to call a specific function.
+    OpenAIResponseInputToolChoiceMCPTool:
+      properties:
+        server_label:
+          type: string
+          title: Server Label
+        type:
+          type: string
+          const: mcp
+          title: Type
+          default: mcp
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - server_label
+      title: OpenAIResponseInputToolChoiceMCPTool
+      description: Forces the model to call a specific tool on a remote MCP server
+    OpenAIResponseInputToolChoiceMode:
+      type: string
+      enum:
+      - auto
+      - required
+      - none
+      title: OpenAIResponseInputToolChoiceMode
+    OpenAIResponseInputToolChoiceWebSearch:
+      properties:
+        type:
+          title: Type
+          default: web_search
+          type: string
+          enum:
+          - web_search
+          - web_search_preview
+          - web_search_preview_2025_03_11
+          - web_search_2025_08_26
+      type: object
+      title: OpenAIResponseInputToolChoiceWebSearch
+      description: Indicates that the model should use web search to generate a response
     OpenAIResponseMessage-Input:
       properties:
         content:
@@ -10879,6 +11124,132 @@ components:
       - $ref: '#/components/schemas/GrammarResponseFormat'
         title: GrammarResponseFormat
       title: JsonSchemaResponseFormat | GrammarResponseFormat
+    AllowedToolsConfig:
+      properties:
+        tools:
+          items:
+            additionalProperties: true
+            type: object
+          title: Tools
+          type: array
+        mode:
+          enum:
+          - auto
+          - required
+          title: Mode
+          type: string
+      required:
+      - tools
+      - mode
+      title: AllowedToolsConfig
+      type: object
+    CustomToolConfig:
+      description: Custom tool configuration for OpenAI-compatible chat completion requests.
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: CustomToolConfig
+      type: object
+    FunctionToolConfig:
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: FunctionToolConfig
+      type: object
+    OpenAIChatCompletionToolChoiceAllowedTools:
+      description: Allowed tools response format for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: allowed_tools
+          default: allowed_tools
+          title: Type
+          type: string
+        allowed_tools:
+          $ref: '#/components/schemas/AllowedToolsConfig'
+      required:
+      - allowed_tools
+      title: OpenAIChatCompletionToolChoiceAllowedTools
+      type: object
+    OpenAIChatCompletionToolChoiceCustomTool:
+      description: Custom tool choice for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: custom
+          default: custom
+          title: Type
+          type: string
+        custom:
+          $ref: '#/components/schemas/CustomToolConfig'
+      required:
+      - custom
+      title: OpenAIChatCompletionToolChoiceCustomTool
+      type: object
+    OpenAIChatCompletionToolChoiceFunctionTool:
+      description: Function tool choice for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: function
+          default: function
+          title: Type
+          type: string
+        function:
+          $ref: '#/components/schemas/FunctionToolConfig'
+      required:
+      - function
+      title: OpenAIChatCompletionToolChoiceFunctionTool
+      type: object
+    OpenAIChatCompletionToolChoice:
+      discriminator:
+        mapping:
+          allowed_tools: '#/components/schemas/OpenAIChatCompletionToolChoiceAllowedTools'
+          custom: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
+          function: '#/components/schemas/OpenAIChatCompletionToolChoiceFunctionTool'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceAllowedTools'
+        title: OpenAIChatCompletionToolChoiceAllowedTools
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceFunctionTool'
+        title: OpenAIChatCompletionToolChoiceFunctionTool
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
+        title: OpenAIChatCompletionToolChoiceCustomTool
+      title: OpenAIChatCompletionToolChoiceAllowedTools | OpenAIChatCompletionToolChoiceFunctionTool | OpenAIChatCompletionToolChoiceCustomTool
+    OpenAIResponseInputToolChoice:
+      anyOf:
+      - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+        title: OpenAIResponseInputToolChoiceMode
+      - discriminator:
+          mapping:
+            allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+            custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+            file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+            function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+            mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+            web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+          propertyName: type
+        oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+          title: OpenAIResponseInputToolChoiceAllowedTools
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+          title: OpenAIResponseInputToolChoiceFileSearch
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+          title: OpenAIResponseInputToolChoiceWebSearch
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+          title: OpenAIResponseInputToolChoiceFunctionTool
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+          title: OpenAIResponseInputToolChoiceMCPTool
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+          title: OpenAIResponseInputToolChoiceCustomTool
+        title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+      title: OpenAIResponseInputToolChoiceMode
     OpenAIResponseContentPart:
       discriminator:
         mapping:
@@ -11468,6 +11839,28 @@ components:
       required:
       - items
       title: ConversationItemCreateRequest
+      type: object
+    GetDatasetRequest:
+      description: Request model for getting a dataset by ID.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: GetDatasetRequest
+      type: object
+    UnregisterDatasetRequest:
+      description: Request model for unregistering a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: UnregisterDatasetRequest
       type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
