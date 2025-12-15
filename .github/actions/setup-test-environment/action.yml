@@ -8,7 +8,7 @@ inputs:
   client-version:
     description: 'Client version (latest or published)'
     required: true
-  python_url:
+  sdk_install_url:
     description: 'URL to install Python SDK from (for testing preview builds). If provided, overrides client-version.'
     required: false
     default: ''
@@ -32,7 +32,7 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         client-version: ${{ inputs.client-version }}
-        python_url: ${{ inputs.python_url }}
+        sdk_install_url: ${{ inputs.sdk_install_url }}
 
     - name: Setup ollama
       if: ${{ (inputs.setup == 'ollama' || inputs.setup == 'ollama-vision') && inputs.inference-mode == 'record' }}

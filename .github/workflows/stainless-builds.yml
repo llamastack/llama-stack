@@ -22,7 +22,7 @@ on:
         description: 'PR number to run Stainless build for'
         required: true
         type: number
-      python_url:
+      sdk_install_url:
         description: 'Python SDK install URL (optional, for testing specific builds)'
         required: false
         type: string
@@ -129,16 +129,16 @@ jobs:
 
   preview:
     needs: compute-branch
-    # Skip preview if workflow_dispatch provides python_url, or if PR is being closed
+    # Skip preview if workflow_dispatch provides sdk_install_url, or if PR is being closed
     if: |
-      (github.event_name == 'workflow_dispatch' && inputs.python_url == '') ||
+      (github.event_name == 'workflow_dispatch' && inputs.sdk_install_url == '') ||
       (github.event_name == 'pull_request_target' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
     outputs:
-      python_url: ${{ fromJSON(steps.run-preview.outputs.outcomes || '{}').python.install_url || '' }}
+      sdk_install_url: ${{ fromJSON(steps.run-preview.outputs.outcomes || '{}').python.install_url || '' }}
     steps:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
@@ -177,8 +177,8 @@ jobs:
       (github.event_name == 'workflow_dispatch' || github.event.action != 'closed')
     uses: ./.github/workflows/integration-tests.yml
     with:
-      # Use provided python_url from workflow_dispatch, or from preview build
-      python_url: ${{ inputs.python_url || needs.preview.outputs.python_url }}
+      # Use provided sdk_install_url from workflow_dispatch, or from preview build
+      sdk_install_url: ${{ inputs.sdk_install_url || needs.preview.outputs.sdk_install_url }}
       matrix_key: 'stainless'
       test-all-client-versions: false
 

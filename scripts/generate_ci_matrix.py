@@ -43,7 +43,9 @@ def generate_matrix(schedule="", test_setup="", matrix_key="default"):
     elif test_setup == "ollama-vision":
         matrix = [{"suite": "vision", "setup": "ollama-vision"}]
     # Use specified matrix key from ci_matrix.json
-    elif matrix_key and matrix_key in matrix_config:
+    elif matrix_key:
+        if matrix_key not in matrix_config:
+            raise ValueError(f"Invalid matrix_key '{matrix_key}'. Available keys: {list(matrix_config.keys())}")
         matrix = matrix_config[matrix_key]
     # Default: use JSON-defined default matrix
     else:

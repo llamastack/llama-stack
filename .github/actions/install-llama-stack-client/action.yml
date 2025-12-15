@@ -6,7 +6,7 @@ inputs:
     description: 'Client version to install on non-release branches (latest or published). Ignored on release branches.'
     required: false
     default: ""
-  python_url:
+  sdk_install_url:
     description: 'URL to install Python SDK from (for testing preview builds). If provided, overrides client-version.'
     required: false
     default: ""
@@ -29,11 +29,11 @@ runs:
       id: configure
       shell: bash
       run: |
-        # If python_url is provided (e.g., from Stainless preview), use it directly
-        if [ -n "${{ inputs.python_url }}" ]; then
-          echo "Using provided python_url: ${{ inputs.python_url }}"
+        # If sdk_install_url is provided (e.g., from Stainless preview), use it directly
+        if [ -n "${{ inputs.sdk_install_url }}" ]; then
+          echo "Using provided sdk_install_url: ${{ inputs.sdk_install_url }}"
           echo "install-after-sync=true" >> $GITHUB_OUTPUT
-          echo "install-source=${{ inputs.python_url }}" >> $GITHUB_OUTPUT
+          echo "install-source=${{ inputs.sdk_install_url }}" >> $GITHUB_OUTPUT
           exit 0
         fi
 
