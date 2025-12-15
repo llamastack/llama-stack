@@ -7,14 +7,14 @@
 import os
 from typing import Any
 
-from pydantic import BaseModel, Field, HttpUrl, SecretStr
+from pydantic import BaseModel, Field, HttpUrl
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
 
 
 class AzureProviderDataValidator(BaseModel):
-    azure_api_key: SecretStr = Field(
+    azure_api_key: str = Field(
         description="Azure API key for Azure",
     )
     azure_api_base: HttpUrl = Field(
