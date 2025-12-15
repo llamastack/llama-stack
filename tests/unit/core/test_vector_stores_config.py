@@ -110,29 +110,20 @@ class TestOptionalArchitecture:
         assert config.annotation_prompt_params is not None
         assert "{num_chunks}" in config.file_search_params.header_template
 
-    def test_constants_fallback_pattern(self):
-        """Test that the constants fallback pattern works correctly."""
+    def test_guaranteed_defaults_match_constants(self):
+        """Test that guaranteed defaults match expected constant values."""
         from llama_stack.providers.utils.memory.constants import (
             DEFAULT_CONTEXT_TEMPLATE,
             DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
         )
 
-        # Simulate the fallback logic used in implementation
-        vector_stores_config = None
+        # Create config with guaranteed defaults
+        config = VectorStoresConfig()
 
-        header_template = (
-            vector_stores_config.file_search_params.header_template
-            if vector_stores_config and vector_stores_config.file_search_params
-            else DEFAULT_FILE_SEARCH_HEADER_TEMPLATE
-        )
+        # Verify defaults match constants
+        header_template = config.file_search_params.header_template
+        context_template = config.context_prompt_params.context_template
 
-        context_template = (
-            vector_stores_config.context_prompt_params.context_template
-            if vector_stores_config and vector_stores_config.context_prompt_params
-            else DEFAULT_CONTEXT_TEMPLATE
-        )
-
-        # Verify fallback works and templates are usable
         assert header_template == DEFAULT_FILE_SEARCH_HEADER_TEMPLATE
         assert context_template == DEFAULT_CONTEXT_TEMPLATE
 
@@ -147,26 +138,12 @@ class TestOptionalArchitecture:
         assert "test query" in formatted_context
 
     def test_end_to_end_template_usage(self):
-        """Test that None config leads to working template output."""
-        from llama_stack.providers.utils.memory.constants import (
-            DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
-            DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
-        )
+        """Test that guaranteed defaults lead to working template output."""
+        # Create config with guaranteed defaults
+        config = VectorStoresConfig()
 
-        # Start with None config → fallback to constants → verify output works
-        vector_stores_config = None
-
-        header_template = (
-            vector_stores_config.file_search_params.header_template
-            if vector_stores_config and vector_stores_config.file_search_params
-            else DEFAULT_FILE_SEARCH_HEADER_TEMPLATE
-        )
-
-        chunk_template = (
-            vector_stores_config.context_prompt_params.chunk_annotation_template
-            if vector_stores_config and vector_stores_config.context_prompt_params
-            else DEFAULT_CHUNK_ANNOTATION_TEMPLATE
-        )
+        header_template = config.file_search_params.header_template
+        chunk_template = config.context_prompt_params.chunk_annotation_template
 
         # Generate realistic output
         test_chunks = [
