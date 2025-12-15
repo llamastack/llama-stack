@@ -514,17 +514,17 @@ class VectorStoresConfig(BaseModel):
         default=None,
         description="Parameters for query rewriting/expansion. None disables query rewriting.",
     )
-    file_search_params: FileSearchParams | None = Field(
+    file_search_params: FileSearchParams = Field(
         default_factory=FileSearchParams,
-        description="Configuration for file search tool output formatting. If None, default templates from constants will be used.",
+        description="Configuration for file search tool output formatting.",
     )
-    context_prompt_params: ContextPromptParams | None = Field(
+    context_prompt_params: ContextPromptParams = Field(
         default_factory=ContextPromptParams,
-        description="Configuration for LLM prompt content and chunk formatting. If None, default templates from constants will be used.",
+        description="Configuration for LLM prompt content and chunk formatting.",
     )
-    annotation_prompt_params: AnnotationPromptParams | None = Field(
+    annotation_prompt_params: AnnotationPromptParams = Field(
         default_factory=AnnotationPromptParams,
-        description="Configuration for source annotation and attribution features. If None, default settings from constants will be used.",
+        description="Configuration for source annotation and attribution features.",
     )
 
 

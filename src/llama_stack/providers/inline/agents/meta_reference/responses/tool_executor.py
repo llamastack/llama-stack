@@ -15,9 +15,6 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.constants import (
     DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE,
     DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE,
-    DEFAULT_CONTEXT_TEMPLATE,
-    DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
-    DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
 )
 from llama_stack_api import (
     ImageContentItem,
@@ -166,24 +163,20 @@ class ToolExecutor:
             and self.vector_stores_config.annotation_prompt_params.enable_annotations
         )
 
-        # Get templates with fallback to defaults
-        file_search_params = getattr(self.vector_stores_config, "file_search_params", None)
-        header_template = getattr(file_search_params, "header_template", DEFAULT_FILE_SEARCH_HEADER_TEMPLATE)
-        footer_template = getattr(file_search_params, "footer_template", DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE)
+        # Get templates
+        header_template = self.vector_stores_config.file_search_params.header_template
+        footer_template = self.vector_stores_config.file_search_params.footer_template
+        context_template = self.vector_stores_config.context_prompt_params.context_template
 
-        context_prompt_params = getattr(self.vector_stores_config, "context_prompt_params", None)
-        context_template = getattr(context_prompt_params, "context_template", DEFAULT_CONTEXT_TEMPLATE)
-
-        # Get annotation templates (always use defaults if annotations disabled)
-        annotation_prompt_params = (
-            getattr(self.vector_stores_config, "annotation_prompt_params", None) if enable_annotations else None
-        )
-        chunk_annotation_template = getattr(
-            annotation_prompt_params, "chunk_annotation_template", DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE
-        )
-        annotation_instruction_template = getattr(
-            annotation_prompt_params, "annotation_instruction_template", DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE
-        )
+        # Get annotation templates (use defaults if annotations disabled)
+        if enable_annotations:
+            chunk_annotation_template = self.vector_stores_config.annotation_prompt_params.chunk_annotation_template
+            annotation_instruction_template = (
+                self.vector_stores_config.annotation_prompt_params.annotation_instruction_template
+            )
+        else:
+            chunk_annotation_template = DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE
+            annotation_instruction_template = DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE
 
         content_items = []
         content_items.append(TextContentItem(text=header_template.format(num_chunks=len(search_results))))

@@ -101,18 +101,14 @@ class TestVectorStoresConfigValidation:
 class TestOptionalArchitecture:
     """Test optional sub-config architecture and constants fallback."""
 
-    def test_none_vs_default_behavior(self):
-        """Test the difference between None values and default factory behavior."""
-        # Explicit None keeps sub-configs as None
-        none_config = VectorStoresConfig(
-            file_search_params=None, context_prompt_params=None, annotation_prompt_params=None
-        )
-        assert none_config.file_search_params is None
-
-        # Default factory creates instances when no value provided
-        default_config = VectorStoresConfig()
-        assert default_config.file_search_params is not None
-        assert "{num_chunks}" in default_config.file_search_params.header_template
+    def test_guaranteed_defaults_behavior(self):
+        """Test that sub-configs are always instantiated with defaults."""
+        # Sub-configs are always instantiated due to default_factory
+        config = VectorStoresConfig()
+        assert config.file_search_params is not None
+        assert config.context_prompt_params is not None
+        assert config.annotation_prompt_params is not None
+        assert "{num_chunks}" in config.file_search_params.header_template
 
     def test_constants_fallback_pattern(self):
         """Test that the constants fallback pattern works correctly."""

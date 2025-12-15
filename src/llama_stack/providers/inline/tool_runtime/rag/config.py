@@ -12,8 +12,8 @@ from llama_stack.core.datatypes import VectorStoresConfig
 
 
 class RagToolRuntimeConfig(BaseModel):
-    vector_stores_config: VectorStoresConfig | None = Field(
-        default=None,
+    vector_stores_config: VectorStoresConfig = Field(
+        default_factory=VectorStoresConfig,
         description="Configuration for vector store prompt templates and behavior",
     )
 

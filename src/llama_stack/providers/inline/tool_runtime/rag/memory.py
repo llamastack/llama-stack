@@ -16,12 +16,6 @@ from pydantic import TypeAdapter
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
-from llama_stack.providers.utils.memory.constants import (
-    DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
-    DEFAULT_CONTEXT_TEMPLATE,
-    DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
-    DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
-)
 from llama_stack.providers.utils.memory.vector_store import parse_data_url
 from llama_stack_api import (
     URL,
@@ -228,17 +222,12 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
 
         tokens = 0
 
-        # Get templates from vector stores config, fallback to constants
-
-        # Get templates with fallback to defaults
+        # Get templates from vector stores config
         vector_stores_config = self.config.vector_stores_config
-        file_search_params = getattr(vector_stores_config, "file_search_params", None)
-        header_template = getattr(file_search_params, "header_template", DEFAULT_FILE_SEARCH_HEADER_TEMPLATE)
-        footer_template = getattr(file_search_params, "footer_template", DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE)
-
-        context_prompt_params = getattr(vector_stores_config, "context_prompt_params", None)
-        chunk_template = getattr(context_prompt_params, "chunk_annotation_template", DEFAULT_CHUNK_ANNOTATION_TEMPLATE)
-        context_template = getattr(context_prompt_params, "context_template", DEFAULT_CONTEXT_TEMPLATE)
+        header_template = vector_stores_config.file_search_params.header_template
+        footer_template = vector_stores_config.file_search_params.footer_template
+        chunk_template = vector_stores_config.context_prompt_params.chunk_annotation_template
+        context_template = vector_stores_config.context_prompt_params.context_template
 
         picked: list[InterleavedContentItem] = [TextContentItem(text=header_template.format(num_chunks=len(chunks)))]
         for i, chunk in enumerate(chunks):
