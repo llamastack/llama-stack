@@ -1491,6 +1491,8 @@ async def _process_tool_choice(
                         tools=tool_choice,
                         mode="required",
                     )
+
+
 async def resolve_mcp_connector_id(
     mcp_tool: OpenAIResponseInputToolMCP,
     connectors_api: Connectors | None,
