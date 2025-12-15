@@ -105,9 +105,7 @@ async def test_update_vector_store_same_provider_id_succeeds():
     mock_existing_store.identifier = "vs_123"
 
     mock_routing_table.get_object_by_identifier = AsyncMock(return_value=mock_existing_store)
-    mock_routing_table.get_provider_impl = AsyncMock(
-        return_value=Mock(openai_update_vector_store=AsyncMock(return_value=Mock(id="vs_123")))
-    )
+    mock_routing_table.openai_update_vector_store = AsyncMock(return_value=Mock(identifier="vs_123"))
 
     router = VectorIORouter(mock_routing_table)
 
@@ -118,10 +116,8 @@ async def test_update_vector_store_same_provider_id_succeeds():
         metadata={"provider_id": "inline::faiss"},  # Same provider_id
     )
 
-    # Verify the provider update method was called
-    mock_routing_table.get_provider_impl.assert_called_once_with("vs_123")
-    provider = await mock_routing_table.get_provider_impl("vs_123")
-    provider.openai_update_vector_store.assert_called_once_with(
+    # Verify the routing table method was called
+    mock_routing_table.openai_update_vector_store.assert_called_once_with(
         vector_store_id="vs_123", name="updated_name", expires_after=None, metadata={"provider_id": "inline::faiss"}
     )
 
@@ -165,11 +161,9 @@ async def test_query_rewrite_functionality():
 
     mock_routing_table = Mock()
 
-    # Mock provider that returns search results
-    mock_provider = Mock()
+    # Mock routing table method that returns search results
     mock_search_response = VectorStoreSearchResponsePage(search_query=["rewritten test query"], data=[], has_more=False)
-    mock_provider.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
-    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+    mock_routing_table.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
 
     # Mock inference API for query rewriting
     mock_inference_api = Mock()
@@ -206,9 +200,9 @@ async def test_query_rewrite_functionality():
     expected_prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query="test query")
     assert prompt_text == expected_prompt
 
-    # Verify provider was called with rewritten query and rewrite_query=False
-    mock_provider.openai_search_vector_store.assert_called_once()
-    call_kwargs = mock_provider.openai_search_vector_store.call_args.kwargs
+    # Verify routing table was called with rewritten query and rewrite_query=False
+    mock_routing_table.openai_search_vector_store.assert_called_once()
+    call_kwargs = mock_routing_table.openai_search_vector_store.call_args.kwargs
     assert call_kwargs["query"] == "rewritten test query"
     assert call_kwargs["rewrite_query"] is False  # Should be False since router handled it
 
@@ -242,10 +236,8 @@ async def test_query_rewrite_with_custom_prompt():
 
     mock_routing_table = Mock()
 
-    mock_provider = Mock()
     mock_search_response = VectorStoreSearchResponsePage(search_query=["custom rewrite"], data=[], has_more=False)
-    mock_provider.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
-    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+    mock_routing_table.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
 
     mock_inference_api = Mock()
     mock_inference_api.openai_chat_completion = AsyncMock(
@@ -283,10 +275,8 @@ async def test_search_without_rewrite():
 
     mock_routing_table = Mock()
 
-    mock_provider = Mock()
     mock_search_response = VectorStoreSearchResponsePage(search_query=["test query"], data=[], has_more=False)
-    mock_provider.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
-    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+    mock_routing_table.openai_search_vector_store = AsyncMock(return_value=mock_search_response)
 
     mock_inference_api = Mock()
     mock_inference_api.openai_chat_completion = AsyncMock()
@@ -303,6 +293,6 @@ async def test_search_without_rewrite():
     # Verify inference API was NOT called
     assert not mock_inference_api.openai_chat_completion.called
 
-    # Verify provider was called with original query
-    call_kwargs = mock_provider.openai_search_vector_store.call_args.kwargs
+    # Verify routing table was called with original query
+    call_kwargs = mock_routing_table.openai_search_vector_store.call_args.kwargs
     assert call_kwargs["query"] == "test query"
