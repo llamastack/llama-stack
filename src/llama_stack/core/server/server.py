@@ -512,7 +512,7 @@ def create_app() -> StackApp:
 
 def _log_run_config(run_config: StackConfig):
     """Logs the run config with redacted fields and disabled providers removed."""
-    logger.info("Run configuration:")
+    logger.info("Stack Configuration:")
     safe_config = redact_sensitive_fields(run_config.model_dump(mode="json"))
     clean_config = remove_disabled_providers(safe_config)
     logger.info(yaml.dump(clean_config, indent=2))
