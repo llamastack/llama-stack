@@ -235,56 +235,36 @@ async def log_request_pre_validation(request: Request):
 def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
     @functools.wraps(func)
     async def route_handler(request: Request, **kwargs):
-        # Get auth attributes from the request scope
-        user = user_from_scope(request.scope)
-
         await log_request_pre_validation(request)
 
-        test_context_token = None
-        test_context_var = None
-        reset_test_context_fn = None
+        is_streaming = is_streaming_request(func.__name__, request, **kwargs)
 
-        # Use context manager with both provider data and auth attributes
-        with request_provider_data_context(request.headers, user):
-            if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
-                from llama_stack.core.testing_context import (
-                    TEST_CONTEXT,
-                    reset_test_context,
-                    sync_test_context_from_provider_data,
-                )
+        try:
+            if is_streaming:
+                # Preserve context vars across async generator boundaries
+                context_vars = [PROVIDER_DATA_VAR]
+                if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
+                    from llama_stack.core.testing_context import TEST_CONTEXT
 
-                test_context_token = sync_test_context_from_provider_data()
-                test_context_var = TEST_CONTEXT
-                reset_test_context_fn = reset_test_context
+                    context_vars.append(TEST_CONTEXT)
+                gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
+                return StreamingResponse(gen, media_type="text/event-stream")
+            else:
+                value = func(**kwargs)
+                result = await maybe_await(value)
+                if isinstance(result, PaginatedResponse) and result.url is None:
+                    result.url = route
 
-            is_streaming = is_streaming_request(func.__name__, request, **kwargs)
+                if method.upper() == "DELETE" and result is None:
+                    return Response(status_code=httpx.codes.NO_CONTENT)
 
-            try:
-                if is_streaming:
-                    context_vars = [PROVIDER_DATA_VAR]
-                    if test_context_var is not None:
-                        context_vars.append(test_context_var)
-                    gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
-                    return StreamingResponse(gen, media_type="text/event-stream")
-                else:
-                    value = func(**kwargs)
-                    result = await maybe_await(value)
-                    if isinstance(result, PaginatedResponse) and result.url is None:
-                        result.url = route
-
-                    if method.upper() == "DELETE" and result is None:
-                        return Response(status_code=httpx.codes.NO_CONTENT)
-
-                    return result
-            except Exception as e:
-                if logger.isEnabledFor(logging.INFO):
-                    logger.exception(f"Error executing endpoint {route=} {method=}")
-                else:
-                    logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
-                raise translate_exception(e) from e
-            finally:
-                if test_context_token is not None and reset_test_context_fn is not None:
-                    reset_test_context_fn(test_context_token)
+                return result
+        except Exception as e:
+            if logger.isEnabledFor(logging.INFO):
+                logger.exception(f"Error executing endpoint {route=} {method=}")
+            else:
+                logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
+            raise translate_exception(e) from e
 
     sig = inspect.signature(func)
 
@@ -356,6 +336,42 @@ class ClientVersionMiddleware:
         return await self.app(scope, receive, send)
 
 
+class ProviderDataMiddleware:
+    """Middleware to set up request context for all routes.
+
+    Sets up provider data context from X-LlamaStack-Provider-Data header
+    and auth attributes. Also handles test context propagation when
+    running in test mode for deterministic ID generation.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            headers = {k.decode(): v.decode() for k, v in scope.get("headers", [])}
+            user = user_from_scope(scope)
+
+            with request_provider_data_context(headers, user):
+                test_context_token = None
+                reset_fn = None
+                if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
+                    from llama_stack.core.testing_context import (
+                        reset_test_context,
+                        sync_test_context_from_provider_data,
+                    )
+
+                    test_context_token = sync_test_context_from_provider_data()
+                    reset_fn = reset_test_context
+                try:
+                    return await self.app(scope, receive, send)
+                finally:
+                    if test_context_token and reset_fn:
+                        reset_fn(test_context_token)
+
+        return await self.app(scope, receive, send)
+
+
 def create_app() -> StackApp:
     """Create and configure the FastAPI application.
 
@@ -394,6 +410,8 @@ def create_app() -> StackApp:
 
     if not os.environ.get("LLAMA_STACK_DISABLE_VERSION_CHECK"):
         app.add_middleware(ClientVersionMiddleware)
+
+    app.add_middleware(ProviderDataMiddleware)
 
     impls = app.stack.impls
 
