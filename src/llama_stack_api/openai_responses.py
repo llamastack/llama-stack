@@ -709,7 +709,7 @@ class OpenAIResponseObject(BaseModel):
     model: str
     object: Literal["response"] = "response"
     output: Sequence[OpenAIResponseOutput]
-    parallel_tool_calls: bool | None = True
+    parallel_tool_calls: bool | None = None
     previous_response_id: str | None = None
     prompt: OpenAIResponsePrompt | None = None
     status: str
