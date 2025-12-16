@@ -25,6 +25,17 @@ The OpenAI web search tool also has fields for `filters` and `user_location` whi
 
 ---
 
+### Reasoning Content
+
+**Status:** Not Implemented
+
+**Issue:** [#4404](https://github.com/llamastack/llama-stack/issues/4404)
+
+Responses API allows you to preserve reasoning context between turns with the reasoning.encrypted_content include value.
+The field exists as a no-op right now, and needs to be wired up to providers.
+
+---
+
 ### Other built-in Tools
 
 **Status:** Partial Implementation
@@ -45,26 +56,6 @@ It's unclear whether there is demand for additional built-in tools in Llama Stac
 **Status:** Not Working
 
 Response branching, as discussed in the [Agents vs OpenAI Responses API documentation](https://llamastack.github.io/docs/building_applications/responses_vs_agents), is not currently functional.
-
----
-
-### Include
-
-**Status:** Not Implemented
-
-The `include` parameter allows you to provide a list of values that indicate additional information for the system to include in the model response.  The [OpenAI API](https://platform.openai.com/docs/api-reference/responses/create) specifies the following allowed values for this parameter.
-
-- `web_search_call.action.sources`
-- `code_interpreter_call.outputs`
-- `computer_call_output.output.image_url`
-- `file_search_call.results`
-- `message.input_image.image_url`
-- `message.output_text.logprobs`
-- `reasoning.encrypted_content`
-
-Some of these are not relevant to Llama Stack in its current form. For example, code interpreter is not implemented (see "Built-in tools" below), so `code_interpreter_call.outputs` would not be a useful directive to Llama Stack.
-
-However, others might be useful. For example, `message.output_text.logprobs` can be useful for assessing how confident a model is in each token of its output.
 
 ---
 
@@ -186,17 +177,6 @@ OpenAI provides a [prompt caching](https://platform.openai.com/docs/guides/promp
 
 ## Coming Soon
 
-### Top Logprobs
-
-**Status:** In Progress
-
-**Issue:** [#3552](https://github.com/llamastack/llama-stack/issues/3552)
-
-The `top_logprobs` parameter from OpenAI's Responses API extends the functionality obtained by including `message.output_text.logprobs` in the `include` parameter list (as discussed in the Include section above).
-It enables users to also get logprobs for alternative tokens.
-
----
-
 ### Parallel Tool Calls
 
 **Status:** In Progress
@@ -219,6 +199,17 @@ Connectors are MCP servers maintained and managed by the Responses API provider.
 
 ---
 
+### Top Logprobs
+
+**Status:** In Progress
+
+**Issue:** [#3552](https://github.com/llamastack/llama-stack/issues/3552)
+
+The `top_logprobs` parameter from OpenAI's Responses API extends the functionality obtained by including `message.output_text.logprobs` in the `include` parameter list (as discussed in the Include section above).
+It enables users to also get logprobs for alternative tokens.
+
+---
+
 ### Server Side Telemetry
 
 **Status:** Merged [Planned 0.4.z]
@@ -229,6 +220,27 @@ Support OpenTelemetry as the preferred way to instrument Llama Stack.
 
 **Remaining Issues:**
 - Some data needs to be converted to follow semantic conventions for OTEL genai data
+
+---
+
+### Include
+
+**Status:** Merged [Planned 0.4.z]
+
+The `include` parameter allows you to provide a list of values that indicate additional information for the system to include in the model response.
+The [OpenAI API](https://platform.openai.com/docs/api-reference/responses/create) specifies the following allowed values for this parameter.
+
+- `web_search_call.action.sources`
+- `code_interpreter_call.outputs`
+- `computer_call_output.output.image_url`
+- `file_search_call.results`
+- `message.input_image.image_url`
+- `message.output_text.logprobs`
+- `reasoning.encrypted_content`
+
+This change adds all the following parameters to inputs and output objects for responses and chat completions in Llama Stack for full API compatibility.
+It also implements `message.output_text.logprobs`, allowing users to get logprobs outputs from their inferencing requests. *Note* that the other fields are
+just stubs for now, and will not work when invoked since Llama Stack does not yet support built in tools.
 
 ---
 
