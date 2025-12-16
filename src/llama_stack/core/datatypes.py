@@ -18,10 +18,20 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
+from llama_stack.providers.utils.memory.constants import (
+    DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE,
+    DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
+    DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE,
+    DEFAULT_CONTEXT_TEMPLATE,
+    DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
+    DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
+    DEFAULT_QUERY_REWRITE_PROMPT,
+)
 from llama_stack_api import (
     Api,
     Benchmark,
     BenchmarkInput,
+    ConnectorInput,
     Dataset,
     DatasetInput,
     DatasetIO,
@@ -191,22 +201,6 @@ class DistributionSpec(BaseModel):
     )
 
 
-class TelemetryConfig(BaseModel):
-    """
-    Configuration for telemetry.
-
-    Llama Stack uses OpenTelemetry for telemetry. Please refer to https://opentelemetry.io/docs/languages/sdk-configuration/
-    for env variables to configure the OpenTelemetry SDK.
-
-    Example:
-    ```bash
-    OTEL_SERVICE_NAME=llama-stack OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 uv run llama stack run starter
-    ```
-    """
-
-    enabled: bool = Field(default=False, description="enable or disable telemetry")
-
-
 class OAuth2JWKSConfig(BaseModel):
     # The JWKS URI for collecting public keys
     uri: str
@@ -365,6 +359,146 @@ class QualifiedModel(BaseModel):
     model_id: str
 
 
+class RewriteQueryParams(BaseModel):
+    """Parameters for query rewriting/expansion."""
+
+    model: QualifiedModel | None = Field(
+        default=None,
+        description="LLM model for query rewriting/expansion in vector search.",
+    )
+    prompt: str = Field(
+        default=DEFAULT_QUERY_REWRITE_PROMPT,
+        description="Prompt template for query rewriting. Use {query} as placeholder for the original query.",
+    )
+    max_tokens: int = Field(
+        default=100,
+        description="Maximum number of tokens for query expansion responses.",
+    )
+    temperature: float = Field(
+        default=0.3,
+        description="Temperature for query expansion model (0.0 = deterministic, 1.0 = creative).",
+    )
+
+    @field_validator("prompt")
+    @classmethod
+    def validate_prompt(cls, v: str) -> str:
+        if "{query}" not in v:
+            raise ValueError("prompt must contain {query} placeholder")
+        return v
+
+    @field_validator("max_tokens")
+    @classmethod
+    def validate_max_tokens(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError("max_tokens must be positive")
+        if v > 4096:
+            raise ValueError("max_tokens should not exceed 4096")
+        return v
+
+    @field_validator("temperature")
+    @classmethod
+    def validate_temperature(cls, v: float) -> float:
+        if v < 0.0 or v > 2.0:
+            raise ValueError("temperature must be between 0.0 and 2.0")
+        return v
+
+
+class FileSearchParams(BaseModel):
+    """Configuration for file search tool output formatting."""
+
+    header_template: str = Field(
+        default=DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
+        description="Template for the header text shown before search results. Available placeholders: {num_chunks} number of chunks found.",
+    )
+    footer_template: str = Field(
+        default=DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
+        description="Template for the footer text shown after search results.",
+    )
+
+    @field_validator("header_template")
+    @classmethod
+    def validate_header_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("header_template must not be empty")
+        if "{num_chunks}" not in v:
+            raise ValueError("header_template must contain {num_chunks} placeholder")
+        if "knowledge_search" not in v.lower():
+            raise ValueError(
+                "header_template must contain 'knowledge_search' keyword to ensure proper tool identification"
+            )
+        return v
+
+
+class ContextPromptParams(BaseModel):
+    """Configuration for LLM prompt content and chunk formatting."""
+
+    chunk_annotation_template: str = Field(
+        default=DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
+        description="Template for formatting individual chunks in search results. Available placeholders: {index} 1-based chunk index, {chunk.content} chunk content, {metadata} chunk metadata dict.",
+    )
+    context_template: str = Field(
+        default=DEFAULT_CONTEXT_TEMPLATE,
+        description="Template for explaining the search results to the model. Available placeholders: {query} user's query, {num_chunks} number of chunks.",
+    )
+
+    @field_validator("chunk_annotation_template")
+    @classmethod
+    def validate_chunk_annotation_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("chunk_annotation_template must not be empty")
+        if "{chunk.content}" not in v:
+            raise ValueError("chunk_annotation_template must contain {chunk.content} placeholder")
+        if "{index}" not in v:
+            raise ValueError("chunk_annotation_template must contain {index} placeholder")
+        return v
+
+    @field_validator("context_template")
+    @classmethod
+    def validate_context_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("context_template must not be empty")
+        if "{query}" not in v:
+            raise ValueError("context_template must contain {query} placeholder")
+        return v
+
+
+class AnnotationPromptParams(BaseModel):
+    """Configuration for source annotation and attribution features."""
+
+    enable_annotations: bool = Field(
+        default=True,
+        description="Whether to include annotation information in results.",
+    )
+    annotation_instruction_template: str = Field(
+        default=DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE,
+        description="Instructions for how the model should cite sources. Used when enable_annotations is True.",
+    )
+    chunk_annotation_template: str = Field(
+        default=DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE,
+        description="Template for chunks with annotation information. Available placeholders: {index} 1-based chunk index, {metadata_text} formatted metadata, {file_id} document identifier, {chunk_text} chunk content.",
+    )
+
+    @field_validator("chunk_annotation_template")
+    @classmethod
+    def validate_chunk_annotation_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("chunk_annotation_template must not be empty")
+        if "{index}" not in v:
+            raise ValueError("chunk_annotation_template must contain {index} placeholder")
+        if "{chunk_text}" not in v:
+            raise ValueError("chunk_annotation_template must contain {chunk_text} placeholder")
+        if "{file_id}" not in v:
+            raise ValueError("chunk_annotation_template must contain {file_id} placeholder")
+        return v
+
+    @field_validator("annotation_instruction_template")
+    @classmethod
+    def validate_annotation_instruction_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("annotation_instruction_template must not be empty")
+        return v
+
+
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
 
@@ -375,6 +509,22 @@ class VectorStoresConfig(BaseModel):
     default_embedding_model: QualifiedModel | None = Field(
         default=None,
         description="Default embedding model configuration for vector stores.",
+    )
+    rewrite_query_params: RewriteQueryParams | None = Field(
+        default=None,
+        description="Parameters for query rewriting/expansion. None disables query rewriting.",
+    )
+    file_search_params: FileSearchParams = Field(
+        default_factory=FileSearchParams,
+        description="Configuration for file search tool output formatting.",
+    )
+    context_prompt_params: ContextPromptParams = Field(
+        default_factory=ContextPromptParams,
+        description="Configuration for LLM prompt content and chunk formatting.",
+    )
+    annotation_prompt_params: AnnotationPromptParams = Field(
+        default_factory=AnnotationPromptParams,
+        description="Configuration for source annotation and attribution features.",
     )
 
 
@@ -445,6 +595,7 @@ class RegisteredResources(BaseModel):
     scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
     benchmarks: list[BenchmarkInput] = Field(default_factory=list)
     tool_groups: list[ToolGroupInput] = Field(default_factory=list)
+    connectors: list[ConnectorInput] = Field(default_factory=list)
 
 
 class ServerConfig(BaseModel):
@@ -490,7 +641,7 @@ class ServerConfig(BaseModel):
     )
 
 
-class StackRunConfig(BaseModel):
+class StackConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
     image_name: str = Field(
@@ -517,6 +668,7 @@ can be instantiated multiple times (with different configs) if necessary.
 """,
     )
     storage: StorageConfig = Field(
+        default_factory=StorageConfig,
         description="Catalog of named storage backends and references available to the stack",
     )
 
@@ -526,8 +678,6 @@ can be instantiated multiple times (with different configs) if necessary.
     )
 
     logging: LoggingConfig | None = Field(default=None, description="Configuration for Llama Stack Logging")
-
-    telemetry: TelemetryConfig = Field(default_factory=TelemetryConfig, description="Configuration for telemetry")
 
     server: ServerConfig = Field(
         default_factory=ServerConfig,
@@ -564,7 +714,7 @@ can be instantiated multiple times (with different configs) if necessary.
         return v
 
     @model_validator(mode="after")
-    def validate_server_stores(self) -> "StackRunConfig":
+    def validate_server_stores(self) -> "StackConfig":
         backend_map = self.storage.backends
         stores = self.storage.stores
         kv_backends = {
@@ -606,39 +756,3 @@ can be instantiated multiple times (with different configs) if necessary.
         _ensure_backend(stores.responses, sql_backends, "storage.stores.responses")
         _ensure_backend(stores.prompts, kv_backends, "storage.stores.prompts")
         return self
-
-
-class BuildConfig(BaseModel):
-    version: int = LLAMA_STACK_BUILD_CONFIG_VERSION
-
-    distribution_spec: DistributionSpec = Field(description="The distribution spec to build including API providers. ")
-    image_type: str = Field(
-        default="venv",
-        description="Type of package to build (container | venv)",
-    )
-    image_name: str | None = Field(
-        default=None,
-        description="Name of the distribution to build",
-    )
-    external_providers_dir: Path | None = Field(
-        default=None,
-        description="Path to directory containing external provider implementations. The providers packages will be resolved from this directory. "
-        "pip_packages MUST contain the provider package name.",
-    )
-    additional_pip_packages: list[str] = Field(
-        default_factory=list,
-        description="Additional pip packages to install in the distribution. These packages will be installed in the distribution environment.",
-    )
-    external_apis_dir: Path | None = Field(
-        default=None,
-        description="Path to directory containing external API implementations. The APIs code and dependencies must be installed on the system.",
-    )
-
-    @field_validator("external_providers_dir")
-    @classmethod
-    def validate_external_providers_dir(cls, v):
-        if v is None:
-            return None
-        if isinstance(v, str):
-            return Path(v)
-        return v

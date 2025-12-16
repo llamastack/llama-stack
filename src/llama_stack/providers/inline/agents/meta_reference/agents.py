@@ -19,6 +19,7 @@ from llama_stack_api import (
     OpenAIDeleteResponseObject,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
     OpenAIResponseObject,
     OpenAIResponsePrompt,
     OpenAIResponseText,
@@ -50,7 +51,6 @@ class MetaReferenceAgentsImpl(Agents):
         prompts_api: Prompts,
         files_api: Files,
         policy: list[AccessRule],
-        telemetry_enabled: bool = False,
     ):
         self.config = config
         self.inference_api = inference_api
@@ -59,7 +59,6 @@ class MetaReferenceAgentsImpl(Agents):
         self.tool_runtime_api = tool_runtime_api
         self.tool_groups_api = tool_groups_api
         self.conversations_api = conversations_api
-        self.telemetry_enabled = telemetry_enabled
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.in_memory_store = InmemoryKVStoreImpl()
@@ -80,6 +79,7 @@ class MetaReferenceAgentsImpl(Agents):
             conversations_api=self.conversations_api,
             prompts_api=self.prompts_api,
             files_api=self.files_api,
+            vector_stores_config=self.config.vector_stores_config,
         )
 
     async def shutdown(self) -> None:
@@ -106,11 +106,13 @@ class MetaReferenceAgentsImpl(Agents):
         stream: bool | None = False,
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
         guardrails: list[ResponseGuardrail] | None = None,
         max_tool_calls: int | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> OpenAIResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         result = await self.openai_responses_impl.create_openai_response(
@@ -124,12 +126,14 @@ class MetaReferenceAgentsImpl(Agents):
             stream,
             temperature,
             text,
+            tool_choice,
             tools,
             include,
             max_infer_iters,
             guardrails,
             parallel_tool_calls,
             max_tool_calls,
+            metadata,
         )
         return result  # type: ignore[no-any-return]
 

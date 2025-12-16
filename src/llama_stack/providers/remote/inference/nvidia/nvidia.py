@@ -48,7 +48,7 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
         if _is_nvidia_hosted(self.config):
             if not self.config.auth_credential:
-                raise RuntimeError(
+                logger.error(
                     "API key is required for hosted NVIDIA NIM. Either provide an API key or use a self-hosted NIM."
                 )
 

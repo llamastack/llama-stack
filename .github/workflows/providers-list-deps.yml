@@ -36,7 +36,7 @@ jobs:
       distros: ${{ steps.set-matrix.outputs.distros }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Generate Distribution List
         id: set-matrix
@@ -55,7 +55,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -79,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -102,4 +102,4 @@ jobs:
           USE_COPY_NOT_MOUNT: "true"
           LLAMA_STACK_DIR: "."
         run: |
-          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/build.yaml
+          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/config.yaml

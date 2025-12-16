@@ -15,7 +15,7 @@ class User(Protocol):
 class ProtectedResource(Protocol):
     type: str
     identifier: str
-    owner: User
+    owner: User | None
 
 
 class Condition(Protocol):
@@ -38,13 +38,13 @@ class UserInOwnersList:
             return None
 
     def matches(self, resource: ProtectedResource, user: User) -> bool:
-        required = self.owners_values(resource)
-        if not required:
-            return True
+        defined = self.owners_values(resource)
+        if not defined:
+            return False
         if not user.attributes or self.name not in user.attributes or not user.attributes[self.name]:
             return False
         user_values = user.attributes[self.name]
-        for value in required:
+        for value in defined:
             if value in user_values:
                 return True
         return False
@@ -106,6 +106,14 @@ class UserIsNotOwner:
         return "user is not owner"
 
 
+class ResourceIsUnowned:
+    def matches(self, resource: ProtectedResource, user: User) -> bool:
+        return not resource.owner
+
+    def __repr__(self):
+        return "resource is unowned"
+
+
 def parse_condition(condition: str) -> Condition:
     words = condition.split()
     match words:
@@ -121,6 +129,8 @@ def parse_condition(condition: str) -> Condition:
             return UserInOwnersList(name)
         case ["user", "not", "in", "owners", name]:
             return UserNotInOwnersList(name)
+        case ["resource", "is", "unowned"]:
+            return ResourceIsUnowned()
         case _:
             raise ValueError(f"Invalid condition: {condition}")
 

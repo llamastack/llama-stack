@@ -80,7 +80,7 @@ def available_providers() -> list[ProviderSpec]:
             provider_type="remote::model-context-protocol",
             module="llama_stack.providers.remote.tool_runtime.model_context_protocol",
             config_class="llama_stack.providers.remote.tool_runtime.model_context_protocol.config.MCPProviderConfig",
-            pip_packages=["mcp>=1.8.1"],
+            pip_packages=["mcp>=1.23.0"],
             provider_data_validator="llama_stack.providers.remote.tool_runtime.model_context_protocol.config.MCPProviderDataValidator",
             description="Model Context Protocol (MCP) tool for standardized tool calling and context management.",
         ),

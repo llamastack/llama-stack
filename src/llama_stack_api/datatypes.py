@@ -111,6 +111,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar tool_groups: Tool group organization
     :cvar files: File storage and management
     :cvar prompts: Prompt versions and management
+    :cvar connectors: External connector management (e.g., MCP servers)
     :cvar inspect: Built-in system inspection and introspection
     """
 
@@ -136,6 +137,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     files = "files"
     prompts = "prompts"
     conversations = "conversations"
+    connectors = "connectors"
 
     # built-in API
     inspect = "inspect"

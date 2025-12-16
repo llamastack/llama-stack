@@ -9,7 +9,7 @@ from typing import Any
 
 def redact_sensitive_fields(data: dict[str, Any]) -> dict[str, Any]:
     """Redact sensitive information from config before printing."""
-    sensitive_patterns = ["api_key", "api_token", "password", "secret"]
+    sensitive_patterns = ["api_key", "api_token", "password", "secret", "token"]
 
     def _redact_value(v: Any) -> Any:
         if isinstance(v, dict):

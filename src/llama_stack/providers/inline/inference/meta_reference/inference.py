@@ -246,7 +246,7 @@ class MetaReferenceInferenceImpl(
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         raise NotImplementedError("OpenAI completion not supported by meta reference provider")
 
     async def should_refresh_models(self) -> bool:

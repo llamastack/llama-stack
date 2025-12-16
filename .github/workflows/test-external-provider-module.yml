@@ -27,7 +27,7 @@ jobs:
         # container and point 'uv pip install' to the correct path...
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -43,8 +43,8 @@ jobs:
           nohup ramalama serve llama3.2:3b-instruct-fp16  > ramalama_server.log 2>&1 &
       - name: Apply image type to config file
         run: |
-          yq -i '.image_type = "${{ matrix.image-type }}"' tests/external/ramalama-stack/run.yaml
-          cat tests/external/ramalama-stack/run.yaml
+          yq -i '.image_type = "${{ matrix.image-type }}"' tests/external/ramalama-stack/config.yaml
+          cat tests/external/ramalama-stack/config.yaml
 
       - name: Install distribution dependencies
         run: |
@@ -59,7 +59,7 @@ jobs:
           # Use the virtual environment created by the build step (name comes from build config)
           source ramalama-stack-test/bin/activate
           uv pip list
-          nohup llama stack run tests/external/ramalama-stack/run.yaml > server.log 2>&1 &
+          nohup llama stack run tests/external/ramalama-stack/config.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: logs-${{ github.run_id }}-${{ github.run_attempt }}-external-provider-module-test
           path: |

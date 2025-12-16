@@ -24,9 +24,66 @@ llama stack list-deps starter | xargs -L1 uv pip install
 llama stack run starter
 ```
 
-### 2. Connect with OpenAI Client
+### 2. Choose Your Approach
 
-In another terminal, use the standard OpenAI client with the Responses API:
+Llama Stack supports various approaches for building RAG applications. The server provides two APIs (Responses and Chat Completions), plus a high-level client wrapper (Agent class):
+
+#### Approach 1: Agent Class (Client-Side)
+
+The **Agent class** is a high-level client wrapper around the Responses API with automatic tool execution and session management. Best for conversational agents and multi-turn RAG.
+
+```python
+from llama_stack_client import Agent, AgentEventLogger, LlamaStackClient
+import requests
+from io import BytesIO
+
+client = LlamaStackClient(base_url="http://localhost:8321")
+
+# Create vector store
+vs = client.vector_stores.create(name="my_vector_db")
+
+# Upload document
+url = "https://www.paulgraham.com/greatwork.html"
+response = requests.get(url)
+file_buffer = BytesIO(response.content)
+file_buffer.name = "greatwork.html"
+
+file = client.files.create(file=file_buffer, purpose="assistants")
+client.vector_stores.files.create(vector_store_id=vs.id, file_id=file.id)
+
+# Create agent with file_search tool (client-side wrapper)
+agent = Agent(
+    client,
+    model="ollama/llama3.2:3b",
+    instructions="You are a helpful assistant",
+    tools=[
+        {
+            "type": "file_search",
+            "vector_store_ids": [vs.id],  # Agent searches this automatically
+        }
+    ],
+)
+
+# Just ask - agent handles retrieval automatically
+response = agent.create_turn(
+    messages=[{"role": "user", "content": "How do you do great work?"}],
+    session_id=agent.create_session("my_session"),
+    stream=True,
+)
+
+for log in AgentEventLogger().log(response):
+    print(log, end="")
+```
+
+**How it works:**
+- Client-side `Agent` class wraps the Responses API
+- Agent automatically decides when to search the vector store
+- Uses internal Python API for vector search (no HTTP overhead)
+- Maintains conversation context across turns
+- Best for: Interactive applications, chatbots, multi-turn conversations
+
+#### Approach 2: Responses API
+
 
 ```python
 import io, requests
@@ -35,7 +92,7 @@ from openai import OpenAI
 url = "https://www.paulgraham.com/greatwork.html"
 client = OpenAI(base_url="http://localhost:8321/v1/", api_key="none")
 
-# Create vector store - auto-detects default embedding model
+# Create vector store
 vs = client.vector_stores.create()
 
 response = requests.get(url)
@@ -43,17 +100,59 @@ pseudo_file = io.BytesIO(str(response.content).encode('utf-8'))
 file_id = client.files.create(file=(url, pseudo_file, "text/html"), purpose="assistants").id
 client.vector_stores.files.create(vector_store_id=vs.id, file_id=file_id)
 
+# Automatic tool calling (calls Responses API directly)
 resp = client.responses.create(
     model="gpt-4o",
-    input="How do you do great work? Use the existing knowledge_search tool.",
+    input="How do you do great work?",
     tools=[{"type": "file_search", "vector_store_ids": [vs.id]}],
     include=["file_search_call.results"],
 )
 
 print(resp.output[-1].content[-1].text)
 ```
-Which should give output like:
-```
+
+**How it works:**
+- Server-side API with automatic tool calling
+- Uses internal Python API for vector search
+- No built-in session management (stateless by default)
+- Best for: Single-turn queries, OpenAI-compatible applications
+
+#### Approach 3: Chat Completions API
+
+The **Chat Completions API** is a server-side API that gives you explicit control over retrieval and generation. Best for custom RAG pipelines and batch processing.
+
+```python
+import io, requests
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:8321/v1/", api_key="none")
+
+# Create vector store and add documents
+vs = client.vector_stores.create()
+# ... upload and add files ...
+
+# Explicitly search vector store via REST API
+query = "How do you do great work?"
+search_results = client.vector_stores.search(
+    vector_store_id=vs.id,
+    query=query,
+    limit=3
+)
+
+# Manually extract context
+context = "\n\n".join([r.content for r in search_results.data if r.content])
+
+# Manually construct prompt with context
+completion = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[
+        {"role": "system", "content": "Use the provided context to answer questions."},
+        {"role": "user", "content": f"Context:\n{context}\n\nQuestion: {query}"}
+    ]
+)
+
+print(completion.choices[0].message.content)
+
 Doing great work is about more than just hard work and ambition; it involves combining several elements:
 
 1. **Pursue What Excites You**: Engage in projects that are both ambitious and exciting to you. It's important to work on something you have a natural aptitude for and a deep interest in.
@@ -85,7 +184,7 @@ Llama Stack provides OpenAI-compatible RAG capabilities through:
 
 ## Configuring Default Embedding Models
 
-To enable automatic vector store creation without specifying embedding models, configure a default embedding model in your run.yaml like so:
+To enable automatic vector store creation without specifying embedding models, configure a default embedding model in your config.yaml like so:
 
 ```yaml
 vector_stores:

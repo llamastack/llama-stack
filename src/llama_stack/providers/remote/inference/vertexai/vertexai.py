@@ -51,4 +51,4 @@ class VertexAIInferenceAdapter(OpenAIMixin):
 
         :return: An iterable of model IDs
         """
-        return ["vertexai/gemini-2.0-flash", "vertexai/gemini-2.5-flash", "vertexai/gemini-2.5-pro"]
+        return ["google/gemini-2.0-flash", "google/gemini-2.5-flash", "google/gemini-2.5-pro"]

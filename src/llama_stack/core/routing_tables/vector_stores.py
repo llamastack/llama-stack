@@ -40,6 +40,15 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
     Only provides internal routing functionality for VectorIORouter.
     """
 
+    def __init__(
+        self,
+        impls_by_provider_id: dict[str, Any],
+        dist_registry: Any,
+        policy: list[Any],
+    ) -> None:
+        super().__init__(impls_by_provider_id, dist_registry, policy)
+        self.vector_io_router = None  # Will be set post-instantiation
+
     # Internal methods only - no public API exposure
 
     async def register_vector_store(
@@ -133,6 +142,20 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         search_mode: str | None = "vector",
     ) -> VectorStoreSearchResponsePage:
         await self.assert_action_allowed("read", "vector_store", vector_store_id)
+
+        # Delegate to VectorIORouter if available (which handles query rewriting)
+        if self.vector_io_router is not None:
+            return await self.vector_io_router.openai_search_vector_store(
+                vector_store_id=vector_store_id,
+                query=query,
+                filters=filters,
+                max_num_results=max_num_results,
+                ranking_options=ranking_options,
+                rewrite_query=rewrite_query,
+                search_mode=search_mode,
+            )
+
+        # Fallback to direct provider call if VectorIORouter not available
         provider = await self.get_provider_impl(vector_store_id)
         return await provider.openai_search_vector_store(
             vector_store_id=vector_store_id,

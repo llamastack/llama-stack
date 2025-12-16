@@ -15,7 +15,6 @@ async def get_provider_impl(
     config: MetaReferenceAgentsImplConfig,
     deps: dict[Api, Any],
     policy: list[AccessRule],
-    telemetry_enabled: bool = False,
 ):
     from .agents import MetaReferenceAgentsImpl
 
@@ -29,7 +28,6 @@ async def get_provider_impl(
         deps[Api.conversations],
         deps[Api.prompts],
         deps[Api.files],
-        telemetry_enabled,
         policy,
     )
     await impl.initialize()
