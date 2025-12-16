@@ -20,6 +20,7 @@ from llama_stack_api import (
     Eval,
     EvaluateResponse,
     Inference,
+    IterRowsRequest,
     Job,
     JobStatus,
     OpenAIChatCompletionRequestWithExtraBody,
@@ -101,8 +102,10 @@ class MetaReferenceEvalImpl(
         # dataset_def = await self.datasets_api.get_dataset(dataset_id=dataset_id)
 
         all_rows = await self.datasetio_api.iterrows(
-            dataset_id=dataset_id,
-            limit=(-1 if benchmark_config.num_examples is None else benchmark_config.num_examples),
+            IterRowsRequest(
+                dataset_id=dataset_id,
+                limit=(-1 if benchmark_config.num_examples is None else benchmark_config.num_examples),
+            )
         )
         res = await self.evaluate_rows(
             benchmark_id=benchmark_id,

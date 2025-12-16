@@ -7,7 +7,15 @@
 from typing import Any
 
 from llama_stack.log import get_logger
-from llama_stack_api import DatasetIO, DatasetPurpose, DataSource, PaginatedResponse, RoutingTable
+from llama_stack_api import (
+    AppendRowsRequest,
+    DatasetIO,
+    DatasetPurpose,
+    DataSource,
+    IterRowsRequest,
+    PaginatedResponse,
+    RoutingTable,
+)
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -45,26 +53,21 @@ class DatasetIORouter(DatasetIO):
             dataset_id=dataset_id,
         )
 
-    async def iterrows(
-        self,
-        dataset_id: str,
-        start_index: int | None = None,
-        limit: int | None = None,
-    ) -> PaginatedResponse:
+    async def iterrows(self, request: IterRowsRequest) -> PaginatedResponse:
         logger.debug(
-            f"DatasetIORouter.iterrows: {dataset_id}, {start_index=} {limit=}",
+            f"DatasetIORouter.iterrows: {request.dataset_id}, start_index={request.start_index} limit={request.limit}",
         )
-        provider = await self.routing_table.get_provider_impl(dataset_id)
+        provider = await self.routing_table.get_provider_impl(request.dataset_id)
         return await provider.iterrows(
-            dataset_id=dataset_id,
-            start_index=start_index,
-            limit=limit,
+            dataset_id=request.dataset_id,
+            start_index=request.start_index,
+            limit=request.limit,
         )
 
-    async def append_rows(self, dataset_id: str, rows: list[dict[str, Any]]) -> None:
-        logger.debug(f"DatasetIORouter.append_rows: {dataset_id}, {len(rows)} rows")
-        provider = await self.routing_table.get_provider_impl(dataset_id)
+    async def append_rows(self, request: AppendRowsRequest) -> None:
+        logger.debug(f"DatasetIORouter.append_rows: {request.dataset_id}, {len(request.rows)} rows")
+        provider = await self.routing_table.get_provider_impl(request.dataset_id)
         return await provider.append_rows(
-            dataset_id=dataset_id,
-            rows=rows,
+            dataset_id=request.dataset_id,
+            rows=request.rows,
         )

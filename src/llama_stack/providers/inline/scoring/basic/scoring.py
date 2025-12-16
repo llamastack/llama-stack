@@ -8,6 +8,7 @@ from typing import Any
 from llama_stack_api import (
     DatasetIO,
     Datasets,
+    IterRowsRequest,
     ScoreBatchResponse,
     ScoreResponse,
     Scoring,
@@ -79,10 +80,7 @@ class BasicScoringImpl(
         scoring_functions: dict[str, ScoringFnParams | None] = None,
         save_results_dataset: bool = False,
     ) -> ScoreBatchResponse:
-        all_rows = await self.datasetio_api.iterrows(
-            dataset_id=dataset_id,
-            limit=-1,
-        )
+        all_rows = await self.datasetio_api.iterrows(IterRowsRequest(dataset_id=dataset_id, limit=-1))
         res = await self.score(
             input_rows=all_rows.data,
             scoring_functions=scoring_functions,

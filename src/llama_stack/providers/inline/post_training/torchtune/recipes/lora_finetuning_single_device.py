@@ -50,6 +50,7 @@ from llama_stack_api import (
     DataConfig,
     DatasetIO,
     Datasets,
+    IterRowsRequest,
     LoraFinetuningConfig,
     OptimizerConfig,
     PostTrainingMetric,
@@ -334,10 +335,7 @@ class LoraFinetuningSingleDevice:
         batch_size: int,
     ) -> tuple[DistributedSampler, DataLoader]:
         async def fetch_rows(dataset_id: str):
-            return await self.datasetio_api.iterrows(
-                dataset_id=dataset_id,
-                limit=-1,
-            )
+            return await self.datasetio_api.iterrows(IterRowsRequest(dataset_id=dataset_id, limit=-1))
 
         all_rows = await fetch_rows(dataset_id)
         rows = all_rows.data
