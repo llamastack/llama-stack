@@ -644,7 +644,7 @@ class ServerConfig(BaseModel):
 class StackConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
-    image_name: str = Field(
+    distro_name: str = Field(
         ...,
         description="""
 Reference to the distribution this package refers to. For unregistered (adhoc) packages,

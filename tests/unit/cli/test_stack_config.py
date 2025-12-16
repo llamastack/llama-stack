@@ -16,11 +16,11 @@ from llama_stack.core.configure import (
 
 
 @pytest.fixture
-def config_with_image_name_int():
+def config_with_distro_name_int():
     return yaml.safe_load(
         f"""
         version: {LLAMA_STACK_RUN_CONFIG_VERSION}
-        image_name: 1234
+        distro_name: 1234
         apis_to_serve: []
         built_at: {datetime.now().isoformat()}
         storage:
@@ -75,7 +75,7 @@ def up_to_date_config():
     return yaml.safe_load(
         f"""
         version: {LLAMA_STACK_RUN_CONFIG_VERSION}
-        image_name: foo
+        distro_name: foo
         apis_to_serve: []
         built_at: {datetime.now().isoformat()}
         storage:
@@ -126,7 +126,7 @@ def up_to_date_config():
 def old_config():
     return yaml.safe_load(
         f"""
-        image_name: foo
+        distro_name: foo
         built_at: {datetime.now().isoformat()}
         apis_to_serve: []
         routing_table:
@@ -200,9 +200,9 @@ def test_parse_and_maybe_upgrade_config_invalid(invalid_config):
         parse_and_maybe_upgrade_config(invalid_config)
 
 
-def test_parse_and_maybe_upgrade_config_image_name_int(config_with_image_name_int):
-    result = parse_and_maybe_upgrade_config(config_with_image_name_int)
-    assert isinstance(result.image_name, str)
+def test_parse_and_maybe_upgrade_config_distro_name_int(config_with_distro_name_int):
+    result = parse_and_maybe_upgrade_config(config_with_distro_name_int)
+    assert isinstance(result.distro_name, str)
 
 
 def test_parse_and_maybe_upgrade_config_sets_external_providers_dir(up_to_date_config):
@@ -252,7 +252,7 @@ def test_generate_run_config_from_providers():
     config_dict = config.model_dump(mode="json")
 
     # Verify basic structure
-    assert config_dict["image_name"] == "providers-run"
+    assert config_dict["distro_name"] == "providers-run"
     assert "inference" in config_dict["apis"]
     assert "inference" in config_dict["providers"]
 
@@ -264,7 +264,7 @@ def test_generate_run_config_from_providers():
 
     # Verify config can be parsed back
     parsed = parse_and_maybe_upgrade_config(config_dict)
-    assert parsed.image_name == "providers-run"
+    assert parsed.distro_name == "providers-run"
 
 
 def test_providers_flag_generates_config_with_api_keys():
@@ -288,7 +288,7 @@ def test_providers_flag_generates_config_with_api_keys():
         config=None,
         port=8321,
         image_type=None,
-        image_name=None,
+        distro_name=None,
         enable_ui=False,
     )
 
