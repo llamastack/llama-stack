@@ -22,6 +22,10 @@ on:
         description: 'PR number to run Stainless build for'
         required: true
         type: number
+      sdk_install_url:
+        description: 'Python SDK install URL (optional, for testing specific builds)'
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}
@@ -61,6 +65,7 @@ jobs:
       pr_head_sha: ${{ steps.compute.outputs.pr_head_sha }}
       pr_base_sha: ${{ steps.compute.outputs.pr_base_sha }}
       pr_base_ref: ${{ steps.compute.outputs.pr_base_ref }}
+      pr_title: ${{ steps.compute.outputs.pr_title }}
     steps:
       - name: Fetch PR details for workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
@@ -68,7 +73,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PR_DATA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRefOid,baseRefName,baseRefOid,headRepositoryOwner)
+          PR_DATA=$(gh pr view ${{ inputs.pr_number }} --repo ${{ github.repository }} --json headRefName,headRepository,headRefOid,baseRefName,baseRefOid,headRepositoryOwner,title)
           echo "pr_data=$PR_DATA" >> $GITHUB_OUTPUT
 
       - name: Compute branch names
@@ -84,6 +89,7 @@ jobs:
             HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
             BASE_SHA=$(echo "$PR_DATA" | jq -r '.baseRefOid')
             BASE_REF=$(echo "$PR_DATA" | jq -r '.baseRefName')
+            PR_TITLE=$(echo "$PR_DATA" | jq -r '.title')
           else
             # Use pull_request_target event data
             HEAD_REPO="${{ github.event.pull_request.head.repo.full_name }}"
@@ -92,6 +98,7 @@ jobs:
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
             BASE_REF="${{ github.event.pull_request.base.ref }}"
+            PR_TITLE="${{ github.event.pull_request.title }}"
           fi
 
           BASE_REPO="${{ github.repository }}"
@@ -118,14 +125,20 @@ jobs:
           echo "pr_head_sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
           echo "pr_base_sha=${BASE_SHA}" >> $GITHUB_OUTPUT
           echo "pr_base_ref=${BASE_REF}" >> $GITHUB_OUTPUT
+          echo "pr_title=${PR_TITLE}" >> $GITHUB_OUTPUT
 
   preview:
     needs: compute-branch
-    if: github.event_name == 'workflow_dispatch' || github.event.action != 'closed'
+    # Skip preview if workflow_dispatch provides sdk_install_url, or if PR is being closed
+    if: |
+      (github.event_name == 'workflow_dispatch' && inputs.sdk_install_url == '') ||
+      (github.event_name == 'pull_request_target' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
+    outputs:
+      sdk_install_url: ${{ fromJSON(steps.run-preview.outputs.outcomes || '{}').python.install_url || '' }}
     steps:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
@@ -137,7 +150,10 @@ jobs:
           fetch-depth: 2
 
       - name: Run preview builds
+        id: run-preview
         uses: stainless-api/upload-openapi-spec-action/preview@979824f1ea5f44334940f0768d04642b6cdaa0d1 # 1.8.1
+        env:
+          PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
@@ -150,6 +166,21 @@ jobs:
           head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
           branch: ${{ needs.compute-branch.outputs.preview_branch }}
           base_branch: ${{ needs.compute-branch.outputs.base_branch }}
+          commit_message: ${{ needs.compute-branch.outputs.pr_title }}
+          make_comment: true
+
+  run-integration-tests:
+    needs: [compute-branch, preview]
+    if: |
+      always() &&
+      (needs.preview.result == 'success' || needs.preview.result == 'skipped') &&
+      (github.event_name == 'workflow_dispatch' || github.event.action != 'closed')
+    uses: ./.github/workflows/integration-tests.yml
+    with:
+      # Use provided sdk_install_url from workflow_dispatch, or from preview build
+      sdk_install_url: ${{ inputs.sdk_install_url || needs.preview.outputs.sdk_install_url }}
+      matrix_key: 'stainless'
+      test-all-client-versions: false
 
   merge:
     needs: compute-branch
