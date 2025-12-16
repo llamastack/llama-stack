@@ -48,6 +48,7 @@ on:
         type: string
         default: 'default'
         description: 'Matrix configuration key from ci_matrix.json (e.g., "default", "stainless")'
+<<<<<<< HEAD
       pr_head_sha:
         required: false
         type: string
@@ -61,6 +62,8 @@ on:
         type: boolean
         default: false
         description: 'Whether this is a fork PR (cannot push recordings to forks)'
+=======
+>>>>>>> 66f3cf40 (feat: wire Stainless preview SDK into integration tests (#4360))
       test-all-client-versions:
         required: false
         type: boolean

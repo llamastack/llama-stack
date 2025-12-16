@@ -66,7 +66,10 @@ jobs:
       pr_base_sha: ${{ steps.compute.outputs.pr_base_sha }}
       pr_base_ref: ${{ steps.compute.outputs.pr_base_ref }}
       pr_title: ${{ steps.compute.outputs.pr_title }}
+<<<<<<< HEAD
       is_fork_pr: ${{ steps.compute.outputs.is_fork_pr }}
+=======
+>>>>>>> 66f3cf40 (feat: wire Stainless preview SDK into integration tests (#4360))
     steps:
       - name: Fetch PR details for workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
@@ -129,7 +132,10 @@ jobs:
           echo "pr_base_sha=${BASE_SHA}" >> $GITHUB_OUTPUT
           echo "pr_base_ref=${BASE_REF}" >> $GITHUB_OUTPUT
           echo "pr_title=${PR_TITLE}" >> $GITHUB_OUTPUT
+<<<<<<< HEAD
           echo "is_fork_pr=${IS_FORK_PR}" >> $GITHUB_OUTPUT
+=======
+>>>>>>> 66f3cf40 (feat: wire Stainless preview SDK into integration tests (#4360))
 
   preview:
     needs: compute-branch
@@ -155,7 +161,11 @@ jobs:
 
       - name: Run preview builds
         id: run-preview
+<<<<<<< HEAD
         uses: stainless-api/upload-openapi-spec-action/preview@11792f827da87f9411ca0b491d7514b94dcb815f # 1.9.0
+=======
+        uses: stainless-api/upload-openapi-spec-action/preview@979824f1ea5f44334940f0768d04642b6cdaa0d1 # 1.8.1
+>>>>>>> 66f3cf40 (feat: wire Stainless preview SDK into integration tests (#4360))
         env:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         with:
@@ -185,9 +195,12 @@ jobs:
       sdk_install_url: ${{ inputs.sdk_install_url || needs.preview.outputs.sdk_install_url }}
       matrix_key: 'stainless'
       test-all-client-versions: false
+<<<<<<< HEAD
       pr_head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
       pr_head_ref: ${{ needs.compute-branch.outputs.pr_head_ref }}
       is_fork_pr: ${{ needs.compute-branch.outputs.is_fork_pr == 'true' }}
+=======
+>>>>>>> 66f3cf40 (feat: wire Stainless preview SDK into integration tests (#4360))
 
   merge:
     needs: compute-branch

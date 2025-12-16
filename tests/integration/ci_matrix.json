@@ -7,7 +7,11 @@
     {"suite": "base-vllm-subset", "setup": "vllm"}
   ],
   "stainless": [
+<<<<<<< HEAD
     {"suite": "base", "setup": "ollama", "inference_mode": "record-if-missing"}
+=======
+    {"suite": "base", "setup": "ollama", "allowed_clients": ["library"]}
+>>>>>>> 66f3cf40 (feat: wire Stainless preview SDK into integration tests (#4360))
   ],
   "schedules": {
     "1 0 * * 0": [
