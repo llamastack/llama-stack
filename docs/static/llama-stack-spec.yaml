@@ -9168,6 +9168,25 @@ components:
       - version
       title: VersionInfo
       description: Version information for the service.
+    AppendRowsRequest:
+      properties:
+        dataset_id:
+          type: string
+          title: Dataset Id
+          description: The ID of the dataset to append the rows to.
+        rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Rows
+          description: The rows to append to the dataset.
+      type: object
+      required:
+      - dataset_id
+      - rows
+      title: AppendRowsRequest
+      description: Request model for appending rows to a dataset.
     PaginatedResponse:
       properties:
         data:
@@ -12675,6 +12694,29 @@ components:
       - conversation_id
       - item_id
       title: DeleteItemRequest
+      type: object
+    IterRowsRequest:
+      description: Request model for iterating over rows in a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get the rows from.
+          title: Dataset Id
+          type: string
+        start_index:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Index into dataset for the first row to get. Get all rows if None.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The number of rows to get.
+          nullable: true
+      required:
+      - dataset_id
+      title: IterRowsRequest
       type: object
     BenchmarkIdRequest:
       description: Request model containing benchmark_id path parameter.

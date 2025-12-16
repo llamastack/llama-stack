@@ -29,6 +29,7 @@ from llama_stack.providers.utils.scoring.aggregation_utils import aggregate_metr
 from llama_stack_api import (
     DatasetIO,
     Datasets,
+    IterRowsRequest,
     ScoreBatchResponse,
     ScoreResponse,
     Scoring,
@@ -164,10 +165,7 @@ class BraintrustScoringImpl(
     ) -> ScoreBatchResponse:
         await self.set_api_key()
 
-        all_rows = await self.datasetio_api.iterrows(
-            dataset_id=dataset_id,
-            limit=-1,
-        )
+        all_rows = await self.datasetio_api.iterrows(IterRowsRequest(dataset_id=dataset_id, limit=-1))
         res = await self.score(input_rows=all_rows.data, scoring_functions=scoring_functions)
         if save_results_dataset:
             # TODO: persist and register dataset on to server for reading
