@@ -296,11 +296,11 @@ MCP tools now correctly handle array-type arguments in both the Agent API and Re
 
 **Status:** ✅ Resolved
 
-The [`parallel_tool_calls` parameter](https://platform.openai.com/docs/api-reference/responses/create#responses_create-parallel_tool_calls) controls turn-based function calling workflows, _not_ parallelism or concurrency. See the [related function calling documentation](https://platform.openai.com/docs/guides/function-calling#parallel-function-calling). 
+The [`parallel_tool_calls` parameter](https://platform.openai.com/docs/api-reference/responses/create#responses_create-parallel_tool_calls) controls turn-based function calling workflows, _not_ parallelism or concurrency. See the [related function calling documentation](https://platform.openai.com/docs/guides/function-calling#parallel-function-calling).
 
 If `parallel_tool_calls=false`, the intended behavior is that multiple generated functional calls will be executed once per turn until done; the client is responsible for executing them one at a time and returning the result, in the expected format, in order to proceed.
 
-For example, with a custom tool generation request with a `get_weather` function definition, the input of "What is the weather in Tokyo and New York?" will, by default, cause two function calls to be generated - a `get_weather` function call definition for each of `Paris` and `New York`. With `parallel_tool_calls = false`, however, only one of these will be generated initially; the client is then responsible for executing that function call and appending the results to the message history, after which the conversation will proceed with the model-generated second function tool call definition. 
+For example, with a custom tool generation request with a `get_weather` function definition, the input of "What is the weather in Tokyo and New York?" will, by default, cause two function calls to be generated - a `get_weather` function call definition for each of `Paris` and `New York`. With `parallel_tool_calls = false`, however, only one of these will be generated initially; the client is then responsible for executing that function call and appending the results to the message history, after which the conversation will proceed with the model-generated second function tool call definition.
 
 | parallel_tool_calls=true | parallel_tool_calls=false |
 |------|-------|
