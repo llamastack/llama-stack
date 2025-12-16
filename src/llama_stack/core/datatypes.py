@@ -499,6 +499,61 @@ class AnnotationPromptParams(BaseModel):
         return v
 
 
+class FileIngestionParams(BaseModel):
+    """Configuration for file processing during ingestion."""
+
+    default_chunk_size_tokens: int = Field(
+        default=512,
+        description="Default chunk size for RAG tool operations when not specified",
+    )
+    default_chunk_overlap_tokens: int = Field(
+        default=128,
+        description="Default overlap in tokens between chunks (original default: 512 // 4 = 128)",
+    )
+
+
+class ChunkRetrievalParams(BaseModel):
+    """Configuration for chunk retrieval and ranking during search."""
+
+    chunk_multiplier: int = Field(
+        default=5,
+        description="Multiplier for OpenAI API over-retrieval (affects all providers)",
+    )
+    max_tokens_in_context: int = Field(
+        default=4000,
+        description="Maximum tokens allowed in RAG context before truncation",
+    )
+    default_reranker_strategy: str = Field(
+        default="rrf",
+        description="Default reranker when not specified: 'rrf', 'weighted', or 'normalized'",
+    )
+    rrf_impact_factor: float = Field(
+        default=60.0,
+        description="Impact factor for RRF (Reciprocal Rank Fusion) reranking",
+    )
+    weighted_search_alpha: float = Field(
+        default=0.5,
+        description="Alpha weight for weighted search reranking (0.0-1.0)",
+    )
+
+
+class FileBatchParams(BaseModel):
+    """Configuration for file batch processing."""
+
+    max_concurrent_files_per_batch: int = Field(
+        default=3,
+        description="Maximum files processed concurrently in file batches",
+    )
+    file_batch_chunk_size: int = Field(
+        default=10,
+        description="Number of files to process in each batch chunk",
+    )
+    cleanup_interval_seconds: int = Field(
+        default=86400,  # 24 hours
+        description="Interval for cleaning up expired file batches (seconds)",
+    )
+
+
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
 
@@ -525,6 +580,19 @@ class VectorStoresConfig(BaseModel):
     annotation_prompt_params: AnnotationPromptParams = Field(
         default_factory=AnnotationPromptParams,
         description="Configuration for source annotation and attribution features.",
+    )
+
+    file_ingestion_params: FileIngestionParams = Field(
+        default_factory=FileIngestionParams,
+        description="Configuration for file processing during ingestion.",
+    )
+    chunk_retrieval_params: ChunkRetrievalParams = Field(
+        default_factory=ChunkRetrievalParams,
+        description="Configuration for chunk retrieval and ranking during search.",
+    )
+    file_batch_params: FileBatchParams = Field(
+        default_factory=FileBatchParams,
+        description="Configuration for file batch processing.",
     )
 
 
