@@ -45,7 +45,7 @@ uv run --env-file .env -- pytest -v tests/integration/inference/test_text_infere
 We use [pre-commit](https://pre-commit.com/) to run linting and formatting checks on your code. You can install the pre-commit hooks by running:
 
 ```bash
-uv pip install pre-commit==4.3.0
+uv pip install 'pre-commit>=4.4.0'
 uv run pre-commit install
 ```
 
