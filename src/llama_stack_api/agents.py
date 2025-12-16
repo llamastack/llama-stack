@@ -88,7 +88,7 @@ class Agents(Protocol):
         model: str,
         prompt: OpenAIResponsePrompt | None = None,
         instructions: str | None = None,
-        parallel_tool_calls: bool | None = True,
+        parallel_tool_calls: bool | None = None,
         previous_response_id: str | None = None,
         conversation: str | None = None,
         store: bool | None = True,

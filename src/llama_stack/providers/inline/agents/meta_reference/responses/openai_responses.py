@@ -450,7 +450,7 @@ class OpenAIResponsesImpl:
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         max_infer_iters: int | None = 10,
         guardrail_ids: list[str] | None = None,
-        parallel_tool_calls: bool | None = True,
+        parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
