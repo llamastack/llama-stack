@@ -125,7 +125,7 @@ class TestOptionalArchitecture:
         )
         assert (
             context_template
-            == 'The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query.{annotation_instruction}\n'
+            == 'The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query. {annotation_instruction}\n'
         )
 
         # Verify templates can be formatted successfully

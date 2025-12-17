@@ -296,15 +296,15 @@ vector_stores:
       '
     context_template: 'The above results were retrieved to help answer the user''s
       query: "{query}". Use them as supporting information only in answering this
-      query.{annotation_instruction}
+      query. {annotation_instruction}
 
       '
   annotation_prompt_params:
     enable_annotations: true
-    annotation_instruction_template: ' Cite sources immediately at the end of sentences
-      before punctuation, using `<|file-id|>` format like ''This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.''.
+    annotation_instruction_template: Cite sources immediately at the end of sentences
+      before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'.
       Do not add extra punctuation. Use only the file IDs provided, do not invent
-      new ones.'
+      new ones.
     chunk_annotation_template: '[{index}] {metadata_text} cite as <|{file_id}|>
 
       {chunk_text}
