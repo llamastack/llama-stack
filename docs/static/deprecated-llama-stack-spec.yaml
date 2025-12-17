@@ -17,7 +17,7 @@ paths:
     get:
       responses:
         '200':
-          description: A OpenAIListModelsResponse.
+          description: A list of OpenAI model objects.
           content:
             application/json:
               schema:
@@ -36,13 +36,13 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Models
-      summary: Openai List Models
+      summary: List models using the OpenAI API.
       description: List models using the OpenAI API.
       operationId: openai_list_models_v1_models_get
     post:
       responses:
         '200':
-          description: A Model.
+          description: The registered model object.
           content:
             application/json:
               schema:
@@ -61,11 +61,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Models
-      summary: Register Model
-      description: |-
-        Register model.
-
-        Register a model.
+      summary: Register a model.
+      description: Register a model.
       operationId: register_model_v1_models_post
       requestBody:
         content:
@@ -78,30 +75,27 @@ paths:
     get:
       responses:
         '200':
-          description: A Model.
+          description: The model object.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Model'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Models
-      summary: Get Model
-      description: |-
-        Get model.
-
-        Get a model by its identifier.
+      summary: Get a model by its identifier.
+      description: Get a model by its identifier.
       operationId: get_model_v1_models__model_id__get
       parameters:
       - name: model_id
@@ -109,30 +103,29 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: model_id'
+          description: The ID of the model to get.
+          title: Model Id
+        description: The ID of the model to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The model was successfully unregistered.
       tags:
       - Models
-      summary: Unregister Model
-      description: |-
-        Unregister model.
-
-        Unregister a model.
+      summary: Unregister a model.
+      description: Unregister a model.
       operationId: unregister_model_v1_models__model_id__delete
       parameters:
       - name: model_id
@@ -140,7 +133,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: model_id'
+          description: The ID of the model to unregister.
+          title: Model Id
+        description: The ID of the model to unregister.
       deprecated: true
   /v1/scoring-functions:
     get:
@@ -3292,10 +3287,12 @@ components:
             $ref: '#/components/schemas/OpenAIModel'
           type: array
           title: Data
+          description: List of OpenAI model objects.
       type: object
       required:
       - data
       title: OpenAIListModelsResponse
+      description: Response containing a list of OpenAI model objects.
     Model:
       properties:
         identifier:
@@ -8299,29 +8296,35 @@ components:
         model_id:
           type: string
           title: Model Id
+          description: The identifier of the model to register.
         provider_model_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the model in the provider.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the provider.
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: Any additional metadata for this model.
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
             title: ModelType
           - type: 'null'
+          description: The type of model to register.
           title: ModelType
       type: object
       required:
       - model_id
       title: RegisterModelRequest
+      description: Request model for registering a model.
     ParamType:
       discriminator:
         mapping:
@@ -9831,6 +9834,41 @@ components:
       required:
       - dataset_id
       title: UnregisterDatasetRequest
+      type: object
+    ListModelsResponse:
+      description: Response containing a list of model objects.
+      properties:
+        data:
+          description: List of model objects.
+          items:
+            $ref: '#/components/schemas/Model'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListModelsResponse
+      type: object
+    GetModelRequest:
+      description: Request model for getting a model by ID.
+      properties:
+        model_id:
+          description: The ID of the model to get.
+          title: Model Id
+          type: string
+      required:
+      - model_id
+      title: GetModelRequest
+      type: object
+    UnregisterModelRequest:
+      description: Request model for unregistering a model.
+      properties:
+        model_id:
+          description: The ID of the model to unregister.
+          title: Model Id
+          type: string
+      required:
+      - model_id
+      title: UnregisterModelRequest
       type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
