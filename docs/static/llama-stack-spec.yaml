@@ -942,12 +942,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Inspect
-      summary: Health
-      description: |-
-        Get health status.
-
-        Get the current health status of the service.
+      summary: Get health status.
+      description: Get the current health status of the service.
       operationId: health_v1_health_get
+      x-public: true
   /v1/inspect/routes:
     get:
       responses:
@@ -971,11 +969,8 @@ paths:
           description: Default Response
       tags:
       - Inspect
-      summary: List Routes
-      description: |-
-        List routes.
-
-        List all available API routes with their methods and implementing providers.
+      summary: List routes.
+      description: List all available API routes with their methods and implementing providers.
       operationId: list_routes_v1_inspect_routes_get
       parameters:
       - name: api_filter
@@ -990,7 +985,9 @@ paths:
             - deprecated
             type: string
           - type: 'null'
+          description: Optional filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
           title: Api Filter
+        description: Optional filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
   /v1/models:
     get:
       responses:
@@ -1365,11 +1362,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Providers
-      summary: List Providers
-      description: |-
-        List providers.
-
-        List all available providers.
+      summary: List providers.
+      description: List all available providers.
       operationId: list_providers_v1_providers_get
   /v1/providers/{provider_id}:
     get:
@@ -1381,24 +1375,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProviderInfo'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Providers
-      summary: Inspect Provider
-      description: |-
-        Get provider.
-
-        Get detailed information about a specific provider.
+      summary: Get provider.
+      description: Get detailed information about a specific provider.
       operationId: inspect_provider_v1_providers__provider_id__get
       parameters:
       - name: provider_id
@@ -1406,7 +1397,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: provider_id'
+          description: The ID of the provider to inspect.
+          title: Provider Id
+        description: The ID of the provider to inspect.
   /v1/responses:
     get:
       responses:
@@ -2705,12 +2698,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Inspect
-      summary: Version
-      description: |-
-        Get version.
-
-        Get the version of the service.
+      summary: Get version.
+      description: Get the version of the service.
       operationId: version_v1_version_get
+      x-public: true
 components:
   schemas:
     Error:
@@ -5012,6 +5003,7 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/HealthStatus'
+          description: The health status of the service
       type: object
       required:
       - status
@@ -5022,14 +5014,17 @@ components:
         route:
           type: string
           title: Route
+          description: The API route path
         method:
           type: string
           title: Method
+          description: The HTTP method for the route
         provider_types:
           items:
             type: string
           type: array
           title: Provider Types
+          description: List of provider types implementing this route
       type: object
       required:
       - route
@@ -5044,6 +5039,7 @@ components:
             $ref: '#/components/schemas/RouteInfo'
           type: array
           title: Data
+          description: List of available API routes
       type: object
       required:
       - data
@@ -5310,20 +5306,25 @@ components:
         api:
           type: string
           title: Api
+          description: The API name this provider implements
         provider_id:
           type: string
           title: Provider Id
+          description: Unique identifier for the provider
         provider_type:
           type: string
           title: Provider Type
+          description: The type of provider implementation
         config:
           additionalProperties: true
           type: object
           title: Config
+          description: Configuration parameters for the provider
         health:
           additionalProperties: true
           type: object
           title: Health
+          description: Current health status of the provider
       type: object
       required:
       - api
@@ -5340,6 +5341,7 @@ components:
             $ref: '#/components/schemas/ProviderInfo'
           type: array
           title: Data
+          description: List of provider information objects
       type: object
       required:
       - data
@@ -9141,6 +9143,7 @@ components:
         version:
           type: string
           title: Version
+          description: The version string of the service
       type: object
       required:
       - version
@@ -12203,6 +12206,17 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
+      type: object
+    InspectProviderRequest:
+      description: Request model for inspecting a provider by ID.
+      properties:
+        provider_id:
+          description: The ID of the provider to inspect.
+          title: Provider Id
+          type: string
+      required:
+      - provider_id
+      title: InspectProviderRequest
       type: object
   responses:
     BadRequest400:
