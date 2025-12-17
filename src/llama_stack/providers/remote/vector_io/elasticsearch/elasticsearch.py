@@ -239,11 +239,14 @@ class ElasticsearchIndex(EmbeddingIndex):
                     "Invalid linear reranker parameters. Expected structure: "
                     '{ "retrievers": { "standard": {"weight": float}, "knn": {"weight": float} } }'
                 )
-            # The first retriever is standard (see retriever variable above)
-            retriever["linear"]["retrievers"][0].update(reranker_params["retrievers"]["standard"])
-            # The second retriever is knn (see retriever variable above)
-            retriever["linear"]["retrievers"][1].update(reranker_params["retrievers"]["knn"])
-
+            try:
+                # The first retriever is standard (see retriever variable above)
+                retriever["linear"]["retrievers"][0].update(reranker_params["retrievers"]["standard"])
+                # The second retriever is knn (see retriever variable above)
+                retriever["linear"]["retrievers"][1].update(reranker_params["retrievers"]["knn"])
+            except Exception as e:
+                log.error(f"Error updating linear retrievers parameters: {e}")
+                raise
         try:
             results = await self.client.search(
                 index=self.collection_name, size=k, retriever=retriever, min_score=score_threshold
