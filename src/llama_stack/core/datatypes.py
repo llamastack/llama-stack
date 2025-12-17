@@ -18,15 +18,6 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
-from llama_stack.providers.utils.memory.constants import (
-    DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE,
-    DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
-    DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE,
-    DEFAULT_CONTEXT_TEMPLATE,
-    DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
-    DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
-    DEFAULT_QUERY_REWRITE_PROMPT,
-)
 from llama_stack_api import (
     Api,
     Benchmark,
@@ -367,7 +358,7 @@ class RewriteQueryParams(BaseModel):
         description="LLM model for query rewriting/expansion in vector search.",
     )
     prompt: str = Field(
-        default=DEFAULT_QUERY_REWRITE_PROMPT,
+        default="Expand this query with relevant synonyms and related terms. Return only the improved query, no explanations:\n\n{query}\n\nImproved query:",
         description="Prompt template for query rewriting. Use {query} as placeholder for the original query.",
     )
     max_tokens: int = Field(
@@ -407,11 +398,11 @@ class FileSearchParams(BaseModel):
     """Configuration for file search tool output formatting."""
 
     header_template: str = Field(
-        default=DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
+        default="knowledge_search tool found {num_chunks} chunks:\nBEGIN of knowledge_search tool results.\n",
         description="Template for the header text shown before search results. Available placeholders: {num_chunks} number of chunks found.",
     )
     footer_template: str = Field(
-        default=DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
+        default="END of knowledge_search tool results.\n",
         description="Template for the footer text shown after search results.",
     )
 
@@ -433,11 +424,11 @@ class ContextPromptParams(BaseModel):
     """Configuration for LLM prompt content and chunk formatting."""
 
     chunk_annotation_template: str = Field(
-        default=DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
+        default="Result {index}\nContent: {chunk.content}\nMetadata: {metadata}\n",
         description="Template for formatting individual chunks in search results. Available placeholders: {index} 1-based chunk index, {chunk.content} chunk content, {metadata} chunk metadata dict.",
     )
     context_template: str = Field(
-        default=DEFAULT_CONTEXT_TEMPLATE,
+        default='The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query.{annotation_instruction}\n',
         description="Template for explaining the search results to the model. Available placeholders: {query} user's query, {num_chunks} number of chunks.",
     )
 
@@ -470,11 +461,11 @@ class AnnotationPromptParams(BaseModel):
         description="Whether to include annotation information in results.",
     )
     annotation_instruction_template: str = Field(
-        default=DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE,
+        default=" Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones.",
         description="Instructions for how the model should cite sources. Used when enable_annotations is True.",
     )
     chunk_annotation_template: str = Field(
-        default=DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE,
+        default="[{index}] {metadata_text} cite as <|{file_id}|>\n{chunk_text}\n",
         description="Template for chunks with annotation information. Available placeholders: {index} 1-based chunk index, {metadata_text} formatted metadata, {file_id} document identifier, {chunk_text} chunk content.",
     )
 

@@ -11,11 +11,8 @@ from typing import Any
 
 from opentelemetry import trace
 
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.memory.constants import (
-    DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE,
-    DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE,
-)
 from llama_stack_api import (
     ImageContentItem,
     OpenAIChatCompletionContentPartImageParam,
@@ -175,8 +172,10 @@ class ToolExecutor:
                 self.vector_stores_config.annotation_prompt_params.annotation_instruction_template
             )
         else:
-            chunk_annotation_template = DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE
-            annotation_instruction_template = DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE
+            # Use defaults from VectorStoresConfig when annotations disabled
+            default_config = VectorStoresConfig()
+            chunk_annotation_template = default_config.annotation_prompt_params.chunk_annotation_template
+            annotation_instruction_template = default_config.annotation_prompt_params.annotation_instruction_template
 
         content_items = []
         content_items.append(TextContentItem(text=header_template.format(num_chunks=len(search_results))))
