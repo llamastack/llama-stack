@@ -15,9 +15,8 @@ from typing import Any, cast
 
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
-from starlette.routing import Route
 
-from llama_stack_api import batches, benchmarks, datasets, providers
+from llama_stack_api import batches, benchmarks, datasets, inspect_api, providers
 
 # Router factories for APIs that have FastAPI routers
 # Add new APIs here as they are migrated to the router system
@@ -28,6 +27,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "benchmarks": benchmarks.fastapi_routes.create_router,
     "datasets": datasets.fastapi_routes.create_router,
     "providers": providers.fastapi_routes.create_router,
+    "inspect": inspect_api.fastapi_routes.create_router,
 }
 
 
@@ -63,38 +63,20 @@ def build_fastapi_router(api: "Api", impl: Any) -> APIRouter | None:
     return cast(APIRouter, router_factory(impl))
 
 
-def get_router_routes(router: APIRouter) -> list[Route]:
-    """Extract routes from a FastAPI router.
+def get_router_routes(router: APIRouter) -> list[APIRoute]:
+    """Extract APIRoute objects from a FastAPI router.
 
     Args:
         router: The FastAPI router to extract routes from
 
     Returns:
-        List of Route objects from the router
+        List of APIRoute objects from the router (preserves tags and other metadata)
     """
     routes = []
 
     for route in router.routes:
-        # FastAPI routers use APIRoute objects, which have path and methods attributes
+        # FastAPI routers use APIRoute objects, which have path, methods, tags, etc.
         if isinstance(route, APIRoute):
-            # Combine router prefix with route path
-            routes.append(
-                Route(
-                    path=route.path,
-                    methods=route.methods,
-                    name=route.name,
-                    endpoint=route.endpoint,
-                )
-            )
-        elif isinstance(route, Route):
-            # Fallback for regular Starlette Route objects
-            routes.append(
-                Route(
-                    path=route.path,
-                    methods=route.methods,
-                    name=route.name,
-                    endpoint=route.endpoint,
-                )
-            )
+            routes.append(route)
 
     return routes

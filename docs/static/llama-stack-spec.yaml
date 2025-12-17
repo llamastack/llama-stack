@@ -942,12 +942,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Inspect
-      summary: Health
-      description: |-
-        Get health status.
-
-        Get the current health status of the service.
+      summary: Get health status.
+      description: Get the current health status of the service.
       operationId: health_v1_health_get
+      x-public: true
   /v1/inspect/routes:
     get:
       responses:
@@ -971,11 +969,8 @@ paths:
           description: Default Response
       tags:
       - Inspect
-      summary: List Routes
-      description: |-
-        List routes.
-
-        List all available API routes with their methods and implementing providers.
+      summary: List routes.
+      description: List all available API routes with their methods and implementing providers.
       operationId: list_routes_v1_inspect_routes_get
       parameters:
       - name: api_filter
@@ -990,7 +985,9 @@ paths:
             - deprecated
             type: string
           - type: 'null'
+          description: Optional filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
           title: Api Filter
+        description: Optional filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
   /v1/models:
     get:
       responses:
@@ -2701,12 +2698,10 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Inspect
-      summary: Version
-      description: |-
-        Get version.
-
-        Get the version of the service.
+      summary: Get version.
+      description: Get the version of the service.
       operationId: version_v1_version_get
+      x-public: true
 components:
   schemas:
     Error:
@@ -5008,6 +5003,7 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/HealthStatus'
+          description: The health status of the service
       type: object
       required:
       - status
@@ -5018,14 +5014,17 @@ components:
         route:
           type: string
           title: Route
+          description: The API route path
         method:
           type: string
           title: Method
+          description: The HTTP method for the route
         provider_types:
           items:
             type: string
           type: array
           title: Provider Types
+          description: List of provider types implementing this route
       type: object
       required:
       - route
@@ -5040,6 +5039,7 @@ components:
             $ref: '#/components/schemas/RouteInfo'
           type: array
           title: Data
+          description: List of available API routes
       type: object
       required:
       - data
@@ -9143,6 +9143,7 @@ components:
         version:
           type: string
           title: Version
+          description: The version string of the service
       type: object
       required:
       - version

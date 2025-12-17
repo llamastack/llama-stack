@@ -28,9 +28,11 @@ class AuthenticationMiddleware:
     4. Makes these attributes available to the route handlers for access control
 
     Unauthenticated Access:
-    Endpoints can opt out of authentication by setting require_authentication=False
-    in their @webmethod decorator. This is typically used for operational endpoints
-    like /health and /version to support monitoring, load balancers, and observability tools.
+    Endpoints can opt out of authentication by:
+    - For legacy @webmethod routes: setting require_authentication=False in the decorator
+    - For FastAPI router routes: setting openapi_extra={PUBLIC_ROUTE_KEY: True}
+    This is typically used for operational endpoints like /health and /version to support
+    monitoring, load balancers, and observability tools.
 
     The middleware supports multiple authentication providers through the AuthProvider interface:
     - Kubernetes: Validates tokens against the Kubernetes API server

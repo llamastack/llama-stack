@@ -3196,6 +3196,7 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/HealthStatus'
+          description: The health status of the service
       type: object
       required:
       - status
@@ -3206,14 +3207,17 @@ components:
         route:
           type: string
           title: Route
+          description: The API route path
         method:
           type: string
           title: Method
+          description: The HTTP method for the route
         provider_types:
           items:
             type: string
           type: array
           title: Provider Types
+          description: List of provider types implementing this route
       type: object
       required:
       - route
@@ -3228,6 +3232,7 @@ components:
             $ref: '#/components/schemas/RouteInfo'
           type: array
           title: Data
+          description: List of available API routes
       type: object
       required:
       - data
@@ -7349,6 +7354,7 @@ components:
         version:
           type: string
           title: Version
+          description: The version string of the service
       type: object
       required:
       - version

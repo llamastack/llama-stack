@@ -19,6 +19,7 @@ from llama_stack.core.server.fastapi_router_registry import (
     get_router_routes,
 )
 from llama_stack_api import Api, ExternalApiSpec, WebMethod
+from llama_stack_api.router_utils import PUBLIC_ROUTE_KEY
 
 EndpointFunc = Callable[..., Any]
 PathParams = dict[str, str]
@@ -124,7 +125,13 @@ def initialize_route_impls(impls, external_apis: dict[Api, ExternalApiSpec] | No
                 #   - Pass summary directly in RouteMatch instead of WebMethod
                 #   - Remove this WebMethod() instantiation entirely
                 #   - Update library_client.py to use the extracted summary instead of webmethod.descriptive_name
-                webmethod = WebMethod(descriptive_name=None)
+
+                # Routes with openapi_extra[PUBLIC_ROUTE_KEY]=True don't require authentication
+                is_public = (route.openapi_extra or {}).get(PUBLIC_ROUTE_KEY, False)
+                webmethod = WebMethod(
+                    descriptive_name=None,
+                    require_authentication=not is_public,
+                )
                 route_impls[method][_convert_path_to_regex(route.path)] = (
                     func,
                     route.path,
@@ -139,19 +146,19 @@ def initialize_route_impls(impls, external_apis: dict[Api, ExternalApiSpec] | No
 
         if api not in impls:
             continue
-        for route, webmethod in api_routes:
+        for legacy_route, webmethod in api_routes:
             impl = impls[api]
-            func = getattr(impl, route.name)
+            func = getattr(impl, legacy_route.name)
             # Get the first (and typically only) method from the set, filtering out HEAD
-            available_methods = [m for m in (route.methods or []) if m != "HEAD"]
+            available_methods = [m for m in (legacy_route.methods or []) if m != "HEAD"]
             if not available_methods:
                 continue  # Skip if only HEAD method is available
             method = available_methods[0].lower()
             if method not in route_impls:
                 route_impls[method] = {}
-            route_impls[method][_convert_path_to_regex(route.path)] = (
+            route_impls[method][_convert_path_to_regex(legacy_route.path)] = (
                 func,
-                route.path,
+                legacy_route.path,
                 webmethod,
             )
 
