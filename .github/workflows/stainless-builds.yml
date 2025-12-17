@@ -181,6 +181,7 @@ jobs:
       sdk_install_url: ${{ inputs.sdk_install_url || needs.preview.outputs.sdk_install_url }}
       matrix_key: 'stainless'
       test-all-client-versions: false
+      pr_head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
 
   merge:
     needs: compute-branch

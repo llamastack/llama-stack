@@ -62,7 +62,7 @@ runs:
 
 
     - name: Commit and push recordings
-      if: ${{ inputs.inference-mode == 'record' }}
+      if: ${{ inputs.inference-mode == 'record' ||  inputs.inference-mode == 'record-if-missing' }}
       shell: bash
       run: |
         echo "Checking for recording changes"

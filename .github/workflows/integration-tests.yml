@@ -48,6 +48,10 @@ on:
         type: string
         default: 'default'
         description: 'Matrix configuration key from ci_matrix.json (e.g., "default", "stainless")'
+      pr_head_sha:
+        required: false
+        type: string
+        description: 'The SHA of the pull request head to checkout'
       test-all-client-versions:
         required: false
         type: boolean
@@ -67,6 +71,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: ${{ inputs.pr_head_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Generate test matrix
         id: set-matrix
@@ -100,6 +106,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: ${{ inputs.pr_head_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup test environment
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
@@ -110,7 +118,7 @@ jobs:
           sdk_install_url: ${{ inputs.sdk_install_url || '' }}
           setup: ${{ matrix.config.setup }}
           suite: ${{ matrix.config.suite }}
-          inference-mode: 'replay'
+          inference-mode: ${{ matrix.config.inference_mode || 'replay' }}
 
       - name: Setup Node.js for TypeScript client tests
         if: ${{ matrix.client == 'server' }}
@@ -140,5 +148,5 @@ jobs:
                 || (matrix.client == 'server' && 'server:ci-tests')
                 || 'docker:ci-tests' }}
           setup: ${{ matrix.config.setup }}
-          inference-mode: 'replay'
+          inference-mode: ${{ matrix.config.inference_mode || 'replay' }}
           suite: ${{ matrix.config.suite }}
