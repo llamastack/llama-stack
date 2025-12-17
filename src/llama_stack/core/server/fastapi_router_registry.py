@@ -22,6 +22,7 @@ from llama_stack_api import (
     batches,
     benchmarks,
     conversations,
+    connectors,
     datasetio,
     datasets,
     eval,
@@ -61,6 +62,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "scoring_functions": scoring_functions.fastapi_routes.create_router,
     "shields": shields.fastapi_routes.create_router,
     "vector_io": vector_io.fastapi_routes.create_router,
+    "connectors": connectors.fastapi_routes.create_router,
 }
 
 
