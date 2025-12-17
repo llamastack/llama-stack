@@ -20,7 +20,7 @@ class BedrockProviderDataValidator(BaseModel):
 
 class BedrockConfig(RemoteInferenceProviderConfig):
     region_name: str = Field(
-        default_factory=lambda: os.getenv("AWS_DEFAULT_REGION", "us-east-2"),
+        default_factory=lambda: os.getenv("AWS_DEFAULT_REGION", "us-west-2"),
         description="AWS Region for the Bedrock Runtime endpoint",
     )
 

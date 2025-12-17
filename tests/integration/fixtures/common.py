@@ -319,7 +319,7 @@ def instantiate_llama_stack_client(session):
             yaml.dump(run_config.model_dump(mode="json"), f)
         config = run_config_file.name
     elif "::" in config:
-        # Handle distro::config.yaml format (e.g., ci-tests::run-bedrock.yaml)
+        # Handle distro::config.yaml format (e.g., ci-tests::run.yaml)
         config = str(resolve_config_or_distro(config))
 
     client = LlamaStackAsLibraryClient(
