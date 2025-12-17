@@ -19,6 +19,7 @@ from llama_stack_api import (
     OpenAIDeleteResponseObject,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
     OpenAIResponseObject,
     OpenAIResponsePrompt,
     OpenAIResponseText,
@@ -78,6 +79,7 @@ class MetaReferenceAgentsImpl(Agents):
             conversations_api=self.conversations_api,
             prompts_api=self.prompts_api,
             files_api=self.files_api,
+            vector_stores_config=self.config.vector_stores_config,
         )
 
     async def shutdown(self) -> None:
@@ -104,6 +106,7 @@ class MetaReferenceAgentsImpl(Agents):
         stream: bool | None = False,
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[str] | None = None,
         max_infer_iters: int | None = 10,
@@ -123,6 +126,7 @@ class MetaReferenceAgentsImpl(Agents):
             stream,
             temperature,
             text,
+            tool_choice,
             tools,
             include,
             max_infer_iters,
