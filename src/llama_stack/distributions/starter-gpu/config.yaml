@@ -280,5 +280,38 @@ vector_stores:
   default_embedding_model:
     provider_id: sentence-transformers
     model_id: nomic-ai/nomic-embed-text-v1.5
+  file_search_params:
+    header_template: 'knowledge_search tool found {num_chunks} chunks:
+
+      BEGIN of knowledge_search tool results.
+
+      '
+    footer_template: 'END of knowledge_search tool results.
+
+      '
+  context_prompt_params:
+    chunk_annotation_template: 'Result {index}
+
+      Content: {chunk.content}
+
+      Metadata: {metadata}
+
+      '
+    context_template: 'The above results were retrieved to help answer the user''s
+      query: "{query}". Use them as supporting information only in answering this
+      query.{annotation_instruction}
+
+      '
+  annotation_prompt_params:
+    enable_annotations: true
+    annotation_instruction_template: ' Cite sources immediately at the end of sentences
+      before punctuation, using `<|file-id|>` format like ''This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.''.
+      Do not add extra punctuation. Use only the file IDs provided, do not invent
+      new ones.'
+    chunk_annotation_template: '[{index}] {metadata_text} cite as <|{file_id}|>
+
+      {chunk_text}
+
+      '
 safety:
   default_shield_id: llama-guard

@@ -6,8 +6,9 @@
 
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
 
 
@@ -20,6 +21,10 @@ class AgentPersistenceConfig(BaseModel):
 
 class MetaReferenceAgentsImplConfig(BaseModel):
     persistence: AgentPersistenceConfig
+    vector_stores_config: VectorStoresConfig | None = Field(
+        default=None,
+        description="Configuration for vector store prompt templates and behavior",
+    )
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str) -> dict[str, Any]:

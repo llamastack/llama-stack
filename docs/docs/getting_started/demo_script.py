@@ -16,6 +16,7 @@ Run this script after starting a Llama Stack server:
 """
 
 import io
+import os
 
 import requests
 from openai import OpenAI
@@ -53,7 +54,7 @@ print("=" * 80)
 print(f"Query: {query}\n")
 
 resp = client.responses.create(
-    model="ollama/llama3.2:3b",  # feel free to change this to any other model
+    model=os.getenv("INFERENCE_MODEL", "ollama/llama3.2:3b"),
     input=query,
     tools=[{"type": "file_search", "vector_store_ids": [vs.id]}],
     include=["file_search_call.results"],
@@ -93,7 +94,7 @@ print(f"Found {len(context_chunks)} relevant chunks\n")
 # Step 3: Use Chat Completions with retrieved context
 print("Generating response with chat completions...")
 completion = client.chat.completions.create(
-    model="ollama/llama3.2:3b",  # Feel free to change this to any other model
+    model=os.getenv("INFERENCE_MODEL", "ollama/llama3.2:3b"),
     messages=[
         {
             "role": "system",

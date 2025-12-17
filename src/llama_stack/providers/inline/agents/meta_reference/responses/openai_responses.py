@@ -32,6 +32,7 @@ from llama_stack_api import (
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
     OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
@@ -80,6 +81,7 @@ class OpenAIResponsesImpl:
         conversations_api: Conversations,
         prompts_api: Prompts,
         files_api: Files,
+        vector_stores_config=None,
     ):
         self.inference_api = inference_api
         self.tool_groups_api = tool_groups_api
@@ -92,6 +94,7 @@ class OpenAIResponsesImpl:
             tool_groups_api=tool_groups_api,
             tool_runtime_api=tool_runtime_api,
             vector_io_api=vector_io_api,
+            vector_stores_config=vector_stores_config,
         )
         self.prompts_api = prompts_api
         self.files_api = files_api
@@ -331,6 +334,7 @@ class OpenAIResponsesImpl:
         stream: bool | None = False,
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,
@@ -388,6 +392,7 @@ class OpenAIResponsesImpl:
             temperature=temperature,
             text=text,
             tools=tools,
+            tool_choice=tool_choice,
             max_infer_iters=max_infer_iters,
             guardrail_ids=guardrail_ids,
             parallel_tool_calls=parallel_tool_calls,
@@ -442,6 +447,7 @@ class OpenAIResponsesImpl:
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
         max_infer_iters: int | None = 10,
         guardrail_ids: list[str] | None = None,
         parallel_tool_calls: bool | None = True,
@@ -472,6 +478,7 @@ class OpenAIResponsesImpl:
             model=model,
             messages=messages,
             response_tools=tools,
+            tool_choice=tool_choice,
             temperature=temperature,
             response_format=response_format,
             tool_context=tool_context,

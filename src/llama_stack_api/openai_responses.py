@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 from collections.abc import Sequence
+from enum import Enum
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -541,6 +542,105 @@ OpenAIResponseTool = Annotated[
 register_schema(OpenAIResponseTool, name="OpenAIResponseTool")
 
 
+@json_schema_type
+class OpenAIResponseInputToolChoiceAllowedTools(BaseModel):
+    """Constrains the tools available to the model to a pre-defined set.
+
+    :param mode: Constrains the tools available to the model to a pre-defined set
+    :param tools: A list of tool definitions that the model should be allowed to call
+    :param type: Tool choice type identifier, always "allowed_tools"
+    """
+
+    mode: Literal["auto", "required"] = "auto"
+    tools: list[dict[str, str]]
+    type: Literal["allowed_tools"] = "allowed_tools"
+
+
+@json_schema_type
+class OpenAIResponseInputToolChoiceFileSearch(BaseModel):
+    """Indicates that the model should use file search to generate a response.
+
+    :param type: Tool choice type identifier, always "file_search"
+    """
+
+    type: Literal["file_search"] = "file_search"
+
+
+@json_schema_type
+class OpenAIResponseInputToolChoiceWebSearch(BaseModel):
+    """Indicates that the model should use web search to generate a response
+
+    :param type: Web search tool type variant to use
+    """
+
+    type: (
+        Literal["web_search"]
+        | Literal["web_search_preview"]
+        | Literal["web_search_preview_2025_03_11"]
+        | Literal["web_search_2025_08_26"]
+    ) = "web_search"
+
+
+@json_schema_type
+class OpenAIResponseInputToolChoiceFunctionTool(BaseModel):
+    """Forces the model to call a specific function.
+
+    :param name: The name of the function to call
+    :param type: Tool choice type identifier, always "function"
+    """
+
+    name: str
+    type: Literal["function"] = "function"
+
+
+@json_schema_type
+class OpenAIResponseInputToolChoiceMCPTool(BaseModel):
+    """Forces the model to call a specific tool on a remote MCP server
+
+    :param server_label: The label of the MCP server to use.
+    :param type: Tool choice type identifier, always "mcp"
+    :param name: (Optional) The name of the tool to call on the server.
+    """
+
+    server_label: str
+    type: Literal["mcp"] = "mcp"
+    name: str | None = None
+
+
+@json_schema_type
+class OpenAIResponseInputToolChoiceCustomTool(BaseModel):
+    """Forces the model to call a custom tool.
+
+    :param type: Tool choice type identifier, always "custom"
+    :param name: The name of the custom tool to call.
+    """
+
+    type: Literal["custom"] = "custom"
+    name: str
+
+
+class OpenAIResponseInputToolChoiceMode(str, Enum):
+    auto = "auto"
+    required = "required"
+    none = "none"
+
+
+OpenAIResponseInputToolChoiceObject = Annotated[
+    OpenAIResponseInputToolChoiceAllowedTools
+    | OpenAIResponseInputToolChoiceFileSearch
+    | OpenAIResponseInputToolChoiceWebSearch
+    | OpenAIResponseInputToolChoiceFunctionTool
+    | OpenAIResponseInputToolChoiceMCPTool
+    | OpenAIResponseInputToolChoiceCustomTool,
+    Field(discriminator="type"),
+]
+
+# 3. Final Union without registration or None (Keep it clean)
+OpenAIResponseInputToolChoice = OpenAIResponseInputToolChoiceMode | OpenAIResponseInputToolChoiceObject
+
+register_schema(OpenAIResponseInputToolChoice, name="OpenAIResponseInputToolChoice")
+
+
 class OpenAIResponseUsageOutputTokensDetails(BaseModel):
     """Token details for output tokens in OpenAI response usage.
 
@@ -595,6 +695,7 @@ class OpenAIResponseObject(BaseModel):
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
     :param tools: (Optional) An array of tools the model may call while generating a response.
+    :param tool_choice: (Optional) Tool choice configuration for the response.
     :param truncation: (Optional) Truncation strategy applied to the response
     :param usage: (Optional) Token usage information for the response
     :param instructions: (Optional) System message inserted into the model's context
@@ -618,6 +719,7 @@ class OpenAIResponseObject(BaseModel):
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
     tools: Sequence[OpenAIResponseTool] | None = None
+    tool_choice: OpenAIResponseInputToolChoice | None = None
     truncation: str | None = None
     usage: OpenAIResponseUsage | None = None
     instructions: str | None = None

@@ -18,7 +18,15 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
-from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
+from llama_stack.providers.utils.memory.constants import (
+    DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE,
+    DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
+    DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE,
+    DEFAULT_CONTEXT_TEMPLATE,
+    DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
+    DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
+    DEFAULT_QUERY_REWRITE_PROMPT,
+)
 from llama_stack_api import (
     Api,
     Benchmark,
@@ -371,6 +379,125 @@ class RewriteQueryParams(BaseModel):
         description="Temperature for query expansion model (0.0 = deterministic, 1.0 = creative).",
     )
 
+    @field_validator("prompt")
+    @classmethod
+    def validate_prompt(cls, v: str) -> str:
+        if "{query}" not in v:
+            raise ValueError("prompt must contain {query} placeholder")
+        return v
+
+    @field_validator("max_tokens")
+    @classmethod
+    def validate_max_tokens(cls, v: int) -> int:
+        if v <= 0:
+            raise ValueError("max_tokens must be positive")
+        if v > 4096:
+            raise ValueError("max_tokens should not exceed 4096")
+        return v
+
+    @field_validator("temperature")
+    @classmethod
+    def validate_temperature(cls, v: float) -> float:
+        if v < 0.0 or v > 2.0:
+            raise ValueError("temperature must be between 0.0 and 2.0")
+        return v
+
+
+class FileSearchParams(BaseModel):
+    """Configuration for file search tool output formatting."""
+
+    header_template: str = Field(
+        default=DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
+        description="Template for the header text shown before search results. Available placeholders: {num_chunks} number of chunks found.",
+    )
+    footer_template: str = Field(
+        default=DEFAULT_FILE_SEARCH_FOOTER_TEMPLATE,
+        description="Template for the footer text shown after search results.",
+    )
+
+    @field_validator("header_template")
+    @classmethod
+    def validate_header_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("header_template must not be empty")
+        if "{num_chunks}" not in v:
+            raise ValueError("header_template must contain {num_chunks} placeholder")
+        if "knowledge_search" not in v.lower():
+            raise ValueError(
+                "header_template must contain 'knowledge_search' keyword to ensure proper tool identification"
+            )
+        return v
+
+
+class ContextPromptParams(BaseModel):
+    """Configuration for LLM prompt content and chunk formatting."""
+
+    chunk_annotation_template: str = Field(
+        default=DEFAULT_CHUNK_ANNOTATION_TEMPLATE,
+        description="Template for formatting individual chunks in search results. Available placeholders: {index} 1-based chunk index, {chunk.content} chunk content, {metadata} chunk metadata dict.",
+    )
+    context_template: str = Field(
+        default=DEFAULT_CONTEXT_TEMPLATE,
+        description="Template for explaining the search results to the model. Available placeholders: {query} user's query, {num_chunks} number of chunks.",
+    )
+
+    @field_validator("chunk_annotation_template")
+    @classmethod
+    def validate_chunk_annotation_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("chunk_annotation_template must not be empty")
+        if "{chunk.content}" not in v:
+            raise ValueError("chunk_annotation_template must contain {chunk.content} placeholder")
+        if "{index}" not in v:
+            raise ValueError("chunk_annotation_template must contain {index} placeholder")
+        return v
+
+    @field_validator("context_template")
+    @classmethod
+    def validate_context_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("context_template must not be empty")
+        if "{query}" not in v:
+            raise ValueError("context_template must contain {query} placeholder")
+        return v
+
+
+class AnnotationPromptParams(BaseModel):
+    """Configuration for source annotation and attribution features."""
+
+    enable_annotations: bool = Field(
+        default=True,
+        description="Whether to include annotation information in results.",
+    )
+    annotation_instruction_template: str = Field(
+        default=DEFAULT_ANNOTATION_INSTRUCTION_TEMPLATE,
+        description="Instructions for how the model should cite sources. Used when enable_annotations is True.",
+    )
+    chunk_annotation_template: str = Field(
+        default=DEFAULT_CHUNK_WITH_SOURCES_TEMPLATE,
+        description="Template for chunks with annotation information. Available placeholders: {index} 1-based chunk index, {metadata_text} formatted metadata, {file_id} document identifier, {chunk_text} chunk content.",
+    )
+
+    @field_validator("chunk_annotation_template")
+    @classmethod
+    def validate_chunk_annotation_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("chunk_annotation_template must not be empty")
+        if "{index}" not in v:
+            raise ValueError("chunk_annotation_template must contain {index} placeholder")
+        if "{chunk_text}" not in v:
+            raise ValueError("chunk_annotation_template must contain {chunk_text} placeholder")
+        if "{file_id}" not in v:
+            raise ValueError("chunk_annotation_template must contain {file_id} placeholder")
+        return v
+
+    @field_validator("annotation_instruction_template")
+    @classmethod
+    def validate_annotation_instruction_template(cls, v: str) -> str:
+        if len(v) == 0:
+            raise ValueError("annotation_instruction_template must not be empty")
+        return v
+
 
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
@@ -386,6 +513,18 @@ class VectorStoresConfig(BaseModel):
     rewrite_query_params: RewriteQueryParams | None = Field(
         default=None,
         description="Parameters for query rewriting/expansion. None disables query rewriting.",
+    )
+    file_search_params: FileSearchParams = Field(
+        default_factory=FileSearchParams,
+        description="Configuration for file search tool output formatting.",
+    )
+    context_prompt_params: ContextPromptParams = Field(
+        default_factory=ContextPromptParams,
+        description="Configuration for LLM prompt content and chunk formatting.",
+    )
+    annotation_prompt_params: AnnotationPromptParams = Field(
+        default_factory=AnnotationPromptParams,
+        description="Configuration for source annotation and attribution features.",
     )
 
 
