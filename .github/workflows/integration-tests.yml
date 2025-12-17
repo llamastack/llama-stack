@@ -37,6 +37,22 @@ on:
         description: 'Test against a specific setup'
         type: string
         default: 'ollama'
+  workflow_call:
+    inputs:
+      sdk_install_url:
+        required: false
+        type: string
+        description: 'URL to install Python SDK from (for testing preview builds)'
+      matrix_key:
+        required: false
+        type: string
+        default: 'default'
+        description: 'Matrix configuration key from ci_matrix.json (e.g., "default", "stainless")'
+      test-all-client-versions:
+        required: false
+        type: boolean
+        default: false
+        description: 'Test against both the latest and published versions'
 
 concurrency:
   # Skip concurrency for pushes to main - each commit should be tested independently
@@ -55,11 +71,12 @@ jobs:
       - name: Generate test matrix
         id: set-matrix
         run: |
-          # Generate matrix from CI_MATRIX in tests/integration/suites.py
-          # Supports schedule-based and manual input overrides
+          # Generate matrix from CI_MATRIX in tests/integration/ci_matrix.json
+          # Supports schedule-based, manual input, and workflow_call overrides
           MATRIX=$(PYTHONPATH=. python3 scripts/generate_ci_matrix.py \
             --schedule "${{ github.event.schedule }}" \
-            --test-setup "${{ github.event.inputs.test-setup }}")
+            --test-setup "${{ github.event.inputs.test-setup || '' }}" \
+            --matrix-key "${{ inputs.matrix_key || 'default' }}")
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           echo "Generated matrix: $MATRIX"
 
@@ -75,8 +92,8 @@ jobs:
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         node-version: [22]
-        client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
-        # Test configurations: Generated from CI_MATRIX in tests/integration/suites.py
+        client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true' || inputs.test-all-client-versions == true) && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
+        # Test configurations: Generated from CI_MATRIX in tests/integration/ci_matrix.json
         # See scripts/generate_ci_matrix.py for generation logic
         config: ${{ fromJSON(needs.generate-matrix.outputs.matrix).include }}
 
@@ -90,6 +107,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
+          sdk_install_url: ${{ inputs.sdk_install_url || '' }}
           setup: ${{ matrix.config.setup }}
           suite: ${{ matrix.config.suite }}
           inference-mode: 'replay'

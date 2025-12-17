@@ -166,7 +166,7 @@ class StackRun(Subcommand):
             config_file = None
 
         if config_file:
-            logger.info(f"Using run configuration: {config_file}")
+            logger.info(f"Using stack configuration: {config_file}")
 
             try:
                 config_dict = yaml.safe_load(config_file.read_text())

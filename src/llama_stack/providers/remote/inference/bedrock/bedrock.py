@@ -69,7 +69,7 @@ class BedrockInferenceAdapter(OpenAIMixin):
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         """Bedrock's OpenAI-compatible API does not support the /v1/completions endpoint."""
         raise NotImplementedError(
             "Bedrock's OpenAI-compatible API does not support /v1/completions endpoint. "
