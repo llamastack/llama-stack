@@ -20,9 +20,9 @@ vector_stores:
   # Query rewriting for enhanced search
   rewrite_query_params:
     model:
-      provider_id: "meta-reference"
-      model_id: "llama3.2"
-    prompt: "Rewrite the following query for better vector search: {query}"
+      provider_id: "ollama"
+      model_id: "llama3.2:3b-instruct-fp16"
+    prompt: "Rewrite this search query to improve retrieval results by expanding it with relevant synonyms and related terms: {query}"
     max_tokens: 100
     temperature: 0.3
 

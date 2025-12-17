@@ -428,7 +428,7 @@ class ContextPromptParams(BaseModel):
         description="Template for formatting individual chunks in search results. Available placeholders: {index} 1-based chunk index, {chunk.content} chunk content, {metadata} chunk metadata dict.",
     )
     context_template: str = Field(
-        default='The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query.{annotation_instruction}\n',
+        default='The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query. {annotation_instruction}\n',
         description="Template for explaining the search results to the model. Available placeholders: {query} user's query, {num_chunks} number of chunks.",
     )
 
@@ -461,7 +461,7 @@ class AnnotationPromptParams(BaseModel):
         description="Whether to include annotation information in results.",
     )
     annotation_instruction_template: str = Field(
-        default=" Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones.",
+        default="Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'. Do not add extra punctuation. Use only the file IDs provided, do not invent new ones.",
         description="Instructions for how the model should cite sources. Used when enable_annotations is True.",
     )
     chunk_annotation_template: str = Field(
