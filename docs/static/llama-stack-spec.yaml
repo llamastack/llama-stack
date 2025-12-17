@@ -1365,11 +1365,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Providers
-      summary: List Providers
-      description: |-
-        List providers.
-
-        List all available providers.
+      summary: List providers.
+      description: List all available providers.
       operationId: list_providers_v1_providers_get
   /v1/providers/{provider_id}:
     get:
@@ -1381,24 +1378,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ProviderInfo'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Providers
-      summary: Inspect Provider
-      description: |-
-        Get provider.
-
-        Get detailed information about a specific provider.
+      summary: Get provider.
+      description: Get detailed information about a specific provider.
       operationId: inspect_provider_v1_providers__provider_id__get
       parameters:
       - name: provider_id
@@ -1406,7 +1400,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: provider_id'
+          description: The ID of the provider to inspect.
+          title: Provider Id
+        description: The ID of the provider to inspect.
   /v1/responses:
     get:
       responses:
@@ -5310,20 +5306,25 @@ components:
         api:
           type: string
           title: Api
+          description: The API name this provider implements
         provider_id:
           type: string
           title: Provider Id
+          description: Unique identifier for the provider
         provider_type:
           type: string
           title: Provider Type
+          description: The type of provider implementation
         config:
           additionalProperties: true
           type: object
           title: Config
+          description: Configuration parameters for the provider
         health:
           additionalProperties: true
           type: object
           title: Health
+          description: Current health status of the provider
       type: object
       required:
       - api
@@ -5340,6 +5341,7 @@ components:
             $ref: '#/components/schemas/ProviderInfo'
           type: array
           title: Data
+          description: List of provider information objects
       type: object
       required:
       - data
@@ -12203,6 +12205,17 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
+      type: object
+    InspectProviderRequest:
+      description: Request model for inspecting a provider by ID.
+      properties:
+        provider_id:
+          description: The ID of the provider to inspect.
+          title: Provider Id
+          type: string
+      required:
+      - provider_id
+      title: InspectProviderRequest
       type: object
   responses:
     BadRequest400:

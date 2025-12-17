@@ -3494,20 +3494,25 @@ components:
         api:
           type: string
           title: Api
+          description: The API name this provider implements
         provider_id:
           type: string
           title: Provider Id
+          description: Unique identifier for the provider
         provider_type:
           type: string
           title: Provider Type
+          description: The type of provider implementation
         config:
           additionalProperties: true
           type: object
           title: Config
+          description: Configuration parameters for the provider
         health:
           additionalProperties: true
           type: object
           title: Health
+          description: Current health status of the provider
       type: object
       required:
       - api
@@ -3524,6 +3529,7 @@ components:
             $ref: '#/components/schemas/ProviderInfo'
           type: array
           title: Data
+          description: List of provider information objects
       type: object
       required:
       - data
@@ -10702,6 +10708,17 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
+      type: object
+    InspectProviderRequest:
+      description: Request model for inspecting a provider by ID.
+      properties:
+        provider_id:
+          description: The ID of the provider to inspect.
+          title: Provider Id
+          type: string
+      required:
+      - provider_id
+      title: InspectProviderRequest
       type: object
   responses:
     BadRequest400:

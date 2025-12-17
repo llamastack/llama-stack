@@ -17,7 +17,7 @@ from fastapi import APIRouter
 from fastapi.routing import APIRoute
 from starlette.routing import Route
 
-from llama_stack_api import batches, benchmarks, datasets
+from llama_stack_api import batches, benchmarks, datasets, providers
 
 # Router factories for APIs that have FastAPI routers
 # Add new APIs here as they are migrated to the router system
@@ -27,6 +27,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "batches": batches.fastapi_routes.create_router,
     "benchmarks": benchmarks.fastapi_routes.create_router,
     "datasets": datasets.fastapi_routes.create_router,
+    "providers": providers.fastapi_routes.create_router,
 }
 
 

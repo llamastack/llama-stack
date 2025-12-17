@@ -359,7 +359,12 @@ from .post_training import (
     TrainingConfig,
 )
 from .prompts import ListPromptsResponse, Prompt, Prompts
-from .providers import ListProvidersResponse, ProviderInfo, Providers
+from .providers import (
+    InspectProviderRequest,
+    ListProvidersResponse,
+    ProviderInfo,
+    Providers,
+)
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
     LLMRAGQueryGeneratorConfig,
@@ -611,6 +616,7 @@ __all__ = [
     "ListPostTrainingJobsResponse",
     "ListPromptsResponse",
     "ListProvidersResponse",
+    "InspectProviderRequest",
     "ListRoutesResponse",
     "ListScoringFunctionsResponse",
     "ListShieldsResponse",
