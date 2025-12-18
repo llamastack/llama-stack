@@ -110,22 +110,23 @@ class TestOptionalArchitecture:
         assert config.annotation_prompt_params is not None
         assert "{num_chunks}" in config.file_search_params.header_template
 
-    def test_guaranteed_defaults_match_constants(self):
-        """Test that guaranteed defaults match expected constant values."""
-        from llama_stack.providers.utils.memory.constants import (
-            DEFAULT_CONTEXT_TEMPLATE,
-            DEFAULT_FILE_SEARCH_HEADER_TEMPLATE,
-        )
-
+    def test_guaranteed_defaults_have_expected_values(self):
+        """Test that guaranteed defaults have expected hardcoded values."""
         # Create config with guaranteed defaults
         config = VectorStoresConfig()
 
-        # Verify defaults match constants
+        # Verify defaults have expected values
         header_template = config.file_search_params.header_template
         context_template = config.context_prompt_params.context_template
 
-        assert header_template == DEFAULT_FILE_SEARCH_HEADER_TEMPLATE
-        assert context_template == DEFAULT_CONTEXT_TEMPLATE
+        assert (
+            header_template
+            == "knowledge_search tool found {num_chunks} chunks:\nBEGIN of knowledge_search tool results.\n"
+        )
+        assert (
+            context_template
+            == 'The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query. {annotation_instruction}\n'
+        )
 
         # Verify templates can be formatted successfully
         formatted_header = header_template.format(num_chunks=3)

@@ -15,6 +15,7 @@ from typing import Annotated, Any
 from fastapi import Body
 from pydantic import TypeAdapter
 
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.vector_store import (
@@ -59,10 +60,6 @@ EMBEDDING_DIMENSION = 768
 logger = get_logger(name=__name__, category="providers::utils")
 
 # Constants for OpenAI vector stores
-CHUNK_MULTIPLIER = 5
-FILE_BATCH_CLEANUP_INTERVAL_SECONDS = 24 * 60 * 60  # 1 day in seconds
-MAX_CONCURRENT_FILES_PER_BATCH = 3  # Maximum concurrent file processing within a batch
-FILE_BATCH_CHUNK_SIZE = 10  # Process files in chunks of this size
 
 VERSION = "v3"
 VECTOR_DBS_PREFIX = f"vector_stores:{VERSION}::"
@@ -85,11 +82,13 @@ class OpenAIVectorStoreMixin(ABC):
         self,
         files_api: Files | None = None,
         kvstore: KVStore | None = None,
+        vector_stores_config: VectorStoresConfig | None = None,
     ):
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.files_api = files_api
         self.kvstore = kvstore
+        self.vector_stores_config = vector_stores_config or VectorStoresConfig()
         self._last_file_batch_cleanup_time = 0
         self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
         self._vector_store_locks: dict[str, asyncio.Lock] = {}
@@ -619,7 +618,7 @@ class OpenAIVectorStoreMixin(ABC):
                 else 0.0
             )
             params = {
-                "max_chunks": max_num_results * CHUNK_MULTIPLIER,
+                "max_chunks": max_num_results * self.vector_stores_config.chunk_retrieval_params.chunk_multiplier,
                 "score_threshold": score_threshold,
                 "mode": search_mode,
             }
@@ -1072,7 +1071,10 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Run cleanup if needed (throttled to once every 1 day)
         current_time = int(time.time())
-        if current_time - self._last_file_batch_cleanup_time >= FILE_BATCH_CLEANUP_INTERVAL_SECONDS:
+        if (
+            current_time - self._last_file_batch_cleanup_time
+            >= self.vector_stores_config.file_batch_params.cleanup_interval_seconds
+        ):
             logger.info("Running throttled cleanup of expired file batches")
             asyncio.create_task(self._cleanup_expired_file_batches())
             self._last_file_batch_cleanup_time = current_time
@@ -1089,7 +1091,7 @@ class OpenAIVectorStoreMixin(ABC):
         batch_info: dict[str, Any],
     ) -> None:
         """Process files with controlled concurrency and chunking."""
-        semaphore = asyncio.Semaphore(MAX_CONCURRENT_FILES_PER_BATCH)
+        semaphore = asyncio.Semaphore(self.vector_stores_config.file_batch_params.max_concurrent_files_per_batch)
 
         async def process_single_file(file_id: str) -> tuple[str, bool]:
             """Process a single file with concurrency control."""
@@ -1108,12 +1110,13 @@ class OpenAIVectorStoreMixin(ABC):
 
         # Process files in chunks to avoid creating too many tasks at once
         total_files = len(file_ids)
-        for chunk_start in range(0, total_files, FILE_BATCH_CHUNK_SIZE):
-            chunk_end = min(chunk_start + FILE_BATCH_CHUNK_SIZE, total_files)
+        chunk_size = self.vector_stores_config.file_batch_params.file_batch_chunk_size
+        for chunk_start in range(0, total_files, chunk_size):
+            chunk_end = min(chunk_start + chunk_size, total_files)
             chunk = file_ids[chunk_start:chunk_end]
 
-            chunk_num = chunk_start // FILE_BATCH_CHUNK_SIZE + 1
-            total_chunks = (total_files + FILE_BATCH_CHUNK_SIZE - 1) // FILE_BATCH_CHUNK_SIZE
+            chunk_num = chunk_start // chunk_size + 1
+            total_chunks = (total_files + chunk_size - 1) // chunk_size
             logger.info(
                 f"Processing chunk {chunk_num} of {total_chunks} ({len(chunk)} files, {chunk_start + 1}-{chunk_end} of {total_files} total files)"
             )

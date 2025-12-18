@@ -41,6 +41,15 @@ const sidebars: SidebarsConfig = {
             'concepts/apis/api_leveling',
           ],
         },
+        {
+          type: 'category',
+          label: 'Vector Stores',
+          collapsed: true,
+          items: [
+            'concepts/file_operations_vector_stores',
+            'concepts/vector_stores_configuration',
+          ],
+        },
         'concepts/distributions',
         'concepts/resources',
       ],
