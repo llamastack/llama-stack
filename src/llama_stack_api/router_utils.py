@@ -18,6 +18,11 @@ from typing import Annotated, Any, TypeVar
 from fastapi import Path, Query
 from pydantic import BaseModel
 
+# OpenAPI extension key to mark routes that don't require authentication.
+# Use this in FastAPI route decorators: @router.get("/health", openapi_extra={PUBLIC_ROUTE_KEY: True})
+PUBLIC_ROUTE_KEY = "x-public"
+
+
 standard_responses: dict[int | str, dict[str, Any]] = {
     400: {"$ref": "#/components/responses/BadRequest400"},
     429: {"$ref": "#/components/responses/TooManyRequests429"},

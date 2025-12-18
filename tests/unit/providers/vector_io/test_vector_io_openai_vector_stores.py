@@ -1091,13 +1091,11 @@ async def test_max_concurrent_files_per_batch(vector_io_adapter):
     # Give time for the semaphore logic to start processing files
     await asyncio.sleep(0.2)
 
-    # Verify that only MAX_CONCURRENT_FILES_PER_BATCH files are processing concurrently
+    # Verify that only max_concurrent_files_per_batch files are processing concurrently
     # The semaphore in _process_files_with_concurrency should limit this
-    from llama_stack.providers.utils.memory.openai_vector_store_mixin import MAX_CONCURRENT_FILES_PER_BATCH
+    max_concurrent_files = vector_io_adapter.vector_stores_config.file_batch_params.max_concurrent_files_per_batch
 
-    assert active_files == MAX_CONCURRENT_FILES_PER_BATCH, (
-        f"Expected {MAX_CONCURRENT_FILES_PER_BATCH} active files, got {active_files}"
-    )
+    assert active_files == max_concurrent_files, f"Expected {max_concurrent_files} active files, got {active_files}"
 
     # Verify batch is in progress
     assert batch.status == "in_progress"

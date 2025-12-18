@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import Iterable
+from collections.abc import AsyncIterator, Iterable
 
 from databricks.sdk import WorkspaceClient
 
@@ -50,5 +50,5 @@ class DatabricksInferenceAdapter(OpenAIMixin):
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         raise NotImplementedError()

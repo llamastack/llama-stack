@@ -25,7 +25,7 @@ __version__ = "0.4.0.dev0"
 from . import common  # noqa: F401
 
 # Import all public API symbols
-from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec
+from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
 from .batches import (
     Batches,
     BatchObject,
@@ -77,6 +77,14 @@ from .common.type_system import (
     NumberType,
     ParamType,
     StringType,
+)
+from .connectors import (
+    Connector,
+    ConnectorInput,
+    Connectors,
+    ConnectorType,
+    ListConnectorsResponse,
+    ListToolsResponse,
 )
 from .conversations import (
     Conversation,
@@ -159,6 +167,10 @@ from .inference import (
     OpenAIChatCompletionTextOnlyMessageContent,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
+    OpenAIChatCompletionToolChoice,
+    OpenAIChatCompletionToolChoiceAllowedTools,
+    OpenAIChatCompletionToolChoiceCustomTool,
+    OpenAIChatCompletionToolChoiceFunctionTool,
     OpenAIChatCompletionUsage,
     OpenAIChatCompletionUsageCompletionTokensDetails,
     OpenAIChatCompletionUsagePromptTokensDetails,
@@ -251,6 +263,15 @@ from .openai_responses import (
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
+    OpenAIResponseInputToolChoiceAllowedTools,
+    OpenAIResponseInputToolChoiceCustomTool,
+    OpenAIResponseInputToolChoiceFileSearch,
+    OpenAIResponseInputToolChoiceFunctionTool,
+    OpenAIResponseInputToolChoiceMCPTool,
+    OpenAIResponseInputToolChoiceMode,
+    OpenAIResponseInputToolChoiceObject,
+    OpenAIResponseInputToolChoiceWebSearch,
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolFunction,
     OpenAIResponseInputToolMCP,
@@ -338,7 +359,12 @@ from .post_training import (
     TrainingConfig,
 )
 from .prompts import ListPromptsResponse, Prompt, Prompts
-from .providers import ListProvidersResponse, ProviderInfo, Providers
+from .providers import (
+    InspectProviderRequest,
+    ListProvidersResponse,
+    ProviderInfo,
+    Providers,
+)
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
     LLMRAGQueryGeneratorConfig,
@@ -497,6 +523,10 @@ __all__ = [
     "CommonShieldFields",
     "CompletionInputType",
     "CompletionRequest",
+    "Connector",
+    "ConnectorInput",
+    "Connectors",
+    "ConnectorType",
     "Conversation",
     "ConversationDeletedResource",
     "ConversationItem",
@@ -576,6 +606,7 @@ __all__ = [
     "ListBenchmarksResponse",
     "RegisterBenchmarkRequest",
     "UnregisterBenchmarkRequest",
+    "ListConnectorsResponse",
     "ListDatasetsResponse",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
@@ -585,11 +616,13 @@ __all__ = [
     "ListPostTrainingJobsResponse",
     "ListPromptsResponse",
     "ListProvidersResponse",
+    "InspectProviderRequest",
     "ListRoutesResponse",
     "ListScoringFunctionsResponse",
     "ListShieldsResponse",
     "ListToolDefsResponse",
     "ListToolGroupsResponse",
+    "ListToolsResponse",
     "LogProbConfig",
     "LoraFinetuningConfig",
     "MCPListToolsTool",
@@ -621,6 +654,10 @@ __all__ = [
     "OpenAIChatCompletionUsage",
     "OpenAIChatCompletionUsageCompletionTokensDetails",
     "OpenAIChatCompletionUsagePromptTokensDetails",
+    "OpenAIChatCompletionToolChoiceAllowedTools",
+    "OpenAIChatCompletionToolChoiceFunctionTool",
+    "OpenAIChatCompletionToolChoiceCustomTool",
+    "OpenAIChatCompletionToolChoice",
     "OpenAIChoice",
     "OpenAIChoiceDelta",
     "OpenAIChoiceLogprobs",
@@ -675,6 +712,15 @@ __all__ = [
     "OpenAIResponseInputToolFunction",
     "OpenAIResponseInputToolMCP",
     "OpenAIResponseInputToolWebSearch",
+    "OpenAIResponseInputToolChoice",
+    "OpenAIResponseInputToolChoiceAllowedTools",
+    "OpenAIResponseInputToolChoiceFileSearch",
+    "OpenAIResponseInputToolChoiceWebSearch",
+    "OpenAIResponseInputToolChoiceFunctionTool",
+    "OpenAIResponseInputToolChoiceMCPTool",
+    "OpenAIResponseInputToolChoiceCustomTool",
+    "OpenAIResponseInputToolChoiceMode",
+    "OpenAIResponseInputToolChoiceObject",
     "OpenAIResponseMCPApprovalRequest",
     "OpenAIResponseMCPApprovalResponse",
     "OpenAIResponseMessage",
@@ -784,6 +830,7 @@ __all__ = [
     "ResponseFormatType",
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
+    "ResponseItemInclude",
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",
