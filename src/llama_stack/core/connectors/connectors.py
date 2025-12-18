@@ -11,6 +11,7 @@ from pydantic import BaseModel
 from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.tools.mcp import get_mcp_server_info, list_mcp_tools
 from llama_stack_api import (
     Connector,
     ConnectorNotFoundError,
@@ -24,18 +25,6 @@ from llama_stack_api import (
 )
 
 logger = get_logger(name=__name__, category="connectors")
-
-MCP_INSTALL_HINT = "The 'mcp' package is required for connector functionality. Install it with: pip install mcp"
-
-
-def _import_mcp_tools():
-    """Import MCP tools with a helpful error message if not installed."""
-    try:
-        from llama_stack.providers.utils.tools.mcp import get_mcp_server_info, list_mcp_tools
-
-        return get_mcp_server_info, list_mcp_tools
-    except ImportError as e:
-        raise ImportError(MCP_INSTALL_HINT) from e
 
 
 class ConnectorServiceConfig(BaseModel):
@@ -137,7 +126,6 @@ class ConnectorServiceImpl(Connectors):
         authorization: str | None = None,
     ) -> Connector:
         """Get a connector by its ID."""
-        get_mcp_server_info, _ = _import_mcp_tools()
 
         connector_json = await self.kvstore.get(self._get_key(connector_id))
         if not connector_json:
@@ -156,7 +144,6 @@ class ConnectorServiceImpl(Connectors):
         authorization: str | None = None,
     ) -> ListToolsResponse:
         """List all tools available from a connector."""
-        _, list_mcp_tools = _import_mcp_tools()
 
         connector = await self.get_connector(connector_id, authorization=authorization)
         tools_response = await list_mcp_tools(connector.url, authorization=authorization)
@@ -169,7 +156,6 @@ class ConnectorServiceImpl(Connectors):
         authorization: str | None = None,
     ) -> ToolDef:
         """Get a tool by its name from a connector."""
-        _, list_mcp_tools = _import_mcp_tools()
 
         connector = await self.get_connector(connector_id, authorization=authorization)
         tools_response = await list_mcp_tools(connector.url, authorization=authorization)
