@@ -5,12 +5,11 @@
 # the root directory of this source tree.
 
 from enum import StrEnum
-from typing import Literal, Protocol
+from typing import Protocol
 
 from pydantic import BaseModel, Field
 from typing_extensions import runtime_checkable
 
-from llama_stack_api.resource import Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, webmethod
 from llama_stack_api.tools import ToolDef
 from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
@@ -21,6 +20,14 @@ class ConnectorType(StrEnum):
     """Type of connector."""
 
     MCP = "mcp"
+
+
+@json_schema_type
+class ConnectorSource(StrEnum):
+    """Source of connector registration."""
+
+    config = "config"  # Registered from run.yaml config
+    api = "api"  # Registered via API call
 
 
 class CommonConnectorFields(BaseModel):
@@ -39,18 +46,20 @@ class CommonConnectorFields(BaseModel):
 
 
 @json_schema_type
-class Connector(CommonConnectorFields, Resource):
-    """A connector resource representing a connector registered in Llama Stack.
+class Connector(CommonConnectorFields):
+    """A connector registered in Llama Stack.
 
-    :param type: Type of resource, always 'connector' for connectors
+    :param source: How the connector was registered (config or api)
     :param server_name: (Optional) Name of the server
     :param server_description: (Optional) Description of the server
     :param server_version: (Optional) Version of the server
-    :param type: Type of resource, always 'connector' for connectors
     """
 
     model_config = {"populate_by_name": True}
-    type: Literal[ResourceType.connector] = ResourceType.connector
+    source: ConnectorSource = Field(
+        default=ConnectorSource.config,
+        description="How the connector was registered: 'config' (from run.yaml) or 'api' (via API call)",
+    )
     server_name: str | None = Field(default=None, description="Name of the server")
     server_description: str | None = Field(default=None, description="Description of the server")
     server_version: str | None = Field(default=None, description="Version of the server")

@@ -44,6 +44,7 @@ from llama_stack_api import (
     Batches,
     Benchmarks,
     Connectors,
+    ConnectorSource,
     Conversations,
     DatasetIO,
     Datasets,
@@ -246,6 +247,44 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             logger.debug(
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
+
+
+async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
+    """Register connectors from config.
+
+    Connectors are not resources, so they're handled separately from register_resources().
+    This function syncs config-sourced connectors: removes stale ones and registers new ones.
+    API-sourced connectors are left untouched.
+    """
+    if Api.connectors not in impls:
+        return
+
+    connectors_impl = impls[Api.connectors]
+
+    # Build sets of connector IDs for comparison
+    config_ids = {c.connector_id for c in run_config.connectors}
+    registered = await connectors_impl.list_connectors(source=ConnectorSource.config)
+    registered_ids = {c.connector_id for c in registered.data}
+
+    # Delete stale config connectors (in KVStore but no longer in config)
+    stale_ids = registered_ids - config_ids
+    for connector_id in stale_ids:
+        logger.debug(f"Removing stale config connector: {connector_id}")
+        await connectors_impl.unregister_connector(connector_id)
+
+    # Register new config connectors (in config but not yet in KVStore)
+    new_ids = config_ids - registered_ids
+    for connector in run_config.connectors:
+        if connector.connector_id not in new_ids:
+            continue
+        logger.debug(f"Registering connector: {connector.connector_id}")
+        await connectors_impl.register_connector(
+            connector_id=connector.connector_id,
+            connector_type=connector.connector_type,
+            url=connector.url,
+            source=ConnectorSource.config,
+            server_label=connector.server_label,
+        )
 
 
 async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
@@ -607,6 +646,7 @@ class Stack:
             await impls[Api.connectors].initialize()
 
         await register_resources(self.run_config, impls)
+        await register_connectors(self.run_config, impls)
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
         await validate_safety_config(self.run_config.safety, impls)

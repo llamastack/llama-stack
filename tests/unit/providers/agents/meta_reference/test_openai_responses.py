@@ -1770,13 +1770,10 @@ async def test_mcp_tool_connector_id_resolved_to_server_url(
     mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api, mock_connectors_api
 ):
     """Test that connector_id is resolved to server_url when using MCP tools."""
-    from llama_stack_api import Connector, ConnectorType, ResourceType
+    from llama_stack_api import Connector, ConnectorType
 
     # Setup mock connector that will be returned when resolving connector_id
     mock_connector = Connector(
-        type=ResourceType.connector,
-        identifier="my-mcp-connector",
-        provider_id="builtin::connectors",
         connector_id="my-mcp-connector",
         connector_type=ConnectorType.MCP,
         url="http://resolved-mcp-server:8080/mcp",

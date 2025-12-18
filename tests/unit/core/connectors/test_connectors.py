@@ -17,12 +17,12 @@ from llama_stack.core.connectors.connectors import (
 from llama_stack_api import (
     Connector,
     ConnectorNotFoundError,
+    ConnectorSource,
     ConnectorToolNotFoundError,
     ConnectorType,
     ListConnectorsResponse,
     ListToolsResponse,
     OpenAIResponseInputToolMCP,
-    ResourceType,
     ToolDef,
 )
 
@@ -91,14 +91,12 @@ def mock_connectors_api():
 def sample_connector():
     """Create a sample connector."""
     return Connector(
-        type=ResourceType.connector,
-        identifier="my-mcp-server",
-        provider_id="builtin::connectors",
         connector_id="my-mcp-server",
         connector_type=ConnectorType.MCP,
         url="http://localhost:8080/mcp",
         server_label="My MCP Server",
         server_name="Test Server",
+        source=ConnectorSource.config,
     )
 
 
@@ -115,14 +113,13 @@ class TestRegisterConnector:
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
             server_label="My MCP",
+            source=ConnectorSource.config,
         )
 
         assert result.connector_id == "my-mcp"
         assert result.connector_type == ConnectorType.MCP
         assert result.url == "http://localhost:8080/mcp"
         assert result.server_label == "My MCP"
-        assert result.type == ResourceType.connector
-        assert result.provider_id == "builtin::connectors"
 
         # Verify stored in kvstore
         stored = await mock_kvstore.get(f"{KEY_PREFIX}my-mcp")
@@ -136,6 +133,7 @@ class TestRegisterConnector:
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
             server_label="Original Label",
+            source=ConnectorSource.config,
         )
 
         # Register again with different label
@@ -144,6 +142,7 @@ class TestRegisterConnector:
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
             server_label="Updated Label",
+            source=ConnectorSource.config,
         )
 
         assert result.server_label == "Updated Label"
@@ -173,11 +172,13 @@ class TestListConnectors:
             connector_id="mcp-1",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8081/mcp",
+            source=ConnectorSource.config,
         )
         await connector_service.register_connector(
             connector_id="mcp-2",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8082/mcp",
+            source=ConnectorSource.config,
         )
 
         result = await connector_service.list_connectors()
@@ -207,6 +208,7 @@ class TestGetConnector:
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
+            source=ConnectorSource.config,
         )
 
         # Mock the MCP server info response
@@ -232,6 +234,7 @@ class TestGetConnector:
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
+            source=ConnectorSource.config,
         )
 
         mock_server_info = MagicMock()
@@ -263,6 +266,7 @@ class TestListConnectorTools:
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
+            source=ConnectorSource.config,
         )
 
         mock_server_info = MagicMock()
@@ -297,6 +301,7 @@ class TestGetConnectorTool:
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
+            source=ConnectorSource.config,
         )
 
         mock_server_info = MagicMock()
@@ -322,6 +327,7 @@ class TestGetConnectorTool:
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
+            source=ConnectorSource.config,
         )
 
         mock_server_info = MagicMock()
@@ -356,6 +362,7 @@ class TestKeyPrefix:
             connector_id="test-connector",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
+            source=ConnectorSource.config,
         )
 
         # Check the key was stored with prefix

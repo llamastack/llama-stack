@@ -12106,24 +12106,6 @@ components:
       title: Body_upload_file_v1_files_post
     Connector:
       properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Unique identifier for this resource in llama stack
-        provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for this resource in the provider
-        provider_id:
-          type: string
-          title: Provider Id
-          description: ID of the provider that owns this resource
-        type:
-          type: string
-          const: connector
-          title: Type
-          default: connector
         connector_type:
           $ref: '#/components/schemas/ConnectorType'
           default: mcp
@@ -12140,6 +12122,10 @@ components:
           - type: string
           - type: 'null'
           description: Label of the server
+        source:
+          $ref: '#/components/schemas/ConnectorSource'
+          description: "How the connector was registered: 'config' (from run.yaml) or 'api' (via API call)"
+          default: config
         server_name:
           anyOf:
           - type: string
@@ -12157,12 +12143,17 @@ components:
           description: Version of the server
       type: object
       required:
-      - identifier
-      - provider_id
       - connector_id
       - url
       title: Connector
-      description: A connector resource representing a connector registered in Llama Stack.
+      description: A connector registered in Llama Stack.
+    ConnectorSource:
+      type: string
+      enum:
+      - config
+      - api
+      title: ConnectorSource
+      description: Source of connector registration.
     ConnectorType:
       type: string
       enum:
