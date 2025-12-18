@@ -7,7 +7,7 @@
     {"suite": "base-vllm-subset", "setup": "vllm"}
   ],
   "stainless": [
-    {"suite": "base", "setup": "ollama", "allowed_clients": ["library"], "inference_mode": "record-if-missing"}
+    {"suite": "base", "setup": "ollama", "inference_mode": "record-if-missing"}
   ],
   "schedules": {
     "1 0 * * 0": [

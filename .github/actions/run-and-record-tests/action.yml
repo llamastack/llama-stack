@@ -66,11 +66,11 @@ runs:
       shell: bash
       run: |
         echo "Checking for recording changes"
-        git status --porcelain tests/integration/
+        git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/
 
-        if [[ -n $(git status --porcelain tests/integration/) ]]; then
+        if [[ -n $(git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/) ]]; then
           echo "New recordings detected, committing and pushing"
-          git add tests/integration/
+          git add tests/integration/recordings/ tests/integration/*/recordings/
 
           git commit -m "Recordings update from CI (setup: ${{ inputs.setup }}, suite: ${{ inputs.suite }})"
 
