@@ -15,11 +15,11 @@ from llama_stack_api import (
     Connector,
     ConnectorNotFoundError,
     Connectors,
+    ConnectorSource,
     ConnectorToolNotFoundError,
     ConnectorType,
     ListConnectorsResponse,
     ListToolsResponse,
-    ResourceType,
     ToolDef,
 )
 
@@ -79,6 +79,7 @@ class ConnectorServiceImpl(Connectors):
         self,
         connector_id: str,
         connector_type: ConnectorType,
+        source: ConnectorSource,
         url: str,
         server_label: str | None = None,
         server_name: str | None = None,
@@ -87,11 +88,9 @@ class ConnectorServiceImpl(Connectors):
         """Register a new connector (idempotent - updates if already exists)."""
 
         connector = Connector(
-            type=ResourceType.connector,
-            identifier=connector_id,
-            provider_id="builtin::connectors",
             connector_id=connector_id,
             connector_type=connector_type,
+            source=source,
             url=url,
             server_label=server_label,
             server_name=server_name,
@@ -99,21 +98,37 @@ class ConnectorServiceImpl(Connectors):
         )
 
         # Upsert: always write (idempotent for boot-time registration)
+        if await self.kvstore.get(self._get_key(connector_id)):
+            logger.debug(f"Found existing connector: {connector_id}, overwritting it")
         await self.kvstore.set(self._get_key(connector_id), connector.model_dump_json())
 
         return connector
 
-    async def list_connectors(self):
-        """List all registered connectors."""
+    async def unregister_connector(self, connector_id: str):
+        """Unregister a connector."""
+        key = self._get_key(connector_id)
+        if not await self.kvstore.get(key):
+            return
+        await self.kvstore.delete(key)
 
-        connectors = []
+    async def list_connectors(self, source: ConnectorSource | None = None) -> ListConnectorsResponse:
+        """List all registered connectors.
+
+        :param source: (Optional) Source of the connectors to list.
+        :returns: A ListConnectorsResponse.
+        """
+
+        connectors: list[Connector] = []
         # Get all keys with the connector prefix
         keys = await self.kvstore.keys_in_range(KEY_PREFIX, KEY_PREFIX + "\uffff")
         for key in keys:
             connector_json = await self.kvstore.get(key)
             if not connector_json:
                 continue
-            connectors.append(Connector.model_validate_json(connector_json))
+            connector = Connector.model_validate_json(connector_json)
+            if source is not None and connector.source != source:
+                continue
+            connectors.append(connector)
         return ListConnectorsResponse(data=connectors)
 
     async def get_connector(
