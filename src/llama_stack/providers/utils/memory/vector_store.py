@@ -17,6 +17,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -262,6 +263,7 @@ class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Api.inference
+    vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(
         self,
@@ -294,6 +296,8 @@ class VectorStoreWithIndex:
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
+        config = self.vector_stores_config or VectorStoresConfig()
+
         if params is None:
             params = {}
         k = params.get("max_chunks", 3)
@@ -302,19 +306,25 @@ class VectorStoreWithIndex:
 
         ranker = params.get("ranker")
         if ranker is None:
-            reranker_type = RERANKER_TYPE_RRF
-            reranker_params = {"impact_factor": 60.0}
+            reranker_type = (
+                RERANKER_TYPE_RRF
+                if config.chunk_retrieval_params.default_reranker_strategy == "rrf"
+                else config.chunk_retrieval_params.default_reranker_strategy
+            )
+            reranker_params = {"impact_factor": config.chunk_retrieval_params.rrf_impact_factor}
         else:
-            strategy = ranker.get("strategy", "rrf")
+            strategy = ranker.get("strategy", config.chunk_retrieval_params.default_reranker_strategy)
             if strategy == "weighted":
                 weights = ranker.get("params", {}).get("weights", [0.5, 0.5])
                 reranker_type = RERANKER_TYPE_WEIGHTED
-                reranker_params = {"alpha": weights[0] if len(weights) > 0 else 0.5}
+                reranker_params = {
+                    "alpha": weights[0] if len(weights) > 0 else config.chunk_retrieval_params.weighted_search_alpha
+                }
             elif strategy == "normalized":
                 reranker_type = RERANKER_TYPE_NORMALIZED
             else:
                 reranker_type = RERANKER_TYPE_RRF
-                k_value = ranker.get("params", {}).get("k", 60.0)
+                k_value = ranker.get("params", {}).get("k", config.chunk_retrieval_params.rrf_impact_factor)
                 reranker_params = {"impact_factor": k_value}
 
         query_string = interleaved_content_as_str(query)

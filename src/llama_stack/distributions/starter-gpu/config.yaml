@@ -299,19 +299,32 @@ vector_stores:
       '
     context_template: 'The above results were retrieved to help answer the user''s
       query: "{query}". Use them as supporting information only in answering this
-      query.{annotation_instruction}
+      query. {annotation_instruction}
 
       '
   annotation_prompt_params:
     enable_annotations: true
-    annotation_instruction_template: ' Cite sources immediately at the end of sentences
-      before punctuation, using `<|file-id|>` format like ''This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.''.
+    annotation_instruction_template: Cite sources immediately at the end of sentences
+      before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'.
       Do not add extra punctuation. Use only the file IDs provided, do not invent
-      new ones.'
+      new ones.
     chunk_annotation_template: '[{index}] {metadata_text} cite as <|{file_id}|>
 
       {chunk_text}
 
       '
+  file_ingestion_params:
+    default_chunk_size_tokens: 512
+    default_chunk_overlap_tokens: 128
+  chunk_retrieval_params:
+    chunk_multiplier: 5
+    max_tokens_in_context: 4000
+    default_reranker_strategy: rrf
+    rrf_impact_factor: 60.0
+    weighted_search_alpha: 0.5
+  file_batch_params:
+    max_concurrent_files_per_batch: 3
+    file_batch_chunk_size: 10
+    cleanup_interval_seconds: 86400
 safety:
   default_shield_id: llama-guard

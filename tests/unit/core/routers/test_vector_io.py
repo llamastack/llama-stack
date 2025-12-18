@@ -156,7 +156,6 @@ async def test_query_rewrite_functionality():
     from unittest.mock import MagicMock
 
     from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams, VectorStoresConfig
-    from llama_stack.providers.utils.memory.constants import DEFAULT_QUERY_REWRITE_PROMPT
     from llama_stack_api import VectorStoreSearchResponsePage
 
     mock_routing_table = Mock()
@@ -197,7 +196,7 @@ async def test_query_rewrite_functionality():
 
     # Verify default prompt is used
     prompt_text = chat_call_args.messages[0].content
-    expected_prompt = DEFAULT_QUERY_REWRITE_PROMPT.format(query="test query")
+    expected_prompt = "Expand this query with relevant synonyms and related terms. Return only the improved query, no explanations:\n\ntest query\n\nImproved query:"
     assert prompt_text == expected_prompt
 
     # Verify routing table was called with rewritten query and rewrite_query=False
