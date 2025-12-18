@@ -83,10 +83,8 @@ search_results = client.vector_stores.search(
 context_chunks = []
 for result in search_results.data:
     # result.content is a list of Content objects, extract the text from each
-    if hasattr(result, "content") and result.content:
-        for content_item in result.content:
-            if hasattr(content_item, "text") and content_item.text:
-                context_chunks.append(content_item.text)
+    for content_item in result.content:
+        context_chunks.append(content_item.text)
 
 context = "\n\n".join(context_chunks)
 print(f"Found {len(context_chunks)} relevant chunks\n")
