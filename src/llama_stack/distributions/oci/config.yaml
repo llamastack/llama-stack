@@ -21,11 +21,17 @@ providers:
       oci_region: ${env.OCI_REGION:=us-ashburn-1}
       oci_compartment_id: ${env.OCI_COMPARTMENT_OCID:=}
   vector_io:
-  - provider_id: faiss
-    provider_type: inline::faiss
+  - provider_id: oci
+    provider_type: remote::oci
     config:
+      conn_str: "${env.OCI26AI_CONNECTION_STRING}" 
+      user: "${env.OCI26AI_USER}" 
+      password: "${env.OCI26AI_PASSWORD}" 
+      tnsnames_loc: "${env.OCI26AI_TNSNAMES_LOC}" 
+      ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
+      ewallet_password: "${env.OCI26AI_EWALLET_PWD}" 
       persistence:
-        namespace: vector_io::faiss
+        namespace: vector_id::oci26ai
         backend: kv_default
   safety:
   - provider_id: llama-guard
