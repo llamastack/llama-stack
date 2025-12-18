@@ -41,6 +41,9 @@ def mock_kvstore():
         async def get(self, key):
             return storage.get(key)
 
+        async def delete(self, key):
+            del storage[key]
+
         async def keys_in_range(self, start, end):
             return [k for k in storage.keys() if start <= k < end]
 
@@ -187,6 +190,68 @@ class TestListConnectors:
         connector_ids = {c.connector_id for c in result.data}
         assert connector_ids == {"mcp-1", "mcp-2"}
 
+    async def test_list_connectors_filters_by_source(self, connector_service):
+        """Test listing connectors can filter by source."""
+        # Register connectors with different sources
+        await connector_service.register_connector(
+            connector_id="config-connector",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8081/mcp",
+            source=ConnectorSource.config,
+        )
+        await connector_service.register_connector(
+            connector_id="api-connector",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8082/mcp",
+            source=ConnectorSource.api,
+        )
+
+        # List only config connectors
+        config_result = await connector_service.list_connectors(source=ConnectorSource.config)
+        assert len(config_result.data) == 1
+        assert config_result.data[0].connector_id == "config-connector"
+
+        # List only api connectors
+        api_result = await connector_service.list_connectors(source=ConnectorSource.api)
+        assert len(api_result.data) == 1
+        assert api_result.data[0].connector_id == "api-connector"
+
+        # List all (no filter)
+        all_result = await connector_service.list_connectors()
+        assert len(all_result.data) == 2
+
+
+# --- unregister_connector tests ---
+
+
+class TestUnregisterConnector:
+    """Tests for unregister_connector method."""
+
+    async def test_unregister_connector_removes_from_store(self, connector_service, mock_kvstore):
+        """Test that unregistering a connector removes it from the store."""
+        await connector_service.register_connector(
+            connector_id="my-mcp",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8080/mcp",
+            source=ConnectorSource.config,
+        )
+
+        # Verify it exists
+        keys = await mock_kvstore.keys_in_range(KEY_PREFIX, KEY_PREFIX + "\uffff")
+        assert len(keys) == 1
+
+        # Unregister
+        await connector_service.unregister_connector("my-mcp")
+
+        # Verify it's gone
+        keys = await mock_kvstore.keys_in_range(KEY_PREFIX, KEY_PREFIX + "\uffff")
+        assert len(keys) == 0
+
+    async def test_unregister_nonexistent_connector_is_noop(self, connector_service):
+        """Test that unregistering a non-existent connector doesn't raise."""
+        # Should not raise
+        await connector_service.unregister_connector("nonexistent")
+
 
 # --- get_connector tests ---
 
@@ -217,9 +282,8 @@ class TestGetConnector:
         mock_server_info.description = "A test server"
         mock_server_info.version = "1.0.0"
 
-        with patch("llama_stack.core.connectors.connectors._import_mcp_tools") as mock_import:
-            mock_get_info = AsyncMock(return_value=mock_server_info)
-            mock_import.return_value = (mock_get_info, None)
+        with patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info:
+            mock_get_info.return_value = mock_server_info
 
             result = await connector_service.get_connector("my-mcp")
 
@@ -242,9 +306,8 @@ class TestGetConnector:
         mock_server_info.description = None
         mock_server_info.version = None
 
-        with patch("llama_stack.core.connectors.connectors._import_mcp_tools") as mock_import:
-            mock_get_info = AsyncMock(return_value=mock_server_info)
-            mock_import.return_value = (mock_get_info, None)
+        with patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info:
+            mock_get_info.return_value = mock_server_info
 
             await connector_service.get_connector("my-mcp", authorization="Bearer token123")
 
@@ -277,10 +340,12 @@ class TestListConnectorTools:
         mock_tools_response = MagicMock()
         mock_tools_response.data = [sample_tool_def]
 
-        with patch("llama_stack.core.connectors.connectors._import_mcp_tools") as mock_import:
-            mock_get_info = AsyncMock(return_value=mock_server_info)
-            mock_list_tools = AsyncMock(return_value=mock_tools_response)
-            mock_import.return_value = (mock_get_info, mock_list_tools)
+        with (
+            patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info,
+            patch("llama_stack.core.connectors.connectors.list_mcp_tools") as mock_list_tools,
+        ):
+            mock_get_info.return_value = mock_server_info
+            mock_list_tools.return_value = mock_tools_response
 
             result = await connector_service.list_connector_tools("my-mcp")
 
@@ -312,10 +377,12 @@ class TestGetConnectorTool:
         mock_tools_response = MagicMock()
         mock_tools_response.data = [sample_tool_def]
 
-        with patch("llama_stack.core.connectors.connectors._import_mcp_tools") as mock_import:
-            mock_get_info = AsyncMock(return_value=mock_server_info)
-            mock_list_tools = AsyncMock(return_value=mock_tools_response)
-            mock_import.return_value = (mock_get_info, mock_list_tools)
+        with (
+            patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info,
+            patch("llama_stack.core.connectors.connectors.list_mcp_tools") as mock_list_tools,
+        ):
+            mock_get_info.return_value = mock_server_info
+            mock_list_tools.return_value = mock_tools_response
 
             result = await connector_service.get_connector_tool("my-mcp", "get_weather")
 
@@ -338,10 +405,12 @@ class TestGetConnectorTool:
         mock_tools_response = MagicMock()
         mock_tools_response.data = [sample_tool_def]
 
-        with patch("llama_stack.core.connectors.connectors._import_mcp_tools") as mock_import:
-            mock_get_info = AsyncMock(return_value=mock_server_info)
-            mock_list_tools = AsyncMock(return_value=mock_tools_response)
-            mock_import.return_value = (mock_get_info, mock_list_tools)
+        with (
+            patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info,
+            patch("llama_stack.core.connectors.connectors.list_mcp_tools") as mock_list_tools,
+        ):
+            mock_get_info.return_value = mock_server_info
+            mock_list_tools.return_value = mock_tools_response
 
             with pytest.raises(ConnectorToolNotFoundError) as exc_info:
                 await connector_service.get_connector_tool("my-mcp", "non_existent_tool")
