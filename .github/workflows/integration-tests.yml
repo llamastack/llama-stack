@@ -52,6 +52,15 @@ on:
         required: false
         type: string
         description: 'The SHA of the pull request head to checkout'
+      pr_head_ref:
+        required: false
+        type: string
+        description: 'The branch name of the pull request head (for recording commits)'
+      is_fork_pr:
+        required: false
+        type: boolean
+        default: false
+        description: 'Whether this is a fork PR (cannot push recordings to forks)'
       test-all-client-versions:
         required: false
         type: boolean
@@ -150,3 +159,5 @@ jobs:
           setup: ${{ matrix.config.setup }}
           inference-mode: ${{ matrix.config.inference_mode || 'replay' }}
           suite: ${{ matrix.config.suite }}
+          target-branch: ${{ inputs.pr_head_ref || '' }}
+          is-fork-pr: ${{ inputs.is_fork_pr && 'true' || (github.event.pull_request.head.repo.full_name != github.repository && 'true' || 'false') }}

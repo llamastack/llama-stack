@@ -66,6 +66,7 @@ jobs:
       pr_base_sha: ${{ steps.compute.outputs.pr_base_sha }}
       pr_base_ref: ${{ steps.compute.outputs.pr_base_ref }}
       pr_title: ${{ steps.compute.outputs.pr_title }}
+      is_fork_pr: ${{ steps.compute.outputs.is_fork_pr }}
     steps:
       - name: Fetch PR details for workflow_dispatch
         if: github.event_name == 'workflow_dispatch'
@@ -111,10 +112,12 @@ jobs:
             fi
             PREVIEW_BRANCH="preview/${FORK_OWNER}/${BRANCH_NAME}"
             BASE_BRANCH="preview/base/${FORK_OWNER}/${BRANCH_NAME}"
+            IS_FORK_PR="true"
           else
             # Same-repo PR
             PREVIEW_BRANCH="preview/${BRANCH_NAME}"
             BASE_BRANCH="preview/base/${BRANCH_NAME}"
+            IS_FORK_PR="false"
           fi
 
           echo "preview_branch=${PREVIEW_BRANCH}" >> $GITHUB_OUTPUT
@@ -126,6 +129,7 @@ jobs:
           echo "pr_base_sha=${BASE_SHA}" >> $GITHUB_OUTPUT
           echo "pr_base_ref=${BASE_REF}" >> $GITHUB_OUTPUT
           echo "pr_title=${PR_TITLE}" >> $GITHUB_OUTPUT
+          echo "is_fork_pr=${IS_FORK_PR}" >> $GITHUB_OUTPUT
 
   preview:
     needs: compute-branch
@@ -182,6 +186,8 @@ jobs:
       matrix_key: 'stainless'
       test-all-client-versions: false
       pr_head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
+      pr_head_ref: ${{ needs.compute-branch.outputs.pr_head_ref }}
+      is_fork_pr: ${{ needs.compute-branch.outputs.is_fork_pr == 'true' }}
 
   merge:
     needs: compute-branch
