@@ -44,6 +44,8 @@ def embedding_dimension() -> int:
 @pytest.fixture(scope="session")
 def sample_chunks():
     """Generates chunks that force multiple batches for a single document to expose ID conflicts."""
+    import time
+
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
     n, k = 10, 3
@@ -52,6 +54,15 @@ def sample_chunks():
             content=f"Sentence {i} from document {j}",
             chunk_id=generate_chunk_id(f"document-{j}", f"Sentence {i} from document {j}"),
             metadata={"document_id": f"document-{j}"},
+            chunk_metadata=ChunkMetadata(
+                document_id=f"document-{j}",
+                chunk_id=generate_chunk_id(f"document-{j}", f"Sentence {i} from document {j}"),
+                created_timestamp=int(time.time()),
+                updated_timestamp=int(time.time()),
+                chunk_embedding_model="test-embedding-model",
+                chunk_embedding_dimension=EMBEDDING_DIMENSION,
+                content_token_count=5,
+            ),
         )
         for j in range(k)
         for i in range(n)
@@ -61,10 +72,16 @@ def sample_chunks():
             Chunk(
                 content=f"Sentence {i} from document {j + k}",
                 chunk_id=f"document-{j}-chunk-{i}",
+                metadata={"document_id": f"document-{j + k}"},
                 chunk_metadata=ChunkMetadata(
                     document_id=f"document-{j + k}",
                     chunk_id=f"document-{j}-chunk-{i}",
                     source=f"example source-{j + k}-{i}",
+                    created_timestamp=int(time.time()),
+                    updated_timestamp=int(time.time()),
+                    chunk_embedding_model="test-embedding-model",
+                    chunk_embedding_dimension=EMBEDDING_DIMENSION,
+                    content_token_count=5,
                 ),
             )
             for j in range(k)

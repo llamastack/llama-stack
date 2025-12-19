@@ -6545,15 +6545,11 @@ components:
           - type: 'null'
           nullable: true
         chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          nullable: true
-          title: ChunkMetadata
+          $ref: '#/components/schemas/ChunkMetadata'
       required:
       - content
       - chunk_id
+      - chunk_metadata
       title: Chunk
       type: object
     ChunkMetadata:
@@ -8725,15 +8721,12 @@ components:
             type: array
           - type: 'null'
         chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          title: ChunkMetadata
+          $ref: '#/components/schemas/ChunkMetadata'
       type: object
       required:
       - content
       - chunk_id
+      - chunk_metadata
       title: Chunk
       description: A chunk of content that can be inserted into a vector database.
     Chunk-Output:
@@ -8781,15 +8774,12 @@ components:
             type: array
           - type: 'null'
         chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          title: ChunkMetadata
+          $ref: '#/components/schemas/ChunkMetadata'
       type: object
       required:
       - content
       - chunk_id
+      - chunk_metadata
       title: Chunk
       description: A chunk of content that can be inserted into a vector database.
     Connector:

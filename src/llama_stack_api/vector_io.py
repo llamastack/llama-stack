@@ -68,7 +68,7 @@ class Chunk(BaseModel):
     chunk_id: str
     metadata: dict[str, Any] = Field(default_factory=dict)
     embedding: list[float] | None = None
-    chunk_metadata: ChunkMetadata | None = None
+    chunk_metadata: ChunkMetadata
 
     @property
     def document_id(self) -> str | None:

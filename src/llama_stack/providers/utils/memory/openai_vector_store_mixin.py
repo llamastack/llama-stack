@@ -18,6 +18,9 @@ from pydantic import TypeAdapter
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import (
+    interleaved_content_as_str,
+)
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
     content_from_data_and_mime_type,
@@ -26,8 +29,10 @@ from llama_stack.providers.utils.memory.vector_store import (
 from llama_stack_api import (
     Chunk,
     Files,
+    Inference,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIFileObject,
     QueryChunksResponse,
     SearchRankingOptions,
@@ -78,7 +83,12 @@ class OpenAIVectorStoreMixin(ABC):
     Mixin class that provides common OpenAI Vector Store API implementation.
     Providers need to implement the abstract storage methods and maintain
     an openai_vector_stores in-memory cache.
+
+    Note: Implementing classes must have an 'inference_api' attribute of type Inference.
     """
+
+    # Type annotation for the attribute that implementing classes must provide
+    inference_api: Inference
 
     # Implementing classes should call super().__init__() in their __init__ method
     # to properly initialize the mixin attributes.
@@ -811,12 +821,19 @@ class OpenAIVectorStoreMixin(ABC):
             chunk_attributes = attributes.copy()
             chunk_attributes["filename"] = file_response.filename
 
+            # Get embedding model info from vector store metadata
+            store_info = self.openai_vector_stores[vector_store_id]
+            embedding_model = store_info["metadata"].get("embedding_model")
+            embedding_dimension = store_info["metadata"].get("embedding_dimension")
+
             chunks = make_overlapped_chunks(
                 file_id,
                 content,
                 max_chunk_size_tokens,
                 chunk_overlap_tokens,
                 chunk_attributes,
+                embedding_model=embedding_model,
+                embedding_dimension=embedding_dimension,
             )
             if not chunks:
                 vector_store_file_object.status = "failed"
@@ -825,6 +842,32 @@ class OpenAIVectorStoreMixin(ABC):
                     message="No chunks were generated from the file",
                 )
             else:
+                # Validate embedding model and dimension are available
+                if not embedding_model:
+                    raise ValueError(f"Embedding model not found in vector store {vector_store_id} metadata")
+                if not embedding_dimension:
+                    raise ValueError(f"Embedding dimension not found in vector store {vector_store_id} metadata")
+
+                # Generate embeddings for all chunks before insertion
+                if not hasattr(self, "inference_api") or not self.inference_api:
+                    raise ValueError(
+                        "Inference API is required for embedding generation. The implementing class must set self.inference_api."
+                    )
+
+                # Prepare embedding request for all chunks
+                params = OpenAIEmbeddingsRequestWithExtraBody(
+                    model=embedding_model,
+                    input=[interleaved_content_as_str(c.content) for c in chunks],
+                )
+                resp = await self.inference_api.openai_embeddings(params)
+
+                # Set embeddings on chunks
+                for c, data in zip(chunks, resp.data, strict=False):
+                    if isinstance(data.embedding, list):
+                        c.embedding = data.embedding
+                    else:
+                        raise ValueError(f"Expected embedding to be a list, got {type(data.embedding)}")
+
                 await self.insert_chunks(
                     vector_store_id=vector_store_id,
                     chunks=chunks,
