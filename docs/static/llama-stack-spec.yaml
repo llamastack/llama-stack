@@ -1854,7 +1854,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Shields
-      summary: List Shields
+      summary: List all shields.
       description: List all shields.
       operationId: list_shields_v1_shields_get
   /v1/shields/{identifier}:
@@ -1867,20 +1867,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Shield'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Shields
-      summary: Get Shield
+      summary: Get a shield by its identifier.
       description: Get a shield by its identifier.
       operationId: get_shield_v1_shields__identifier__get
       parameters:
@@ -1889,7 +1889,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: identifier'
+          description: The identifier of the shield to get.
+          title: Identifier
+        description: The identifier of the shield to get.
   /v1/vector-io/insert:
     post:
       responses:
@@ -8083,10 +8085,12 @@ components:
             $ref: '#/components/schemas/Shield'
           type: array
           title: Data
+          description: List of shield objects
       type: object
       required:
       - data
       title: ListShieldsResponse
+      description: Response containing a list of all shields.
     ImageContentItem:
       description: A image content item
       properties:
@@ -10170,6 +10174,33 @@ components:
       - $ref: '#/components/schemas/CompletionInputType'
         title: CompletionInputType
       title: StringType | ... (9 variants)
+    RegisterShieldRequest:
+      properties:
+        shield_id:
+          type: string
+          title: Shield Id
+          description: The identifier of the shield to register.
+        provider_shield_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The identifier of the shield in the provider.
+        provider_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The identifier of the provider.
+        params:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: The parameters of the shield.
+      type: object
+      required:
+      - shield_id
+      title: RegisterShieldRequest
+      description: Request model for registering a shield.
     DataSource:
       discriminator:
         mapping:
@@ -11621,6 +11652,28 @@ components:
           title: Type
           type: string
       title: DialogType
+      type: object
+    GetShieldRequest:
+      description: Request model for getting a shield by identifier.
+      properties:
+        identifier:
+          description: The identifier of the shield to get.
+          title: Identifier
+          type: string
+      required:
+      - identifier
+      title: GetShieldRequest
+      type: object
+    UnregisterShieldRequest:
+      description: Request model for unregistering a shield.
+      properties:
+        identifier:
+          description: The identifier of the shield to unregister.
+          title: Identifier
+          type: string
+      required:
+      - identifier
+      title: UnregisterShieldRequest
       type: object
     TextDelta:
       description: A text content delta for streaming responses.

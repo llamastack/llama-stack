@@ -12,6 +12,7 @@ import requests
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack_api import (
+    GetShieldRequest,
     OpenAIMessageParam,
     RunShieldResponse,
     Safety,
@@ -72,7 +73,7 @@ class SambaNovaSafetyAdapter(Safety, ShieldsProtocolPrivate, NeedsRequestProvide
     async def run_shield(
         self, shield_id: str, messages: list[OpenAIMessageParam], params: dict[str, Any] | None = None
     ) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(shield_id)
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=shield_id))
         if not shield:
             raise ValueError(f"Shield {shield_id} not found")
 
