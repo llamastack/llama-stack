@@ -13,7 +13,7 @@ def test_bedrock_config_defaults_no_env(monkeypatch):
     monkeypatch.delenv("AWS_DEFAULT_REGION", raising=False)
     config = BedrockConfig()
     assert config.auth_credential is None
-    assert config.region_name == "us-east-2"
+    assert config.region_name == "us-west-2"
 
 
 def test_bedrock_config_reads_from_env(monkeypatch):
