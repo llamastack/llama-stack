@@ -10,6 +10,7 @@ from typing import Any
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.bedrock.client import create_bedrock_client
 from llama_stack_api import (
+    GetShieldRequest,
     OpenAIMessageParam,
     RunShieldResponse,
     Safety,
@@ -58,7 +59,7 @@ class BedrockSafetyAdapter(Safety, ShieldsProtocolPrivate):
     async def run_shield(
         self, shield_id: str, messages: list[OpenAIMessageParam], params: dict[str, Any] = None
     ) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(shield_id)
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=shield_id))
         if not shield:
             raise ValueError(f"Shield {shield_id} not found")
 

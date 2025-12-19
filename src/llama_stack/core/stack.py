@@ -53,6 +53,7 @@ from llama_stack_api import (
     PostTraining,
     Prompts,
     Providers,
+    RegisterShieldRequest,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -91,18 +92,22 @@ class LlamaStack(
     pass
 
 
+# Resources to register from config. Each tuple contains:
+# (config_attr, api, register_method, list_method, optional_request_class)
+# When request_class is provided, the config object is converted to the request class before calling the method.
 RESOURCES = [
-    ("models", Api.models, "register_model", "list_models"),
-    ("shields", Api.shields, "register_shield", "list_shields"),
-    ("datasets", Api.datasets, "register_dataset", "list_datasets"),
+    ("models", Api.models, "register_model", "list_models", None),
+    ("shields", Api.shields, "register_shield", "list_shields", RegisterShieldRequest),
+    ("datasets", Api.datasets, "register_dataset", "list_datasets", None),
     (
         "scoring_fns",
         Api.scoring_functions,
         "register_scoring_function",
         "list_scoring_functions",
+        None,
     ),
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
+    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", None),
+    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
 ]
 
 
@@ -199,7 +204,7 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
-    for rsrc, api, register_method, list_method in RESOURCES:
+    for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
             continue
@@ -213,10 +218,14 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
                     continue
                 logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
 
-            # we want to maintain the type information in arguments to method.
-            # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
-            # we use model_dump() to find all the attrs and then getattr to get the still typed value.
-            await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+            if request_class is not None:
+                # Convert config object to request object
+                request = request_class(**obj.model_dump())
+                await method(request)
+            else:
+                # Pass keyword arguments directly for backward compatibility
+                # We use model_dump() to find all the attrs and then getattr to get the still typed value.
+                await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
 
         method = getattr(impls[api], list_method)
         response = await invoke_with_optional_request(method)
