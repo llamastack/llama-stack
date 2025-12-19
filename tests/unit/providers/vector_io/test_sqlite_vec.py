@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import time
 
 import numpy as np
 import pytest
@@ -14,7 +15,7 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import (
     SQLiteVecVectorIOAdapter,
     _create_sqlite_connection,
 )
-from llama_stack_api import Chunk, QueryChunksResponse
+from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse
 
 # This test is a unit test for the SQLiteVecVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -437,11 +438,36 @@ async def test_query_chunks_hybrid_tie_breaking(
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
     # Create two chunks with the same content and embedding
+    chunk1_id = generate_chunk_id("docA", "identical")
+    chunk2_id = generate_chunk_id("docB", "identical")
+
     chunk1 = Chunk(
-        content="identical", chunk_id=generate_chunk_id("docA", "identical"), metadata={"document_id": "docA"}
+        content="identical",
+        chunk_id=chunk1_id,
+        metadata={"document_id": "docA"},
+        chunk_metadata=ChunkMetadata(
+            document_id="docA",
+            chunk_id=chunk1_id,
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            chunk_embedding_model="test-model",
+            chunk_embedding_dimension=768,
+            content_token_count=1,
+        ),
     )
     chunk2 = Chunk(
-        content="identical", chunk_id=generate_chunk_id("docB", "identical"), metadata={"document_id": "docB"}
+        content="identical",
+        chunk_id=chunk2_id,
+        metadata={"document_id": "docB"},
+        chunk_metadata=ChunkMetadata(
+            document_id="docB",
+            chunk_id=chunk2_id,
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            chunk_embedding_model="test-model",
+            chunk_embedding_dimension=768,
+            content_token_count=1,
+        ),
     )
     chunks = [chunk1, chunk2]
     # Use the same embedding for both chunks to ensure equal scores

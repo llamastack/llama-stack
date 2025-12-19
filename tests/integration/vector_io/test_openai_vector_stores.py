@@ -13,7 +13,7 @@ from openai import BadRequestError as OpenAIBadRequestError
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
-from llama_stack_api import Chunk, ExpiresAfter
+from llama_stack_api import Chunk, ChunkMetadata, ExpiresAfter
 
 from ..conftest import vector_provider_wrapper
 
@@ -88,6 +88,8 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
 
 @pytest.fixture(scope="session")
 def sample_chunks():
+    import numpy as np
+
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
     chunks_data = [
@@ -112,11 +114,25 @@ def sample_chunks():
             "ai",
         ),
     ]
+
+    # Use a fixed seed for deterministic embeddings
+    np.random.seed(42)
+
     return [
         Chunk(
             content=content,
             chunk_id=generate_chunk_id(doc_id, content),
             metadata={"document_id": doc_id, "topic": topic},
+            embedding=np.random.random(768).tolist(),  # Generate deterministic dummy embeddings
+            chunk_metadata=ChunkMetadata(
+                document_id=doc_id,
+                chunk_id=generate_chunk_id(doc_id, content),
+                created_timestamp=int(time.time()),
+                updated_timestamp=int(time.time()),
+                chunk_embedding_model="test-embedding-model",
+                chunk_embedding_dimension=768,
+                content_token_count=len(content.split()),
+            ),
         )
         for content, doc_id, topic in chunks_data
     ]

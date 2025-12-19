@@ -15,7 +15,7 @@ from llama_stack.providers.inline.vector_io.faiss.faiss import (
     FaissIndex,
     FaissVectorIOAdapter,
 )
-from llama_stack_api import Chunk, Files, HealthStatus, QueryChunksResponse, VectorStore
+from llama_stack_api import Chunk, ChunkMetadata, Files, HealthStatus, QueryChunksResponse, VectorStore
 
 # This test is a unit test for the FaissVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -46,20 +46,41 @@ def vector_store_id():
 
 @pytest.fixture
 def sample_chunks():
+    import time
+
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
+    chunk_id_1 = generate_chunk_id("mock-doc-1", "MOCK text content 1")
+    chunk_id_2 = generate_chunk_id("mock-doc-2", "MOCK text content 1")
 
     return [
         Chunk(
             content="MOCK text content 1",
-            chunk_id=generate_chunk_id("mock-doc-1", "MOCK text content 1"),
-            mime_type="text/plain",
+            chunk_id=chunk_id_1,
             metadata={"document_id": "mock-doc-1"},
+            chunk_metadata=ChunkMetadata(
+                chunk_id=chunk_id_1,
+                document_id="mock-doc-1",
+                created_timestamp=int(time.time()),
+                updated_timestamp=int(time.time()),
+                chunk_embedding_model="test-embedding-model",
+                chunk_embedding_dimension=768,
+                content_token_count=4,
+            ),
         ),
         Chunk(
             content="MOCK text content 1",
-            chunk_id=generate_chunk_id("mock-doc-2", "MOCK text content 1"),
-            mime_type="text/plain",
+            chunk_id=chunk_id_2,
             metadata={"document_id": "mock-doc-2"},
+            chunk_metadata=ChunkMetadata(
+                chunk_id=chunk_id_2,
+                document_id="mock-doc-2",
+                created_timestamp=int(time.time()),
+                updated_timestamp=int(time.time()),
+                chunk_embedding_model="test-embedding-model",
+                chunk_embedding_dimension=768,
+                content_token_count=4,
+            ),
         ),
     ]
 
