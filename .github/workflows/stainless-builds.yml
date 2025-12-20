@@ -155,7 +155,7 @@ jobs:
 
       - name: Run preview builds
         id: run-preview
-        uses: stainless-api/upload-openapi-spec-action/preview@979824f1ea5f44334940f0768d04642b6cdaa0d1 # 1.8.1
+        uses: stainless-api/upload-openapi-spec-action/preview@11792f827da87f9411ca0b491d7514b94dcb815f # 1.9.0
         env:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         with:
@@ -213,7 +213,7 @@ jobs:
       # against the preview branch to complete, but assuming that
       # the preview job happens before the PR merge, it should be fine.
       - name: Run merge build
-        uses: stainless-api/upload-openapi-spec-action/merge@979824f1ea5f44334940f0768d04642b6cdaa0d1 # 1.8.1
+        uses: stainless-api/upload-openapi-spec-action/merge@11792f827da87f9411ca0b491d7514b94dcb815f # 1.9.0
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}
