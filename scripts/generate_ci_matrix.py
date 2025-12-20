@@ -36,7 +36,7 @@ def generate_matrix(schedule="", test_setup="", matrix_key="default"):
     Returns:
         Matrix configuration as JSON string
     """
-    # Weekly scheduled test matrices 
+    # Weekly scheduled test matrices (highest priority)
     if schedule and schedule in SCHEDULE_MATRICES:
         matrix = SCHEDULE_MATRICES[schedule]
     # Manual input for specific setup
