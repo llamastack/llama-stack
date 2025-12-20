@@ -26,7 +26,6 @@ class TestMLflowPromptsConfig:
         assert config.mlflow_registry_uri is None
         assert config.experiment_name == "llama-stack-prompts"
         assert config.auth_credential is None
-        assert config.timeout_seconds == 30
 
     def test_custom_config(self):
         """Test custom configuration values."""
@@ -35,14 +34,12 @@ class TestMLflowPromptsConfig:
             mlflow_registry_uri="http://registry.example.com:8080",
             experiment_name="my-prompts",
             auth_credential=SecretStr("my-token"),
-            timeout_seconds=60,
         )
 
         assert config.mlflow_tracking_uri == "http://mlflow.example.com:8080"
         assert config.mlflow_registry_uri == "http://registry.example.com:8080"
         assert config.experiment_name == "my-prompts"
         assert config.auth_credential.get_secret_value() == "my-token"
-        assert config.timeout_seconds == 60
 
     def test_databricks_uri(self):
         """Test Databricks URI configuration."""
@@ -81,26 +78,6 @@ class TestMLflowPromptsConfig:
         # Whitespace is stripped
         config = MLflowPromptsConfig(experiment_name="  my-experiment  ")
         assert config.experiment_name == "my-experiment"
-
-    def test_timeout_validation(self):
-        """Test timeout range validation."""
-        # Too low rejected
-        with pytest.raises(ValidationError):
-            MLflowPromptsConfig(timeout_seconds=0)
-
-        with pytest.raises(ValidationError):
-            MLflowPromptsConfig(timeout_seconds=-1)
-
-        # Too high rejected
-        with pytest.raises(ValidationError):
-            MLflowPromptsConfig(timeout_seconds=301)
-
-        # Boundary values accepted
-        config_min = MLflowPromptsConfig(timeout_seconds=1)
-        assert config_min.timeout_seconds == 1
-
-        config_max = MLflowPromptsConfig(timeout_seconds=300)
-        assert config_max.timeout_seconds == 300
 
     def test_sample_run_config(self):
         """Test sample_run_config generates valid configuration."""

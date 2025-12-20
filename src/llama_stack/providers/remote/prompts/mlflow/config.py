@@ -45,7 +45,6 @@ class MLflowPromptsConfig(BaseModel):
         mlflow_registry_uri: MLflow registry URI (optional, defaults to tracking_uri)
         experiment_name: MLflow experiment name for prompt storage
         auth_credential: MLflow API token for authentication (optional, can be overridden by provider data)
-        timeout_seconds: Timeout for MLflow API calls in seconds (default: 30)
     """
 
     mlflow_tracking_uri: str = Field(
@@ -63,12 +62,6 @@ class MLflowPromptsConfig(BaseModel):
     auth_credential: SecretStr | None = Field(
         default=None,
         description="MLflow API token for authentication. Can be overridden via provider data header.",
-    )
-    timeout_seconds: int = Field(
-        default=30,
-        ge=1,
-        le=300,
-        description="Timeout for MLflow API calls in seconds (1-300)",
     )
 
     @classmethod

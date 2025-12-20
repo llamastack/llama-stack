@@ -10,8 +10,8 @@ This module implements the Llama Stack Prompts protocol using MLflow's Prompt Re
 as the backend for centralized prompt management and versioning.
 """
 
+import os
 import re
-from typing import TYPE_CHECKING, Any
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -22,7 +22,6 @@ from llama_stack_api import ListPromptsResponse, Prompt, Prompts
 # Try importing mlflow at module level
 try:
     import mlflow
-    from mlflow.client import MlflowClient
 except ImportError:
     # Fail gracefully when provider is instantiated during initialize()
     mlflow = None
@@ -49,7 +48,6 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
 
     Attributes:
         config: MLflow provider configuration
-        mlflow_client: MLflow client instance
         mapper: ID mapping utility
     """
 
@@ -60,12 +58,30 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
             config: MLflow provider configuration
         """
         self.config = config
-        self.mlflow_client: "MlflowClient | None" = None
         self.mapper = PromptIDMapper()
         logger.info(
             f"MLflowPromptsAdapter initialized: tracking_uri={config.mlflow_tracking_uri}, "
             f"experiment={config.experiment_name}"
         )
+
+    def _setup_auth(self) -> None:
+        """Set up authentication for MLflow operations.
+
+        Checks for per-request credentials in provider data (preferred),
+        then falls back to config credentials. Sets MLFLOW_TRACKING_TOKEN
+        environment variable which MLflow reads for authentication.
+        """
+        # Try to get per-request token from provider data
+        provider_data = self.get_request_provider_data()
+        if provider_data and provider_data.mlflow_api_token:
+            os.environ["MLFLOW_TRACKING_TOKEN"] = provider_data.mlflow_api_token
+            logger.debug("Using MLflow token from provider data")
+            return
+
+        # Fall back to config token (reset in case per-request token was used previously)
+        if self.config.auth_credential is not None:
+            os.environ["MLFLOW_TRACKING_TOKEN"] = self.config.auth_credential.get_secret_value()
+            logger.debug("Using MLflow token from config")
 
     async def initialize(self) -> None:
         """Initialize MLflow client and set up experiment.
@@ -93,16 +109,8 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
             # Default to tracking URI if registry not specified
             mlflow.set_registry_uri(self.config.mlflow_tracking_uri)
 
-        # Set authentication token if provided in config
-        if self.config.auth_credential is not None:
-            import os
-
-            # MLflow reads MLFLOW_TRACKING_TOKEN from environment
-            os.environ["MLFLOW_TRACKING_TOKEN"] = self.config.auth_credential.get_secret_value()
-            logger.debug("Set MLFLOW_TRACKING_TOKEN from config auth_credential")
-
-        # Initialize client
-        self.mlflow_client = MlflowClient()
+        # Set up authentication
+        self._setup_auth()
 
         # Validate experiment exists (don't create during initialization)
         try:
@@ -120,6 +128,7 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
         This is called lazily on first write operation to avoid creating
         external resources during initialization.
         """
+        self._setup_auth()
         try:
             mlflow.set_experiment(self.config.experiment_name)
         except Exception:
@@ -253,6 +262,7 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
         Raises:
             ValueError: If prompt not found
         """
+        self._setup_auth()
         mlflow_name = self.mapper.to_mlflow_name(prompt_id)
 
         # Build MLflow URI
@@ -412,6 +422,7 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
             Only lists prompts created/managed by Llama Stack
             (those with llama_stack_managed=true tag)
         """
+        self._setup_auth()
         try:
             # Search for Llama Stack managed prompts using metadata tags
             prompts = mlflow.genai.search_prompts(filter_string="tag.llama_stack_managed='true'")
@@ -494,13 +505,14 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
 
         mlflow_name = self.mapper.to_mlflow_name(prompt_id)
 
-        # Verify version exists
+        # Verify version exists (get_prompt calls _setup_auth internally)
         try:
             prompt = await self.get_prompt(prompt_id, version)
         except ValueError as e:
             raise ValueError(f"Cannot set default: {e}") from e
 
         # Set "default" alias in MLflow
+        self._setup_auth()
         try:
             mlflow.genai.set_prompt_alias(
                 name=mlflow_name,
@@ -527,6 +539,7 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
         Returns:
             True if this version is the default, False otherwise
         """
+        self._setup_auth()
         try:
             # Try to load with @default alias
             default_uri = f"prompts:/{mlflow_name}@default"
