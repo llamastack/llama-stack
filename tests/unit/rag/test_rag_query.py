@@ -8,21 +8,26 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from llama_stack.providers.inline.tool_runtime.rag.config import RagToolRuntimeConfig
 from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRuntimeImpl
 from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, RAGQueryConfig
 
 
 class TestRagQuery:
     async def test_query_raises_on_empty_vector_store_ids(self):
+        config = RagToolRuntimeConfig()
         rag_tool = MemoryToolRuntimeImpl(
-            config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
+            config=config, vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         with pytest.raises(ValueError):
             await rag_tool.query(content=MagicMock(), vector_store_ids=[])
 
     async def test_query_chunk_metadata_handling(self):
+        # Create config with default templates
+        config = RagToolRuntimeConfig()
+
         rag_tool = MemoryToolRuntimeImpl(
-            config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
+            config=config, vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         content = "test query content"
         vector_store_ids = ["db1"]
@@ -33,9 +38,8 @@ class TestRagQuery:
             source="test_source",
             metadata_token_count=5,
         )
-        interleaved_content = MagicMock()
         chunk = Chunk(
-            content=interleaved_content,
+            content="This is test chunk content from document 1",
             chunk_id="chunk1",
             metadata={
                 "key1": "value1",
@@ -78,8 +82,11 @@ class TestRagQuery:
             RAGQueryConfig(mode="wrong_mode")
 
     async def test_query_adds_vector_store_id_to_chunk_metadata(self):
+        # Create config with default templates
+        config = RagToolRuntimeConfig()
+
         rag_tool = MemoryToolRuntimeImpl(
-            config=MagicMock(),
+            config=config,
             vector_io_api=MagicMock(),
             inference_api=MagicMock(),
             files_api=MagicMock(),

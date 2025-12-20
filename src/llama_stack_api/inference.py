@@ -556,6 +556,81 @@ register_schema(OpenAIResponseFormatParam, name="OpenAIResponseFormatParam")
 
 
 @json_schema_type
+class FunctionToolConfig(BaseModel):
+    name: str
+
+
+@json_schema_type
+class OpenAIChatCompletionToolChoiceFunctionTool(BaseModel):
+    """Function tool choice for OpenAI-compatible chat completion requests.
+
+    :param type: Must be "function" to indicate function tool choice
+    :param function: The function tool configuration
+    """
+
+    type: Literal["function"] = "function"
+    function: FunctionToolConfig
+
+    def __init__(self, name: str):
+        super().__init__(type="function", function=FunctionToolConfig(name=name))
+
+
+@json_schema_type
+class CustomToolConfig(BaseModel):
+    """Custom tool configuration for OpenAI-compatible chat completion requests.
+
+    :param name: Name of the custom tool
+    """
+
+    name: str
+
+
+@json_schema_type
+class OpenAIChatCompletionToolChoiceCustomTool(BaseModel):
+    """Custom tool choice for OpenAI-compatible chat completion requests.
+
+    :param type: Must be "custom" to indicate custom tool choice
+    """
+
+    type: Literal["custom"] = "custom"
+    custom: CustomToolConfig
+
+    def __init__(self, name: str):
+        super().__init__(type="custom", custom=CustomToolConfig(name=name))
+
+
+@json_schema_type
+class AllowedToolsConfig(BaseModel):
+    tools: list[dict[str, Any]]
+    mode: Literal["auto", "required"]
+
+
+@json_schema_type
+class OpenAIChatCompletionToolChoiceAllowedTools(BaseModel):
+    """Allowed tools response format for OpenAI-compatible chat completion requests.
+
+    :param type: Must be "allowed_tools" to indicate allowed tools response format
+    """
+
+    type: Literal["allowed_tools"] = "allowed_tools"
+    allowed_tools: AllowedToolsConfig
+
+    def __init__(self, tools: list[dict[str, Any]], mode: Literal["auto", "required"]):
+        super().__init__(type="allowed_tools", allowed_tools=AllowedToolsConfig(tools=tools, mode=mode))
+
+
+# Define the object-level union with discriminator
+OpenAIChatCompletionToolChoice = Annotated[
+    OpenAIChatCompletionToolChoiceAllowedTools
+    | OpenAIChatCompletionToolChoiceFunctionTool
+    | OpenAIChatCompletionToolChoiceCustomTool,
+    Field(discriminator="type"),
+]
+
+register_schema(OpenAIChatCompletionToolChoice, name="OpenAIChatCompletionToolChoice")
+
+
+@json_schema_type
 class OpenAITopLogProb(BaseModel):
     """The top log probability for a token from an OpenAI-compatible chat completion response.
 
@@ -1020,11 +1095,11 @@ class InferenceProvider(Protocol):
     async def openai_completion(
         self,
         params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         """Create completion.
 
         Generate an OpenAI-compatible completion for the given prompt using the specified model.
-        :returns: An OpenAICompletion.
+        :returns: An OpenAICompletion. When streaming, returns Server-Sent Events (SSE) with OpenAICompletion chunks.
         """
         ...
 
@@ -1036,7 +1111,7 @@ class InferenceProvider(Protocol):
         """Create chat completions.
 
         Generate an OpenAI-compatible chat completion for the given messages using the specified model.
-        :returns: An OpenAIChatCompletion.
+        :returns: An OpenAIChatCompletion. When streaming, returns Server-Sent Events (SSE) with OpenAIChatCompletionChunk objects.
         """
         ...
 

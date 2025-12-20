@@ -30,6 +30,9 @@ class VLLMInferenceAdapter(OpenAIMixin):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    # vLLM does not support the stream_options parameter
+    supports_stream_options: bool = False
+
     provider_data_api_key_field: str = "vllm_api_token"
 
     def get_api_key(self) -> str | None:
