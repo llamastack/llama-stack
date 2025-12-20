@@ -255,6 +255,8 @@ class StreamingResponseOrchestrator:
                     True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
                 )
 
+                top_logprobs_param = self.top_logprobs if logprobs is True else None
+
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
@@ -267,7 +269,7 @@ class StreamingResponseOrchestrator:
                         "include_usage": True,
                     },
                     logprobs=logprobs,
-                    top_logprobs=self.top_logprobs,
+                    top_logprobs=top_logprobs_param,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
