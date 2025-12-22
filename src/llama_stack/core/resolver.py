@@ -24,6 +24,7 @@ from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
     LLAMA_STACK_API_V1ALPHA,
+    Admin,
     Agents,
     Api,
     Batches,
@@ -80,6 +81,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Dictionary mapping API types to their protocol classes
     """
     protocols = {
+        Api.admin: Admin,
         Api.providers: ProvidersAPI,
         Api.agents: Agents,
         Api.inference: Inference,
