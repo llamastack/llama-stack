@@ -25,20 +25,11 @@ from .models import (
     RunEvalRequest,
 )
 
-# Automatically generate dependency functions from Pydantic models
-# This ensures the models are the single source of truth for descriptions
 get_benchmark_id_request = create_path_dependency(BenchmarkIdRequest)
 
 
 def create_router(impl: Eval) -> APIRouter:
-    """Create a FastAPI router for the Eval API.
-
-    Args:
-        impl: The Eval implementation instance
-
-    Returns:
-        APIRouter configured for the Eval API
-    """
+    """Create a FastAPI router for the Eval API."""
     router = APIRouter(
         prefix=f"/{LLAMA_STACK_API_V1ALPHA}",
         tags=["Eval"],
@@ -58,7 +49,6 @@ def create_router(impl: Eval) -> APIRouter:
         benchmark_id_request: Annotated[BenchmarkIdRequest, Depends(get_benchmark_id_request)],
         body_request: Annotated[RunEvalBodyRequest, Body(...)],
     ) -> Job:
-        # Combine path and body into full request
         request = RunEvalRequest(
             benchmark_id=benchmark_id_request.benchmark_id,
             benchmark_config=body_request.benchmark_config,
@@ -78,7 +68,6 @@ def create_router(impl: Eval) -> APIRouter:
         benchmark_id_request: Annotated[BenchmarkIdRequest, Depends(get_benchmark_id_request)],
         body_request: Annotated[EvaluateRowsBodyRequest, Body(...)],
     ) -> EvaluateResponse:
-        # Combine path and body into full request
         request = EvaluateRowsRequest(
             benchmark_id=benchmark_id_request.benchmark_id,
             input_rows=body_request.input_rows,
