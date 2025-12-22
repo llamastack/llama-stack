@@ -186,6 +186,7 @@ def router_with_real_routing_table(mock_provider):
                     Chunk(
                         content="test",
                         chunk_id="c1",
+                        embedding=[],
                         chunk_metadata=ChunkMetadata(
                             document_id="test_doc",
                             chunk_id="c1",
@@ -328,6 +329,7 @@ async def test_operations_fail_before_provider_when_unauthorized(router_with_rea
                     Chunk(
                         content="test",
                         chunk_id="c1",
+                        embedding=[],
                         chunk_metadata=ChunkMetadata(
                             document_id="test_doc",
                             chunk_id="c1",

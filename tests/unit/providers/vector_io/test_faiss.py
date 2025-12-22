@@ -58,6 +58,7 @@ def sample_chunks():
             content="MOCK text content 1",
             chunk_id=chunk_id_1,
             metadata={"document_id": "mock-doc-1"},
+            embedding=[],
             chunk_metadata=ChunkMetadata(
                 chunk_id=chunk_id_1,
                 document_id="mock-doc-1",
@@ -72,6 +73,7 @@ def sample_chunks():
             content="MOCK text content 1",
             chunk_id=chunk_id_2,
             metadata={"document_id": "mock-doc-2"},
+            embedding=[],
             chunk_metadata=ChunkMetadata(
                 chunk_id=chunk_id_2,
                 document_id="mock-doc-2",

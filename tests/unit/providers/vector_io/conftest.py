@@ -54,6 +54,7 @@ def sample_chunks():
             content=f"Sentence {i} from document {j}",
             chunk_id=generate_chunk_id(f"document-{j}", f"Sentence {i} from document {j}"),
             metadata={"document_id": f"document-{j}"},
+            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id=f"document-{j}",
                 chunk_id=generate_chunk_id(f"document-{j}", f"Sentence {i} from document {j}"),
@@ -73,6 +74,7 @@ def sample_chunks():
                 content=f"Sentence {i} from document {j + k}",
                 chunk_id=f"document-{j}-chunk-{i}",
                 metadata={"document_id": f"document-{j + k}"},
+                embedding=[],
                 chunk_metadata=ChunkMetadata(
                     document_id=f"document-{j + k}",
                     chunk_id=f"document-{j}-chunk-{i}",
@@ -100,6 +102,7 @@ def sample_chunks_with_metadata():
             content=f"Sentence {i} from document {j}",
             chunk_id=f"document-{j}-chunk-{i}",
             metadata={"document_id": f"document-{j}"},
+            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id=f"document-{j}",
                 chunk_id=f"document-{j}-chunk-{i}",

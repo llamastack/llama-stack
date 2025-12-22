@@ -6538,17 +6538,16 @@ components:
           title: Metadata
           type: object
         embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-          nullable: true
+          items:
+            type: number
+          title: Embedding
+          type: array
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
       required:
       - content
       - chunk_id
+      - embedding
       - chunk_metadata
       title: Chunk
       type: object
@@ -8715,17 +8714,17 @@ components:
           type: object
           title: Metadata
         embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
+          items:
+            type: number
+          type: array
+          title: Embedding
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
       type: object
       required:
       - content
       - chunk_id
+      - embedding
       - chunk_metadata
       title: Chunk
       description: A chunk of content that can be inserted into a vector database.
@@ -8768,17 +8767,17 @@ components:
           type: object
           title: Metadata
         embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
+          items:
+            type: number
+          type: array
+          title: Embedding
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
       type: object
       required:
       - content
       - chunk_id
+      - embedding
       - chunk_metadata
       title: Chunk
       description: A chunk of content that can be inserted into a vector database.

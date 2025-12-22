@@ -67,10 +67,11 @@ class TestChunk:
         assert chunk.metadata == {"key": "value"}
         assert chunk.embedding == [0.1, 0.2, 0.3]
 
-        chunk_no_embedding = Chunk(
+        chunk_empty_embedding = Chunk(
             content="Example chunk content",
             chunk_id=generate_chunk_id("test-doc", "Example chunk content"),
             metadata={"key": "value"},
+            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id="test-doc",
                 chunk_id=generate_chunk_id("test-doc", "Example chunk content"),
@@ -81,7 +82,7 @@ class TestChunk:
                 content_token_count=3,
             ),
         )
-        assert chunk_no_embedding.embedding is None
+        assert chunk_empty_embedding.embedding == []
 
 
 class TestValidateEmbedding:
@@ -238,7 +239,7 @@ class TestVectorStoreWithIndex:
             Chunk(
                 content="Test 1",
                 chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                embedding=None,
+                embedding=[],
                 metadata={},
                 chunk_metadata=ChunkMetadata(
                     document_id="test-doc",
@@ -252,8 +253,8 @@ class TestVectorStoreWithIndex:
             ),
         ]
 
-        # Should raise ValueError because embeddings are missing
-        with pytest.raises(ValueError, match="Chunk at index 0 is missing embedding"):
+        # Should raise ValueError because empty embedding has wrong dimension
+        with pytest.raises(ValueError, match="Embedding at index 0 has dimension 0, expected 3"):
             await vector_store_with_index.insert_chunks(chunks)
 
         # Verify inference API was never called since it should fail before that
@@ -339,7 +340,7 @@ class TestVectorStoreWithIndex:
                     Chunk(
                         content="Test 1",
                         chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                        embedding=None,
+                        embedding=[],
                         metadata={},
                         chunk_metadata=ChunkMetadata(
                             document_id="test-doc",
@@ -372,21 +373,23 @@ class TestVectorStoreWithIndex:
         # Verify Chunk raises ValueError for invalid embedding element type in insert_chunks (i.e., Chunk errors before insert_chunks is called)
         with pytest.raises(ValueError, match=" Input should be a valid number, unable to parse string as a number "):
             await vector_store_with_index.insert_chunks(
-                Chunk(
-                    content="Test 1",
-                    chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                    embedding=[0.1, "string", 0.3],
-                    metadata={},
-                    chunk_metadata=ChunkMetadata(
-                        document_id="test-doc",
+                [
+                    Chunk(
+                        content="Test 1",
                         chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                        created_timestamp=1234567890,
-                        updated_timestamp=1234567890,
-                        chunk_embedding_model="test-model",
-                        chunk_embedding_dimension=3,
-                        content_token_count=2,
-                    ),
-                )
+                        embedding=[0.1, "string", 0.3],
+                        metadata={},
+                        chunk_metadata=ChunkMetadata(
+                            document_id="test-doc",
+                            chunk_id=generate_chunk_id("test-doc", "Test 1"),
+                            created_timestamp=1234567890,
+                            updated_timestamp=1234567890,
+                            chunk_embedding_model="test-model",
+                            chunk_embedding_dimension=3,
+                            content_token_count=2,
+                        ),
+                    )
+                ]
             )
 
         chunks_wrong_dim = [
@@ -427,7 +430,7 @@ class TestVectorStoreWithIndex:
             Chunk(
                 content="Test 1",
                 chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                embedding=None,  # Missing embedding
+                embedding=[],
                 metadata={},
                 chunk_metadata=ChunkMetadata(
                     document_id="test-doc",
@@ -457,7 +460,7 @@ class TestVectorStoreWithIndex:
         ]
 
         # Should fail immediately on the first chunk without embeddings
-        with pytest.raises(ValueError, match="Chunk at index 0 is missing embedding"):
+        with pytest.raises(ValueError, match="Embedding at index 0 has dimension 0, expected 3"):
             await vector_store_with_index.insert_chunks(chunks)
 
         # Verify no inference API calls were made
