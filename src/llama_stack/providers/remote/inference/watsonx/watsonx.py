@@ -13,8 +13,6 @@ import requests
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
-from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
-from llama_stack.providers.utils.inference.stream_utils import wrap_async_stream
 from llama_stack_api import (
     Model,
     ModelType,
@@ -22,7 +20,6 @@ from llama_stack_api import (
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIChatCompletionUsage,
-    OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
@@ -48,57 +45,25 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
             openai_compat_api_base=self.get_base_url(),
         )
 
+    def _litellm_extra_request_params(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody | OpenAICompletionRequestWithExtraBody,
+    ) -> dict[str, Any]:
+        # These are watsonx-specific parameters used by LiteLLM.
+        return {"timeout": self.config.timeout, "project_id": self.config.project_id}
+
     async def openai_chat_completion(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         """
-        Override parent method to add timeout and inject usage object when missing.
+        Override parent method to inject usage object when missing.
+
         This works around a LiteLLM defect where usage block is sometimes dropped.
+        Note: request parameter construction (including telemetry-driven stream_options injection)
+        is handled by LiteLLMOpenAIMixin via _litellm_extra_request_params().
         """
-
-        # Add usage tracking for streaming when telemetry is active
-        stream_options = params.stream_options
-        if params.stream:
-            if stream_options is None:
-                stream_options = {"include_usage": True}
-            elif "include_usage" not in stream_options:
-                stream_options = {**stream_options, "include_usage": True}
-
-        model_obj = await self.model_store.get_model(params.model)
-
-        request_params = await prepare_openai_completion_params(
-            model=self.get_litellm_model_name(model_obj.provider_resource_id),
-            messages=params.messages,
-            frequency_penalty=params.frequency_penalty,
-            function_call=params.function_call,
-            functions=params.functions,
-            logit_bias=params.logit_bias,
-            logprobs=params.logprobs,
-            max_completion_tokens=params.max_completion_tokens,
-            max_tokens=params.max_tokens,
-            n=params.n,
-            parallel_tool_calls=params.parallel_tool_calls,
-            presence_penalty=params.presence_penalty,
-            response_format=params.response_format,
-            seed=params.seed,
-            stop=params.stop,
-            stream=params.stream,
-            stream_options=stream_options,
-            temperature=params.temperature,
-            tool_choice=params.tool_choice,
-            tools=params.tools,
-            top_logprobs=params.top_logprobs,
-            top_p=params.top_p,
-            user=params.user,
-            api_key=self.get_api_key(),
-            api_base=self.api_base,
-            # These are watsonx-specific parameters
-            timeout=self.config.timeout,
-            project_id=self.config.project_id,
-        )
-
-        result = await litellm.acompletion(**request_params)
+        result = await super().openai_chat_completion(params)
 
         # If not streaming, check and inject usage if missing
         if not params.stream:
@@ -174,49 +139,6 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         except Exception as e:
             logger.error(f"Error normalizing stream: {e}", exc_info=True)
             raise
-
-    async def openai_completion(
-        self,
-        params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
-        """
-        Override parent method to add watsonx-specific parameters.
-        """
-        from llama_stack.providers.utils.inference.openai_compat import prepare_openai_completion_params
-
-        model_obj = await self.model_store.get_model(params.model)
-
-        request_params = await prepare_openai_completion_params(
-            model=self.get_litellm_model_name(model_obj.provider_resource_id),
-            prompt=params.prompt,
-            best_of=params.best_of,
-            echo=params.echo,
-            frequency_penalty=params.frequency_penalty,
-            logit_bias=params.logit_bias,
-            logprobs=params.logprobs,
-            max_tokens=params.max_tokens,
-            n=params.n,
-            presence_penalty=params.presence_penalty,
-            seed=params.seed,
-            stop=params.stop,
-            stream=params.stream,
-            stream_options=params.stream_options,
-            temperature=params.temperature,
-            top_p=params.top_p,
-            user=params.user,
-            suffix=params.suffix,
-            api_key=self.get_api_key(),
-            api_base=self.api_base,
-            # These are watsonx-specific parameters
-            timeout=self.config.timeout,
-            project_id=self.config.project_id,
-        )
-        result = await litellm.atext_completion(**request_params)
-
-        if params.stream:
-            return wrap_async_stream(result)  # type: ignore[arg-type]  # LiteLLM streaming types
-
-        return result  # type: ignore[return-value]  # external lib lacks type stubs
 
     async def openai_embeddings(
         self,

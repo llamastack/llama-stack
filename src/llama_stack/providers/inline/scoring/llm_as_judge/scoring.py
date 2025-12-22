@@ -5,11 +5,6 @@
 # the root directory of this source tree.
 from typing import Any
 
-from llama_stack.core.datatypes import Api
-from llama_stack.providers.utils.common.data_schema_validator import (
-    get_valid_schemas,
-    validate_dataset_schema,
-)
 from llama_stack_api import (
     DatasetIO,
     Datasets,
@@ -73,9 +68,6 @@ class LlmAsJudgeScoringImpl(
         scoring_functions: dict[str, ScoringFnParams | None] = None,
         save_results_dataset: bool = False,
     ) -> ScoreBatchResponse:
-        dataset_def = await self.datasets_api.get_dataset(dataset_id=dataset_id)
-        validate_dataset_schema(dataset_def.dataset_schema, get_valid_schemas(Api.scoring.value))
-
         all_rows = await self.datasetio_api.iterrows(
             dataset_id=dataset_id,
             limit=-1,

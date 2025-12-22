@@ -7,6 +7,7 @@
 import base64
 import struct
 from collections.abc import AsyncIterator
+from typing import Any
 
 import litellm
 
@@ -14,6 +15,7 @@ from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
 from llama_stack.providers.utils.inference.openai_compat import (
+    get_stream_options_for_telemetry,
     prepare_openai_completion_params,
 )
 from llama_stack.providers.utils.inference.stream_utils import wrap_async_stream
@@ -50,6 +52,7 @@ class LiteLLMOpenAIMixin(
         openai_compat_api_base: str | None = None,
         download_images: bool = False,
         json_schema_strict: bool = True,
+        supports_stream_options: bool = True,
     ):
         """
         Initialize the LiteLLMOpenAIMixin.
@@ -61,6 +64,7 @@ class LiteLLMOpenAIMixin(
         :param openai_compat_api_base: The base URL for OpenAI compatibility, or None if not using OpenAI compatibility.
         :param download_images: Whether to download images and convert to base64 for message conversion.
         :param json_schema_strict: Whether to use strict mode for JSON schema validation.
+        :param supports_stream_options: Whether the provider supports stream_options parameter.
         """
         ModelRegistryHelper.__init__(self, model_entries=model_entries)
 
@@ -70,6 +74,7 @@ class LiteLLMOpenAIMixin(
         self.api_base = openai_compat_api_base
         self.download_images = download_images
         self.json_schema_strict = json_schema_strict
+        self.supports_stream_options = supports_stream_options
 
         if openai_compat_api_base:
             self.is_openai_compat = True
@@ -180,6 +185,11 @@ class LiteLLMOpenAIMixin(
         self,
         params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
+        # Inject stream_options when streaming and telemetry is active
+        stream_options = get_stream_options_for_telemetry(
+            params.stream_options, params.stream, self.supports_stream_options
+        )
+
         if not self.model_store:
             raise ValueError("Model store is not initialized")
 
@@ -202,13 +212,14 @@ class LiteLLMOpenAIMixin(
             seed=params.seed,
             stop=params.stop,
             stream=params.stream,
-            stream_options=params.stream_options,
+            stream_options=stream_options,
             temperature=params.temperature,
             top_p=params.top_p,
             user=params.user,
             suffix=params.suffix,
             api_key=self.get_api_key(),
             api_base=self.api_base,
+            **self._litellm_extra_request_params(params),
         )
         # LiteLLM returns compatible type but mypy can't verify external library
         result = await litellm.atext_completion(**request_params)
@@ -222,14 +233,10 @@ class LiteLLMOpenAIMixin(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        # Add usage tracking for streaming when telemetry is active
-
-        stream_options = params.stream_options
-        if params.stream:
-            if stream_options is None:
-                stream_options = {"include_usage": True}
-            elif "include_usage" not in stream_options:
-                stream_options = {**stream_options, "include_usage": True}
+        # Inject stream_options when streaming and telemetry is active
+        stream_options = get_stream_options_for_telemetry(
+            params.stream_options, params.stream, self.supports_stream_options
+        )
 
         if not self.model_store:
             raise ValueError("Model store is not initialized")
@@ -265,6 +272,7 @@ class LiteLLMOpenAIMixin(
             user=params.user,
             api_key=self.get_api_key(),
             api_base=self.api_base,
+            **self._litellm_extra_request_params(params),
         )
         # LiteLLM returns compatible type but mypy can't verify external library
         result = await litellm.acompletion(**request_params)
@@ -287,6 +295,20 @@ class LiteLLMOpenAIMixin(
             return False
 
         return model in litellm.models_by_provider[self.litellm_provider_name]
+
+    def _litellm_extra_request_params(
+        self,
+        params: OpenAIChatCompletionRequestWithExtraBody | OpenAICompletionRequestWithExtraBody,
+    ) -> dict[str, Any]:
+        """
+        Provider hook for extra LiteLLM/OpenAI-compat request params.
+
+        This is intentionally a narrow hook so provider adapters (e.g. WatsonX)
+        can add provider-specific kwargs (timeouts, project IDs, etc.) while the
+        mixin remains the single source of truth for telemetry-driven
+        stream_options injection.
+        """
+        return {}
 
 
 def b64_encode_openai_embeddings_response(

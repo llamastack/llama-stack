@@ -24,6 +24,7 @@ from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
     LLAMA_STACK_API_V1ALPHA,
+    Admin,
     Agents,
     Api,
     Batches,
@@ -80,6 +81,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Dictionary mapping API types to their protocol classes
     """
     protocols = {
+        Api.admin: Admin,
         Api.providers: ProvidersAPI,
         Api.agents: Agents,
         Api.inference: Inference,
@@ -412,7 +414,9 @@ async def instantiate_provider(
         # Inject vector_stores_config for providers that need it (introspection-based)
         config_type = instantiate_class_type(provider_spec.config_class)
         if hasattr(config_type, "__fields__") and "vector_stores_config" in config_type.__fields__:
-            provider_config["vector_stores_config"] = run_config.vector_stores
+            # Only inject if vector_stores is provided, otherwise let default_factory handle it
+            if run_config.vector_stores is not None:
+                provider_config["vector_stores_config"] = run_config.vector_stores
 
         config = config_type(**provider_config)
         args = [config, deps]
