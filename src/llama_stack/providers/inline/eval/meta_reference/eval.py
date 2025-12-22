@@ -13,19 +13,23 @@ from llama_stack.providers.utils.common.data_schema_validator import ColumnName
 from llama_stack_api import (
     Agents,
     Benchmark,
-    BenchmarkConfig,
     BenchmarksProtocolPrivate,
     DatasetIO,
     Datasets,
     Eval,
     EvaluateResponse,
+    EvaluateRowsRequest,
     Inference,
     Job,
+    JobCancelRequest,
+    JobResultRequest,
     JobStatus,
+    JobStatusRequest,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletionRequestWithExtraBody,
     OpenAISystemMessageParam,
     OpenAIUserMessageParam,
+    RunEvalRequest,
     Scoring,
 )
 
@@ -90,10 +94,9 @@ class MetaReferenceEvalImpl(
 
     async def run_eval(
         self,
-        benchmark_id: str,
-        benchmark_config: BenchmarkConfig,
+        request: RunEvalRequest,
     ) -> Job:
-        task_def = self.benchmarks[benchmark_id]
+        task_def = self.benchmarks[request.benchmark_id]
         dataset_id = task_def.dataset_id
         scoring_functions = task_def.scoring_functions
 
@@ -102,14 +105,15 @@ class MetaReferenceEvalImpl(
 
         all_rows = await self.datasetio_api.iterrows(
             dataset_id=dataset_id,
-            limit=(-1 if benchmark_config.num_examples is None else benchmark_config.num_examples),
+            limit=(-1 if request.benchmark_config.num_examples is None else request.benchmark_config.num_examples),
         )
-        res = await self.evaluate_rows(
-            benchmark_id=benchmark_id,
+        eval_rows_request = EvaluateRowsRequest(
+            benchmark_id=request.benchmark_id,
             input_rows=all_rows.data,
             scoring_functions=scoring_functions,
-            benchmark_config=benchmark_config,
+            benchmark_config=request.benchmark_config,
         )
+        res = await self.evaluate_rows(eval_rows_request)
 
         # TODO: currently needs to wait for generation before returning
         # need job scheduler queue (ray/celery) w/ jobs api
@@ -118,9 +122,9 @@ class MetaReferenceEvalImpl(
         return Job(job_id=job_id, status=JobStatus.completed)
 
     async def _run_model_generation(
-        self, input_rows: list[dict[str, Any]], benchmark_config: BenchmarkConfig
+        self, input_rows: list[dict[str, Any]], request: EvaluateRowsRequest
     ) -> list[dict[str, Any]]:
-        candidate = benchmark_config.eval_candidate
+        candidate = request.benchmark_config.eval_candidate
         assert candidate.sampling_params.max_tokens is not None, "SamplingParams.max_tokens must be provided"
         sampling_params = {"max_tokens": candidate.sampling_params.max_tokens}
 
@@ -165,30 +169,27 @@ class MetaReferenceEvalImpl(
 
     async def evaluate_rows(
         self,
-        benchmark_id: str,
-        input_rows: list[dict[str, Any]],
-        scoring_functions: list[str],
-        benchmark_config: BenchmarkConfig,
+        request: EvaluateRowsRequest,
     ) -> EvaluateResponse:
-        candidate = benchmark_config.eval_candidate
+        candidate = request.benchmark_config.eval_candidate
         # Agent evaluation removed
         if candidate.type == "model":
-            generations = await self._run_model_generation(input_rows, benchmark_config)
+            generations = await self._run_model_generation(request.input_rows, request)
         else:
             raise ValueError(f"Invalid candidate type: {candidate.type}")
 
         # scoring with generated_answer
         score_input_rows = [
-            input_r | generated_r for input_r, generated_r in zip(input_rows, generations, strict=False)
+            input_r | generated_r for input_r, generated_r in zip(request.input_rows, generations, strict=False)
         ]
 
-        if benchmark_config.scoring_params is not None:
+        if request.benchmark_config.scoring_params is not None:
             scoring_functions_dict = {
-                scoring_fn_id: benchmark_config.scoring_params.get(scoring_fn_id, None)
-                for scoring_fn_id in scoring_functions
+                scoring_fn_id: request.benchmark_config.scoring_params.get(scoring_fn_id, None)
+                for scoring_fn_id in request.scoring_functions
             }
         else:
-            scoring_functions_dict = dict.fromkeys(scoring_functions)
+            scoring_functions_dict = dict.fromkeys(request.scoring_functions)
 
         score_response = await self.scoring_api.score(
             input_rows=score_input_rows, scoring_functions=scoring_functions_dict
@@ -196,19 +197,20 @@ class MetaReferenceEvalImpl(
 
         return EvaluateResponse(generations=generations, scores=score_response.results)
 
-    async def job_status(self, benchmark_id: str, job_id: str) -> Job:
-        if job_id in self.jobs:
-            return Job(job_id=job_id, status=JobStatus.completed)
+    async def job_status(self, request: JobStatusRequest) -> Job:
+        if request.job_id in self.jobs:
+            return Job(job_id=request.job_id, status=JobStatus.completed)
 
-        raise ValueError(f"Job {job_id} not found")
+        raise ValueError(f"Job {request.job_id} not found")
 
-    async def job_cancel(self, benchmark_id: str, job_id: str) -> None:
+    async def job_cancel(self, request: JobCancelRequest) -> None:
         raise NotImplementedError("Job cancel is not implemented yet")
 
-    async def job_result(self, benchmark_id: str, job_id: str) -> EvaluateResponse:
-        job = await self.job_status(benchmark_id, job_id)
+    async def job_result(self, request: JobResultRequest) -> EvaluateResponse:
+        job_status_request = JobStatusRequest(benchmark_id=request.benchmark_id, job_id=request.job_id)
+        job = await self.job_status(job_status_request)
         status = job.status
         if not status or status != JobStatus.completed:
             raise ValueError(f"Job is not completed, Status: {status.value}")
 
-        return self.jobs[job_id]
+        return self.jobs[request.job_id]
