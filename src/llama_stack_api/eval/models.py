@@ -16,17 +16,14 @@ from llama_stack_api.scoring_functions import ScoringFnParams
 
 @json_schema_type
 class ModelCandidate(BaseModel):
-    """A model candidate for evaluation.
-
-    :param model: The model ID to evaluate.
-    :param sampling_params: The sampling parameters for the model.
-    :param system_message: (Optional) The system message providing instructions or context to the model.
-    """
+    """A model candidate for evaluation."""
 
     type: Literal["model"] = "model"
-    model: str
-    sampling_params: SamplingParams
-    system_message: SystemMessage | None = None
+    model: str = Field(..., description="The model ID to evaluate", min_length=1)
+    sampling_params: SamplingParams = Field(..., description="The sampling parameters for the model")
+    system_message: SystemMessage | None = Field(
+        None, description="The system message providing instructions or context to the model"
+    )
 
 
 EvalCandidate = ModelCandidate
@@ -34,101 +31,98 @@ EvalCandidate = ModelCandidate
 
 @json_schema_type
 class BenchmarkConfig(BaseModel):
-    """A benchmark configuration for evaluation.
+    """A benchmark configuration for evaluation."""
 
-    :param eval_candidate: The candidate to evaluate.
-    :param scoring_params: Map between scoring function id and parameters for each scoring function you want to run
-    :param num_examples: (Optional) The number of examples to evaluate. If not provided, all examples in the dataset will be evaluated
-    """
-
-    eval_candidate: EvalCandidate
+    eval_candidate: EvalCandidate = Field(..., description="The candidate to evaluate")
     scoring_params: dict[str, ScoringFnParams] = Field(
-        description="Map between scoring function id and parameters for each scoring function you want to run",
         default_factory=dict,
+        description="Map between scoring function id and parameters for each scoring function you want to run",
     )
     num_examples: int | None = Field(
+        None,
         description="Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated",
-        default=None,
+        ge=1,
     )
     # we could optinally add any specific dataset config here
 
 
 @json_schema_type
 class EvaluateResponse(BaseModel):
-    """The response from an evaluation.
+    """The response from an evaluation."""
 
-    :param generations: The generations from the evaluation.
-    :param scores: The scores from the evaluation.
-    """
-
-    generations: list[dict[str, Any]]
-    # each key in the dict is a scoring function name
-    scores: dict[str, ScoringResult]
+    generations: list[dict[str, Any]] = Field(..., description="The generations from the evaluation")
+    scores: dict[str, ScoringResult] = Field(
+        ..., description="The scores from the evaluation. Each key in the dict is a scoring function name"
+    )
 
 
 @json_schema_type
 class BenchmarkIdRequest(BaseModel):
     """Request model containing benchmark_id path parameter."""
 
-    benchmark_id: str = Field(..., description="The ID of the benchmark.")
+    benchmark_id: str = Field(..., description="The ID of the benchmark", min_length=1)
 
 
 @json_schema_type
 class RunEvalRequest(BaseModel):
     """Request model for running an evaluation on a benchmark."""
 
-    benchmark_id: str = Field(..., description="The ID of the benchmark to run the evaluation on.")
-    benchmark_config: BenchmarkConfig = Field(..., description="The configuration for the benchmark.")
+    benchmark_id: str = Field(..., description="The ID of the benchmark to run the evaluation on", min_length=1)
+    benchmark_config: BenchmarkConfig = Field(..., description="The configuration for the benchmark")
 
 
 @json_schema_type
 class RunEvalBodyRequest(BaseModel):
     """Request body model for running an evaluation (without path parameter)."""
 
-    benchmark_config: BenchmarkConfig = Field(..., description="The configuration for the benchmark.")
+    benchmark_config: BenchmarkConfig = Field(..., description="The configuration for the benchmark")
 
 
 @json_schema_type
 class EvaluateRowsRequest(BaseModel):
     """Request model for evaluating a list of rows on a benchmark."""
 
-    benchmark_id: str = Field(..., description="The ID of the benchmark to run the evaluation on.")
-    input_rows: list[dict[str, Any]] = Field(..., description="The rows to evaluate.")
-    scoring_functions: list[str] = Field(..., description="The scoring functions to use for the evaluation.")
-    benchmark_config: BenchmarkConfig = Field(..., description="The configuration for the benchmark.")
+    benchmark_id: str = Field(..., description="The ID of the benchmark to run the evaluation on", min_length=1)
+    input_rows: list[dict[str, Any]] = Field(..., description="The rows to evaluate", min_length=1)
+    scoring_functions: list[str] = Field(
+        ..., description="The scoring functions to use for the evaluation", min_length=1
+    )
+    benchmark_config: BenchmarkConfig = Field(..., description="The configuration for the benchmark")
 
 
 @json_schema_type
 class EvaluateRowsBodyRequest(BaseModel):
     """Request body model for evaluating rows (without path parameter)."""
 
-    input_rows: list[dict[str, Any]] = Field(..., description="The rows to evaluate.")
-    scoring_functions: list[str] = Field(..., description="The scoring functions to use for the evaluation.")
-    benchmark_config: BenchmarkConfig = Field(..., description="The configuration for the benchmark.")
+    input_rows: list[dict[str, Any]] = Field(..., description="The rows to evaluate", min_length=1)
+    scoring_functions: list[str] = Field(
+        ..., description="The scoring functions to use for the evaluation", min_length=1
+    )
+    benchmark_config: BenchmarkConfig = Field(..., description="The configuration for the benchmark")
 
 
 @json_schema_type
 class JobStatusRequest(BaseModel):
     """Request model for getting the status of a job."""
 
-    benchmark_id: str = Field(..., description="The ID of the benchmark associated with the job.")
-    job_id: str = Field(..., description="The ID of the job to get the status of.")
+    benchmark_id: str = Field(..., description="The ID of the benchmark associated with the job", min_length=1)
+    job_id: str = Field(..., description="The ID of the job to get the status of", min_length=1)
 
 
 @json_schema_type
 class JobCancelRequest(BaseModel):
     """Request model for canceling a job."""
 
-    benchmark_id: str = Field(..., description="The ID of the benchmark associated with the job.")
-    job_id: str = Field(..., description="The ID of the job to cancel.")
+    benchmark_id: str = Field(..., description="The ID of the benchmark associated with the job", min_length=1)
+    job_id: str = Field(..., description="The ID of the job to cancel", min_length=1)
 
 
 @json_schema_type
 class JobResultRequest(BaseModel):
     """Request model for getting the result of a job."""
 
-    benchmark_id: str = Field(..., description="The ID of the benchmark associated with the job.")
-    job_id: str = Field(..., description="The ID of the job to get the result of.")
+    benchmark_id: str = Field(..., description="The ID of the benchmark associated with the job", min_length=1)
+    job_id: str = Field(..., description="The ID of the job to get the result of", min_length=1)
 
 
 __all__ = [

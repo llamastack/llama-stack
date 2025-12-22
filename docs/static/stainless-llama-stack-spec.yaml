@@ -3531,9 +3531,9 @@ paths:
         required: true
         schema:
           type: string
-          description: The ID of the benchmark.
+          description: The ID of the benchmark
           title: Benchmark Id
-        description: The ID of the benchmark.
+        description: The ID of the benchmark
       requestBody:
         required: true
         content:
@@ -3572,9 +3572,9 @@ paths:
         required: true
         schema:
           type: string
-          description: The ID of the benchmark.
+          description: The ID of the benchmark
           title: Benchmark Id
-        description: The ID of the benchmark.
+        description: The ID of the benchmark
       requestBody:
         required: true
         content:
@@ -10723,6 +10723,7 @@ components:
       properties:
         eval_candidate:
           $ref: '#/components/schemas/ModelCandidate'
+          description: The candidate to evaluate
         scoring_params:
           additionalProperties:
             oneOf:
@@ -10745,6 +10746,7 @@ components:
         num_examples:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated
       type: object
@@ -10771,14 +10773,18 @@ components:
           default: model
         model:
           type: string
+          minLength: 1
           title: Model
+          description: The model ID to evaluate
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
+          description: The sampling parameters for the model
         system_message:
           anyOf:
           - $ref: '#/components/schemas/SystemMessage'
             title: SystemMessage
           - type: 'null'
+          description: The system message providing instructions or context to the model
           title: SystemMessage
       type: object
       required:
@@ -10904,25 +10910,28 @@ components:
       description: Request model for evaluating a list of rows on a benchmark.
       properties:
         benchmark_id:
-          description: The ID of the benchmark to run the evaluation on.
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
           title: Benchmark Id
           type: string
         input_rows:
-          description: The rows to evaluate.
+          description: The rows to evaluate
           items:
             additionalProperties: true
             type: object
+          minItems: 1
           title: Input Rows
           type: array
         scoring_functions:
-          description: The scoring functions to use for the evaluation.
+          description: The scoring functions to use for the evaluation
           items:
             type: string
+          minItems: 1
           title: Scoring Functions
           type: array
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-          description: The configuration for the benchmark.
+          description: The configuration for the benchmark
       required:
       - benchmark_id
       - input_rows
@@ -10938,11 +10947,13 @@ components:
             type: object
           type: array
           title: Generations
+          description: The generations from the evaluation
         scores:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Scores
+          description: The scores from the evaluation. Each key in the dict is a scoring function name
       type: object
       required:
       - generations
@@ -10953,12 +10964,13 @@ components:
       description: Request model for running an evaluation on a benchmark.
       properties:
         benchmark_id:
-          description: The ID of the benchmark to run the evaluation on.
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
           title: Benchmark Id
           type: string
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-          description: The configuration for the benchmark.
+          description: The configuration for the benchmark
       required:
       - benchmark_id
       - benchmark_config
@@ -12064,17 +12076,19 @@ components:
             additionalProperties: true
             type: object
           type: array
+          minItems: 1
           title: Input Rows
-          description: The rows to evaluate.
+          description: The rows to evaluate
         scoring_functions:
           items:
             type: string
           type: array
+          minItems: 1
           title: Scoring Functions
-          description: The scoring functions to use for the evaluation.
+          description: The scoring functions to use for the evaluation
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-          description: The configuration for the benchmark.
+          description: The configuration for the benchmark
       type: object
       required:
       - input_rows
@@ -12757,7 +12771,7 @@ components:
       properties:
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-          description: The configuration for the benchmark.
+          description: The configuration for the benchmark
       type: object
       required:
       - benchmark_config
@@ -13874,7 +13888,8 @@ components:
       description: Request model containing benchmark_id path parameter.
       properties:
         benchmark_id:
-          description: The ID of the benchmark.
+          description: The ID of the benchmark
+          minLength: 1
           title: Benchmark Id
           type: string
       required:
@@ -13885,11 +13900,13 @@ components:
       description: Request model for getting the status of a job.
       properties:
         benchmark_id:
-          description: The ID of the benchmark associated with the job.
+          description: The ID of the benchmark associated with the job
+          minLength: 1
           title: Benchmark Id
           type: string
         job_id:
-          description: The ID of the job to get the status of.
+          description: The ID of the job to get the status of
+          minLength: 1
           title: Job Id
           type: string
       required:
@@ -13901,11 +13918,13 @@ components:
       description: Request model for canceling a job.
       properties:
         benchmark_id:
-          description: The ID of the benchmark associated with the job.
+          description: The ID of the benchmark associated with the job
+          minLength: 1
           title: Benchmark Id
           type: string
         job_id:
-          description: The ID of the job to cancel.
+          description: The ID of the job to cancel
+          minLength: 1
           title: Job Id
           type: string
       required:
@@ -13917,11 +13936,13 @@ components:
       description: Request model for getting the result of a job.
       properties:
         benchmark_id:
-          description: The ID of the benchmark associated with the job.
+          description: The ID of the benchmark associated with the job
+          minLength: 1
           title: Benchmark Id
           type: string
         job_id:
-          description: The ID of the job to get the result of.
+          description: The ID of the job to get the result of
+          minLength: 1
           title: Job Id
           type: string
       required:
