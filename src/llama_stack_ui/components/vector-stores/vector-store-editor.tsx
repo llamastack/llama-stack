@@ -86,7 +86,7 @@ export function VectorStoreEditor({
     };
 
     fetchModels();
-  }, [client]);
+  }, [client, formData.embedding_model]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,7 +139,7 @@ export function VectorStoreEditor({
                   <SelectValue placeholder="Select Embedding Model" />
                 </SelectTrigger>
                 <SelectContent>
-                  {embeddingModels.map((model, index) => (
+                  {embeddingModels.map(model => (
                     <SelectItem key={model.id} value={model.id}>
                       {model.id}
                     </SelectItem>

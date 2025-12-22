@@ -10,7 +10,7 @@
 # This script sets up Jaeger, OpenTelemetry Collector, Prometheus, and Grafana using Podman
 # For whoever is interested in testing the telemetry stack, you can run this script to set up the stack.
 #    export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-#    export TELEMETRY_SINKS=otel_trace,otel_metric
+#    export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 #    export OTEL_SERVICE_NAME=my-llama-app
 # Then run the distro server
 
@@ -158,7 +158,7 @@ echo "   OTEL Collector:   http://localhost:4318 (OTLP endpoint)"
 echo ""
 echo "🔧 Environment variables for Llama Stack:"
 echo "   export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318"
-echo "   export TELEMETRY_SINKS=otel_trace,otel_metric"
+echo "   export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf"
 echo "   export OTEL_SERVICE_NAME=my-llama-app"
 echo ""
 echo "📊 Next steps:"
