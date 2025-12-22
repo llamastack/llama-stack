@@ -59,7 +59,7 @@ class Chunk(BaseModel):
     :param content: The content of the chunk, which can be interleaved text, images, or other types.
     :param chunk_id: Unique identifier for the chunk. Must be provided explicitly.
     :param metadata: Metadata associated with the chunk that will be used in the model context during inference.
-    :param embedding: Optional embedding for the chunk. If not provided, it will be computed later.
+    :param embedding: Embedding for the chunk. Required for insertion into vector stores.
     :param chunk_metadata: Metadata for the chunk that will NOT be used in the context during inference.
         The `chunk_metadata` is required backend functionality.
     """
@@ -67,7 +67,7 @@ class Chunk(BaseModel):
     content: InterleavedContent
     chunk_id: str
     metadata: dict[str, Any] = Field(default_factory=dict)
-    embedding: list[float] | None = None
+    embedding: list[float]
     chunk_metadata: ChunkMetadata
 
     @property

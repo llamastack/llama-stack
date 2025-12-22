@@ -208,6 +208,7 @@ def make_overlapped_chunks(
                 content=chunk,
                 chunk_id=chunk_id,
                 metadata=chunk_metadata,
+                embedding=[],
                 chunk_metadata=backend_chunk_metadata,
             )
         )

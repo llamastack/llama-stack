@@ -235,6 +235,7 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
             content="has doc_id in metadata",
             chunk_id=generate_chunk_id("doc-1", "has doc_id in metadata"),
             metadata={"document_id": "doc-1"},
+            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id="doc-1",
                 chunk_id=generate_chunk_id("doc-1", "has doc_id in metadata"),
@@ -249,6 +250,7 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
             content="no doc_id anywhere",
             chunk_id=generate_chunk_id("unknown", "no doc_id anywhere"),
             metadata={"source": "test"},
+            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id=None,
                 chunk_id=generate_chunk_id("unknown", "no doc_id anywhere"),
@@ -263,6 +265,7 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
             content="doc_id in chunk_metadata",
             chunk_id=generate_chunk_id("doc-3", "doc_id in chunk_metadata"),
             metadata={},
+            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id="doc-3",
                 chunk_id=generate_chunk_id("doc-3", "doc_id in chunk_metadata"),
@@ -291,6 +294,7 @@ async def test_document_id_with_invalid_type_raises_error():
         content="test",
         chunk_id=chunk_id,
         metadata={"document_id": 12345},
+        embedding=[],
         chunk_metadata=ChunkMetadata(
             document_id=None,
             chunk_id=chunk_id,
@@ -315,6 +319,7 @@ async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter
     chunk = Chunk(
         content="c1",
         chunk_id=chunk_id,
+        embedding=[],
         chunk_metadata=ChunkMetadata(
             document_id="test",
             chunk_id=chunk_id,

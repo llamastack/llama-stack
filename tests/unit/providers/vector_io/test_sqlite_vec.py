@@ -445,6 +445,7 @@ async def test_query_chunks_hybrid_tie_breaking(
         content="identical",
         chunk_id=chunk1_id,
         metadata={"document_id": "docA"},
+        embedding=[],
         chunk_metadata=ChunkMetadata(
             document_id="docA",
             chunk_id=chunk1_id,
@@ -459,6 +460,7 @@ async def test_query_chunks_hybrid_tie_breaking(
         content="identical",
         chunk_id=chunk2_id,
         metadata={"document_id": "docB"},
+        embedding=[],
         chunk_metadata=ChunkMetadata(
             document_id="docB",
             chunk_id=chunk2_id,
