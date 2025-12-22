@@ -4,13 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""FastAPI router for the Eval API.
-
-This module defines the FastAPI router for the Eval API using standard
-FastAPI route decorators. The router is defined in the API package to keep
-all API-related code together.
-"""
-
 from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends
