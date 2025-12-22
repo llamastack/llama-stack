@@ -57,6 +57,7 @@ class Connector(CommonConnectorFields):
 
     model_config = {"populate_by_name": True}
     source: ConnectorSource = Field(
+        exclude=True,
         default=ConnectorSource.config,
         description="How the connector was registered: 'config' (from run.yaml) or 'api' (via API call)",
     )

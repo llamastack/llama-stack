@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import json
 from typing import cast
 
 from pydantic import BaseModel
@@ -86,10 +87,26 @@ class ConnectorServiceImpl(Connectors):
             server_description=server_description,
         )
 
-        # Upsert: always write (idempotent for boot-time registration)
-        if await self.kvstore.get(self._get_key(connector_id)):
-            logger.debug(f"Found existing connector: {connector_id}, overwritting it")
-        await self.kvstore.set(self._get_key(connector_id), connector.model_dump_json())
+        key = self._get_key(connector_id)
+        existing_connector_json = await self.kvstore.get(key)
+
+        if existing_connector_json:
+            existing_connector = Connector.model_validate_json(existing_connector_json)
+
+            # Only overwrite if the connector is an exact match; otherwise log and keep existing.
+            if existing_connector.model_dump() != connector.model_dump():
+                logger.info(
+                    "Connector %s already exists with different configuration; skipping overwrite",
+                    connector_id,
+                )
+                return existing_connector
+
+            logger.debug("Connector %s already exists and matches; overwriting with same value", connector_id)
+
+        # Persist full connector, including source (Field is excluded from schema/dumps by default).
+        connector_payload = connector.model_dump()
+        connector_payload["source"] = connector.source
+        await self.kvstore.set(key, json.dumps(connector_payload))
 
         return connector
 
