@@ -412,7 +412,9 @@ async def instantiate_provider(
         # Inject vector_stores_config for providers that need it (introspection-based)
         config_type = instantiate_class_type(provider_spec.config_class)
         if hasattr(config_type, "__fields__") and "vector_stores_config" in config_type.__fields__:
-            provider_config["vector_stores_config"] = run_config.vector_stores
+            # Only inject if vector_stores is provided, otherwise let default_factory handle it
+            if run_config.vector_stores is not None:
+                provider_config["vector_stores_config"] = run_config.vector_stores
 
         config = config_type(**provider_config)
         args = [config, deps]
