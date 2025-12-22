@@ -248,30 +248,28 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         return model_obj.provider_resource_id
 
     async def _maybe_overwrite_id(self, resp: Any, stream: bool | None) -> Any:
-        if not self.overwrite_completion_id:
-            return resp
-
-        new_id = f"cltsd-{uuid.uuid4()}"
         if stream:
+            new_id = f"cltsd-{uuid.uuid4()}" if self.overwrite_completion_id else None
 
             async def _gen():
                 async for chunk in resp:
-                    chunk.id = new_id
+                    if new_id:
+                        chunk.id = new_id
                     yield chunk
 
             return _gen()
         else:
-            resp.id = new_id
+            if self.overwrite_completion_id:
+                resp.id = f"cltsd-{uuid.uuid4()}"
             return resp
 
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         """
         Direct OpenAI completion API call.
         """
-        # TODO: fix openai_completion to return type compatible with OpenAI's API response
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
 

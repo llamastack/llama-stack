@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+
 import importlib
 import importlib.metadata
 import inspect
@@ -28,6 +29,7 @@ from llama_stack_api import (
     Batches,
     Benchmarks,
     BenchmarksProtocolPrivate,
+    Connectors,
     Conversations,
     DatasetIO,
     Datasets,
@@ -102,6 +104,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.prompts: Prompts,
         Api.conversations: Conversations,
         Api.file_processors: FileProcessors,
+        Api.connectors: Connectors,
     }
 
     if external_apis:
@@ -406,13 +409,17 @@ async def instantiate_provider(
         args = [provider_spec.api, inner_impls, deps, dist_registry, policy]
     else:
         method = "get_provider_impl"
+        provider_config = provider.config.copy()
 
+        # Inject vector_stores_config for providers that need it (introspection-based)
         config_type = instantiate_class_type(provider_spec.config_class)
-        config = config_type(**provider.config)
+        if hasattr(config_type, "__fields__") and "vector_stores_config" in config_type.__fields__:
+            provider_config["vector_stores_config"] = run_config.vector_stores
+
+        config = config_type(**provider_config)
         args = [config, deps]
         if "policy" in inspect.signature(getattr(module, method)).parameters:
             args.append(policy)
-
     fn = getattr(module, method)
     impl = await fn(*args)
     impl.__provider_id__ = provider.provider_id
