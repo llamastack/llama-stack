@@ -8768,10 +8768,6 @@ components:
           - type: string
           - type: 'null'
           description: Label of the server
-        source:
-          $ref: '#/components/schemas/ConnectorSource'
-          description: "How the connector was registered: 'config' (from run.yaml) or 'api' (via API call)"
-          default: config
         server_name:
           anyOf:
           - type: string
