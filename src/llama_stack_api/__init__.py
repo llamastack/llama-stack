@@ -124,7 +124,7 @@ from .datatypes import (
     VectorStoresProtocolPrivate,
 )
 from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
-from .file_processors import FileProcessors, ProcessedContent, ProcessFileRequest
+from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
     ExpiresAfter,
     Files,
@@ -747,8 +747,7 @@ __all__ = [
     "ParamType",
     "parse_type",
     "PostTraining",
-    "ProcessedContent",
-    "ProcessFileRequest",
+    "ProcessFileResponse",
     "PostTrainingMetric",
     "PostTrainingJob",
     "PostTrainingJobArtifactsResponse",
