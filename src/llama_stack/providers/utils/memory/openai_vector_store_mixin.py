@@ -460,6 +460,11 @@ class OpenAIVectorStoreMixin(ABC):
             metadata["provider_id"] = provider_id
         if provider_vector_store_id:
             metadata["provider_vector_store_id"] = provider_vector_store_id
+
+        # Add embedding configuration to metadata for file processing
+        metadata["embedding_model"] = embedding_model
+        metadata["embedding_dimension"] = str(embedding_dimension)
+
         store_info["metadata"] = metadata
 
         # Save to persistent storage (provider-specific)
