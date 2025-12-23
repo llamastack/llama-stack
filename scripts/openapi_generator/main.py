@@ -92,6 +92,7 @@ def generate_openapi_spec(output_dir: str) -> dict[str, Any]:
 
     # Apply duplicate union extraction to combined schema (used by Stainless)
     combined_schema = schema_transforms._extract_duplicate_union_types(combined_schema)
+    combined_schema = schema_transforms._dedupe_create_response_request_input_union_for_stainless(combined_schema)
 
     base_description = (
         "This is the specification of the Llama Stack that provides\n"

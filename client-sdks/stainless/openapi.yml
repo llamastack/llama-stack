@@ -12036,12 +12036,10 @@ components:
                 title: OpenAIResponseInputFunctionToolCallOutput
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
                 title: OpenAIResponseMCPApprovalResponse
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
+              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse
             type: array
-            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
-          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse]
+          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse]
           description: Input message(s) to create the response.
         model:
           type: string
