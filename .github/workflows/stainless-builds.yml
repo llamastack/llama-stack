@@ -4,7 +4,7 @@ run-name: Build Stainless SDK from OpenAPI spec changes
 # This workflow uses pull_request_target, which allows it to run on pull requests
 # from forks with access to secrets. This is safe because the workflow definition
 # comes from the base branch (trusted), and the action only reads OpenAPI spec
-# files without executing any code from the PR.
+# files without executing any code from the PR. 
 
 on:
   pull_request_target:
