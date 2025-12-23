@@ -37,7 +37,17 @@ from .admin import (
 )
 
 # Import all public API symbols
-from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
+from .agents import (
+    Agents,
+    CreateResponseRequest,
+    DeleteResponseRequest,
+    ListResponseInputItemsRequest,
+    ListResponsesRequest,
+    ResponseGuardrail,
+    ResponseGuardrailSpec,
+    ResponseItemInclude,
+    RetrieveResponseRequest,
+)
 from .batches import (
     Batches,
     BatchObject,
@@ -492,6 +502,12 @@ __all__ = [
     # API Symbols
     "Agents",
     "AggregationFunctionType",
+    # Agents Request Models
+    "CreateResponseRequest",
+    "DeleteResponseRequest",
+    "ListResponseInputItemsRequest",
+    "ListResponsesRequest",
+    "RetrieveResponseRequest",
     "AlgorithmConfig",
     "AllowedToolsFilter",
     "Api",
