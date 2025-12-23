@@ -28,6 +28,9 @@ class OllamaInferenceAdapter(OpenAIMixin):
     # automatically set by the resolver when instantiating the provider
     __provider_id__: str
 
+    # Ollama does not support the stream_options parameter
+    supports_stream_options: bool = False
+
     embedding_model_metadata: dict[str, dict[str, int]] = {
         "all-minilm:l6-v2": {
             "embedding_dimension": 384,
