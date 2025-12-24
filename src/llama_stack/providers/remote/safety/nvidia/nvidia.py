@@ -17,6 +17,7 @@ from llama_stack_api import (
     SafetyViolation,
     Shield,
     ShieldsProtocolPrivate,
+    ShieldStore,
     ViolationLevel,
 )
 
@@ -25,7 +26,28 @@ from .config import NVIDIASafetyConfig
 logger = get_logger(name=__name__, category="safety::nvidia")
 
 
+def _extract_text_content(content: Any) -> str:
+    """Extract text content from OpenAI message content."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        texts = []
+        for part in content:
+            if isinstance(part, dict):
+                if part.get("type") == "text":
+                    texts.append(part.get("text", ""))
+            elif hasattr(part, "type") and hasattr(part, "text"):
+                if part.type == "text":
+                    texts.append(getattr(part, "text", ""))
+        return " ".join(texts)
+    return str(content)
+
+
 class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
+    shield_store: ShieldStore
+
     def __init__(self, config: NVIDIASafetyConfig) -> None:
         """
         Initialize the NVIDIASafetyAdapter with a given safety configuration.
@@ -113,6 +135,7 @@ class NeMoGuardrails:
         """
         self.config_id = config.config_id
         self.model = model
+        self.blocked_message = config.blocked_message
         assert self.config_id is not None, "Must provide config id"
         if temperature <= 0:
             raise ValueError("Temperature must be greater than 0")
@@ -122,11 +145,10 @@ class NeMoGuardrails:
         self.guardrails_service_url = config.guardrails_service_url
 
     async def _guardrails_post(self, path: str, data: Any | None):
-        """Helper for making POST requests to the guardrails service."""
-        headers = {
-            "Accept": "application/json",
-        }
-        response = requests.post(url=f"{self.guardrails_service_url}{path}", headers=headers, json=data)
+        """Make a POST request to the guardrails service."""
+        headers = {"Accept": "application/json", "Content-Type": "application/json"}
+        url = f"{self.guardrails_service_url}{path}"
+        response = requests.post(url=url, headers=headers, json=data)
         response.raise_for_status()
         return response.json()
 
@@ -146,14 +168,13 @@ class NeMoGuardrails:
         request_data = {
             "config_id": self.config_id,
             "model": self.model,
-            "messages": [{"role": message.role, "content": message.content} for message in messages],
+            "messages": [
+                {"role": message.role, "content": _extract_text_content(message.content)} for message in messages
+            ],
         }
         response = await self._guardrails_post(path="/v1/guardrail/chat/completions", data=request_data)
 
-        # Detection method 1: Check for error object with guardrails_violation
-        # NeMo Guardrails returns this format when content is blocked:
-        # {"error": {"message": "Blocked by <rail-name> rails.", "type": "guardrails_violation",
-        #            "param": "<rail-name>", "code": "content_blocked"}}
+        # Check for error object with guardrails_violation
         error = response.get("error")
         if error:
             error_type = error.get("type", "")
@@ -167,30 +188,24 @@ class NeMoGuardrails:
                             "error_type": error_type,
                             "error_code": error_code,
                             "rail_name": error.get("param", "unknown"),
-                            "detection_method": "error_object",
                         },
                     )
                 )
 
-        # Detection method 2: Check for exception message with InputRailException
-        # When enable_rails_exceptions is True, NeMo returns: {"role": "exception", "type": "InputRailException"}
+        # Check for exception message (when enable_rails_exceptions is True)
         response_messages = response.get("messages", [])
         for msg in response_messages:
             if msg.get("role") == "exception":
-                exception_type = msg.get("type", "RailException")
                 return RunShieldResponse(
                     violation=SafetyViolation(
                         user_message=msg.get("content", "Content blocked by guardrails"),
                         violation_level=ViolationLevel.ERROR,
-                        metadata={
-                            "exception_type": exception_type,
-                            "detection_method": "exception_message",
-                        },
+                        metadata={"exception_type": msg.get("type", "RailException")},
                     )
                 )
 
-        # Detection method 3: Legacy format with explicit status field
-        if "status" in response and response["status"] == "blocked":
+        # Check for legacy format with status field
+        if response.get("status") == "blocked":
             return RunShieldResponse(
                 violation=SafetyViolation(
                     user_message="Content blocked by guardrails",
@@ -199,5 +214,17 @@ class NeMoGuardrails:
                 )
             )
 
-        # No violation detected
+        # Check for blocked response in choices (configurable via blocked_message)
+        choices = response.get("choices", [])
+        if choices and self.blocked_message:
+            content = choices[0].get("message", {}).get("content", "")
+            if self.blocked_message.lower().strip() == content.lower().strip():
+                return RunShieldResponse(
+                    violation=SafetyViolation(
+                        user_message=content,
+                        violation_level=ViolationLevel.ERROR,
+                        metadata={"matched_pattern": self.blocked_message},
+                    )
+                )
+
         return RunShieldResponse(violation=None)
