@@ -98,7 +98,7 @@ Note to start the container with Podman, you can do the same but replace `docker
 `podman`. If you are using `podman` older than `4.7.0`, please also replace `host.docker.internal` in the `OLLAMA_URL`
 with `host.containers.internal`.
 
-The configuration YAML for the Ollama distribution is available at `distributions/ollama/run.yaml`.
+The configuration YAML for the Ollama distribution is available at `distributions/ollama/config.yaml`.
 
 :::tip
 Docker containers run in their own isolated network namespaces on Linux. To allow the container to communicate with services running on the host via `localhost`, you need `--network=host`. This makes the container use the host's network directly so it can connect to Ollama running on `localhost:11434`.

@@ -9,6 +9,7 @@ from collections.abc import AsyncIterator
 from openai import AsyncOpenAI
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
+from llama_stack.providers.utils.inference.stream_utils import wrap_async_stream
 from llama_stack_api import (
     Inference,
     Model,
@@ -107,12 +108,16 @@ class PassthroughInferenceAdapter(NeedsRequestProviderData, Inference):
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         """Forward completion request to downstream using OpenAI client."""
         client = self._get_openai_client()
         request_params = params.model_dump(exclude_none=True)
         response = await client.completions.create(**request_params)
-        return response  # type: ignore
+
+        if params.stream:
+            return wrap_async_stream(response)
+
+        return response  # type: ignore[return-value]
 
     async def openai_chat_completion(
         self,
@@ -122,7 +127,11 @@ class PassthroughInferenceAdapter(NeedsRequestProviderData, Inference):
         client = self._get_openai_client()
         request_params = params.model_dump(exclude_none=True)
         response = await client.chat.completions.create(**request_params)
-        return response  # type: ignore
+
+        if params.stream:
+            return wrap_async_stream(response)
+
+        return response  # type: ignore[return-value]
 
     async def openai_embeddings(
         self,

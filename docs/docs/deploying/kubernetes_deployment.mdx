@@ -133,7 +133,7 @@ For more information about the operator, see the [llama-stack-k8s-operator repos
 ### Step 4: Deploy Llama Stack Server using Operator
 
 Create a `LlamaStackDistribution` custom resource to deploy the Llama Stack server. The operator will automatically create the necessary Deployment, Service, and other resources.
-You can optionally override the default `run.yaml` using `spec.server.userConfig` with a ConfigMap (see [userConfig spec](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/docs/api-overview.md#userconfigspec)).
+You can optionally override the default `config.yaml` using `spec.server.userConfig` with a ConfigMap (see [userConfig spec](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/docs/api-overview.md#userconfigspec)).
 
 ```yaml
 cat <<EOF | kubectl apply -f -
@@ -155,7 +155,7 @@ spec:
         value: "4096"
       - name: VLLM_API_TOKEN
         value: "fake"
-    # Optional: override run.yaml from a ConfigMap using userConfig
+    # Optional: override config.yaml from a ConfigMap using userConfig
     userConfig:
       configMap:
         name: llama-stack-config
@@ -172,7 +172,7 @@ EOF
 - `server.distribution.image`: (Optional) Custom container image for non-supported distributions. Use this field when deploying a distribution that is not in the supported list. If specified, this takes precedence over `name`.
 - `server.containerSpec.port`: Port on which the Llama Stack server listens (default: 8321)
 - `server.containerSpec.env`: Environment variables to configure providers:
-- `server.userConfig`: (Optional) Override the default `run.yaml` using a ConfigMap. See [userConfig spec](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/docs/api-overview.md#userconfigspec).
+- `server.userConfig`: (Optional) Override the default `config.yaml` using a ConfigMap. See [userConfig spec](https://github.com/llamastack/llama-stack-k8s-operator/blob/main/docs/api-overview.md#userconfigspec).
 - `server.storage.size`: Size of the persistent volume for model and data storage
 - `server.storage.mountPath`: Where to mount the storage in the container
 

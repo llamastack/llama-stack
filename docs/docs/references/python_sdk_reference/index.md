@@ -220,6 +220,20 @@ Methods:
 
 ## VectorIo
 
+:::warning DEPRECATED API
+
+**This API is deprecated and will be removed in a future version.**
+
+Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+- Instead of `client.vector_io.insert()`, use `client.vector_stores.files.create()` and `client.vector_stores.files.chunks.create()`
+- Instead of `client.vector_io.query()`, use `client.vector_stores.search()`
+
+See the [RAG documentation](/docs/building_applications/rag) for migration examples.
+
+Related: [Issue #2981](https://github.com/meta-llama/llama-stack/issues/2981)
+
+:::
+
 Types:
 
 ```python
@@ -232,6 +246,22 @@ Methods:
 - <code title="post /v1/vector-io/query">client.vector_io.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/vector_io.py">query</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/vector_io_query_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/query_chunks_response.py">QueryChunksResponse</a></code>
 
 ## VectorDBs
+
+:::warning DEPRECATED API
+
+**This API is deprecated and will be removed in a future version.**
+
+Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+- Instead of `client.vector_dbs.register()`, use `client.vector_stores.create()`
+- Instead of `client.vector_dbs.list()`, use `client.vector_stores.list()`
+- Instead of `client.vector_dbs.retrieve()`, use `client.vector_stores.retrieve()`
+- Instead of `client.vector_dbs.unregister()`, use `client.vector_stores.delete()`
+
+See the [RAG documentation](/docs/building_applications/rag) for migration examples.
+
+Related: [Issue #2981](https://github.com/meta-llama/llama-stack/issues/2981)
+
+:::
 
 Types:
 
