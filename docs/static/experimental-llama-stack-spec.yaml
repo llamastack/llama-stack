@@ -8296,13 +8296,6 @@ components:
       - url
       title: Connector
       description: A connector registered in Llama Stack.
-    ConnectorSource:
-      type: string
-      enum:
-      - config
-      - api
-      title: ConnectorSource
-      description: Source of connector registration.
     ConnectorType:
       type: string
       enum:
