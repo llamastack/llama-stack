@@ -253,7 +253,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
     """Register connectors from config.
 
     Connectors are not resources, so they're handled separately from register_resources().
-    This function syncs config-sourced connectors: removes stale ones and registers new ones.
+    This function syncs config-sourced connectors: removes stale ones and registers/updates new/changed ones.
     API-sourced connectors are left untouched.
     """
     if Api.connectors not in impls:
@@ -272,11 +272,8 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
         logger.debug(f"Removing stale config connector: {connector_id}")
         await connectors_impl.unregister_connector(connector_id)
 
-    # Register new config connectors (in config but not yet in KVStore)
-    new_ids = config_ids - registered_ids
+    # Register/Update config connectors
     for connector in run_config.connectors:
-        if connector.connector_id not in new_ids:
-            continue
         logger.debug(f"Registering connector: {connector.connector_id}")
         await connectors_impl.register_connector(
             connector_id=connector.connector_id,

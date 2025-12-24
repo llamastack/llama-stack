@@ -93,15 +93,16 @@ class ConnectorServiceImpl(Connectors):
         if existing_connector_json:
             existing_connector = Connector.model_validate_json(existing_connector_json)
 
-            # Only overwrite if the connector is an exact match; otherwise log and keep existing.
-            if existing_connector.model_dump() != connector.model_dump():
+            # Config source always wins (overwrites existing, regardless of prior source).
+            # stack admins may choose to update any existing connector via the config at boot time regardless of the source.
+            # Non-config sources (e.g., API) cannot overwrite existing connectors via register;
+            # they must use a separate update operation.
+            if connector.source != ConnectorSource.config or connector == existing_connector:
                 logger.info(
-                    "Connector %s already exists with different configuration; skipping overwrite",
+                    "Connector %s already exists; skipping registration",
                     connector_id,
                 )
                 return existing_connector
-
-            logger.debug("Connector %s already exists and matches; overwriting with same value", connector_id)
 
         # Persist full connector, including source (Field is excluded from schema/dumps by default).
         connector_payload = connector.model_dump()

@@ -72,15 +72,6 @@ async def connector_service(mock_kvstore):
         return service
 
 
-@pytest.fixture(autouse=True)
-async def cleanup_connectors(mock_kvstore):
-    """Ensure connectors are cleared after each test."""
-    yield
-    keys = await mock_kvstore.keys_in_range(KEY_PREFIX, KEY_PREFIX + "\uffff")
-    for key in list(keys):
-        await mock_kvstore.delete(key)
-
-
 @pytest.fixture
 def sample_tool_def():
     """Create a sample ToolDef for testing."""
@@ -137,10 +128,10 @@ class TestRegisterConnector:
         stored = await mock_kvstore.get(f"{KEY_PREFIX}my-mcp")
         assert stored is not None
 
-    async def test_register_connector_idempotent_same_config(self, connector_service, mock_kvstore):
-        """Re-registering with identical config keeps the connector unchanged."""
-        # Register first time
-        original = await connector_service.register_connector(
+    async def test_register_connector_different_config_updates(self, connector_service, mock_kvstore):
+        """Attempting to update an existing connector via config should update the existing connector regardless of the source."""
+        # Register the original connector
+        _ = await connector_service.register_connector(
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
@@ -148,23 +139,43 @@ class TestRegisterConnector:
             source=ConnectorSource.config,
         )
 
-        # Register again with the exact same config
-        result = await connector_service.register_connector(
+        _ = await connector_service.register_connector(
+            connector_id="my-mcp-2",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8081/mcp",
+            server_label="Original Label 2",
+            source=ConnectorSource.api,
+        )
+
+        # Attempt to update with a different URL
+        _ = await connector_service.register_connector(
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
-            url="http://localhost:8080/mcp",
+            url="http://different-host:9090/mcp",
             server_label="Original Label",
             source=ConnectorSource.config,
         )
 
-        assert result == original
+        _ = await connector_service.register_connector(
+            connector_id="my-mcp-2",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:9091/mcp",
+            server_label="Original Label 2",
+            source=ConnectorSource.config,
+        )
 
-        # Should only have one entry
-        keys = await mock_kvstore.keys_in_range(KEY_PREFIX, KEY_PREFIX + "\uffff")
-        assert len(keys) == 1
+        # Existing connector should be returned and updated
+        stored = await mock_kvstore.get(f"{KEY_PREFIX}my-mcp")
+        persisted = Connector.model_validate_json(stored)
+        assert persisted.url == "http://different-host:9090/mcp"
 
-    async def test_register_connector_different_config_preserves_existing(self, connector_service, mock_kvstore):
-        """Attempting to overwrite with different config should preserve existing connector."""
+        stored_2 = await mock_kvstore.get(f"{KEY_PREFIX}my-mcp-2")
+        persisted_2 = Connector.model_validate_json(stored_2)
+        assert persisted_2.url == "http://localhost:9091/mcp"
+        assert persisted_2.source == ConnectorSource.config
+
+    async def test_register_connector_different_source_ignores(self, connector_service, mock_kvstore):
+        """Attempting to register an existing connector with different values and source should fail to register the new connector."""
         # Register the original connector
         original = await connector_service.register_connector(
             connector_id="my-mcp",
@@ -174,23 +185,20 @@ class TestRegisterConnector:
             source=ConnectorSource.config,
         )
 
-        # Attempt to overwrite with a different URL
+        # Attempt to register with a different source
         result = await connector_service.register_connector(
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
-            url="http://different-host:9090/mcp",
+            url="http://localhost:9090/mcp",
             server_label="Original Label",
-            source=ConnectorSource.config,
+            source=ConnectorSource.api,
         )
 
-        # Existing connector should be returned and preserved
+        # Existing connector should be returned and not updated
         assert result == original
         stored = await mock_kvstore.get(f"{KEY_PREFIX}my-mcp")
         persisted = Connector.model_validate_json(stored)
         assert persisted.url == "http://localhost:8080/mcp"
-        # Still only one entry
-        keys = await mock_kvstore.keys_in_range(KEY_PREFIX, KEY_PREFIX + "\uffff")
-        assert len(keys) == 1
 
 
 # --- list_connectors tests ---
