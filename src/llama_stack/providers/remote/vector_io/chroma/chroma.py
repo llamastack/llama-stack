@@ -225,10 +225,9 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         inference_api: Inference,
         files_api: Files | None,
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         log.info(f"Initializing ChromaVectorIOAdapter with url: {config}")
         self.config = config
-        self.inference_api = inference_api
         self.client = None
         self.cache = {}
         self.vector_store_table = None

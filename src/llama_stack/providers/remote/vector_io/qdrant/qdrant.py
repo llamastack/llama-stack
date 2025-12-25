@@ -268,11 +268,10 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         inference_api: Inference,
         files_api: Files | None = None,
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
         self.client: AsyncQdrantClient = None
         self.cache = {}
-        self.inference_api = inference_api
         self.vector_store_table = None
         self._qdrant_lock = asyncio.Lock()
 

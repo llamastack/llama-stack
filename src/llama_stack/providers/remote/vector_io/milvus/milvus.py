@@ -273,11 +273,10 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         inference_api: Inference,
         files_api: Files | None,
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
         self.cache = {}
         self.client = None
-        self.inference_api = inference_api
         self.vector_store_table = None
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
