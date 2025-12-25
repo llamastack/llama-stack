@@ -222,7 +222,6 @@ async def test_run_shield_blocked_with_error_object(nvidia_adapter, mock_guardra
         "error_type": "guardrails_violation",
         "error_code": "content_blocked",
         "rail_name": "content-moderation",
-        "detection_method": "error_object",
     }
 
 

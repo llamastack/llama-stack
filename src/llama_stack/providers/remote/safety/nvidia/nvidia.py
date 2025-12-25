@@ -9,6 +9,7 @@ from typing import Any
 import requests
 
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack_api import (
     ModerationObject,
     OpenAIMessageParam,
@@ -24,25 +25,6 @@ from llama_stack_api import (
 from .config import NVIDIASafetyConfig
 
 logger = get_logger(name=__name__, category="safety::nvidia")
-
-
-def _extract_text_content(content: Any) -> str:
-    """Extract text content from OpenAI message content."""
-    if content is None:
-        return ""
-    if isinstance(content, str):
-        return content
-    if isinstance(content, list):
-        texts = []
-        for part in content:
-            if isinstance(part, dict):
-                if part.get("type") == "text":
-                    texts.append(part.get("text", ""))
-            elif hasattr(part, "type") and hasattr(part, "text"):
-                if part.type == "text":
-                    texts.append(getattr(part, "text", ""))
-        return " ".join(texts)
-    return str(content)
 
 
 class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
@@ -169,7 +151,7 @@ class NeMoGuardrails:
             "config_id": self.config_id,
             "model": self.model,
             "messages": [
-                {"role": message.role, "content": _extract_text_content(message.content)} for message in messages
+                {"role": message.role, "content": interleaved_content_as_str(message.content)} for message in messages
             ],
         }
         response = await self._guardrails_post(path="/v1/guardrail/chat/completions", data=request_data)
