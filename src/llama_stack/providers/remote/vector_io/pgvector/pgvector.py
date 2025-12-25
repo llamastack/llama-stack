@@ -332,9 +332,8 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
     def __init__(
         self, config: PGVectorVectorIOConfig, inference_api: Inference, files_api: Files | None = None
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
-        self.inference_api = inference_api
         self.conn = None
         self.cache = {}
         self.vector_store_table = None

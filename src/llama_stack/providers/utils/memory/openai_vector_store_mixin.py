@@ -83,21 +83,21 @@ class OpenAIVectorStoreMixin(ABC):
     Mixin class that provides common OpenAI Vector Store API implementation.
     Providers need to implement the abstract storage methods and maintain
     an openai_vector_stores in-memory cache.
-
-    Note: Implementing classes must have an 'inference_api' attribute of type Inference.
     """
-
-    # Type annotation for the attribute that implementing classes must provide
-    inference_api: Inference
 
     # Implementing classes should call super().__init__() in their __init__ method
     # to properly initialize the mixin attributes.
     def __init__(
         self,
+        inference_api: Inference,
         files_api: Files | None = None,
         kvstore: KVStore | None = None,
         vector_stores_config: VectorStoresConfig | None = None,
     ):
+        if not inference_api:
+            raise RuntimeError("Inference API is required for vector store operations")
+
+        self.inference_api = inference_api
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.files_api = files_api
@@ -849,15 +849,11 @@ class OpenAIVectorStoreMixin(ABC):
             else:
                 # Validate embedding model and dimension are available
                 if not embedding_model:
-                    raise ValueError(f"Embedding model not found in vector store {vector_store_id} metadata")
+                    raise RuntimeError(f"Vector store {vector_store_id} is not properly configured for file processing")
                 if not embedding_dimension:
-                    raise ValueError(f"Embedding dimension not found in vector store {vector_store_id} metadata")
+                    raise RuntimeError(f"Vector store {vector_store_id} is not properly configured for file processing")
 
                 # Generate embeddings for all chunks before insertion
-                if not hasattr(self, "inference_api") or not self.inference_api:
-                    raise ValueError(
-                        "Inference API is required for embedding generation. The implementing class must set self.inference_api."
-                    )
 
                 # Prepare embedding request for all chunks
                 params = OpenAIEmbeddingsRequestWithExtraBody(
