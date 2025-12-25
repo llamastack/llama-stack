@@ -80,8 +80,8 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
                 f"Shield {shield_id} does not have a model configured. Set 'model' in params or provider_resource_id."
             )
 
-        self.shield = NeMoGuardrails(self.config, model)
-        return await self.shield.run(messages)
+        guardrails = NeMoGuardrails(self.config, model)
+        return await guardrails.run(messages)
 
     async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
         raise NotImplementedError("NVIDIA safety provider currently does not implement run_moderation")
@@ -95,35 +95,22 @@ class NeMoGuardrails:
     if a safety violation has occurred.
     """
 
-    def __init__(
-        self,
-        config: NVIDIASafetyConfig,
-        model: str,
-        threshold: float = 0.9,
-        temperature: float = 1.0,
-    ):
+    def __init__(self, config: NVIDIASafetyConfig, model: str):
         """
         Initialize a NeMoGuardrails instance with the provided parameters.
 
         Args:
             config (NVIDIASafetyConfig): The safety configuration containing the config ID and guardrails URL.
             model (str): The identifier or name of the model to be used for safety checks.
-            threshold (float, optional): The threshold for flagging violations. Defaults to 0.9.
-            temperature (float, optional): The temperature setting for the underlying model. Must be greater than 0. Defaults to 1.0.
 
         Raises:
-            ValueError: If temperature is less than or equal to 0.
-            AssertionError: If config_id is not provided in the configuration.
+            ValueError: If config_id is not provided in the configuration.
         """
+        if not config.config_id:
+            raise ValueError("Must provide config_id in NVIDIASafetyConfig")
         self.config_id = config.config_id
         self.model = model
         self.blocked_message = config.blocked_message
-        assert self.config_id is not None, "Must provide config id"
-        if temperature <= 0:
-            raise ValueError("Temperature must be greater than 0")
-
-        self.temperature = temperature
-        self.threshold = threshold
         self.guardrails_service_url = config.guardrails_service_url
 
     async def _guardrails_post(self, path: str, data: Any | None):
@@ -174,18 +161,6 @@ class NeMoGuardrails:
                     )
                 )
 
-        # Check for exception message (when enable_rails_exceptions is True)
-        response_messages = response.get("messages", [])
-        for msg in response_messages:
-            if msg.get("role") == "exception":
-                return RunShieldResponse(
-                    violation=SafetyViolation(
-                        user_message=msg.get("content", "Content blocked by guardrails"),
-                        violation_level=ViolationLevel.ERROR,
-                        metadata={"exception_type": msg.get("type", "RailException")},
-                    )
-                )
-
         # Check for legacy format with status field
         if response.get("status") == "blocked":
             return RunShieldResponse(
@@ -196,10 +171,33 @@ class NeMoGuardrails:
                 )
             )
 
-        # Check for blocked response in choices (configurable via blocked_message)
+        # Extract response content - handle both OpenAI format (choices) and NeMo format (messages)
+        # Also check for exception messages (NeMo server-side configuration)
+        content = ""
         choices = response.get("choices", [])
-        if choices and self.blocked_message:
-            content = choices[0].get("message", {}).get("content", "")
+        if choices:
+            # OpenAI-compatible format: choices[0].message.content
+            message = choices[0].get("message") or {}
+            content = message.get("content", "")
+        else:
+            # NeMo Guardrails native format: messages[].content
+            for msg in response.get("messages", []):
+                role = msg.get("role")
+                if role == "exception":
+                    # Exception message indicates content was blocked
+                    return RunShieldResponse(
+                        violation=SafetyViolation(
+                            user_message=msg.get("content", "Content blocked by guardrails"),
+                            violation_level=ViolationLevel.ERROR,
+                            metadata={"exception_type": msg.get("type", "RailException")},
+                        )
+                    )
+                if role == "assistant":
+                    content = msg.get("content", "")
+                    break
+
+        # Check for blocked response (configurable via blocked_message)
+        if content and self.blocked_message:
             if self.blocked_message.lower().strip() == content.lower().strip():
                 return RunShieldResponse(
                     violation=SafetyViolation(

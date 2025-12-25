@@ -5,8 +5,7 @@
 # the root directory of this source tree.
 
 import os
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -55,41 +54,6 @@ def mock_guardrails_post():
     with patch("llama_stack.providers.remote.safety.nvidia.nvidia.NeMoGuardrails._guardrails_post") as mock_post:
         mock_post.return_value = {"status": "allowed"}
         yield mock_post
-
-
-def _assert_request(
-    mock_call: MagicMock,
-    expected_url: str,
-    expected_headers: dict[str, str] | None = None,
-    expected_json: dict[str, Any] | None = None,
-) -> None:
-    """
-    Helper method to verify request details in mock API calls.
-
-    Args:
-        mock_call: The MagicMock object that was called
-        expected_url: The expected URL to which the request was made
-        expected_headers: Optional dictionary of expected request headers
-        expected_json: Optional dictionary of expected JSON payload
-    """
-    call_args = mock_call.call_args
-
-    # Check URL
-    assert call_args[0][0] == expected_url
-
-    # Check headers if provided
-    if expected_headers:
-        for key, value in expected_headers.items():
-            assert call_args[1]["headers"][key] == value
-
-    # Check JSON if provided
-    if expected_json:
-        for key, value in expected_json.items():
-            if isinstance(value, dict):
-                for nested_key, nested_value in value.items():
-                    assert call_args[1]["json"][key][nested_key] == nested_value
-            else:
-                assert call_args[1]["json"][key] == value
 
 
 async def test_register_shield_with_valid_id(nvidia_adapter):
@@ -352,36 +316,23 @@ def test_init_nemo_guardrails():
         guardrails_service_url=os.environ["NVIDIA_GUARDRAILS_URL"],
         config_id=test_config_id,
     )
-    # Initialize with default parameters
     test_model = "test-model"
     guardrails = NeMoGuardrails(config, test_model)
 
     # Verify the attributes are set correctly
     assert guardrails.config_id == test_config_id
     assert guardrails.model == test_model
-    assert guardrails.threshold == 0.9  # Default value
-    assert guardrails.temperature == 1.0  # Default value
-    assert guardrails.guardrails_service_url == os.environ["NVIDIA_GUARDRAILS_URL"]
-
-    # Initialize with custom parameters
-    guardrails = NeMoGuardrails(config, test_model, threshold=0.8, temperature=0.7)
-
-    # Verify the attributes are set correctly
-    assert guardrails.config_id == test_config_id
-    assert guardrails.model == test_model
-    assert guardrails.threshold == 0.8
-    assert guardrails.temperature == 0.7
     assert guardrails.guardrails_service_url == os.environ["NVIDIA_GUARDRAILS_URL"]
 
 
-def test_init_nemo_guardrails_invalid_temperature():
+def test_init_nemo_guardrails_missing_config_id():
     from llama_stack.providers.remote.safety.nvidia.nvidia import NeMoGuardrails
 
     os.environ["NVIDIA_GUARDRAILS_URL"] = "http://nemo.test"
 
     config = NVIDIASafetyConfig(
         guardrails_service_url=os.environ["NVIDIA_GUARDRAILS_URL"],
-        config_id="test-custom-config-id",
+        config_id=None,
     )
-    with pytest.raises(ValueError):
-        NeMoGuardrails(config, "test-model", temperature=0)
+    with pytest.raises(ValueError, match="Must provide config_id"):
+        NeMoGuardrails(config, "test-model")
