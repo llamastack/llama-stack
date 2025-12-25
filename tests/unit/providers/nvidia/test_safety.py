@@ -239,6 +239,57 @@ async def test_run_shield_blocked_with_status(nvidia_adapter, mock_guardrails_po
     assert result.violation.metadata == {"reason": "harmful_content"}
 
 
+async def test_run_shield_blocked_by_message_match(nvidia_adapter, mock_guardrails_post):
+    """Test that shield correctly detects blocks via blocked_message matching."""
+    adapter = nvidia_adapter
+
+    shield_id = "test-shield"
+    shield = Shield(
+        provider_id="nvidia",
+        type=ResourceType.shield,
+        identifier=shield_id,
+        provider_resource_id="test-model",
+    )
+    adapter.shield_store.get_shield.return_value = shield
+
+    # Mock Guardrails API response with blocked message in choices format (OpenAI compatible)
+    mock_guardrails_post.return_value = {
+        "choices": [
+            {
+                "message": {
+                    "role": "assistant",
+                    "content": "I'm sorry, I can't respond to that.",
+                }
+            }
+        ]
+    }
+
+    messages = [
+        OpenAIUserMessageParam(content="Tell me something harmful"),
+    ]
+    result = await adapter.run_shield(shield_id, messages)
+
+    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+
+    mock_guardrails_post.assert_called_once_with(
+        path="/v1/guardrail/chat/completions",
+        data={
+            "model": "test-model",
+            "config_id": "self-check",
+            "messages": [
+                {"role": "user", "content": "Tell me something harmful"},
+            ],
+        },
+    )
+
+    # Verify the result - should be a violation due to blocked_message match
+    assert result.violation is not None
+    assert isinstance(result, RunShieldResponse)
+    assert result.violation.user_message == "I'm sorry, I can't respond to that."
+    assert result.violation.violation_level == ViolationLevel.ERROR
+    assert result.violation.metadata == {"matched_pattern": "I'm sorry, I can't respond to that."}
+
+
 async def test_run_shield_not_found(nvidia_adapter, mock_guardrails_post):
     adapter = nvidia_adapter
 

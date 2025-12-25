@@ -6,7 +6,7 @@
 
 from typing import Any
 
-import requests
+import httpx
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
@@ -113,13 +113,14 @@ class NeMoGuardrails:
         self.blocked_message = config.blocked_message
         self.guardrails_service_url = config.guardrails_service_url
 
-    async def _guardrails_post(self, path: str, data: Any | None):
+    async def _guardrails_post(self, path: str, data: Any | None) -> dict[str, Any]:
         """Make a POST request to the guardrails service."""
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
         url = f"{self.guardrails_service_url}{path}"
-        response = requests.post(url=url, headers=headers, json=data)
-        response.raise_for_status()
-        return response.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url=url, headers=headers, json=data)
+            response.raise_for_status()
+            return dict(response.json())
 
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         """
@@ -132,7 +133,7 @@ class NeMoGuardrails:
             RunShieldResponse: Response with SafetyViolation if content is blocked, None otherwise.
 
         Raises:
-            requests.HTTPError: If the POST request fails.
+            httpx.HTTPStatusError: If the POST request fails.
         """
         request_data = {
             "config_id": self.config_id,
@@ -141,6 +142,9 @@ class NeMoGuardrails:
                 {"role": message.role, "content": interleaved_content_as_str(message.content)} for message in messages
             ],
         }
+        logger.debug(
+            f"Guardrails request to {self.guardrails_service_url}: config_id={self.config_id}, model={self.model}"
+        )
         response = await self._guardrails_post(path="/v1/guardrail/chat/completions", data=request_data)
 
         # Check for error object with guardrails_violation
@@ -149,6 +153,9 @@ class NeMoGuardrails:
             error_type = error.get("type", "")
             error_code = error.get("code", "")
             if error_type == "guardrails_violation" or error_code == "content_blocked":
+                logger.info(
+                    f"Guardrails violation: type={error_type}, code={error_code}, rail={error.get('param', 'unknown')}"
+                )
                 return RunShieldResponse(
                     violation=SafetyViolation(
                         user_message=error.get("message", "Content blocked by guardrails"),
@@ -163,6 +170,7 @@ class NeMoGuardrails:
 
         # Check for legacy format with status field
         if response.get("status") == "blocked":
+            logger.info(f"Guardrails blocked (legacy format): {response.get('rails_status', {})}")
             return RunShieldResponse(
                 violation=SafetyViolation(
                     user_message="Content blocked by guardrails",
