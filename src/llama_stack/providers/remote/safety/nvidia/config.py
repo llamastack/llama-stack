@@ -35,6 +35,10 @@ class NVIDIASafetyConfig(BaseModel):
         default_factory=lambda: os.getenv("NVIDIA_GUARDRAILS_BLOCKED_MESSAGE", "I'm sorry, I can't respond to that."),
         description="The message NeMo Guardrails returns when input is blocked",
     )
+    temperature: float = Field(
+        default=1.0,
+        description="Sampling temperature for the guardrails model, between 0 and 2",
+    )
 
     @classmethod
     def sample_run_config(cls, **kwargs) -> dict[str, Any]:
@@ -42,4 +46,5 @@ class NVIDIASafetyConfig(BaseModel):
             "guardrails_service_url": "${env.GUARDRAILS_SERVICE_URL:=http://localhost:7331}",
             "config_id": "${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}",
             "blocked_message": "${env.NVIDIA_GUARDRAILS_BLOCKED_MESSAGE:=I'm sorry, I can't respond to that.}",
+            "temperature": 1.0,
         }

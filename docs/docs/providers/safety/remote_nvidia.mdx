@@ -17,6 +17,7 @@ NVIDIA's safety provider for content moderation and safety filtering.
 | `guardrails_service_url` | `str` | No | http://0.0.0.0:7331 | The URL for accessing the NeMo Guardrails service |
 | `config_id` | `str \| None` | No | self-check | Guardrails configuration ID to use from the configuration store |
 | `blocked_message` | `str` | No | I'm sorry, I can't respond to that. | The message NeMo Guardrails returns when input is blocked |
+| `temperature` | `float` | No | 1.0 | Sampling temperature for the guardrails model, between 0 and 2 |
 
 ## Sample Configuration
 
@@ -25,4 +26,5 @@ guardrails_service_url: ${env.GUARDRAILS_SERVICE_URL:=http://localhost:7331}
 config_id: ${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}
 blocked_message: ${env.NVIDIA_GUARDRAILS_BLOCKED_MESSAGE:=I'm sorry, I can't respond
   to that.}
+temperature: 1.0
 ```

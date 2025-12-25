@@ -119,11 +119,14 @@ async def test_run_shield_allowed(nvidia_adapter, mock_guardrails_post):
         path="/v1/guardrail/chat/completions",
         data={
             "model": "test-model",
-            "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
                 {"role": "assistant", "content": "I'm doing well, thank you for asking!"},
             ],
+            "guardrails": {
+                "config_id": "self-check",
+            },
+            "temperature": 1.0,
         },
     )
 
@@ -170,11 +173,14 @@ async def test_run_shield_blocked_with_error_object(nvidia_adapter, mock_guardra
         path="/v1/guardrail/chat/completions",
         data={
             "model": "test-model",
-            "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
                 {"role": "assistant", "content": "I'm doing well, thank you for asking!"},
             ],
+            "guardrails": {
+                "config_id": "self-check",
+            },
+            "temperature": 1.0,
         },
     )
 
@@ -223,11 +229,14 @@ async def test_run_shield_blocked_with_status(nvidia_adapter, mock_guardrails_po
         path="/v1/guardrail/chat/completions",
         data={
             "model": "test-model",
-            "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
                 {"role": "assistant", "content": "I'm doing well, thank you for asking!"},
             ],
+            "guardrails": {
+                "config_id": "self-check",
+            },
+            "temperature": 1.0,
         },
     )
 
@@ -275,10 +284,13 @@ async def test_run_shield_blocked_by_message_match(nvidia_adapter, mock_guardrai
         path="/v1/guardrail/chat/completions",
         data={
             "model": "test-model",
-            "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Tell me something harmful"},
             ],
+            "guardrails": {
+                "config_id": "self-check",
+            },
+            "temperature": 1.0,
         },
     )
 
@@ -346,11 +358,14 @@ async def test_run_shield_http_error(nvidia_adapter, mock_guardrails_post):
         path="/v1/guardrail/chat/completions",
         data={
             "model": "test-model",
-            "config_id": "self-check",
             "messages": [
                 {"role": "user", "content": "Hello, how are you?"},
                 {"role": "assistant", "content": "I'm doing well, thank you for asking!"},
             ],
+            "guardrails": {
+                "config_id": "self-check",
+            },
+            "temperature": 1.0,
         },
     )
     # Verify the exception message

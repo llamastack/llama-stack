@@ -25,6 +25,7 @@ providers:
       config_id: ${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}
       blocked_message: ${env.NVIDIA_GUARDRAILS_BLOCKED_MESSAGE:=I'm sorry, I can't
         respond to that.}
+      temperature: 1.0
   vector_io:
   - provider_id: faiss
     provider_type: inline::faiss
@@ -40,6 +41,7 @@ providers:
       config_id: ${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}
       blocked_message: ${env.NVIDIA_GUARDRAILS_BLOCKED_MESSAGE:=I'm sorry, I can't
         respond to that.}
+      temperature: 1.0
   agents:
   - provider_id: meta-reference
     provider_type: inline::meta-reference

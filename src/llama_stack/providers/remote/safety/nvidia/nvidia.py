@@ -112,6 +112,7 @@ class NeMoGuardrails:
         self.model = model
         self.blocked_message = config.blocked_message
         self.guardrails_service_url = config.guardrails_service_url
+        self.temperature = config.temperature
 
     async def _guardrails_post(self, path: str, data: Any | None) -> dict[str, Any]:
         """Make a POST request to the guardrails service."""
@@ -136,11 +137,14 @@ class NeMoGuardrails:
             httpx.HTTPStatusError: If the POST request fails.
         """
         request_data = {
-            "config_id": self.config_id,
             "model": self.model,
             "messages": [
                 {"role": message.role, "content": interleaved_content_as_str(message.content)} for message in messages
             ],
+            "guardrails": {
+                "config_id": self.config_id,
+            },
+            "temperature": self.temperature,
         }
         logger.debug(
             f"Guardrails request to {self.guardrails_service_url}: config_id={self.config_id}, model={self.model}"
