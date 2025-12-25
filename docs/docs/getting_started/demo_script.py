@@ -24,16 +24,12 @@ from openai import OpenAI
 # Initialize OpenAI client pointing to Llama Stack server
 client = OpenAI(base_url="http://localhost:8321/v1/", api_key="none")
 
-# Shared setup: Create vector store and upload document
-print("=" * 80)
-print("SETUP: Creating vector store and uploading document")
-print("=" * 80)
+print("RAG demonstration\n")
 
 url = "https://www.paulgraham.com/greatwork.html"
 print(f"Fetching document from: {url}")
 
 vs = client.vector_stores.create()
-print(f"Vector store created: {vs.id}")
 
 response = requests.get(url)
 pseudo_file = io.BytesIO(str(response.content).encode("utf-8"))
@@ -44,15 +40,19 @@ client.vector_stores.files.create(vector_store_id=vs.id, file_id=uploaded_file.i
 print(f"File uploaded and added to vector store: {uploaded_file.id}")
 
 query = "How do you do great work?"
-
-# ============================================================================
-# APPROACH 1: Responses API (Recommended for most use cases)
-# ============================================================================
-print("\n" + "=" * 80)
-print("APPROACH 1: Responses API (Automatic Tool Calling)")
-print("=" * 80)
 print(f"Query: {query}\n")
 
+print(
+    """
+RAG using Responses API:
+   - Automatic tool calling (model decides when to search)
+   - Simpler code, less control
+   - Best for: Conversational agents, automatic workflows
+
+"""
+)
+
+print("Reply via Responses API:\n")
 resp = client.responses.create(
     model=os.getenv("INFERENCE_MODEL", "ollama/llama3.2:3b"),
     input=query,
@@ -60,39 +60,36 @@ resp = client.responses.create(
     include=["file_search_call.results"],
 )
 
-print("Response (Responses API):")
 print("-" * 80)
 print(resp.output[-1].content[-1].text)
 print("-" * 80)
 
-# ============================================================================
-# APPROACH 2: Chat Completions API
-# ============================================================================
-print("\n" + "=" * 80)
-print("APPROACH 2: Chat Completions API (Manual Retrieval)")
-print("=" * 80)
-print(f"Query: {query}\n")
+print(
+    """
 
-# Step 1: Search vector store explicitly
+RAG using Chat Completions API:
+   - Manual retrieval (you control the search)
+   - More code, more control
+   - Best for: Custom RAG patterns, batch processing, specialized workflows
+"""
+)
+
 print("Searching vector store...")
 search_results = client.vector_stores.search(
     vector_store_id=vs.id, query=query, max_num_results=3, rewrite_query=False
 )
 
-# Step 2: Extract context from search results
+# Extract context from search results
 context_chunks = []
 for result in search_results.data:
     # result.content is a list of Content objects, extract the text from each
-    if hasattr(result, "content") and result.content:
-        for content_item in result.content:
-            if hasattr(content_item, "text") and content_item.text:
-                context_chunks.append(content_item.text)
+    for content_item in result.content:
+        context_chunks.append(content_item.text)
 
 context = "\n\n".join(context_chunks)
 print(f"Found {len(context_chunks)} relevant chunks\n")
 
-# Step 3: Use Chat Completions with retrieved context
-print("Generating response with chat completions...")
+print("Reply via Chat Completions API:\n")
 completion = client.chat.completions.create(
     model=os.getenv("INFERENCE_MODEL", "ollama/llama3.2:3b"),
     messages=[
@@ -108,29 +105,6 @@ completion = client.chat.completions.create(
     temperature=0.7,
 )
 
-print("Response (Chat Completions API):")
 print("-" * 80)
 print(completion.choices[0].message.content)
 print("-" * 80)
-
-# ============================================================================
-# Summary
-# ============================================================================
-print("\n" + "=" * 80)
-print("SUMMARY")
-print("=" * 80)
-print(
-    """
-Both approaches successfully performed RAG:
-
-1. Responses API:
-   - Automatic tool calling (model decides when to search)
-   - Simpler code, less control
-   - Best for: Conversational agents, automatic workflows
-
-2. Chat Completions API:
-   - Manual retrieval (you control the search)
-   - More code, more control
-   - Best for: Custom RAG patterns, batch processing, specialized workflows
-"""
-)
