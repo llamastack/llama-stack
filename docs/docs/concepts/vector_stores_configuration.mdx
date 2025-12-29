@@ -1,0 +1,261 @@
+# Vector Stores Configuration
+
+## Overview
+
+Llama Stack provides a variety of configuration options for vector stores through the `VectorStoresConfig`. This configuration allows you to customize file processing, chunk retrieval, search behavior, and performance parameters to optimize File Search and your RAG (Retrieval Augmented Generation) applications.
+
+The configuration affects all vector store providers and operations across the entire stack, particularly the OpenAI-compatible vector store APIs.
+
+## Configuration Structure
+
+Vector store configuration is organized into logical subconfigs that group related settings. For example, the yaml below provides an example configuration for the Faiss provider.
+
+```yaml
+vector_stores:
+  default_provider_id: "faiss"
+  default_embedding_model:
+    provider_id: "sentence-transformers"
+    model_id: "all-MiniLM-L6-v2"
+
+  # Query rewriting for enhanced search
+  rewrite_query_params:
+    model:
+      provider_id: "ollama"
+      model_id: "llama3.2:3b-instruct-fp16"
+    prompt: "Rewrite this search query to improve retrieval results by expanding it with relevant synonyms and related terms: {query}"
+    max_tokens: 100
+    temperature: 0.3
+
+  # File processing during file ingestion
+  file_ingestion_params:
+    default_chunk_size_tokens: 512
+    default_chunk_overlap_tokens: 128
+
+  # Chunk retrieval and ranking during search
+  chunk_retrieval_params:
+    chunk_multiplier: 5
+    max_tokens_in_context: 4000
+    default_reranker_strategy: "rrf"
+    rrf_impact_factor: 60.0
+    weighted_search_alpha: 0.5
+
+  # Batch processing performance settings
+  file_batch_params:
+    max_concurrent_files_per_batch: 3
+    file_batch_chunk_size: 10
+    cleanup_interval_seconds: 86400
+
+  # Tool output and prompt formatting
+  file_search_params:
+    header_template: "## Knowledge Search Results\n\nI found {num_chunks} relevant chunks:\n\n"
+    footer_template: "\n---\n\nEnd of search results."
+
+  context_prompt_params:
+    chunk_annotation_template: "**Source {index}:**\n{chunk.content}\n\n"
+    context_template: "Use the above information to answer: {query}"
+
+  annotation_prompt_params:
+    enable_annotations: true
+    annotation_instruction_template: "Cite sources using [Source X] format."
+    chunk_annotation_template: "[Source {index}] {chunk_text} (File: {file_id})"
+```
+
+## Configuration Sections
+
+### File Ingestion Parameters
+
+The `file_ingestion_params` configuration controls how files are processed during ingestion into vector stores when using `client.vector_stores.files.create()`:
+
+#### `file_ingestion_params`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `default_chunk_size_tokens` | `int` | `512` | Default token count for file/document chunks when not explicitly specified |
+| `default_chunk_overlap_tokens` | `int` | `128` | Number of tokens to overlap between chunks (original default: 512 // 4) |
+
+```yaml
+file_ingestion_params:
+  default_chunk_size_tokens: 512    # Smaller chunks for precision
+  default_chunk_overlap_tokens: 128  # Fixed token overlap for context continuity
+```
+
+**Use Cases:**
+- **Smaller chunks (256-512)**: Better for precise factual retrieval
+- **Larger chunks (800-1200)**: Better for context-heavy applications
+- **Higher overlap (200-300 tokens)**: Reduces context loss at chunk boundaries
+- **Lower overlap (50-100 tokens)**: More efficient storage, faster processing
+
+### Chunk Retrieval Parameters
+
+The `chunk_retrieval_params` controls search behavior and ranking strategies when using `client.vector_stores.search()`:
+
+#### `chunk_retrieval_params`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `chunk_multiplier` | `int` | `5` | Over-retrieval factor for OpenAI API compatibility (affects all providers) |
+| `max_tokens_in_context` | `int` | `4000` | Maximum tokens allowed in RAG context before truncation |
+| `default_reranker_strategy` | `str` | `"rrf"` | Default ranking strategy: `"rrf"`, `"weighted"`, or `"normalized"` |
+| `rrf_impact_factor` | `float` | `60.0` | Impact factor for Reciprocal Rank Fusion (RRF) reranking |
+| `weighted_search_alpha` | `float` | `0.5` | Alpha weight for weighted search reranking (0.0-1.0) |
+
+```yaml
+chunk_retrieval_params:
+  chunk_multiplier: 5               # Retrieve 5x chunks for reranking
+  max_tokens_in_context: 4000       # Context window limit
+  default_reranker_strategy: "rrf"  # Use RRF for hybrid search
+  rrf_impact_factor: 60.0           # RRF ranking parameter
+  weighted_search_alpha: 0.5        # 50/50 vector/keyword weight
+```
+
+**Ranking Strategies:**
+
+- **RRF (Reciprocal Rank Fusion)**: Combines vector and keyword rankings with configurable impact factor
+- **Weighted**: Linear combination with adjustable alpha (0=keyword only, 1=vector only)
+- **Normalized**: Normalizes scores before combination
+
+### File Batch Parameters
+
+The `file_batch_params` controls performance and concurrency for batch file processing when using `client.vector_stores.file_batches.*`:
+
+#### `file_batch_params`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `max_concurrent_files_per_batch` | `int` | `3` | Maximum files processed concurrently in file batches |
+| `file_batch_chunk_size` | `int` | `10` | Number of files to process in each batch chunk |
+| `cleanup_interval_seconds` | `int` | `86400` | Interval for cleaning up expired file batches (24 hours) |
+
+```yaml
+file_batch_params:
+  max_concurrent_files_per_batch: 3 # Process 3 files simultaneously
+  file_batch_chunk_size: 10         # Handle 10 files per chunk
+  cleanup_interval_seconds: 86400   # Clean up daily
+```
+
+**Performance Tuning:**
+- **Higher concurrency**: Faster processing, more memory usage
+- **Lower concurrency**: Slower processing, less resource usage
+- **Larger chunk size**: Fewer iterations, more memory per iteration
+- **Smaller chunk size**: More iterations, better memory distribution
+
+## Advanced Configuration
+
+### Default Provider and Model Settings
+
+Set system-wide defaults for vector operations:
+
+```yaml
+vector_stores:
+  default_provider_id: "faiss"  # Default vector store provider
+  default_embedding_model:      # Default embedding model
+    provider_id: "sentence-transformers"
+    model_id: "all-MiniLM-L6-v2"
+```
+
+### Query Rewriting Configuration
+
+Enable intelligent query expansion for better search results:
+
+#### `rewrite_query_params`
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `model` | `QualifiedModel` | LLM model for query rewriting/expansion |
+| `prompt` | `str` | Prompt template (must contain `{query}` placeholder) |
+| `max_tokens` | `int` | Maximum tokens for expansion (1-4096) |
+| `temperature` | `float` | Generation temperature (0.0-2.0) |
+
+```yaml
+rewrite_query_params:
+  model:
+    provider_id: "meta-reference"
+    model_id: "llama3.2"
+  prompt: |
+    Expand this search query with related terms and synonyms for better vector search.
+    Keep the expansion focused and relevant.
+
+    Original query: {query}
+
+    Expanded query:
+  max_tokens: 100
+  temperature: 0.3
+```
+
+**Note**: Query rewriting is optional. Omit this section to disable query expansion.
+
+### Output Formatting Configuration
+
+Customize how search results are formatted for RAG applications:
+
+#### `file_search_params`
+
+```yaml
+file_search_params:
+  header_template: |
+    ## Knowledge Search Results
+
+    I found {num_chunks} relevant chunks from your knowledge base:
+
+  footer_template: |
+
+    ---
+
+    End of search results. Use this information to provide a comprehensive answer.
+```
+
+#### `context_prompt_params`
+
+```yaml
+context_prompt_params:
+  chunk_annotation_template: |
+    **Source {index}:**
+    {chunk.content}
+
+    *Metadata: {metadata}*
+
+  context_template: |
+    Based on the search results above, please answer this question: {query}
+
+    Provide specific details from the sources and cite them appropriately.
+```
+
+#### `annotation_prompt_params`
+
+```yaml
+annotation_prompt_params:
+  enable_annotations: true
+  annotation_instruction_template: |
+    When citing information, use the format [Source X] where X is the source number.
+    Always cite specific sources for factual claims.
+  chunk_annotation_template: |
+    [Source {index}] {chunk_text}
+
+    Source: {file_id}
+```
+
+## Provider-Specific Considerations
+
+### OpenAI-Compatible API
+
+All configuration options affect the OpenAI-compatible vector store API:
+
+- `chunk_multiplier` affects over-retrieval in search operations
+- `file_ingestion_params` control chunking during file attachment
+- `file_batch_params` control batch processing performance
+
+### RAG Tools
+
+The RAG tool runtime respects these configurations:
+
+- Uses `default_chunk_size_tokens` for file insertion
+- Applies `max_tokens_in_context` for context window management
+- Uses formatting templates for tool output
+
+### All Vector Store Providers
+
+These settings apply across all vector store providers:
+
+- **Inline providers**: FAISS, SQLite-vec, Milvus
+- **Remote providers**: ChromaDB, Qdrant, Weaviate, PGVector
+- **Hybrid providers**: Milvus (supports both inline and remote)

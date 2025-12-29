@@ -37,6 +37,35 @@ on:
         description: 'Test against a specific setup'
         type: string
         default: 'ollama'
+  workflow_call:
+    inputs:
+      sdk_install_url:
+        required: false
+        type: string
+        description: 'URL to install Python SDK from (for testing preview builds)'
+      matrix_key:
+        required: false
+        type: string
+        default: 'default'
+        description: 'Matrix configuration key from ci_matrix.json (e.g., "default", "stainless")'
+      pr_head_sha:
+        required: false
+        type: string
+        description: 'The SHA of the pull request head to checkout'
+      pr_head_ref:
+        required: false
+        type: string
+        description: 'The branch name of the pull request head (for recording commits)'
+      is_fork_pr:
+        required: false
+        type: boolean
+        default: false
+        description: 'Whether this is a fork PR (cannot push recordings to forks)'
+      test-all-client-versions:
+        required: false
+        type: boolean
+        default: false
+        description: 'Test against both the latest and published versions'
 
 concurrency:
   # Skip concurrency for pushes to main - each commit should be tested independently
@@ -50,16 +79,19 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: ${{ inputs.pr_head_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Generate test matrix
         id: set-matrix
         run: |
-          # Generate matrix from CI_MATRIX in tests/integration/suites.py
-          # Supports schedule-based and manual input overrides
+          # Generate matrix from CI_MATRIX in tests/integration/ci_matrix.json
+          # Supports schedule-based, manual input, and workflow_call overrides
           MATRIX=$(PYTHONPATH=. python3 scripts/generate_ci_matrix.py \
             --schedule "${{ github.event.schedule }}" \
-            --test-setup "${{ github.event.inputs.test-setup }}")
+            --test-setup "${{ github.event.inputs.test-setup || '' }}" \
+            --matrix-key "${{ inputs.matrix_key || 'default' }}")
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           echo "Generated matrix: $MATRIX"
 
@@ -74,14 +106,17 @@ jobs:
         client: [library, docker, server]
         # Use Python 3.13 only on nightly schedule (daily latest client test), otherwise use 3.12
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
-        client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true') && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
-        # Test configurations: Generated from CI_MATRIX in tests/integration/suites.py
+        node-version: [22]
+        client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true' || inputs.test-all-client-versions == true) && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
+        # Test configurations: Generated from CI_MATRIX in tests/integration/ci_matrix.json
         # See scripts/generate_ci_matrix.py for generation logic
         config: ${{ fromJSON(needs.generate-matrix.outputs.matrix).include }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          ref: ${{ inputs.pr_head_sha || github.event.pull_request.head.sha || github.sha }}
 
       - name: Setup test environment
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
@@ -89,15 +124,16 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
+          sdk_install_url: ${{ inputs.sdk_install_url || '' }}
           setup: ${{ matrix.config.setup }}
           suite: ${{ matrix.config.suite }}
-          inference-mode: 'replay'
+          inference-mode: ${{ matrix.config.inference_mode || 'replay' }}
 
       - name: Setup Node.js for TypeScript client tests
         if: ${{ matrix.client == 'server' }}
-        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
         with:
-          node-version: '20'
+          node-version: ${{matrix.node-version}}
           cache: 'npm'
           cache-dependency-path: tests/integration/client-typescript/package-lock.json
 
@@ -121,5 +157,7 @@ jobs:
                 || (matrix.client == 'server' && 'server:ci-tests')
                 || 'docker:ci-tests' }}
           setup: ${{ matrix.config.setup }}
-          inference-mode: 'replay'
+          inference-mode: ${{ matrix.config.inference_mode || 'replay' }}
           suite: ${{ matrix.config.suite }}
+          target-branch: ${{ inputs.pr_head_ref || '' }}
+          is-fork-pr: ${{ inputs.is_fork_pr && 'true' || (github.event.pull_request.head.repo.full_name != github.repository && 'true' || 'false') }}

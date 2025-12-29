@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 from collections.abc import AsyncIterator
+from enum import StrEnum
 from typing import Annotated, Protocol, runtime_checkable
 
 from pydantic import BaseModel
@@ -19,6 +20,7 @@ from .openai_responses import (
     OpenAIDeleteResponseObject,
     OpenAIResponseInput,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
     OpenAIResponsePrompt,
@@ -38,6 +40,20 @@ class ResponseGuardrailSpec(BaseModel):
 
 
 ResponseGuardrail = str | ResponseGuardrailSpec
+
+
+class ResponseItemInclude(StrEnum):
+    """
+    Specify additional output data to include in the model response.
+    """
+
+    web_search_call_action_sources = "web_search_call.action.sources"
+    code_interpreter_call_outputs = "code_interpreter_call.outputs"
+    computer_call_output_output_image_url = "computer_call_output.output.image_url"
+    file_search_call_results = "file_search_call.results"
+    message_input_image_image_url = "message.input_image.image_url"
+    message_output_text_logprobs = "message.output_text.logprobs"
+    reasoning_encrypted_content = "reasoning.encrypted_content"
 
 
 @runtime_checkable
@@ -79,8 +95,9 @@ class Agents(Protocol):
         stream: bool | None = False,
         temperature: float | None = None,
         text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
-        include: list[str] | None = None,
+        include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,  # this is an extension to the OpenAI API
         guardrails: Annotated[
             list[ResponseGuardrail] | None,
@@ -89,6 +106,7 @@ class Agents(Protocol):
             ),
         ] = None,
         max_tool_calls: int | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a model response.
 
@@ -100,6 +118,7 @@ class Agents(Protocol):
         :param include: (Optional) Additional fields to include in the response.
         :param guardrails: (Optional) List of guardrails to apply during response generation. Can be guardrail IDs (strings) or guardrail specifications.
         :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response.
+        :param metadata: (Optional) Dictionary of metadata key-value pairs to attach to the response.
         :returns: An OpenAIResponseObject.
         """
         ...

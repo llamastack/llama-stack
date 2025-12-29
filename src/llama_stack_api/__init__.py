@@ -23,16 +23,40 @@ __version__ = "0.4.0.dev0"
 
 # Import submodules for those who need them
 from . import common  # noqa: F401
+from .admin import (
+    Admin,
+    ApiFilter,
+    HealthInfo,
+    InspectProviderRequest,
+    ListProvidersResponse,
+    ListRoutesRequest,
+    ListRoutesResponse,
+    ProviderInfo,
+    RouteInfo,
+    VersionInfo,
+)
 
 # Import all public API symbols
-from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec
-from .batches import Batches, BatchObject, ListBatchesResponse
+from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
+from .batches import (
+    Batches,
+    BatchObject,
+    CancelBatchRequest,
+    CreateBatchRequest,
+    ListBatchesRequest,
+    ListBatchesResponse,
+    RetrieveBatchRequest,
+)
 from .benchmarks import (
     Benchmark,
     BenchmarkInput,
     Benchmarks,
     CommonBenchmarkFields,
+    GetBenchmarkRequest,
+    ListBenchmarksRequest,
     ListBenchmarksResponse,
+    RegisterBenchmarkRequest,
+    UnregisterBenchmarkRequest,
 )
 
 # Import commonly used types from common submodule
@@ -65,6 +89,14 @@ from .common.type_system import (
     NumberType,
     ParamType,
     StringType,
+)
+from .connectors import (
+    Connector,
+    ConnectorInput,
+    Connectors,
+    ConnectorType,
+    ListConnectorsResponse,
+    ListToolsResponse,
 )
 from .conversations import (
     Conversation,
@@ -112,6 +144,7 @@ from .datatypes import (
     VectorStoresProtocolPrivate,
 )
 from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
+from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
     ExpiresAfter,
     Files,
@@ -147,6 +180,10 @@ from .inference import (
     OpenAIChatCompletionTextOnlyMessageContent,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
+    OpenAIChatCompletionToolChoice,
+    OpenAIChatCompletionToolChoiceAllowedTools,
+    OpenAIChatCompletionToolChoiceCustomTool,
+    OpenAIChatCompletionToolChoiceFunctionTool,
     OpenAIChatCompletionUsage,
     OpenAIChatCompletionUsageCompletionTokensDetails,
     OpenAIChatCompletionUsagePromptTokensDetails,
@@ -196,14 +233,7 @@ from .inference import (
     TopPSamplingStrategy,
     UserMessage,
 )
-from .inspect import (
-    ApiFilter,
-    HealthInfo,
-    Inspect,
-    ListRoutesResponse,
-    RouteInfo,
-    VersionInfo,
-)
+from .inspect_api import Inspect
 from .models import (
     CommonModelFields,
     ListModelsResponse,
@@ -239,6 +269,15 @@ from .openai_responses import (
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputTool,
+    OpenAIResponseInputToolChoice,
+    OpenAIResponseInputToolChoiceAllowedTools,
+    OpenAIResponseInputToolChoiceCustomTool,
+    OpenAIResponseInputToolChoiceFileSearch,
+    OpenAIResponseInputToolChoiceFunctionTool,
+    OpenAIResponseInputToolChoiceMCPTool,
+    OpenAIResponseInputToolChoiceMode,
+    OpenAIResponseInputToolChoiceObject,
+    OpenAIResponseInputToolChoiceWebSearch,
     OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolFunction,
     OpenAIResponseInputToolMCP,
@@ -326,7 +365,7 @@ from .post_training import (
     TrainingConfig,
 )
 from .prompts import ListPromptsResponse, Prompt, Prompts
-from .providers import ListProvidersResponse, ProviderInfo, Providers
+from .providers import Providers
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
     LLMRAGQueryGeneratorConfig,
@@ -462,6 +501,9 @@ __all__ = [
     "BasicScoringFnParams",
     "Batches",
     "BatchObject",
+    "CancelBatchRequest",
+    "CreateBatchRequest",
+    "ListBatchesRequest",
     "Benchmark",
     "BenchmarkConfig",
     "BenchmarkInput",
@@ -482,6 +524,10 @@ __all__ = [
     "CommonShieldFields",
     "CompletionInputType",
     "CompletionRequest",
+    "Connector",
+    "ConnectorInput",
+    "Connectors",
+    "ConnectorType",
     "Conversation",
     "ConversationDeletedResource",
     "ConversationItem",
@@ -518,6 +564,7 @@ __all__ = [
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",
+    "FileProcessors",
     "Files",
     "Fp8QuantizationConfig",
     "clear_dynamic_schema_types",
@@ -533,6 +580,8 @@ __all__ = [
     "InferenceProvider",
     "InlineProviderSpec",
     "Inspect",
+    "InspectProviderRequest",
+    "Admin",
     "Int4QuantizationConfig",
     "InterleavedContent",
     "InterleavedContentItem",
@@ -555,7 +604,13 @@ __all__ = [
     "LLMAsJudgeScoringFnParams",
     "LLMRAGQueryGeneratorConfig",
     "ListBatchesResponse",
+    "RetrieveBatchRequest",
+    "GetBenchmarkRequest",
+    "ListBenchmarksRequest",
     "ListBenchmarksResponse",
+    "RegisterBenchmarkRequest",
+    "UnregisterBenchmarkRequest",
+    "ListConnectorsResponse",
     "ListDatasetsResponse",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
@@ -565,11 +620,13 @@ __all__ = [
     "ListPostTrainingJobsResponse",
     "ListPromptsResponse",
     "ListProvidersResponse",
+    "ListRoutesRequest",
     "ListRoutesResponse",
     "ListScoringFunctionsResponse",
     "ListShieldsResponse",
     "ListToolDefsResponse",
     "ListToolGroupsResponse",
+    "ListToolsResponse",
     "LogProbConfig",
     "LoraFinetuningConfig",
     "MCPListToolsTool",
@@ -601,6 +658,10 @@ __all__ = [
     "OpenAIChatCompletionUsage",
     "OpenAIChatCompletionUsageCompletionTokensDetails",
     "OpenAIChatCompletionUsagePromptTokensDetails",
+    "OpenAIChatCompletionToolChoiceAllowedTools",
+    "OpenAIChatCompletionToolChoiceFunctionTool",
+    "OpenAIChatCompletionToolChoiceCustomTool",
+    "OpenAIChatCompletionToolChoice",
     "OpenAIChoice",
     "OpenAIChoiceDelta",
     "OpenAIChoiceLogprobs",
@@ -655,6 +716,15 @@ __all__ = [
     "OpenAIResponseInputToolFunction",
     "OpenAIResponseInputToolMCP",
     "OpenAIResponseInputToolWebSearch",
+    "OpenAIResponseInputToolChoice",
+    "OpenAIResponseInputToolChoiceAllowedTools",
+    "OpenAIResponseInputToolChoiceFileSearch",
+    "OpenAIResponseInputToolChoiceWebSearch",
+    "OpenAIResponseInputToolChoiceFunctionTool",
+    "OpenAIResponseInputToolChoiceMCPTool",
+    "OpenAIResponseInputToolChoiceCustomTool",
+    "OpenAIResponseInputToolChoiceMode",
+    "OpenAIResponseInputToolChoiceObject",
     "OpenAIResponseMCPApprovalRequest",
     "OpenAIResponseMCPApprovalResponse",
     "OpenAIResponseMessage",
@@ -725,6 +795,7 @@ __all__ = [
     "ParamType",
     "parse_type",
     "PostTraining",
+    "ProcessFileResponse",
     "PostTrainingMetric",
     "PostTrainingJob",
     "PostTrainingJobArtifactsResponse",
@@ -764,6 +835,7 @@ __all__ = [
     "ResponseFormatType",
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
+    "ResponseItemInclude",
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",

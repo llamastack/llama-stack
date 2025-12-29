@@ -35,5 +35,5 @@ class RunpodImplConfig(RemoteInferenceProviderConfig):
     def sample_run_config(cls, **kwargs: Any) -> dict[str, Any]:
         return {
             "base_url": "${env.RUNPOD_URL:=}",
-            "api_token": "${env.RUNPOD_API_TOKEN}",
+            "api_token": "${env.RUNPOD_API_TOKEN:=}",
         }

@@ -7,14 +7,14 @@
 
 import yaml
 
-from llama_stack.core.datatypes import BuildConfig, StackRunConfig
+from llama_stack.core.datatypes import StackConfig
 from llama_stack.log import get_logger
 from llama_stack_api import Api, ExternalApiSpec
 
 logger = get_logger(name=__name__, category="core")
 
 
-def load_external_apis(config: StackRunConfig | BuildConfig | None) -> dict[Api, ExternalApiSpec]:
+def load_external_apis(config: StackConfig | None) -> dict[Api, ExternalApiSpec]:
     """Load external API specifications from the configured directory.
 
     Args:

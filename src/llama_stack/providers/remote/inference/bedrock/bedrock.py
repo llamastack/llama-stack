@@ -8,7 +8,6 @@ from collections.abc import AsyncIterator, Iterable
 
 from openai import AuthenticationError
 
-from llama_stack.core.telemetry.tracing import get_current_span
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
@@ -70,7 +69,7 @@ class BedrockInferenceAdapter(OpenAIMixin):
     async def openai_completion(
         self,
         params: OpenAICompletionRequestWithExtraBody,
-    ) -> OpenAICompletion:
+    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
         """Bedrock's OpenAI-compatible API does not support the /v1/completions endpoint."""
         raise NotImplementedError(
             "Bedrock's OpenAI-compatible API does not support /v1/completions endpoint. "
@@ -82,14 +81,7 @@ class BedrockInferenceAdapter(OpenAIMixin):
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        """Override to enable streaming usage metrics and handle authentication errors."""
-        # Enable streaming usage metrics when telemetry is active
-        if params.stream and get_current_span() is not None:
-            if params.stream_options is None:
-                params.stream_options = {"include_usage": True}
-            elif "include_usage" not in params.stream_options:
-                params.stream_options = {**params.stream_options, "include_usage": True}
-
+        """Override to handle authentication errors and null responses."""
         try:
             logger.debug(f"Calling Bedrock OpenAI API with model={params.model}, stream={params.stream}")
             result = await super().openai_chat_completion(params=params)

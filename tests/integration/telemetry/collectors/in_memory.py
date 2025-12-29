@@ -15,11 +15,10 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-import llama_stack.core.telemetry.telemetry as telemetry_module
-
 from .base import BaseTelemetryCollector, MetricStub, SpanStub
 
 
+# TODO: Fix thi to work with Automatic Instrumentation
 class InMemoryTelemetryCollector(BaseTelemetryCollector):
     """In-memory telemetry collector for library-client tests.
 
@@ -75,13 +74,10 @@ class InMemoryTelemetryManager:
         meter_provider = MeterProvider(metric_readers=[metric_reader])
         metrics.set_meter_provider(meter_provider)
 
-        telemetry_module._TRACER_PROVIDER = tracer_provider
-
         self.collector = InMemoryTelemetryCollector(span_exporter, metric_reader)
         self._tracer_provider = tracer_provider
         self._meter_provider = meter_provider
 
     def shutdown(self) -> None:
-        telemetry_module._TRACER_PROVIDER = None
         self._tracer_provider.shutdown()
         self._meter_provider.shutdown()

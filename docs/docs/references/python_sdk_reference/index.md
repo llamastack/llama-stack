@@ -220,6 +220,20 @@ Methods:
 
 ## VectorIo
 
+:::warning DEPRECATED API
+
+**This API is deprecated and will be removed in a future version.**
+
+Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+- Instead of `client.vector_io.insert()`, use `client.vector_stores.files.create()` and `client.vector_stores.files.chunks.create()`
+- Instead of `client.vector_io.query()`, use `client.vector_stores.search()`
+
+See the [RAG documentation](/docs/building_applications/rag) for migration examples.
+
+Related: [Issue #2981](https://github.com/meta-llama/llama-stack/issues/2981)
+
+:::
+
 Types:
 
 ```python
@@ -232,6 +246,22 @@ Methods:
 - <code title="post /v1/vector-io/query">client.vector_io.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/vector_io.py">query</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/vector_io_query_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/query_chunks_response.py">QueryChunksResponse</a></code>
 
 ## VectorDBs
+
+:::warning DEPRECATED API
+
+**This API is deprecated and will be removed in a future version.**
+
+Use the OpenAI-compatible [Vector Stores API](#vectorstores) instead:
+- Instead of `client.vector_dbs.register()`, use `client.vector_stores.create()`
+- Instead of `client.vector_dbs.list()`, use `client.vector_stores.list()`
+- Instead of `client.vector_dbs.retrieve()`, use `client.vector_stores.retrieve()`
+- Instead of `client.vector_dbs.unregister()`, use `client.vector_stores.delete()`
+
+See the [RAG documentation](/docs/building_applications/rag) for migration examples.
+
+Related: [Issue #2981](https://github.com/meta-llama/llama-stack/issues/2981)
+
+:::
 
 Types:
 
@@ -359,32 +389,6 @@ from llama_stack_client.types import SyntheticDataGenerationResponse
 Methods:
 
 - <code title="post /v1/synthetic-data-generation/generate">client.synthetic_data_generation.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/synthetic_data_generation.py">generate</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/synthetic_data_generation_generate_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/synthetic_data_generation_response.py">SyntheticDataGenerationResponse</a></code>
-
-## Telemetry
-
-Types:
-
-```python
-from llama_stack_client.types import (
-    QuerySpansResponse,
-    SpanWithStatus,
-    Trace,
-    TelemetryGetSpanResponse,
-    TelemetryGetSpanTreeResponse,
-    TelemetryQuerySpansResponse,
-    TelemetryQueryTracesResponse,
-)
-```
-
-Methods:
-
-- <code title="get /v1/telemetry/traces/{trace_id}/spans/{span_id}">client.telemetry.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/telemetry.py">get_span</a>(span_id, \*, trace_id) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_get_span_response.py">TelemetryGetSpanResponse</a></code>
-- <code title="get /v1/telemetry/spans/{span_id}/tree">client.telemetry.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/telemetry.py">get_span_tree</a>(span_id, \*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_get_span_tree_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_get_span_tree_response.py">TelemetryGetSpanTreeResponse</a></code>
-- <code title="get /v1/telemetry/traces/{trace_id}">client.telemetry.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/telemetry.py">get_trace</a>(trace_id) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/trace.py">Trace</a></code>
-- <code title="post /v1/telemetry/events">client.telemetry.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/telemetry.py">log_event</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_log_event_params.py">params</a>) -> None</code>
-- <code title="get /v1/telemetry/spans">client.telemetry.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/telemetry.py">query_spans</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_query_spans_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_query_spans_response.py">TelemetryQuerySpansResponse</a></code>
-- <code title="get /v1/telemetry/traces">client.telemetry.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/telemetry.py">query_traces</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_query_traces_params.py">params</a>) -> <a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_query_traces_response.py">TelemetryQueryTracesResponse</a></code>
-- <code title="post /v1/telemetry/spans/export">client.telemetry.<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/resources/telemetry.py">save_spans_to_dataset</a>(\*\*<a href="https://github.com/meta-llama/llama-stack-client-python/tree/main/src/llama_stack_client/types/telemetry_save_spans_to_dataset_params.py">params</a>) -> None</code>
 
 ## Datasetio
 

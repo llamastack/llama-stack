@@ -10,6 +10,7 @@ import json
 import logging  # allow-direct-logging
 import os
 import sys
+import typing
 from enum import Enum
 from io import BytesIO
 from pathlib import Path
@@ -41,13 +42,10 @@ from termcolor import cprint
 
 from llama_stack.core.build import print_pip_install_help
 from llama_stack.core.configure import parse_and_maybe_upgrade_config
-from llama_stack.core.datatypes import BuildConfig, BuildProvider, DistributionSpec
 from llama_stack.core.request_headers import PROVIDER_DATA_VAR, request_provider_data_context
 from llama_stack.core.resolver import ProviderRegistry
 from llama_stack.core.server.routes import RouteImpls, find_matching_route, initialize_route_impls
 from llama_stack.core.stack import Stack, get_stack_run_config_from_distro, replace_env_vars
-from llama_stack.core.telemetry import Telemetry
-from llama_stack.core.telemetry.tracing import CURRENT_TRACE_CONTEXT, end_trace, setup_logger, start_trace
 from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.core.utils.exec import in_notebook
@@ -204,13 +202,6 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         super().__init__()
         # Initialize logging from environment variables first
         setup_logging()
-
-        # when using the library client, we should not log to console since many
-        # of our logs are intended for server-side usage
-        if sinks_from_env := os.environ.get("TELEMETRY_SINKS", None):
-            current_sinks = sinks_from_env.strip().lower().split(",")
-            os.environ["TELEMETRY_SINKS"] = ",".join(sink for sink in current_sinks if sink != "console")
-
         if in_notebook():
             import nest_asyncio
 
@@ -266,20 +257,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                 file=sys.stderr,
             )
             if self.config_path_or_distro_name.endswith(".yaml"):
-                providers: dict[str, list[BuildProvider]] = {}
-                for api, run_providers in self.config.providers.items():
-                    for provider in run_providers:
-                        providers.setdefault(api, []).append(
-                            BuildProvider(provider_type=provider.provider_type, module=provider.module)
-                        )
-                providers = dict(providers)
-                build_config = BuildConfig(
-                    distribution_spec=DistributionSpec(
-                        providers=providers,
-                    ),
-                    external_providers_dir=self.config.external_providers_dir,
-                )
-                print_pip_install_help(build_config)
+                print_pip_install_help(self.config)
             else:
                 prefix = "!" if in_notebook() else ""
                 cprint(
@@ -295,8 +273,6 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             raise _e
 
         assert self.impls is not None
-        if self.config.telemetry.enabled:
-            setup_logger(Telemetry())
 
         if not os.environ.get("PYTEST_CURRENT_TEST"):
             console = Console()
@@ -392,13 +368,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         body, field_names = self._handle_file_uploads(options, body)
 
         body = self._convert_body(matched_func, body, exclude_params=set(field_names))
-
-        trace_path = webmethod.descriptive_name or route_path
-        await start_trace(trace_path, {"__location__": "library_client"})
-        try:
-            result = await matched_func(**body)
-        finally:
-            await end_trace()
+        result = await matched_func(**body)
 
         # Handle FastAPI Response objects (e.g., from file content retrieval)
         if isinstance(result, FastAPIResponse):
@@ -457,19 +427,13 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         # Prepare body for the function call (handles both Pydantic and traditional params)
         body = self._convert_body(func, body)
 
-        trace_path = webmethod.descriptive_name or route_path
-        await start_trace(trace_path, {"__location__": "library_client"})
-
         async def gen():
-            try:
-                async for chunk in await func(**body):
-                    data = json.dumps(convert_pydantic_to_json_value(chunk))
-                    sse_event = f"data: {data}\n\n"
-                    yield sse_event.encode("utf-8")
-            finally:
-                await end_trace()
+            async for chunk in await func(**body):
+                data = json.dumps(convert_pydantic_to_json_value(chunk))
+                sse_event = f"data: {data}\n\n"
+                yield sse_event.encode("utf-8")
 
-        wrapped_gen = preserve_contexts_async_generator(gen(), [CURRENT_TRACE_CONTEXT, PROVIDER_DATA_VAR])
+        wrapped_gen = preserve_contexts_async_generator(gen(), [PROVIDER_DATA_VAR])
 
         mock_response = httpx.Response(
             status_code=httpx.codes.OK,
@@ -527,6 +491,25 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                 unwrapped_body_param = param
                 break
 
+        # Check for parameters with Depends() annotation (FastAPI router endpoints)
+        # These need special handling: construct the request model from body
+        depends_param = None
+        for param in params_list:
+            param_type = param.annotation
+            if get_origin(param_type) is typing.Annotated:
+                args = get_args(param_type)
+                if len(args) > 1:
+                    # Check if any metadata is Depends
+                    metadata = args[1:]
+                    for item in metadata:
+                        # Check if it's a Depends object (has dependency attribute or is a callable)
+                        # Depends objects typically have a 'dependency' attribute or are callable functions
+                        if hasattr(item, "dependency") or callable(item) or "Depends" in str(type(item)):
+                            depends_param = param
+                            break
+                if depends_param:
+                    break
+
         # Convert parameters to Pydantic models where needed
         converted_body = {}
         for param_name, param in sig.parameters.items():
@@ -536,6 +519,27 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     converted_body[param_name] = value
                 else:
                     converted_body[param_name] = convert_to_pydantic(param.annotation, value)
+
+        # Handle Depends parameter: construct request model from body
+        if depends_param and depends_param.name not in converted_body:
+            param_type = depends_param.annotation
+            if get_origin(param_type) is typing.Annotated:
+                base_type = get_args(param_type)[0]
+                # Handle Union types (e.g., SomeRequestModel | None) - extract the non-None type
+                # In Python 3.10+, Union types created with | syntax are still typing.Union
+                origin = get_origin(base_type)
+                if origin is Union:
+                    # Get the first non-None type from the Union
+                    union_args = get_args(base_type)
+                    base_type = next(
+                        (t for t in union_args if t is not type(None) and t is not None),
+                        union_args[0] if union_args else None,
+                    )
+
+                # Only try to instantiate if it's a class (not a Union or other non-callable type)
+                if base_type is not None and inspect.isclass(base_type) and callable(base_type):
+                    # Construct the request model from all body parameters
+                    converted_body[depends_param.name] = base_type(**body)
 
         # handle unwrapped body parameter after processing all named parameters
         if unwrapped_body_param:

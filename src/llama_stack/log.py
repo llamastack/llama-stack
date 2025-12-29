@@ -37,7 +37,6 @@ CATEGORIES = [
     "eval",
     "tools",
     "client",
-    "telemetry",
     "openai",
     "openai_responses",
     "openai_conversations",
@@ -45,6 +44,7 @@ CATEGORIES = [
     "providers",
     "models",
     "files",
+    "file_processors",
     "vector_io",
     "tool_runtime",
     "cli",
@@ -92,10 +92,10 @@ def config_to_category_levels(category: str, level: str):
 
 def parse_yaml_config(yaml_config: LoggingConfig) -> dict[str, int]:
     """
-    Helper function to parse a yaml logging configuration found in the run.yaml
+    Helper function to parse a yaml logging configuration found in the config.yaml
 
     Parameters:
-        yaml_config (Logging): the logger config object found in the run.yaml
+        yaml_config (Logging): the logger config object found in the config.yaml
 
     Returns:
         Dict[str, int]: A dictionary mapping categories to their log levels.

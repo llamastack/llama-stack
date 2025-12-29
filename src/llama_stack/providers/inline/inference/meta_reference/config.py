@@ -16,7 +16,7 @@ class MetaReferenceInferenceConfig(BaseModel):
     # this is a placeholder to indicate inference model id
     # the actual inference model id is dtermined by the moddel id in the request
     # Note: you need to register the model before using it for inference
-    # models in the resouce list in the run.yaml config will be registered automatically
+    # models in the resouce list in the config.yaml config will be registered automatically
     model: str | None = None
     torch_seed: int | None = None
     max_seq_len: int = 4096
