@@ -25,11 +25,19 @@ class NVIDIASafetyConfig(BaseModel):
 
     guardrails_service_url: str = Field(
         default_factory=lambda: os.getenv("GUARDRAILS_SERVICE_URL", "http://0.0.0.0:7331"),
-        description="The url for accessing the Guardrails service",
+        description="The URL for accessing the NeMo Guardrails service",
     )
     config_id: str | None = Field(
         default_factory=lambda: os.getenv("NVIDIA_GUARDRAILS_CONFIG_ID", "self-check"),
-        description="Guardrails configuration ID to use from the Guardrails configuration store",
+        description="Guardrails configuration ID to use from the configuration store",
+    )
+    blocked_message: str = Field(
+        default_factory=lambda: os.getenv("NVIDIA_GUARDRAILS_BLOCKED_MESSAGE", "I'm sorry, I can't respond to that."),
+        description="The message NeMo Guardrails returns when input is blocked",
+    )
+    temperature: float = Field(
+        default=1.0,
+        description="Sampling temperature for the guardrails model, between 0 and 2",
     )
 
     @classmethod
@@ -37,4 +45,6 @@ class NVIDIASafetyConfig(BaseModel):
         return {
             "guardrails_service_url": "${env.GUARDRAILS_SERVICE_URL:=http://localhost:7331}",
             "config_id": "${env.NVIDIA_GUARDRAILS_CONFIG_ID:=self-check}",
+            "blocked_message": "${env.NVIDIA_GUARDRAILS_BLOCKED_MESSAGE:=I'm sorry, I can't respond to that.}",
+            "temperature": 1.0,
         }
