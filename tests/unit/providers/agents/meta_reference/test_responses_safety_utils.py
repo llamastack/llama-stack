@@ -32,6 +32,7 @@ def mock_apis():
         "safety_api": AsyncMock(),
         "prompts_api": AsyncMock(),
         "files_api": AsyncMock(),
+        "connectors_api": AsyncMock(),
     }
 
 
