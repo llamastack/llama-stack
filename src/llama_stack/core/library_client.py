@@ -428,10 +428,26 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         body = self._convert_body(func, body)
 
         async def gen():
-            async for chunk in await func(**body):
-                data = json.dumps(convert_pydantic_to_json_value(chunk))
-                sse_event = f"data: {data}\n\n"
-                yield sse_event.encode("utf-8")
+            result = await func(**body)
+
+            # Handle FastAPI StreamingResponse (returned by router endpoints)
+            # Extract the async generator from the StreamingResponse body
+            from fastapi.responses import StreamingResponse
+
+            if isinstance(result, StreamingResponse):
+                # StreamingResponse.body_iterator is the async generator
+                async for chunk in result.body_iterator:
+                    # Chunk is already SSE-formatted string from sse_generator, encode to bytes
+                    if isinstance(chunk, str):
+                        yield chunk.encode("utf-8")
+                    else:
+                        yield chunk
+            else:
+                # Direct async generator from implementation
+                async for chunk in result:
+                    data = json.dumps(convert_pydantic_to_json_value(chunk))
+                    sse_event = f"data: {data}\n\n"
+                    yield sse_event.encode("utf-8")
 
         wrapped_gen = preserve_contexts_async_generator(gen(), [PROVIDER_DATA_VAR])
 
