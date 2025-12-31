@@ -250,9 +250,10 @@ class StackRun(Subcommand):
             if enable_gunicorn:
                 # On Unix-like systems, use Gunicorn with Uvicorn workers for production-grade performance
                 try:
-                    self._run_with_gunicorn(host, port, uvicorn_config)
-                except (FileNotFoundError, subprocess.CalledProcessError) as e:
-                    # Gunicorn not available or failed to start - fall back to Uvicorn
+                    self._run_with_gunicorn(host, port, uvicorn_config, config)
+                    # Note: _run_with_gunicorn uses os.execvp, so this line is only reached on exec failure
+                except (FileNotFoundError, OSError) as e:
+                    # Gunicorn not available or failed to exec - fall back to Uvicorn
                     logger.warning(f"Gunicorn unavailable or failed to start: {e}")
                     logger.info("Falling back to single-process Uvicorn server...")
                     uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
@@ -270,7 +271,7 @@ class StackRun(Subcommand):
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
 
-    def _run_with_gunicorn(self, host: str | list[str], port: int, uvicorn_config: dict) -> None:
+    def _run_with_gunicorn(self, host: str | list[str], port: int, uvicorn_config: dict, config: StackConfig) -> None:
         """
         Run the server using Gunicorn with Uvicorn workers.
 
@@ -279,9 +280,10 @@ class StackRun(Subcommand):
         import logging  # allow-direct-logging
         import multiprocessing
 
-        # Calculate number of workers: (2 * CPU cores) + 1 is a common formula
-        # Can be overridden by WEB_CONCURRENCY or GUNICORN_WORKERS environment variable
-        default_workers = (multiprocessing.cpu_count() * 2) + 1
+        # Worker count priority: env var > config > default formula
+        # Default formula: (2 * CPU cores) + 1
+        config_workers = uvicorn_config.get("workers", 1)
+        default_workers = config_workers if config_workers > 1 else (multiprocessing.cpu_count() * 2) + 1
         num_workers = int(os.getenv("GUNICORN_WORKERS") or os.getenv("WEB_CONCURRENCY") or default_workers)
 
         # Handle host configuration - Gunicorn expects a single bind address
@@ -376,12 +378,21 @@ class StackRun(Subcommand):
         logger.info(f"Total concurrent capacity: {num_workers * worker_connections} connections")
 
         # Warn if using SQLite with multiple workers
-        if num_workers > 1 and os.getenv("SQLITE_STORE_DIR"):
+        if num_workers > 1 and self._config_uses_sqlite(config):
             logger.warning("SQLite detected with multiple GUNICORN workers - writes will be serialized.")
 
-        # Execute the Gunicorn command
-        # If Gunicorn is not found or fails to start, raise the exception for the caller to handle
-        subprocess.run(gunicorn_command, check=True)
+        # Execute Gunicorn by replacing this process (exec)
+        # This ensures proper signal handling - signals go directly to Gunicorn
+        os.execvp("gunicorn", gunicorn_command)
+
+    def _config_uses_sqlite(self, config: StackConfig) -> bool:
+        """Check if any storage backend in the config uses SQLite."""
+        if not config.storage or not config.storage.backends:
+            return False
+        for backend in config.storage.backends.values():
+            if isinstance(backend, SqliteKVStoreConfig | SqliteSqlStoreConfig):
+                return True
+        return False
 
     def _start_ui_development_server(self, stack_server_port: int):
         logger.info("Attempting to start UI development server...")
