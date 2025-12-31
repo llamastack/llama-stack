@@ -29,7 +29,6 @@ On Unix-based systems (Linux, macOS), Llama Stack automatically uses **Gunicorn 
 
 - **Multi-process concurrency**: Automatically scales to `(2 × CPU cores) + 1` workers
 - **Worker recycling**: Prevents memory leaks by restarting workers periodically
-- **High throughput**: Tested at 698+ requests/second with sub-millisecond response times
 - **Graceful degradation**: Automatically falls back to single-process Uvicorn on Windows
 
 ### Configuration

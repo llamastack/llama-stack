@@ -242,7 +242,7 @@ class StackRun(Subcommand):
         try:
             # Check if Gunicorn should be enabled
             # Default to true on Unix systems, can be disabled via environment variable
-            enable_gunicorn = os.getenv("LLAMA_STACK_ENABLE_GUNICORN", "true").lower() == "true" and sys.platform in (
+            enable_gunicorn = os.getenv("LLAMA_STACK_ENABLE_GUNICORN", "false").lower() == "true" and sys.platform in (
                 "linux",
                 "darwin",
             )
