@@ -28,6 +28,7 @@ from llama_stack.providers.utils.memory.vector_store import (
 )
 from llama_stack_api import (
     Chunk,
+    EmbeddedChunk,
     Files,
     Inference,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
@@ -356,7 +357,7 @@ class OpenAIVectorStoreMixin(ABC):
     async def insert_chunks(
         self,
         vector_store_id: str,
-        chunks: list[Chunk],
+        chunks: list[EmbeddedChunk],
         ttl_seconds: int | None = None,
     ) -> None:
         """Insert chunks into a vector database (provider-specific implementation)."""
@@ -651,7 +652,10 @@ class OpenAIVectorStoreMixin(ABC):
 
             # Convert response to OpenAI format
             data = []
-            for chunk, score in zip(response.chunks, response.scores, strict=False):
+            for embedded_chunk, score in zip(response.chunks, response.scores, strict=False):
+                # Extract the underlying chunk from the EmbeddedChunk
+                chunk = embedded_chunk.chunk
+
                 # Apply filters if provided
                 if filters:
                     # Simple metadata filtering
@@ -738,9 +742,8 @@ class OpenAIVectorStoreMixin(ABC):
         self, chunk: Chunk, include_embeddings: bool = False, include_metadata: bool = False
     ) -> list[VectorStoreContent]:
         def extract_fields() -> dict:
-            """Extract embedding and metadata fields from chunk based on include flags."""
+            """Extract metadata fields from chunk based on include flags."""
             return {
-                "embedding": chunk.embedding if include_embeddings else None,
                 "chunk_metadata": chunk.chunk_metadata if include_metadata else None,
                 "metadata": chunk.metadata if include_metadata else None,
             }
@@ -837,8 +840,6 @@ class OpenAIVectorStoreMixin(ABC):
                 max_chunk_size_tokens,
                 chunk_overlap_tokens,
                 chunk_attributes,
-                embedding_model=embedding_model,
-                embedding_dimension=embedding_dimension,
             )
             if not chunks:
                 vector_store_file_object.status = "failed"
@@ -862,16 +863,25 @@ class OpenAIVectorStoreMixin(ABC):
                 )
                 resp = await self.inference_api.openai_embeddings(params)
 
-                # Set embeddings on chunks
-                for c, data in zip(chunks, resp.data, strict=False):
-                    if isinstance(data.embedding, list):
-                        c.embedding = data.embedding
-                    else:
-                        raise ValueError(f"Expected embedding to be a list, got {type(data.embedding)}")
+                # Create EmbeddedChunk instances from chunks and their embeddings
+                embedded_chunks = []
+                for chunk, data in zip(chunks, resp.data, strict=False):
+                    # Ensure embedding is a list of floats
+                    embedding = data.embedding
+                    if isinstance(embedding, str):
+                        # Handle case where embedding might be returned as a string (shouldn't normally happen)
+                        raise ValueError(f"Received string embedding instead of list: {embedding}")
+                    embedded_chunk = EmbeddedChunk(
+                        chunk=chunk,
+                        embedding=embedding,
+                        embedding_model=embedding_model,
+                        embedding_dimension=len(embedding),
+                    )
+                    embedded_chunks.append(embedded_chunk)
 
                 await self.insert_chunks(
                     vector_store_id=vector_store_id,
-                    chunks=chunks,
+                    chunks=embedded_chunks,
                 )
                 vector_store_file_object.status = "completed"
         except Exception as e:

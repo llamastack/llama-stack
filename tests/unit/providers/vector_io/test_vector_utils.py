@@ -40,14 +40,11 @@ def test_generate_chunk_id_with_window():
         content="test",
         chunk_id="placeholder",
         metadata={"document_id": "doc-1"},
-        embedding=[],
         chunk_metadata=ChunkMetadata(
             document_id="doc-1",
             chunk_id="placeholder",
             created_timestamp=int(time.time()),
             updated_timestamp=int(time.time()),
-            chunk_embedding_model="test-model",
-            chunk_embedding_dimension=768,
             content_token_count=1,
         ),
     )
@@ -66,14 +63,11 @@ def test_chunk_creation_with_explicit_id():
         content="test",
         chunk_id=chunk_id,
         metadata={"document_id": "doc-1"},
-        embedding=[],
         chunk_metadata=ChunkMetadata(
             document_id="doc-1",
             chunk_id=chunk_id,
             created_timestamp=int(time.time()),
             updated_timestamp=int(time.time()),
-            chunk_embedding_model="test-model",
-            chunk_embedding_dimension=768,
             content_token_count=1,
         ),
     )
@@ -88,14 +82,11 @@ def test_chunk_with_metadata():
         content="test",
         chunk_id=chunk_id,
         metadata={"document_id": "existing-id"},
-        embedding=[],
         chunk_metadata=ChunkMetadata(
             document_id="document_1",
             chunk_id=chunk_id,
             created_timestamp=int(time.time()),
             updated_timestamp=int(time.time()),
-            chunk_embedding_model="test-model",
-            chunk_embedding_dimension=768,
             content_token_count=1,
         ),
     )
@@ -109,14 +100,11 @@ def test_chunk_serialization():
         content="test",
         chunk_id="test-chunk-id",
         metadata={"document_id": "doc-1"},
-        embedding=[],
         chunk_metadata=ChunkMetadata(
             document_id="doc-1",
             chunk_id="test-chunk-id",
             created_timestamp=int(time.time()),
             updated_timestamp=int(time.time()),
-            chunk_embedding_model="test-model",
-            chunk_embedding_dimension=768,
             content_token_count=1,
         ),
     )

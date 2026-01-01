@@ -6084,7 +6084,7 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content that can be inserted into a vector database.
+      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
@@ -6122,17 +6122,11 @@ components:
           additionalProperties: true
           title: Metadata
           type: object
-        embedding:
-          items:
-            type: number
-          title: Embedding
-          type: array
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
       required:
       - content
       - chunk_id
-      - embedding
       - chunk_metadata
       title: Chunk
       type: object
@@ -6166,14 +6160,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-        chunk_embedding_model:
-          anyOf:
-          - type: string
-          - type: 'null'
-        chunk_embedding_dimension:
-          anyOf:
-          - type: integer
-          - type: 'null'
         content_token_count:
           anyOf:
           - type: integer
@@ -6193,7 +6179,7 @@ components:
       properties:
         chunks:
           items:
-            $ref: '#/components/schemas/Chunk-Output'
+            $ref: '#/components/schemas/EmbeddedChunk-Output'
           type: array
           title: Chunks
         scores:
@@ -7981,21 +7967,15 @@ components:
           additionalProperties: true
           type: object
           title: Metadata
-        embedding:
-          items:
-            type: number
-          type: array
-          title: Embedding
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
       type: object
       required:
       - content
       - chunk_id
-      - embedding
       - chunk_metadata
       title: Chunk
-      description: A chunk of content that can be inserted into a vector database.
+      description: A chunk of content from file processing.
     Connector:
       properties:
         identifier:
@@ -8064,6 +8044,29 @@ components:
       - eval/messages-answer
       title: DatasetPurpose
       description: Purpose of the dataset. Each purpose has a required input data schema.
+    EmbeddedChunk-Output:
+      properties:
+        chunk:
+          $ref: '#/components/schemas/Chunk-Output'
+        embedding:
+          items:
+            type: number
+          type: array
+          title: Embedding
+        embedding_model:
+          type: string
+          title: Embedding Model
+        embedding_dimension:
+          type: integer
+          title: Embedding Dimension
+      type: object
+      required:
+      - chunk
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      description: A chunk of content with its embedding vector for vector database operations.
     Errors:
       properties:
         data:
@@ -9523,6 +9526,29 @@ components:
           - type: 'null'
           nullable: true
       title: OpenAICompletionLogprobs
+      type: object
+    EmbeddedChunk:
+      description: A chunk of content with its embedding vector for vector database operations.
+      properties:
+        chunk:
+          $ref: '#/components/schemas/Chunk'
+        embedding:
+          items:
+            type: number
+          title: Embedding
+          type: array
+        embedding_model:
+          title: Embedding Model
+          type: string
+        embedding_dimension:
+          title: Embedding Dimension
+          type: integer
+      required:
+      - chunk
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
       type: object
     VectorStoreCreateRequest:
       description: Request to create a vector store.

@@ -15,7 +15,7 @@ from llama_stack.providers.inline.vector_io.faiss.faiss import (
     FaissIndex,
     FaissVectorIOAdapter,
 )
-from llama_stack_api import Chunk, ChunkMetadata, Files, HealthStatus, QueryChunksResponse, VectorStore
+from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, Files, HealthStatus, QueryChunksResponse, VectorStore
 
 # This test is a unit test for the FaissVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -58,14 +58,11 @@ def sample_chunks():
             content="MOCK text content 1",
             chunk_id=chunk_id_1,
             metadata={"document_id": "mock-doc-1"},
-            embedding=[],
             chunk_metadata=ChunkMetadata(
                 chunk_id=chunk_id_1,
                 document_id="mock-doc-1",
                 created_timestamp=int(time.time()),
                 updated_timestamp=int(time.time()),
-                chunk_embedding_model="test-embedding-model",
-                chunk_embedding_dimension=768,
                 content_token_count=4,
             ),
         ),
@@ -73,14 +70,11 @@ def sample_chunks():
             content="MOCK text content 1",
             chunk_id=chunk_id_2,
             metadata={"document_id": "mock-doc-2"},
-            embedding=[],
             chunk_metadata=ChunkMetadata(
                 chunk_id=chunk_id_2,
                 document_id="mock-doc-2",
                 created_timestamp=int(time.time()),
                 updated_timestamp=int(time.time()),
-                chunk_embedding_model="test-embedding-model",
-                chunk_embedding_dimension=768,
                 content_token_count=4,
             ),
         ),
@@ -123,7 +117,17 @@ async def faiss_index(embedding_dimension):
 async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_identical(
     faiss_index, sample_chunks, sample_embeddings, embedding_dimension
 ):
-    await faiss_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects from chunks and embeddings
+    embedded_chunks = [
+        EmbeddedChunk(
+            chunk=chunk,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=embedding_dimension,
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await faiss_index.add_chunks(embedded_chunks)
     query_embedding = np.random.rand(embedding_dimension).astype(np.float32)
 
     with patch.object(faiss_index.index, "search") as mock_search:
@@ -138,8 +142,8 @@ async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_
         assert response.scores[0] == float("inf")  # infinity (1.0 / 0.0)
         assert response.scores[1] == 10.0  # (1.0 / 0.1 = 10.0)
 
-        assert response.chunks[0] == sample_chunks[0]
-        assert response.chunks[1] == sample_chunks[1]
+        assert response.chunks[0] == embedded_chunks[0]
+        assert response.chunks[1] == embedded_chunks[1]
 
 
 async def test_health_success():

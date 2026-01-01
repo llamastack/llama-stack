@@ -21,7 +21,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     make_overlapped_chunks,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
-from llama_stack_api import Chunk, ChunkMetadata, RAGDocument
+from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, RAGDocument
 
 DUMMY_PDF_PATH = Path(os.path.abspath(__file__)).parent / "fixtures" / "dummy.pdf"
 # Depending on the machine, this can get parsed a couple of ways
@@ -51,38 +51,44 @@ class TestChunk:
             content="Example chunk content",
             chunk_id=generate_chunk_id("test-doc", "Example chunk content"),
             metadata={"key": "value"},
-            embedding=[0.1, 0.2, 0.3],
             chunk_metadata=ChunkMetadata(
                 document_id="test-doc",
                 chunk_id=generate_chunk_id("test-doc", "Example chunk content"),
                 created_timestamp=1234567890,
                 updated_timestamp=1234567890,
-                chunk_embedding_model="test-model",
-                chunk_embedding_dimension=3,
                 content_token_count=3,
             ),
         )
 
         assert chunk.content == "Example chunk content"
         assert chunk.metadata == {"key": "value"}
-        assert chunk.embedding == [0.1, 0.2, 0.3]
 
-        chunk_empty_embedding = Chunk(
+    def test_embedded_chunk(self):
+        chunk = Chunk(
             content="Example chunk content",
             chunk_id=generate_chunk_id("test-doc", "Example chunk content"),
             metadata={"key": "value"},
-            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id="test-doc",
                 chunk_id=generate_chunk_id("test-doc", "Example chunk content"),
                 created_timestamp=1234567890,
                 updated_timestamp=1234567890,
-                chunk_embedding_model="test-model",
-                chunk_embedding_dimension=3,
                 content_token_count=3,
             ),
         )
-        assert chunk_empty_embedding.embedding == []
+
+        embedded_chunk = EmbeddedChunk(
+            chunk=chunk,
+            embedding=[0.1, 0.2, 0.3],
+            embedding_model="test-model",
+            embedding_dimension=3,
+        )
+
+        assert embedded_chunk.chunk.content == "Example chunk content"
+        assert embedded_chunk.chunk.metadata == {"key": "value"}
+        assert embedded_chunk.embedding == [0.1, 0.2, 0.3]
+        assert embedded_chunk.embedding_model == "test-model"
+        assert embedded_chunk.embedding_dimension == 3
 
 
 class TestValidateEmbedding:
@@ -224,9 +230,10 @@ class TestVectorStore:
 
 
 class TestVectorStoreWithIndex:
-    async def test_insert_chunks_rejects_chunks_without_embeddings(self):
-        """Test that VectorStoreWithIndex.insert_chunks() requires embeddings to be pre-generated."""
+    async def test_insert_chunks_with_embedded_chunks(self):
+        """Test that VectorStoreWithIndex.insert_chunks() works with EmbeddedChunk objects."""
         mock_vector_store = MagicMock()
+        mock_vector_store.embedding_model = "test-embedding-model"
         mock_vector_store.embedding_dimension = 3
         mock_index = AsyncMock()
         mock_inference_api = AsyncMock()
@@ -235,189 +242,39 @@ class TestVectorStoreWithIndex:
             vector_store=mock_vector_store, index=mock_index, inference_api=mock_inference_api
         )
 
-        chunks = [
-            Chunk(
-                content="Test 1",
+        chunk = Chunk(
+            content="Test 1",
+            chunk_id=generate_chunk_id("test-doc", "Test 1"),
+            metadata={},
+            chunk_metadata=ChunkMetadata(
+                document_id="test-doc",
                 chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                embedding=[],
-                metadata={},
-                chunk_metadata=ChunkMetadata(
-                    document_id="test-doc",
-                    chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                    created_timestamp=1234567890,
-                    updated_timestamp=1234567890,
-                    chunk_embedding_model="test-model",
-                    chunk_embedding_dimension=3,
-                    content_token_count=2,
-                ),
+                created_timestamp=1234567890,
+                updated_timestamp=1234567890,
+                content_token_count=2,
             ),
-        ]
-
-        # Should raise ValueError because empty embedding has wrong dimension
-        with pytest.raises(ValueError, match="Embedding at index 0 has dimension 0, expected 3"):
-            await vector_store_with_index.insert_chunks(chunks)
-
-        # Verify inference API was never called since it should fail before that
-        mock_inference_api.openai_embeddings.assert_not_called()
-        mock_index.add_chunks.assert_not_called()
-
-    async def test_insert_chunks_with_valid_embeddings(self):
-        mock_vector_store = MagicMock()
-        mock_vector_store.embedding_model = "test-model with embeddings"
-        mock_vector_store.embedding_dimension = 3
-        mock_index = AsyncMock()
-        mock_inference_api = AsyncMock()
-
-        vector_store_with_index = VectorStoreWithIndex(
-            vector_store=mock_vector_store, index=mock_index, inference_api=mock_inference_api
         )
 
-        chunks = [
-            Chunk(
-                content="Test 1",
-                chunk_id=generate_chunk_id("test-doc", "Test 1"),
+        embedded_chunks = [
+            EmbeddedChunk(
+                chunk=chunk,
                 embedding=[0.1, 0.2, 0.3],
-                metadata={},
-                chunk_metadata=ChunkMetadata(
-                    document_id="test-doc",
-                    chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                    created_timestamp=1234567890,
-                    updated_timestamp=1234567890,
-                    chunk_embedding_model="test-model",
-                    chunk_embedding_dimension=3,
-                    content_token_count=2,
-                ),
-            ),
-            Chunk(
-                content="Test 2",
-                chunk_id=generate_chunk_id("test-doc", "Test 2"),
-                embedding=[0.4, 0.5, 0.6],
-                metadata={},
-                chunk_metadata=ChunkMetadata(
-                    document_id="test-doc",
-                    chunk_id=generate_chunk_id("test-doc", "Test 2"),
-                    created_timestamp=1234567890,
-                    updated_timestamp=1234567890,
-                    chunk_embedding_model="test-model",
-                    chunk_embedding_dimension=3,
-                    content_token_count=2,
-                ),
-            ),
+                embedding_model="test-embedding-model",
+                embedding_dimension=3,
+            )
         ]
 
-        await vector_store_with_index.insert_chunks(chunks)
+        await vector_store_with_index.insert_chunks(embedded_chunks)
 
+        # Verify inference API was NOT called since we already have embeddings
         mock_inference_api.openai_embeddings.assert_not_called()
-        mock_index.add_chunks.assert_called_once()
-        args = mock_index.add_chunks.call_args[0]
-        assert args[0] == chunks
-        assert np.array_equal(args[1], np.array([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]], dtype=np.float32))
+        # Verify index was called with the EmbeddedChunk objects we provided
+        mock_index.add_chunks.assert_called_once_with(embedded_chunks)
 
-    async def test_insert_chunks_with_invalid_embeddings(self):
+    async def test_insert_chunks_with_multiple_embedded_chunks(self):
+        """Test that VectorStoreWithIndex.insert_chunks() works with multiple EmbeddedChunk objects."""
         mock_vector_store = MagicMock()
-        mock_vector_store.embedding_dimension = 3
-        mock_vector_store.embedding_model = "test-model with invalid embeddings"
-        mock_index = AsyncMock()
-        mock_inference_api = AsyncMock()
-
-        vector_store_with_index = VectorStoreWithIndex(
-            vector_store=mock_vector_store, index=mock_index, inference_api=mock_inference_api
-        )
-
-        # Verify Chunk raises ValueError for invalid embedding type
-        with pytest.raises(ValueError, match="Input should be a valid list"):
-            Chunk(
-                content="Test 1",
-                chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                embedding="invalid_type",
-                metadata={},
-            )
-
-        # Verify Chunk raises ValueError for invalid embedding type in insert_chunks (i.e., Chunk errors before insert_chunks is called)
-        with pytest.raises(ValueError, match="Input should be a valid list"):
-            await vector_store_with_index.insert_chunks(
-                [
-                    Chunk(
-                        content="Test 1",
-                        chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                        embedding=[],
-                        metadata={},
-                        chunk_metadata=ChunkMetadata(
-                            document_id="test-doc",
-                            chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                            created_timestamp=1234567890,
-                            updated_timestamp=1234567890,
-                            chunk_embedding_model="test-model",
-                            chunk_embedding_dimension=3,
-                            content_token_count=2,
-                        ),
-                    ),
-                    Chunk(
-                        content="Test 2",
-                        chunk_id=generate_chunk_id("test-doc", "Test 2"),
-                        embedding="invalid_type",
-                        metadata={},
-                        chunk_metadata=ChunkMetadata(
-                            document_id="test-doc",
-                            chunk_id=generate_chunk_id("test-doc", "Test 2"),
-                            created_timestamp=1234567890,
-                            updated_timestamp=1234567890,
-                            chunk_embedding_model="test-model",
-                            chunk_embedding_dimension=3,
-                            content_token_count=2,
-                        ),
-                    ),
-                ]
-            )
-
-        # Verify Chunk raises ValueError for invalid embedding element type in insert_chunks (i.e., Chunk errors before insert_chunks is called)
-        with pytest.raises(ValueError, match=" Input should be a valid number, unable to parse string as a number "):
-            await vector_store_with_index.insert_chunks(
-                [
-                    Chunk(
-                        content="Test 1",
-                        chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                        embedding=[0.1, "string", 0.3],
-                        metadata={},
-                        chunk_metadata=ChunkMetadata(
-                            document_id="test-doc",
-                            chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                            created_timestamp=1234567890,
-                            updated_timestamp=1234567890,
-                            chunk_embedding_model="test-model",
-                            chunk_embedding_dimension=3,
-                            content_token_count=2,
-                        ),
-                    )
-                ]
-            )
-
-        chunks_wrong_dim = [
-            Chunk(
-                content="Test 1",
-                chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                embedding=[0.1, 0.2, 0.3, 0.4],
-                metadata={},
-                chunk_metadata=ChunkMetadata(
-                    document_id="test-doc",
-                    chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                    created_timestamp=1234567890,
-                    updated_timestamp=1234567890,
-                    chunk_embedding_model="test-model",
-                    chunk_embedding_dimension=3,
-                    content_token_count=2,
-                ),
-            ),
-        ]
-        with pytest.raises(ValueError, match="has dimension 4, expected 3"):
-            await vector_store_with_index.insert_chunks(chunks_wrong_dim)
-
-        mock_inference_api.openai_embeddings.assert_not_called()
-        mock_index.add_chunks.assert_not_called()
-
-    async def test_insert_chunks_rejects_partial_embeddings(self):
-        """Test that VectorStoreWithIndex.insert_chunks() rejects chunks with missing embeddings."""
-        mock_vector_store = MagicMock()
+        mock_vector_store.embedding_model = "test-embedding-model"
         mock_vector_store.embedding_dimension = 3
         mock_index = AsyncMock()
         mock_inference_api = AsyncMock()
@@ -430,39 +287,47 @@ class TestVectorStoreWithIndex:
             Chunk(
                 content="Test 1",
                 chunk_id=generate_chunk_id("test-doc", "Test 1"),
-                embedding=[],
                 metadata={},
                 chunk_metadata=ChunkMetadata(
                     document_id="test-doc",
                     chunk_id=generate_chunk_id("test-doc", "Test 1"),
                     created_timestamp=1234567890,
                     updated_timestamp=1234567890,
-                    chunk_embedding_model="test-model",
-                    chunk_embedding_dimension=3,
                     content_token_count=2,
                 ),
             ),
             Chunk(
                 content="Test 2",
                 chunk_id=generate_chunk_id("test-doc", "Test 2"),
-                embedding=[0.2, 0.2, 0.2],  # Has embedding
                 metadata={},
                 chunk_metadata=ChunkMetadata(
                     document_id="test-doc",
                     chunk_id=generate_chunk_id("test-doc", "Test 2"),
                     created_timestamp=1234567890,
                     updated_timestamp=1234567890,
-                    chunk_embedding_model="test-model",
-                    chunk_embedding_dimension=3,
                     content_token_count=2,
                 ),
             ),
         ]
 
-        # Should fail immediately on the first chunk without embeddings
-        with pytest.raises(ValueError, match="Embedding at index 0 has dimension 0, expected 3"):
-            await vector_store_with_index.insert_chunks(chunks)
+        embedded_chunks = [
+            EmbeddedChunk(
+                chunk=chunks[0],
+                embedding=[0.1, 0.2, 0.3],
+                embedding_model="test-embedding-model",
+                embedding_dimension=3,
+            ),
+            EmbeddedChunk(
+                chunk=chunks[1],
+                embedding=[0.4, 0.5, 0.6],
+                embedding_model="test-embedding-model",
+                embedding_dimension=3,
+            ),
+        ]
 
-        # Verify no inference API calls were made
+        await vector_store_with_index.insert_chunks(embedded_chunks)
+
+        # Verify inference API was NOT called since we already have embeddings
         mock_inference_api.openai_embeddings.assert_not_called()
-        mock_index.add_chunks.assert_not_called()
+        # Verify index was called with the EmbeddedChunk objects we provided
+        mock_index.add_chunks.assert_called_once_with(embedded_chunks)

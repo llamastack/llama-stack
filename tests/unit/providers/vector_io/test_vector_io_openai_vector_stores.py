@@ -14,6 +14,7 @@ import pytest
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 from llama_stack_api import (
     Chunk,
+    EmbeddedChunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
@@ -50,22 +51,42 @@ async def test_initialize_index(vector_index):
 async def test_add_chunks_query_vector(vector_index, sample_chunks, sample_embeddings):
     vector_index.delete()
     vector_index.initialize()
-    await vector_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            chunk=chunk,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await vector_index.add_chunks(embedded_chunks)
     resp = await vector_index.query_vector(sample_embeddings[0], k=1, score_threshold=-1)
-    assert resp.chunks[0].content == sample_chunks[0].content
+    assert resp.chunks[0].chunk.content == sample_chunks[0].content
     vector_index.delete()
 
 
 async def test_chunk_id_conflict(vector_index, sample_chunks, embedding_dimension):
     embeddings = np.random.rand(len(sample_chunks), embedding_dimension).astype(np.float32)
-    await vector_index.add_chunks(sample_chunks, embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            chunk=chunk,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, embeddings, strict=False)
+    ]
+    await vector_index.add_chunks(embedded_chunks)
     resp = await vector_index.query_vector(
         np.random.rand(embedding_dimension).astype(np.float32),
         k=len(sample_chunks),
         score_threshold=-1,
     )
 
-    contents = [chunk.content for chunk in resp.chunks]
+    contents = [embedded_chunk.chunk.content for embedded_chunk in resp.chunks]
     assert len(contents) == len(set(contents))
 
 
@@ -319,18 +340,23 @@ async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter
     chunk = Chunk(
         content="c1",
         chunk_id=chunk_id,
-        embedding=[],
+        metadata={},
         chunk_metadata=ChunkMetadata(
             document_id="test",
             chunk_id=chunk_id,
             created_timestamp=int(time.time()),
             updated_timestamp=int(time.time()),
-            chunk_embedding_model="test-model",
-            chunk_embedding_dimension=768,
             content_token_count=1,
         ),
     )
-    expected = QueryChunksResponse(chunks=[chunk], scores=[0.1])
+
+    embedded_chunk = EmbeddedChunk(
+        chunk=chunk,
+        embedding=[0.1, 0.2, 0.3],
+        embedding_model="test-model",
+        embedding_dimension=3,
+    )
+    expected = QueryChunksResponse(chunks=[embedded_chunk], scores=[0.1])
     fake_index = AsyncMock(query_chunks=AsyncMock(return_value=expected))
     vector_io_adapter.cache["db1"] = fake_index
 
