@@ -10,7 +10,7 @@ import pytest
 
 from llama_stack.providers.inline.tool_runtime.rag.config import RagToolRuntimeConfig
 from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRuntimeImpl
-from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, RAGQueryConfig
+from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, QueryChunksResponse, RAGQueryConfig
 
 
 class TestRagQuery:
@@ -48,11 +48,17 @@ class TestRagQuery:
                 # Note this is inserted into `metadata` during MemoryToolRuntimeImpl().insert()
                 "document_id": "doc1",
             },
-            embedding=[],
             chunk_metadata=chunk_metadata,
         )
 
-        query_response = QueryChunksResponse(chunks=[chunk], scores=[1.0])
+        embedded_chunk = EmbeddedChunk(
+            chunk=chunk,
+            embedding=[0.1, 0.2, 0.3],
+            embedding_model="test-model",
+            embedding_dimension=3,
+        )
+
+        query_response = QueryChunksResponse(chunks=[embedded_chunk], scores=[1.0])
 
         rag_tool.vector_io_api.query_chunks = AsyncMock(return_value=query_response)
         result = await rag_tool.query(content=content, vector_store_ids=vector_store_ids)
@@ -106,8 +112,14 @@ class TestRagQuery:
             content="chunk from db1",
             chunk_id="c1",
             metadata={"vector_store_id": "db1", "document_id": "doc1"},
-            embedding=[],
             chunk_metadata=chunk_metadata1,
+        )
+
+        embedded_chunk1 = EmbeddedChunk(
+            chunk=chunk1,
+            embedding=[0.1, 0.2, 0.3],
+            embedding_model="test-model",
+            embedding_dimension=3,
         )
 
         chunk_metadata2 = ChunkMetadata(
@@ -120,14 +132,20 @@ class TestRagQuery:
             content="chunk from db2",
             chunk_id="c2",
             metadata={"vector_store_id": "db2", "document_id": "doc2"},
-            embedding=[],
             chunk_metadata=chunk_metadata2,
+        )
+
+        embedded_chunk2 = EmbeddedChunk(
+            chunk=chunk2,
+            embedding=[0.4, 0.5, 0.6],
+            embedding_model="test-model",
+            embedding_dimension=3,
         )
 
         rag_tool.vector_io_api.query_chunks = AsyncMock(
             side_effect=[
-                QueryChunksResponse(chunks=[chunk1], scores=[0.9]),
-                QueryChunksResponse(chunks=[chunk2], scores=[0.8]),
+                QueryChunksResponse(chunks=[embedded_chunk1], scores=[0.9]),
+                QueryChunksResponse(chunks=[embedded_chunk2], scores=[0.8]),
             ]
         )
 

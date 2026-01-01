@@ -54,14 +54,11 @@ def sample_chunks():
             content=f"Sentence {i} from document {j}",
             chunk_id=generate_chunk_id(f"document-{j}", f"Sentence {i} from document {j}"),
             metadata={"document_id": f"document-{j}"},
-            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id=f"document-{j}",
                 chunk_id=generate_chunk_id(f"document-{j}", f"Sentence {i} from document {j}"),
                 created_timestamp=int(time.time()),
                 updated_timestamp=int(time.time()),
-                chunk_embedding_model="test-embedding-model",
-                chunk_embedding_dimension=EMBEDDING_DIMENSION,
                 content_token_count=5,
             ),
         )
@@ -74,15 +71,12 @@ def sample_chunks():
                 content=f"Sentence {i} from document {j + k}",
                 chunk_id=f"document-{j}-chunk-{i}",
                 metadata={"document_id": f"document-{j + k}"},
-                embedding=[],
                 chunk_metadata=ChunkMetadata(
                     document_id=f"document-{j + k}",
                     chunk_id=f"document-{j}-chunk-{i}",
                     source=f"example source-{j + k}-{i}",
                     created_timestamp=int(time.time()),
                     updated_timestamp=int(time.time()),
-                    chunk_embedding_model="test-embedding-model",
-                    chunk_embedding_dimension=EMBEDDING_DIMENSION,
                     content_token_count=5,
                 ),
             )
@@ -102,7 +96,6 @@ def sample_chunks_with_metadata():
             content=f"Sentence {i} from document {j}",
             chunk_id=f"document-{j}-chunk-{i}",
             metadata={"document_id": f"document-{j}"},
-            embedding=[],
             chunk_metadata=ChunkMetadata(
                 document_id=f"document-{j}",
                 chunk_id=f"document-{j}-chunk-{i}",
@@ -258,16 +251,21 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
             index._test_chunks = []
             original_add_chunks = index.add_chunks
 
-            async def mock_add_chunks(chunks, embeddings):
-                index._test_chunks = list(chunks)
+            async def mock_add_chunks(embedded_chunks):
+                index._test_chunks = list(embedded_chunks)
+                # Extract embeddings for the original interface, convert to numpy arrays
+                import numpy as np
+
+                chunks = [ec.chunk for ec in embedded_chunks]
+                embeddings = [np.array(ec.embedding) for ec in embedded_chunks]
                 await original_add_chunks(chunks, embeddings)
 
             index.add_chunks = mock_add_chunks
 
             async def mock_query_vector(embedding, k, score_threshold):
-                chunks = index._test_chunks[:k] if hasattr(index, "_test_chunks") else []
-                scores = [1.0] * len(chunks)
-                return QueryChunksResponse(chunks=chunks, scores=scores)
+                embedded_chunks = index._test_chunks[:k] if hasattr(index, "_test_chunks") else []
+                scores = [1.0] * len(embedded_chunks)
+                return QueryChunksResponse(chunks=embedded_chunks, scores=scores)
 
             index.query_vector = mock_query_vector
 
@@ -353,14 +351,17 @@ async def qdrant_vec_index(embedding_dimension):
     index = QdrantIndex(mock_client, collection_name)
     index._test_chunks = []
 
-    async def mock_add_chunks(chunks, embeddings):
-        index._test_chunks = list(chunks)
+    async def mock_add_chunks(embedded_chunks):
+        index._test_chunks = list(embedded_chunks)
         # Create mock query response with test chunks
         mock_points = []
-        for chunk in chunks:
+        for embedded_chunk in embedded_chunks:
             mock_point = MagicMock(spec=models.ScoredPoint)
             mock_point.score = 1.0
-            mock_point.payload = {"chunk_content": chunk.model_dump(), "_chunk_id": chunk.chunk_id}
+            mock_point.payload = {
+                "chunk_content": embedded_chunk.chunk.model_dump(),
+                "_chunk_id": embedded_chunk.chunk.chunk_id,
+            }
             mock_points.append(mock_point)
 
         async def query_points_mock(**kwargs):
@@ -373,9 +374,9 @@ async def qdrant_vec_index(embedding_dimension):
     index.add_chunks = mock_add_chunks
 
     async def mock_query_vector(embedding, k, score_threshold):
-        chunks = index._test_chunks[:k] if hasattr(index, "_test_chunks") else []
-        scores = [1.0] * len(chunks)
-        return QueryChunksResponse(chunks=chunks, scores=scores)
+        embedded_chunks = index._test_chunks[:k] if hasattr(index, "_test_chunks") else []
+        scores = [1.0] * len(embedded_chunks)
+        return QueryChunksResponse(chunks=embedded_chunks, scores=scores)
 
     index.query_vector = mock_query_vector
 
