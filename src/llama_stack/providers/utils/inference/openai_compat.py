@@ -235,3 +235,40 @@ def prepare_openai_embeddings_params(
         params["user"] = user
 
     return params
+
+
+def get_stream_options_for_telemetry(
+    stream_options: dict[str, Any] | None,
+    is_streaming: bool,
+    supports_stream_options: bool = True,
+) -> dict[str, Any] | None:
+    """
+    Inject stream_options when streaming and telemetry is active.
+
+    Active telemetry takes precedence over caller preference to ensure
+    complete and consistent observability metrics.
+
+    Args:
+        stream_options: Existing stream options from the request
+        is_streaming: Whether this is a streaming request
+        supports_stream_options: Whether the provider supports stream_options parameter
+
+    Returns:
+        Updated stream_options with include_usage=True if conditions are met, otherwise original options
+    """
+    if not is_streaming:
+        return stream_options
+
+    if not supports_stream_options:
+        return stream_options
+
+    from opentelemetry import trace
+
+    span = trace.get_current_span()
+    if not span or not span.is_recording():
+        return stream_options
+
+    if stream_options is None:
+        return {"include_usage": True}
+
+    return {**stream_options, "include_usage": True}

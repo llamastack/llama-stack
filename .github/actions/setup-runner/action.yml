@@ -9,6 +9,10 @@ inputs:
     description: The llama-stack-client-python version to test against (latest or published)
     required: false
     default: "latest"
+  sdk_install_url:
+    description: 'URL to install Python SDK from (for testing preview builds). If provided, overrides client-version.'
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
@@ -22,6 +26,7 @@ runs:
       uses: ./.github/actions/install-llama-stack-client
       with:
         client-version: ${{ inputs.client-version }}
+        sdk_install_url: ${{ inputs.sdk_install_url }}
 
     - name: Install dependencies
       shell: bash

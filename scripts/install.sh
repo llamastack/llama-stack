@@ -20,7 +20,6 @@ WAIT_TIMEOUT=30
 TEMP_LOG=""
 WITH_TELEMETRY=true
 TELEMETRY_SERVICE_NAME="llama-stack"
-TELEMETRY_SINKS="otel_trace,otel_metric"
 OTEL_EXPORTER_OTLP_ENDPOINT="http://otel-collector:4318"
 TEMP_TELEMETRY_DIR=""
 
@@ -412,7 +411,6 @@ Options:
     --no-telemetry, --without-telemetry
                               Skip provisioning the telemetry stack
     --telemetry-service NAME   Service name reported to telemetry (default: ${TELEMETRY_SERVICE_NAME})
-    --telemetry-sinks SINKS    Comma-separated telemetry sinks (default: ${TELEMETRY_SINKS})
     --otel-endpoint URL        OTLP endpoint provided to Llama Stack (default: ${OTEL_EXPORTER_OTLP_ENDPOINT})
     -h, --help                 Show this help message
 
@@ -462,10 +460,6 @@ while [[ $# -gt 0 ]]; do
             ;;
         --telemetry-service)
             TELEMETRY_SERVICE_NAME="$2"
-            shift 2
-            ;;
-        --telemetry-sinks)
-            TELEMETRY_SINKS="$2"
             shift 2
             ;;
         --otel-endpoint)
@@ -630,8 +624,8 @@ fi
 server_env_opts=()
 if [ "$WITH_TELEMETRY" = true ]; then
   server_env_opts+=(
-    -e TELEMETRY_SINKS="${TELEMETRY_SINKS}"
     -e OTEL_EXPORTER_OTLP_ENDPOINT="${OTEL_EXPORTER_OTLP_ENDPOINT}"
+    -e OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
     -e OTEL_SERVICE_NAME="${TELEMETRY_SERVICE_NAME}"
   )
 fi

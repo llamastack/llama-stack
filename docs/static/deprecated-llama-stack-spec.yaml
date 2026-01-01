@@ -655,7 +655,7 @@ paths:
     get:
       responses:
         '200':
-          description: A ListDatasetsResponse.
+          description: A list of dataset objects.
           content:
             application/json:
               schema:
@@ -674,13 +674,13 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Datasets
-      summary: List Datasets
+      summary: List all datasets.
       description: List all datasets.
       operationId: list_datasets_v1beta_datasets_get
     post:
       responses:
         '200':
-          description: A Dataset.
+          description: The registered dataset object.
           content:
             application/json:
               schema:
@@ -699,7 +699,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Datasets
-      summary: Register Dataset
+      summary: Register a new dataset.
       description: Register a new dataset.
       operationId: register_dataset_v1beta_datasets_post
       requestBody:
@@ -713,26 +713,26 @@ paths:
     get:
       responses:
         '200':
-          description: A Dataset.
+          description: The dataset object.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Dataset'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Datasets
-      summary: Get Dataset
+      summary: Get a dataset by its ID.
       description: Get a dataset by its ID.
       operationId: get_dataset_v1beta_datasets__dataset_id__get
       parameters:
@@ -741,26 +741,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: dataset_id'
+          description: The ID of the dataset to get.
+          title: Dataset Id
+        description: The ID of the dataset to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The dataset was successfully unregistered.
       tags:
       - Datasets
-      summary: Unregister Dataset
+      summary: Unregister a dataset by its ID.
       description: Unregister a dataset by its ID.
       operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
       parameters:
@@ -769,7 +771,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: dataset_id'
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+        description: The ID of the dataset to unregister.
       deprecated: true
   /v1alpha/eval/benchmarks:
     get:
@@ -3192,6 +3196,7 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/HealthStatus'
+          description: The health status of the service
       type: object
       required:
       - status
@@ -3202,14 +3207,17 @@ components:
         route:
           type: string
           title: Route
+          description: The API route path
         method:
           type: string
           title: Method
+          description: The HTTP method for the route
         provider_types:
           items:
             type: string
           type: array
           title: Provider Types
+          description: List of provider types implementing this route
       type: object
       required:
       - route
@@ -3224,6 +3232,7 @@ components:
             $ref: '#/components/schemas/RouteInfo'
           type: array
           title: Data
+          description: List of available API routes
       type: object
       required:
       - data
@@ -3490,20 +3499,25 @@ components:
         api:
           type: string
           title: Api
+          description: The API name this provider implements
         provider_id:
           type: string
           title: Provider Id
+          description: Unique identifier for the provider
         provider_type:
           type: string
           title: Provider Type
+          description: The type of provider implementation
         config:
           additionalProperties: true
           type: object
           title: Config
+          description: Configuration parameters for the provider
         health:
           additionalProperties: true
           type: object
           title: Health
+          description: Current health status of the provider
       type: object
       required:
       - api
@@ -3520,6 +3534,7 @@ components:
             $ref: '#/components/schemas/ProviderInfo'
           type: array
           title: Data
+          description: List of provider information objects
       type: object
       required:
       - data
@@ -3795,6 +3810,38 @@ components:
               title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         truncation:
           anyOf:
           - type: string
@@ -4182,6 +4229,38 @@ components:
             title: OpenAIResponseText
           - type: 'null'
           title: OpenAIResponseText
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         tools:
           anyOf:
           - items:
@@ -4341,6 +4420,38 @@ components:
               title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         truncation:
           anyOf:
           - type: string
@@ -7243,6 +7354,7 @@ components:
         version:
           type: string
           title: Version
+          description: The version string of the service
       type: object
       required:
       - version
@@ -7300,9 +7412,11 @@ components:
           type: string
           const: dataset
           title: Type
+          description: Type of resource, always 'dataset' for datasets
           default: dataset
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
+          description: Purpose of the dataset indicating its intended use
         source:
           oneOf:
           - $ref: '#/components/schemas/URIDataSource'
@@ -7310,6 +7424,7 @@ components:
           - $ref: '#/components/schemas/RowsDataSource'
             title: RowsDataSource
           title: URIDataSource | RowsDataSource
+          description: Data source configuration for the dataset
           discriminator:
             propertyName: type
             mapping:
@@ -7334,6 +7449,7 @@ components:
           type: string
           const: rows
           title: Type
+          description: The type of data source.
           default: rows
         rows:
           items:
@@ -7341,6 +7457,7 @@ components:
             type: object
           type: array
           title: Rows
+          description: 'The dataset is stored in rows. E.g. [{"messages": [{"role": "user", "content": "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}]}]'
       type: object
       required:
       - rows
@@ -7352,10 +7469,12 @@ components:
           type: string
           const: uri
           title: Type
+          description: The type of data source.
           default: uri
         uri:
           type: string
           title: Uri
+          description: The dataset can be obtained from a URI. E.g. "https://mywebsite.com/mydata.jsonl", "lsfs://mydata.jsonl", "data:csv;base64,{base64_content}"
       type: object
       required:
       - uri
@@ -7368,6 +7487,7 @@ components:
             $ref: '#/components/schemas/Dataset'
           type: array
           title: Data
+          description: List of datasets
       type: object
       required:
       - data
@@ -8365,27 +8485,37 @@ components:
       properties:
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
+          description: The purpose of the dataset.
         source:
-          anyOf:
+          oneOf:
           - $ref: '#/components/schemas/URIDataSource'
             title: URIDataSource
           - $ref: '#/components/schemas/RowsDataSource'
             title: RowsDataSource
           title: URIDataSource | RowsDataSource
+          description: The data source of the dataset.
+          discriminator:
+            propertyName: type
+            mapping:
+              rows: '#/components/schemas/RowsDataSource'
+              uri: '#/components/schemas/URIDataSource'
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The metadata for the dataset.
         dataset_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the dataset. If not provided, an ID will be generated.
       type: object
       required:
       - purpose
       - source
       title: RegisterDatasetRequest
+      description: Request model for registering a dataset.
     RegisterBenchmarkRequest:
       properties:
         benchmark_id:
@@ -8916,6 +9046,112 @@ components:
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
+    OpenAIResponseInputToolChoiceAllowedTools:
+      properties:
+        mode:
+          type: string
+          enum:
+          - auto
+          - required
+          title: Mode
+          default: auto
+        tools:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          type: array
+          title: Tools
+        type:
+          type: string
+          const: allowed_tools
+          title: Type
+          default: allowed_tools
+      type: object
+      required:
+      - tools
+      title: OpenAIResponseInputToolChoiceAllowedTools
+      description: Constrains the tools available to the model to a pre-defined set.
+    OpenAIResponseInputToolChoiceCustomTool:
+      properties:
+        type:
+          type: string
+          const: custom
+          title: Type
+          default: custom
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - name
+      title: OpenAIResponseInputToolChoiceCustomTool
+      description: Forces the model to call a custom tool.
+    OpenAIResponseInputToolChoiceFileSearch:
+      properties:
+        type:
+          type: string
+          const: file_search
+          title: Type
+          default: file_search
+      type: object
+      title: OpenAIResponseInputToolChoiceFileSearch
+      description: Indicates that the model should use file search to generate a response.
+    OpenAIResponseInputToolChoiceFunctionTool:
+      properties:
+        name:
+          type: string
+          title: Name
+        type:
+          type: string
+          const: function
+          title: Type
+          default: function
+      type: object
+      required:
+      - name
+      title: OpenAIResponseInputToolChoiceFunctionTool
+      description: Forces the model to call a specific function.
+    OpenAIResponseInputToolChoiceMCPTool:
+      properties:
+        server_label:
+          type: string
+          title: Server Label
+        type:
+          type: string
+          const: mcp
+          title: Type
+          default: mcp
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - server_label
+      title: OpenAIResponseInputToolChoiceMCPTool
+      description: Forces the model to call a specific tool on a remote MCP server
+    OpenAIResponseInputToolChoiceMode:
+      type: string
+      enum:
+      - auto
+      - required
+      - none
+      title: OpenAIResponseInputToolChoiceMode
+    OpenAIResponseInputToolChoiceWebSearch:
+      properties:
+        type:
+          title: Type
+          default: web_search
+          type: string
+          enum:
+          - web_search
+          - web_search_preview
+          - web_search_preview_2025_03_11
+          - web_search_2025_08_26
+      type: object
+      title: OpenAIResponseInputToolChoiceWebSearch
+      description: Indicates that the model should use web search to generate a response
     OpenAIResponseMessage-Input:
       properties:
         content:
@@ -9396,6 +9632,132 @@ components:
       - $ref: '#/components/schemas/GrammarResponseFormat'
         title: GrammarResponseFormat
       title: JsonSchemaResponseFormat | GrammarResponseFormat
+    AllowedToolsConfig:
+      properties:
+        tools:
+          items:
+            additionalProperties: true
+            type: object
+          title: Tools
+          type: array
+        mode:
+          enum:
+          - auto
+          - required
+          title: Mode
+          type: string
+      required:
+      - tools
+      - mode
+      title: AllowedToolsConfig
+      type: object
+    CustomToolConfig:
+      description: Custom tool configuration for OpenAI-compatible chat completion requests.
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: CustomToolConfig
+      type: object
+    FunctionToolConfig:
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: FunctionToolConfig
+      type: object
+    OpenAIChatCompletionToolChoiceAllowedTools:
+      description: Allowed tools response format for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: allowed_tools
+          default: allowed_tools
+          title: Type
+          type: string
+        allowed_tools:
+          $ref: '#/components/schemas/AllowedToolsConfig'
+      required:
+      - allowed_tools
+      title: OpenAIChatCompletionToolChoiceAllowedTools
+      type: object
+    OpenAIChatCompletionToolChoiceCustomTool:
+      description: Custom tool choice for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: custom
+          default: custom
+          title: Type
+          type: string
+        custom:
+          $ref: '#/components/schemas/CustomToolConfig'
+      required:
+      - custom
+      title: OpenAIChatCompletionToolChoiceCustomTool
+      type: object
+    OpenAIChatCompletionToolChoiceFunctionTool:
+      description: Function tool choice for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: function
+          default: function
+          title: Type
+          type: string
+        function:
+          $ref: '#/components/schemas/FunctionToolConfig'
+      required:
+      - function
+      title: OpenAIChatCompletionToolChoiceFunctionTool
+      type: object
+    OpenAIChatCompletionToolChoice:
+      discriminator:
+        mapping:
+          allowed_tools: '#/components/schemas/OpenAIChatCompletionToolChoiceAllowedTools'
+          custom: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
+          function: '#/components/schemas/OpenAIChatCompletionToolChoiceFunctionTool'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceAllowedTools'
+        title: OpenAIChatCompletionToolChoiceAllowedTools
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceFunctionTool'
+        title: OpenAIChatCompletionToolChoiceFunctionTool
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
+        title: OpenAIChatCompletionToolChoiceCustomTool
+      title: OpenAIChatCompletionToolChoiceAllowedTools | OpenAIChatCompletionToolChoiceFunctionTool | OpenAIChatCompletionToolChoiceCustomTool
+    OpenAIResponseInputToolChoice:
+      anyOf:
+      - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+        title: OpenAIResponseInputToolChoiceMode
+      - discriminator:
+          mapping:
+            allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+            custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+            file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+            function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+            mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+            web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+          propertyName: type
+        oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+          title: OpenAIResponseInputToolChoiceAllowedTools
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+          title: OpenAIResponseInputToolChoiceFileSearch
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+          title: OpenAIResponseInputToolChoiceWebSearch
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+          title: OpenAIResponseInputToolChoiceFunctionTool
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+          title: OpenAIResponseInputToolChoiceMCPTool
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+          title: OpenAIResponseInputToolChoiceCustomTool
+        title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+      title: OpenAIResponseInputToolChoiceMode
     OpenAIResponseContentPart:
       discriminator:
         mapping:
@@ -9411,26 +9773,64 @@ components:
       - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
         title: OpenAIResponseContentPartReasoningText
       title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
-    MetricInResponse:
-      description: A metric value included in API responses.
+    ListBenchmarksRequest:
+      description: Request model for listing benchmarks.
+      properties: {}
+      title: ListBenchmarksRequest
+      type: object
+    GetBenchmarkRequest:
+      description: Request model for getting a benchmark.
       properties:
-        metric:
-          title: Metric
+        benchmark_id:
+          description: The ID of the benchmark to get.
+          title: Benchmark Id
           type: string
-        value:
-          anyOf:
-          - type: integer
-          - type: number
-          title: integer | number
-        unit:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
       required:
-      - metric
-      - value
-      title: MetricInResponse
+      - benchmark_id
+      title: GetBenchmarkRequest
+      type: object
+    UnregisterBenchmarkRequest:
+      description: Request model for unregistering a benchmark.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark to unregister.
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: UnregisterBenchmarkRequest
+      type: object
+    GetDatasetRequest:
+      description: Request model for getting a dataset by ID.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: GetDatasetRequest
+      type: object
+    UnregisterDatasetRequest:
+      description: Request model for unregistering a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: UnregisterDatasetRequest
+      type: object
+    DialogType:
+      description: Parameter type for dialog data with semantic output labels.
+      properties:
+        type:
+          const: dialog
+          default: dialog
+          title: Type
+          type: string
+      title: DialogType
       type: object
     TextDelta:
       description: A text content delta for streaming responses.
@@ -9462,6 +9862,363 @@ components:
       required:
       - image
       title: ImageDelta
+      type: object
+    ToolGroupInput:
+      description: Input data for registering a tool group.
+      properties:
+        toolgroup_id:
+          title: Toolgroup Id
+          type: string
+        provider_id:
+          title: Provider Id
+          type: string
+        args:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        mcp_endpoint:
+          anyOf:
+          - $ref: '#/components/schemas/URL'
+            title: URL
+          - type: 'null'
+          nullable: true
+          title: URL
+      required:
+      - toolgroup_id
+      - provider_id
+      title: ToolGroupInput
+      type: object
+    Api:
+      description: Enumeration of all available APIs in the Llama Stack system.
+      enum:
+      - providers
+      - inference
+      - safety
+      - agents
+      - batches
+      - vector_io
+      - datasetio
+      - scoring
+      - eval
+      - post_training
+      - tool_runtime
+      - models
+      - shields
+      - vector_stores
+      - datasets
+      - scoring_functions
+      - benchmarks
+      - tool_groups
+      - files
+      - file_processors
+      - prompts
+      - conversations
+      - connectors
+      - inspect
+      - admin
+      title: Api
+      type: string
+    ProviderSpec:
+      properties:
+        api:
+          $ref: '#/components/schemas/Api'
+        provider_type:
+          title: Provider Type
+          type: string
+        config_class:
+          description: Fully-qualified classname of the config for this provider
+          title: Config Class
+          type: string
+        api_dependencies:
+          description: Higher-level API surfaces may depend on other providers to provide their functionality
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Api Dependencies
+          type: array
+        optional_api_dependencies:
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Optional Api Dependencies
+          type: array
+        deprecation_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated, specify the warning message here
+          nullable: true
+        deprecation_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated and does NOT work, specify the error message here
+          nullable: true
+        module:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2-
+
+             Fully-qualified name of the module to import. The module is expected to have:
+
+              - `get_adapter_impl(config, deps)`: returns the adapter implementation
+
+              Example: `module: ramalama_stack`
+
+          nullable: true
+        pip_packages:
+          description: The pip dependencies needed for this implementation
+          items:
+            type: string
+          title: Pip Packages
+          type: array
+        provider_data_validator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        is_external:
+          default: false
+          description: Notes whether this provider is an external provider.
+          title: Is External
+          type: boolean
+        deps__:
+          items:
+            type: string
+          title: Deps
+          type: array
+      required:
+      - api
+      - provider_type
+      - config_class
+      title: ProviderSpec
+      type: object
+    InlineProviderSpec:
+      properties:
+        api:
+          $ref: '#/components/schemas/Api'
+        provider_type:
+          title: Provider Type
+          type: string
+        config_class:
+          description: Fully-qualified classname of the config for this provider
+          title: Config Class
+          type: string
+        api_dependencies:
+          description: Higher-level API surfaces may depend on other providers to provide their functionality
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Api Dependencies
+          type: array
+        optional_api_dependencies:
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Optional Api Dependencies
+          type: array
+        deprecation_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated, specify the warning message here
+          nullable: true
+        deprecation_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated and does NOT work, specify the error message here
+          nullable: true
+        module:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2-
+
+             Fully-qualified name of the module to import. The module is expected to have:
+
+              - `get_adapter_impl(config, deps)`: returns the adapter implementation
+
+              Example: `module: ramalama_stack`
+
+          nullable: true
+        pip_packages:
+          description: The pip dependencies needed for this implementation
+          items:
+            type: string
+          title: Pip Packages
+          type: array
+        provider_data_validator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        is_external:
+          default: false
+          description: Notes whether this provider is an external provider.
+          title: Is External
+          type: boolean
+        deps__:
+          items:
+            type: string
+          title: Deps
+          type: array
+        container_image:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2
+
+            The container image to use for this implementation. If one is provided, pip_packages will be ignored.
+            If a provider depends on other providers, the dependencies MUST NOT specify a container image.
+          nullable: true
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2
+
+            A description of the provider. This is used to display in the documentation.
+          nullable: true
+      required:
+      - api
+      - provider_type
+      - config_class
+      title: InlineProviderSpec
+      type: object
+    RemoteProviderSpec:
+      properties:
+        api:
+          $ref: '#/components/schemas/Api'
+        provider_type:
+          title: Provider Type
+          type: string
+        config_class:
+          description: Fully-qualified classname of the config for this provider
+          title: Config Class
+          type: string
+        api_dependencies:
+          description: Higher-level API surfaces may depend on other providers to provide their functionality
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Api Dependencies
+          type: array
+        optional_api_dependencies:
+          items:
+            $ref: '#/components/schemas/Api'
+          title: Optional Api Dependencies
+          type: array
+        deprecation_warning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated, specify the warning message here
+          nullable: true
+        deprecation_error:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: If this provider is deprecated and does NOT work, specify the error message here
+          nullable: true
+        module:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2-
+
+             Fully-qualified name of the module to import. The module is expected to have:
+
+              - `get_adapter_impl(config, deps)`: returns the adapter implementation
+
+              Example: `module: ramalama_stack`
+
+          nullable: true
+        pip_packages:
+          description: The pip dependencies needed for this implementation
+          items:
+            type: string
+          title: Pip Packages
+          type: array
+        provider_data_validator:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        is_external:
+          default: false
+          description: Notes whether this provider is an external provider.
+          title: Is External
+          type: boolean
+        deps__:
+          items:
+            type: string
+          title: Deps
+          type: array
+        adapter_type:
+          description: Unique identifier for this adapter
+          title: Adapter Type
+          type: string
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: |2
+
+            A description of the provider. This is used to display in the documentation.
+          nullable: true
+      required:
+      - api
+      - provider_type
+      - config_class
+      - adapter_type
+      title: RemoteProviderSpec
+      type: object
+    ListRoutesRequest:
+      description: Request to list API routes.
+      properties:
+        api_filter:
+          anyOf:
+          - enum:
+            - v1
+            - v1alpha
+            - v1beta
+            - deprecated
+            type: string
+          - type: 'null'
+          description: Filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
+          nullable: true
+      title: ListRoutesRequest
+      type: object
+    InspectProviderRequest:
+      description: Request to inspect a specific provider.
+      properties:
+        provider_id:
+          description: The ID of the provider to inspect.
+          title: Provider Id
+          type: string
+      required:
+      - provider_id
+      title: InspectProviderRequest
+      type: object
+    MetricInResponse:
+      description: A metric value included in API responses.
+      properties:
+        metric:
+          title: Metric
+          type: string
+        value:
+          anyOf:
+          - type: integer
+          - type: number
+          title: integer | number
+        unit:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+      required:
+      - metric
+      - value
+      title: MetricInResponse
       type: object
     Fp8QuantizationConfig:
       description: Configuration for 8-bit floating point quantization.
@@ -9808,70 +10565,6 @@ components:
       - batch_id
       title: CancelBatchRequest
       type: object
-    ListBenchmarksRequest:
-      description: Request model for listing benchmarks.
-      properties: {}
-      title: ListBenchmarksRequest
-      type: object
-    GetBenchmarkRequest:
-      description: Request model for getting a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to get.
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: GetBenchmarkRequest
-      type: object
-    UnregisterBenchmarkRequest:
-      description: Request model for unregistering a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to unregister.
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: UnregisterBenchmarkRequest
-      type: object
-    DialogType:
-      description: Parameter type for dialog data with semantic output labels.
-      properties:
-        type:
-          const: dialog
-          default: dialog
-          title: Type
-          type: string
-      title: DialogType
-      type: object
-    ToolGroupInput:
-      description: Input data for registering a tool group.
-      properties:
-        toolgroup_id:
-          title: Toolgroup Id
-          type: string
-        provider_id:
-          title: Provider Id
-          type: string
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          nullable: true
-          title: URL
-      required:
-      - toolgroup_id
-      - provider_id
-      title: ToolGroupInput
-      type: object
     ConnectorInput:
       description: Input for creating a connector
       properties:
@@ -9986,285 +10679,28 @@ components:
       - items
       title: ConversationItemCreateRequest
       type: object
-    Api:
-      description: Enumeration of all available APIs in the Llama Stack system.
-      enum:
-      - providers
-      - inference
-      - safety
-      - agents
-      - batches
-      - vector_io
-      - datasetio
-      - scoring
-      - eval
-      - post_training
-      - tool_runtime
-      - models
-      - shields
-      - vector_stores
-      - datasets
-      - scoring_functions
-      - benchmarks
-      - tool_groups
-      - files
-      - prompts
-      - conversations
-      - connectors
-      - inspect
-      title: Api
-      type: string
-    ProviderSpec:
+    ProcessFileResponse:
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
       properties:
-        api:
-          $ref: '#/components/schemas/Api'
-        provider_type:
-          title: Provider Type
-          type: string
-        config_class:
-          description: Fully-qualified classname of the config for this provider
-          title: Config Class
-          type: string
-        api_dependencies:
-          description: Higher-level API surfaces may depend on other providers to provide their functionality
+        chunks:
+          description: Processed chunks from the file. Always returns at least one chunk.
           items:
-            $ref: '#/components/schemas/Api'
-          title: Api Dependencies
+            $ref: '#/components/schemas/Chunk'
+          title: Chunks
           type: array
-        optional_api_dependencies:
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Optional Api Dependencies
-          type: array
-        deprecation_warning:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated, specify the warning message here
-          nullable: true
-        deprecation_error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated and does NOT work, specify the error message here
-          nullable: true
-        module:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2-
-
-             Fully-qualified name of the module to import. The module is expected to have:
-
-              - `get_adapter_impl(config, deps)`: returns the adapter implementation
-
-              Example: `module: ramalama_stack`
-
-          nullable: true
-        pip_packages:
-          description: The pip dependencies needed for this implementation
-          items:
-            type: string
-          title: Pip Packages
-          type: array
-        provider_data_validator:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        is_external:
-          default: false
-          description: Notes whether this provider is an external provider.
-          title: Is External
-          type: boolean
-        deps__:
-          items:
-            type: string
-          title: Deps
-          type: array
+        metadata:
+          additionalProperties: true
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+          title: Metadata
+          type: object
       required:
-      - api
-      - provider_type
-      - config_class
-      title: ProviderSpec
-      type: object
-    InlineProviderSpec:
-      properties:
-        api:
-          $ref: '#/components/schemas/Api'
-        provider_type:
-          title: Provider Type
-          type: string
-        config_class:
-          description: Fully-qualified classname of the config for this provider
-          title: Config Class
-          type: string
-        api_dependencies:
-          description: Higher-level API surfaces may depend on other providers to provide their functionality
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Api Dependencies
-          type: array
-        optional_api_dependencies:
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Optional Api Dependencies
-          type: array
-        deprecation_warning:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated, specify the warning message here
-          nullable: true
-        deprecation_error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated and does NOT work, specify the error message here
-          nullable: true
-        module:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2-
-
-             Fully-qualified name of the module to import. The module is expected to have:
-
-              - `get_adapter_impl(config, deps)`: returns the adapter implementation
-
-              Example: `module: ramalama_stack`
-
-          nullable: true
-        pip_packages:
-          description: The pip dependencies needed for this implementation
-          items:
-            type: string
-          title: Pip Packages
-          type: array
-        provider_data_validator:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        is_external:
-          default: false
-          description: Notes whether this provider is an external provider.
-          title: Is External
-          type: boolean
-        deps__:
-          items:
-            type: string
-          title: Deps
-          type: array
-        container_image:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2
-
-            The container image to use for this implementation. If one is provided, pip_packages will be ignored.
-            If a provider depends on other providers, the dependencies MUST NOT specify a container image.
-          nullable: true
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2
-
-            A description of the provider. This is used to display in the documentation.
-          nullable: true
-      required:
-      - api
-      - provider_type
-      - config_class
-      title: InlineProviderSpec
-      type: object
-    RemoteProviderSpec:
-      properties:
-        api:
-          $ref: '#/components/schemas/Api'
-        provider_type:
-          title: Provider Type
-          type: string
-        config_class:
-          description: Fully-qualified classname of the config for this provider
-          title: Config Class
-          type: string
-        api_dependencies:
-          description: Higher-level API surfaces may depend on other providers to provide their functionality
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Api Dependencies
-          type: array
-        optional_api_dependencies:
-          items:
-            $ref: '#/components/schemas/Api'
-          title: Optional Api Dependencies
-          type: array
-        deprecation_warning:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated, specify the warning message here
-          nullable: true
-        deprecation_error:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: If this provider is deprecated and does NOT work, specify the error message here
-          nullable: true
-        module:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2-
-
-             Fully-qualified name of the module to import. The module is expected to have:
-
-              - `get_adapter_impl(config, deps)`: returns the adapter implementation
-
-              Example: `module: ramalama_stack`
-
-          nullable: true
-        pip_packages:
-          description: The pip dependencies needed for this implementation
-          items:
-            type: string
-          title: Pip Packages
-          type: array
-        provider_data_validator:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        is_external:
-          default: false
-          description: Notes whether this provider is an external provider.
-          title: Is External
-          type: boolean
-        deps__:
-          items:
-            type: string
-          title: Deps
-          type: array
-        adapter_type:
-          description: Unique identifier for this adapter
-          title: Adapter Type
-          type: string
-        description:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: |2
-
-            A description of the provider. This is used to display in the documentation.
-          nullable: true
-      required:
-      - api
-      - provider_type
-      - config_class
-      - adapter_type
-      title: RemoteProviderSpec
+      - chunks
+      - metadata
+      title: ProcessFileResponse
       type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.

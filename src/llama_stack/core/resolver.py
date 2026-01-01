@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+
 import importlib
 import importlib.metadata
 import inspect
@@ -23,6 +24,7 @@ from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
     LLAMA_STACK_API_V1ALPHA,
+    Admin,
     Agents,
     Api,
     Batches,
@@ -35,6 +37,7 @@ from llama_stack_api import (
     DatasetsProtocolPrivate,
     Eval,
     ExternalApiSpec,
+    FileProcessors,
     Files,
     Inference,
     InferenceProvider,
@@ -79,6 +82,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Dictionary mapping API types to their protocol classes
     """
     protocols = {
+        Api.admin: Admin,
         Api.providers: ProvidersAPI,
         Api.agents: Agents,
         Api.inference: Inference,
@@ -101,6 +105,7 @@ def api_protocol_map(external_apis: dict[Api, ExternalApiSpec] | None = None) ->
         Api.files: Files,
         Api.prompts: Prompts,
         Api.conversations: Conversations,
+        Api.file_processors: FileProcessors,
         Api.connectors: Connectors,
     }
 
@@ -406,13 +411,19 @@ async def instantiate_provider(
         args = [provider_spec.api, inner_impls, deps, dist_registry, policy]
     else:
         method = "get_provider_impl"
+        provider_config = provider.config.copy()
 
+        # Inject vector_stores_config for providers that need it (introspection-based)
         config_type = instantiate_class_type(provider_spec.config_class)
-        config = config_type(**provider.config)
+        if hasattr(config_type, "__fields__") and "vector_stores_config" in config_type.__fields__:
+            # Only inject if vector_stores is provided, otherwise let default_factory handle it
+            if run_config.vector_stores is not None:
+                provider_config["vector_stores_config"] = run_config.vector_stores
+
+        config = config_type(**provider_config)
         args = [config, deps]
         if "policy" in inspect.signature(getattr(module, method)).parameters:
             args.append(policy)
-
     fn = getattr(module, method)
     impl = await fn(*args)
     impl.__provider_id__ = provider.provider_id

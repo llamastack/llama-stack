@@ -116,8 +116,10 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         self,
         documents: list[RAGDocument],
         vector_store_id: str,
-        chunk_size_in_tokens: int = 512,
+        chunk_size_in_tokens: int | None = None,
     ) -> None:
+        if chunk_size_in_tokens is None:
+            chunk_size_in_tokens = self.config.vector_stores_config.file_ingestion_params.default_chunk_size_tokens
         if not documents:
             return
 
@@ -145,10 +147,11 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
                     log.error(f"Failed to upload file for document {doc.document_id}: {e}")
                     continue
 
+                overlap_tokens = self.config.vector_stores_config.file_ingestion_params.default_chunk_overlap_tokens
                 chunking_strategy = VectorStoreChunkingStrategyStatic(
                     static=VectorStoreChunkingStrategyStaticConfig(
                         max_chunk_size_tokens=chunk_size_in_tokens,
-                        chunk_overlap_tokens=chunk_size_in_tokens // 4,
+                        chunk_overlap_tokens=overlap_tokens,
                     )
                 )
 
@@ -180,7 +183,9 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
                 "No vector DBs were provided to the knowledge search tool. Please provide at least one vector DB ID."
             )
 
-        query_config = query_config or RAGQueryConfig()
+        query_config = query_config or RAGQueryConfig(
+            max_tokens_in_context=self.config.vector_stores_config.chunk_retrieval_params.max_tokens_in_context
+        )
         query = await generate_rag_query(
             query_config.query_generator_config,
             content,
@@ -221,11 +226,15 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         chunks = chunks[: query_config.max_chunks]
 
         tokens = 0
-        picked: list[InterleavedContentItem] = [
-            TextContentItem(
-                text=f"knowledge_search tool found {len(chunks)} chunks:\nBEGIN of knowledge_search tool results.\n"
-            )
-        ]
+
+        # Get templates from vector stores config
+        vector_stores_config = self.config.vector_stores_config
+        header_template = vector_stores_config.file_search_params.header_template
+        footer_template = vector_stores_config.file_search_params.footer_template
+        chunk_template = vector_stores_config.context_prompt_params.chunk_annotation_template
+        context_template = vector_stores_config.context_prompt_params.context_template
+
+        picked: list[InterleavedContentItem] = [TextContentItem(text=header_template.format(num_chunks=len(chunks)))]
         for i, chunk in enumerate(chunks):
             metadata = chunk.metadata
             tokens += metadata.get("token_count", 0)
@@ -255,13 +264,13 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
                 if k not in metadata_keys_to_exclude_from_context:
                     metadata_for_context[k] = metadata[k]
 
-            text_content = query_config.chunk_template.format(index=i + 1, chunk=chunk, metadata=metadata_for_context)
+            text_content = chunk_template.format(index=i + 1, chunk=chunk, metadata=metadata_for_context)
             picked.append(TextContentItem(text=text_content))
 
-        picked.append(TextContentItem(text="END of knowledge_search tool results.\n"))
+        picked.append(TextContentItem(text=footer_template))
         picked.append(
             TextContentItem(
-                text=f'The above results were retrieved to help answer the user\'s query: "{interleaved_content_as_str(content)}". Use them as supporting information only in answering this query.\n',
+                text=context_template.format(query=interleaved_content_as_str(content), annotation_instruction="")
             )
         )
 
@@ -315,7 +324,9 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         if query_config:
             query_config = TypeAdapter(RAGQueryConfig).validate_python(query_config)
         else:
-            query_config = RAGQueryConfig()
+            query_config = RAGQueryConfig(
+                max_tokens_in_context=self.config.vector_stores_config.chunk_retrieval_params.max_tokens_in_context
+            )
 
         query = kwargs["query"]
         result = await self.query(

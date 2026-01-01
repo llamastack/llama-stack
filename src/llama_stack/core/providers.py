@@ -10,7 +10,14 @@ from typing import Any
 from pydantic import BaseModel
 
 from llama_stack.log import get_logger
-from llama_stack_api import HealthResponse, HealthStatus, ListProvidersResponse, ProviderInfo, Providers
+from llama_stack_api import (
+    HealthResponse,
+    HealthStatus,
+    InspectProviderRequest,
+    ListProvidersResponse,
+    ProviderInfo,
+    Providers,
+)
 
 from .datatypes import StackConfig
 from .utils.config import redact_sensitive_fields
@@ -67,13 +74,13 @@ class ProviderImpl(Providers):
 
         return ListProvidersResponse(data=ret)
 
-    async def inspect_provider(self, provider_id: str) -> ProviderInfo:
+    async def inspect_provider(self, request: InspectProviderRequest) -> ProviderInfo:
         all_providers = await self.list_providers()
         for p in all_providers.data:
-            if p.provider_id == provider_id:
+            if p.provider_id == request.provider_id:
                 return p
 
-        raise ValueError(f"Provider {provider_id} not found")
+        raise ValueError(f"Provider {request.provider_id} not found")
 
     async def get_providers_health(self) -> dict[str, dict[str, HealthResponse]]:
         """Get health status for all providers.
