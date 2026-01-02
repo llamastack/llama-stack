@@ -52,7 +52,10 @@ class TestRagQuery:
         )
 
         embedded_chunk = EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=[0.1, 0.2, 0.3],
             embedding_model="test-model",
             embedding_dimension=3,
@@ -116,7 +119,10 @@ class TestRagQuery:
         )
 
         embedded_chunk1 = EmbeddedChunk(
-            chunk=chunk1,
+            content=chunk1.content,
+            chunk_id=chunk1.chunk_id,
+            metadata=chunk1.metadata,
+            chunk_metadata=chunk1.chunk_metadata,
             embedding=[0.1, 0.2, 0.3],
             embedding_model="test-model",
             embedding_dimension=3,
@@ -136,7 +142,10 @@ class TestRagQuery:
         )
 
         embedded_chunk2 = EmbeddedChunk(
-            chunk=chunk2,
+            content=chunk2.content,
+            chunk_id=chunk2.chunk_id,
+            metadata=chunk2.metadata,
+            chunk_metadata=chunk2.chunk_metadata,
             embedding=[0.4, 0.5, 0.6],
             embedding_model="test-model",
             embedding_dimension=3,

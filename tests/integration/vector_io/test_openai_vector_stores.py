@@ -13,7 +13,7 @@ from openai import BadRequestError as OpenAIBadRequestError
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
-from llama_stack_api import Chunk, ChunkMetadata, ExpiresAfter
+from llama_stack_api import ChunkMetadata, EmbeddedChunk, ExpiresAfter
 
 from ..conftest import vector_provider_wrapper
 
@@ -3216,24 +3216,27 @@ def sample_chunks():
         ),
     ]
 
-    return [
-        Chunk(
+    embedded_chunks = []
+    for (content, doc_id, topic), embedding in zip(chunks_data, embeddings, strict=True):
+        chunk_id = generate_chunk_id(doc_id, content)
+        embedded_chunk = EmbeddedChunk(
             content=content,
-            chunk_id=generate_chunk_id(doc_id, content),
+            chunk_id=chunk_id,
             metadata={"document_id": doc_id, "topic": topic},
-            embedding=embedding.tolist(),  # Add static embeddings for semantic search
             chunk_metadata=ChunkMetadata(
                 document_id=doc_id,
-                chunk_id=generate_chunk_id(doc_id, content),
+                chunk_id=chunk_id,
                 created_timestamp=int(time.time()),
                 updated_timestamp=int(time.time()),
-                chunk_embedding_model="test-embedding-model",
-                chunk_embedding_dimension=768,
                 content_token_count=len(content.split()),
             ),
+            embedding=embedding.tolist(),  # Add static embeddings for semantic search
+            embedding_model="test-embedding-model",
+            embedding_dimension=768,
         )
-        for (content, doc_id, topic), embedding in zip(chunks_data, embeddings, strict=True)
-    ]
+        embedded_chunks.append(embedded_chunk)
+
+    return embedded_chunks
 
 
 @pytest.fixture(scope="function")

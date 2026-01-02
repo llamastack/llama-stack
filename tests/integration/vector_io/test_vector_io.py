@@ -8,7 +8,7 @@ import time
 
 import pytest
 
-from llama_stack_api import Chunk, ChunkMetadata
+from llama_stack_api import ChunkMetadata, EmbeddedChunk
 
 from ..conftest import vector_provider_wrapper
 
@@ -41,24 +41,28 @@ def sample_chunks(embedding_dimension):
     # Use a fixed seed for deterministic embeddings
     np.random.seed(42)
 
-    return [
-        Chunk(
+    embedded_chunks = []
+    for _i, (content, doc_id) in enumerate(chunks_data):
+        chunk_id = generate_chunk_id(doc_id, content)
+        embedding = np.random.random(int(embedding_dimension)).tolist()  # Generate deterministic dummy embeddings
+        embedded_chunk = EmbeddedChunk(
             content=content,
-            chunk_id=generate_chunk_id(doc_id, content),
+            chunk_id=chunk_id,
             metadata={"document_id": doc_id},
-            embedding=np.random.random(int(embedding_dimension)).tolist(),  # Generate deterministic dummy embeddings
             chunk_metadata=ChunkMetadata(
                 document_id=doc_id,
-                chunk_id=generate_chunk_id(doc_id, content),
+                chunk_id=chunk_id,
                 created_timestamp=int(time.time()),
                 updated_timestamp=int(time.time()),
-                chunk_embedding_model="test-embedding-model",
-                chunk_embedding_dimension=int(embedding_dimension),
                 content_token_count=len(content.split()),
             ),
+            embedding=embedding,
+            embedding_model="test-embedding-model",
+            embedding_dimension=int(embedding_dimension),
         )
-        for i, (content, doc_id) in enumerate(chunks_data)
-    ]
+        embedded_chunks.append(embedded_chunk)
+
+    return embedded_chunks
 
 
 @pytest.fixture(scope="function")
@@ -199,21 +203,21 @@ def test_insert_chunks_with_precomputed_embeddings(
     actual_vector_store_id = register_response.id
 
     chunks_with_embeddings = [
-        Chunk(
+        EmbeddedChunk(
             content="This is a test chunk with precomputed embedding.",
             chunk_id="chunk1",
             metadata={"document_id": "doc1", "source": "precomputed", "chunk_id": "chunk1"},
-            embedding=[0.1] * int(embedding_dimension),
             chunk_metadata=ChunkMetadata(
                 document_id="doc1",
                 chunk_id="chunk1",
                 source="precomputed",
                 created_timestamp=int(time.time()),
                 updated_timestamp=int(time.time()),
-                chunk_embedding_model="test-embedding-model",
-                chunk_embedding_dimension=int(embedding_dimension),
                 content_token_count=8,
             ),
+            embedding=[0.1] * int(embedding_dimension),
+            embedding_model="test-embedding-model",
+            embedding_dimension=int(embedding_dimension),
         ),
     ]
 
@@ -263,21 +267,21 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
 
     chunk_id = generate_chunk_id("doc1", "duplicate")
     chunks_with_embeddings = [
-        Chunk(
+        EmbeddedChunk(
             content="duplicate",
             chunk_id=chunk_id,
             metadata={"document_id": "doc1", "source": "precomputed"},
-            embedding=[0.1] * int(embedding_dimension),
             chunk_metadata=ChunkMetadata(
                 document_id="doc1",
                 chunk_id=chunk_id,
                 source="precomputed",
                 created_timestamp=int(time.time()),
                 updated_timestamp=int(time.time()),
-                chunk_embedding_model="test-embedding-model",
-                chunk_embedding_dimension=int(embedding_dimension),
                 content_token_count=1,
             ),
+            embedding=[0.1] * int(embedding_dimension),
+            embedding_model="test-embedding-model",
+            embedding_dimension=int(embedding_dimension),
         ),
     ]
 

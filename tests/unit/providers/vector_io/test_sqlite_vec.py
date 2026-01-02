@@ -47,7 +47,10 @@ async def test_query_chunk_metadata(sqlite_vec_index, sample_chunks_with_metadat
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -56,14 +59,17 @@ async def test_query_chunk_metadata(sqlite_vec_index, sample_chunks_with_metadat
     ]
     await sqlite_vec_index.add_chunks(embedded_chunks)
     response = await sqlite_vec_index.query_vector(sample_embeddings_with_metadata[-1], k=2, score_threshold=0.0)
-    assert response.chunks[0].chunk.chunk_metadata == sample_chunks_with_metadata[-1].chunk_metadata
+    assert response.chunks[0].chunk_metadata == sample_chunks_with_metadata[-1].chunk_metadata
 
 
 async def test_query_chunks_full_text_search(sqlite_vec_index, sample_chunks, sample_embeddings):
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -90,7 +96,10 @@ async def test_query_chunks_hybrid(sqlite_vec_index, sample_chunks, sample_embed
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -121,7 +130,10 @@ async def test_query_chunks_full_text_search_k_greater_than_results(sqlite_vec_i
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -135,7 +147,7 @@ async def test_query_chunks_full_text_search_k_greater_than_results(sqlite_vec_i
 
     assert isinstance(response, QueryChunksResponse)
     assert 0 < len(response.chunks) < 5, f"Expected results between [1, 4], got {len(response.chunks)}"
-    assert any("Sentence 1 from document 0" in embedded_chunk.chunk.content for embedded_chunk in response.chunks), (
+    assert any("Sentence 1 from document 0" in embedded_chunk.content for embedded_chunk in response.chunks), (
         "Expected chunk not found"
     )
 
@@ -150,7 +162,10 @@ async def test_chunk_id_conflict(sqlite_vec_index, sample_chunks, embedding_dime
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -185,7 +200,10 @@ async def test_query_chunks_hybrid_no_keyword_matches(sqlite_vec_index, sample_c
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -223,7 +241,10 @@ async def test_query_chunks_hybrid_score_threshold(sqlite_vec_index, sample_chun
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -256,7 +277,10 @@ async def test_query_chunks_hybrid_different_embedding(
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -289,7 +313,10 @@ async def test_query_chunks_hybrid_rrf_ranking(sqlite_vec_index, sample_chunks, 
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -322,7 +349,10 @@ async def test_query_chunks_hybrid_score_selection(sqlite_vec_index, sample_chun
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -380,7 +410,10 @@ async def test_query_chunks_hybrid_mixed_results(sqlite_vec_index, sample_chunks
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -409,7 +442,7 @@ async def test_query_chunks_hybrid_mixed_results(sqlite_vec_index, sample_chunks
     assert all(response.scores[i] >= response.scores[i + 1] for i in range(len(response.scores) - 1))
     # Verify we get results from both the vector-similar document and keyword-matched document
     doc_ids = {
-        embedded_chunk.chunk.metadata.get("document_id") or embedded_chunk.chunk.chunk_metadata.document_id
+        embedded_chunk.metadata.get("document_id") or embedded_chunk.chunk_metadata.document_id
         for embedded_chunk in response.chunks
     }
     assert "document-0" in doc_ids  # From vector search
@@ -424,7 +457,10 @@ async def test_query_chunks_hybrid_weighted_reranker_parametrization(
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -448,8 +484,8 @@ async def test_query_chunks_hybrid_weighted_reranker_parametrization(
     assert any(
         "document-0"
         in (
-            embedded_chunk.chunk.metadata.get("document_id")
-            or (embedded_chunk.chunk.chunk_metadata.document_id if embedded_chunk.chunk.chunk_metadata else "")
+            embedded_chunk.metadata.get("document_id")
+            or (embedded_chunk.chunk_metadata.document_id if embedded_chunk.chunk_metadata else "")
         )
         for embedded_chunk in response.chunks
     )
@@ -464,12 +500,15 @@ async def test_query_chunks_hybrid_weighted_reranker_parametrization(
         reranker_params={"alpha": 0.0},
     )
     assert len(response.chunks) > 0  # Should get at least one result
-    assert any("document-0" in embedded_chunk.chunk.metadata["document_id"] for embedded_chunk in response.chunks)
+    assert any("document-0" in embedded_chunk.metadata["document_id"] for embedded_chunk in response.chunks)
 
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -490,8 +529,8 @@ async def test_query_chunks_hybrid_weighted_reranker_parametrization(
     assert any(
         "document-0"
         in (
-            embedded_chunk.chunk.metadata.get("document_id")
-            or (embedded_chunk.chunk.chunk_metadata.document_id if embedded_chunk.chunk.chunk_metadata else "")
+            embedded_chunk.metadata.get("document_id")
+            or (embedded_chunk.chunk_metadata.document_id if embedded_chunk.chunk_metadata else "")
         )
         for embedded_chunk in response.chunks
     )
@@ -502,7 +541,10 @@ async def test_query_chunks_hybrid_rrf_impact_factor(sqlite_vec_index, sample_ch
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -542,7 +584,10 @@ async def test_query_chunks_hybrid_edge_cases(sqlite_vec_index, sample_chunks, s
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(embedding),
@@ -631,13 +676,19 @@ async def test_query_chunks_hybrid_tie_breaking(
     # Create EmbeddedChunk objects
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk1,
+            content=chunk1.content,
+            chunk_id=chunk1.chunk_id,
+            metadata=chunk1.metadata,
+            chunk_metadata=chunk1.chunk_metadata,
             embedding=same_embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(same_embedding),
         ),
         EmbeddedChunk(
-            chunk=chunk2,
+            content=chunk2.content,
+            chunk_id=chunk2.chunk_id,
+            metadata=chunk2.metadata,
+            chunk_metadata=chunk2.chunk_metadata,
             embedding=same_embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=len(same_embedding),
@@ -677,7 +728,7 @@ async def test_query_chunks_hybrid_tie_breaking(
     # Verify both chunks are returned with equal scores
     assert len(first_response.chunks) == 2
     assert first_response.scores[0] == first_response.scores[1]
-    assert {embedded_chunk.chunk.metadata["document_id"] for embedded_chunk in first_response.chunks} == {
+    assert {embedded_chunk.metadata["document_id"] for embedded_chunk in first_response.chunks} == {
         "docA",
         "docB",
     }

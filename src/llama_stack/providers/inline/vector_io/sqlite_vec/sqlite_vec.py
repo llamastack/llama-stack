@@ -25,7 +25,6 @@ from llama_stack.providers.utils.memory.vector_store import (
 )
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 from llama_stack_api import (
-    Chunk,
     EmbeddedChunk,
     Files,
     Inference,
@@ -150,7 +149,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         If any insert fails, the transaction is rolled back to maintain consistency.
         Also inserts chunk content into FTS table for keyword search support.
         """
-        chunks = [ec.chunk for ec in embedded_chunks]
+        chunks = embedded_chunks  # EmbeddedChunk now inherits from Chunk
         embeddings = np.array([ec.embedding for ec in embedded_chunks], dtype=np.float32)
         assert all(isinstance(chunk.content, str) for chunk in chunks), "SQLiteVecIndex only supports text chunks"
 
@@ -236,14 +235,7 @@ class SQLiteVecIndex(EmbeddingIndex):
             if score < score_threshold:
                 continue
             try:
-                chunk = Chunk.model_validate_json(chunk_json)
-                # Create EmbeddedChunk - we don't have the original embedding here, so use placeholder
-                embedded_chunk = EmbeddedChunk(
-                    chunk=chunk,
-                    embedding=[],  # Empty embedding since we only need it for search response
-                    embedding_model="",  # Empty model name since this is query response
-                    embedding_dimension=0,  # Zero dimension since this is query response
-                )
+                embedded_chunk = EmbeddedChunk.model_validate_json(chunk_json)
             except Exception as e:
                 logger.error(f"Error parsing chunk JSON for id {_id}: {e}")
                 continue
@@ -284,14 +276,7 @@ class SQLiteVecIndex(EmbeddingIndex):
             if score > -score_threshold:
                 continue
             try:
-                chunk = Chunk.model_validate_json(chunk_json)
-                # Create EmbeddedChunk - we don't have the original embedding here, so use placeholder
-                embedded_chunk = EmbeddedChunk(
-                    chunk=chunk,
-                    embedding=[],  # Empty embedding since we only need it for search response
-                    embedding_model="",  # Empty model name since this is query response
-                    embedding_dimension=0,  # Zero dimension since this is query response
-                )
+                embedded_chunk = EmbeddedChunk.model_validate_json(chunk_json)
             except Exception as e:
                 logger.error(f"Error parsing chunk JSON for id {_id}: {e}")
                 continue
@@ -329,13 +314,13 @@ class SQLiteVecIndex(EmbeddingIndex):
         vector_response = await self.query_vector(embedding, k, score_threshold)
         keyword_response = await self.query_keyword(query_string, k, score_threshold)
 
-        # Convert responses to score dictionaries using chunk_id (access through .chunk.chunk_id for EmbeddedChunk)
+        # Convert responses to score dictionaries using chunk_id (EmbeddedChunk inherits from Chunk)
         vector_scores = {
-            embedded_chunk.chunk.chunk_id: score
+            embedded_chunk.chunk_id: score
             for embedded_chunk, score in zip(vector_response.chunks, vector_response.scores, strict=False)
         }
         keyword_scores = {
-            embedded_chunk.chunk.chunk_id: score
+            embedded_chunk.chunk_id: score
             for embedded_chunk, score in zip(keyword_response.chunks, keyword_response.scores, strict=False)
         }
 
@@ -352,7 +337,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         filtered_items = [(doc_id, score) for doc_id, score in top_k_items if score >= score_threshold]
 
         # Create a map of chunk_id to embedded_chunk for both responses
-        chunk_map = {ec.chunk.chunk_id: ec for ec in vector_response.chunks + keyword_response.chunks}
+        chunk_map = {ec.chunk_id: ec for ec in vector_response.chunks + keyword_response.chunks}
 
         # Use the map to look up embedded chunks by their IDs
         chunks = []
