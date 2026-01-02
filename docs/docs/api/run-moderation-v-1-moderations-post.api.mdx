@@ -1,0 +1,70 @@
+---
+id: run-moderation-v-1-moderations-post
+title: "Run Moderation"
+description: "Create moderation."
+sidebar_label: "Run Moderation"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81u20YQfpXBHg3asoMEaXRznAQwkCCGpB4KRxBG5FDcZLnL7C5lE6qOfYs+XZ+kmF1SpCw1sQsUaIDooJ/l/H/fjGY3wpKrjHbkxHgjnp2f80dGLrWy8tJoMRaXUJqMLPJPMMvPlPozkYjUaE/aszxWlZJpEBh9dqy0ES4tqET+VllTkfUyupAZv/umIjEWzlupVyIRXnrFB9eZ2CaC/alviX0IAtuEo6+Vj4Y9le7QX65wtaKh06UxilAPzL1rZbaJSNHTythWGXXzMRfj243ALJOcH6qbPfMPbG6T7iQWSmyTnYyulRLbee+kWYTCUbaQuqr9guUe6XaX7H6FevdoLTZPDcelxj4xcV2XS7KPdFQ7souSnMMV7Xt5mMYR5ZI8ZugDpY4H5W1ND+MYcKbT3x4Eyzz6WkvLNLndMWa+z7fYAB+DxqSlXfKYVnkISm+2M/O9iGQmuqboKf+N8B4Z15b9Pj/W8q8xgwl9rcn5p3T6vpG31hoL3XyB3JoSfEFweXN9BhNTrwrVQG6UMncOJu+u4OUv5y95suw3sPPo60i5Nt1pPNnVTGpPq5aEUaSXnYXP5LBPMvIo1VD0TTw5Iiu186jTJ3I2CV9wycaZmtvtPqpul0YbYxvSANhQQnHYW4Lusaxipl19np+f94r7AHa5illBYOMx3KEDqdeoZAbGQokqN7bkKRh58ezVIaQzY+AD6qaz7X6y40dhx7NXveIxGHcc+c3UUOCagO5TooyyAItFT6BkKf0Z3ChCR+BtA7hCqUGhJ9sNlBfHBsq19mQ1KpiSXZOFLvSf5PkRyPNiOFr+CcodgS411JruK0o9ZUABKpOmtbW74ZJRjrXyh8C+iQ9g0kL7kyL/P4pECD2uHNuZYk6+YbX9+l9Z4pHR7x1nn/QnfaXQOZlLciBz8HTvAXU2MhZkiSuCsAg7QEtQGYZdolINFGjLvFYMD4MT7F1nYixsrRe9i8X6YvDLLSrjulWKnH9tsoZr+G8vLhza9zB45F7e11hJ52+j1Dyg1j2IZ/A77EsMLkdP2J6/t1+G1AbOJ7Xud8puj9juUyiQKqzlhWEo2mJX6AsxFqP1xWgAhUiEC+PChYBry4Oi8L4aj0aom9PCOE/ZqVJY4qnzmH45S00ZCuIora30TVB80w2O2zk/Y8wmPbpv+9HVotVfHduy7fVVboYd+J6dw5Sdw7SiVOYtNQ7W6VkhHUgX5okbSoLJw+HQlC/QQ2XNWmbkPmk48kJw5FmXdFYZqbkDdPjflRZSY+MUy5gPPG1sjim5aBgtRZvcvMbyv7U57mTJS5+iNVlutBhhuEe70JkscnLy159/wHR2+fr925OTMdxYk9UpJ3ZqCbOGh6eDO+kLWGL65Q5tBqkpK/RyKZX0DaxqtKg9keNeZbxjxdYXXHGmSImhyzSWLdGgZ9rDQg969T+bJ21fsOqoUijDHT7wc9Ny+ZajjwTq2DxPBDOWn202S3T0q1XbLR9/rckyVeeJWKOVcf7e8v21IMzIBhZ/oYYzirmdzjgCFld1mBAPZxL3c9S4TFOq/Ddl54OOvPk4nYlELNu5xwnwyMQ7bn+8E2MR5mlMabyJZxuhUK/qcEMX0Sa//gYuhUMV
+sidebar_class_name: "post api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Run Moderation"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1/moderations"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Create moderation.
+
+Classifies if text and/or image inputs are potentially harmful.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"properties":{"input":{"anyOf":[{"type":"string"},{"items":{"type":"string"},"type":"array","title":"list[string]"}],"title":"string | list[string]"},"model":{"anyOf":[{"type":"string"},{"type":"null"}]}},"type":"object","required":["input"],"title":"RunModerationRequest"}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A moderation object.","content":{"application/json":{"schema":{"properties":{"id":{"type":"string","title":"Id"},"model":{"type":"string","title":"Model"},"results":{"items":{"properties":{"flagged":{"type":"boolean","title":"Flagged"},"categories":{"anyOf":[{"additionalProperties":{"type":"boolean"},"type":"object"},{"type":"null"}]},"category_applied_input_types":{"anyOf":[{"additionalProperties":{"items":{"type":"string"},"type":"array"},"type":"object"},{"type":"null"}]},"category_scores":{"anyOf":[{"additionalProperties":{"type":"number"},"type":"object"},{"type":"null"}]},"user_message":{"anyOf":[{"type":"string"},{"type":"null"}]},"metadata":{"additionalProperties":true,"type":"object","title":"Metadata"}},"type":"object","required":["flagged"],"title":"ModerationObjectResults","description":"A moderation object."},"type":"array","title":"Results"}},"type":"object","required":["id","model","results"],"title":"ModerationObject","description":"A moderation object."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

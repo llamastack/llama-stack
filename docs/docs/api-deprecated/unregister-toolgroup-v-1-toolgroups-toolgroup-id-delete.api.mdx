@@ -1,0 +1,72 @@
+---
+id: unregister-toolgroup-v-1-toolgroups-toolgroup-id-delete
+title: "Unregister Toolgroup"
+description: "Unregister a tool group."
+sidebar_label: "Unregister Toolgroup"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1u20YQfpXBnlqDlmTDQRre3EgtDDioIcuHwhGMMTkUN1nu0rtDxYTAZ+i9pz5Gn6cv0FcohtQPFSk+N4B5Ibn8ZnZ+vm+WK+UplM4GCipeqfPRhdxSConXJWtnVaxuqyShELLKwHQNVk2kLkajQ+zPmMKUnioKrCKVOMtkWWBYlkYnKLDhpyDYlQpJTgUeOpl47zxsAoPMuwI4J7i8uRrA1FWL3NSQOWPclwDTX97D259GbwcqUqV3JXnWXTKBkav2iTUbkky6lUhxXcq7tkwL8pLNGrLDztr7FhrYa7sQZEqM2vSh427lCFbbwGiT1jHa+rdMxferA9h2xVbGqGYetQ/4KM7ZV9Q0kfL0VGlPqYrvN4ltgt6GNN+m0ZVwF5F7/EQJS0T0jEXZZbqpz8VotDPcb+AmVzXLCXy3DF8wgLZLNDoF56FAkzlfUKqaRiK9OH932NKZc/ABbb3xHV7Z8b2w4/zdzvBYG7cc+d1VkOOSgJ4TopTSti0emcDoQvMAbgxhIGBfAy5QWzDI5Adr4rw5NlCuLJO3aOCW/JI8bEJ/Jc/3QJ43/dHyrVZuCXRpobL0XFLClAK1rXJJUnm/HS4pZVgZPmzsuPuwO6FeKfK/o0jXQsZFED8z5wz86l1VBrHdb8Kd9bTQgckDAgtyIUgpsxS57eRVqmJVbYEPAmtRD8uz3Ut46H3Q6cNDSoZY4i7RY0FMPrR1sVhIsH2wkhqqWJXIuepXQeoS9Rh0pE39bG6Qc9huF8PeHk2bfOkpQd75LohzJwn2wuVcxWq4PBvukhuu+r4aFanQiqtLqfIiq5y5jIdDtPVp7gJTemoMFngaGJPPg8QVbQiBksprrlvD8UZm93P5pm3m+pS7Fnu4FXu4LSnR2VpccArjbSqimO6A2PsTyHUAHVpJhT1bl7WLfeecI0Pp3VKnFD5aOHIhBGKxJZuWTlsOgLY9erSHxPlOyKm2CxDB+QwTCp1j9NT5FP46LweWO77Jo/z3GFqSx8Umwg8uJRMGH21ncnLyz59//fv3HzCe3Ewn7y9nk/HJSQzXtMCkbkvRbVpgDY/yM1W4JaWgLWQVV55AuqadDQO4k7HjfOe30IuO7uApI082IXDW1CKFtYmK1fJMWFe6wAW2023N5p6OZhuifN2S1W5SvqS7NceZnnlYGtRWdmwZtlpz817CiHYKkubHe1yfR0ooKNDV6hED3XnTNLL8VJEX7s0jtUSvu/Fzv1KpDvKcqjhDE+iF0H+YruX5I7yot29ksl5EW0th0VTypiL1meqvp0IzbyKVE6bk2xg7yGWSUMk944NDR6S01fV4cj2ZTVTT/AebaKNE
+sidebar_class_name: "delete api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Unregister Toolgroup"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/toolgroups/{toolgroup_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Unregister a tool group.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"toolgroup_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: toolgroup_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"Successful Response"},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

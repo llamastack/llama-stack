@@ -1,0 +1,68 @@
+---
+id: delete-openai-response-v-1-responses-response-id-delete
+title: "Delete Openai Response"
+description: "Delete a response."
+sidebar_label: "Delete Openai Response"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81u20YQfpXBnlqDlmwjQRrdlMoFDDiwYauHwhGEETkSN17uMrtD2YLAY96iT9cnKYZ/omTFQG8NYB0kejj/3ze7463yFHJnAwU12qqLszP5SSjEXuesnVUjNbZwk5MdX03IENNdY3Cz+Eoxq0jFzjJZFkPMc6NjFMPh1yDWWxXilDKUp9y7nDzrOpZO5Js3OamRCuy1XalIsWYjgqtElZFydYwjerGzgdWoS79n2iWW0BILs6dVilSq6AdfOGcIbc/FpNHp+WBfUFlGrY1rg3j6Vmgv/h6kpFkvj9eatt/i9jXUbiF2dql9pu0KqnS1s+CWgC0S0BY0UGUpWb07BtwnTOCOvhUU/hNM+04uvXe+iwdL7zLglGB8ezWAO1esUrOBpTPGPQW4++N3+PDb2YeBig7QDoxcVE9te+5rSddRbZlW5AWiRmWnO61+owMWVGAyatNXndSSI7raBkYbV47Rbm6WavRwSKwy6iS2MEaVs6h6wIU4bznQxzx0ZTQ5Nin1iFC1UB1Sp4wUPWOW15W2/Xl3drYz3AewrVVNUwJfi+EJA2i7RqMTcB4yNEvnM0paXlx8fAnp1Dn4jHbT+g5v7PhZ2HHxcWd4DMaOI3+5AlJcE9BzTJRQUsHikQmMzjQP4NYQBgL2G8AVagsGmXx7oLw/dqBcWSZv0cA9+TV5aFN/I8/PQJ73/aPlR1B2BBpbKCw95xQzJUAVVC6OC++7w6W7Gw+BndQv4G53Ob9R5H9GkRpCxlUQP+MVWQ5idoikbC+AvYUjUtLZCr6rRI2afWrucrKo563efH3ePYf5TqyT+by2EJDQY0ZMPlTNsJhRb1mba1nAtKSRI6d7u5b0Iuqx5gg0/TJukVPooo2gH0KanBGnbldMlRqnaqSG6/NhV8Zw27MrVaRCNTt18oWXqUmZ89FwiHZzmrrAlJwagxmeBsb4cRC7rAoXKC685k1lOGmn6GEm77Rduj6jrsUe7sUe7nOK9bKZnRdL5DTVAXSo5iP0NWV1FGHfFafIkHu31gmFLxaOfBACsdiSTXKnLQdAW90j2kPsfN2MRJZUmR6/xJhC7Rg91T6FjM7L7eOOB1nIEmNoTR5XbYafXUImDL7Y2uTk5J+/v8P9dPzp+vLkZAS33iVFLIWdesJkI4dBgCfNKSwwfnxCn0DsshxZL7TRvIFVgR4tEwWhr0BWd2x9LlTJXeAMq2OoYWDD+puK0v1TbK/h292hdnxOGlIyPfMwN6itRKt4sm349SApRL3/wSI16nNzFimhkShutwsM9Kc3ZSnibwV54c8sUmv0uj4hHrYq0UGeEzVaogn0Ssq/3DXT9Cu8Nh4/KKMRot1IR9EU8peK1CNtDka4nJWRSgkT8lWGtcY4jinnnu2LW2FvLieX15fTS1WW/wKWXgkL
+sidebar_class_name: "delete api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete Openai Response"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/responses/{response_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Delete a response.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"response_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: response_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"An OpenAIDeleteResponseObject","content":{"application/json":{"schema":{"properties":{"id":{"type":"string","title":"Id"},"object":{"type":"string","const":"response","title":"Object","default":"response"},"deleted":{"type":"boolean","title":"Deleted","default":true}},"type":"object","required":["id"],"title":"OpenAIDeleteResponseObject","description":"Response object confirming deletion of an OpenAI response."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

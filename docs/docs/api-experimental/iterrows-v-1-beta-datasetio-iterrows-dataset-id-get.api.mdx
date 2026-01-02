@@ -1,0 +1,76 @@
+---
+id: iterrows-v-1-beta-datasetio-iterrows-dataset-id-get
+title: "Iterrows"
+description: "Get a paginated list of rows from a dataset."
+sidebar_label: "Iterrows"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWFFv2zYQ/isHPjWBbCdFi656y5asC5B0QZJiG5LAOEsniy1FqiTlxAj0W/Y4YL9uP2E4UrLl2hnQh2ErEL/YPt/xjvd995Hyo7DkaqMdOZE+ipcHB/yWk8usrL00WqTiCC5wLjV6yi8757FIRGa0J+3ZH+tayQzZf/LRcdCjcFlJFfKn2pqarJcxRY4+WKWnKhgwzyVHoroYOHrbUCL8siaRCjP7SJkX7cqA1uJSJMJLr/j7MS/aJqJEN62MJV63c50Zowj1wPkndHDOTm0iGqtCDXr5cyHSm1WU81bquWiTlUU3Son2rm2/rCoRlj430lIu0pu4vUEhd+u8W10UyVan56TJygzq3hd6fMCX6KEwSpl7BwhOVrUiKIyt0I9F23Jlr3bh9z3mcEmfG3L+a2DbXOTEWmPXxRTWVOBLgqOL0zFcmmZequWqussff4A33x28YZpsou88+iZ86rtyFS2rrkrtaU42gB1d1r7X4T3ZAknk5FGqoetxtOzwldp51Bl9He5J+IAzXpy5yd0e4u5W2+hq7Eoa4B9aKHaQmh6QsRz259XBwTpwE8B+r+K6JLDRDPfoQOoFKpmDsVChYmJQ3vPi5dttSK+NgXPUy35t98yOb4UdL9+uA3fBuOLIb6aBEhcE9JAR5ZQHWCx6AiUr6cdwoQhZXewScI5Sg0JPtheU17sE5VR7shoVXJFdkIW+9GfyfAvkeT2UlqegXBHoSEOj6aGmjA8jClCZLGusXYlLTgU2ym8Dexx/gMF590yR/xlFIoQe547X4XuUIy8NR25C8I484OBeoqTzYAqw3PIACEIew8e3+lZ/cOTAFIUjP5qho7yPlUbDfUmW0ls9AufR+qnUOT2kwCdaMEg9h2CDFwcxem8MpwW8N5qS6NIlndFcai31fMyrBU1L4X1TzchydeGWCd6AJd9YvVqED8nRYdKZHaBS0TfUHk/WjmxSZ6rJyYVyeYcpnHV7j6sXxgYyhqHQnvdJoZr+EpjCLyX5koKbJUBLwPYuHhcoA7aAhQ9O0gG3USSC2RtadpozOz0P4L2bLg5n5HGa93BNV7/0tqnMp9M58YWhRosVebIucE1jxQQIrRJMSJGKzw3Z5cZNtkDlKBkM5BZZ16OyzdaedGchScsuXdoB3v928itOBach1bCEdYf6Cmr05UYB8eljnX/HyA9n4wJ9Cas2pzDIwAVV5EvD+PV4+FKkYhJBnKxAnPQgTh7XC7QiES5oc0QvPLCI0vs6nUxQL0elcZ7ykVJY4ch5zD6NM1OFvI6yxkq/DIHHvUrf3PFvUhdmqFhnHA9XHA9XNWWy6LQZRnDyUJOVFWmPiiXXbT24XDNlpQtj4DaiTRGMw+XDg0xtzULm5G417Hgh859jSee1kdo7QB3uLtJCZmwczjzKhCdbYEYuLoyW4posgMbyjcfsTjLji7OiBVmc9xWem5xUFAF22d//6/c//oSTXy9OLk/PT95fH53t76dwYWlkKV6cuB/wYnGIqi4xgQjqXqylwiVkJeo5wYwK01c2o8xUXLvzPPY854xvbOXikPlVG+crDGdix9rTjhxf9v5xfaY+a/R/otGdOHh68JNaodSDPxbirN+ISAvGbnXCJis5F4lIB5Jxlwgeag57fOTGfrCqbdkclZKnOZeOq1lr5SdaDkR9garhmoI+PuG7qcTriDv+YmW8bOxK9ST9Xlx2AroH/6CITzSs/2dHL4fV9MVuKCr/0UOYkw31RYejLKN6uPWt6+WGEr87uRZt+zeIxIei
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Iterrows"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1beta/datasetio/iterrows/{dataset_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get a paginated list of rows from a dataset.
+
+Uses offset-based pagination where:
+- start_index: The starting index (0-based). If None, starts from beginning.
+- limit: Number of items to return. If None or -1, returns all items.
+
+The response includes:
+- data: List of items for the current page.
+- has_more: Whether there are more items available after this set.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"limit","in":"query","required":false,"schema":{"anyOf":[{"type":"integer"},{"type":"null"}],"title":"Limit"}},{"name":"start_index","in":"query","required":false,"schema":{"anyOf":[{"type":"integer"},{"type":"null"}],"title":"Start Index"}},{"name":"dataset_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: dataset_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A PaginatedResponse.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"additionalProperties":true,"type":"object"},"type":"array","title":"Data"},"has_more":{"type":"boolean","title":"Has More"},"url":{"anyOf":[{"type":"string"},{"type":"null"}]}},"type":"object","required":["data","has_more"],"title":"PaginatedResponse","description":"A generic paginated response that follows a simple format."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

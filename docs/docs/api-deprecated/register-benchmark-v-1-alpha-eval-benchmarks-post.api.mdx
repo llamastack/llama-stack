@@ -1,0 +1,72 @@
+---
+id: register-benchmark-v-1-alpha-eval-benchmarks-post
+title: "Register a benchmark."
+description: "Register a benchmark."
+sidebar_label: "Register a benchmark."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81uGzcQfpUBj4YsOYGDNLo5kQMYSBBDdg6FIxgj7qyWCZfckFzZC0HP0HtPfYw+T1+gr1AM9z9WnPRQoAGyF0nc4fx+881oJxz5whpPXsx34unJKX8k5KVTRVDWiLm4zgjWZGSWo/sEd+jBl1KS92mpdQWONsoHcpRMxX4iTk9OHqp4iQks6XNJPoiJkNYEMoHFsCi0kshis4+eZXfCy4xyfKjk3DnroPUXUmdzCBnB2eXFFJa23GS6gtRqbe88LF+/gue/nDyfiokonC3IBVXH6AOGMn4LKmgSc3FVn0xEqAr+rUygDTmOphHpZa/jZyfqg1Nmw5IJBVR6KLqoTw7IKuMDGhkVo6nepWJ+s3sg1p2YUmuxX03iF1yz8uBK2u8nwtHnUjlKxPymDax1unNp1YVRp7D3yK4/kgzsEd1jXtSRtvk5PTnpL44L2MYaoeHq4wgMZbaoVQLWQY46tS6nROz37Onp0xcHoGUtvEVTtbr9T3T8KOh4+qK/eKiMHUZ+tSVkuCWge0mUUBLL4jAQaJWrMIVLTegJgqsAN6gMaAzkpg1wnh0ilAsTyBnUcEVuSw5a13+C50cAz7MhtXytlB2AzgyUhu4LkoESoFgqK2XpXEcuCaVY6vCwsIv6BSyb0v6EyP8PInUJA24863nZbhqer45rsGxWDcB+IeEUc4JjFS8SMRftQnLbydxun6AuMrylLer+2N8WNs6zZoS9tEnFSfluhIxL25tTSazEKKODWdrtUheJ+DJEnqgXC7BpBFe/dgXbLVpxzUowoKfwDVOLWurbhhp1bKZkdFs3th9temlZ/21aGslaYtQqUO4f+rDvyozOYTXw6arWAq87LYdca2xBZ+tx1wpntyoZ1bzOzL8B+GMJag2MS/IdDv1HbjxqPKeAXNGxZUwSxUpRXw5wy738kLW/x6vWymO+7L9UPSaNUbVGoD6EtgGVtEzQ9dJwOR1TRr2d5jYhHV1s24jRhWNnR5QWSY7VFY4khvYoZjezTDQNexQYMjEXs4ZkZkwys55kOJQ42XysQul4pmUhFPPZDE11nFkfKDnWGnM89gHlp6m0ecy5J1k6Fap4cdHOuJsVv2M2Wva8dd5P2XEL9KQwpIz+9EBT37RvV19trP7+COj98QCC+zhzUjucTm84WrjiaOGqIKnShmXhGBZdxnm4HqIH5UH5iDU/uts0yVB5yDC0XeM/GDjwIDDz2RTIJIVVJnhAE7dU5UBaV8/8hPHCs9mlKMnXitFRrZNHnXW829rDRtYMQk1bcrhpPXzLmPTTD6a+cnT01+9//P3nb7A4v1yevzq7Pl8cHc3hDW1QVjEVtdEcK1jz/67cbikBZSAtQ+kIGGNcwSm8r9ux1purTT0dwVFKjowksEZXPDmbK2Iutk8ibVkfcoxjzmBOj8zcUU0GM/OrFxoeCHQfZoVGZdhe7IZd00I3omkhMRHcRGIi1qNtgFuFxXa7NXp67/R+z8efS3LcI6uJ2KJT9Y5ys9pPREaYkIvt84kqMRevajePr9kZFtdlnFFfjnlmwPrGmZRUhEdlVwNOuHx3dc1+N6sE0w6vJHjHzId3Yi7ivtKNz3i2ExrNpsQNy9Y6+fkHpkETEw==
+sidebar_class_name: "post api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Register a benchmark."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1alpha/eval/benchmarks"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Register a benchmark.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"properties":{"benchmark_id":{"type":"string","title":"Benchmark Id","description":"The ID of the benchmark to register."},"dataset_id":{"type":"string","title":"Dataset Id","description":"The ID of the dataset to use for the benchmark."},"scoring_functions":{"items":{"type":"string"},"type":"array","title":"Scoring Functions","description":"The scoring functions to use for the benchmark."},"provider_benchmark_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The ID of the provider benchmark to use for the benchmark."},"provider_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The ID of the provider to use for the benchmark."},"metadata":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}],"description":"The metadata to use for the benchmark."}},"type":"object","required":["benchmark_id","dataset_id","scoring_functions"],"title":"RegisterBenchmarkRequest","description":"Request model for registering a benchmark."}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"The benchmark was successfully registered."},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

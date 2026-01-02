@@ -1,0 +1,70 @@
+---
+id: get-model-v-1-models-model-id-get
+title: "Get Model"
+description: "Get model."
+sidebar_label: "Get Model"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV1Fv2zYQ/isHPm2BY6dBi656c5esMNBiQeI+DGlgnMWzxUYiFfLkxDD0uH+xX7dfMhwl2YrtDOieVqB+MUUe7z7efXc8bpSnUDobKKhko87PzuRPU0i9Kdk4qxI1hk9OUz5UA5U6y2RZZLAsc5OiyIy+BhHcqJBmVKCMSu9K8mwatUaTZbMw5OWL1yWpRAX2xi7VQLHhXCYmO6nBHoTP1jxUBDs9sHAeODMBPAVX+ZTAWMhzLBACY3qv6oGAWBlNftbJzIyO0O3694VKbveh1IPtjK3yXNV3/xEHZwSd8WdAGvsvOeCqFYOJPvDA5ALc4pli4AwZ3KMNzwGIwcbCoaXU2cAqUYUEtGd5KnJicoFVvhOoB6ogRo0cg4paG4GD+VUvvOwr6iwqN/9KKfc0f+r27x9obNewUwidnZ1DdxBkMOuOtMOY54UaHByRbFWo5LZdpWJOWjcrnjzae3XXAyeat2fvo7u0VUE+slv8HqqydJ5JN6hAjAaJ9MfIuBth3FDV9aEfPD1UxpMWSKZP8D4n9iEdOqu1uyWZp9JTEHV2CWhhPNlKLE1g8qSPwBOAr4+l+HvUcE0PFQX+lizf85n3zkNXT2DhXREJO76aDOHaVcssX8PC5bl7DHD926/w9pezt8PGFb1iERi5iqPOJzfNzNa5xjItm8xqRXay0/i/T4taHMpo8r7oRTNzRNbYwGhT+tZiIQOci3JJCvF2P/xhe4wWYwupF/3oQrXPonqg6AmLsjlp55/XZ2e7jc8D2J1VTTOhSpyGRxTGrjA3GpyHAvOF8wXpjhfn7w5DOnUOPqFdd7rDD3Z8L+w4f9cr70fCuOXIH66CDFcE9JQSadIxLB6ZIDeF4SFc5YSBgP0acIlyzyKT7wrKm2MFZWKZvNT1G/Ir8tBB/0Ge74E8b/ql5aVQbgk0tlBZeioplQuSYqhcmlbeb4vL9tLeD+xFswDXbWh/UOT/R5EmhIzLIHpigxLUQWv8gbhpQYZf7BcrX9i2JPM1GA69plm8Lj6PgZ1olagl8axp81avmkGYtRNGz2ZLklutRI8FMfkQHWKxoK5TlSZKHKcSVSJnz/qupj/d0eZIbPrnuELOYGsqga1+cXFBnLkWcETEmUrUaPVq1IAebTrxWg1UiAnToK28pErGXCajEdr1aeYCkz6NT5bT+GQZpq6IVgKllTe8jhsvutS5vZM1YxeuT6Nehwc3JaVm0SbMQQ85labahJgUoS/ZPSz6quLbom1RwxcLR34IgVj2ktWlM5YDoI2Xh/GQOt+kovTeICnjF5hSaBSjp0anMNBJr8ruuJG5dC45rcjjskPYMDDSTEROTv7+60+4mY7ff7w8OUngyjtdpXKwU0+o11IBAjwazmCO6f0jeg2pK0pkMze54TUsK/RomSgIMyVkjcdWr+LjzQUuMNaelnJC7qN9+mZXvL41H1pWMj3xqMzRWDEdSbNpaXYreNrXkORxsmXm3UAJm0Rks5ljoM8+r2uZfqjIC43uBmqF3jTV4XajtAky1ipZYB7oX47x03WbSD/Di5nxAvp2Eu1avIp5JV9qoO5p3c/b+q4eqIxQ3sqCrVkepymV3Nt4cBc8y8cPl1NV1/8AorTDww==
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get Model"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/models/{model_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get model.
+
+Get a model by its identifier.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"model_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: model_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A Model.","content":{"application/json":{"schema":{"properties":{"identifier":{"type":"string","title":"Identifier","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","title":"Provider Id","description":"ID of the provider that owns this resource"},"type":{"type":"string","const":"model","title":"Type","default":"model"},"metadata":{"additionalProperties":true,"type":"object","title":"Metadata","description":"Any additional metadata for this model"},"model_type":{"default":"llm","type":"string","enum":["llm","embedding","rerank"],"title":"ModelType","description":"Enumeration of supported model types in Llama Stack."}},"type":"object","required":["identifier","provider_id"],"title":"Model","description":"A model resource representing an AI model registered in Llama Stack."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>
