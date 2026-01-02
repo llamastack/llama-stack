@@ -25,12 +25,65 @@ import TabItem from '@theme/TabItem';
 
 Use the Containerfile at `containers/Containerfile`, which installs `llama-stack`, resolves distribution dependencies via `llama stack list-deps`, and sets the entrypoint to `llama stack run`.
 
+**Single-architecture build:**
+
 ```bash
 docker build . \
   -f containers/Containerfile \
   --build-arg DISTRO_NAME=starter \
   --tag llama-stack:starter
 ```
+
+**Multi-architecture build:**
+
+The Containerfile supports multi-architecture builds for `linux/amd64` and `linux/arm64`. To build and push images with a multi-arch image index, you can use either Docker buildx or Podman buildx:
+
+<Tabs>
+<TabItem value="docker" label="Docker buildx">
+
+```bash
+# Build and push multi-arch image index (creates manifest list)
+docker buildx build --platform linux/amd64,linux/arm64 \
+  --push \
+  -f containers/Containerfile \
+  --build-arg DISTRO_NAME=starter \
+  --tag docker.io/llamastack/distribution-starter:latest .
+```
+
+To add more architectures in the future, extend the `--platform` flag:
+
+```bash
+docker buildx build --platform linux/amd64,linux/arm64,linux/s390x,linux/ppc64le \
+  --push \
+  -f containers/Containerfile \
+  --build-arg DISTRO_NAME=starter \
+  --tag docker.io/llamastack/distribution-starter:latest .
+```
+
+</TabItem>
+<TabItem value="podman" label="Podman buildx">
+
+```bash
+# Build and push multi-arch image index (creates manifest list)
+podman buildx build --platform linux/amd64,linux/arm64 \
+  --push \
+  -f containers/Containerfile \
+  --build-arg DISTRO_NAME=starter \
+  --tag docker.io/llamastack/distribution-starter:latest .
+```
+
+To add more architectures in the future, extend the `--platform` flag:
+
+```bash
+podman buildx build --platform linux/amd64,linux/arm64,linux/s390x,linux/ppc64le \
+  --push \
+  -f containers/Containerfile \
+  --build-arg DISTRO_NAME=starter \
+  --tag docker.io/llamastack/distribution-starter:latest .
+```
+
+</TabItem>
+</Tabs>
 
 Handy build arguments:
 

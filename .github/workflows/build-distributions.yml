@@ -1,0 +1,126 @@
+name: Build Distribution Images
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Distribution version tag (e.g., "0.2.12" or "latest")'
+        required: true
+        type: string
+      distributions:
+        description: 'Comma-separated list of distributions to build (leave empty for all)'
+        required: false
+        type: string
+      platforms:
+        description: 'Comma-separated list of platforms (default: linux/amd64,linux/arm64)'
+        required: false
+        type: string
+        default: 'linux/amd64,linux/arm64'
+
+permissions:
+  contents: read
+  actions: write
+
+env:
+  IMAGE_PREFIX: llamastack/distribution
+
+jobs:
+  generate-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      distros: ${{ steps.set-matrix.outputs.distros }}
+      version: ${{ steps.set-version.outputs.version }}
+      platforms: ${{ steps.set-platforms.outputs.platforms }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Set version
+        id: set-version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ github.event.inputs.version }}"
+          else
+            # Extract version from tag (e.g., v0.2.12 -> 0.2.12)
+            version="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Building for version: $version"
+
+      - name: Set platforms
+        id: set-platforms
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.platforms }}" ]; then
+            platforms="${{ github.event.inputs.platforms }}"
+          else
+            platforms="linux/amd64,linux/arm64"
+          fi
+          echo "platforms=$platforms" >> $GITHUB_OUTPUT
+          echo "Building for platforms: $platforms"
+
+      - name: Generate Distribution List
+        id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.distributions }}" ]; then
+            # Use provided distributions
+            distros=$(echo "${{ github.event.inputs.distributions }}" | tr ',' '\n' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          else
+            # Get all distributions, excluding ci-tests and __pycache__
+            distros=$(ls src/llama_stack/distributions/*/*build.yaml 2>/dev/null | \
+              awk -F'/' '{print $(NF-1)}' | \
+              grep -v '^ci-tests$' | \
+              grep -v '^__pycache__$' | \
+              jq -R -s -c 'split("\n") | map(select(length > 0))')
+          fi
+          echo "distros=$distros" >> $GITHUB_OUTPUT
+          echo "Building distributions: $distros"
+
+  build:
+    needs: generate-matrix
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        distro: ${{ fromJson(needs.generate-matrix.outputs.distros) }}
+      fail-fast: false
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Install dependencies
+        uses: ./.github/actions/setup-runner
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+      - name: Build distribution image
+        env:
+          DISTRO_NAME: ${{ matrix.distro }}
+          IMAGE_TAG: ${{ needs.generate-matrix.outputs.version }}
+          PLATFORMS: ${{ needs.generate-matrix.outputs.platforms }}
+        run: |
+          LOCAL_IMAGE_NAME="${IMAGE_PREFIX}-${DISTRO_NAME}:${IMAGE_TAG}"
+          echo "Verifying build for: ${LOCAL_IMAGE_NAME}"
+          echo "Requested platforms: ${PLATFORMS}"
+
+          # Build arguments
+          BUILD_ARGS="--build-arg INSTALL_MODE=pypi --build-arg DISTRO_NAME=${DISTRO_NAME}"
+
+          # Add UV index configuration if available (for release branches)
+          if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
+            BUILD_ARGS="${BUILD_ARGS} --build-arg UV_EXTRA_INDEX_URL=${UV_EXTRA_INDEX_URL}"
+          fi
+          if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
+            BUILD_ARGS="${BUILD_ARGS} --build-arg UV_INDEX_STRATEGY=${UV_INDEX_STRATEGY}"
+          fi
+
+          # Build for native platform only (--load only works for single platform)
+          # This verifies the build works, but maintainers should build multi-arch manually
+          docker buildx build \
+            --platform linux/amd64 \
+            --load \
+            -f containers/Containerfile \
+            ${BUILD_ARGS} \
+            --tag "${LOCAL_IMAGE_NAME}" \
+            .
+
+          echo "Successfully built: ${LOCAL_IMAGE_NAME}"
