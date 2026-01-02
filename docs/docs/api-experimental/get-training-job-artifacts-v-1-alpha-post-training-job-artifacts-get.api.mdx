@@ -1,0 +1,68 @@
+---
+id: get-training-job-artifacts-v-1-alpha-post-training-job-artifacts-get
+title: "Get Training Job Artifacts"
+description: "Get the artifacts of a training job."
+sidebar_label: "Get Training Job Artifacts"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWF9v20YM/yrEPbWBYqdFi7Z+81qvSNFsQZIOG9LAoCXKulS6U+8oN4ahz7LHAft0+wgD9c+S7Sbr2wo0LxbuSB754488XjbKkc+t8eTVZKOenpzIT0Q+dDpnbY2aqCmcW89XDrXRZvnOLqaOdYwh+4tGd6QCFVrDZFjUMc9THaKoj2+92NgoHyaUoXzlzubkWNcn3trFvCh0JN+8zklNlGenzVIFijWnsvDOLuCDyJSBChMKP+VWG67UNVPm963qiAzrWJO7z+7pVkosO0KmaI58SCe2LpMdFSHTMeuMeoZe16owZTFEuQ2Tng1tmJbkevKzSqIMVG49z7lBdi5Y3I+EJALaTIDgclqhkiMn9+rJfhmo7qiM2OmwwgrN+tdYTa43g1PaQ84qQRXsAPwNMVZnzlPrfU/eFNliIF6dB+9FqgzUClMdVQR6UPG3TrTTzsnlKd1pXt+neL6VKsXNWswubilkFShHnwvtKFKT6ybaQSj7Pg7OvQl2iqhLWoM8hJhz4SiCqJBkgVDhuM0P3NqFH6ky6Lmfpqq8Ce5L0kNh9KpiQPegC/AgHxt69c5+3RWh2o1zuwXNCW2AXWyuMFVsra/oHK7VIev+wZC69vEVZA51qz2fOwmwMSDE2hAXbRpGqizFi2eHWuNPGMEFfS7I87e0wKGRmXPWQduHIXY2A04IpuenI7iwxTJJ1xDbNLVfPFz8/BpevDx5MdorSc/IRV0qDRCX9UqwW6Rlh9VW9qr6DXY6SClQMeq0L/qmXjkgq41nNCHttJUdsX1OywcuxDi7ggTtfo59F0bjY+NSL+UVhGqXKtKL7zDL60hbfJ6dnGwVhwlsY1VXCYGrl+ELetCmqnawDjJM5S6gqOXF01f7Kb2yFs7QrFvb/gc7vhd2PH3Vu5QOpLHjyB+2gARXBHQXEkUUVWlxyASpzjSP4Dwl9ATs1oBLud5SZHJtQ3l+qKGcGiZnMIVLcity0Lr+gzzfA3me91vL11LZEWhqoDB0l1MotyRVqbJhWDjXNZeIYixS3k/sm3oDenfaD4r8zyhSp5Bx6cXOYHTfnw/fElew43AW6Q+EArpAXuX1NFITtaSdaa3Tnq+eYJonON+f6LYyS+JquHOYEZPzFV4GMwmiG6wEVzVRnwty68HwJWAFPVo9/HoTsDPixDa+t5PlRI0bd8eDKXh8axfjzl0VKF9VUu1n4aSGEuZ8Mh6jWR8n1jNFx2mKGR57xvDTKLRZlWFPYeGq58D1pi0dNbm+kT1tYtvn13vRh0vRh8ucQh03lQTHMLvLyemMDGMqBeL3RsmrRHvQvkqlH2jbuFrsm+cEGXJnVzoi/9HAgT8ETyy6ZKJ6JAY01U2jHYTW1XUbCUOkvlyMIfnaMDqqbQpdrbw02B4+ZCFjTkorcrhsPTyzEaV+9NHUKkdH//z5198w+/18dnF6Nvvlavr+6GgC546OHdXXnOABj5pEBrB6siDGx7UvGa4hTNAsCRYU29azBYU2E989SwEKwSW/NZSrJ+0LOcOqgzXMlEoZPIGnPYYMsrHZ9sT/Wl8NiZnueJynqI34UFFt03D1WjUhNs+ljq0qkKJRgdoy9iZQwkpR2mwW6OmDS8tSlutyEjpG2kvskZrEmHq6J4RHF03tPYavefqJ1sPaXWFaiFhVBit0um501zdloBLCSP5Bcr1p9KZhSDn3tPbukUEFv51dqbL8F8N+RpA=
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get Training Job Artifacts"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/post-training/job/artifacts"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get the artifacts of a training job.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"job_uuid","in":"query","required":true,"schema":{"type":"string","title":"Job Uuid"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A PostTrainingJobArtifactsResponse.","content":{"application/json":{"schema":{"properties":{"job_uuid":{"type":"string","title":"Job Uuid"},"checkpoints":{"items":{"properties":{"identifier":{"type":"string","title":"Identifier"},"created_at":{"type":"string","format":"date-time","title":"Created At"},"epoch":{"type":"integer","title":"Epoch"},"post_training_job_id":{"type":"string","title":"Post Training Job Id"},"path":{"type":"string","title":"Path"},"training_metrics":{"anyOf":[{"title":"PostTrainingMetric","properties":{"epoch":{"type":"integer","title":"Epoch"},"train_loss":{"type":"number","title":"Train Loss"},"validation_loss":{"type":"number","title":"Validation Loss"},"perplexity":{"type":"number","title":"Perplexity"}},"type":"object","required":["epoch","train_loss","validation_loss","perplexity"],"description":"Training metrics captured during post-training jobs."},{"type":"null"}],"title":"PostTrainingMetric"}},"type":"object","required":["identifier","created_at","epoch","post_training_job_id","path"],"title":"Checkpoint","description":"Checkpoint created during training runs."},"type":"array","title":"Checkpoints"}},"type":"object","required":["job_uuid"],"title":"PostTrainingJobArtifactsResponse","description":"Artifacts of a finetuning job."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

@@ -1,0 +1,68 @@
+---
+id: openai-retrieve-vector-store-v-1-vector-stores-vector-store-id-get
+title: "Openai Retrieve Vector Store"
+description: "Retrieves a vector store."
+sidebar_label: "Openai Retrieve Vector Store"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV9tuGzcQ/RWCT62xtpwgQRK9ybkUAhLYsJUChWMII+5Iy4QiN+SsbEHYx/5Fv65fUgyplXYlRW761ADxgyVxzwzncs4suZIeQ+lswCD7K/n0/Jw/cgzK65K0s7IvB+J3VOT8DTmPl5PPqEh4LD0GtKTtTFCBYhEhIjDmTGZSOUtoib1BWRqtgL31Pgd2uZJBFTgH/lZ6V6InnQLQOf+nZYmyLwN5bWcyk6TJ8MIwl3UmXQzhGC4FKTOZ4xQqQ7IvU3zjGB87UR6BMB9D25G2hDP0LU+vE0wMiI0szDFmZJeXU9m/3Y2gzjYrtjJG1nd1JqsAMxxPlpQy/OZWHxknLiKuFfl5ncmpNjhWrrIU9kum3Lw0SJgfT2SD4uTBKjTmMZMNikMA/Rj+XYLUmdR2XHo38xiOpzy04qrB1ZkkR2COGowiomZsgrim0x6/VtpzhLetirRT3eTQja/Z9m67S4vu77TB16nw2Y4s+JEovVMYAqsgEFAVRGqTmDovYEcVdSYT6Bh3bxKizV3V7h0+lNpjGMOU0HfJCHmuOTgwVy2GkK9wt14HibrxTAc53nTjoK2BQGNQpBf4n+znSJADxYnw79PYVu1DY/8YN3QkxVb8XXEdJkFrnLQJcFmiHQzXw1FEpEh7nsm65kCeHRqnF5CLa/xaYaDvmZNdJ2+9d140s1tMvZvHMTy4Gp6Ja1fNCrMUU2eMuw/i+t1r8eLl+Quey93Z0aLjLv32utZAtthR/Mz2hqDMkUCbNvRNWjmA1TYQa/T75moWv8CEnTMzuNrtNodNGusY1yG1GhxLKPeVIfEBWG/t+jw7P98adhvY5CpHBQqflsU9BKHtAozOhfNiDmbq/JwFnHjx9NV+S0fOiQ9gl43v8JMdPwo7nr5qv6L227jhyB+uEgUsUOCDQswxj23xQCiMnms6E1cGIaAgvxQwA22FAULfDJTnhwbK0BJ6C0bcoF+gF03oP8nzI5DneXu0fKuVGwINrKgsPpSo+FSKsVVOqcr7zXDZnBt2G/smPRDX69b+pMj/jyKphQSzwH7WR4uhY8tuC66RvMYFhr1TZia5xrGRw5xdl2hBj/3aYNy+CY0XTzq/w7j7WOfj8Qz5NVeChzkS+hArlG5Ccgccj9ayL0ugonPuSoe3LZ0O9Kyd3BVQITY79sXuNtyBOVLhOL8mPipkX/YWT3qdhHqrHeNaZjJEdaVMKs+6KojKfq8HdnlauECYnxoDczgNBOrLmXLzuGdAVXlNy2j4ptHZ7R0/03bq2px7z/bihu3FTYlKT9fq2jtHjgodhA5RQaGNFG4aF9uuqADiW8dC5xg+WXHgD0RAYlu0eek030bAxjeN9kI5n3Sb852F9eWnoDAkx+Ax+WS6Os/vJ3d4kwkfcwwu0POtNUX4weVowtknm0xOTv7+609xMxpcvH97ctLnq15eKU7s1CPkSx4XQdxrKsQE1Jd78Lngqw6QnmijaSlmFXiwhBiY1tyyVLHFE+ZM6QLNIQ6qNR0vI9VFo43O0Xy37Kvt8DsqpjVVCR+oVxrQlreOpFmtSXfL8WQdLbD2+7usvcskc4sNVqsJBPzoTV3z8tcKPZPqLpML8DoNltuVzHXg77nsT8EEPJLBL9drrf0qHhPPN1JaL4Jdci5gKv4lM/kFlweEHi9tBULOd9Db1Ro1UApLatnvvVQ6yv3t7UjW9T89pGCy
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Openai Retrieve Vector Store"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/vector_stores/{vector_store_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Retrieves a vector store.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"vector_store_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: vector_store_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A VectorStoreObject representing the vector store.","content":{"application/json":{"schema":{"properties":{"id":{"type":"string","title":"Id"},"object":{"type":"string","title":"Object","default":"vector_store"},"created_at":{"type":"integer","title":"Created At"},"name":{"anyOf":[{"type":"string"},{"type":"null"}]},"usage_bytes":{"type":"integer","title":"Usage Bytes","default":0},"file_counts":{"properties":{"completed":{"type":"integer","title":"Completed"},"cancelled":{"type":"integer","title":"Cancelled"},"failed":{"type":"integer","title":"Failed"},"in_progress":{"type":"integer","title":"In Progress"},"total":{"type":"integer","title":"Total"}},"type":"object","required":["completed","cancelled","failed","in_progress","total"],"title":"VectorStoreFileCounts","description":"File processing status counts for a vector store."},"status":{"type":"string","title":"Status","default":"completed"},"expires_after":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]},"expires_at":{"anyOf":[{"type":"integer"},{"type":"null"}]},"last_active_at":{"anyOf":[{"type":"integer"},{"type":"null"}]},"metadata":{"additionalProperties":true,"type":"object","title":"Metadata"}},"type":"object","required":["id","created_at","file_counts"],"title":"VectorStoreObject","description":"OpenAI Vector Store object."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

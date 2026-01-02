@@ -1,0 +1,68 @@
+---
+id: get-benchmark-v-1-alpha-eval-benchmarks-benchmark-id-get
+title: "Get a benchmark by its ID."
+description: "Get a benchmark by its ID."
+sidebar_label: "Get a benchmark by its ID."
+hide_title: true
+hide_table_of_contents: true
+api: eJztWM1u20YQfpXBnlqDlpwgQRrdnMgJBCSoYSuHwjGEETkUNyZ36d2hbELgM/TeUx+jz9MX6CsUwx+R+kna9NQA8UXScnbmm5lvhjPeKEc+t8aTV5ONenp2Jh8R+dDpnLU1aqLO4RWZMMnQ3Y1UoEJrmAyLHOZ5qkMUufEnL8Ib5cOEMpRvubM5OdaNah2RYR1rcvKLy5zURHl22qxUoFhzKgezXirYg/HB6PuCoNcDsXXAifbgyNvChQTaQJpihuAZwztVBQJirSNyi05moaMauil/jtXkZh9KFWxPTJGmqrr9jzg4IeiM7wBp7H8uAJetGMyigwjMpmDjHcXACTLYB+N3AYjBxsKhpdAaz2qill1SB9bnIrtvdp5Q75loCwDTByw9LIe8iCjGIt3VXAUqQkZP/A9uTxupo173gW69b1UCWyg8teGnHg3QGtOipuVIIPjQirlFXJhQDhs+MmX+ENI2cAqdw3IA8brRAm+2WvaRvtOeBWNrDzp7A654AS1lU0JU1EJ7WDNiFP9qjkaRlgeYXg5KiV1BW5B2+YlCHqB8393fB9c96NnaWwZGfzdSVXWo19F9oR1FanIzLOFdPu9k+Vi8b3uArwa02+8zfQa3fBO0HVCzgsxGlEJOLrYuQxOSoBbcz451rlcYwRXdF+T5axrXrpIL56yDrk1C7GxW0+38cjaCK1uskrSE2KapffBw9eY1vPjp7MWoidCg/3lGLhrCdYRqTrYx14Zp1TSLVqSXndefwSFZI2LU6VB02pwckdXGs8Tsa/uffMGlKBfuSbSHrPBbN1qMLaRBzusQqn1yVYGiR8zyxtMuPs/OzgZk2Ulg52vbkepjeEAP2qwx1RFYBxmmQg2KOl48fXmY0rm18B5N2en239nxrbDj6cvB2+pIGrcc+cUWkOCagB5DooiiOi0OmSDVmeYRXKaEnoBdCbhCGR2QyXUN5fmxhjIzTM5gCtfk1uSgg/6dPN8CeZ4PW8vnUrkl0LmBwtBjTiFTBFSnyoZh4dy2uWxHnv3ETpsHcNWm9jtF/n8UaVLIuPKiZzuW1MPKbg7eEgMOhpNlCZo9zKYSZ4lyncpZpCZqRbzYCi7WTzDNE1zIANMf+8VAREeLxYrk7Zajw4yYnK8DYzCj4SzdjFZa8OTIyc5o1oyEPYX2p+zDeb5fJXq32MKKeKSOzGoyl1dfq0eSlxEntg1M7SMnaqLGbWDGEphxH5jxZuhuJaNkXZxNRAonZZkw55PxGE15mljPFJ3WG99pvfGNQpvVdj2FhdNc1henXZne3MozbWI7pOy7emO8lvtwnVOo47Y44RSmlDsKUTrA+eXscOSfyyCtfR0Bv3O3DctQeb2stXOz/2jgyB+CLDY2BjJRbrVhD2jqV5d2EFrXNIJIRmEpWBdjSL5RjI4ancJ/6+SFZ48bWcrclNKaHK46hO9lsPajj6a5cnLy52+///XHrzC9uLy6eH0+v5ienEzgHa0wLOtQNEYzLGEpw1hm1xTJ3hsXXDgCyZqM/iP40Kxojd5Mr5pqAUcxOTIhgTVpKaxrr6iJWj+pN2brOcO6O7bF8MVC3EnMpu+3X77VlgrTI4/zFLURyzXTNi1bb1TLVhUo4asK+qIUQkx2SvQ2UEJLubbZLNHTB5dWlRzfF+SEj7eBWqPTTUu72ahIe/keqUmMqacvOPLDVVvxP8K/qOFjjnWrrZHFVrYq+aUCdUflfq+pbqtAJYTy7wuB2YichyHlPLh88C7bqfq3F3NVVX8DpqVUXg==
+sidebar_class_name: "get api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get a benchmark by its ID."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/eval/benchmarks/{benchmark_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get a benchmark by its ID.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"benchmark_id","in":"path","required":true,"schema":{"type":"string","description":"The ID of the benchmark to get.","title":"Benchmark Id"},"description":"The ID of the benchmark to get."}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A Benchmark.","content":{"application/json":{"schema":{"properties":{"identifier":{"type":"string","title":"Identifier","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","title":"Provider Id","description":"ID of the provider that owns this resource"},"type":{"type":"string","const":"benchmark","title":"Type","description":"The resource type, always benchmark.","default":"benchmark"},"dataset_id":{"type":"string","title":"Dataset Id","description":"Identifier of the dataset to use for the benchmark evaluation."},"scoring_functions":{"items":{"type":"string"},"type":"array","title":"Scoring Functions","description":"List of scoring function identifiers to apply during evaluation."},"metadata":{"additionalProperties":true,"type":"object","title":"Metadata","description":"Metadata for this evaluation task."}},"type":"object","required":["identifier","provider_id","dataset_id","scoring_functions"],"title":"Benchmark","description":"A benchmark resource for evaluating model performance."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

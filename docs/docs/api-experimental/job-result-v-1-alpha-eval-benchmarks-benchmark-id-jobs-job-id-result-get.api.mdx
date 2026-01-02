@@ -1,0 +1,68 @@
+---
+id: job-result-v-1-alpha-eval-benchmarks-benchmark-id-jobs-job-id-result-get
+title: "Job Result"
+description: "Get the result of a job."
+sidebar_label: "Job Result"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV21v2zYQ/isHfmoDxU6DFm31LVu9IkO7BU4GbEgD4yydJaYUqZKUE8PQb9nHAft1+wnDUS+WEzVDhw5YgeRDTFF3x4fPPXektsKSK4125ES8FcdHR/yTkkusLL00WsTiIiew5CrlwazA5wTXZjkRkUiM9qQ9e2BZKpkge0yvHbtthUtyKpBHpTUlWS+bRTLSZINpeJSeijDANJU8i+psYO9tRZHwm5JELMzymhIv6n4CrcWNiISXXvHz20HsOhIuMZYeCH4XWrBfWHPz9ZGdc2iYc+g6EphlljL0lC4aar9wnV3ckz4SzNtIdX3f3NKnSlpKRXw53OUokqt91FJnTWQR3VHGCbjmfaePlbGA4KTOFIE1NxMxAmWPkX9GO5RLn9EBxNkaVYWe5q2Q76Fs9RtewsqaAlADNV7S6Imoa8bwfEz73yHT+qki579E8PtBZtYaewcCl9HJ2ekE5qbKcrWBlVHK3DiY//A9vHx19JIL7I44PfoqjHoGm5meP6k9ZWQD6Y3JzvYi/PamznPe2DIlj1INTd80MyO2UjuPOgmBUW9+Xon4cnvPrJ/RlVKivorCAJccnMXMbO/psd9Gi7GFNEwyUyhGqo1usSibnXb8PD862jnuJ7Dba6uJMA036EDqNSqZgrFQoFoZW1Da6eL49UhPNAbeo950sd2jOr4VdRy/3jmOpbHXyG+mghzXBHSbEKWUhrRY9ARKFtJP4EwROgJvN4AZSg0KPdmuobwYayin2pPVqOCc7JosdNAfxfMtiOfFsLV8LpW9gE40VJpuS0r4dKaQKpMklbV9c0lphXyy3kvsm+YFDE61R4n8zyTSpNBj5jgO30PYaZ/9t+SbttFfoLG7PjO7IYWnqYjFtVm2F7DF+hmqMscF31EWS9JJXqD96Ba78UKmi8W1WbrwPzy1vhnxOVeixYI8WRco0lgw7qG7YDpFLEr0+d6Fq7lt7sQ0krHh/s7Q59AvF8PeGpyMdu0G5n+1ahudk12Qzw0T2jHhcxGLacvplDmd7jidboeA6ylzOt024eqp7a69LlR4Q2ZlubZz78t4OkW9OcyN85QeKoUFHjqPycdJYooAxlFSWek3wfFNV+uXV/xO6pUZ6v4d+8M5+8N5SYlctRUOhzC7LcnKgrRHxYXrRi650oF0QWtuz7v9ZhuG9zl6KK1Zy5TcBw0jfwiOglxJp6WR2jtAHU5AaSExtuknKd/9ue7tChNyTWC01MTkMjKWz00zvsiSr1+K1mQx6xC+NykpN/mgG5eDg79+/+NPmP16Npufvp/9dHHy7uAghjNLh5aa45f5gCdtgiNYP1uSx6cNlgI3kOSoM4IlrUyHbEmJKRi789wYuBo5vw2V62csuNI4X2DorK2EfzRLGP8Q2u5680MF34ra062flgql5nWCnLatTi9Fuw0RCVaqiHZFyzmP75Qwy5Wn++pqFXsVCVYlB9xul+joF6vqmqc/VWRZjleRWKOVTVu83IpUOh6nIl6hcvTABp/M26p9Cg8W/2f2230ea/445o8wfhKR+Eibuy2K28dXwdXT8y8Q9a2ljkROmJINfDUvT5KESj9wu3cw77Wkt7MLUdd/A9wz/xw=
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Job Result"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get the result of a job.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"benchmark_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: benchmark_id"},{"name":"job_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: job_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The result of the job.","content":{"application/json":{"schema":{"properties":{"generations":{"items":{"additionalProperties":true,"type":"object"},"type":"array","title":"Generations"},"scores":{"additionalProperties":{"properties":{"score_rows":{"items":{"additionalProperties":true,"type":"object"},"type":"array","title":"Score Rows"},"aggregated_results":{"additionalProperties":true,"type":"object","title":"Aggregated Results"}},"type":"object","required":["score_rows","aggregated_results"],"title":"ScoringResult","description":"A scoring result for a single row."},"type":"object","title":"Scores"}},"type":"object","required":["generations","scores"],"title":"EvaluateResponse","description":"The response from an evaluation."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

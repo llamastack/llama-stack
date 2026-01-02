@@ -1,0 +1,60 @@
+---
+id: version-v-1-alpha-admin-version-get
+title: "Get service version"
+description: "Get the version of the service."
+sidebar_label: "Get service version"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVttu20YQ/ZXBPrUGLdlGgiR6c2s1MBC3hu0WLRzBGJFDcZPlLr07ZCwI/JY+FujX9ROKWV4s2SrQvjWA9cLVcOey55wdzkZ5CpWzgYKabdTJ0ZE8Mgqp1xVrZ9VM/UI+aGdB29z5EsUKbvmJUp6oRKXOMlkWN6wqo9O4YfopiO9GhbSgEmVVeVeRZ91larqgsuR1RWqmAnttVypRrNnQY16VPKnnpiDo3aFzApcDFwSBfKNTUm2bDFG7QlWiPN3X2lOmZrdj8sWzZOc2d88S7gMgd3475US1rWR9tQ/A7zCDK7qvKfB/AWw3yNx752FgC3LvyljA6eX5BK5cvSrMGnJnjPsS4OqH7+HN26M3QtAu7oGR67gaTn7dWUbEtGVakVftCM7j3pv4TJ5Q1gpgjNpsbz3rLHv2ahsYbRoDo13/lKvZ7VMVtMlosbUxql0kcYFLCc6+JkF7m9MwHqOvsS9pi+MIoXoqjTZR9IBl1Z10wOfV0dGj4y6Bw1mjEH1nhi8YQNsGjc7AeSjRiFYoG3Rx8u45pTfOwQXa9RA7vKjja1HHybtHx300jhr5zdVQYENADylRRlmkxSMTGF1qnsClIQwE7NeAK9QWDDL5oaG83tdQzi2Tt2jgmnxDHobSX8TzNYjn9XZr+ScqRwGdWqgtPVSUMmVAkSqXprX3Y3PJKMfa8HNiz7oXcNVT+yKR/59EOgoZV0HinGaljnPJLvzviSPcw9izO+8IzoJypPI8U7NhwLlrjtFUBd6hhL0brCuSz1hJXDjZ3P2tkAs1U9PeZRpdps04g4WozxDRqr0os2CuZtMp2vVh4QJTdmgMlngYGNPPk9SVEbdAae01r6Pj2aDU24W8k4Fqm7UP4g/X4g/XFaU67/UJhzB/qMjrkiyjEdmFPXOhDqBDh8yOdw/XdngukKHyrtEZhY8W9vwQArH4ks0qpy0HQBv7t/aQOt/dhkzmT1GtzzGl0AVGT11MEYHz0vXd/iRLGR4MNeRxNVR44TIyYfLRdi4HB3/9/sefMP/1cn51fjH/8eb0w8HBDC49HXrqPh6CB3zTU5dAc7wkxm+7WkpcQ1qgXREsKXdDZUtKXSm1BxZZi4bGmVw1x3JVKhe4xNgXLJbU67AXHTT7x/PNY4v5F7LtLwPTA08rg9pK3iivTa/IW9UfSyUqanKr0EWiRHmyabNZYqCfvWlbMd/X5EVyi0Q16HV3cW8XbaIKwox8VONnWkuDTVOq5AY0aGop5llfFKmOt+X9/Ea17d+NMoTg
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get service version"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/admin/version"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get the version of the service.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Version information object.","content":{"application/json":{"schema":{"properties":{"version":{"type":"string","title":"Version","description":"The version string of the service"}},"type":"object","required":["version"],"title":"VersionInfo","description":"Version information for the service."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

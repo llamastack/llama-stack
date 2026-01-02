@@ -1,0 +1,68 @@
+---
+id: list-connector-tools-v-1-alpha-connectors-connector-id-tools-get
+title: "List Connector Tools"
+description: "List tools available from a connector."
+sidebar_label: "List Connector Tools"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV1FvGzcM/iuEntrgEidFi65+y5psCNB2QeIBG9LAoO9on1qddJV4blzDv2WPA/br9hMGSnf2OXbXFdiAFYhfbEgkRX38PopeKk+hdjZQUMOlenJ8LF8FhdzrmrWzaqhO4ZUOPHLOhKvW+EhlKneWybLYY10bnaPYD94FcVqqkJdUofyqvavJs05HFMhxVTNVYXebnTMz75p6rIsY2i5+mqrhzVLxoiY1VIG9tjO1ytYrtjFGrW5XmbJYUQyyZZop1mxk4Y3sr7Lt+33lGdrWDY83t9s4Y1FoCYnmsncl9g1lXRg3eUc57w/sGv6PIlfE2MH+LwVd3bfJlKcPjfZUqOFNKsTtBnghzxlN1T3o4zoUNNU2pgJNoAK0Bd9Y1hVB5NgdhyO1ORC9x0WvqGdysy8lFK/fS2iH0TupdRsxB9RW2xkgGB0Y3BSEppLVSg5+uk8132MBV/ShocBfI5btIOfeOw+dRGHqXQVcEpxeXhzBlWtmpVnA1BnjPga4+uElPP/u+LmIc1tUgZGbJK/2/tdpZQ2atkwz8hHmZLKxHcXvbEccqiBGbfqmZ2llj622gdHm9HV6y+IPnEhwYaag3S9rWF+jzbFNqVfpCKHapbSiO6zqdNMOn6fHxxvH7QJ2d1WjksCnZfiIAbSdo9EFOA8VmqnzFRUdL5682C3pyDl4jXbRxQ4P7PhW2PHkxVZH2ynjmiO/ugZKnBPQXU5UUBHL4pEJjK40H8GlIQwE7BeAM9QWDDL5rqE829dQLiyTt2jgmvycPHSpP5DnWyDPs35r+Vwp1wQ6tdBYuqspZyqAYqlcnjfer5tLQVNsDO8W9ixtQO9le6DI/4wiqYSMsyBxXjprKWfng7hu10AGlTRtAM5Rx2xSJVAmk+QnmAvisawXhRoqmVPG6/1xDDCen6CpS9ysh3HPRhfj1m5G8uLV6LEiJh8iWGm2Vthw6bz+FI9Sgqwaqg8N+cXWxDVFEyhT+4bZL6PegXe6ddZKTNss+ll3SdTI5VYOaZTdpLCHQX2kL5FLWF96CFtnSFoVcekE3A4fLtVQDVpUBxtUB8u+72oQUVWZClHtCc7Gi85L5no4GKBdHJYuMBWHxmCFh4Exf3+UuyoeHChvvOZFdDzrdH9zK3vaTl1fA6/EH67FH65ryvW0VTscwvldTV5XZBmNiDjszuOlDqBDVHnY8paZtyToh+cSGWrv5rqg8NbCng9CoDgvky1qpy0HQBtfQ+0hdz71lkJma+kBfoo5hRQYPaWYIinn5Q11+w+ZyChmaE4eZ12Gr11BJhy9tcnl4ODP337/A85/uTy/unh9/mZ0+urgYAiXng49padY8IBHbTEzmJ9MiPFxyqXCBeQl2hnBhKauy2xCuask98AiS1Gh1DdBOT8RitUucIWxy7bUjYJeKx5GLTfu/SVdd+x/3gBaesv/pUFtUFs5P9Js2XL1RrXXS09C13MyNbynp0TY20wJKcVvuZxgoJ+9Wa1kOeld2FjoIAltFP+eFnu6xBxNI8lFOs/R69RU9wX4LBCPrlplP4a/lepnkOj+PdpFP58u4XtiX2WqJCzIxxyTyWmeU809552ndKtJ/Hg+UqvVX7+b+4E=
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List Connector Tools"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/connectors/{connector_id}/tools"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List tools available from a connector.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"authorization","in":"query","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Authorization"}},{"name":"connector_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: connector_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListToolsResponse.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"toolgroup_id":{"anyOf":[{"type":"string"},{"type":"null"}]},"name":{"type":"string","title":"Name"},"description":{"anyOf":[{"type":"string"},{"type":"null"}]},"input_schema":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]},"output_schema":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]},"metadata":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]}},"type":"object","required":["name"],"title":"ToolDef","description":"Tool definition used in runtime contexts."},"type":"array","title":"Data"}},"type":"object","required":["data"],"title":"ListToolsResponse","description":"Response containing a list of tools."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

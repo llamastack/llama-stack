@@ -117,6 +117,13 @@ repos:
         pass_filenames: false
         require_serial: true
         files: ^src/llama_stack_api/.*$
+      - id: apidocs-codegen
+        name: API Docs MDX Codegen
+        entry: bash ./scripts/gen-api-mdx.sh
+        language: system
+        pass_filenames: false
+        require_serial: true
+        files: ^docs/static/.*-spec\.yaml$
       - id: check-workflows-use-hashes
         name: Check GitHub Actions use SHA-pinned actions
         entry: ./scripts/check-workflows-use-hashes.sh

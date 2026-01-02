@@ -1,0 +1,70 @@
+---
+id: openai-delete-conversation-v-1-conversations-conversation-id-delete
+title: "Openai Delete Conversation"
+description: "Delete a conversation."
+sidebar_label: "Openai Delete Conversation"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1u4zYQfhWCpzZQ7CTYxXZ9y25SIEAWCZIURZEYwVgaW9xQpDIcOTEMHfsWfbo+STGU5Mha77YFeugC8cGmyfn/vhlyrQlD6V3AoCdrfXRwID8ZhpRMycY7PdE3OaoMLTJmKvVuiRRAjhRh8BWlONKJTr1jdCzaUJbWpFFk/DmIibUOaY4FyKokXyKxaRyaTL55VaKe6MBk3EInmg1b2TjLdPJPgzEZOjZzg6TrRPvZZ0z5W7YvGomh/WZbRS05m0NlWU9039eoDUAcdcsXTzPvLYLruTppZYa+fs2RcyTFOaomYPUEoUuv756pwrpOOhe+i53wsTIk7m+llNMXnx978bb+r1q4vojjqqWAmnvaWdyRrmtx/2YXPT5Apq7wscLA/4YH20ZOiTwp2gRCvohlOb48G6krXy1yu1Jzb61/Curq54/q3U8H74R323QKDFzFVVeH62ZnUzrjGBcNR1qRF9mb+JsMKBNBZjC2L3rS7OyQNS4wuDQaBre6mOvJ7ZCFdbLZcZW1up4mcQEzMd6B3Qc3bNJoY2xD6iEeS6iHHKkTjc9QlE2mXX3eHBy8KG4D2OUaO42a7UhL45ZgTaY8qQLs3FMhHdDw4uj9jrHhvfoEbtXZDq/s+F7YcfT+RXEXjBuO/OYrlcMSFT6niBlmERYCRmVNYXikLi1CQMW0UrAA45QFRuoGyttdA+XMMZIDq66RlkiqC/2VPN8Ded72R8vXoNwQ6NipyuFziancORih8mlaEW2Gy+YSHAJ70hyo7vp6pcj/jyINhAyLIHb6j5Ig2kNA5emhYPvtcefu3M4T9WQ4jzgtzBKdOjsRSASQeHyWSRwlOjD3zaPmvq99vzzc+h/ut49Ndt+qCc5AUCAjhVhPBwUO3oT3Rh5sRtIogfOtt5mUNOmRbwfC/TJcAudq43Gihm4ErwI595JgL0TO9USPl4fjrbTG64F+rRMdYjs2yVQkjZgzl5PxGNxqP/eBMdu3FgrYDwzpwyj1RXQbMK3I8CoqnnSNeTuVM+Pmvk/Sc9FX16KvrktMzbxtxx1vehOUCRHK0JdUfh43+6Y4B1Yl+aXJMNw5teMDKiCLLrqs9MZxUODi1WRIpZ6aRs+MWyhpSJpDiqExDISNTeG3J7nQ/G4nM3kXWVwiwaKL8JPP0IbIWBHZ2/vzj9/V9c3xh/PTvb2JuiSfVakktk8I2UrmS2hYPIP04QlInt1FCWxmxhpeqUUFBI4Rg1BbIGsqtjwU2pQ+cAFxsrWMvIh0V2279NttWPT1y6z8b/quJTXjM49LC8ZJhJFb65abtxJ2stU1MlMmQ35PEy0UFIX1egYBfyFb17L9WCEJ96aJXgKZZmDdrnVmgqwzPZmDDfiNVH+4arvyR/V3bfaVlNpNcCtBBGwl/3SiH3C1YyTU0zrROUKGFCNtpI7TFEvu6X9xWW31+Mnp+enNqa7rvwDQF2nn
+sidebar_class_name: "delete api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Openai Delete Conversation"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/conversations/{conversation_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Delete a conversation.
+
+Delete a conversation with the given ID.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"conversation_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: conversation_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The deleted conversation resource.","content":{"application/json":{"schema":{"properties":{"id":{"type":"string","title":"Id","description":"The deleted conversation identifier"},"object":{"type":"string","title":"Object","description":"Object type","default":"conversation.deleted"},"deleted":{"type":"boolean","title":"Deleted","description":"Whether the object was deleted","default":true}},"type":"object","required":["id"],"title":"ConversationDeletedResource","description":"Response for deleted conversation."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>
