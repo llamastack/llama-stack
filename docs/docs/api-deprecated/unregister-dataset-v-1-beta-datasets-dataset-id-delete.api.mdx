@@ -1,0 +1,72 @@
+---
+id: unregister-dataset-v-1-beta-datasets-dataset-id-delete
+title: "Unregister a dataset by its ID."
+description: "Unregister a dataset by its ID."
+sidebar_label: "Unregister a dataset by its ID."
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1u20YQfpXBnlqDlhTDQRre3EgFBDioIduHQhGMEXcobrLcpXeHigmBz9B7T32MPk9foK9QLP8k1Wqb3hrAvJBczgxnvvm+2d0JR76wxpMX8U5cTC7DTZJPnCpYWSNicZcRSGT0xPAZPfgyScj7tNS6gtI42ijP5EiORB2Jy8nkeYjvUcKCHkvyLCKRWMNkOJhhUWiVYDAbf/TBdid8klGOz4PMnLMO+nwhdTYHzgiubuYjWNhyk+kKUqu1/exh8cM7ePPd5M1IRKJwtiDHqq3RM3LZPLFiTSIWt+1KJLgqwrsyTBtyoZrOZG9719wHU89OmU2wlMSo9KHptF05YauMZzRJExhN9WMq4uXumdmwYkqtRb2Kmgdch+DsSqrrSDh6LJUjKeJlX1if9JDSaiijhXCfkV1/pIRDRvSEedFW2uNzOZnsHY8b2NfaUMO1yw01lNmiVhKsgxx1al1OUtR1yPTy4u0JalkL79FUfWz/wo6vhR0Xb/eOp9o4cOQnW0KGWwJ6SogkyaYtDplAq1zxCG40oSdgVwFuUBnQyORGHXFenxooc8PkDGq4JbclB33qL+T5Gsjz+nC0/F0rBwJdGSgNPRWUMEmgplU2SUrnhuEiKcVS8/PGTtsPsOha+0KR/x9F2hYybnyIM21PGj44HnfgfjhqAA4HknUFij3MpwHqAHTTzbkUsdgfTR4664ftqzUx9q/+Yfig5MODJE0cMi/QYU5MzjfIGMxDuntTETAUsSiQM3GIQsAlOmDQMaZ/rSdsnvMp2LThUV8Q24Mz1Ujs0euAgblsG/6fQ9UNooWjBHmfbU6c2QDXQfmciViMW7DGPVjj3R6BWkTCN3JtISpdEGrGXMTjMZrqPLOeSZ5rjTmee8bk0yixeZOCp6R0iqvGcdoLd7kK35RJ7SGJr4M/3AZ/uC0oUWknVziH6VBK0KA/Aa/yoHyDiD/y7WA6DM4ZMhTObpUk/8HAiQshYGpTICMLqwx7QNNsZspBYl07GqQyGwgSdikm5NvA6KiNGRRhXdgC7emfrMNJStOWHG76DN9bSdqPPpjW5ezs919+/eO3n2E6u1nM3l3dzaZnZzFc0waTqoGi/WmOFazD8Sy3W5KgDKQll44gdE1Z40dwHwaZdW3cXG1a8YCjlByZhMAaXQUOdi4iFttXgX2F9ZxjMy87dfy7OI+6s9uP4S9w7XTE9MTjQqMyIYeGc7uOrUvRsjX8px8gkYgPNLuKRCBlMN3t1ujp3um6DsuPJbnAxlUktuhUO+KWOyGVD89SxClqT/9QwTeLbgR8C18q6lMVdYtoqgA56jK8iUh8oup4/tSrOhIZoSTXZNoaXCUJFXzg+mx7CxIb9D6dXc/uZqKu/wQIAsoV
+sidebar_class_name: "delete api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Unregister a dataset by its ID."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1beta/datasets/{dataset_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Unregister a dataset by its ID.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"dataset_id","in":"path","required":true,"schema":{"type":"string","description":"The ID of the dataset to unregister.","title":"Dataset Id"},"description":"The ID of the dataset to unregister."}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"The dataset was successfully unregistered."},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

@@ -1,0 +1,68 @@
+---
+id: inspect-provider-v-1-providers-provider-id-get
+title: "Get provider."
+description: "Get detailed information about a specific provider."
+sidebar_label: "Get provider."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81u20YQfpXBXtoasuQECdLopsRpaiBBDds5FI5hjLgjcZPlLr07lC0IPPYt+nR9kmK4pET9JEh9aoD4Qno1v998M5xdqUCx9C5SVOOVenpyIg9NMQumZOOdGqsJnAe/MJrCmZt58NNPlDFk3jEaZ9wcOCcoW5GfImhiNDYO1UCJEDkWm1iW1mQoNkefohheqZjlVKC8lcGXFNikMLA08uBlSWqsIgfj5mqg2LCVg0lp1GAnyKucYHJ+Bg4LAs5NXEcEpigtFeQ4qnqguuNbo7/mo0sZzvSerw/O3FUERpNjMzMUYObDFgpbjpKLb3B1JQKHEhNN8LMDKTV4irfMu5mZN+BpbeQU7XkPVA4VDboQUgl7IbxO2ru+03EVGi9QYsCCmEI8mG9OaDl/bAS/J+29CKoQyDEk4xAZuYoCxbb3et9woLvKBNJqfN3wabvyu+VZA7jO42a/QEL/vQjlMBQJIZz6igEh0NxEpkC6VzKX2UpLuxiOkG0hi05vZzhUdS1JPTvUj69QwwXdVRT5v7TYtpE3IfgAXfPDLPiiwXRyfjaEC1/Nc7uEmbfW30e4+O01vPj15MUw4dbr1BRuw+4WrMt0si6IcUzzxJBWZCN71TwHO51RC8QyQvqip+nkgKxxkdFljWF0yz9many922z1YH3iKmtVfTNoXnAqxoWZgnafMnGdRhtjG1KPFg2Eapd59UDRA0p/9vF5dnKyUdwuYJdr0+khHcM9RjBugdZo8AEKtMIy0h0vnr7cL+mV9/Ae3bKzHX+w43thx9OXG8VDZVxz5E9fQY4LAnrIiDTppiwBmcCawvAQzi1hJOCwBJyjcWCRKXQD5fmhgXLmmIJDC5cUFhSgC/0Heb4H8jzvj5YvlXJNoImDytFDSRmTBmpK5bNMPrPdcNE0w8ryfmFP0w9w0Zb2B0X+fxRJJWScR7HTbS5RNLdL8Ja43dRJgzmwxMSSMjMz2XqFEfwF/UbsTDfoihDfrnepxZP1e7y97S1ct7dzko/dZodscJJtXY13NjMj4ZXYbIMbUNL6uCHU7ja9vzWfne4uisAe2piHX9j160dYknoWxLkXTLo8ZRVWo8WT0RqQ0aqXZ60GKjY9mpCognRnzlyORyN0y+PcRyZ9bC0WeBwZs8/DzBeNr0hZFQwvG8XTrluvb+Q3qWSfue9EHy5FHy7biqZLw36iJoKJTZqxL9nl3jfFOXIHRvzo4MAfQiQWXXK69MZxbPZczskEyHxI3Z82YplaM8woJsMYKNkUenpZo9kfdjKVZcnSggLOuwjfe002Dj+6pHJ09M/ff8Hl1eTVuzdHR2O5zOoqk8SOA6FeytCJcG84hylmn+8xaMh8USKbqbGGlzCvMKBjouZOKyVLiC2eNPc8H7nAZty1dJbW6jfNFs6rzcx8ZA+2zGd64FFp0TT3v4Y/q5Z31xLa5oojg2Tc77GbgRJ6ieBqNcVIH4Ktazm+qygIr24GaoHBpAl1vVLaRHnXajxDG+krOf180bbsL/BtTXgom/YQ3VIAR1vJf2qgPtNyZ1zUN+nqKddACTRJTLKMSu7p7n2ctnr27ZsrVdf/AnfB4mQ=
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get provider."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/providers/{provider_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get detailed information about a specific provider.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"provider_id","in":"path","required":true,"schema":{"type":"string","description":"The ID of the provider to inspect.","title":"Provider Id"},"description":"The ID of the provider to inspect."}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ProviderInfo object containing the provider's details.","content":{"application/json":{"schema":{"properties":{"api":{"type":"string","title":"Api","description":"The API name this provider implements"},"provider_id":{"type":"string","title":"Provider Id","description":"Unique identifier for the provider"},"provider_type":{"type":"string","title":"Provider Type","description":"The type of provider implementation"},"config":{"additionalProperties":true,"type":"object","title":"Config","description":"Configuration parameters for the provider"},"health":{"additionalProperties":true,"type":"object","title":"Health","description":"Current health status of the provider"}},"type":"object","required":["api","provider_id","provider_type","config","health"],"title":"ProviderInfo","description":"Information about a registered provider including its configuration and health status."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

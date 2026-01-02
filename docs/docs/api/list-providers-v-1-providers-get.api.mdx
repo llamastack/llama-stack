@@ -1,0 +1,60 @@
+---
+id: list-providers-v-1-providers-get
+title: "List providers."
+description: "List all available providers."
+sidebar_label: "List providers."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81uGzcQfpUBj4YsO0GCNLo5cdoKSFDDdg6FYwSj5UjLhEuuyVnZgqBj3qJP1ycphtSuV9KmaXtqgOiy0izn75tvRsO1ChRr7yJFNVmrp6en8tAUi2BqNt6piTqDtybyRfBLoynEy60CFN4xGmfcAoyb+1ChKADOfMOA1kLdqozVSMlpcizmsa6tKdLpk09RfKxVLEqqUL7VwdcU2OSINHKSGqYqHr7G2siDVzWpiYocjFuokWLDVgRntVGjvXSuS4Kziyk4rAi4NLGLE0xVW6rIcVSbkWrFH43+Ox8tMDDVB77eO3PXEBhNjs3cUIC5D8AldT53HGUX/8DVtRwYSkw0wc8HUkpwi7fCu7lZJPC0NiJFe9EDlUNDozYEP/tEBfdCeJ21931ncRMyBWoMWBFTiIP5loSWy/8awa9Z+yCCJgRyDNk4REZuokCx631zaDjQXWMCaTW5SXzarfx+eToAuzxuDws0dXN/EOH0sEkg0MJEpkC6VzJX2EantuIIxQ6y6PRuhmP1mBGGgKseUufSO/tRSC/vMqQXVsYkfhOm1JW9vAcHxIHrocmBYLcBycTAJRqLM0v92bHZSDjPhkbTK9RwSXcNRf43I2bXyJsQfIB2DsI8+CqR5uxiOoZL3yxKu4K5t9bfR7j8+TW8+On0xTgTozeKcj1S+25RucqSDkrjmBa5BbZHHs9ep+dor/U3AiGjsf2j51kycNa4yOiKZBjd6re5mtzsT5PNqJO4xlq1uR2lL4J6bj1Bu1/s2KWxjXEbUq/+CUK1z5nNSNEDygDq4/Ps9PRRcbeAba5plIUshnuMYNwSrdHgA1Roha+kW148fXlY0mvv4R26VWs7/mDH98KOpy8fFYfK2HHkd99AiUsCeiiINOlUloBMYE1leAwXljAScFgBLtA4sMgU2oHyfGigTB1TcGjhisKSArSh/yDP90Ce5/3R8rVSdgQ6c9A4eqipYNJAqVS+KGSPaIeLpjk2lg8Le55fQO+/7gdF/mcUySVkXESx060nojmwEn11/RgpwTkVc6rVRMm+8rF7/3H5pPdjQfI3VhGXXo7mnzXKsqtOlk9OupNqpGKiZUwgNUEIWTLXk5MTdKvj0kcmfWwtVngcGYvP48JXCa5IRRMMr5LieUvQm1t5J7tcv1hvRR+uRB+uairMfEvLgcuDiWBiol7sn2xX6L4pLpFbiOIHBwMfhEhprSOna28cx7S7ckkmQOFDJnzecqVR51hQzIYxULYpdfayGrMfdjKT/cDSkgIu2gjfeU02jj+4rHJ09OcfX+Dq+uzV2zdHRxO4CF43hSR2HAj1Svoswr3hEmZYfL7HoKHwVY1sZsYaXsGiwYCOiRIXpGQZseWTdHfzkStMHS4XypZNO/zZQXr9OCi+SbwtoZke+KS2aNL9LXFlvWXVjYTxeEVJ5BbuyJv1eoaR3ge72Yj4rqEgpLkdqSUGkzvu5jbfx+RuJHz6TCuZjEVBtVB3ibZJN4v9gSZk62j+y5trtdn8Batyodg=
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List providers."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/providers"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List all available providers.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListProvidersResponse containing information about all providers.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"api":{"type":"string","title":"Api","description":"The API name this provider implements"},"provider_id":{"type":"string","title":"Provider Id","description":"Unique identifier for the provider"},"provider_type":{"type":"string","title":"Provider Type","description":"The type of provider implementation"},"config":{"additionalProperties":true,"type":"object","title":"Config","description":"Configuration parameters for the provider"},"health":{"additionalProperties":true,"type":"object","title":"Health","description":"Current health status of the provider"}},"type":"object","required":["api","provider_id","provider_type","config","health"],"title":"ProviderInfo","description":"Information about a registered provider including its configuration and health status."},"type":"array","title":"Data","description":"List of provider information objects"}},"type":"object","required":["data"],"title":"ListProvidersResponse","description":"Response containing a list of all available providers."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

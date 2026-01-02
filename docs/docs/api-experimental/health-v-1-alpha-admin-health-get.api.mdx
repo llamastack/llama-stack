@@ -1,0 +1,60 @@
+---
+id: health-v-1-alpha-admin-health-get
+title: "Get service health status"
+description: "Get the current health status of the service."
+sidebar_label: "Get service health status"
+hide_title: true
+hide_table_of_contents: true
+api: eJztllFv2zYQx7/KgU9boNhJ0KKr37LF64w1bZBkwIY0CM7SyWJLkQp5UmMY+ix7LNBPt48wHCU5du0O6NsKxC+yad7x+P//eOJKeQqVs4GCmqzUydGRPDIKqdcVa2fVRP1GaLgAbXPnS5RBcPP3lPJIJSp1lsmyRGFVGZ3GCeP3QUJXKqQFlSjfKu8q8qy7hQIj12F3reuCoOjW66aAy4ELgkC+0SmpRPGyIjVRgb22C5UosnWpJjfq7e8qUVPvnVeJeuMYZmVlqCTLlKnbRLFmQ+vtXHUFtO06YbcnlShP97X2lEnSvs6d8JnNnUr2C9UXvqlX7vzmLkaqbWXlZ/vk/hkzuKT7mgJ/i77bSaIOMHgLuXdlLOD0YjaCS1cvCrOE3BnjPga4/PUXePHT0Qvx82s2DdvvdVurpi3Tgrxq1wo9zr2Ozy8da0U2Rm02p551I3vmahsYbRoTo12+zdXkZrUzbT1ia2NUe5vELziX5OxrErX3+DoUvS5pw+gBpW082kTRAwpZm/o8Ozp6DNw2cNhrRNt3w/ARhY8Gjc7AeSjRCCuUDVycvNxzNJyDc7TLIXd4ouN7oePk5WPgPhvXjPzlaiiwIaCHlCijLNrikQmMLjWP4MIQBgL2S8AFagsGmfzQUJ7vaygzy+QtGrgi35CHofQneL4HeJ5vtpavWbkG6NRCbemhopQpA4pWuTStvV83l4xyrA3vGnvW/QGXvbVPiPz/EOksZFwEyXOaldpK1Lb8r4ij3NF2y/95oRLVRfNo7CxTE9XNvmuO0VQF3qGscdcPLkheaSVx4WRq97NCLtREjfuIcYwYdxEqUSGiGqJwtRdIC+ZqMh6jXR4WLjBlh8ZgiYeBMf0wSl0ZJQyU1l7zMgaeDdDe3Mp/crfaNPC1xMOVxMNVRanOe1ThEKYPFXkt90A0QmDYubddFzqADp0sW9G9VpvpuUCGyrtGZxTeWdjzQQjEEks2q5y2HABtbOXaQ+p8dzAybRcgAPscUwpdYvTU5RQenJcXgNu/yFzuEYYa8rgYKjx3GZkweme7kIODf/7+9Bmmf15ML2fn0zfXp68PDiZw4enQU/ceET3gh965BJrjOTH+2NVS4hLSAu2CYE65GyqbU+pKqT2wEC4Aib+dlM2xnJrKBS4xtgiLJfVI9sRt4/ilGavHnvPNHPdnhemBx5VBbaWWiNyqh/RG9VtViYqYqqTnXU6RwChzVqs5BvrDm7aV4fuavFB4m6gGve6O9c1tG0Mz8hHQD7SU9pumVMmZaNDUUstO1xR61+fn1fRate2/Flid5w==
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get service health status"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/admin/health"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get the current health status of the service.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Health information object.","content":{"application/json":{"schema":{"properties":{"status":{"description":"The health status of the service","type":"string","enum":["OK","Error","Not Implemented"],"title":"HealthStatus"}},"type":"object","required":["status"],"title":"HealthInfo","description":"Health status information for the service."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

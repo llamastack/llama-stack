@@ -1,0 +1,68 @@
+---
+id: get-connector-tool-v-1-alpha-connectors-connector-id-tools-tool-name-get
+title: "Get Connector Tool"
+description: "Get a tool definition by its name from a connector."
+sidebar_label: "Get Connector Tool"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV8Fu20YQ/ZXBnhKDthwjQRrd3NgNDCSpYbtAC8cQRuRQ3GS5y+wOFasCv6XHAv26fkIxS1KiLLlFggRoAOsiYTkz+3be49vRUnkKlbOBghov1dHhoXxlFFKvK9bOqrE6hivnzAnlBypRqbNMliUKq8roFCVq9D5I6FKFtKAS5VflXUWedVuYnTMz7+pqorOYaxc/52p8vVS8qEiNVWCv7Uw1yWrF1sao5qZJlMWSYpGN0ESxZiMLb+V5k2zC/sw9tK1qnqzhr5Mxy7SURHM+OBL7mpK+jJu+p5R3F3Y1f6PKJTFmyF+zaHM3JlGePtbaU6bG1y0RN+vGd7pQd1of1yGjXNsIBepAGWgLvrasS4IoolsOB6ppZM+nu2T3I2ZwQR9rCvw5utsscuq989BrHHLvSuCC4Pj87AAuXD0rzAJyZ4z7FODip5fw/IfD56LzTfkGRq5bIXdHv2xXVv3SlmlGXmTYhaxjr+J3siVDlRGjNsPQk3ZlR6y2gdGm9HnKTuIPnEpx0YB0e8hoWB2jw9hBGpAcW6i2xaPoFsuqPWnfn6eHh+vETQL7s6qrgsC3y/AJA2g7R6MzcB5KNLnzJWW9Lo5ebFN65Ry8Qbvoa4cHdXwv6jh6seEdWzSuNPKbq6HAOQHdpkQZZZEWj0xgdKn5AM4NYSBgvwCcobZgkMn3hvJsl6GcWSZv0cAl+Tl56KE/iOd7EM+zobXcR+VKQMcWaku3FaVMGVCkyqVp7f3KXDLKsTa8TexJ+wAuOmofJPL/k0hLIeMsSJ2XzlpK2fkgqZscvCIGBL4zkUwXoDmADDQtLShDSVtECJD2R47PMjVWM+LJ6vFEak3mT9BUBa6Xw2QQorNJDAvt10T2mUxmJBdhhR5LYvIh9rAdbhXWXDivf4+bKmm4GquPNfnFxgyWowmUqF3T5H+T0ff0eGOvRkI7FMMT9CAq5GIDQztLriHsENaQgHPkAlaHHsPGHoO9V436VhuvN5BmlMSF68iNrHChxmrU8Tpa8zpaDhE3o8jraLmq1qhEhWhDLaG1FwMqmKvxaIR2sV+4wJTtG4Ml7gfG9MNB6soIIlBae82LmHjSG9L1jTzTNnfDl/O15MOl5MNlRanOOxuCfTi9rcjrkiyjEXcJ2yN5oQPoEO0nbGS7PC4Oy3OBDJV3c51ReGdhxwchEEsu2axy2nIAtPGa1h5S51vTy7SdgZiTzzGl0BZGT21Nededl8vd7d5kKjOioTl5nPUI37iMTDh4Z9uUvb2///jzLzj99fz04uzN6dur49d7e2M497TvqZ0RpB/wqCM2gfmTKTE+brGUuIC0QDsjmFLuemRTSl0p2AOLe4kjCL9tK+dPRGuVC1xitP9OwOI0KyeK/5nvsrBcXyRf6Eud5OXf06gyqK1AiYpbdhK+Vt1J22ur98VEje+83FHHsr5+L24SJWKVIsvlFAP94k3TyHLrRKLSTAdpydqLPtBih3/N0dSCNMp8jl63t8CuAve26NFF9+o/hn81kXva0i2iXQzx9IC3bOir4Bqa2BeAGlpUk6iCMCMfu9Y+P05TqniQuTWNbFjbq9Mr1TT/AMYNKBs=
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get Connector Tool"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/connectors/{connector_id}/tools/{tool_name}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get a tool definition by its name from a connector.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"authorization","in":"query","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Authorization"}},{"name":"connector_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: connector_id"},{"name":"tool_name","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: tool_name"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ToolDef.","content":{"application/json":{"schema":{"properties":{"toolgroup_id":{"anyOf":[{"type":"string"},{"type":"null"}]},"name":{"type":"string","title":"Name"},"description":{"anyOf":[{"type":"string"},{"type":"null"}]},"input_schema":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]},"output_schema":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]},"metadata":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]}},"type":"object","required":["name"],"title":"ToolDef","description":"Tool definition used in runtime contexts."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

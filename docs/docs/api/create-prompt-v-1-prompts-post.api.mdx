@@ -1,0 +1,70 @@
+---
+id: create-prompt-v-1-prompts-post
+title: "Create Prompt"
+description: "Create prompt."
+sidebar_label: "Create Prompt"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV9tu20YQ/ZXBvqQ16FuQIIlQFLCTFDCQIIbtBCgcwxhxR+Imy116dyhZEPTYv+jX9UuKWZIiLSltgr40QPQiYrhz2TNnhjNLFShW3kWKarRUj4+O5E9TzIOp2HinRuqqIMgDIZOG8+DLiiFQ9HXI6UBlKveOybHoYVVZk6PoHX6KorxUMS+oRHmqgq8osGlcVclS0nKLdxM1ul4qXlSkRipyMG6qVtla4mpr1eom2xFZXESmEhpzMDdcwAyDwbElqCzmVHirKUS1ytSMQjRNWK1h45imFFSmSuNMWZdqdJwpNmzl7Yf2/KbfVg4/teoQGQMbNwVkOM7AuDxQSU4Q8w4izuhn8d8EeWv0IIL2sr3TFuIzveX2vTN3NYHR5NhMDAUwDiY+lMjwqBLLvzx5vq/N1PB+gbH49VG6dItGQt0wlXHb+yrrBBgCLgbRfFhrb0bzxkQGP+nRdlhSBC6QIUcHY4I6kpYYuaAuQUxlZZFJXJp4q2mCteVBRGPvLaEbhHAW4VV7bDOG0+YwGKcT79wU5gVxQQG4MBHahIOJKYbWWydO5lr/E7SRVj0OfvyJcnEY6K42gbQaXater8/kzWbmtoI86e7eVQ0EqgJFyaJQBiL7QBreVeROzuClLytkk/j7EDOB8o3FEuGSMf98oFYrifjJrqI9RQ0XdFdT5G+p0YdGXofgA3QdAibBlwnHk/OzA7jw9bSwC5h4a/08wsVvL+HZ86NnBw08g1KPjFw3rGuRumwk2WYZrtZg9mev0n+2zVhNjMYOj75qJDvOGhcZXU7f2m/kQcitRhzqxI8hH+L6Gm2MbUgDTiQI1SatVpmieyyr5qYdPk+OjnrFhwns7ppaXmjEMMcIxs3QGg0+QIlWmgHpjhePX+xo5t7DW3SLznb8wY7vhR2PX/SKu9K45sjvvoYCZwR0nxNp0iktQTqINaXhAzi3hJGAwwJwisaBtJfQNZSnuxrKmWMKDi1cUphRgC70H+T5HsjzdNhavpTKNYFOHNSO7ivKZYKhlCqf53UI6+Yy+HA/TGz7qYaLNrU/KPL/o0iTQsZpFDvN2BLV1nj9Mg397RRy8NF9dK0EwdG8k6tMCdwpp2dajVSzK9y2I9LsuH2Kt5WP3URFkU+9Xggg/3l/+OdBemsE7hPwlcPwdmb+bU5sYxskogGuiaj7qq8eJjSlOFMlceEFxhatCrlQI3U4Oz5scVSZiqlwY7pFHaRkC+ZqdHiIbrFf+Mik961MivsxTYq5LxOhIuV1MLxIit1QPbq+kXcC+EWfmtd9E+mg7iEeAHrdSW8S0Sd+WBKDaRUuK8rNpE3v1pB8JeN6O6bH4UlZMUQ4NJV2jCr4mdEUPzrY8UOIlNYTcrryxnEEdOlDaALkPjRtRcsALuUfJph3ywsGamxKNaXJnP1uJ2OZwizNKOC0i/Ct12RjqhY5srf3159/wOXVyemb13t7I1mgdZ3LxfYDoV5IN4vN2jrG/PMcg4a83QCMNbyAaY0BHRNFKbX1Cqtmx2ml9JFLTJUi+1dftbuXkUG5fX15t1RnuufDyqJx4jjRbtnS81qi6bai1EmEhCJfLscY6X2wq5WI72oKwr6bnkOJf5kqCDWFRMzPtJDwmkD3r8S7HLd1qsnNHiHl2Wic5DmlK3/57M2gwM7fXV6pTI3bPlR6LToB51LNOFcjlVqbaKcukWRLZdFNa5zK2cam/P4G8rv0Gw==
+sidebar_class_name: "post api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Create Prompt"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1/prompts"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Create prompt.
+
+Create a new prompt.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"properties":{"prompt":{"type":"string","title":"Prompt"},"variables":{"anyOf":[{"items":{"type":"string"},"type":"array"},{"type":"null"}]}},"type":"object","required":["prompt"],"title":"CreatePromptRequest"}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The created Prompt resource.","content":{"application/json":{"schema":{"properties":{"prompt":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The system prompt with variable placeholders"},"version":{"type":"integer","minimum":1,"title":"Version","description":"Version (integer starting at 1, incremented on save)"},"prompt_id":{"type":"string","title":"Prompt Id","description":"Unique identifier in format 'pmpt_<48-digit-hash>'"},"variables":{"items":{"type":"string"},"type":"array","title":"Variables","description":"List of variable names that can be used in the prompt template"},"is_default":{"type":"boolean","title":"Is Default","description":"Boolean indicating whether this version is the default version","default":false}},"type":"object","required":["version","prompt_id"],"title":"Prompt","description":"A prompt resource representing a stored OpenAI Compatible prompt template in Llama Stack."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

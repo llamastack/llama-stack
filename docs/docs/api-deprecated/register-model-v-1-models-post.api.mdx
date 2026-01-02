@@ -1,0 +1,74 @@
+---
+id: register-model-v-1-models-post
+title: "Register Model"
+description: "Register model."
+sidebar_label: "Register Model"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWM1u2zgQfpUBj4HjpEWLbnVz6yxgoEUDxz0skiAYSyObrUQqJOVEMPwMve9pH2OfZ19gX2ExpP5sq9222MMWqC+WqeHMx5mPH4feCkO20MqSFdFWPD0/56+EbGxk4aRWIhITeKsTysZiJGKtHCnHNlgUmYyRbc4+WDbcChuvKUd+KowuyDgZ3MqElJOpJMO/XFWQiIR1RqqVGAknXcYDs85qdADhvZL3JUHnB1JtwK2lBUNWlyYmkAqyDHME6zD+KHYjBrGRCZm7xuZOJh66qt6lIro+hLIbtSOqzDKxu/1OHG5N0ATfAxLify4Bl7UZzJKjDMymoNM9x+DW6EA/KLsPgAOGCMeRYq2sE5HIuaC9yAu245AplllnsBuJnBwm6HxRMUkkw8HssldeZ0pqIgq9/ECx63l+28w/XNBEVdA5hCZOl9AOAj/cNUvqMGZZLkZHSyRV5iK6rt9SvqQkCW8MGVQfxW0PHHtu195Hd6HKnIxnN+fdlkWhjaMkoAIOarnSbzzjrphxY7HbHefB0H0pDSUMSfYJ3ufEIaTjZNVxW5IZKgxZdqdWgAoms9ZiJa0jQ8kAPAb4bGiLv8IE5nRfknXfsssPcmaMNtDoCaRG556wk8vZGOa6XK2zClKdZfrBwvzX1/Dil/MX45CKnlhYh670T01OrsJIm1ypHK3CzqpNOtuF/z6kxY4T6lBmfdNpGBmwlco6VDF9q1jwAy7ZOW8Kzna//LZdRo2xhtSrvk+hOGTRbiToEfMirLTJz7Pz827ifgGbtYrFmqnih+EBmbEbzGQC2kCOWapNTknDi6cvj0u60Breoqoa3/YnO34Udjx92ZP3gTK2HPlNl7DGDQE9xkQJJb4sBh1BJnPpxnCZEVoCZyrAFfI5i45MIyjPhwRlphwZ1vUrMhsy0ED/SZ4fgTzP+9LyuVK2BJooKBU9FhTzAUm+VDqOS2NacWkP7cPCTsMLmNel/UmR/x9FQgkdriz78Q2KFUet8bxuPEIfMr5RN6odwnpQjATn2hd0lohINN3KXejxNk/Cg70rtG26J7LulU4qzsZ3Xj+C8y/33n5Z3Hj32/X+xK+vxHHD/01z9zruduLX997DTvd66B6egU74ezrq/6J7HqD0Mbx/67HbkvVmNzz0Xpouabe/QfyW4XUUhmJ0zZAvx1ozV2tKFujWIhJnmydngatiJKxXRuszWhrWxLVzRXR2hqo6XWvrKDn1d9NTfzcdxzr3y7MUl0a6yk+cNhp5fcvvmNTzjv4XnUp3rOxqNEDZgZf7wz2iHTDEl9orUar7mtWrF1wVFMu03oJwCtM2cyy59ugKs+A7nbRek+3e3Ppe23fur7Y1bHujYOCDYMnxXFJJoaVyFlD53kUaiLUJJwETFVixTYox2eAYDQWfLICar0pODwdZcuOc0YYMrhqEQQC9wLHJyclfv//x95+fYHpxOb94PVlcTE9OInhDK4wrn4oQNMcKltyN53oTLmdp6UpDwMyRWtkxvOdzS5vgN5eregcZSsmQigm0yioW0XqKiMTmiRcsbV2OXgMV5n3Kw+B9sqekX6vbNTEcPbqzIkOpOK7n+rbeEtcMpuaRPx+Y+Dy83S7R0nuT7XY8fF+SYcbfjsQGjQwn1jWL1JqQ/zDhzfCRKhGJ1wHlaS1MG8xKBnGk/SwdYcYkjqlwX7S97e3py3dXCzESy/p8Yex8KuEDqwo+iEj4I4tn+5PEj21FhmpV4optg0/+/AOdQ6Sr
+sidebar_class_name: "post api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Register Model"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1/models"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Register model.
+
+Register a model.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"properties":{"model_id":{"type":"string","title":"Model Id"},"provider_model_id":{"anyOf":[{"type":"string"},{"type":"null"}]},"provider_id":{"anyOf":[{"type":"string"},{"type":"null"}]},"metadata":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]},"model_type":{"anyOf":[{"title":"ModelType","type":"string","enum":["llm","embedding","rerank"],"description":"Enumeration of supported model types in Llama Stack."},{"type":"null"}],"title":"ModelType"}},"type":"object","required":["model_id"],"title":"RegisterModelRequest"}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A Model.","content":{"application/json":{"schema":{"properties":{"identifier":{"type":"string","title":"Identifier","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","title":"Provider Id","description":"ID of the provider that owns this resource"},"type":{"type":"string","const":"model","title":"Type","default":"model"},"metadata":{"additionalProperties":true,"type":"object","title":"Metadata","description":"Any additional metadata for this model"},"model_type":{"default":"llm","type":"string","enum":["llm","embedding","rerank"],"title":"ModelType","description":"Enumeration of supported model types in Llama Stack."}},"type":"object","required":["identifier","provider_id"],"title":"Model","description":"A model resource representing an AI model registered in Llama Stack."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

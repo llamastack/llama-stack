@@ -1,0 +1,60 @@
+---
+id: get-training-jobs-v-1-alpha-post-training-jobs-get
+title: "Get Training Jobs"
+description: "Get all training jobs."
+sidebar_label: "Get Training Jobs"
+hide_title: true
+hide_table_of_contents: true
+api: eJztl89u4zYQxl9lwFMbyHYS7GJ3fUsbd5Eg2waJF2iRNYKxNLaYpUiFHHljGHqWHgv06foIxVCS/8XborcukFwsUPMNyfl+HCor5SmUzgYKarhSp8fH8pNRSL0uWTurhuoMrnTgaxd47FFbbeeXbhpuWl1fJSp1lsmySLEsjU5RpIOHIPqVCmlOBcpT6V1JnnUzW4YcRzVTEZ6/fnDT+6rSmTzzsiQ1VIG9tnOVKNZsZODSTeGjxNR10gW56QOlrBLl6bHSnjI1vNskm2zEe1tSmxToPS63pjmXlf7bFHE7W+n/qWqqriXdq0P1/gEzuKHHigL/l9ruJhl57zx05sLMuwI4Jzi7vujDjavmuVnCzBnjvgS4+elHePP2+I14uetBYOQqPnW7um1G1qXQlmlOPhavCdnEjuNvsudenaiMGLXZDj1vRg7EahsYbRoTo13+MlPDu30g6mQ9YitjVD1J4gNOJTn7iqTa22aF9TbaNbZL2vIvllDte14nip6wKJuddvV5dXy8Ee4a2O1VjXMC3wzDFwyg7QKNzsB5KNDMnC8o67g4fffc0rFz8AHtsssdXuj4Vug4fbcRHrJxzchvroIcFwT0lBJllEVbPDKB0YXmPlwbwkDAfgk4R23BIJPvt+C8PtRQLiyTt2jglvyCPHRLf4HnW4Dn9XZr+ZqVa4DOLFSWnkpKmTKgaJVL08r7dXPJaIaV4efGnjcvYH1JvSDyv0OksZBxHiSPfF5A930h6l0b3hMDGgPcRsCDmwYpsxQ5OnmRqaGaE993IfcScr84QVPmeF+6sP9qTnKpFcS5a7ViG3KuhmrQ6gai63W6gehUokJENsQCVl5gzZnL4WCAdtnLXWDKesZggb3AmH7up66IpQyUVl7zMgrPO3jvJvJO25nbNvJK9HArergtKdWzFlnoweipJK8LsoxGSGwa784Nm+sAOkRUw47azeLgdnrOkaH0bqEzCp8sHPhDCMSiJZuVTlsOgDa2dO0hdb45IJk4IyD7GaYUmsToqckpXDgvF4E7PMlUvicMLcjjvFvhB5eRCf1PtpEcHf31+x9/wujX69HNxYfRz+Ozq6OjIVx76nlq7hOpB3zX+pfA4mRKjN83aylwCWmOdk4wpZnrVjal1BWy9sBCunAl/jalXJzI6REOCoytwmJBLZIdsHDZgLFjwmrTc77Ob3somJ54UBrUViaLTK1aFu9UuxfVrGJNo0pU5HGSKGFOIlerKQb66E1dy/BjRV5gmyRqgV43p/huUicqJ8zIRw4/01K6bZpSKQdggaaK/zjsN0mBdH1Y3o/Gqq7/BpFEmHU=
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get Training Jobs"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/post-training/jobs"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get all training jobs.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListPostTrainingJobsResponse.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"job_uuid":{"type":"string","title":"Job Uuid"}},"type":"object","required":["job_uuid"],"title":"PostTrainingJob"},"type":"array","title":"Data"}},"type":"object","required":["data"],"title":"ListPostTrainingJobsResponse"}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

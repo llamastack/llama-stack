@@ -1,0 +1,68 @@
+---
+id: openai-delete-file-v-1-files-file-id-delete
+title: "Openai Delete File"
+description: "Delete file."
+sidebar_label: "Openai Delete File"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1u4zYQfpUBT22gxEmwi+365q0TIEAWCRL3UGQNYyyNLW4oUiFHTgxDx32LPl2fpBhKchTHKdBbF4gPFjWaP873DTkb5SmUzgYKarhRp8fH8sgopF6XrJ1VQzWycFWSHV2ca0NjMsR00xqBtplOkbVdQqjSlEJYVAYyUdLOHqlEpc4yWRa3WJYmajs7+B7E90aFNKcCZVV6V5Jn3WSiM/nndUlqqAJ7bZcqUazZiOAiU3Wi3Pw7pbxPL3U2sBqqhTbUM7tqDBKV0QIrs9WoRSL76gedO2cIbc983OrUddIpuc6jp4dKe3FwJ7k/O5z2wr9Rxajdr/i2vAvn22LaJSBIsqA7OEA8BRhdXxypupakPuyD7wtmcEMPFQX+L3C8dHLmvfPgt3l5VwDnFIPDjauWuVnDwhnjHgPcnP8On347/iTwv0Q1MHIVV11NbhvJtqDaMi3JCyStyrPuJD6THbQjeIza9FXHjWSPrraB0abRMdr11UIN73YJVCdbia2MUfU0iQuci3P2FUm1+5CH7TbaHNuUeujHEqpd5tSJoicsymanXX0+HB8/G74EsNurmuQEvhHDIwbQdoVGZ+A8FGgWzheRqpEXp59fQzpxDr6iXXe+wzs7fhZ2nH5+NtwH45Yjf7oKclwR0FNKlFEWYfHIBEYXmo/g2hAGAvZrwCVqCwaZfHegfNx3oFxYJm/RwC35FXnoUn8nz89Ano/9o+UtKLcEGlmoLD2VlDJlQBEql6aV99vDZXuX7gI7bj5A75p7p8j/jCINhIzLIH7iQCFWu0DKtBKnDymqlDTidpGJp5Is6lkz7sxEZ7Y6ic8wa151Nms/CyLosSAmH+LOLRbUTmGzODZpCVgi5y9mKtl00qPHHgz6CV8j57CNNITOvVSyIM6dJN5LiXM1VIPVySCmPdi0+rVKVIiN0SRbeWmJnLkcDgZo14e5C0zZoTFY4GFgTO+PUlfEMIHSymteR8Nx1yJ3U/mm7cL16XIp9nAr9nBbUqoXbWO8GgwnuQ6gQyR/6GuCW0Rh3xXnyFB6t9IZhW8W9vwQArHYks1Kpy0HQBsvCe0hdb5puUymT2kNv8CUQuMYPTU+hWnOy9Xi9geZy4RiaEUel12GX11GJhx9s43JwcHff/2A28noy+XZwcEQrr3LqlQ2dugJs7V0eoBHzTnMMb1/RJ9B6ooSWc+10byGZYUeLRMFoahA1lRsdSL0KF3gAuMZ0zLuKtIWWmqfa/NqCt88n1a7HdDSj+mJB6VBbSVGZMemZdOdBE4ir6Uvhx0Dp4kS0ojCZjPHQH94U9cifqjIC1umiVqh102z321UpoOsMzVcoAn0L0n+ctP2y6/wVgO8kXorRLuW2qGp5E0l6p7Wveasp3WicsKMfMys+TpKUyq5Z/fqYH/RdeOzy7PJmarrfwD2Ru5v
+sidebar_class_name: "delete api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Openai Delete File"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/files/{file_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Delete file.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"file_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: file_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"An OpenAIFileDeleteResponse indicating successful deletion.","content":{"application/json":{"schema":{"properties":{"id":{"type":"string","title":"Id"},"object":{"type":"string","const":"file","title":"Object","default":"file"},"deleted":{"type":"boolean","title":"Deleted"}},"type":"object","required":["id","deleted"],"title":"OpenAIFileDeleteResponse","description":"Response for deleting a file in OpenAI Files API."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

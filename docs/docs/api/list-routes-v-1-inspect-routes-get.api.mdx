@@ -1,0 +1,68 @@
+---
+id: list-routes-v-1-inspect-routes-get
+title: "List routes."
+description: "List all available API routes with their methods and implementing providers."
+sidebar_label: "List routes."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81uGzcQfpUBL26NtWwHCdLo5sRJKyBBDFs9FI5hjHZHWiZcckPOyhYEHfsWfbo+STHkrrSy5AQFemgA6yKCOzOcn28+DpfKU6idDRTUcKmenZzIX0Eh97pm7awaqstWAnJnGbXVdgbaTp2vUCQAJ65hQGMA56gNTgyBdw1TGKhMiRJZFrNY10bnUen4cxDbSxXykiqUVe1dTZ518qRAjruaqQq7n6N9WfCiJjVUgb22M5Up1mxk4zIKZA9CGZcEZxej5B7UyKVaZaoiLl3xLWsfksQ+c7+NxxeQLMDUeeCyjV4s197NdUH+VgyHrXi2j1pl3QZ6j4ve0RetCRhHEw9deK8Dg5tCdxLEk0BXtaGKLEuxuNSh82lzkJt8ppxVpjx9bbSnQg2v27yuU7ITwc2DDI/s1O34NNoFh+2lXdvcNEVEEYdYhKxNYAZoi23fu/PD4Bs5OhewPJaZDSjXLoTv5iHCrxesGIsBh64bds7b1yYIpvNiqz02ngzUaiXOPN/Xea+xgEv62lDgf9NJ20beeu88dG0OU++qCNKzi9EALl0zK80Cps4Ydxfg8t0bePnLyctBKn2v4wIjNwm5bU6u0s46kdoyzcjHOiWRjew4/me7qC+IUZu+6Hna2SOrbWC0eTSMdvFxqobXu4203rGNMWp1k8WFpF0N2Tck2e6XOqzDaH1sXepVP6ZQPUTMKlN0jwLWfn6en5xsFLcL2MUaecOnbbjDANrO0egCnIcKjTQPFR0unr3aLenYOfiAdtHZDk/o+FHQ8ezVRnFfGdcY+cM1UOKcgO5zooKKdLMgExhdaR7AhSEMBOwXgDPUFgwy+Y5QXuwjlJFl8hYNXJGfk4fO9Sfw/AjgedGnlsdKuQbQmYXG0n1NOVMBFEvl8rzxfk0uBU2xMbxb2PP0AXqX3RNE/mcQSSVknAWxM7JBKi16e8agx6YPuNNcSj20b0ew8M0RLFNSlFj5UaGGSqab22Tqdn56q5MT3c6M5Nar0WNFTD7EhFms4ghX69upNkwSmRZHvzbkF1tj2BRNoKwHrU3ayTaVhD0/VZman6KpS4yrCbWjYO0pR6YiZvK7RdrO2ce4QAPJQ2AXhzrvDNyVOi+77KGXe5wbb6kYwBu0MKFu1jU0JwM/HcxPDzI4aF1MS/Hx4GexGkp3B9bZo42/a9sMXCInO5mMBgcboYO18h7F3LsQYsmjbhjAaArWMUhx9FRTkbVeJ6m95w964/VZreFdqtXqKVV7UiUI6h6RqkM9l2qojuenx21XHLdPj0yFyNipHRovXF0y18PjY7SLo9IFpuLIGKzwKDDmXwa5q+IRgfLGa15ExfOOu69v5Js8yPs89l704Ur04SoFkxh7zyNWB9AhsnLoS8qzRTb7pmKeW0IInyzs+SEEik8eskXttOVEKYlkcufTXZDef3KHTTGnkAyjp2RTKNB5mXnc/kMmMjpLzTzOOg8/uEJK+MkmlcPDv//6E67GZ6/fvz08HMKFd0WTS2BHnrBYCPRaApxg/uUOfQG5q2pkPdFG8wJmDXq0TKkbpGQpY/PT+LZ3gSuMl1/LaZFqN+2zlebl5gL9rym55TKmez6uDWor3kVcLVsYtjzZAlE4NkHxJlMCNxFYLicY6HdvVivZTmQsOCt0EA83dPxoWE9U8Hg5vtDi4aU3R9OIYGztOXqdhoTrm1WmSsKCfMx/0jzLc6q5p7Uzg21x0K9vx2q1+gfZidpg
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List routes."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/inspect/routes"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List all available API routes with their methods and implementing providers.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"api_filter","in":"query","required":false,"schema":{"anyOf":[{"enum":["v1","v1alpha","v1beta","deprecated"],"type":"string"},{"type":"null"}],"description":"Optional filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.","title":"Api Filter"},"description":"Optional filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes."}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Response containing information about all available routes.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"route":{"type":"string","title":"Route","description":"The API route path"},"method":{"type":"string","title":"Method","description":"The HTTP method for the route"},"provider_types":{"items":{"type":"string"},"type":"array","title":"Provider Types","description":"List of provider types implementing this route"}},"type":"object","required":["route","method","provider_types"],"title":"RouteInfo","description":"Information about an API route including its path, method, and implementing providers."},"type":"array","title":"Data","description":"List of available API routes"}},"type":"object","required":["data"],"title":"ListRoutesResponse","description":"Response containing a list of all available API routes."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

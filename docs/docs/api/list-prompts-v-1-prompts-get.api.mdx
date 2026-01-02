@@ -1,0 +1,60 @@
+---
+id: list-prompts-v-1-prompts-get
+title: "List Prompts"
+description: "List all prompts."
+sidebar_label: "List Prompts"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV9tuGzcQ/ZUBX9Ia8i1IkEQoCjiXFgYSxLCdAIVjGCNypGXCJdfDWdmCoMf8Rb+uX1KQe9FaUlvkrQHiF8lDcm7ncHS4VEyxCj5SVOOlenx0lD4MRc22Ehu8GqsTeGujnHEoK4nn7XbQwQtab/0M0DmomuUDNVJphbwkR1hVzmpMjg4/x+RtqaIuqMT0reJQEYttYhuUbLVCZdxebgJkp37xfqrGV0sli4rUWEVh62dqNeotvnZOra5HG5VcFgRxEYXKNl+4s1LAHNnixBFUDjUVwRniqFYjNSeOtsm6dWy90IxYjVRpvS3rUo2PR0qsuLT6sd2/Gbe1w0/tcYiCLLl1AscjsF4zleSFDAQPEef0c4rfJHljzSCDtth10AYYODVbYT94e1sTWENe7NQSg/UwDVyiwKMqef7lyfN9Y2dW9guMxa+PctFtN+IDMDZb3RmQGReDbD72pzezSSSCMF1322NJEaRAAY0eJgR1JJNylII6gITKyqFQCmnjjaEp1k4GGU1CcIR+kMJphNftts0cXjabwXqTaelncFeQFMQghY3QAg425hzaaJ05u2vjT9FFWq37ECafSaeATLe1ZTJqfKXW59ZIXm8it5XkSVc7Uww1awKmiikmFBNlIEpgMvC+In9yCq9CWaHYzN+HPUutfOuwRLgQ1F8O/gW21+ny/Vc5+YYO8t8xFraK6edFGQw5kAAu8aAfF6tVivpk19x5iQbO6bamKN8yVR46ecMcGLohB1MOZYb25Oz0AM5DPSvcAqbBuXAX4fy3V/Ds+dGzgwaxwfSJglI3F6Et/qKxjDYnw6rvz3rvZf4cbV8iQ4LWDbe+biw79lofBb2mbx2B6Uu6b2osXGfKDjGNfRltjm1KA5hzC9UmNVYjRfdYVk2lXX+eHB2tDz4EsKs1T2FuzHCHEayfo7MGAkOJLs0nMh0vHr/YhvQyBHiHftH5jj/Y8b2w4/GL9cFdMPYc+SPUUOCcgO41kSGTYeE01JwtrRzAmSOMBMILwBlaD2nicTdQnu4aKKdeiD06uCCeE0OX+g/yfA/keTocLf8EZU+gEw+1p/uKdBJVlKEKWtfM/XAZaImHwLbqAQY/aj8o8j+jSAOh4CwmP60KUVuKP4vOjfdJ6myG79SosUpy5KZdvZkf919nlH60SpIipG3NvxVKocbqcH582O5TIxUzBWNuSM2JfIVINT48RL/YL0IUMvsuybD9mGWYDmVuTSRds5VFPtgp1vHVdVqzfhqGwAxkHFxUpO20peCW4LpMOrbVr3G4M2nvZBy6yuK74jC3huInDzv+ECJl3U7eVMF6iYA+j2PLoAM35DZJmSYS8hR1p+qRqfGZMM2SVcLuIJOkBRzNiXHWZfguCcZ48Mk3R/b2/vrzK1xcnrx8+2ZvbwxnHEytU2H7TGgW6U7F5j03Qf3lDtmAbqWxdVYWMKuR0QtRZkH/tlPz4/zWClFKzLc5PUw67pz1MD9o83I9EXZyrGWr0L0cVg6tTyEyOZYtia5S3O5hkJmbqJLsy+UEI31gt1ol821NnDhyvX6aZZaMVEFoiDN9vtAiDT2tKT8o5ujqLPM3Z1XiVs/p399cqtXqb5SBgi4=
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List Prompts"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/prompts"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List all prompts.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListPromptsResponse containing all prompts.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"prompt":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"The system prompt with variable placeholders"},"version":{"type":"integer","minimum":1,"title":"Version","description":"Version (integer starting at 1, incremented on save)"},"prompt_id":{"type":"string","title":"Prompt Id","description":"Unique identifier in format 'pmpt_<48-digit-hash>'"},"variables":{"items":{"type":"string"},"type":"array","title":"Variables","description":"List of variable names that can be used in the prompt template"},"is_default":{"type":"boolean","title":"Is Default","description":"Boolean indicating whether this version is the default version","default":false}},"type":"object","required":["version","prompt_id"],"title":"Prompt","description":"A prompt resource representing a stored OpenAI Compatible prompt template in Llama Stack."},"type":"array","title":"Data"}},"type":"object","required":["data"],"title":"ListPromptsResponse","description":"Response model to list prompts."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>
