@@ -4,26 +4,25 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+"""Pydantic models for Models API requests and responses.
+
+This module defines the request and response models for the Models API
+using Pydantic with Field descriptions for OpenAPI schema generation.
+"""
+
 from enum import StrEnum
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from llama_stack_api.resource import Resource, ResourceType
-from llama_stack_api.schema_utils import json_schema_type, webmethod
-from llama_stack_api.version import LLAMA_STACK_API_V1
-
-
-class CommonModelFields(BaseModel):
-    metadata: dict[str, Any] = Field(
-        default_factory=dict,
-        description="Any additional metadata for this model",
-    )
+from llama_stack_api.schema_utils import json_schema_type
 
 
 @json_schema_type
 class ModelType(StrEnum):
     """Enumeration of supported model types in Llama Stack.
+
     :cvar llm: Large language model for text generation and completion
     :cvar embedding: Embedding model for converting text to vector representations
     :cvar rerank: Reranking model for reordering documents based on their relevance to a query
@@ -32,6 +31,13 @@ class ModelType(StrEnum):
     llm = "llm"
     embedding = "embedding"
     rerank = "rerank"
+
+
+class CommonModelFields(BaseModel):
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Any additional metadata for this model",
+    )
 
 
 @json_schema_type
@@ -77,8 +83,11 @@ class ModelInput(CommonModelFields):
     model_config = ConfigDict(protected_namespaces=())
 
 
+@json_schema_type
 class ListModelsResponse(BaseModel):
-    data: list[Model]
+    """Response containing a list of model objects."""
+
+    data: list[Model] = Field(..., description="List of model objects.")
 
 
 @json_schema_type
@@ -101,71 +110,48 @@ class OpenAIModel(BaseModel):
 
 @json_schema_type
 class OpenAIListModelsResponse(BaseModel):
-    data: list[OpenAIModel]
+    """Response containing a list of OpenAI model objects."""
+
+    data: list[OpenAIModel] = Field(..., description="List of OpenAI model objects.")
 
 
-@runtime_checkable
-class Models(Protocol):
-    async def list_models(self) -> ListModelsResponse:
-        """List all models.
+# Request models for each endpoint
 
-        :returns: A ListModelsResponse.
-        """
-        ...
 
-    @webmethod(route="/models", method="GET", level=LLAMA_STACK_API_V1)
-    async def openai_list_models(self) -> OpenAIListModelsResponse:
-        """List models using the OpenAI API.
+@json_schema_type
+class GetModelRequest(BaseModel):
+    """Request model for getting a model by ID."""
 
-        :returns: A OpenAIListModelsResponse.
-        """
-        ...
+    model_id: str = Field(..., description="The ID of the model to get.")
 
-    @webmethod(route="/models/{model_id:path}", method="GET", level=LLAMA_STACK_API_V1)
-    async def get_model(
-        self,
-        model_id: str,
-    ) -> Model:
-        """Get model.
 
-        Get a model by its identifier.
+@json_schema_type
+class RegisterModelRequest(BaseModel):
+    """Request model for registering a model."""
 
-        :param model_id: The identifier of the model to get.
-        :returns: A Model.
-        """
-        ...
+    model_id: str = Field(..., description="The identifier of the model to register.")
+    provider_model_id: str | None = Field(default=None, description="The identifier of the model in the provider.")
+    provider_id: str | None = Field(default=None, description="The identifier of the provider.")
+    metadata: dict[str, Any] | None = Field(default=None, description="Any additional metadata for this model.")
+    model_type: ModelType | None = Field(default=None, description="The type of model to register.")
 
-    @webmethod(route="/models", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
-    async def register_model(
-        self,
-        model_id: str,
-        provider_model_id: str | None = None,
-        provider_id: str | None = None,
-        metadata: dict[str, Any] | None = None,
-        model_type: ModelType | None = None,
-    ) -> Model:
-        """Register model.
 
-        Register a model.
+@json_schema_type
+class UnregisterModelRequest(BaseModel):
+    """Request model for unregistering a model."""
 
-        :param model_id: The identifier of the model to register.
-        :param provider_model_id: The identifier of the model in the provider.
-        :param provider_id: The identifier of the provider.
-        :param metadata: Any additional metadata for this model.
-        :param model_type: The type of model to register.
-        :returns: A Model.
-        """
-        ...
+    model_id: str = Field(..., description="The ID of the model to unregister.")
 
-    @webmethod(route="/models/{model_id:path}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
-    async def unregister_model(
-        self,
-        model_id: str,
-    ) -> None:
-        """Unregister model.
 
-        Unregister a model.
-
-        :param model_id: The identifier of the model to unregister.
-        """
-        ...
+__all__ = [
+    "CommonModelFields",
+    "GetModelRequest",
+    "ListModelsResponse",
+    "Model",
+    "ModelInput",
+    "ModelType",
+    "OpenAIListModelsResponse",
+    "OpenAIModel",
+    "RegisterModelRequest",
+    "UnregisterModelRequest",
+]
