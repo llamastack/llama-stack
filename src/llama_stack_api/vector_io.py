@@ -82,16 +82,15 @@ class Chunk(BaseModel):
 
 
 @json_schema_type
-class EmbeddedChunk(BaseModel):
+class EmbeddedChunk(Chunk):
     """
     A chunk of content with its embedding vector for vector database operations.
-    :param chunk: The base chunk containing content and metadata.
+    Inherits all fields from Chunk and adds embedding-related fields.
     :param embedding: The embedding vector for the chunk content.
     :param embedding_model: The model used to generate the embedding (e.g., 'openai/text-embedding-3-small').
     :param embedding_dimension: The dimension of the embedding vector.
     """
 
-    chunk: Chunk
     embedding: list[float]
     embedding_model: str
     embedding_dimension: int

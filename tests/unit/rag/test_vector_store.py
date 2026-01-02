@@ -78,14 +78,17 @@ class TestChunk:
         )
 
         embedded_chunk = EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=[0.1, 0.2, 0.3],
             embedding_model="test-model",
             embedding_dimension=3,
         )
 
-        assert embedded_chunk.chunk.content == "Example chunk content"
-        assert embedded_chunk.chunk.metadata == {"key": "value"}
+        assert embedded_chunk.content == "Example chunk content"
+        assert embedded_chunk.metadata == {"key": "value"}
         assert embedded_chunk.embedding == [0.1, 0.2, 0.3]
         assert embedded_chunk.embedding_model == "test-model"
         assert embedded_chunk.embedding_dimension == 3
@@ -257,7 +260,10 @@ class TestVectorStoreWithIndex:
 
         embedded_chunks = [
             EmbeddedChunk(
-                chunk=chunk,
+                content=chunk.content,
+                chunk_id=chunk.chunk_id,
+                metadata=chunk.metadata,
+                chunk_metadata=chunk.chunk_metadata,
                 embedding=[0.1, 0.2, 0.3],
                 embedding_model="test-embedding-model",
                 embedding_dimension=3,
@@ -312,13 +318,19 @@ class TestVectorStoreWithIndex:
 
         embedded_chunks = [
             EmbeddedChunk(
-                chunk=chunks[0],
+                content=chunks[0].content,
+                chunk_id=chunks[0].chunk_id,
+                metadata=chunks[0].metadata,
+                chunk_metadata=chunks[0].chunk_metadata,
                 embedding=[0.1, 0.2, 0.3],
                 embedding_model="test-embedding-model",
                 embedding_dimension=3,
             ),
             EmbeddedChunk(
-                chunk=chunks[1],
+                content=chunks[1].content,
+                chunk_id=chunks[1].chunk_id,
+                metadata=chunks[1].metadata,
+                chunk_metadata=chunks[1].chunk_metadata,
                 embedding=[0.4, 0.5, 0.6],
                 embedding_model="test-embedding-model",
                 embedding_dimension=3,

@@ -79,7 +79,7 @@ class FaissIndex(EmbeddingIndex):
             buffer = io.BytesIO(base64.b64decode(data["faiss_index"]))
             try:
                 self.index = faiss.deserialize_index(np.load(buffer, allow_pickle=False))
-                self.chunk_ids = [embedded_chunk.chunk.chunk_id for embedded_chunk in self.chunk_by_index.values()]
+                self.chunk_ids = [embedded_chunk.chunk_id for embedded_chunk in self.chunk_by_index.values()]
             except Exception as e:
                 logger.debug(e, exc_info=True)
                 raise ValueError(
@@ -126,7 +126,7 @@ class FaissIndex(EmbeddingIndex):
 
         async with self.chunk_id_lock:
             self.index.add(embeddings)
-            self.chunk_ids.extend([ec.chunk.chunk_id for ec in embedded_chunks])
+            self.chunk_ids.extend([ec.chunk_id for ec in embedded_chunks])  # EmbeddedChunk inherits from Chunk
 
         # Save updated index
         await self._save_index()

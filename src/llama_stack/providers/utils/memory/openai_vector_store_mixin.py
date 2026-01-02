@@ -477,7 +477,13 @@ class OpenAIVectorStoreMixin(ABC):
         # Now that our vector store is created, attach any files that were provided
         file_ids = params.file_ids or []
         tasks = [self.openai_attach_file_to_vector_store(vector_store_id, file_id) for file_id in file_ids]
-        await asyncio.gather(*tasks)
+        # Use return_exceptions=True to handle individual file attachment failures gracefully
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Log any exceptions but don't fail the vector store creation
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.warning(f"Failed to attach file {file_ids[i]} to vector store {vector_store_id}: {result}")
 
         # Get the updated store info and return it
         store_info = self.openai_vector_stores[vector_store_id]
@@ -653,8 +659,8 @@ class OpenAIVectorStoreMixin(ABC):
             # Convert response to OpenAI format
             data = []
             for embedded_chunk, score in zip(response.chunks, response.scores, strict=False):
-                # Extract the underlying chunk from the EmbeddedChunk
-                chunk = embedded_chunk.chunk
+                # EmbeddedChunk inherits from Chunk, so use it directly
+                chunk = embedded_chunk
 
                 # Apply filters if provided
                 if filters:
@@ -739,13 +745,14 @@ class OpenAIVectorStoreMixin(ABC):
             raise ValueError(f"Unsupported filter type: {filter_type}")
 
     def _chunk_to_vector_store_content(
-        self, chunk: Chunk, include_embeddings: bool = False, include_metadata: bool = False
+        self, chunk: EmbeddedChunk, include_embeddings: bool = False, include_metadata: bool = False
     ) -> list[VectorStoreContent]:
         def extract_fields() -> dict:
             """Extract metadata fields from chunk based on include flags."""
             return {
                 "chunk_metadata": chunk.chunk_metadata if include_metadata else None,
                 "metadata": chunk.metadata if include_metadata else None,
+                "embedding": chunk.embedding if include_embeddings else None,
             }
 
         fields = extract_fields()
@@ -790,6 +797,7 @@ class OpenAIVectorStoreMixin(ABC):
         chunking_strategy = chunking_strategy or VectorStoreChunkingStrategyAuto()
         created_at = int(time.time())
         chunks: list[Chunk] = []
+        embedded_chunks: list[EmbeddedChunk] = []
         file_response: OpenAIFileObject | None = None
 
         vector_store_file_object = VectorStoreFileObject(
@@ -864,7 +872,6 @@ class OpenAIVectorStoreMixin(ABC):
                 resp = await self.inference_api.openai_embeddings(params)
 
                 # Create EmbeddedChunk instances from chunks and their embeddings
-                embedded_chunks = []
                 for chunk, data in zip(chunks, resp.data, strict=False):
                     # Ensure embedding is a list of floats
                     embedding = data.embedding
@@ -872,7 +879,10 @@ class OpenAIVectorStoreMixin(ABC):
                         # Handle case where embedding might be returned as a string (shouldn't normally happen)
                         raise ValueError(f"Received string embedding instead of list: {embedding}")
                     embedded_chunk = EmbeddedChunk(
-                        chunk=chunk,
+                        content=chunk.content,
+                        chunk_id=chunk.chunk_id,
+                        metadata=chunk.metadata,
+                        chunk_metadata=chunk.chunk_metadata,
                         embedding=embedding,
                         embedding_model=embedding_model,
                         embedding_dimension=len(embedding),
@@ -897,7 +907,7 @@ class OpenAIVectorStoreMixin(ABC):
         file_info = vector_store_file_object.model_dump(exclude={"last_error"})
         file_info["filename"] = file_response.filename if file_response else ""
 
-        dict_chunks = [c.model_dump() for c in chunks]
+        dict_chunks = [c.model_dump() for c in embedded_chunks]
         await self._save_openai_vector_store_file(vector_store_id, file_id, file_info, dict_chunks)
 
         # Update file_ids and file_counts in vector store metadata
@@ -1005,7 +1015,7 @@ class OpenAIVectorStoreMixin(ABC):
         # include_embeddings and include_metadata are now function parameters
 
         dict_chunks = await self._load_openai_vector_store_file_contents(vector_store_id, file_id)
-        chunks = [Chunk.model_validate(c) for c in dict_chunks]
+        chunks = [EmbeddedChunk.model_validate(c) for c in dict_chunks]
         content = []
         for chunk in chunks:
             content.extend(

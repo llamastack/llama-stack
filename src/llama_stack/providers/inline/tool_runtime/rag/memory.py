@@ -213,13 +213,13 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
 
         for vector_store_id, result in zip(vector_store_ids, results, strict=False):
             for embedded_chunk, score in zip(result.chunks, result.scores, strict=False):
-                # Access the underlying chunk and its metadata
-                chunk = embedded_chunk.chunk
+                # EmbeddedChunk inherits from Chunk, so use it directly
+                chunk = embedded_chunk
                 if chunk.metadata is None:
                     chunk.metadata = {}
                 chunk.metadata["vector_store_id"] = vector_store_id
 
-                chunks.append(embedded_chunk)
+                chunks.append(chunk)
                 scores.append(score)
 
         if not chunks:
@@ -240,7 +240,7 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
 
         picked: list[InterleavedContentItem] = [TextContentItem(text=header_template.format(num_chunks=len(chunks)))]
         for i, embedded_chunk in enumerate(chunks):
-            metadata = embedded_chunk.chunk.metadata
+            metadata = embedded_chunk.metadata
             tokens += metadata.get("token_count", 0)
             tokens += metadata.get("metadata_token_count", 0)
 
@@ -263,12 +263,12 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
             ]
             metadata_for_context = {}
             for k in chunk_metadata_keys_to_include_from_context:
-                metadata_for_context[k] = getattr(embedded_chunk.chunk.chunk_metadata, k)
+                metadata_for_context[k] = getattr(embedded_chunk.chunk_metadata, k)
             for k in metadata:
                 if k not in metadata_keys_to_exclude_from_context:
                     metadata_for_context[k] = metadata[k]
 
-            text_content = chunk_template.format(index=i + 1, chunk=embedded_chunk.chunk, metadata=metadata_for_context)
+            text_content = chunk_template.format(index=i + 1, chunk=embedded_chunk, metadata=metadata_for_context)
             picked.append(TextContentItem(text=text_content))
 
         picked.append(TextContentItem(text=footer_template))
@@ -281,10 +281,10 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         return RAGQueryResult(
             content=picked,
             metadata={
-                "document_ids": [c.chunk.document_id for c in chunks[: len(picked)]],
-                "chunks": [c.chunk.content for c in chunks[: len(picked)]],
+                "document_ids": [c.document_id for c in chunks[: len(picked)]],
+                "chunks": [c.content for c in chunks[: len(picked)]],
                 "scores": scores[: len(picked)],
-                "vector_store_ids": [c.chunk.metadata["vector_store_id"] for c in chunks[: len(picked)]],
+                "vector_store_ids": [c.metadata["vector_store_id"] for c in chunks[: len(picked)]],
             },
         )
 

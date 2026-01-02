@@ -120,7 +120,10 @@ async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_
     # Create EmbeddedChunk objects from chunks and embeddings
     embedded_chunks = [
         EmbeddedChunk(
-            chunk=chunk,
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
             embedding=embedding.tolist(),
             embedding_model="test-embedding-model",
             embedding_dimension=embedding_dimension,

@@ -10153,100 +10153,6 @@ components:
       - file
       - purpose
       title: Body_upload_file_v1_files_post
-    Chunk-Input:
-      properties:
-        content:
-          anyOf:
-          - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Input'
-              title: ImageContentItem-Input
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Input'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Input | TextContentItem
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Input'
-                title: ImageContentItem-Input
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Input'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Input | TextContentItem
-            type: array
-            title: list[ImageContentItem-Input | TextContentItem]
-          title: string | list[ImageContentItem-Input | TextContentItem]
-        chunk_id:
-          type: string
-          title: Chunk Id
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-        chunk_metadata:
-          $ref: '#/components/schemas/ChunkMetadata'
-      type: object
-      required:
-      - content
-      - chunk_id
-      - chunk_metadata
-      title: Chunk
-      description: A chunk of content from file processing.
-    Chunk-Output:
-      properties:
-        content:
-          anyOf:
-          - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Output'
-              title: ImageContentItem-Output
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Output'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Output | TextContentItem
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Output'
-                title: ImageContentItem-Output
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Output'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Output | TextContentItem
-            type: array
-            title: list[ImageContentItem-Output | TextContentItem]
-          title: string | list[ImageContentItem-Output | TextContentItem]
-        chunk_id:
-          type: string
-          title: Chunk Id
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-        chunk_metadata:
-          $ref: '#/components/schemas/ChunkMetadata'
-      type: object
-      required:
-      - content
-      - chunk_id
-      - chunk_metadata
-      title: Chunk
-      description: A chunk of content from file processing.
     Connector:
       properties:
         identifier:
@@ -10329,8 +10235,44 @@ components:
       description: Purpose of the dataset. Each purpose has a required input data schema.
     EmbeddedChunk-Input:
       properties:
-        chunk:
-          $ref: '#/components/schemas/Chunk-Input'
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Input'
+              title: ImageContentItem-Input
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Input'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Input | TextContentItem
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Input'
+                title: ImageContentItem-Input
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Input'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Input | TextContentItem
+            type: array
+            title: list[ImageContentItem-Input | TextContentItem]
+          title: string | list[ImageContentItem-Input | TextContentItem]
+        chunk_id:
+          type: string
+          title: Chunk Id
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
         embedding:
           items:
             type: number
@@ -10344,16 +10286,56 @@ components:
           title: Embedding Dimension
       type: object
       required:
-      - chunk
+      - content
+      - chunk_id
+      - chunk_metadata
       - embedding
       - embedding_model
       - embedding_dimension
       title: EmbeddedChunk
-      description: A chunk of content with its embedding vector for vector database operations.
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
     EmbeddedChunk-Output:
       properties:
-        chunk:
-          $ref: '#/components/schemas/Chunk-Output'
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+              title: ImageContentItem-Output
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Output | TextContentItem
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+                title: ImageContentItem-Output
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Output | TextContentItem
+            type: array
+            title: list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem-Output | TextContentItem]
+        chunk_id:
+          type: string
+          title: Chunk Id
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
         embedding:
           items:
             type: number
@@ -10367,12 +10349,16 @@ components:
           title: Embedding Dimension
       type: object
       required:
-      - chunk
+      - content
+      - chunk_id
+      - chunk_metadata
       - embedding
       - embedding_model
       - embedding_dimension
       title: EmbeddedChunk
-      description: A chunk of content with its embedding vector for vector database operations.
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
     Errors:
       properties:
         data:
@@ -11953,10 +11939,48 @@ components:
       title: OpenAICompletionLogprobs
       type: object
     EmbeddedChunk:
-      description: A chunk of content with its embedding vector for vector database operations.
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
       properties:
-        chunk:
-          $ref: '#/components/schemas/Chunk'
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+        chunk_id:
+          title: Chunk Id
+          type: string
+        metadata:
+          additionalProperties: true
+          title: Metadata
+          type: object
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
         embedding:
           items:
             type: number
@@ -11969,7 +11993,9 @@ components:
           title: Embedding Dimension
           type: integer
       required:
-      - chunk
+      - content
+      - chunk_id
+      - chunk_metadata
       - embedding
       - embedding_model
       - embedding_dimension
