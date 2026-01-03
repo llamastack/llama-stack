@@ -447,6 +447,7 @@ from .tools import (
 from .vector_io import (
     Chunk,
     ChunkMetadata,
+    EmbeddedChunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
@@ -516,6 +517,7 @@ __all__ = [
     "Checkpoint",
     "Chunk",
     "ChunkMetadata",
+    "EmbeddedChunk",
     "CommonBenchmarkFields",
     "ConflictError",
     "CommonDatasetFields",

@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import time
+
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import Chunk, ChunkMetadata, VectorStoreFileObject
 
@@ -34,7 +36,18 @@ def test_generate_chunk_id():
 def test_generate_chunk_id_with_window():
     """Test that generate_chunk_id with chunk_window produces different IDs."""
     # Create a chunk object to match the original test behavior (passing object to generate_chunk_id)
-    chunk = Chunk(content="test", chunk_id="placeholder", metadata={"document_id": "doc-1"})
+    chunk = Chunk(
+        content="test",
+        chunk_id="placeholder",
+        metadata={"document_id": "doc-1"},
+        chunk_metadata=ChunkMetadata(
+            document_id="doc-1",
+            chunk_id="placeholder",
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            content_token_count=1,
+        ),
+    )
     chunk_id1 = generate_chunk_id("doc-1", chunk, chunk_window="0-1")
     chunk_id2 = generate_chunk_id("doc-1", chunk, chunk_window="1-2")
     # Verify that different windows produce different IDs
@@ -50,6 +63,13 @@ def test_chunk_creation_with_explicit_id():
         content="test",
         chunk_id=chunk_id,
         metadata={"document_id": "doc-1"},
+        chunk_metadata=ChunkMetadata(
+            document_id="doc-1",
+            chunk_id=chunk_id,
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            content_token_count=1,
+        ),
     )
     assert chunk.chunk_id == chunk_id
     assert chunk.chunk_id == "31d1f9a3-c8d2-66e7-3c37-af2acd329778"
@@ -62,7 +82,13 @@ def test_chunk_with_metadata():
         content="test",
         chunk_id=chunk_id,
         metadata={"document_id": "existing-id"},
-        chunk_metadata=ChunkMetadata(document_id="document_1"),
+        chunk_metadata=ChunkMetadata(
+            document_id="document_1",
+            chunk_id=chunk_id,
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            content_token_count=1,
+        ),
     )
     assert chunk.chunk_id == "chunk-id-1"
     assert chunk.document_id == "existing-id"  # metadata takes precedence
@@ -74,6 +100,13 @@ def test_chunk_serialization():
         content="test",
         chunk_id="test-chunk-id",
         metadata={"document_id": "doc-1"},
+        chunk_metadata=ChunkMetadata(
+            document_id="doc-1",
+            chunk_id="test-chunk-id",
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            content_token_count=1,
+        ),
     )
     serialized_chunk = chunk.model_dump()
     assert serialized_chunk["chunk_id"] == "test-chunk-id"

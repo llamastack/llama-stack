@@ -19,6 +19,7 @@ from llama_stack.core.routers.vector_io import VectorIORouter
 from llama_stack.core.routing_tables.vector_stores import VectorStoresRoutingTable
 from llama_stack_api import (
     Chunk,
+    ChunkMetadata,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     QueryChunksResponse,
     VectorStoreChunkingStrategyStatic,
@@ -179,7 +180,25 @@ def router_with_real_routing_table(mock_provider):
         (
             "insert_chunks",
             "update",
-            lambda r: r.insert_chunks("vs_123", [Chunk(content="test", chunk_id="c1")]),
+            lambda r: r.insert_chunks(
+                "vs_123",
+                [
+                    Chunk(
+                        content="test",
+                        chunk_id="c1",
+                        embedding=[],
+                        chunk_metadata=ChunkMetadata(
+                            document_id="test_doc",
+                            chunk_id="c1",
+                            created_timestamp=1234567890,
+                            updated_timestamp=1234567890,
+                            chunk_embedding_model="test-model",
+                            chunk_embedding_dimension=768,
+                            content_token_count=1,
+                        ),
+                    )
+                ],
+            ),
             "insert_chunks",
         ),
         (
@@ -302,7 +321,28 @@ async def test_operations_fail_before_provider_when_unauthorized(router_with_rea
 
     # Test all operations fail before reaching provider
     operations = [
-        ("insert_chunks", lambda: router.insert_chunks("vs_123", [Chunk(content="test", chunk_id="c1")])),
+        (
+            "insert_chunks",
+            lambda: router.insert_chunks(
+                "vs_123",
+                [
+                    Chunk(
+                        content="test",
+                        chunk_id="c1",
+                        embedding=[],
+                        chunk_metadata=ChunkMetadata(
+                            document_id="test_doc",
+                            chunk_id="c1",
+                            created_timestamp=1234567890,
+                            updated_timestamp=1234567890,
+                            chunk_embedding_model="test-model",
+                            chunk_embedding_dimension=768,
+                            content_token_count=1,
+                        ),
+                    )
+                ],
+            ),
+        ),
         ("query_chunks", lambda: router.query_chunks("vs_123", "test")),
         ("openai_retrieve_vector_store", lambda: router.openai_retrieve_vector_store("vs_123")),
         ("openai_update_vector_store", lambda: router.openai_update_vector_store("vs_123", name="test")),

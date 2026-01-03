@@ -13,7 +13,7 @@ from fastapi import Body
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     HealthResponse,
     HealthStatus,
     Inference,
@@ -124,7 +124,7 @@ class VectorIORouter(VectorIO):
     async def insert_chunks(
         self,
         vector_store_id: str,
-        chunks: list[Chunk],
+        chunks: list[EmbeddedChunk],
         ttl_seconds: int | None = None,
     ) -> None:
         doc_ids = [chunk.document_id for chunk in chunks[:3]]
