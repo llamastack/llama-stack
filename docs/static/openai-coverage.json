@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 82.4,
-      "issues": 272,
-      "missing_properties": 184,
-      "total_problems": 456,
+      "score": 83.9,
+      "issues": 258,
+      "missing_properties": 161,
+      "total_problems": 419,
       "total_properties": 2598
     }
   },
@@ -706,9 +706,9 @@
       ]
     },
     "Chat": {
-      "score": 82.1,
-      "issues": 22,
-      "missing_properties": 50,
+      "score": 90.3,
+      "issues": 11,
+      "missing_properties": 28,
       "total_properties": 402,
       "endpoints": [
         {
@@ -779,112 +779,11 @@
             {
               "method": "POST",
               "missing_properties": [
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.annotations",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.audio",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.content",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.refusal",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.role",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls",
-                "POST.responses.200.content.application/json.properties.service_tier",
-                "POST.responses.200.content.application/json.properties.system_fingerprint",
-                "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens",
-                "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens_details",
-                "POST.responses.200.content.application/json.properties.usage.properties.prompt_tokens",
-                "POST.responses.200.content.application/json.properties.usage.properties.prompt_tokens_details",
-                "POST.responses.200.content.application/json.properties.usage.properties.total_tokens",
-                "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content",
-                "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal",
-                "POST.responses.200.content.text/event-stream.properties.service_tier",
-                "POST.responses.200.content.text/event-stream.properties.system_fingerprint",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.total_tokens"
+                "POST.responses.200"
               ],
-              "conformance_issues": [
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.finish_reason",
-                  "details": [
-                    "Enum removed: ['stop', 'length', 'tool_calls', 'content_filter', 'function_call']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.logprobs",
-                  "details": [
-                    "Union variants added: 1",
-                    "Union variants removed: 1"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 5"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Enum removed: ['chat.completion']",
-                    "Default changed: None -> chat.completion"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.usage",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.role",
-                  "details": [
-                    "Enum removed: ['developer', 'system', 'user', 'assistant', 'tool']",
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls",
-                  "details": [
-                    "Type removed: ['array']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.finish_reason",
-                  "details": [
-                    "Enum removed: ['stop', 'length', 'tool_calls', 'content_filter', 'function_call']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.object",
-                  "details": [
-                    "Enum removed: ['chat.completion.chunk']",
-                    "Default changed: None -> chat.completion.chunk"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.usage",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 2"
-                  ]
-                }
-              ],
-              "missing_count": 23,
-              "issues_count": 11
+              "conformance_issues": [],
+              "missing_count": 1,
+              "issues_count": 0
             }
           ]
         },
@@ -953,9 +852,9 @@
       ]
     },
     "Completions": {
-      "score": 52.2,
-      "issues": 20,
-      "missing_properties": 2,
+      "score": 60.9,
+      "issues": 17,
+      "missing_properties": 1,
       "total_properties": 46,
       "endpoints": [
         {
@@ -964,8 +863,7 @@
             {
               "method": "POST",
               "missing_properties": [
-                "POST.responses.200.content.application/json.properties.system_fingerprint",
-                "POST.responses.200.content.application/json.properties.usage"
+                "POST.responses.200"
               ],
               "conformance_issues": [
                 {
@@ -1110,30 +1008,10 @@
                     "Nullable added (OpenAI non-nullable)",
                     "Union variants added: 2"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.finish_reason",
-                  "details": [
-                    "Enum removed: ['stop', 'length', 'content_filter']"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.logprobs",
-                  "details": [
-                    "Union variants added: 1",
-                    "Union variants removed: 1"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.object",
-                  "details": [
-                    "Enum removed: ['text_completion']",
-                    "Default changed: None -> text_completion"
-                  ]
                 }
               ],
-              "missing_count": 2,
-              "issues_count": 20
+              "missing_count": 1,
+              "issues_count": 17
             }
           ]
         }

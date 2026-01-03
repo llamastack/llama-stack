@@ -430,38 +430,6 @@ paths:
         schema:
           type: string
           title: Job Id
-  /v1alpha/inference/rerank:
-    post:
-      responses:
-        '200':
-          description: RerankResponse with indices sorted by relevance score (descending).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RerankResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Inference
-      summary: Rerank
-      description: Rerank a list of documents based on their relevance to a query.
-      operationId: rerank_v1alpha_inference_rerank_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RerankRequest'
-        required: true
   /v1alpha/post-training/job/artifacts:
     get:
       responses:
@@ -1856,17 +1824,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-        reasoning_effort:
-          anyOf:
-          - type: string
-            enum:
-            - none
-            - minimal
-            - low
-            - medium
-            - high
-            - xhigh
-          - type: 'null'
       additionalProperties: true
       type: object
       required:
@@ -1875,40 +1832,41 @@ components:
       title: OpenAIChatCompletionRequestWithExtraBody
       description: Request parameters for OpenAI-compatible chat completion endpoint.
     OpenAIChatCompletion:
+      description: Response from an OpenAI-compatible chat completion request.
       properties:
         id:
-          type: string
           title: Id
+          type: string
         choices:
           items:
             $ref: '#/components/schemas/OpenAIChoice'
-          type: array
           title: Choices
+          type: array
         object:
-          type: string
           const: chat.completion
-          title: Object
           default: chat.completion
-        created:
-          type: integer
-          title: Created
-        model:
+          title: Object
           type: string
+        created:
+          title: Created
+          type: integer
+        model:
           title: Model
+          type: string
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
             title: OpenAIChatCompletionUsage
           - type: 'null'
+          nullable: true
           title: OpenAIChatCompletionUsage
-      type: object
       required:
       - id
       - choices
       - created
       - model
       title: OpenAIChatCompletion
-      description: Response from an OpenAI-compatible chat completion request.
+      type: object
     OpenAIChatCompletionChunk:
       description: Chunk from a streaming response to an OpenAI-compatible chat completion request.
       properties:
@@ -2163,33 +2121,6 @@ components:
       title: OpenAICompletionRequestWithExtraBody
       description: Request parameters for OpenAI-compatible completion endpoint.
     OpenAICompletion:
-      properties:
-        id:
-          type: string
-          title: Id
-        choices:
-          items:
-            $ref: '#/components/schemas/OpenAICompletionChoice'
-          type: array
-          title: Choices
-        created:
-          type: integer
-          title: Created
-        model:
-          type: string
-          title: Model
-        object:
-          type: string
-          const: text_completion
-          title: Object
-          default: text_completion
-      type: object
-      required:
-      - id
-      - choices
-      - created
-      - model
-      title: OpenAICompletion
       description: |-
         Response from an OpenAI-compatible completion request.
 
@@ -2198,29 +2129,34 @@ components:
         :created: The Unix timestamp in seconds when the completion was created
         :model: The model that was used to generate the completion
         :object: The object type, which will be "text_completion"
-    OpenAICompletionChoice:
       properties:
-        finish_reason:
+        id:
+          title: Id
           type: string
-          title: Finish Reason
-        text:
-          type: string
-          title: Text
-        index:
+        choices:
+          items:
+            $ref: '#/components/schemas/OpenAICompletionChoice'
+          title: Choices
+          type: array
+        created:
+          title: Created
           type: integer
-          title: Index
-        logprobs:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
-            title: OpenAIChoiceLogprobs
-          - type: 'null'
-          title: OpenAIChoiceLogprobs
-      type: object
+        model:
+          title: Model
+          type: string
+        object:
+          const: text_completion
+          default: text_completion
+          title: Object
+          type: string
       required:
-      - finish_reason
-      - text
-      - index
-      title: OpenAICompletionChoice
+      - id
+      - choices
+      - created
+      - model
+      title: OpenAICompletion
+      type: object
+    OpenAICompletionChoice:
       description: |-
         A choice from an OpenAI-compatible completion response.
 
@@ -2228,6 +2164,29 @@ components:
         :text: The text of the choice
         :index: The index of the choice
         :logprobs: (Optional) The log probabilities for the tokens in the choice
+      properties:
+        finish_reason:
+          title: Finish Reason
+          type: string
+        text:
+          title: Text
+          type: string
+        index:
+          title: Index
+          type: integer
+        logprobs:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
+            title: OpenAIChoiceLogprobs
+          - type: 'null'
+          nullable: true
+          title: OpenAIChoiceLogprobs
+      required:
+      - finish_reason
+      - text
+      - index
+      title: OpenAICompletionChoice
+      type: object
     ConversationItem:
       discriminator:
         mapping:
@@ -7631,6 +7590,7 @@ components:
         model:
           type: string
           title: Model
+          description: The identifier of the reranking model to use.
         query:
           anyOf:
           - type: string
@@ -7639,6 +7599,7 @@ components:
           - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
             title: OpenAIChatCompletionContentPartImageParam
           title: string | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
+          description: The search query to rank items against. Can be a string, text content part, or image content part. The input must not exceed the model's max input token length.
         items:
           items:
             anyOf:
@@ -7650,16 +7611,19 @@ components:
             title: string | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
           type: array
           title: Items
+          description: List of items to rerank. Each item can be a string, text content part, or image content part. Each input must not exceed the model's max input token length.
         max_num_results:
           anyOf:
           - type: integer
           - type: 'null'
+          description: 'Maximum number of results to return. Default: returns all.'
       type: object
       required:
       - model
       - query
       - items
       title: RerankRequest
+      description: Request model for reranking documents.
     RerankData:
       properties:
         index:
@@ -10380,6 +10344,48 @@ components:
           - type: 'null'
           nullable: true
       title: OpenAICompletionLogprobs
+      type: object
+    ListChatCompletionsRequest:
+      description: Request model for listing chat completions.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the last chat completion to return.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 20
+          description: The maximum number of chat completions to return.
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The model to filter by.
+          nullable: true
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
+          title: Order
+      title: ListChatCompletionsRequest
+      type: object
+    GetChatCompletionRequest:
+      description: Request model for getting a chat completion.
+      properties:
+        completion_id:
+          description: ID of the chat completion.
+          title: Completion Id
+          type: string
+      required:
+      - completion_id
+      title: GetChatCompletionRequest
       type: object
     EmbeddedChunk:
       description: |-
