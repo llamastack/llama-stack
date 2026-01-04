@@ -265,7 +265,7 @@ class RunConfigSettings(BaseModel):
         # Return a dict that matches StackRunConfig structure
         config = {
             "version": LLAMA_STACK_RUN_CONFIG_VERSION,
-            "image_name": name,
+            "distro_name": name,
             "container_image": container_image,
             "apis": apis,
             "providers": provider_configs,

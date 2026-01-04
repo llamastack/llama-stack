@@ -16,7 +16,7 @@ from llama_stack.core.distribution import (
     builtin_automatically_routed_apis,
     get_provider_registry,
 )
-from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
+from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.prompt_for_config import prompt_for_config
 from llama_stack.log import get_logger
@@ -200,4 +200,4 @@ def parse_and_maybe_upgrade_config(config_dict: dict[str, Any]) -> StackConfig:
     config_dict["version"] = LLAMA_STACK_RUN_CONFIG_VERSION
 
     processed_config_dict = replace_env_vars(config_dict)
-    return StackConfig(**cast_image_name_to_string(processed_config_dict))
+    return StackConfig(**cast_distro_name_to_string(processed_config_dict))
