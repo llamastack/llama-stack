@@ -238,13 +238,8 @@ client = LlamaStackClient(base_url="http://localhost:8321")
 # List available models
 models = client.models.list()
 
-# Select the first LLM
-llm = next(
-    m for m in models
-    if m.custom_metadata
-    and m.custom_metadata.get("model_type") == "llm"
-    and m.custom_metadata.get("provider_id") == "ollama"
-)
+# Select the first ollama LLM
+llm = next(m for m in models if m.id and "ollama" in m.id)
 model_id = llm.id
 
 print("Model:", model_id)
