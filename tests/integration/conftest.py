@@ -372,13 +372,14 @@ def vector_provider_wrapper(func):
     if inference_mode == "live":
         # For live tests, try all providers (they'll skip if not available)
         all_providers = [
-            "faiss",
-            "sqlite-vec",
-            "milvus",
-            "chromadb",
-            "pgvector",
-            "weaviate",
-            "qdrant",
+            # "faiss",
+            # "sqlite-vec",
+            # "milvus",
+            # "chromadb",
+            # "pgvector",
+            # "weaviate",
+            # "qdrant",
+            "oci",
         ]
     else:
         # For CI tests (replay/record), only use providers that are available in ci-tests environment

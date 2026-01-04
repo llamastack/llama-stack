@@ -229,7 +229,7 @@ class VectorIORouter(VectorIO):
             params.chunking_strategy = VectorStoreChunkingStrategyStatic(
                 static=VectorStoreChunkingStrategyStaticConfig()
             )
-
+        print('This is creating the store a second time?')
         return await provider.openai_create_vector_store(params)
 
     async def openai_list_vector_stores(
