@@ -279,12 +279,7 @@ import uuid
 client = LlamaStackClient(base_url=f"http://localhost:8321")
 
 models = client.models.list()
-llm = next(
-    m for m in models
-    if m.custom_metadata
-    and m.custom_metadata.get("model_type") == "llm"
-    and m.custom_metadata.get("provider_id") == "ollama"
-)
+llm = next(m for m in models if m.id and "ollama" in m.id)
 model_id = llm.id
 
 agent = Agent(client, model=model_id, instructions="You are a helpful assistant.")
@@ -297,7 +292,7 @@ response = agent.create_turn(
     session_id=s_id,
     stream=False,
 )
-print("agent>", response.output_message.content)
+print("agent>", response.output_text)
 
 print("Streaming ...")
 stream = agent.create_turn(
@@ -311,7 +306,7 @@ stream = agent.create_turn(
     messages=[{"role": "user", "content": "Who are you?"}], session_id=s_id, stream=True
 )
 for event in AgentEventLogger().log(stream):
-    event.print()
+    print(event, end="")
 ```
 #### ii. Run the Script
 Let's run the script using `uv`
