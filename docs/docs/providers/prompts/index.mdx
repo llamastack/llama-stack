@@ -1,0 +1,92 @@
+---
+sidebar_label: Prompts
+title: Prompts
+---
+
+# Prompts
+
+## Overview
+
+This section contains documentation for all available providers for the **prompts** API.
+
+The Prompts API enables centralized management of prompt templates with versioning, variable handling, and team collaboration capabilities.
+
+## Available Providers
+
+### Inline Providers
+
+Inline providers run in the same process as the Llama Stack server and require no external dependencies:
+
+- **[inline::reference](inline_reference.mdx)** - Reference implementation using KVStore backend (SQLite, PostgreSQL, etc.)
+  - Zero external dependencies
+  - Supports local SQLite or PostgreSQL storage
+  - Full CRUD operations including deletion
+  - Ideal for local development and single-server deployments
+
+### Remote Providers
+
+Remote providers connect to external services for centralized prompt management:
+
+- **[remote::mlflow](remote_mlflow.mdx)** - MLflow Prompt Registry integration (requires MLflow 3.4+)
+  - Centralized prompt management across teams
+  - Built-in versioning and audit trail
+  - Supports authentication (per-request, config, or environment variables)
+  - Integrates with Databricks and enterprise MLflow deployments
+  - Ideal for team collaboration and production environments
+
+## Choosing a Provider
+
+### Use `inline::reference` when:
+- Developing locally or deploying to a single server
+- You want zero external dependencies
+- SQLite or PostgreSQL storage is sufficient
+- You need full CRUD operations (including deletion)
+- You prefer simple configuration
+
+### Use `remote::mlflow` when:
+- Working in a team environment with multiple users
+- You need centralized prompt management
+- Integration with existing MLflow infrastructure
+- You need authentication and multi-tenant support
+- Advanced versioning and audit trail capabilities are required
+
+## Quick Start Examples
+
+### Using inline::reference
+
+```yaml
+prompts:
+  - provider_id: local-prompts
+    provider_type: inline::reference
+    config:
+      run_config:
+        storage:
+          stores:
+            prompts:
+              type: sqlite
+              db_path: ./prompts.db
+```
+
+### Using remote::mlflow
+
+```yaml
+prompts:
+  - provider_id: mlflow-prompts
+    provider_type: remote::mlflow
+    config:
+      mlflow_tracking_uri: http://localhost:5555
+      experiment_name: llama-stack-prompts
+      auth_credential: ${env.MLFLOW_TRACKING_TOKEN}
+```
+
+## Common Features
+
+All prompt providers support:
+- Create and store prompts with version control
+- Retrieve prompts by ID and version
+- Update prompts (creates new versions)
+- List all prompts or versions of a specific prompt
+- Set default version for a prompt
+- Automatic variable extraction from `{{ variable }}` templates
+
+For detailed documentation on each provider, see the individual provider pages linked above.
