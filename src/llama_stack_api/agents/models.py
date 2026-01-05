@@ -12,7 +12,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 
 from enum import StrEnum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack_api.common.responses import Order
 from llama_stack_api.openai_responses import (
@@ -41,6 +41,8 @@ class ResponseItemInclude(StrEnum):
 class ResponseGuardrailSpec(BaseModel):
     """Specification for a guardrail to apply during response generation."""
 
+    model_config = ConfigDict(extra="forbid")
+
     type: str
     # TODO: more fields to be added for guardrail configuration
 
@@ -51,6 +53,8 @@ ResponseGuardrail = str | ResponseGuardrailSpec
 @json_schema_type
 class CreateResponseRequest(BaseModel):
     """Request model for creating a response."""
+
+    model_config = ConfigDict(extra="forbid")
 
     input: str | list[OpenAIResponseInput] = Field(..., description="Input message(s) to create the response.")
     model: str = Field(..., description="The underlying LLM used for completions.")
@@ -80,6 +84,8 @@ class CreateResponseRequest(BaseModel):
     )
     temperature: float | None = Field(
         default=None,
+        ge=0.0,
+        le=2.0,
         description="Sampling temperature.",
     )
     text: OpenAIResponseText | None = Field(
@@ -100,6 +106,7 @@ class CreateResponseRequest(BaseModel):
     )
     max_infer_iters: int | None = Field(
         default=10,
+        ge=1,
         description="Maximum number of inference iterations.",
     )
     guardrails: list[ResponseGuardrail] | None = Field(
@@ -108,6 +115,7 @@ class CreateResponseRequest(BaseModel):
     )
     max_tool_calls: int | None = Field(
         default=None,
+        ge=1,
         description="Max number of total calls to built-in tools that can be processed in a response.",
     )
     metadata: dict[str, str] | None = Field(
@@ -120,15 +128,19 @@ class CreateResponseRequest(BaseModel):
 class RetrieveResponseRequest(BaseModel):
     """Request model for retrieving a response."""
 
-    response_id: str = Field(..., description="The ID of the OpenAI response to retrieve.")
+    model_config = ConfigDict(extra="forbid")
+
+    response_id: str = Field(..., min_length=1, description="The ID of the OpenAI response to retrieve.")
 
 
 @json_schema_type
 class ListResponsesRequest(BaseModel):
     """Request model for listing responses."""
 
+    model_config = ConfigDict(extra="forbid")
+
     after: str | None = Field(default=None, description="The ID of the last response to return.")
-    limit: int | None = Field(default=50, description="The number of responses to return.")
+    limit: int | None = Field(default=50, ge=1, le=100, description="The number of responses to return.")
     model: str | None = Field(default=None, description="The model to filter responses by.")
     order: Order | None = Field(
         default=Order.desc,
@@ -140,12 +152,18 @@ class ListResponsesRequest(BaseModel):
 class ListResponseInputItemsRequest(BaseModel):
     """Request model for listing input items of a response."""
 
-    response_id: str = Field(..., description="The ID of the response to retrieve input items for.")
+    model_config = ConfigDict(extra="forbid")
+
+    response_id: str = Field(..., min_length=1, description="The ID of the response to retrieve input items for.")
     after: str | None = Field(default=None, description="An item ID to list items after, used for pagination.")
     before: str | None = Field(default=None, description="An item ID to list items before, used for pagination.")
-    include: list[str] | None = Field(default=None, description="Additional fields to include in the response.")
+    include: list[ResponseItemInclude] | None = Field(
+        default=None, description="Additional fields to include in the response."
+    )
     limit: int | None = Field(
         default=20,
+        ge=1,
+        le=100,
         description="A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.",
     )
     order: Order | None = Field(default=Order.desc, description="The order to return the input items in.")
@@ -155,4 +173,6 @@ class ListResponseInputItemsRequest(BaseModel):
 class DeleteResponseRequest(BaseModel):
     """Request model for deleting a response."""
 
-    response_id: str = Field(..., description="The ID of the OpenAI response to delete.")
+    model_config = ConfigDict(extra="forbid")
+
+    response_id: str = Field(..., min_length=1, description="The ID of the OpenAI response to delete.")
