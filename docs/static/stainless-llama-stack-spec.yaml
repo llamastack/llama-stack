@@ -12095,7 +12095,6 @@ components:
         max_tool_calls:
           anyOf:
           - type: integer
-            minimum: 1.0
           - type: 'null'
           description: Max number of total calls to built-in tools that can be processed in a response.
         metadata:
