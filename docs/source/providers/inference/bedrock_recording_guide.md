@@ -131,7 +131,7 @@ uv run pytest -v -s \
   test_openai_completion.py::test_openai_chat_completion_streaming \
   test_openai_completion.py::test_inference_store \
   --setup=bedrock \
-  --stack-config=ci-tests::run-bedrock.yaml \
+  --stack-config=ci-tests::config.yaml \
   --inference-mode=replay \
   -k "client_with_models"
 
@@ -226,7 +226,7 @@ uv run pytest -v -s \
 uv run pytest -v -s \
   test_openai_completion.py::your_new_test_function \
   --setup=bedrock \
-  --stack-config=ci-tests::run-bedrock.yaml \
+  --stack-config=ci-tests::config.yaml \
   --inference-mode=replay \
   -k "client_with_models"
 ```
@@ -258,6 +258,6 @@ The Bedrock CI uses a dedicated suite that runs only recorded tests:
 
 | File | Purpose |
 |------|---------|
-| `src/llama_stack/distributions/ci-tests/run-bedrock.yaml` | Stack config with dummy API key and pre-registered model |
+| `src/llama_stack/distributions/ci-tests/config.yaml` | Stack config with dummy API key and pre-registered model |
 | `tests/integration/suites.py` | Defines `bedrock` suite with specific test paths |
 | `tests/integration/ci_matrix.json` | CI entry with `allowed_clients: ["library"]` to run only in library mode |

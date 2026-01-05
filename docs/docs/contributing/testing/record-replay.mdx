@@ -268,14 +268,14 @@ export AWS_DEFAULT_REGION=us-west-2
 
 ### Stack Configuration Choices
 
-- `ci-tests::run.yaml` — canonical config that CI and replay runs use. It already registers the Bedrock provider with a dummy API key, so recordings can be replayed without editing the file.
+- `ci-tests::config.yaml` — canonical config that CI and replay runs use. It already registers the Bedrock provider with a dummy API key, so recordings can be replayed without editing the file.
 - `bedrock-test.yaml` — lightweight config at the repo root that only wires up Bedrock. Use this when you specifically want to run a standalone stack server for debugging.
 
-Prefer `ci-tests::run.yaml` for anything that interacts with the shared recordings, and switch to `bedrock-test.yaml` only when you need that minimal setup.
+Prefer `ci-tests::config.yaml` for anything that interacts with the shared recordings, and switch to `bedrock-test.yaml` only when you need that minimal setup.
 
 ### Recording Bedrock Tests
 
-Record the three test functions (which generate 4 parametrized test cases):
+Record the three test functions (which generate 6 parametrized tests):
 
 ```bash
 uv run pytest -v -s \
@@ -283,7 +283,7 @@ uv run pytest -v -s \
   tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming \
   tests/integration/inference/test_openai_completion.py::test_inference_store \
   --setup=bedrock \
-  --stack-config=ci-tests::run.yaml \
+  --stack-config=ci-tests::config.yaml \
   --inference-mode=record \
   -k "client_with_models"
 ```
@@ -297,7 +297,7 @@ unset AWS_BEARER_TOKEN_BEDROCK
 uv run pytest -v -s \
   tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming \
   --setup=bedrock \
-  --stack-config=ci-tests::run.yaml \
+  --stack-config=ci-tests::config.yaml \
   --inference-mode=replay \
   -k "client_with_models"
 ```
