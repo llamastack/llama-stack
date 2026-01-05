@@ -25,6 +25,27 @@ The OpenAI web search tool also has fields for `filters` and `user_location` whi
 
 ---
 
+## Implement Remaining Include flags
+
+**Status:** Partially Implemented
+
+**Issue:** https://github.com/llamastack/llama-stack/issues/4440
+
+OpenAI allows you to return an optional subset of additional/power user data in their API response.
+Llama Stack's API now supports these fields, but most of them are not implemented. Not all of them will
+make sense to implement in llama stack, but this meta issue tracks which of them are implemented and which are not.
+
+- [ ] `web_search_call.action.sources`
+- [ ] `code_interpreter_call.outputs`
+- [ ] `computer_call_output.output.image_url`
+- [ ] `file_search_call.results`
+- [ ] `message.input_image.image_url`
+- [ ] `message.output_text.logprobs`
+- [ ] `reasoning.encrypted_content`
+- [x] `message.output_text.logprobs`
+
+---
+
 ### Reasoning Content
 
 **Status:** Not Implemented
@@ -227,20 +248,11 @@ Support OpenTelemetry as the preferred way to instrument Llama Stack.
 
 **Status:** Merged [Planned 0.4.z]
 
-The `include` parameter allows you to provide a list of values that indicate additional information for the system to include in the model response.
-The [OpenAI API](https://platform.openai.com/docs/api-reference/responses/create) specifies the following allowed values for this parameter.
+The `include` parameter allows you to provide a list of flags to include specific categories of additional information in the response payload.
+The API now supportes the same fields as the [OpenAI API](https://platform.openai.com/docs/api-reference/responses/create). Llama stack will no
+longer raise an HTTP error when these fields are passed, however most of them are not yet implemented. Along with this change,
+`message.output_text.logprobs` was implemented fully, allowing you to get logprobs data from your inference server provider.
 
-- `web_search_call.action.sources`
-- `code_interpreter_call.outputs`
-- `computer_call_output.output.image_url`
-- `file_search_call.results`
-- `message.input_image.image_url`
-- `message.output_text.logprobs`
-- `reasoning.encrypted_content`
-
-This change adds all the following parameters to inputs and output objects for responses and chat completions in Llama Stack for full API compatibility.
-It also implements `message.output_text.logprobs`, allowing users to get logprobs outputs from their inferencing requests. *Note* that the other fields are
-just stubs for now, and will not work when invoked since Llama Stack does not yet support built in tools.
 
 ---
 
