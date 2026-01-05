@@ -11407,6 +11407,7 @@ components:
       - benchmarks
       - tool_groups
       - files
+      - file_processors
       - prompts
       - conversations
       - connectors
@@ -12169,6 +12170,29 @@ components:
       required:
       - items
       title: ConversationItemCreateRequest
+      type: object
+    ProcessFileResponse:
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
+      properties:
+        chunks:
+          description: Processed chunks from the file. Always returns at least one chunk.
+          items:
+            $ref: '#/components/schemas/Chunk'
+          title: Chunks
+          type: array
+        metadata:
+          additionalProperties: true
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+          title: Metadata
+          type: object
+      required:
+      - chunks
+      - metadata
+      title: ProcessFileResponse
       type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.
