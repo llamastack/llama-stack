@@ -57,7 +57,7 @@ from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 
-from .auth import AuthenticationMiddleware
+from .auth import AuthenticationMiddleware, EndpointAuthorizationMiddleware
 from .quota import QuotaMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -416,8 +416,19 @@ def create_app() -> StackApp:
     impls = app.stack.impls
 
     if config.server.auth:
-        logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
-        app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
+        # Add endpoint authorization middleware if endpoint_policy is configured
+        # This can work independently of authentication
+        # NOTE: Add this FIRST because middleware wraps in reverse order (last added runs first)
+        # We want: Request → Auth → EndpointAuth → App
+        if config.server.auth.endpoint_policy:
+            logger.info(f"Enabling endpoint-level authorization with {len(config.server.auth.endpoint_policy)} rules")
+            app.add_middleware(EndpointAuthorizationMiddleware, endpoint_policy=config.server.auth.endpoint_policy)
+
+        # Add authentication middleware only if provider is configured
+        # This runs FIRST in the middleware chain (last added = first to run)
+        if config.server.auth.provider_config:
+            logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
+            app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
     else:
         if config.server.quota:
             quota = config.server.quota

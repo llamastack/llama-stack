@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from llama_stack.core.access_control.datatypes import AccessRule
+from llama_stack.core.access_control.datatypes import AccessRule, EndpointAccessRule
 from llama_stack.core.storage.datatypes import (
     KVStoreReference,
     StorageBackendType,
@@ -329,13 +329,17 @@ AuthProviderConfig = Annotated[
 class AuthenticationConfig(BaseModel):
     """Top-level authentication configuration."""
 
-    provider_config: AuthProviderConfig = Field(
-        ...,
-        description="Authentication provider configuration",
+    provider_config: AuthProviderConfig | None = Field(
+        default=None,
+        description="Authentication provider configuration (optional if only using endpoint_policy)",
+    )
+    endpoint_policy: list[EndpointAccessRule] = Field(
+        default=[],
+        description="Rules for determining access to API endpoints (infrastructure-level)",
     )
     access_policy: list[AccessRule] = Field(
         default=[],
-        description="Rules for determining access to resources",
+        description="Rules for determining access to resources (data-level)",
     )
 
 
