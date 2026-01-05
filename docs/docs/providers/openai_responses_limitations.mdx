@@ -15,13 +15,13 @@ Please open new issues in the [meta-llama/llama-stack](https://github.com/meta-l
 
 **Status:** Partial Implementation
 
-Both OpenAI and Llama Stack support a web-search built-in tool.  The [OpenAI documentation](https://platform.openai.com/docs/api-reference/responses/create) for web search tool in a Responses tool list says:
+**Issue:** https://github.com/llamastack/llama-stack/issues/4442
 
-> The type of the web search tool. One of `web_search` or `web_search_2025_08_26`.
+Llama Stack offers an OpenAI compatible Web Search tool. To have a feature complete implementation of Web Search that is compatible with what OpenAI's tool offers, the following features need to be implemented:
 
-Llama Stack now supports both `web_search` and `web_search_2025_08_26` types, matching OpenAI's API. For backward compatibility, Llama Stack also supports `web_search_preview` and `web_search_preview_2025_03_11` types.
-
-The OpenAI web search tool also has fields for `filters` and `user_location` which are not yet implemented in Llama Stack.  If feasible, it would be good to support these too.
+- [ ] Domain filtering: Restrict searching to a whitelisted subset of domains
+- [ ] User location: Refine search results based on geography by specifying an approximate user location using country, city, region, and/or timezone
+- [ ] Live internet access: Control whether the web search tool fetches live content or uses only cached/indexed results in the Responses API
 
 ---
 
@@ -228,6 +228,17 @@ Connectors are MCP servers maintained and managed by the Responses API provider.
 
 The `top_logprobs` parameter from OpenAI's Responses API extends the functionality obtained by including `message.output_text.logprobs` in the `include` parameter list (as discussed in the Include section above).
 It enables users to also get logprobs for alternative tokens.
+
+---
+
+### Web Search API Arguments
+
+**Status:** Merged [Planed 0.4.z]
+
+**Issue:** https://github.com/llamastack/llama-stack/issues/4102
+
+ Llama Stack supports `web_search`, `web_search_preview`, `web_search_preview_2025_03_1`, and now `web_search_2025_08_26` for
+ the built in web search tool.
 
 ---
 
