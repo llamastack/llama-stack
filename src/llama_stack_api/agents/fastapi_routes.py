@@ -12,12 +12,15 @@ FastAPI route decorators.
 
 import asyncio
 import json
+import logging
 from collections.abc import AsyncIterator
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 from llama_stack_api.common.responses import Order
 from llama_stack_api.openai_responses import (
@@ -39,6 +42,7 @@ from .models import (
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
     ListResponsesRequest,
+    ResponseItemInclude,
     RetrieveResponseRequest,
 )
 
@@ -62,10 +66,12 @@ async def sse_generator(event_gen):
         async for item in event_gen:
             yield create_sse_event(item)
     except asyncio.CancelledError:
+        logger.info("SSE generator cancelled")
         if hasattr(event_gen, "aclose"):
             await event_gen.aclose()
         raise  # Re-raise to maintain proper cancellation semantics
     except Exception as e:
+        logger.exception("Error in sse_generator")
         yield create_sse_event({"error": {"message": str(e)}})
 
 
@@ -87,7 +93,7 @@ async def get_list_response_input_items_request(
         Query(description="An item ID to list items before, used for pagination."),
     ] = None,
     include: Annotated[
-        list[str] | None,
+        list[ResponseItemInclude] | None,
         Query(description="Additional fields to include in the response."),
     ] = None,
     limit: Annotated[
@@ -147,7 +153,7 @@ def create_router(impl: Agents) -> APIRouter:
         try:
             return await impl.get_openai_response(request)
         except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from None
+            raise _http_exception_from_value_error(exc) from exc
 
     @router.post(
         "/responses",
@@ -171,7 +177,7 @@ def create_router(impl: Agents) -> APIRouter:
         try:
             result = await impl.create_openai_response(request)
         except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from None
+            raise _http_exception_from_value_error(exc) from exc
 
         # For streaming responses, wrap in StreamingResponse for HTTP requests.
         # The implementation is typed to return an `AsyncIterator` for streaming.
@@ -195,7 +201,7 @@ def create_router(impl: Agents) -> APIRouter:
         try:
             return await impl.list_openai_responses(request)
         except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from None
+            raise _http_exception_from_value_error(exc) from exc
 
     @router.get(
         "/responses/{response_id}/input_items",
@@ -209,7 +215,7 @@ def create_router(impl: Agents) -> APIRouter:
         try:
             return await impl.list_openai_response_input_items(request)
         except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from None
+            raise _http_exception_from_value_error(exc) from exc
 
     @router.delete(
         "/responses/{response_id}",
@@ -223,6 +229,6 @@ def create_router(impl: Agents) -> APIRouter:
         try:
             return await impl.delete_openai_response(request)
         except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from None
+            raise _http_exception_from_value_error(exc) from exc
 
     return router

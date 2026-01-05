@@ -4090,6 +4090,7 @@ components:
         type:
           type: string
           title: Type
+      additionalProperties: false
       type: object
       required:
       - type
@@ -8335,6 +8336,8 @@ components:
         temperature:
           anyOf:
           - type: number
+            maximum: 2.0
+            minimum: 0.0
           - type: 'null'
           description: Sampling temperature.
         text:
@@ -8413,6 +8416,7 @@ components:
         max_infer_iters:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Maximum number of inference iterations.
           default: 10
@@ -8430,6 +8434,7 @@ components:
         max_tool_calls:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Max number of total calls to built-in tools that can be processed in a response.
         metadata:
@@ -8439,6 +8444,7 @@ components:
             type: object
           - type: 'null'
           description: Dictionary of metadata key-value pairs to attach to the response.
+      additionalProperties: false
       type: object
       required:
       - input
@@ -10344,10 +10350,12 @@ components:
       title: VectorStoreSearchRequest
       type: object
     RetrieveResponseRequest:
+      additionalProperties: false
       description: Request model for retrieving a response.
       properties:
         response_id:
           description: The ID of the OpenAI response to retrieve.
+          minLength: 1
           title: Response Id
           type: string
       required:
@@ -10355,6 +10363,7 @@ components:
       title: RetrieveResponseRequest
       type: object
     ListResponsesRequest:
+      additionalProperties: false
       description: Request model for listing responses.
       properties:
         after:
@@ -10365,7 +10374,9 @@ components:
           nullable: true
         limit:
           anyOf:
-          - type: integer
+          - maximum: 100
+            minimum: 1
+            type: integer
           - type: 'null'
           default: 50
           description: The number of responses to return.
@@ -10386,10 +10397,12 @@ components:
       title: ListResponsesRequest
       type: object
     ListResponseInputItemsRequest:
+      additionalProperties: false
       description: Request model for listing input items of a response.
       properties:
         response_id:
           description: The ID of the response to retrieve input items for.
+          minLength: 1
           title: Response Id
           type: string
         after:
@@ -10407,14 +10420,16 @@ components:
         include:
           anyOf:
           - items:
-              type: string
+              $ref: '#/components/schemas/ResponseItemInclude'
             type: array
           - type: 'null'
           description: Additional fields to include in the response.
           nullable: true
         limit:
           anyOf:
-          - type: integer
+          - maximum: 100
+            minimum: 1
+            type: integer
           - type: 'null'
           default: 20
           description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.
@@ -10431,10 +10446,12 @@ components:
       title: ListResponseInputItemsRequest
       type: object
     DeleteResponseRequest:
+      additionalProperties: false
       description: Request model for deleting a response.
       properties:
         response_id:
           description: The ID of the OpenAI response to delete.
+          minLength: 1
           title: Response Id
           type: string
       required:
