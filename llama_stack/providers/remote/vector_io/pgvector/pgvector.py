@@ -336,7 +336,9 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:
-        log.info(f"Initializing PGVector memory adapter with config: {self.config}")
+        # Create a safe config representation with masked password for logging
+        safe_config = {**self.config.model_dump(exclude={"password"}), "password": "******"}
+        log.info(f"Initializing PGVector memory adapter with config: {safe_config}")
         self.kvstore = await kvstore_impl(self.config.persistence)
         await self.initialize_openai_vector_stores()
 
