@@ -12,7 +12,7 @@ FastAPI route decorators.
 
 import asyncio
 import json
-import logging
+import logging  # allow-direct-logging
 from collections.abc import AsyncIterator
 from typing import Annotated, Any
 
