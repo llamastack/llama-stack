@@ -171,7 +171,7 @@ class NeMoGuardrails:
             logger.info(f"Guardrails blocked: {response.get('rails_status', {})}")
             return RunShieldResponse(
                 violation=SafetyViolation(
-                    user_message="Sorry I cannot do this.",
+                    user_message=self.blocked_message,
                     violation_level=ViolationLevel.ERROR,
                     metadata=response.get("rails_status", {}),
                 )
@@ -203,7 +203,7 @@ class NeMoGuardrails:
                 )
                 return RunShieldResponse(
                     violation=SafetyViolation(
-                        user_message=error.get("message", "Content blocked by guardrails"),
+                        user_message=error.get("message", self.blocked_message),
                         violation_level=ViolationLevel.ERROR,
                         metadata={
                             "error_type": error_type,
@@ -223,7 +223,7 @@ class NeMoGuardrails:
             logger.info(f"Guardrails blocked (legacy format): {response.get('rails_status', {})}")
             return RunShieldResponse(
                 violation=SafetyViolation(
-                    user_message="Content blocked by guardrails",
+                    user_message=self.blocked_message,
                     violation_level=ViolationLevel.ERROR,
                     metadata=response.get("rails_status", {}),
                 )
@@ -241,7 +241,7 @@ class NeMoGuardrails:
                 if role == "exception":
                     return RunShieldResponse(
                         violation=SafetyViolation(
-                            user_message=msg.get("content", "Content blocked by guardrails"),
+                            user_message=msg.get("content", self.blocked_message),
                             violation_level=ViolationLevel.ERROR,
                             metadata={"exception_type": msg.get("type", "RailException")},
                         )

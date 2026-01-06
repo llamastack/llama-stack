@@ -269,7 +269,7 @@ async def test_run_shield_blocked_with_status(nvidia_adapter, mock_guardrails_po
 
     assert result.violation is not None
     assert isinstance(result, RunShieldResponse)
-    assert result.violation.user_message == "Content blocked by guardrails"
+    assert result.violation.user_message == "I'm sorry, I can't respond to that."
     assert result.violation.violation_level == ViolationLevel.ERROR
     assert result.violation.metadata == {"reason": "harmful_content"}
 
@@ -507,7 +507,7 @@ async def test_run_shield_microservice_blocked(nvidia_adapter_microservice, mock
 
     assert result.violation is not None
     assert isinstance(result, RunShieldResponse)
-    assert result.violation.user_message == "Sorry I cannot do this."
+    assert result.violation.user_message == "I'm sorry, I can't respond to that."
     assert result.violation.violation_level == ViolationLevel.ERROR
     assert result.violation.metadata == {"self check input": "blocked"}
 
