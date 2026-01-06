@@ -31,7 +31,7 @@ RUN set -eux; \
         dnf -y update && \
         dnf install -y iputils git net-tools wget \
             vim-minimal python3.12 python3.12-pip python3.12-wheel \
-            python3.12-setuptools python3.12-devel gcc gcc-c++ make && \
+            python3.12-setuptools python3.12-devel gcc gcc-c++ make libpq-devel && \
         ln -sf /usr/bin/pip3.12 /usr/local/bin/pip && \
         ln -sf /usr/bin/python3.12 /usr/local/bin/python && \
         dnf clean all; \
@@ -40,7 +40,7 @@ RUN set -eux; \
         apt-get install -y --no-install-recommends \
             iputils-ping net-tools iproute2 dnsutils telnet \
             curl wget git procps psmisc lsof traceroute bubblewrap \
-            gcc g++ && \
+            gcc g++ libpq-dev && \
         rm -rf /var/lib/apt/lists/*; \
     else \
         echo "Unsupported base image: expected dnf or apt-get" >&2; \
