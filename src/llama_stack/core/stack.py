@@ -15,6 +15,7 @@ from typing import Any, get_type_hints
 import yaml
 from pydantic import BaseModel
 
+from llama_stack.core.admin import AdminImpl, AdminImplConfig
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
@@ -453,8 +454,7 @@ def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
 
 
 def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> None:
-    """Add internal implementations (inspect and providers) to the implementations dictionary.
-
+    """Add internal implementations (inspect, providers, and admin) to the implementations dictionary.
     Args:
         impls: Dictionary of API implementations
         run_config: Stack run configuration
@@ -470,6 +470,12 @@ def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> 
         deps=impls,
     )
     impls[Api.providers] = providers_impl
+
+    admin_impl = AdminImpl(
+        AdminImplConfig(config=config),
+        deps=impls,
+    )
+    impls[Api.admin] = admin_impl
 
     prompts_impl = PromptServiceImpl(
         PromptServiceConfig(config=config),

@@ -44,6 +44,11 @@ from llama_stack_api.batches.models import (
     ListBatchesRequest,
     RetrieveBatchRequest,
 )
+from llama_stack_api.files.models import (
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+    UploadFileRequest,
+)
 
 from .config import ReferenceBatchesImplConfig
 
@@ -349,7 +354,7 @@ class ReferenceBatchesImpl(Batches):
         requests: list[BatchRequest] = []
         errors: list[BatchError] = []
         try:
-            await self.files_api.openai_retrieve_file(batch.input_file_id)
+            await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=batch.input_file_id))
         except Exception:
             errors.append(
                 BatchError(
@@ -362,7 +367,9 @@ class ReferenceBatchesImpl(Batches):
             return errors, requests
 
         # TODO(SECURITY): do something about large files
-        file_content_response = await self.files_api.openai_retrieve_file_content(batch.input_file_id)
+        file_content_response = await self.files_api.openai_retrieve_file_content(
+            RetrieveFileContentRequest(file_id=batch.input_file_id)
+        )
         # Handle both bytes and memoryview types - convert to bytes unconditionally
         # (bytes(x) returns x if already bytes, creates new bytes from memoryview otherwise)
         body_bytes = bytes(file_content_response.body)
@@ -683,5 +690,8 @@ class ReferenceBatchesImpl(Batches):
 
         with AsyncBytesIO("\n".join(output_lines).encode("utf-8")) as file_buffer:
             file_buffer.filename = f"{batch_id}_{file_type}.jsonl"
-            uploaded_file = await self.files_api.openai_upload_file(file=file_buffer, purpose=OpenAIFilePurpose.BATCH)
+            uploaded_file = await self.files_api.openai_upload_file(
+                request=UploadFileRequest(purpose=OpenAIFilePurpose.BATCH),
+                file=file_buffer,
+            )
             return uploaded_file.id

@@ -634,6 +634,163 @@ paths:
             schema:
               $ref: '#/components/schemas/SupervisedFineTuneRequest'
         required: true
+  /v1alpha/admin/providers:
+    get:
+      responses:
+        '200':
+          description: A list of provider information objects.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListProvidersResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Admin
+      summary: List all available providers
+      description: List all available providers with their configuration and health status.
+      operationId: list_providers_v1alpha_admin_providers_get
+  /v1alpha/admin/providers/{provider_id}:
+    get:
+      responses:
+        '200':
+          description: The provider information object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProviderInfo'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+        '404':
+          description: Provider not found.
+      tags:
+      - Admin
+      summary: Get provider details
+      description: Get detailed information about a specific provider.
+      operationId: inspect_provider_v1alpha_admin_providers__provider_id__get
+      parameters:
+      - name: provider_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the provider to inspect.
+          title: Provider Id
+        description: The ID of the provider to inspect.
+  /v1alpha/admin/inspect/routes:
+    get:
+      responses:
+        '200':
+          description: A list of route information objects.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListRoutesResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Admin
+      summary: List all available API routes
+      description: List all available API routes with their methods and implementing providers.
+      operationId: list_routes_v1alpha_admin_inspect_routes_get
+      parameters:
+      - name: api_filter
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - enum:
+            - v1
+            - v1alpha
+            - v1beta
+            - deprecated
+            type: string
+          - type: 'null'
+          description: Filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
+          title: Api Filter
+        description: Filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
+  /v1alpha/admin/health:
+    get:
+      responses:
+        '200':
+          description: Health information object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthInfo'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Admin
+      summary: Get service health status
+      description: Get the current health status of the service.
+      operationId: health_v1alpha_admin_health_get
+  /v1alpha/admin/version:
+    get:
+      responses:
+        '200':
+          description: Version information object.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VersionInfo'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Admin
+      summary: Get service version
+      description: Get the version of the service.
+      operationId: version_v1alpha_admin_version_get
   /v1alpha/connectors/{connector_id}:
     get:
       responses:
@@ -993,6 +1150,13 @@ components:
       - object
       - status
       title: Batch
+    Order:
+      type: string
+      enum:
+      - asc
+      - desc
+      title: Order
+      description: Sort order for paginated responses.
     ListOpenAIChatCompletionResponse:
       properties:
         data:
@@ -2879,19 +3043,24 @@ components:
             $ref: '#/components/schemas/OpenAIFileObject'
           type: array
           title: Data
+          description: The list of files.
         has_more:
           type: boolean
           title: Has More
+          description: Whether there are more files available beyond this page.
         first_id:
           type: string
           title: First Id
+          description: The ID of the first file in the list for pagination.
         last_id:
           type: string
           title: Last Id
+          description: The ID of the last file in the list for pagination.
         object:
           type: string
           const: list
           title: Object
+          description: The object type, which is always 'list'.
           default: list
       type: object
       required:
@@ -2907,24 +3076,31 @@ components:
           type: string
           const: file
           title: Object
+          description: The object type, which is always 'file'.
           default: file
         id:
           type: string
           title: Id
+          description: The file identifier, which can be referenced in the API endpoints.
         bytes:
           type: integer
           title: Bytes
+          description: The size of the file, in bytes.
         created_at:
           type: integer
           title: Created At
+          description: The Unix timestamp (in seconds) for when the file was created.
         expires_at:
           type: integer
           title: Expires At
+          description: The Unix timestamp (in seconds) for when the file expires.
         filename:
           type: string
           title: Filename
+          description: The name of the file.
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the file.
       type: object
       required:
       - id
@@ -2941,35 +3117,35 @@ components:
           type: string
           const: created_at
           title: Anchor
+          description: The anchor point for expiration, must be 'created_at'.
         seconds:
           type: integer
           maximum: 2592000.0
           minimum: 3600.0
           title: Seconds
+          description: Seconds until expiration, between 3600 (1 hour) and 2592000 (30 days).
       type: object
       required:
       - anchor
       - seconds
       title: ExpiresAfter
-      description: |-
-        Control expiration of uploaded files.
-
-        Params:
-         - anchor, must be "created_at"
-         - seconds, must be int between 3600 and 2592000 (1 hour to 30 days)
+      description: Control expiration of uploaded files.
     OpenAIFileDeleteResponse:
       properties:
         id:
           type: string
           title: Id
+          description: The file identifier that was deleted.
         object:
           type: string
           const: file
           title: Object
+          description: The object type, which is always 'file'.
           default: file
         deleted:
           type: boolean
           title: Deleted
+          description: Whether the file was successfully deleted.
       type: object
       required:
       - id
@@ -5908,7 +6084,7 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content that can be inserted into a vector database.
+      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
@@ -5946,23 +6122,12 @@ components:
           additionalProperties: true
           title: Metadata
           type: object
-        embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-          nullable: true
         chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          nullable: true
-          title: ChunkMetadata
+          $ref: '#/components/schemas/ChunkMetadata'
       required:
       - content
       - chunk_id
+      - chunk_metadata
       title: Chunk
       type: object
     ChunkMetadata:
@@ -5995,14 +6160,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-        chunk_embedding_model:
-          anyOf:
-          - type: string
-          - type: 'null'
-        chunk_embedding_dimension:
-          anyOf:
-          - type: integer
-          - type: 'null'
         content_token_count:
           anyOf:
           - type: integer
@@ -6022,7 +6179,7 @@ components:
       properties:
         chunks:
           items:
-            $ref: '#/components/schemas/Chunk-Output'
+            $ref: '#/components/schemas/EmbeddedChunk-Output'
           type: array
           title: Chunks
         scores:
@@ -7772,62 +7929,6 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
-    Chunk-Output:
-      properties:
-        content:
-          anyOf:
-          - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Output'
-              title: ImageContentItem-Output
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Output'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Output | TextContentItem
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Output'
-                title: ImageContentItem-Output
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Output'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Output | TextContentItem
-            type: array
-            title: list[ImageContentItem-Output | TextContentItem]
-          title: string | list[ImageContentItem-Output | TextContentItem]
-        chunk_id:
-          type: string
-          title: Chunk Id
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-        embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-        chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          title: ChunkMetadata
-      type: object
-      required:
-      - content
-      - chunk_id
-      title: Chunk
-      description: A chunk of content that can be inserted into a vector database.
     Connector:
       properties:
         identifier:
@@ -7896,6 +7997,69 @@ components:
       - eval/messages-answer
       title: DatasetPurpose
       description: Purpose of the dataset. Each purpose has a required input data schema.
+    EmbeddedChunk-Output:
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+              title: ImageContentItem-Output
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Output | TextContentItem
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+                title: ImageContentItem-Output
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Output | TextContentItem
+            type: array
+            title: list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem-Output | TextContentItem]
+        chunk_id:
+          type: string
+          title: Chunk Id
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+        embedding:
+          items:
+            type: number
+          type: array
+          title: Embedding
+        embedding_model:
+          type: string
+          title: Embedding Model
+        embedding_dimension:
+          type: integer
+          title: Embedding Dimension
+      type: object
+      required:
+      - content
+      - chunk_id
+      - chunk_metadata
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
     Errors:
       properties:
         data:
@@ -8690,26 +8854,64 @@ components:
       - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
         title: OpenAIResponseContentPartReasoningText
       title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
-    MetricInResponse:
-      description: A metric value included in API responses.
+    ListBenchmarksRequest:
+      description: Request model for listing benchmarks.
+      properties: {}
+      title: ListBenchmarksRequest
+      type: object
+    GetBenchmarkRequest:
+      description: Request model for getting a benchmark.
       properties:
-        metric:
-          title: Metric
+        benchmark_id:
+          description: The ID of the benchmark to get.
+          title: Benchmark Id
           type: string
-        value:
-          anyOf:
-          - type: integer
-          - type: number
-          title: integer | number
-        unit:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
       required:
-      - metric
-      - value
-      title: MetricInResponse
+      - benchmark_id
+      title: GetBenchmarkRequest
+      type: object
+    UnregisterBenchmarkRequest:
+      description: Request model for unregistering a benchmark.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark to unregister.
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: UnregisterBenchmarkRequest
+      type: object
+    GetDatasetRequest:
+      description: Request model for getting a dataset by ID.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: GetDatasetRequest
+      type: object
+    UnregisterDatasetRequest:
+      description: Request model for unregistering a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: UnregisterDatasetRequest
+      type: object
+    DialogType:
+      description: Parameter type for dialog data with semantic output labels.
+      properties:
+        type:
+          const: dialog
+          default: dialog
+          title: Type
+          type: string
+      title: DialogType
       type: object
     TextDelta:
       description: A text content delta for streaming responses.
@@ -8742,388 +8944,6 @@ components:
       - image
       title: ImageDelta
       type: object
-    Fp8QuantizationConfig:
-      description: Configuration for 8-bit floating point quantization.
-      properties:
-        type:
-          const: fp8_mixed
-          default: fp8_mixed
-          title: Type
-          type: string
-      title: Fp8QuantizationConfig
-      type: object
-    Bf16QuantizationConfig:
-      description: Configuration for BFloat16 precision (typically no quantization).
-      properties:
-        type:
-          const: bf16
-          default: bf16
-          title: Type
-          type: string
-      title: Bf16QuantizationConfig
-      type: object
-    Int4QuantizationConfig:
-      description: Configuration for 4-bit integer quantization.
-      properties:
-        type:
-          const: int4_mixed
-          default: int4_mixed
-          title: Type
-          type: string
-        scheme:
-          anyOf:
-          - type: string
-          - type: 'null'
-          default: int4_weight_int8_dynamic_activation
-      title: Int4QuantizationConfig
-      type: object
-    UserMessage:
-      description: A message from the user in a chat conversation.
-      properties:
-        role:
-          const: user
-          default: user
-          title: Role
-          type: string
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
-        context:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          - type: 'null'
-          title: string | list[ImageContentItem | TextContentItem]
-          nullable: true
-      required:
-      - content
-      title: UserMessage
-      type: object
-    ToolResponseMessage:
-      description: A message representing the result of a tool invocation.
-      properties:
-        role:
-          const: tool
-          default: tool
-          title: Role
-          type: string
-        call_id:
-          title: Call Id
-          type: string
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
-      required:
-      - call_id
-      - content
-      title: ToolResponseMessage
-      type: object
-    TokenLogProbs:
-      description: Log probabilities for generated tokens.
-      properties:
-        logprobs_by_token:
-          additionalProperties:
-            type: number
-          title: Logprobs By Token
-          type: object
-      required:
-      - logprobs_by_token
-      title: TokenLogProbs
-      type: object
-    EmbeddingsResponse:
-      description: Response containing generated embeddings.
-      properties:
-        embeddings:
-          items:
-            items:
-              type: number
-            type: array
-          title: Embeddings
-          type: array
-      required:
-      - embeddings
-      title: EmbeddingsResponse
-      type: object
-    OpenAICompletionLogprobs:
-      description: |-
-        The log probabilities for the tokens in the message from an OpenAI-compatible completion response.
-
-        :text_offset: (Optional) The offset of the token in the text
-        :token_logprobs: (Optional) The log probabilities for the tokens
-        :tokens: (Optional) The tokens
-        :top_logprobs: (Optional) The top log probabilities for the tokens
-      properties:
-        text_offset:
-          anyOf:
-          - items:
-              type: integer
-            type: array
-          - type: 'null'
-          nullable: true
-        token_logprobs:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-          nullable: true
-        tokens:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          nullable: true
-        top_logprobs:
-          anyOf:
-          - items:
-              additionalProperties:
-                type: number
-              type: object
-            type: array
-          - type: 'null'
-          nullable: true
-      title: OpenAICompletionLogprobs
-      type: object
-    VectorStoreCreateRequest:
-      description: Request to create a vector store.
-      properties:
-        name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        file_ids:
-          items:
-            type: string
-          title: File Ids
-          type: array
-        expires_after:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        chunking_strategy:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        metadata:
-          additionalProperties: true
-          title: Metadata
-          type: object
-      title: VectorStoreCreateRequest
-      type: object
-    VectorStoreModifyRequest:
-      description: Request to modify a vector store.
-      properties:
-        name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        expires_after:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-      title: VectorStoreModifyRequest
-      type: object
-    VectorStoreSearchRequest:
-      description: Request to search a vector store.
-      properties:
-        query:
-          anyOf:
-          - type: string
-          - items:
-              type: string
-            type: array
-            title: list[string]
-          title: string | list[string]
-        filters:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        max_num_results:
-          default: 10
-          title: Max Num Results
-          type: integer
-        ranking_options:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        rewrite_query:
-          default: false
-          title: Rewrite Query
-          type: boolean
-      required:
-      - query
-      title: VectorStoreSearchRequest
-      type: object
-    ListBatchesRequest:
-      description: Request model for listing batches.
-      properties:
-        after:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Optional cursor for pagination. Returns batches after this ID.
-          nullable: true
-        limit:
-          default: 20
-          description: Maximum number of batches to return. Defaults to 20.
-          title: Limit
-          type: integer
-      title: ListBatchesRequest
-      type: object
-    RetrieveBatchRequest:
-      description: Request model for retrieving a batch.
-      properties:
-        batch_id:
-          description: The ID of the batch to retrieve.
-          title: Batch Id
-          type: string
-      required:
-      - batch_id
-      title: RetrieveBatchRequest
-      type: object
-    CancelBatchRequest:
-      description: Request model for canceling a batch.
-      properties:
-        batch_id:
-          description: The ID of the batch to cancel.
-          title: Batch Id
-          type: string
-      required:
-      - batch_id
-      title: CancelBatchRequest
-      type: object
-    ListBenchmarksRequest:
-      description: Request model for listing benchmarks.
-      properties: {}
-      title: ListBenchmarksRequest
-      type: object
-    GetBenchmarkRequest:
-      description: Request model for getting a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to get.
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: GetBenchmarkRequest
-      type: object
-    UnregisterBenchmarkRequest:
-      description: Request model for unregistering a benchmark.
-      properties:
-        benchmark_id:
-          description: The ID of the benchmark to unregister.
-          title: Benchmark Id
-          type: string
-      required:
-      - benchmark_id
-      title: UnregisterBenchmarkRequest
-      type: object
-    DialogType:
-      description: Parameter type for dialog data with semantic output labels.
-      properties:
-        type:
-          const: dialog
-          default: dialog
-          title: Type
-          type: string
-      title: DialogType
-      type: object
     ToolGroupInput:
       description: Input data for registering a tool group.
       properties:
@@ -9151,142 +8971,6 @@ components:
       - provider_id
       title: ToolGroupInput
       type: object
-    ConnectorInput:
-      description: Input for creating a connector
-      properties:
-        connector_type:
-          $ref: '#/components/schemas/ConnectorType'
-          default: mcp
-        connector_id:
-          description: Identifier for the connector
-          title: Connector Id
-          type: string
-        url:
-          description: URL of the connector
-          title: Url
-          type: string
-        server_label:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Label of the server
-          nullable: true
-        type:
-          const: connector
-          default: connector
-          title: Type
-          type: string
-      required:
-      - connector_id
-      - url
-      title: ConnectorInput
-      type: object
-    ConversationMessage:
-      description: OpenAI-compatible message item for conversations.
-      properties:
-        id:
-          description: unique identifier for this message
-          title: Id
-          type: string
-        content:
-          description: message content
-          items:
-            additionalProperties: true
-            type: object
-          title: Content
-          type: array
-        role:
-          description: message role
-          title: Role
-          type: string
-        status:
-          description: message status
-          title: Status
-          type: string
-        type:
-          const: message
-          default: message
-          title: Type
-          type: string
-        object:
-          const: message
-          default: message
-          title: Object
-          type: string
-      required:
-      - id
-      - content
-      - role
-      - status
-      title: ConversationMessage
-      type: object
-    ConversationItemCreateRequest:
-      description: Request body for creating conversation items.
-      properties:
-        items:
-          description: Items to include in the conversation context. You may add up to 20 items at a time.
-          items:
-            discriminator:
-              mapping:
-                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                message: '#/components/schemas/OpenAIResponseMessage'
-                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/OpenAIResponseMessage'
-              title: OpenAIResponseMessage
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
-            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
-            title: OpenAIResponseMessage | ... (9 variants)
-          maxItems: 20
-          title: Items
-          type: array
-      required:
-      - items
-      title: ConversationItemCreateRequest
-      type: object
-    GetDatasetRequest:
-      description: Request model for getting a dataset by ID.
-      properties:
-        dataset_id:
-          description: The ID of the dataset to get.
-          title: Dataset Id
-          type: string
-      required:
-      - dataset_id
-      title: GetDatasetRequest
-      type: object
-    UnregisterDatasetRequest:
-      description: Request model for unregistering a dataset.
-      properties:
-        dataset_id:
-          description: The ID of the dataset to unregister.
-          title: Dataset Id
-          type: string
-      required:
-      - dataset_id
-      title: UnregisterDatasetRequest
-      type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
       enum:
@@ -9309,10 +8993,12 @@ components:
       - benchmarks
       - tool_groups
       - files
+      - file_processors
       - prompts
       - conversations
       - connectors
       - inspect
+      - admin
       title: Api
       type: string
     ProviderSpec:
@@ -9567,6 +9253,683 @@ components:
       - adapter_type
       title: RemoteProviderSpec
       type: object
+    ListRoutesRequest:
+      description: Request to list API routes.
+      properties:
+        api_filter:
+          anyOf:
+          - enum:
+            - v1
+            - v1alpha
+            - v1beta
+            - deprecated
+            type: string
+          - type: 'null'
+          description: Filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
+          nullable: true
+      title: ListRoutesRequest
+      type: object
+    InspectProviderRequest:
+      description: Request to inspect a specific provider.
+      properties:
+        provider_id:
+          description: The ID of the provider to inspect.
+          title: Provider Id
+          type: string
+      required:
+      - provider_id
+      title: InspectProviderRequest
+      type: object
+    MetricInResponse:
+      description: A metric value included in API responses.
+      properties:
+        metric:
+          title: Metric
+          type: string
+        value:
+          anyOf:
+          - type: integer
+          - type: number
+          title: integer | number
+        unit:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+      required:
+      - metric
+      - value
+      title: MetricInResponse
+      type: object
+    Fp8QuantizationConfig:
+      description: Configuration for 8-bit floating point quantization.
+      properties:
+        type:
+          const: fp8_mixed
+          default: fp8_mixed
+          title: Type
+          type: string
+      title: Fp8QuantizationConfig
+      type: object
+    Bf16QuantizationConfig:
+      description: Configuration for BFloat16 precision (typically no quantization).
+      properties:
+        type:
+          const: bf16
+          default: bf16
+          title: Type
+          type: string
+      title: Bf16QuantizationConfig
+      type: object
+    Int4QuantizationConfig:
+      description: Configuration for 4-bit integer quantization.
+      properties:
+        type:
+          const: int4_mixed
+          default: int4_mixed
+          title: Type
+          type: string
+        scheme:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: int4_weight_int8_dynamic_activation
+      title: Int4QuantizationConfig
+      type: object
+    UserMessage:
+      description: A message from the user in a chat conversation.
+      properties:
+        role:
+          const: user
+          default: user
+          title: Role
+          type: string
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+        context:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          - type: 'null'
+          title: string | list[ImageContentItem | TextContentItem]
+          nullable: true
+      required:
+      - content
+      title: UserMessage
+      type: object
+    ToolResponseMessage:
+      description: A message representing the result of a tool invocation.
+      properties:
+        role:
+          const: tool
+          default: tool
+          title: Role
+          type: string
+        call_id:
+          title: Call Id
+          type: string
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+      required:
+      - call_id
+      - content
+      title: ToolResponseMessage
+      type: object
+    TokenLogProbs:
+      description: Log probabilities for generated tokens.
+      properties:
+        logprobs_by_token:
+          additionalProperties:
+            type: number
+          title: Logprobs By Token
+          type: object
+      required:
+      - logprobs_by_token
+      title: TokenLogProbs
+      type: object
+    EmbeddingsResponse:
+      description: Response containing generated embeddings.
+      properties:
+        embeddings:
+          items:
+            items:
+              type: number
+            type: array
+          title: Embeddings
+          type: array
+      required:
+      - embeddings
+      title: EmbeddingsResponse
+      type: object
+    OpenAICompletionLogprobs:
+      description: |-
+        The log probabilities for the tokens in the message from an OpenAI-compatible completion response.
+
+        :text_offset: (Optional) The offset of the token in the text
+        :token_logprobs: (Optional) The log probabilities for the tokens
+        :tokens: (Optional) The tokens
+        :top_logprobs: (Optional) The top log probabilities for the tokens
+      properties:
+        text_offset:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          nullable: true
+        token_logprobs:
+          anyOf:
+          - items:
+              type: number
+            type: array
+          - type: 'null'
+          nullable: true
+        tokens:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          nullable: true
+        top_logprobs:
+          anyOf:
+          - items:
+              additionalProperties:
+                type: number
+              type: object
+            type: array
+          - type: 'null'
+          nullable: true
+      title: OpenAICompletionLogprobs
+      type: object
+    EmbeddedChunk:
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+        chunk_id:
+          title: Chunk Id
+          type: string
+        metadata:
+          additionalProperties: true
+          title: Metadata
+          type: object
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+        embedding:
+          items:
+            type: number
+          title: Embedding
+          type: array
+        embedding_model:
+          title: Embedding Model
+          type: string
+        embedding_dimension:
+          title: Embedding Dimension
+          type: integer
+      required:
+      - content
+      - chunk_id
+      - chunk_metadata
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      type: object
+    VectorStoreCreateRequest:
+      description: Request to create a vector store.
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        file_ids:
+          items:
+            type: string
+          title: File Ids
+          type: array
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        chunking_strategy:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        metadata:
+          additionalProperties: true
+          title: Metadata
+          type: object
+      title: VectorStoreCreateRequest
+      type: object
+    VectorStoreModifyRequest:
+      description: Request to modify a vector store.
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+      title: VectorStoreModifyRequest
+      type: object
+    VectorStoreSearchRequest:
+      description: Request to search a vector store.
+      properties:
+        query:
+          anyOf:
+          - type: string
+          - items:
+              type: string
+            type: array
+            title: list[string]
+          title: string | list[string]
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        max_num_results:
+          default: 10
+          title: Max Num Results
+          type: integer
+        ranking_options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        rewrite_query:
+          default: false
+          title: Rewrite Query
+          type: boolean
+      required:
+      - query
+      title: VectorStoreSearchRequest
+      type: object
+    ListBatchesRequest:
+      description: Request model for listing batches.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional cursor for pagination. Returns batches after this ID.
+          nullable: true
+        limit:
+          default: 20
+          description: Maximum number of batches to return. Defaults to 20.
+          title: Limit
+          type: integer
+      title: ListBatchesRequest
+      type: object
+    RetrieveBatchRequest:
+      description: Request model for retrieving a batch.
+      properties:
+        batch_id:
+          description: The ID of the batch to retrieve.
+          title: Batch Id
+          type: string
+      required:
+      - batch_id
+      title: RetrieveBatchRequest
+      type: object
+    CancelBatchRequest:
+      description: Request model for canceling a batch.
+      properties:
+        batch_id:
+          description: The ID of the batch to cancel.
+          title: Batch Id
+          type: string
+      required:
+      - batch_id
+      title: CancelBatchRequest
+      type: object
+    ConnectorInput:
+      description: Input for creating a connector
+      properties:
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+        url:
+          description: URL of the connector
+          title: Url
+          type: string
+        server_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Label of the server
+          nullable: true
+        type:
+          const: connector
+          default: connector
+          title: Type
+          type: string
+      required:
+      - connector_id
+      - url
+      title: ConnectorInput
+      type: object
+    ConversationMessage:
+      description: OpenAI-compatible message item for conversations.
+      properties:
+        id:
+          description: unique identifier for this message
+          title: Id
+          type: string
+        content:
+          description: message content
+          items:
+            additionalProperties: true
+            type: object
+          title: Content
+          type: array
+        role:
+          description: message role
+          title: Role
+          type: string
+        status:
+          description: message status
+          title: Status
+          type: string
+        type:
+          const: message
+          default: message
+          title: Type
+          type: string
+        object:
+          const: message
+          default: message
+          title: Object
+          type: string
+      required:
+      - id
+      - content
+      - role
+      - status
+      title: ConversationMessage
+      type: object
+    ConversationItemCreateRequest:
+      description: Request body for creating conversation items.
+      properties:
+        items:
+          description: Items to include in the conversation context. You may add up to 20 items at a time.
+          items:
+            discriminator:
+              mapping:
+                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                message: '#/components/schemas/OpenAIResponseMessage'
+                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseMessage'
+              title: OpenAIResponseMessage
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              title: OpenAIResponseOutputMessageWebSearchToolCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+              title: OpenAIResponseOutputMessageFileSearchToolCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+              title: OpenAIResponseOutputMessageFunctionToolCall
+            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+              title: OpenAIResponseInputFunctionToolCallOutput
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+              title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+              title: OpenAIResponseMCPApprovalResponse
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+              title: OpenAIResponseOutputMessageMCPCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              title: OpenAIResponseOutputMessageMCPListTools
+            title: OpenAIResponseMessage | ... (9 variants)
+          maxItems: 20
+          title: Items
+          type: array
+      required:
+      - items
+      title: ConversationItemCreateRequest
+      type: object
+    ProcessFileResponse:
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
+      properties:
+        chunks:
+          description: Processed chunks from the file. Always returns at least one chunk.
+          items:
+            $ref: '#/components/schemas/Chunk'
+          title: Chunks
+          type: array
+        metadata:
+          additionalProperties: true
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+          title: Metadata
+          type: object
+      required:
+      - chunks
+      - metadata
+      title: ProcessFileResponse
+      type: object
+    ListFilesRequest:
+      description: Request model for listing files.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: A cursor for pagination. Returns files after this ID.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 10000
+          description: Maximum number of files to return (1-10,000).
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: Sort order by created_at timestamp ('asc' or 'desc').
+          title: Order
+        purpose:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIFilePurpose'
+            title: OpenAIFilePurpose
+          - type: 'null'
+          description: Filter files by purpose.
+          nullable: true
+          title: OpenAIFilePurpose
+      title: ListFilesRequest
+      type: object
+    RetrieveFileRequest:
+      description: Request model for retrieving a file.
+      properties:
+        file_id:
+          description: The ID of the file to retrieve.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: RetrieveFileRequest
+      type: object
+    DeleteFileRequest:
+      description: Request model for deleting a file.
+      properties:
+        file_id:
+          description: The ID of the file to delete.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: DeleteFileRequest
+      type: object
+    RetrieveFileContentRequest:
+      description: Request model for retrieving file content.
+      properties:
+        file_id:
+          description: The ID of the file to retrieve content from.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: RetrieveFileContentRequest
+      type: object
+    UploadFileRequest:
+      description: Request model for uploading a file.
+      properties:
+        purpose:
+          $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the uploaded file.
+        expires_after:
+          anyOf:
+          - $ref: '#/components/schemas/ExpiresAfter'
+            title: ExpiresAfter
+          - type: 'null'
+          description: Optional expiration settings for the file.
+          nullable: true
+          title: ExpiresAfter
+      required:
+      - purpose
+      title: UploadFileRequest
+      type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.
       properties:
@@ -9631,17 +9994,6 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
-      type: object
-    InspectProviderRequest:
-      description: Request model for inspecting a provider by ID.
-      properties:
-        provider_id:
-          description: The ID of the provider to inspect.
-          title: Provider Id
-          type: string
-      required:
-      - provider_id
-      title: InspectProviderRequest
       type: object
   responses:
     BadRequest400:

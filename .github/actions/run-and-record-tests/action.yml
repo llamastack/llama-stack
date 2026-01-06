@@ -24,6 +24,14 @@ inputs:
     description: 'Regex pattern to pass to pytest -k'
     required: false
     default: ''
+  target-branch:
+    description: 'Target branch for recording commits (for PRs, use the PR head branch)'
+    required: false
+    default: ''
+  is-fork-pr:
+    description: 'Whether this is a fork PR (recordings cannot be pushed to forks)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -66,22 +74,48 @@ runs:
       shell: bash
       run: |
         echo "Checking for recording changes"
-        git status --porcelain tests/integration/
+        git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/
 
-        if [[ -n $(git status --porcelain tests/integration/) ]]; then
-          echo "New recordings detected, committing and pushing"
-          git add tests/integration/
+        if [[ -n $(git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/) ]]; then
+          echo "New recordings detected"
 
-          git commit -m "Recordings update from CI (setup: ${{ inputs.setup }}, suite: ${{ inputs.suite }})"
+          # Determine target branch: use target-branch input if provided, otherwise use current branch
+          TARGET_BRANCH="${{ inputs.target-branch }}"
+          if [ -z "$TARGET_BRANCH" ]; then
+            TARGET_BRANCH="${{ github.ref_name }}"
+          fi
+          echo "Target branch: $TARGET_BRANCH"
 
-          git fetch origin ${{ github.ref_name }}
-          git rebase origin/${{ github.ref_name }}
-          echo "Rebased successfully"
-          git push origin HEAD:${{ github.ref_name }}
-          echo "Pushed successfully"
+          # Check if this is a fork PR
+          if [ "${{ inputs.is-fork-pr }}" = "true" ]; then
+            echo "::warning::This is a fork PR. Recordings were updated locally but cannot be pushed to the fork."
+            echo "::warning::Please download the workflow artifacts and commit the recordings manually."
+          else
+            echo "Committing and pushing recordings to branch: $TARGET_BRANCH"
+            git add tests/integration/recordings/ tests/integration/*/recordings/
+
+            git commit -m "Recordings update from CI (setup: ${{ inputs.setup }}, suite: ${{ inputs.suite }})"
+
+            git fetch origin "$TARGET_BRANCH"
+            git rebase "origin/$TARGET_BRANCH"
+            echo "Rebased successfully"
+            git push origin "HEAD:$TARGET_BRANCH"
+            echo "Pushed successfully to $TARGET_BRANCH"
+          fi
         else
           echo "No recording changes"
         fi
+
+    - name: Upload recordings (for fork PRs)
+      if: ${{ inputs.is-fork-pr == 'true' && (inputs.inference-mode == 'record' || inputs.inference-mode == 'record-if-missing') }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: recordings-${{ github.run_id }}-${{ github.run_attempt || '1' }}-${{ strategy.job-index || github.job }}
+        path: |
+          tests/integration/recordings/
+          tests/integration/*/recordings/
+        retention-days: 7
+        if-no-files-found: ignore
 
     - name: Write docker logs to file
       if: ${{ always() }}

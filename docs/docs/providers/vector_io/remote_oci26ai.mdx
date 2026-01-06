@@ -1,0 +1,120 @@
+---
+description: |
+  [Oracle 26ai](https://docs.oracle.com/en/database/oracle/oracle-database/23/ovdci/overview.html) 
+  is a remote vector database provider for Llama Stack. It allows you to store and query vectors directly 
+  in an Oracle 26ai database.
+
+  ## Features
+
+  - Easy to use
+  - Fully integrated with Llama Stack
+  - Supports vector search, keyword search, and hybrid search
+
+  ## Usage
+
+  To use Oracle 26ai in your Llama Stack project, follow these steps:
+
+  1. Install the necessary dependencies.
+  2. Configure your Llama Stack project to use Oracle 26ai.
+  3. Start storing and querying vectors.
+
+  ## Installation
+
+  You can install the Oracle 26ai client using pip:
+
+  ```bash
+  pip install oracledb       
+  ```
+
+  ## Configuration
+
+  ```yaml
+  vector_io:
+    - provider_id: oci26ai
+      provider_type: remote::oci
+      config:
+        user: "${env.OCI26AI_USER}"
+        uri: "${env.OCI26AI_ENDPOINT}"
+        token: "${env.OCI26AI_TOKEN}"
+  ```
+
+  ## Documentation
+  See the [Oracle 26ai documentation](https://docs.oracle.com/en/database/oracle/oracle-database/23/ovdci/overview.html) 
+  for more details about Oracle 26ai in general.
+sidebar_label: Remote - Oci26Ai
+title: remote::oci26ai
+---
+
+# remote::oci
+
+## Description
+
+
+[Oracle 26ai](https://docs.oracle.com/en/database/oracle/oracle-database/23/ovdci/overview.html) 
+is a remote vector database provider for Llama Stack. It allows you to store and query vectors directly 
+in an Oracle 26ai database.
+
+## Features
+
+- Easy to use
+- Fully integrated with Llama Stack
+- Supports vector search, keyword search, and hybrid search
+
+## Usage
+
+To use Oracle 26ai in your Llama Stack project, follow these steps:
+
+1. Install the necessary dependencies.
+2. Configure your Llama Stack project to use Oracle 26ai.
+3. Start storing and querying vectors.
+
+## Installation
+
+You can install the Oracle 26ai client using pip:
+
+```bash
+pip install oracledb       
+```
+
+## Configuration
+
+```yaml
+vector_io:
+  - provider_id: oci26ai
+    provider_type: remote::oci26ai
+    config:
+      user: "${env.OCI26AI_USER}"
+      uri: "${env.OCI26AI_ENDPOINT}"
+      token: "${env.OCI26AI_TOKEN}"
+```
+
+## Documentation
+See the [Oracle 26ai documentation](https://docs.oracle.com/en/database/oracle/oracle-database/23/ovdci/overview.html) 
+for more details about Oracle 26ai in general.
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `uri` | `str` | No |  | The URI of the OCI26ai server |
+| `username` | `str` | No |  | The username for the OCI26ai server |
+| `password` | `str \| None` | No |  | The password for the OCI26ai server |
+| `consistency_level` | `str` | No | Strong | The consistency level of the OCI26ai server |
+| `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
+| `config` | `dict` | No | `{}` | This configuration allows additional fields to be passed through to the underlying OCI26ai client. |
+
+:::note
+This configuration class accepts additional fields beyond those listed above. You can pass any additional configuration options that will be forwarded to the underlying provider.
+:::
+
+## Sample Configuration
+
+```yaml
+uri: ${env.OCI26ai_ENDPOINT}
+username: ${env.OCI26ai_USER}
+password: ${env.OCI26ai_PASSWORD}
+persistence:
+  namespace: vector_io::oci26ai_remote
+  backend: kv_default
+```
