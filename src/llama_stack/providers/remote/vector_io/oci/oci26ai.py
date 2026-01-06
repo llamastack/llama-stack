@@ -68,19 +68,13 @@ class OCI26aiIndex(EmbeddingIndex):
         try:
             #  Create table
             create_table_sql = f"""
-            BEGIN
-                EXECUTE IMMEDIATE '
                 CREATE TABLE IF NOT EXISTS {self.table_name} (
                     chunk_id VARCHAR2(100) PRIMARY KEY,
                     content CLOB,
                     vector VECTOR({self.dimensions}, FLOAT32),
                     metadata JSON,
                     chunk_metadata JSON
-                )';
-            EXCEPTION
-                WHEN OTHERS THEN
-                    IF SQLCODE = -955 THEN NULL; ELSE RAISE; END IF;
-            END;
+                );
             """
             logger.debug(f"Executing SQL: {create_table_sql}")
             cursor.execute(create_table_sql)
@@ -109,10 +103,10 @@ class OCI26aiIndex(EmbeddingIndex):
             {
                 "name": f"{self.table_name}_content_idx",
                 "sql": f"""
-                    CREATE INDEX {self.table_name}_content_idx
-                    ON {self.table_name}(content)
-                    INDEXTYPE IS CTXSYS.CONTEXT
-                    PARAMETERS ('SYNC (ON COMMIT)')
+                    CREATE INDEX RRILEY_TEST_CONTENT_IDX
+                    ON rriley_test(content)
+                    INDEXTYPE IS CTXSYS.CONTEXT 
+                    PARAMETERS ('SYNC (EVERY "FREQ=SECONDLY;INTERVAL=5")');
                 """
             },
             {
@@ -124,14 +118,6 @@ class OCI26aiIndex(EmbeddingIndex):
                     DISTANCE COSINE
                     WITH TARGET ACCURACY 95
                 """
-            },
-            {
-                "name": f"{self.table_name}_metadata_idx",
-                "sql": f"""
-                    CREATE SEARCH INDEX {self.table_name}_metadata_idx
-                    ON {self.table_name}(metadata)
-                    FOR JSON
-                """
             }
         ]
 
@@ -140,7 +126,7 @@ class OCI26aiIndex(EmbeddingIndex):
                 logger.info(f"Creating index: {idx['name']}")
                 cursor = self.connection.cursor()
                 try:
-                    cursor.execute(f"BEGIN EXECUTE IMMEDIATE '{idx['sql']}'; END;")
+                    cursor.execute(idx['sql'])
                     logger.info(f"Index {idx['name']} created successfully")
                 finally:
                     cursor.close()
