@@ -102,27 +102,33 @@ class NeMoGuardrails:
         Args:
             config (NVIDIASafetyConfig): The safety configuration containing the config ID and guardrails URL.
             model (str): The identifier or name of the model to be used for safety checks.
-
-        Raises:
-            ValueError: If config_id is not provided in the configuration.
         """
-        if not config.config_id:
-            raise ValueError("Must provide config_id in NVIDIASafetyConfig")
         self.config_id = config.config_id
         self.model = model
         self.blocked_message = config.blocked_message
         self.guardrails_service_url = config.guardrails_service_url
         self.temperature = config.temperature
+        self.timeout = config.timeout
         self.api_mode = config.api_mode
 
     async def _guardrails_post(self, path: str, data: Any | None) -> dict[str, Any]:
         """Make a POST request to the guardrails service."""
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
         url = f"{self.guardrails_service_url}{path}"
-        async with httpx.AsyncClient() as client:
-            response = await client.post(url=url, headers=headers, json=data)
-            response.raise_for_status()
-            return dict(response.json())
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(url=url, headers=headers, json=data)
+                response.raise_for_status()
+                return dict(response.json())
+        except httpx.TimeoutException as e:
+            raise RuntimeError(
+                f"Failed to get response from guardrails service: request timed out after {self.timeout}s"
+            ) from e
+        except httpx.HTTPStatusError as e:
+            error_text = e.response.text[:200] if e.response.text else "No response body"
+            raise RuntimeError(f"Failed to call guardrails service: {e.response.status_code} {error_text}") from e
+        except httpx.RequestError as e:
+            raise RuntimeError(f"Failed to connect to guardrails service at {url}: {e}") from e
 
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         """
@@ -187,7 +193,6 @@ class NeMoGuardrails:
         )
         response = await self._guardrails_post(path="/v1/guardrail/chat/completions", data=request_data)
 
-        # Check for error object with guardrails_violation
         error = response.get("error")
         if error:
             error_type = error.get("type", "")
@@ -207,6 +212,11 @@ class NeMoGuardrails:
                         },
                     )
                 )
+            # Unknown error type - log and raise to avoid silent failure
+            logger.error(
+                f"Guardrails service error: type={error_type}, code={error_code}, message={error.get('message', 'unknown')}"
+            )
+            raise RuntimeError(f"Failed to run guardrails check: {error.get('message', 'Unknown error')}")
 
         # Check for legacy format with status field
         if response.get("status") == "blocked":
@@ -240,7 +250,6 @@ class NeMoGuardrails:
                     content = msg.get("content", "")
                     break
 
-        # Check for blocked response (configurable via blocked_message)
         if content and self.blocked_message and self.blocked_message.lower().strip() == content.lower().strip():
             return RunShieldResponse(
                 violation=SafetyViolation(

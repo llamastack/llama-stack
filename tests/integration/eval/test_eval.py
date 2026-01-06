@@ -18,11 +18,12 @@ import uuid
 from pathlib import Path
 
 import pytest
+from llama_stack_client import LlamaStackClient
 
 from ..datasets.test_datasets import data_url_from_file
 
 
-def ensure_model_registered(client, model_id: str) -> str:
+def ensure_model_registered(client: LlamaStackClient, model_id: str) -> str:
     """Ensure the specified model is registered, registering it if necessary.
 
     Args:
@@ -158,7 +159,7 @@ def test_evaluate_benchmark(llama_stack_client, text_model_id, scoring_fn_id):
         elapsed += poll_interval
 
     assert job_status is not None
-    assert job_status.status == "completed", f"Job did not complete in time, status: {job_status.status}"
+    assert job_status.status == "completed", f"Failed to complete job in time, status: {job_status.status}"
 
     # Retrieve the job result (GET /eval/benchmarks/{benchmark_id}/jobs/{job_id}/result)
     result = llama_stack_client.alpha.eval.jobs.retrieve(
