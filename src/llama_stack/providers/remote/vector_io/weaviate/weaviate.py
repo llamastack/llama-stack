@@ -29,10 +29,8 @@ from llama_stack_api import (
     Inference,
     InterleavedContent,
     QueryChunksResponse,
-    VectorIO,
     VectorStore,
     VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
 )
 from llama_stack_api.internal.kvstore import KVStore
 
@@ -261,7 +259,7 @@ class WeaviateIndex(EmbeddingIndex):
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
 
-class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProviderData, VectorStoresProtocolPrivate):
+class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, NeedsRequestProviderData):
     def __init__(self, config: WeaviateVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config

@@ -26,10 +26,8 @@ from llama_stack_api import (
     Inference,
     InterleavedContent,
     QueryChunksResponse,
-    VectorIO,
     VectorStore,
     VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
 )
 from llama_stack_api.internal.kvstore import KVStore
 
@@ -190,7 +188,7 @@ class FaissIndex(EmbeddingIndex):
         )
 
 
-class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+class FaissVectorIOAdapter(OpenAIVectorStoreMixin):
     def __init__(self, config: FaissVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
