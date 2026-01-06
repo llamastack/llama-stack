@@ -35,6 +35,7 @@ from llama_stack_api import (
     ToolGroupsProtocolPrivate,
     ToolInvocationResult,
     ToolRuntime,
+    UploadFileRequest,
     VectorIO,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
@@ -141,7 +142,8 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
 
                 try:
                     created_file = await self.files_api.openai_upload_file(
-                        file=upload_file, purpose=OpenAIFilePurpose.ASSISTANTS
+                        request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
+                        file=upload_file,
                     )
                 except Exception as e:
                     log.error(f"Failed to upload file for document {doc.document_id}: {e}")
@@ -210,8 +212,10 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         scores = []
 
         for vector_store_id, result in zip(vector_store_ids, results, strict=False):
-            for chunk, score in zip(result.chunks, result.scores, strict=False):
-                if not hasattr(chunk, "metadata") or chunk.metadata is None:
+            for embedded_chunk, score in zip(result.chunks, result.scores, strict=False):
+                # EmbeddedChunk inherits from Chunk, so use it directly
+                chunk = embedded_chunk
+                if chunk.metadata is None:
                     chunk.metadata = {}
                 chunk.metadata["vector_store_id"] = vector_store_id
 
@@ -235,8 +239,8 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         context_template = vector_stores_config.context_prompt_params.context_template
 
         picked: list[InterleavedContentItem] = [TextContentItem(text=header_template.format(num_chunks=len(chunks)))]
-        for i, chunk in enumerate(chunks):
-            metadata = chunk.metadata
+        for i, embedded_chunk in enumerate(chunks):
+            metadata = embedded_chunk.metadata
             tokens += metadata.get("token_count", 0)
             tokens += metadata.get("metadata_token_count", 0)
 
@@ -259,12 +263,12 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
             ]
             metadata_for_context = {}
             for k in chunk_metadata_keys_to_include_from_context:
-                metadata_for_context[k] = getattr(chunk.chunk_metadata, k)
+                metadata_for_context[k] = getattr(embedded_chunk.chunk_metadata, k)
             for k in metadata:
                 if k not in metadata_keys_to_exclude_from_context:
                     metadata_for_context[k] = metadata[k]
 
-            text_content = chunk_template.format(index=i + 1, chunk=chunk, metadata=metadata_for_context)
+            text_content = chunk_template.format(index=i + 1, chunk=embedded_chunk, metadata=metadata_for_context)
             picked.append(TextContentItem(text=text_content))
 
         picked.append(TextContentItem(text=footer_template))

@@ -20,7 +20,7 @@ from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIV
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator, sanitize_collection_name
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     Files,
     Inference,
     InterleavedContent,
@@ -130,7 +130,7 @@ class PGVectorIndex(EmbeddingIndex):
             log.exception(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}")
             raise RuntimeError(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}") from e
 
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
+    async def add_chunks(self, chunks: list[EmbeddedChunk], embeddings: NDArray):
         assert len(chunks) == len(embeddings), (
             f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
         )
@@ -194,7 +194,7 @@ class PGVectorIndex(EmbeddingIndex):
                 score = 1.0 / float(dist) if dist != 0 else float("inf")
                 if score < score_threshold:
                     continue
-                chunks.append(Chunk(**doc))
+                chunks.append(EmbeddedChunk(**doc))
                 scores.append(score)
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
@@ -230,7 +230,7 @@ class PGVectorIndex(EmbeddingIndex):
             for doc, score in results:
                 if score < score_threshold:
                     continue
-                chunks.append(Chunk(**doc))
+                chunks.append(EmbeddedChunk(**doc))
                 scores.append(float(score))
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
@@ -332,9 +332,8 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
     def __init__(
         self, config: PGVectorVectorIOConfig, inference_api: Inference, files_api: Files | None = None
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
-        self.inference_api = inference_api
         self.conn = None
         self.cache = {}
         self.vector_store_table = None
@@ -429,7 +428,9 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
         await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
-    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         await index.insert_chunks(chunks)
 

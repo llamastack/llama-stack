@@ -29,6 +29,7 @@ from llama_stack_api import (
     Api,
     Chunk,
     ChunkMetadata,
+    EmbeddedChunk,
     InterleavedContent,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksResponse,
@@ -158,7 +159,11 @@ async def content_from_doc(doc: RAGDocument) -> str:
 
 
 def make_overlapped_chunks(
-    document_id: str, text: str, window_len: int, overlap_len: int, metadata: dict[str, Any]
+    document_id: str,
+    text: str,
+    window_len: int,
+    overlap_len: int,
+    metadata: dict[str, Any],
 ) -> list[Chunk]:
     default_tokenizer = "DEFAULT_TIKTOKEN_TOKENIZER"
     tokenizer = Tokenizer.get_instance()
@@ -190,7 +195,6 @@ def make_overlapped_chunks(
             updated_timestamp=int(time.time()),
             chunk_window=chunk_window,
             chunk_tokenizer=default_tokenizer,
-            chunk_embedding_model=None,  # This will be set in `VectorStoreWithIndex.insert_chunks`
             content_token_count=len(toks),
             metadata_token_count=len(metadata_tokens),
         )
@@ -226,7 +230,7 @@ def _validate_embedding(embedding: NDArray, index: int, expected_dimension: int)
 
 class EmbeddingIndex(ABC):
     @abstractmethod
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
+    async def add_chunks(self, embedded_chunks: list[EmbeddedChunk]):
         raise NotImplementedError()
 
     @abstractmethod
@@ -267,29 +271,13 @@ class VectorStoreWithIndex:
 
     async def insert_chunks(
         self,
-        chunks: list[Chunk],
+        chunks: list[EmbeddedChunk],
     ) -> None:
-        chunks_to_embed = []
-        for i, c in enumerate(chunks):
-            if c.embedding is None:
-                chunks_to_embed.append(c)
-                if c.chunk_metadata:
-                    c.chunk_metadata.chunk_embedding_model = self.vector_store.embedding_model
-                    c.chunk_metadata.chunk_embedding_dimension = self.vector_store.embedding_dimension
-            else:
-                _validate_embedding(c.embedding, i, self.vector_store.embedding_dimension)
+        # Validate embedding dimensions match the vector store
+        for i, embedded_chunk in enumerate(chunks):
+            _validate_embedding(embedded_chunk.embedding, i, self.vector_store.embedding_dimension)
 
-        if chunks_to_embed:
-            params = OpenAIEmbeddingsRequestWithExtraBody(
-                model=self.vector_store.embedding_model,
-                input=[c.content for c in chunks_to_embed],
-            )
-            resp = await self.inference_api.openai_embeddings(params)
-            for c, data in zip(chunks_to_embed, resp.data, strict=False):
-                c.embedding = data.embedding
-
-        embeddings = np.array([c.embedding for c in chunks], dtype=np.float32)
-        await self.index.add_chunks(chunks, embeddings)
+        await self.index.add_chunks(chunks)
 
     async def query_chunks(
         self,
