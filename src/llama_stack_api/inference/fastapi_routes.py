@@ -59,12 +59,16 @@ def create_router(impl: Inference) -> APIRouter:
 
     @router.post(
         "/chat/completions",
-        response_model=None,  # Allow dynamic response type (streaming or non-streaming)
+        response_model=None,  # Dynamic response: non-streaming (JSON) or streaming (SSE)
         summary="Create chat completions.",
         description="Generate an OpenAI-compatible chat completion for the given messages using the specified model.",
         responses={
             200: {
-                "description": "An OpenAIChatCompletion. When streaming, returns Server-Sent Events (SSE) with OpenAIChatCompletionChunk objects."
+                "description": "An OpenAIChatCompletion. When streaming, returns Server-Sent Events (SSE) with OpenAIChatCompletionChunk objects.",
+                "content": {
+                    "application/json": {"schema": {"$ref": "#/components/schemas/OpenAIChatCompletion"}},
+                    "text/event-stream": {"schema": {"$ref": "#/components/schemas/OpenAIChatCompletionChunk"}},
+                },
             },
         },
     )
@@ -103,12 +107,16 @@ def create_router(impl: Inference) -> APIRouter:
 
     @router.post(
         "/completions",
-        response_model=None,  # Allow dynamic response type (streaming or non-streaming)
+        response_model=None,  # Dynamic response: non-streaming (JSON) or streaming (SSE)
         summary="Create completion.",
         description="Generate an OpenAI-compatible completion for the given prompt using the specified model.",
         responses={
             200: {
-                "description": "An OpenAICompletion. When streaming, returns Server-Sent Events (SSE) with OpenAICompletion chunks."
+                "description": "An OpenAICompletion. When streaming, returns Server-Sent Events (SSE) with OpenAICompletion chunks.",
+                "content": {
+                    "application/json": {"schema": {"$ref": "#/components/schemas/OpenAICompletion"}},
+                    "text/event-stream": {"schema": {"$ref": "#/components/schemas/OpenAICompletion"}},
+                },
             },
         },
     )

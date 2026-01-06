@@ -234,6 +234,15 @@ paths:
         description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
     post:
       responses:
+        '200':
+          description: An OpenAIChatCompletion. When streaming, returns Server-Sent Events (SSE) with OpenAIChatCompletionChunk objects.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIChatCompletion'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/OpenAIChatCompletionChunk'
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -246,8 +255,6 @@ paths:
         default:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
-        '204':
-          description: An OpenAIChatCompletion. When streaming, returns Server-Sent Events (SSE) with OpenAIChatCompletionChunk objects.
       tags:
       - Inference
       summary: Create chat completions.
@@ -297,6 +304,15 @@ paths:
   /v1/completions:
     post:
       responses:
+        '200':
+          description: An OpenAICompletion. When streaming, returns Server-Sent Events (SSE) with OpenAICompletion chunks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAICompletion'
+            text/event-stream:
+              schema:
+                $ref: '#/components/schemas/OpenAICompletion'
         '400':
           description: Bad Request
           $ref: '#/components/responses/BadRequest400'
@@ -309,8 +325,6 @@ paths:
         default:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
-        '204':
-          description: An OpenAICompletion. When streaming, returns Server-Sent Events (SSE) with OpenAICompletion chunks.
       tags:
       - Inference
       summary: Create completion.
