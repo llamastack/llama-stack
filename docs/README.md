@@ -56,3 +56,4 @@ Try out Llama Stack's capabilities through our detailed Jupyter notebooks:
 * [Building AI Applications Notebook](./getting_started.ipynb) - A comprehensive guide to building production-ready AI applications using Llama Stack
 * [Benchmark Evaluations Notebook](./notebooks/Llama_Stack_Benchmark_Evals.ipynb) - Detailed performance evaluations and benchmarking results
 * [Zero-to-Hero Guide](./zero_to_hero_guide) - Step-by-step guide for getting started with Llama Stack
+* [Migrating from Agent objects to Responses](./notebooks/responses-api-agent-migration.ipynb) - A guide to migrating from legacy Llama Stack Agent APIs to the OpenAI-compatible Responses API
