@@ -297,28 +297,51 @@ class VectorStoreWithIndex:
         mode = params.get("mode")
         score_threshold = params.get("score_threshold", 0.0)
 
-        ranker = params.get("ranker")
-        if ranker is None:
+        # Get reranker configuration from params (set by openai_vector_store_mixin)
+        # NOTE: Breaking change - removed support for old nested "ranker" format.
+        #       Now uses flattened format: reranker_type and reranker_params.
+        reranker_type = params.get("reranker_type")
+        reranker_params = params.get("reranker_params", {})
+
+        # If no ranker specified, use VectorStoresConfig default
+        if reranker_type is None:
             reranker_type = (
                 RERANKER_TYPE_RRF
                 if config.chunk_retrieval_params.default_reranker_strategy == "rrf"
                 else config.chunk_retrieval_params.default_reranker_strategy
             )
             reranker_params = {"impact_factor": config.chunk_retrieval_params.rrf_impact_factor}
+
+        # Normalize reranker_type to use constants
+        if reranker_type == "weighted":
+            reranker_type = RERANKER_TYPE_WEIGHTED
+            # Ensure alpha is set (use default if not provided)
+            if "alpha" not in reranker_params:
+                reranker_params["alpha"] = config.chunk_retrieval_params.weighted_search_alpha
+        elif reranker_type == "rrf":
+            reranker_type = RERANKER_TYPE_RRF
+            # Ensure impact_factor is set (use default if not provided)
+            if "impact_factor" not in reranker_params:
+                reranker_params["impact_factor"] = config.chunk_retrieval_params.rrf_impact_factor
+        elif reranker_type == "neural":
+            # TODO: Implement neural reranking
+            log.warning(
+                "TODO: Neural reranking for vector stores is not implemented yet; "
+                "using configured reranker params without algorithm fallback."
+            )
+        elif reranker_type == "normalized":
+            reranker_type = RERANKER_TYPE_NORMALIZED
         else:
-            strategy = ranker.get("strategy", config.chunk_retrieval_params.default_reranker_strategy)
-            if strategy == "weighted":
-                weights = ranker.get("params", {}).get("weights", [0.5, 0.5])
-                reranker_type = RERANKER_TYPE_WEIGHTED
-                reranker_params = {
-                    "alpha": weights[0] if len(weights) > 0 else config.chunk_retrieval_params.weighted_search_alpha
-                }
-            elif strategy == "normalized":
-                reranker_type = RERANKER_TYPE_NORMALIZED
-            else:
-                reranker_type = RERANKER_TYPE_RRF
-                k_value = ranker.get("params", {}).get("k", config.chunk_retrieval_params.rrf_impact_factor)
-                reranker_params = {"impact_factor": k_value}
+            # Default to RRF for unknown strategies
+            reranker_type = RERANKER_TYPE_RRF
+            if "impact_factor" not in reranker_params:
+                reranker_params["impact_factor"] = config.chunk_retrieval_params.rrf_impact_factor
+
+        # Store neural model and weights from params if provided (for future neural reranking in Part II)
+        if "neural_model" in params:
+            reranker_params["neural_model"] = params["neural_model"]
+        if "neural_weights" in params:
+            reranker_params["neural_weights"] = params["neural_weights"]
 
         query_string = interleaved_content_as_str(query)
         if mode == "keyword":

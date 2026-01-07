@@ -64,6 +64,41 @@ class ElasticsearchIndex(EmbeddingIndex):
         except (AttributeError, TypeError):
             return False
 
+    def _convert_to_linear_params(self, reranker_params: dict[str, Any]) -> dict[str, Any] | None:
+        weights = reranker_params.get("weights")
+        alpha = reranker_params.get("alpha")
+        if weights is not None:
+            vector_weight = weights.get("vector")
+            keyword_weight = weights.get("keyword")
+            if vector_weight is None or keyword_weight is None:
+                log.warning("Elasticsearch linear retriever requires 'vector' and 'keyword' weights; ignoring weights.")
+                return None
+            total = vector_weight + keyword_weight
+            if total == 0:
+                log.warning(
+                    "Elasticsearch linear retriever weights for 'vector' and 'keyword' sum to 0; ignoring weights."
+                )
+                return None
+            if abs(total - 1.0) > 0.001:
+                log.warning(
+                    "Elasticsearch linear retriever uses normalized vector/keyword weights; "
+                    "renormalizing provided weights."
+                )
+                vector_weight /= total
+                keyword_weight /= total
+        elif alpha is not None:
+            vector_weight = alpha
+            keyword_weight = 1 - alpha
+        else:
+            return None
+
+        return {
+            "retrievers": {
+                "standard": {"weight": keyword_weight},
+                "knn": {"weight": vector_weight},
+            }
+        }
+
     async def initialize(self) -> None:
         # Elasticsearch collections (indexes) are created on-demand in add_chunks
         # If the index does not exist, it will be created in add_chunks.
@@ -224,44 +259,83 @@ class ElasticsearchIndex(EmbeddingIndex):
         reranker_params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
         supported_retrievers = ["rrf", "linear"]
+        original_reranker_type = reranker_type
+        if reranker_type == "weighted":
+            log.warning("Elasticsearch does not support 'weighted' reranker; using 'linear' retriever instead.")
+            reranker_type = "linear"
         if reranker_type not in supported_retrievers:
-            raise ValueError(f"Unsupported reranker type: {reranker_type}. Supported types are: {supported_retrievers}")
+            log.warning(
+                f"Unsupported reranker type: {reranker_type}. Supported types are: {supported_retrievers}. "
+                "Falling back to 'rrf'."
+            )
+            reranker_type = "rrf"
 
         retriever = {
             reranker_type: {
                 "retrievers": [
                     {"retriever": {"standard": {"query": {"match": {"content": query_string}}}}},
-                    {"retriever": {"knn": {"field": "embedding", "query_vector": embedding.tolist(), "k": k}}},
+                    {
+                        "retriever": {
+                            "knn": {
+                                "field": "embedding",
+                                "query_vector": embedding.tolist(),
+                                "k": k,
+                                "num_candidates": k,
+                            }
+                        }
+                    },
                 ]
             }
         }
+        # Elasticsearch requires rank_window_size >= size for rrf/linear retrievers.
+        retriever[reranker_type]["rank_window_size"] = k
 
         # Add reranker parameters if provided for RRF (e.g. rank_constant, rank_window_size, filter)
         # see https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrievers/rrf-retriever
         if reranker_type == "rrf" and reranker_params is not None:
             allowed_rrf_params = {"rank_constant", "rank_windows_size", "filter"}
-            extra_keys = set(reranker_params.keys()) - allowed_rrf_params
+            rrf_params = dict(reranker_params)
+            if "impact_factor" in rrf_params:
+                if "rank_constant" not in rrf_params:
+                    rrf_params["rank_constant"] = rrf_params.pop("impact_factor")
+                    log.warning("Elasticsearch RRF does not support impact_factor; mapping to rank_constant.")
+                else:
+                    rrf_params.pop("impact_factor")
+                    log.warning("Elasticsearch RRF ignores impact_factor when rank_constant is provided.")
+            if "rank_window_size" not in rrf_params and "rank_windows_size" in rrf_params:
+                rrf_params["rank_window_size"] = rrf_params.pop("rank_windows_size")
+            extra_keys = set(rrf_params.keys()) - allowed_rrf_params
             if extra_keys:
-                raise ValueError(
-                    f"Unsupported RRF reranker parameters: {extra_keys}. Allowed parameters are: {allowed_rrf_params}"
-                )
-            retriever["rrf"].update(reranker_params)
+                log.warning(f"Ignoring unsupported RRF parameters for Elasticsearch: {extra_keys}")
+                for key in extra_keys:
+                    rrf_params.pop(key, None)
+            if rrf_params:
+                retriever["rrf"].update(rrf_params)
         elif reranker_type == "linear" and reranker_params is not None:
             # Add reranker parameters (i.e. weights) for linear
             # see https://www.elastic.co/docs/reference/elasticsearch/rest-apis/retrievers/linear-retriever
             if await self._is_rerank_linear_param_valid(reranker_params) is False:
-                raise ValueError(
-                    "Invalid linear reranker parameters. Expected structure: "
-                    '{ "retrievers": { "standard": {"weight": float}, "knn": {"weight": float} } }'
-                )
+                converted_params = self._convert_to_linear_params(reranker_params)
+                if converted_params is None:
+                    log.warning(
+                        "Invalid linear reranker parameters for Elasticsearch; "
+                        'expected {"retrievers": {"standard": {"weight": float}, "knn": {"weight": float}}}. '
+                        "Ignoring provided parameters."
+                    )
+                else:
+                    reranker_params = converted_params
             try:
-                # The first retriever is standard (see retriever variable above)
-                retriever["linear"]["retrievers"][0].update(reranker_params["retrievers"]["standard"])
-                # The second retriever is knn (see retriever variable above)
-                retriever["linear"]["retrievers"][1].update(reranker_params["retrievers"]["knn"])
+                if await self._is_rerank_linear_param_valid(reranker_params):
+                    retriever["linear"]["retrievers"][0].update(reranker_params["retrievers"]["standard"])
+                    retriever["linear"]["retrievers"][1].update(reranker_params["retrievers"]["knn"])
             except Exception as e:
                 log.error(f"Error updating linear retrievers parameters: {e}")
                 raise
+        elif reranker_type == "linear" and reranker_params is None and original_reranker_type == "weighted":
+            converted_params = self._convert_to_linear_params({})
+            if converted_params:
+                retriever["linear"]["retrievers"][0].update(converted_params["retrievers"]["standard"])
+                retriever["linear"]["retrievers"][1].update(converted_params["retrievers"]["knn"])
         try:
             results = await self.client.search(
                 index=self.collection_name,
