@@ -241,6 +241,7 @@ from .inference import (
 from .inspect_api import Inspect
 from .models import (
     CommonModelFields,
+    GetModelRequest,
     ListModelsResponse,
     Model,
     ModelInput,
@@ -248,6 +249,8 @@ from .models import (
     ModelType,
     OpenAIListModelsResponse,
     OpenAIModel,
+    RegisterModelRequest,
+    UnregisterModelRequest,
 )
 from .openai_responses import (
     AllowedToolsFilter,
@@ -648,6 +651,9 @@ __all__ = [
     "ModelType",
     "ModelTypeError",
     "Models",
+    "GetModelRequest",
+    "RegisterModelRequest",
+    "UnregisterModelRequest",
     "ModelsProtocolPrivate",
     "ModerationObject",
     "ModerationObjectResults",

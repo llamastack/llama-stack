@@ -23,6 +23,7 @@ from llama_stack_api import (
     BatchObject,
     ConflictError,
     Files,
+    GetModelRequest,
     Inference,
     ListBatchesResponse,
     Models,
@@ -485,7 +486,7 @@ class ReferenceBatchesImpl(Batches):
 
                         if "model" in request_body and isinstance(request_body["model"], str):
                             try:
-                                await self.models_api.get_model(request_body["model"])
+                                await self.models_api.get_model(GetModelRequest(model_id=request_body["model"]))
                             except Exception:
                                 errors.append(
                                     BatchError(

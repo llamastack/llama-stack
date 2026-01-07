@@ -16,6 +16,7 @@ from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProv
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
+    GetModelRequest,
     ListModelsResponse,
     Model,
     ModelNotFoundError,
@@ -23,6 +24,8 @@ from llama_stack_api import (
     ModelType,
     OpenAIListModelsResponse,
     OpenAIModel,
+    RegisterModelRequest,
+    UnregisterModelRequest,
 )
 
 from .common import CommonRoutingTableImpl, lookup_model
@@ -171,7 +174,12 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         ]
         return OpenAIListModelsResponse(data=openai_models)
 
-    async def get_model(self, model_id: str) -> Model:
+    async def get_model(self, request_or_model_id: GetModelRequest | str) -> Model:
+        # Support both the public Models API (GetModelRequest) and internal ModelStore interface (string)
+        if isinstance(request_or_model_id, GetModelRequest):
+            model_id = request_or_model_id.model_id
+        else:
+            model_id = request_or_model_id
         return await lookup_model(self, model_id)
 
     async def get_provider_impl(self, model_id: str) -> Any:
@@ -195,12 +203,28 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
 
     async def register_model(
         self,
-        model_id: str,
+        request: RegisterModelRequest | str | None = None,
+        *,
+        model_id: str | None = None,
         provider_model_id: str | None = None,
         provider_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
     ) -> Model:
+        # Support both the public Models API (RegisterModelRequest) and legacy parameter-based interface
+        if isinstance(request, RegisterModelRequest):
+            model_id = request.model_id
+            provider_model_id = request.provider_model_id
+            provider_id = request.provider_id
+            metadata = request.metadata
+            model_type = request.model_type
+        elif isinstance(request, str):
+            # Legacy positional argument: register_model("model-id", ...)
+            model_id = request
+
+        if model_id is None:
+            raise ValueError("Either request or model_id must be provided")
+
         if provider_id is None:
             # If provider_id not specified, use the only provider if it supports this model
             if len(self.impls_by_provider_id) == 1:
@@ -229,7 +253,22 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         registered_model = await self.register_object(model)
         return registered_model
 
-    async def unregister_model(self, model_id: str) -> None:
+    async def unregister_model(
+        self,
+        request: UnregisterModelRequest | str | None = None,
+        *,
+        model_id: str | None = None,
+    ) -> None:
+        # Support both the public Models API (UnregisterModelRequest) and legacy parameter-based interface
+        if isinstance(request, UnregisterModelRequest):
+            model_id = request.model_id
+        elif isinstance(request, str):
+            # Legacy positional argument: unregister_model("model-id")
+            model_id = request
+
+        if model_id is None:
+            raise ValueError("Either request or model_id must be provided")
+
         existing_model = await self.get_model(model_id)
         if existing_model is None:
             raise ModelNotFoundError(model_id)

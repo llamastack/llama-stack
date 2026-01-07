@@ -46,6 +46,7 @@ from llama_stack_api import (
     OpenAITokenLogProb,
     OpenAITopLogProb,
     Order,
+    RegisterModelRequest,
     RerankResponse,
     RoutingTable,
 )
@@ -87,7 +88,14 @@ class InferenceRouter(Inference):
         logger.debug(
             f"InferenceRouter.register_model: {model_id=} {provider_model_id=} {provider_id=} {metadata=} {model_type=}",
         )
-        await self.routing_table.register_model(model_id, provider_model_id, provider_id, metadata, model_type)
+        request = RegisterModelRequest(
+            model_id=model_id,
+            provider_model_id=provider_model_id,
+            provider_id=provider_id,
+            metadata=metadata,
+            model_type=model_type,
+        )
+        await self.routing_table.register_model(request)
 
     async def _get_model_provider(self, model_id: str, expected_model_type: str) -> tuple[Inference, str]:
         model = await self.routing_table.get_object_by_identifier("model", model_id)
