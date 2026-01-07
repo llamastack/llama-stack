@@ -321,8 +321,6 @@ async def test_document_id_with_invalid_type_raises_error():
             chunk_id=chunk_id,
             created_timestamp=int(time.time()),
             updated_timestamp=int(time.time()),
-            chunk_embedding_model="test-model",
-            chunk_embedding_dimension=768,
             content_token_count=1,
         ),
     )
