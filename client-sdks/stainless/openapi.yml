@@ -13811,7 +13811,48 @@ components:
           nullable: true
       title: OpenAICompletionLogprobs
       type: object
-<<<<<<< HEAD
+    ListChatCompletionsRequest:
+      description: Request model for listing chat completions.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the last chat completion to return.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 20
+          description: The maximum number of chat completions to return.
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The model to filter by.
+          nullable: true
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
+          title: Order
+      title: ListChatCompletionsRequest
+      type: object
+    GetChatCompletionRequest:
+      description: Request model for getting a chat completion.
+      properties:
+        completion_id:
+          description: ID of the chat completion.
+          title: Completion Id
+          type: string
+      required:
+      - completion_id
+      title: GetChatCompletionRequest
+      type: object
     EmbeddedChunk:
       description: |-
         A chunk of content with its embedding vector for vector database operations.
@@ -13874,49 +13915,6 @@ components:
       - embedding_model
       - embedding_dimension
       title: EmbeddedChunk
-=======
-    ListChatCompletionsRequest:
-      description: Request model for listing chat completions.
-      properties:
-        after:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: The ID of the last chat completion to return.
-          nullable: true
-        limit:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          default: 20
-          description: The maximum number of chat completions to return.
-        model:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: The model to filter by.
-          nullable: true
-        order:
-          anyOf:
-          - $ref: '#/components/schemas/Order'
-            title: Order
-          - type: 'null'
-          default: desc
-          description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
-          title: Order
-      title: ListChatCompletionsRequest
-      type: object
-    GetChatCompletionRequest:
-      description: Request model for getting a chat completion.
-      properties:
-        completion_id:
-          description: ID of the chat completion.
-          title: Completion Id
-          type: string
-      required:
-      - completion_id
-      title: GetChatCompletionRequest
->>>>>>> 390560e6 (feat: migrate Inference API to FastAPI router system)
       type: object
     VectorStoreCreateRequest:
       description: Request to create a vector store.
