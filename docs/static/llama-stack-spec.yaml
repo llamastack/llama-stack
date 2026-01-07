@@ -11958,9 +11958,52 @@ components:
           - type: number
           - type: 'null'
           default: 0.0
+        alpha:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          description: Weight factor for weighted ranker
+        impact_factor:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          description: Impact factor for RRF algorithm
+        weights:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          description: "Weights for combining vector, keyword, and neural scores. Keys: 'vector', 'keyword', 'neural'"
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Model identifier for neural reranker
       type: object
       title: SearchRankingOptions
-      description: Options for ranking and filtering search results.
+      description: |-
+        Options for ranking and filtering search results.
+
+        This class configures how search results are ranked and filtered. You can use algorithm-based
+        rerankers (weighted, RRF) or neural rerankers. Defaults from VectorStoresConfig are
+        used when parameters are not provided.
+
+        Examples:
+            # Weighted ranker with custom alpha
+            SearchRankingOptions(ranker="weighted", alpha=0.7)
+
+            # RRF ranker with custom impact factor
+            SearchRankingOptions(ranker="rrf", impact_factor=50.0)
+
+            # Use config defaults (just specify ranker type)
+            SearchRankingOptions(ranker="weighted")  # Uses alpha from VectorStoresConfig
+
+            # Score threshold filtering
+            SearchRankingOptions(ranker="weighted", score_threshold=0.5)
     SetDefaultVersionBodyRequest:
       properties:
         version:

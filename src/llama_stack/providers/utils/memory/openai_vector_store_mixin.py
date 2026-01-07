@@ -671,6 +671,19 @@ class OpenAIVectorStoreMixin(ABC):
             search_query = query
 
         try:
+            # Validate neural ranker requires model parameter
+            if ranking_options is not None:
+                if getattr(ranking_options, "ranker", None) == "neural":
+                    model_value = getattr(ranking_options, "model", None)
+                    if model_value is None or (isinstance(model_value, str) and model_value.strip() == ""):
+                        # Return empty results when model is missing for neural ranker
+                        logger.warning("model parameter is required when ranker='neural', returning empty results")
+                        return VectorStoreSearchResponsePage(
+                            search_query=query if isinstance(query, list) else [query],
+                            data=[],
+                            has_more=False,
+                            next_page=None,
+                        )
             score_threshold = (
                 ranking_options.score_threshold
                 if ranking_options and ranking_options.score_threshold is not None
@@ -681,7 +694,10 @@ class OpenAIVectorStoreMixin(ABC):
                 "score_threshold": score_threshold,
                 "mode": search_mode,
             }
-            # TODO: Add support for ranking_options.ranker
+
+            # Use VectorStoresConfig defaults when ranking_options values are not provided
+            config = self.vector_stores_config or VectorStoresConfig()
+            params.update(self._build_reranker_params(ranking_options, config))
 
             response = await self.query_chunks(
                 vector_store_id=vector_store_id,
@@ -722,14 +738,70 @@ class OpenAIVectorStoreMixin(ABC):
             )
 
         except Exception as e:
+            # Log the error and return empty results
             logger.error(f"Error searching vector store {vector_store_id}: {e}")
-            # Return empty results on error
             return VectorStoreSearchResponsePage(
                 search_query=query if isinstance(query, list) else [query],
                 data=[],
                 has_more=False,
                 next_page=None,
             )
+
+    def _build_reranker_params(
+        self,
+        ranking_options: SearchRankingOptions | None,
+        config: VectorStoresConfig,
+    ) -> dict[str, Any]:
+        reranker_params: dict[str, Any] = {}
+        params: dict[str, Any] = {}
+
+        if ranking_options and ranking_options.ranker:
+            reranker_type = ranking_options.ranker
+
+            if ranking_options.ranker == "weighted":
+                alpha = ranking_options.alpha
+                if alpha is None:
+                    alpha = config.chunk_retrieval_params.weighted_search_alpha
+                reranker_params["alpha"] = alpha
+                if ranking_options.weights:
+                    reranker_params["weights"] = ranking_options.weights
+            elif ranking_options.ranker == "rrf":
+                # For RRF ranker, use impact_factor from request if provided, otherwise use VectorStoresConfig default
+                impact_factor = ranking_options.impact_factor
+                if impact_factor is None:
+                    impact_factor = config.chunk_retrieval_params.rrf_impact_factor
+                reranker_params["impact_factor"] = impact_factor
+                # If weights dict is provided (for neural combination), store it
+                if ranking_options.weights:
+                    reranker_params["weights"] = ranking_options.weights
+            elif ranking_options.ranker == "neural":
+                reranker_params["model"] = ranking_options.model
+            else:
+                logger.debug(f"Unknown ranker value: {ranking_options.ranker}, passing through")
+
+            params["reranker_type"] = reranker_type
+            params["reranker_params"] = reranker_params
+
+            # Store model and weights for neural reranking (TODO: implemented in Part II)
+            if ranking_options.model:
+                params["neural_model"] = ranking_options.model
+            if ranking_options.weights:
+                params["neural_weights"] = ranking_options.weights
+        elif ranking_options is None or ranking_options.ranker is None:
+            # No ranker specified in request - use VectorStoresConfig default
+            default_strategy = config.chunk_retrieval_params.default_reranker_strategy
+            if default_strategy in ("weighted", "rrf"):
+                params["reranker_type"] = default_strategy
+                reranker_params = {}
+
+                if default_strategy == "weighted":
+                    reranker_params["alpha"] = config.chunk_retrieval_params.weighted_search_alpha
+                elif default_strategy == "rrf":
+                    reranker_params["impact_factor"] = config.chunk_retrieval_params.rrf_impact_factor
+
+                params["reranker_params"] = reranker_params
+
+        return params
 
     def _matches_filters(self, metadata: dict[str, Any], filters: dict[str, Any]) -> bool:
         """Check if metadata matches the provided filters."""
@@ -738,15 +810,29 @@ class OpenAIVectorStoreMixin(ABC):
 
         filter_type = filters.get("type")
 
+        if filter_type is None:
+            if "key" not in filters and "value" not in filters and "filters" not in filters:
+                for key, value in filters.items():
+                    if key not in metadata:
+                        return False
+                    if metadata[key] != value:
+                        return False
+                return True
+            else:
+                raise ValueError("Unsupported filter structure: missing 'type' field")
+
         if filter_type in ["eq", "ne", "gt", "gte", "lt", "lte"]:
             # Comparison filter
-            key = filters.get("key")
+            filter_key = filters.get("key")
             value = filters.get("value")
 
-            if key not in metadata:
+            if filter_key is None or not isinstance(filter_key, str):
                 return False
 
-            metadata_value = metadata[key]
+            if filter_key not in metadata:
+                return False
+
+            metadata_value = metadata[filter_key]
 
             if filter_type == "eq":
                 return bool(metadata_value == value)
