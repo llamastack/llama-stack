@@ -44,16 +44,81 @@ For hybrid search, Llama Stack offers configurable ranking strategies:
 
 - **RRF (Reciprocal Rank Fusion)**: Combines rankings with configurable impact factor
 - **Weighted Ranker**: Linear combination of vector and keyword scores with adjustable weights
+- **Neural Reranker**: Uses neural models for reranking (requires model parameter)
 
+**Elasticsearch note**: Elasticsearch hybrid search uses the retriever API and maps the
+`weighted` ranker to its `linear` retriever under the hood. RRF parameters are translated
+to Elasticsearch equivalents when possible.
+
+#### Algorithm-Based Rerankers
+
+**Weighted Ranker:**
 ```python
-# Custom ranking configuration
+from llama_stack_api import SearchRankingOptions
+
+# Weighted ranker with custom alpha (0 = keyword only, 1 = vector only)
 results = await client.vector_stores.search(
     vector_store_id=vector_store.id,
     query="neural networks",
     search_mode="hybrid",
-    ranking_options={
-        "ranker": {"type": "weighted", "alpha": 0.7}  # 70% vector, 30% keyword
-    },
+    ranking_options=SearchRankingOptions(
+        ranker="weighted",
+        alpha=0.7  # 70% vector, 30% keyword
+    ),
+)
+```
+
+**RRF Ranker:**
+```python
+# RRF ranker with custom impact factor
+results = await client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="machine learning",
+    search_mode="hybrid",
+    ranking_options=SearchRankingOptions(
+        ranker="rrf",
+        impact_factor=50.0  # Lower values give more weight to higher-ranked results
+    ),
+)
+```
+
+#### Using VectorStoresConfig Defaults
+
+You can set default reranker parameters in your stack configuration:
+
+```yaml
+vector_stores:
+  chunk_retrieval_params:
+    default_reranker_strategy: "weighted"  # or "rrf"
+    weighted_search_alpha: 0.7
+    rrf_impact_factor: 50.0
+```
+
+Then use them without specifying parameters:
+
+```python
+# Uses defaults from VectorStoresConfig
+results = await client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="your query",
+    search_mode="hybrid",
+    ranking_options=SearchRankingOptions(ranker="weighted"),  # Uses alpha=0.7 from config
+)
+```
+
+#### Neural Reranking (TODO: implement inference endpoint)
+
+
+```python
+# Neural reranker
+results = await client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="your query",
+    search_mode="hybrid",
+    ranking_options=SearchRankingOptions(
+        ranker="neural",
+        model="vllm/Qwen3-Reranker-0.6B"  # Required for neural reranking
+    ),
 )
 ```
 

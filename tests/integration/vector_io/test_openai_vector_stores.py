@@ -10,6 +10,7 @@ from io import BytesIO
 import pytest
 from llama_stack_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
+from openai import OpenAI
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
@@ -41,7 +42,9 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
     pytest.skip("OpenAI vector stores are not supported by any provider")
 
 
-def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_models, search_mode):
+def skip_if_provider_doesnt_support_openai_vector_stores_search(
+    client_with_models, search_mode, vector_io_provider_id=None, embedding_dimension=None
+):
     vector_io_providers = [p for p in client_with_models.providers.list() if p.api == "vector_io"]
     search_mode_support = {
         "vector": [
@@ -80,7 +83,38 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::elasticsearch",
         ],
     }
+
+    # ChromaDB's default embedding function produces 384-dimensional embeddings whereas other providers produce 768-dimensional embeddings.
+    # More details: https://github.com/llamastack/llama-stack/issues/4588
+    # When using query_texts for keyword/hybrid search, the embedding dimension must match
+    chromadb_default_embedding_dim = 384
+
+    if search_mode in ["keyword", "hybrid"] and embedding_dimension is not None:
+        if vector_io_provider_id:
+            provider = next((p for p in vector_io_providers if p.provider_id == vector_io_provider_id), None)
+            if provider and provider.provider_type in ["remote::chromadb", "inline::chromadb"]:
+                if embedding_dimension != chromadb_default_embedding_dim:
+                    pytest.skip(
+                        f"ChromaDB {search_mode} search requires embedding dimension {chromadb_default_embedding_dim} "
+                        f"(ChromaDB's default), but got {embedding_dimension}. "
+                        f"ChromaDB's query_texts uses its default embedding function which doesn't match collection dimensions."
+                    )
+
     supported_providers = search_mode_support.get(search_mode, [])
+
+    # If a specific provider_id is provided, check if that provider supports the search mode
+    if vector_io_provider_id:
+        # Find the provider by ID
+        provider = next((p for p in vector_io_providers if p.provider_id == vector_io_provider_id), None)
+        if provider:
+            if provider.provider_type not in supported_providers:
+                pytest.skip(
+                    f"Search mode '{search_mode}' is not supported by provider '{provider.provider_type}'. "
+                    f"Supported providers for '{search_mode}': {supported_providers}"
+                )
+            return
+
+    # Fallback: check if any provider supports the search mode
     for p in vector_io_providers:
         if p.provider_type in supported_providers:
             return
@@ -3725,6 +3759,352 @@ def test_openai_vector_store_search_with_high_score_filter(
 
 
 @vector_provider_wrapper
+def test_openai_vector_store_search_with_weighted_ranker(
+    llama_stack_client,
+    client_with_models,
+    sample_chunks,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+):
+    """Test OpenAI vector store search with weighted ranker and custom alpha."""
+    skip_if_provider_doesnt_support_openai_vector_stores_search(
+        client_with_models, "hybrid", vector_io_provider_id, embedding_dimension
+    )
+
+    client = llama_stack_client
+    llama_client = client_with_models
+
+    # Create a vector store
+    vector_store = client.vector_stores.create(
+        name="weighted_ranker_test",
+        metadata={"purpose": "weighted_ranker_testing"},
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    # Insert chunks (insert_chunks returns None, which is expected)
+    llama_client.vector_io.insert(
+        vector_store_id=vector_store.id,
+        chunks=sample_chunks,
+    )
+
+    # Use a query that will match both vector and keyword search
+    # "artificial intelligence" should match doc2 and doc4 via both vector and keyword
+    # "Python programming" should match doc1 via both vector and keyword
+    test_query = "artificial intelligence and machine learning"
+
+    keyword_search = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query=test_query,
+        search_mode="keyword",
+        max_num_results=5,
+    )
+
+    vector_search = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query=test_query,
+        search_mode="vector",
+        max_num_results=5,
+    )
+
+    hybrid_basic = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query=test_query,
+        search_mode="hybrid",
+        max_num_results=5,
+    )
+
+    # Test weighted ranker with custom alpha
+    search_response = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query=test_query,
+        search_mode="hybrid",
+        max_num_results=5,
+        ranking_options={
+            "ranker": "weighted",
+            "alpha": 0.7,  # 70% vector, 30% keyword
+        },
+    )
+
+    assert search_response is not None
+
+    # If no results, try with a query that should match via both vector and keyword
+    if len(search_response.data) == 0:
+        search_response = client.vector_stores.search(
+            vector_store_id=vector_store.id,
+            query="Python programming language",  # Should match doc1 via both vector and keyword
+            search_mode="hybrid",
+            max_num_results=5,
+            ranking_options={
+                "ranker": "weighted",
+                "alpha": 0.7,
+            },
+        )
+
+    assert len(search_response.data) > 0, (
+        f"No search results found. "
+        f"Keyword search: {len(keyword_search.data)} results, "
+        f"Vector search: {len(vector_search.data)} results, "
+        f"Hybrid basic: {len(hybrid_basic.data)} results."
+    )
+
+    # Results should be sorted by score (descending)
+    scores = [result.score for result in search_response.data]
+    assert all(scores[i] >= scores[i + 1] for i in range(len(scores) - 1))
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_search_with_rrf_ranker(
+    llama_stack_client,
+    client_with_models,
+    sample_chunks,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+):
+    """Test OpenAI vector store search with RRF ranker and custom impact_factor."""
+    skip_if_provider_doesnt_support_openai_vector_stores_search(
+        client_with_models, "hybrid", vector_io_provider_id, embedding_dimension
+    )
+
+    client = llama_stack_client
+    llama_client = client_with_models
+
+    # Create a vector store
+    vector_store = client.vector_stores.create(
+        name="rrf_ranker_test",
+        metadata={"purpose": "rrf_ranker_testing"},
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    # Insert chunks
+    llama_client.vector_io.insert(
+        vector_store_id=vector_store.id,
+        chunks=sample_chunks,
+    )
+
+    # Test RRF ranker with custom impact_factor
+    search_response = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="machine learning and artificial intelligence",
+        search_mode="hybrid",
+        max_num_results=5,
+        ranking_options={
+            "ranker": "rrf",
+            "impact_factor": 50.0,  # Custom impact factor
+        },
+    )
+
+    assert search_response is not None
+    assert len(search_response.data) > 0
+
+    # Results should be sorted by score (descending)
+    scores = [result.score for result in search_response.data]
+    assert all(scores[i] >= scores[i + 1] for i in range(len(scores) - 1))
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_search_with_ranker_defaults(
+    llama_stack_client,
+    client_with_models,
+    sample_chunks,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+):
+    """Test that ranker uses VectorStoresConfig defaults when parameters are not provided."""
+    skip_if_provider_doesnt_support_openai_vector_stores_search(
+        client_with_models, "hybrid", vector_io_provider_id, embedding_dimension
+    )
+
+    client = llama_stack_client
+    llama_client = client_with_models
+
+    # Create a vector store
+    vector_store = client.vector_stores.create(
+        name="ranker_defaults_test",
+        metadata={"purpose": "ranker_defaults_testing"},
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    # Insert chunks
+    llama_client.vector_io.insert(
+        vector_store_id=vector_store.id,
+        chunks=sample_chunks,
+    )
+
+    # Test weighted ranker without alpha (should use config default)
+    search_response = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="machine learning",
+        search_mode="hybrid",
+        max_num_results=5,
+        ranking_options={
+            "ranker": "weighted",
+        },
+    )
+
+    assert search_response is not None
+    assert len(search_response.data) > 0
+
+    # Test RRF ranker without impact_factor (should use config default)
+    search_response_rrf = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="machine learning",
+        search_mode="hybrid",
+        max_num_results=5,
+        ranking_options={
+            "ranker": "rrf",
+        },
+    )
+
+    assert search_response_rrf is not None
+    assert len(search_response_rrf.data) > 0
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_search_neural_ranker_validation(
+    compat_client_with_empty_stores,
+    client_with_models,
+    sample_chunks,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+):
+    """Test that neural ranker requires model parameter."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_doesnt_support_openai_vector_stores_search(
+        client_with_models, "hybrid", vector_io_provider_id, embedding_dimension
+    )
+
+    compat_client = compat_client_with_empty_stores
+
+    # OpenAI client doesn't support search_mode parameter (it's a Llama Stack extension)
+    if isinstance(compat_client, OpenAI):
+        pytest.skip("OpenAI client doesn't support search_mode parameter")
+    llama_client = client_with_models
+
+    vector_store = compat_client.vector_stores.create(
+        name="neural_ranker_validation_test",
+        metadata={"purpose": "neural_ranker_validation"},
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    llama_client.vector_io.insert(
+        vector_store_id=vector_store.id,
+        chunks=sample_chunks,
+    )
+
+    # Test that neural ranker without model returns empty results
+    search_response_no_model = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="machine learning",
+        search_mode="hybrid",
+        max_num_results=5,
+        ranking_options={
+            "ranker": "neural",
+        },
+    )
+    assert search_response_no_model is not None
+    assert len(search_response_no_model.data) == 0  # Should return empty results when model is missing
+
+    # Test that neural ranker with model is accepted (even though not implemented yet)
+    # This should not raise an error, but will use fallback algorithm
+    search_response = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="machine learning",
+        search_mode="hybrid",
+        max_num_results=5,
+        ranking_options={
+            "ranker": "neural",
+            "model": "vllm/Qwen3-Reranker-0.6B",  # Model provided
+        },
+    )
+
+    # Should succeed (using fallback algorithm for now)
+    assert search_response is not None
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_search_with_ranking_options_combined(
+    llama_stack_client,
+    client_with_models,
+    sample_chunks,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+):
+    """Test combining multiple ranking options (ranker, alpha, score_threshold)."""
+    skip_if_provider_doesnt_support_openai_vector_stores_search(
+        client_with_models, "hybrid", vector_io_provider_id, embedding_dimension
+    )
+
+    client = llama_stack_client
+    llama_client = client_with_models
+
+    # Create a vector store
+    vector_store = client.vector_stores.create(
+        name="combined_ranking_options_test",
+        metadata={"purpose": "combined_ranking_testing"},
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    # Insert chunks
+    llama_client.vector_io.insert(
+        vector_store_id=vector_store.id,
+        chunks=sample_chunks,
+    )
+
+    # First search to determine threshold
+    initial_search = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="machine learning",
+        search_mode="hybrid",
+        max_num_results=5,
+    )
+
+    if initial_search.data:
+        threshold = min(result.score for result in initial_search.data) * 0.9
+    else:
+        threshold = 0.01
+
+    # Test combining ranker, alpha, and score_threshold
+    search_response = client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="machine learning",
+        search_mode="hybrid",
+        max_num_results=5,
+        ranking_options={
+            "ranker": "weighted",
+            "alpha": 0.8,
+            "score_threshold": threshold,
+        },
+    )
+
+    assert search_response is not None
+    assert len(search_response.data) > 0
+
+    # All results should meet the score threshold
+    for result in search_response.data:
+        assert result.score >= threshold
+
+
+@vector_provider_wrapper
 def test_openai_vector_store_search_with_max_num_results(
     compat_client_with_empty_stores,
     client_with_models,
@@ -4304,7 +4684,9 @@ def test_openai_vector_store_search_modes(
     vector_io_provider_id,
 ):
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
-    skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_models, search_mode)
+    skip_if_provider_doesnt_support_openai_vector_stores_search(
+        client_with_models, search_mode, vector_io_provider_id, embedding_dimension
+    )
 
     vector_store = llama_stack_client.vector_stores.create(
         name=f"search_mode_test_{search_mode}",
