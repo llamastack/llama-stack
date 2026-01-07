@@ -93,6 +93,7 @@ On Unix-based systems (Linux, macOS), you can optionally enable Gunicorn with Uv
 - On Windows, Gunicorn is not supported; the server uses single-process Uvicorn.
 - **Database Race Condition**: When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions. To avoid this, set `GUNICORN_PRELOAD=true`.
 - **SQLite with Multiple Workers**: SQLite only allows one writer at a time - write operations from multiple workers are serialized. **For production deployments with high traffic, we recommend using PostgreSQL**.
+- **Timeout for Long-Running Inference**: The default `GUNICORN_TIMEOUT=120` (seconds) may be insufficient for long-running LLM workloads such as document summarization, long-form generation, or streaming responses with slow time-to-first-token. Increase this value (e.g., `GUNICORN_TIMEOUT=300` or higher) to prevent workers from being killed mid-request.
 
 **Example production configuration:**
 ```bash
