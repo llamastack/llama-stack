@@ -23,6 +23,18 @@ __version__ = "0.4.0.dev0"
 
 # Import submodules for those who need them
 from . import common  # noqa: F401
+from .admin import (
+    Admin,
+    ApiFilter,
+    HealthInfo,
+    InspectProviderRequest,
+    ListProvidersResponse,
+    ListRoutesRequest,
+    ListRoutesResponse,
+    ProviderInfo,
+    RouteInfo,
+    VersionInfo,
+)
 
 # Import all public API symbols
 from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
@@ -132,13 +144,19 @@ from .datatypes import (
     VectorStoresProtocolPrivate,
 )
 from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
+from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
+    DeleteFileRequest,
     ExpiresAfter,
     Files,
+    ListFilesRequest,
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
     OpenAIFileObject,
     OpenAIFilePurpose,
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+    UploadFileRequest,
 )
 from .inference import (
     Bf16QuantizationConfig,
@@ -220,16 +238,10 @@ from .inference import (
     TopPSamplingStrategy,
     UserMessage,
 )
-from .inspect_api import (
-    ApiFilter,
-    HealthInfo,
-    Inspect,
-    ListRoutesResponse,
-    RouteInfo,
-    VersionInfo,
-)
+from .inspect_api import Inspect
 from .models import (
     CommonModelFields,
+    GetModelRequest,
     ListModelsResponse,
     Model,
     ModelInput,
@@ -237,6 +249,8 @@ from .models import (
     ModelType,
     OpenAIListModelsResponse,
     OpenAIModel,
+    RegisterModelRequest,
+    UnregisterModelRequest,
 )
 from .openai_responses import (
     AllowedToolsFilter,
@@ -359,12 +373,7 @@ from .post_training import (
     TrainingConfig,
 )
 from .prompts import ListPromptsResponse, Prompt, Prompts
-from .providers import (
-    InspectProviderRequest,
-    ListProvidersResponse,
-    ProviderInfo,
-    Providers,
-)
+from .providers import Providers
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
     LLMRAGQueryGeneratorConfig,
@@ -446,6 +455,7 @@ from .tools import (
 from .vector_io import (
     Chunk,
     ChunkMetadata,
+    EmbeddedChunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
@@ -515,6 +525,7 @@ __all__ = [
     "Checkpoint",
     "Chunk",
     "ChunkMetadata",
+    "EmbeddedChunk",
     "CommonBenchmarkFields",
     "ConflictError",
     "CommonDatasetFields",
@@ -551,6 +562,7 @@ __all__ = [
     "Datasets",
     "DatasetsProtocolPrivate",
     "DefaultRAGQueryGeneratorConfig",
+    "DeleteFileRequest",
     "Docstring",
     "DynamicApiMeta",
     "EfficiencyConfig",
@@ -563,6 +575,7 @@ __all__ = [
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",
+    "FileProcessors",
     "Files",
     "Fp8QuantizationConfig",
     "clear_dynamic_schema_types",
@@ -578,6 +591,8 @@ __all__ = [
     "InferenceProvider",
     "InlineProviderSpec",
     "Inspect",
+    "InspectProviderRequest",
+    "Admin",
     "Int4QuantizationConfig",
     "InterleavedContent",
     "InterleavedContentItem",
@@ -608,6 +623,7 @@ __all__ = [
     "UnregisterBenchmarkRequest",
     "ListConnectorsResponse",
     "ListDatasetsResponse",
+    "ListFilesRequest",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
     "ListOpenAIFileResponse",
@@ -616,7 +632,7 @@ __all__ = [
     "ListPostTrainingJobsResponse",
     "ListPromptsResponse",
     "ListProvidersResponse",
-    "InspectProviderRequest",
+    "ListRoutesRequest",
     "ListRoutesResponse",
     "ListScoringFunctionsResponse",
     "ListShieldsResponse",
@@ -635,6 +651,9 @@ __all__ = [
     "ModelType",
     "ModelTypeError",
     "Models",
+    "GetModelRequest",
+    "RegisterModelRequest",
+    "UnregisterModelRequest",
     "ModelsProtocolPrivate",
     "ModerationObject",
     "ModerationObjectResults",
@@ -791,6 +810,7 @@ __all__ = [
     "ParamType",
     "parse_type",
     "PostTraining",
+    "ProcessFileResponse",
     "PostTrainingMetric",
     "PostTrainingJob",
     "PostTrainingJobArtifactsResponse",
@@ -831,6 +851,8 @@ __all__ = [
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
     "ResponseItemInclude",
+    "RetrieveFileContentRequest",
+    "RetrieveFileRequest",
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",
@@ -887,6 +909,7 @@ __all__ = [
     "unwrap_generic_list",
     "unwrap_optional_type",
     "unwrap_union_types",
+    "UploadFileRequest",
     "URIDataSource",
     "URL",
     "_URLOrData",

@@ -45,7 +45,11 @@ jobs:
       - name: Generate Distribution List
         id: set-matrix
         run: |
-          distros=$(ls src/llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
+          distros=$(ls -d src/llama_stack/distributions/*/ 2>/dev/null | \
+            awk -F'/' '{print $(NF-1)}' | \
+            grep -v '^__pycache__$' | \
+            grep -v '^ci-tests$' | \
+            jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "distros=$distros" >> "$GITHUB_OUTPUT"
 
   build:
@@ -84,10 +88,40 @@ jobs:
             $BUILD_ARGS \
             --tag llama-stack:${{ matrix.distro }}-ci
 
-      - name: Print dependencies in the image
-        if: matrix.image-type == 'venv'
+  build-arm64:
+    needs: generate-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro: ${{ fromJson(needs.generate-matrix.outputs.distros) }}
+        exclude:
+          # meta-reference-gpu depends on fbgemm-gpu-genai which only has x86_64 wheels
+          - distro: meta-reference-gpu
+      fail-fast: false # We want to run all jobs even if some fail
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Install dependencies
+        uses: ./.github/actions/setup-runner
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+      - name: Build ARM64 container image
         run: |
-          uv pip list
+          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=${{ matrix.distro }}"
+          if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+          fi
+          if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+          fi
+          docker buildx build --platform linux/arm64 --load . \
+            -f containers/Containerfile \
+            $BUILD_ARGS \
+            --tag llama-stack:${{ matrix.distro }}-arm64-ci
 
   build-single-provider:
     runs-on: ubuntu-latest

@@ -33,8 +33,6 @@ class ChunkMetadata(BaseModel):
     :param updated_timestamp: An optional timestamp indicating when the chunk was last updated.
     :param chunk_window: The window of the chunk, which can be used to group related chunks together.
     :param chunk_tokenizer: The tokenizer used to create the chunk. Default is Tiktoken.
-    :param chunk_embedding_model: The embedding model used to create the chunk's embedding.
-    :param chunk_embedding_dimension: The dimension of the embedding vector for the chunk.
     :param content_token_count: The number of tokens in the content of the chunk.
     :param metadata_token_count: The number of tokens in the metadata of the chunk.
     """
@@ -46,8 +44,6 @@ class ChunkMetadata(BaseModel):
     updated_timestamp: int | None = None
     chunk_window: str | None = None
     chunk_tokenizer: str | None = None
-    chunk_embedding_model: str | None = None
-    chunk_embedding_dimension: int | None = None
     content_token_count: int | None = None
     metadata_token_count: int | None = None
 
@@ -55,11 +51,10 @@ class ChunkMetadata(BaseModel):
 @json_schema_type
 class Chunk(BaseModel):
     """
-    A chunk of content that can be inserted into a vector database.
+    A chunk of content from file processing.
     :param content: The content of the chunk, which can be interleaved text, images, or other types.
     :param chunk_id: Unique identifier for the chunk. Must be provided explicitly.
     :param metadata: Metadata associated with the chunk that will be used in the model context during inference.
-    :param embedding: Optional embedding for the chunk. If not provided, it will be computed later.
     :param chunk_metadata: Metadata for the chunk that will NOT be used in the context during inference.
         The `chunk_metadata` is required backend functionality.
     """
@@ -67,8 +62,7 @@ class Chunk(BaseModel):
     content: InterleavedContent
     chunk_id: str
     metadata: dict[str, Any] = Field(default_factory=dict)
-    embedding: list[float] | None = None
-    chunk_metadata: ChunkMetadata | None = None
+    chunk_metadata: ChunkMetadata
 
     @property
     def document_id(self) -> str | None:
@@ -88,14 +82,29 @@ class Chunk(BaseModel):
 
 
 @json_schema_type
+class EmbeddedChunk(Chunk):
+    """
+    A chunk of content with its embedding vector for vector database operations.
+    Inherits all fields from Chunk and adds embedding-related fields.
+    :param embedding: The embedding vector for the chunk content.
+    :param embedding_model: The model used to generate the embedding (e.g., 'openai/text-embedding-3-small').
+    :param embedding_dimension: The dimension of the embedding vector.
+    """
+
+    embedding: list[float]
+    embedding_model: str
+    embedding_dimension: int
+
+
+@json_schema_type
 class QueryChunksResponse(BaseModel):
     """Response from querying chunks in a vector database.
 
-    :param chunks: List of content chunks returned from the query
+    :param chunks: List of embedded chunks returned from the query
     :param scores: Relevance scores corresponding to each returned chunk
     """
 
-    chunks: list[Chunk]
+    chunks: list[EmbeddedChunk]
     scores: list[float]
 
 
@@ -581,16 +590,14 @@ class VectorIO(Protocol):
     async def insert_chunks(
         self,
         vector_store_id: str,
-        chunks: list[Chunk],
+        chunks: list[EmbeddedChunk],
         ttl_seconds: int | None = None,
     ) -> None:
-        """Insert chunks into a vector database.
+        """Insert embedded chunks into a vector database.
 
         :param vector_store_id: The identifier of the vector database to insert the chunks into.
-        :param chunks: The chunks to insert. Each `Chunk` should contain content which can be interleaved text, images, or other types.
-            `metadata`: `dict[str, Any]` and `embedding`: `List[float]` are optional.
-            If `metadata` is provided, you configure how Llama Stack formats the chunk during generation.
-            If `embedding` is not provided, it will be computed later.
+        :param chunks: The embedded chunks to insert. Each `EmbeddedChunk` contains the content, metadata,
+            and embedding vector ready for storage.
         :param ttl_seconds: The time to live of the chunks.
         """
         ...

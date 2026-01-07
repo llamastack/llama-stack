@@ -14,6 +14,7 @@ import pytest
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 from llama_stack_api import (
     Chunk,
+    EmbeddedChunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
@@ -50,7 +51,20 @@ async def test_initialize_index(vector_index):
 async def test_add_chunks_query_vector(vector_index, sample_chunks, sample_embeddings):
     vector_index.delete()
     vector_index.initialize()
-    await vector_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects using inheritance pattern
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await vector_index.add_chunks(embedded_chunks)
     resp = await vector_index.query_vector(sample_embeddings[0], k=1, score_threshold=-1)
     assert resp.chunks[0].content == sample_chunks[0].content
     vector_index.delete()
@@ -58,14 +72,27 @@ async def test_add_chunks_query_vector(vector_index, sample_chunks, sample_embed
 
 async def test_chunk_id_conflict(vector_index, sample_chunks, embedding_dimension):
     embeddings = np.random.rand(len(sample_chunks), embedding_dimension).astype(np.float32)
-    await vector_index.add_chunks(sample_chunks, embeddings)
+    # Create EmbeddedChunk objects using inheritance pattern
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, embeddings, strict=False)
+    ]
+    await vector_index.add_chunks(embedded_chunks)
     resp = await vector_index.query_vector(
         np.random.rand(embedding_dimension).astype(np.float32),
         k=len(sample_chunks),
         score_threshold=-1,
     )
 
-    contents = [chunk.content for chunk in resp.chunks]
+    contents = [embedded_chunk.content for embedded_chunk in resp.chunks]
     assert len(contents) == len(set(contents))
 
 
@@ -235,16 +262,46 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
             content="has doc_id in metadata",
             chunk_id=generate_chunk_id("doc-1", "has doc_id in metadata"),
             metadata={"document_id": "doc-1"},
+            embedding=[],
+            chunk_metadata=ChunkMetadata(
+                document_id="doc-1",
+                chunk_id=generate_chunk_id("doc-1", "has doc_id in metadata"),
+                created_timestamp=int(time.time()),
+                updated_timestamp=int(time.time()),
+                chunk_embedding_model="test-model",
+                chunk_embedding_dimension=768,
+                content_token_count=5,
+            ),
         ),
         Chunk(
             content="no doc_id anywhere",
             chunk_id=generate_chunk_id("unknown", "no doc_id anywhere"),
             metadata={"source": "test"},
+            embedding=[],
+            chunk_metadata=ChunkMetadata(
+                document_id=None,
+                chunk_id=generate_chunk_id("unknown", "no doc_id anywhere"),
+                created_timestamp=int(time.time()),
+                updated_timestamp=int(time.time()),
+                chunk_embedding_model="test-model",
+                chunk_embedding_dimension=768,
+                content_token_count=4,
+            ),
         ),
         Chunk(
             content="doc_id in chunk_metadata",
             chunk_id=generate_chunk_id("doc-3", "doc_id in chunk_metadata"),
-            chunk_metadata=ChunkMetadata(document_id="doc-3"),
+            metadata={},
+            embedding=[],
+            chunk_metadata=ChunkMetadata(
+                document_id="doc-3",
+                chunk_id=generate_chunk_id("doc-3", "doc_id in chunk_metadata"),
+                created_timestamp=int(time.time()),
+                updated_timestamp=int(time.time()),
+                chunk_embedding_model="test-model",
+                chunk_embedding_dimension=768,
+                content_token_count=5,
+            ),
         ),
     ]
 
@@ -257,9 +314,24 @@ async def test_document_id_with_invalid_type_raises_error():
     """Ensure TypeError is raised when document_id is not a string."""
     # Integer document_id should raise TypeError
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
-    from llama_stack_api import Chunk
+    from llama_stack_api import Chunk, ChunkMetadata
 
-    chunk = Chunk(content="test", chunk_id=generate_chunk_id("test", "test"), metadata={"document_id": 12345})
+    chunk_id = generate_chunk_id("test", "test")
+    chunk = Chunk(
+        content="test",
+        chunk_id=chunk_id,
+        metadata={"document_id": 12345},
+        embedding=[],
+        chunk_metadata=ChunkMetadata(
+            document_id=None,
+            chunk_id=chunk_id,
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            chunk_embedding_model="test-model",
+            chunk_embedding_dimension=768,
+            content_token_count=1,
+        ),
+    )
     with pytest.raises(TypeError) as exc_info:
         _ = chunk.document_id
     assert "metadata['document_id'] must be a string" in str(exc_info.value)
@@ -268,8 +340,32 @@ async def test_document_id_with_invalid_type_raises_error():
 
 async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter):
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+    from llama_stack_api import ChunkMetadata
 
-    expected = QueryChunksResponse(chunks=[Chunk(content="c1", chunk_id=generate_chunk_id("test", "c1"))], scores=[0.1])
+    chunk_id = generate_chunk_id("test", "c1")
+    chunk = Chunk(
+        content="c1",
+        chunk_id=chunk_id,
+        metadata={},
+        chunk_metadata=ChunkMetadata(
+            document_id="test",
+            chunk_id=chunk_id,
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            content_token_count=1,
+        ),
+    )
+
+    embedded_chunk = EmbeddedChunk(
+        content=chunk.content,
+        chunk_id=chunk.chunk_id,
+        metadata=chunk.metadata,
+        chunk_metadata=chunk.chunk_metadata,
+        embedding=[0.1, 0.2, 0.3],
+        embedding_model="test-model",
+        embedding_dimension=3,
+    )
+    expected = QueryChunksResponse(chunks=[embedded_chunk], scores=[0.1])
     fake_index = AsyncMock(query_chunks=AsyncMock(return_value=expected))
     vector_io_adapter.cache["db1"] = fake_index
 
