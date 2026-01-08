@@ -6,10 +6,12 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | ---- | ---- | ------- |
 | Backward Compatibility Check | [backward-compat.yml](backward-compat.yml) | Check backward compatibility for config.yaml files |
 | Build Distribution Images | [build-distributions.yml](build-distributions.yml) | Build Distribution Images |
+| Update Changelog | [changelog.yml](changelog.yml) | Creates PR for updating the CHANGELOG.md |
 | CodeQL Workflow Security Scan | [codeql.yml](codeql.yml) | CodeQL Workflow Security Scan |
 | API Conformance Tests | [conformance.yml](conformance.yml) | Run the API Conformance test suite on the changes. |
 | Installer CI | [install-script-ci.yml](install-script-ci.yml) | Test the installation script |
 | Integration Auth Tests | [integration-auth-tests.yml](integration-auth-tests.yml) | Run the integration test suite with Kubernetes authentication |
+| MLflow Prompts Integration Tests | [integration-mlflow-tests.yml](integration-mlflow-tests.yml) | Run the integration test suite with MLflow Prompt Registry provider |
 | SqlStore Integration Tests | [integration-sql-store-tests.yml](integration-sql-store-tests.yml) | Run the integration test suite with SqlStore |
 | Integration Tests (Replay) | [integration-tests.yml](integration-tests.yml) | Run the integration test suites from tests/integration in replay mode |
 | Vector IO Integration Tests | [integration-vector-io-tests.yml](integration-vector-io-tests.yml) | Run the integration test suite with various VectorIO providers |

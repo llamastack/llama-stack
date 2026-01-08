@@ -28,6 +28,7 @@ except ImportError:
 
 logger = get_logger(__name__)
 
+
 class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
     """MLflow Prompt Registry adapter for Llama Stack.
 
@@ -96,8 +97,7 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
         """
         if mlflow is None:
             raise ImportError(
-                "mlflow package is required for MLflow prompts provider. "
-                "Install with: pip install 'mlflow>=3.4.0'"
+                "mlflow package is required for MLflow prompts provider. Install with: pip install 'mlflow>=3.4.0'"
             )
 
         # Set MLflow URIs
@@ -138,9 +138,7 @@ class MLflowPromptsAdapter(NeedsRequestProviderData, Prompts):
                 mlflow.set_experiment(self.config.experiment_name)
                 logger.info(f"Created MLflow experiment: {self.config.experiment_name}")
             except Exception as e:
-                raise ValueError(
-                    f"Failed to create experiment '{self.config.experiment_name}': {e}"
-                ) from e
+                raise ValueError(f"Failed to create experiment '{self.config.experiment_name}': {e}") from e
 
     def _extract_variables(self, template: str) -> list[str]:
         """Extract variables from prompt template.

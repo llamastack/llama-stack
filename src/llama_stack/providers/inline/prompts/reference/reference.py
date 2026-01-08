@@ -26,11 +26,8 @@ class PromptServiceImpl(Prompts):
         self.kvstore: KVStore
 
     async def initialize(self) -> None:
-        # Use prompts store reference from run config
-        prompts_ref = self.config.run_config.storage.stores.prompts
-        if not prompts_ref:
-            raise ValueError("storage.stores.prompts must be configured in run config")
-        self.kvstore = await kvstore_impl(prompts_ref)
+        # Use prompts store reference from config
+        self.kvstore = await kvstore_impl(self.config.prompts_store)
 
     def _get_default_key(self, prompt_id: str) -> str:
         """Get the KVStore key that stores the default version number."""
