@@ -274,12 +274,12 @@ class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStore
         inference_api: Inference,
         files_api: Files | None = None,
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
         self.client: AsyncElasticsearch = None
         self.cache = {}
-        self.inference_api = inference_api
         self.vector_store_table = None
+        self.metadata_collection_name = "openai_vector_stores_metadata"
 
     async def initialize(self) -> None:
         self.client = AsyncElasticsearch(hosts=self.config.elasticsearch_url, api_key=self.config.elasticsearch_api_key)
