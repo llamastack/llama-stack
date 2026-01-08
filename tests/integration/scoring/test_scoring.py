@@ -44,6 +44,16 @@ def register_scoring_function(
     )
 
 
+def unregister_scoring_function(llama_stack_client, scoring_fn_id):
+    try:
+        base_url = llama_stack_client.base_url
+    except AttributeError:
+        pytest.skip("No server base_url available; cannot test HTTP unregister in library mode")
+
+    resp = requests.delete(f"{base_url}/v1/scoring-functions/{scoring_fn_id}", timeout=30)
+    assert resp.status_code in (200, 204)
+
+
 def test_scoring_functions_list(llama_stack_client):
     response = llama_stack_client.scoring_functions.list()
     assert isinstance(response, list)
@@ -94,6 +104,10 @@ def test_scoring_functions_unregister(
         pytest.skip("No llm-as-judge provider found, cannot test unregister")
 
     llm_as_judge_provider_id = llm_as_judge_provider[0].provider_id
+
+    # Ensure a clean state: shared server runs can keep a prior registration, and
+    # re-registering the same identifier would fail with a 400.
+    unregister_scoring_function(llama_stack_client, sample_scoring_fn_id)
 
     # Register first
     register_scoring_function(
@@ -184,7 +198,6 @@ def test_scoring_score_with_aggregation_functions(
     sample_judge_prompt_template,
     judge_model_id,
     provider_id,
-    rag_dataset_for_test,
 ):
     df = pd.read_csv(Path(__file__).parent.parent / "datasets" / "test_dataset.csv")
     rows = df.to_dict(orient="records")
