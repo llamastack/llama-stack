@@ -235,3 +235,7 @@ uv run ./scripts/run_openapi_generator.sh
 ```
 
 The generated API schema will be available in `docs/static/`. Make sure to review the changes before committing.
+
+## Release Process
+
+For information about how Llama Stack versions are released, including release schedules, testing requirements, and how to contribute to releases, see [RELEASE_PROCESS.md](./RELEASE_PROCESS.md).
