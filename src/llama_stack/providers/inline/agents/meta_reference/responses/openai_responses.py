@@ -17,11 +17,13 @@ from llama_stack.providers.utils.responses.responses_store import (
     _OpenAIResponseObjectWithInputAndMessages,
 )
 from llama_stack_api import (
+    AddItemsRequest,
     ConversationItem,
     Conversations,
     Files,
     Inference,
     InvalidConversationIdError,
+    ListItemsRequest,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIChatCompletionContentPartParam,
@@ -148,7 +150,9 @@ class OpenAIResponsesImpl:
 
             tool_context.recover_tools_from_previous_response(previous_response)
         elif conversation is not None:
-            conversation_items = await self.conversations_api.list_items(conversation, order="asc")
+            conversation_items = await self.conversations_api.list_items(
+                ListItemsRequest(conversation_id=conversation, order="asc")
+            )
 
             # Use stored messages as source of truth (like previous_response.messages)
             stored_messages = await self.responses_store.get_conversation_messages(conversation)
@@ -570,4 +574,4 @@ class OpenAIResponsesImpl:
 
         adapter = TypeAdapter(list[ConversationItem])
         validated_items = adapter.validate_python(conversation_items)
-        await self.conversations_api.add_items(conversation_id, validated_items)
+        await self.conversations_api.add_items(conversation_id, AddItemsRequest(items=validated_items))

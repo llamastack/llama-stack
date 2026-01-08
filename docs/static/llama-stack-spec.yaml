@@ -356,11 +356,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Conversations
-      summary: Create Conversation
-      description: |-
-        Create a conversation.
-
-        Create a conversation.
+      summary: Create a conversation.
+      description: Create a conversation.
       operationId: create_conversation_v1_conversations_post
       requestBody:
         content:
@@ -378,24 +375,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/Conversation'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Conversations
-      summary: Get Conversation
-      description: |-
-        Retrieve a conversation.
-
-        Get a conversation with the given ID.
+      summary: Retrieve a conversation.
+      description: Get a conversation with the given ID.
       operationId: get_conversation_v1_conversations__conversation_id__get
       parameters:
       - name: conversation_id
@@ -403,7 +397,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: conversation_id'
+          description: The conversation identifier.
+          title: Conversation Id
+        description: The conversation identifier.
     post:
       responses:
         '200':
@@ -413,24 +409,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/Conversation'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Conversations
-      summary: Update Conversation
-      description: |-
-        Update a conversation.
-
-        Update a conversation's metadata with the given ID.
+      summary: Update a conversation.
+      description: Update a conversation's metadata with the given ID.
       operationId: update_conversation_v1_conversations__conversation_id__post
       parameters:
       - name: conversation_id
@@ -438,13 +431,15 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: conversation_id'
+          description: The conversation identifier.
+          title: Conversation Id
+        description: The conversation identifier.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UpdateConversationRequest'
-        required: true
     delete:
       responses:
         '200':
@@ -454,32 +449,31 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConversationDeletedResource'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Conversations
-      summary: Openai Delete Conversation
-      description: |-
-        Delete a conversation.
-
-        Delete a conversation with the given ID.
-      operationId: openai_delete_conversation_v1_conversations__conversation_id__delete
+      summary: Delete a conversation.
+      description: Delete a conversation with the given ID.
+      operationId: delete_conversation_v1_conversations__conversation_id__delete
       parameters:
       - name: conversation_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: conversation_id'
+          description: The conversation identifier.
+          title: Conversation Id
+        description: The conversation identifier.
   /v1/conversations/{conversation_id}/items:
     get:
       responses:
@@ -503,13 +497,18 @@ paths:
           description: Default Response
       tags:
       - Conversations
-      summary: List Items
-      description: |-
-        List items.
-
-        List items in the conversation.
+      summary: List items.
+      description: List items in the conversation.
       operationId: list_items_v1_conversations__conversation_id__items_get
       parameters:
+      - name: conversation_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The conversation identifier.
+          title: Conversation Id
+        description: The conversation identifier.
       - name: after
         in: query
         required: false
@@ -518,6 +517,16 @@ paths:
           - type: string
           - type: 'null'
           title: After
+      - name: include
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: array
+            items:
+              $ref: '#/components/schemas/ConversationItemInclude'
+          - type: 'null'
+          title: Include
       - name: limit
         in: query
         required: false
@@ -537,22 +546,6 @@ paths:
             type: string
           - type: 'null'
           title: Order
-      - name: conversation_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: conversation_id'
-      - name: include
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: array
-            items:
-              $ref: '#/components/schemas/ConversationItemInclude'
-          - type: 'null'
-          title: Include
     post:
       responses:
         '200':
@@ -575,11 +568,8 @@ paths:
           description: Default Response
       tags:
       - Conversations
-      summary: Add Items
-      description: |-
-        Create items.
-
-        Create items in the conversation.
+      summary: Create items.
+      description: Create items in the conversation.
       operationId: add_items_v1_conversations__conversation_id__items_post
       parameters:
       - name: conversation_id
@@ -587,7 +577,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: conversation_id'
+          description: The conversation identifier.
+          title: Conversation Id
+        description: The conversation identifier.
       requestBody:
         required: true
         content:
@@ -602,40 +594,63 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/OpenAIResponseMessage'
+                oneOf:
+                - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    message: '#/components/schemas/OpenAIResponseMessage-Output'
+                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                    function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                    mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                title: Response Retrieve Item V1 Conversations  Conversation Id  Items  Item Id  Get
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Conversations
-      summary: Retrieve
-      description: |-
-        Retrieve an item.
-
-        Retrieve a conversation item.
-      operationId: retrieve_v1_conversations__conversation_id__items__item_id__get
+      summary: Retrieve an item.
+      description: Retrieve a conversation item.
+      operationId: retrieve_item_v1_conversations__conversation_id__items__item_id__get
       parameters:
       - name: conversation_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: conversation_id'
+          description: The conversation identifier.
+          title: Conversation Id
+        description: The conversation identifier.
       - name: item_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: item_id'
+          description: The item identifier.
+          title: Item Id
+        description: The item identifier.
     delete:
       responses:
         '200':
@@ -645,38 +660,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/ConversationItemDeletedResource'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Conversations
-      summary: Openai Delete Conversation Item
-      description: |-
-        Delete an item.
-
-        Delete a conversation item.
-      operationId: openai_delete_conversation_item_v1_conversations__conversation_id__items__item_id__delete
+      summary: Delete an item.
+      description: Delete a conversation item.
+      operationId: delete_item_v1_conversations__conversation_id__items__item_id__delete
       parameters:
       - name: conversation_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: conversation_id'
+          description: The conversation identifier.
+          title: Conversation Id
+        description: The conversation identifier.
       - name: item_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: item_id'
+          description: The item identifier.
+          title: Item Id
+        description: The item identifier.
   /v1/embeddings:
     post:
       responses:
@@ -4582,14 +4598,17 @@ components:
               title: OpenAIResponseMessage-Input | ... (9 variants)
             type: array
           - type: 'null'
+          description: Initial items to include in the conversation context.
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+          description: Set of key-value pairs that can be attached to an object.
       type: object
       title: CreateConversationRequest
+      description: Request model for creating a conversation.
     Conversation:
       properties:
         id:
@@ -4634,10 +4653,12 @@ components:
             type: string
           type: object
           title: Metadata
+          description: Set of key-value pairs that can be attached to an object.
       type: object
       required:
       - metadata
       title: UpdateConversationRequest
+      description: Request model for updating a conversation's metadata.
     ConversationDeletedResource:
       properties:
         id:
@@ -4760,11 +4781,14 @@ components:
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
             title: OpenAIResponseMessage-Input | ... (9 variants)
           type: array
+          maxItems: 20
           title: Items
+          description: Items to include in the conversation context. You may add up to 20 items at a time.
       type: object
       required:
       - items
       title: AddItemsRequest
+      description: Request model for adding items to a conversation.
     ConversationItemDeletedResource:
       properties:
         id:
@@ -12310,6 +12334,100 @@ components:
       required:
       - items
       title: ConversationItemCreateRequest
+      type: object
+    GetConversationRequest:
+      description: Request model for getting a conversation by ID.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+      required:
+      - conversation_id
+      title: GetConversationRequest
+      type: object
+    DeleteConversationRequest:
+      description: Request model for deleting a conversation.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+      required:
+      - conversation_id
+      title: DeleteConversationRequest
+      type: object
+    RetrieveItemRequest:
+      description: Request model for retrieving a conversation item.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+        item_id:
+          description: The item identifier.
+          title: Item Id
+          type: string
+      required:
+      - conversation_id
+      - item_id
+      title: RetrieveItemRequest
+      type: object
+    ListItemsRequest:
+      description: Request model for listing items in a conversation.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: An item ID to list items after, used in pagination.
+          nullable: true
+        include:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ConversationItemInclude'
+            type: array
+          - type: 'null'
+          description: Specify additional output data to include in the response.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: A limit on the number of objects to be returned (1-100, default 20).
+          nullable: true
+        order:
+          anyOf:
+          - enum:
+            - asc
+            - desc
+            type: string
+          - type: 'null'
+          description: The order to return items in (asc or desc, default desc).
+          nullable: true
+      required:
+      - conversation_id
+      title: ListItemsRequest
+      type: object
+    DeleteItemRequest:
+      description: Request model for deleting a conversation item.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+        item_id:
+          description: The item identifier.
+          title: Item Id
+          type: string
+      required:
+      - conversation_id
+      - item_id
+      title: DeleteItemRequest
       type: object
     ProcessFileResponse:
       description: |-
