@@ -1,0 +1,46 @@
+name: "CodeQL Workflow Security Scan"
+
+on:
+  push:
+    # Running on push for workflows not going through PRs
+    branches: [ "main" ]
+    # Limit scans to changes in the .github directory, bash scripts are not scanned anyway
+    paths:
+      - '.github/**'
+  pull_request:
+    # PRs are checked for new issues
+    branches: [ "main" ]
+    # Limit scans to changes in the .github directory, bash scripts are not scanned anyway
+    paths:
+      - '.github/**'
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # actions is the most specific language option for
+        # codeql does NOT support Bash
+        # In case javascript is used in workflows, that should be added or replace
+        language: [ 'actions' ]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+    # Initializes CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@45c373516f557556c15d420e3f5e0aa3d64366bc # v3
+      with:
+        languages: ${{ matrix.language }}
+        # "security-extended" is recommended for higher severity coverage - not necessary can be removed to speed up
+        queries: security-extended
+
+    # Scans the code and uploads results to GitHub Security tab.
+    # The "Fail on High" logic is handled by Branch Protection Rules in Settings
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@45c373516f557556c15d420e3f5e0aa3d64366bc # v3
+      with:
+        category: "/language:${{ matrix.language }}"
