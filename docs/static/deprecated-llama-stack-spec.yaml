@@ -6601,69 +6601,6 @@ components:
             will not be used in the context during inference, but is required for backend functionality. The `ChunkMetadata`
             is set during chunk creation in `MemoryToolRuntimeImpl().insert()`and is not expected to change after.
             Use `Chunk.metadata` for metadata that will be used in the context during inference.
-    InsertChunksRequest:
-      properties:
-        vector_store_id:
-          type: string
-          title: Vector Store Id
-        chunks:
-          items:
-            $ref: '#/components/schemas/EmbeddedChunk-Input'
-          type: array
-          title: Chunks
-        ttl_seconds:
-          anyOf:
-          - type: integer
-          - type: 'null'
-      type: object
-      required:
-      - vector_store_id
-      - chunks
-      title: InsertChunksRequest
-    QueryChunksRequest:
-      properties:
-        vector_store_id:
-          type: string
-          title: Vector Store Id
-        query:
-          anyOf:
-          - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Input'
-              title: ImageContentItem-Input
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Input'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Input | TextContentItem
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Input'
-                title: ImageContentItem-Input
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Input'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Input | TextContentItem
-            type: array
-            title: list[ImageContentItem-Input | TextContentItem]
-          title: string | list[ImageContentItem-Input | TextContentItem]
-        params:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - vector_store_id
-      - query
-      title: QueryChunksRequest
     QueryChunksResponse:
       properties:
         chunks:
@@ -6878,24 +6815,6 @@ components:
       type: object
       title: OpenAICreateVectorStoreRequestWithExtraBody
       description: Request to create a vector store with extra_body support.
-    OpenaiUpdateVectorStoreRequest:
-      properties:
-        name:
-          anyOf:
-          - type: string
-          - type: 'null'
-        expires_after:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      title: OpenaiUpdateVectorStoreRequest
     VectorStoreDeleteResponse:
       properties:
         id:
@@ -7135,45 +7054,6 @@ components:
       - data
       title: VectorStoreListFilesResponse
       description: Response from listing files in a vector store.
-    OpenaiAttachFileToVectorStoreRequest:
-      properties:
-        file_id:
-          type: string
-          title: File Id
-        attributes:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        chunking_strategy:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-              title: VectorStoreChunkingStrategyAuto
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-              title: VectorStoreChunkingStrategyStatic
-            discriminator:
-              propertyName: type
-              mapping:
-                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
-          - type: 'null'
-          title: Chunking Strategy
-      type: object
-      required:
-      - file_id
-      title: OpenaiAttachFileToVectorStoreRequest
-    OpenaiUpdateVectorStoreFileRequest:
-      properties:
-        attributes:
-          additionalProperties: true
-          type: object
-          title: Attributes
-      type: object
-      required:
-      - attributes
-      title: OpenaiUpdateVectorStoreFileRequest
     VectorStoreFileDeleteResponse:
       properties:
         id:
@@ -7249,46 +7129,6 @@ components:
       - data
       title: VectorStoreFileContentResponse
       description: Represents the parsed content of a vector store file.
-    OpenaiSearchVectorStoreRequest:
-      properties:
-        query:
-          anyOf:
-          - type: string
-          - items:
-              type: string
-            type: array
-            title: list[string]
-          title: string | list[string]
-        filters:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        max_num_results:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          default: 10
-        ranking_options:
-          anyOf:
-          - $ref: '#/components/schemas/SearchRankingOptions'
-            title: SearchRankingOptions
-          - type: 'null'
-          title: SearchRankingOptions
-        rewrite_query:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: false
-        search_mode:
-          anyOf:
-          - type: string
-          - type: 'null'
-          default: vector
-      type: object
-      required:
-      - query
-      title: OpenaiSearchVectorStoreRequest
     VectorStoreSearchResponse:
       properties:
         file_id:
@@ -9677,6 +9517,166 @@ components:
       type: object
       title: SearchRankingOptions
       description: Options for ranking and filtering search results.
+    _InsertChunksRequest:
+      properties:
+        vector_store_id:
+          type: string
+          title: Vector Store Id
+        chunks:
+          items:
+            $ref: '#/components/schemas/EmbeddedChunk-Input'
+          type: array
+          title: Chunks
+        ttl_seconds:
+          anyOf:
+          - type: integer
+          - type: 'null'
+      type: object
+      required:
+      - vector_store_id
+      - chunks
+      title: _InsertChunksRequest
+    _OpenAIAttachFileRequest:
+      properties:
+        file_id:
+          type: string
+          title: File Id
+        attributes:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        chunking_strategy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              title: VectorStoreChunkingStrategyAuto
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              title: VectorStoreChunkingStrategyStatic
+            discriminator:
+              propertyName: type
+              mapping:
+                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          - type: 'null'
+          title: Chunking Strategy
+      type: object
+      required:
+      - file_id
+      title: _OpenAIAttachFileRequest
+    _OpenAISearchVectorStoreRequest:
+      properties:
+        query:
+          anyOf:
+          - type: string
+          - items:
+              type: string
+            type: array
+            title: list[string]
+          title: string | list[string]
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        max_num_results:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 10
+        ranking_options:
+          anyOf:
+          - $ref: '#/components/schemas/SearchRankingOptions'
+            title: SearchRankingOptions
+          - type: 'null'
+          title: SearchRankingOptions
+        rewrite_query:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          default: false
+        search_mode:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: vector
+      type: object
+      required:
+      - query
+      title: _OpenAISearchVectorStoreRequest
+    _OpenAIUpdateVectorStoreFileRequest:
+      properties:
+        attributes:
+          additionalProperties: true
+          type: object
+          title: Attributes
+      type: object
+      required:
+      - attributes
+      title: _OpenAIUpdateVectorStoreFileRequest
+    _OpenAIUpdateVectorStoreRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+      type: object
+      title: _OpenAIUpdateVectorStoreRequest
+    _QueryChunksRequest:
+      properties:
+        vector_store_id:
+          type: string
+          title: Vector Store Id
+        query:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Input'
+              title: ImageContentItem-Input
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Input'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Input | TextContentItem
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Input'
+                title: ImageContentItem-Input
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Input'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Input | TextContentItem
+            type: array
+            title: list[ImageContentItem-Input | TextContentItem]
+          title: string | list[ImageContentItem-Input | TextContentItem]
+        params:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+      type: object
+      required:
+      - vector_store_id
+      - query
+      title: _QueryChunksRequest
     _URLOrData:
       properties:
         url:

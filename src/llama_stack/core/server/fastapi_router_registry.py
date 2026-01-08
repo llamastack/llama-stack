@@ -30,6 +30,7 @@ from llama_stack_api import (
     post_training,
     providers,
     shields,
+    vector_io,
 )
 
 # Router factories for APIs that have FastAPI routers
@@ -50,6 +51,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "post_training": post_training.fastapi_routes.create_router,
     "providers": providers.fastapi_routes.create_router,
     "shields": shields.fastapi_routes.create_router,
+    "vector_io": vector_io.fastapi_routes.create_router,
 }
 
 

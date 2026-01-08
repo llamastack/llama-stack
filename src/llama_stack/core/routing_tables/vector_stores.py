@@ -24,10 +24,13 @@ from llama_stack_api import (
     SearchRankingOptions,
     VectorStoreChunkingStrategy,
     VectorStoreDeleteResponse,
+    VectorStoreFileBatchObject,
     VectorStoreFileContentResponse,
     VectorStoreFileDeleteResponse,
     VectorStoreFileObject,
+    VectorStoreFilesListInBatchResponse,
     VectorStoreFileStatus,
+    VectorStoreListFilesResponse,
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
@@ -201,7 +204,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         after: str | None = None,
         before: str | None = None,
         filter: VectorStoreFileStatus | None = None,
-    ) -> list[VectorStoreFileObject]:
+    ) -> VectorStoreListFilesResponse:
         await self.assert_action_allowed("read", "vector_store", vector_store_id)
         provider = await self.get_provider_impl(vector_store_id)
         return await provider.openai_list_files_in_vector_store(
@@ -272,7 +275,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         self,
         vector_store_id: str,
         params: OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
-    ):
+    ) -> VectorStoreFileBatchObject:
         await self.assert_action_allowed("update", "vector_store", vector_store_id)
         provider = await self.get_provider_impl(vector_store_id)
         return await provider.openai_create_vector_store_file_batch(
@@ -284,7 +287,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         self,
         batch_id: str,
         vector_store_id: str,
-    ):
+    ) -> VectorStoreFileBatchObject:
         await self.assert_action_allowed("read", "vector_store", vector_store_id)
         provider = await self.get_provider_impl(vector_store_id)
         return await provider.openai_retrieve_vector_store_file_batch(
@@ -301,7 +304,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         filter: str | None = None,
         limit: int | None = 20,
         order: str | None = "desc",
-    ):
+    ) -> VectorStoreFilesListInBatchResponse:
         await self.assert_action_allowed("read", "vector_store", vector_store_id)
         provider = await self.get_provider_impl(vector_store_id)
         return await provider.openai_list_files_in_vector_store_file_batch(
@@ -318,7 +321,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         self,
         batch_id: str,
         vector_store_id: str,
-    ):
+    ) -> VectorStoreFileBatchObject:
         await self.assert_action_allowed("update", "vector_store", vector_store_id)
         provider = await self.get_provider_impl(vector_store_id)
         return await provider.openai_cancel_vector_store_file_batch(
