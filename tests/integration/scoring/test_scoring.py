@@ -95,6 +95,29 @@ def test_scoring_functions_unregister(
 
     llm_as_judge_provider_id = llm_as_judge_provider[0].provider_id
 
+    # Check if the scoring function already exists and unregister it first.
+    # This is necessary because:
+    # 1. Other tests in the same session (e.g., test_scoring_functions_register) may have
+    #    already registered a function with the same identifier (sample_scoring_fn_id).
+    # 2. When running tests with --stack-config=server:*, all tests share the same server
+    #    instance, so state persists between tests. The scoring function registry is not
+    #    automatically cleaned up between test runs.
+    # 3. If we try to register a function that already exists, the API will return a 400 error
+    #    ("Scoring function def with identifier ... already exists"), causing this test to fail.
+    # By unregistering first, we ensure a clean state before testing the register->unregister flow.
+    list_response_before = llama_stack_client.scoring_functions.list()
+    if any(x.identifier == sample_scoring_fn_id for x in list_response_before):
+        try:
+            base_url = llama_stack_client.base_url
+            resp = requests.delete(f"{base_url}/v1/scoring-functions/{sample_scoring_fn_id}", timeout=30)
+            if resp.status_code not in (200, 204):
+                # If deletion fails, try to continue anyway - the register call below may still work
+                # or will provide a more specific error message
+                pass
+        except (AttributeError, requests.exceptions.RequestException):
+            # If we can't delete it (e.g., library mode without base_url), try to register anyway
+            # and let it fail with a more specific error message if needed
+            pass
     # Register first
     register_scoring_function(
         llama_stack_client,
@@ -184,8 +207,14 @@ def test_scoring_score_with_aggregation_functions(
     sample_judge_prompt_template,
     judge_model_id,
     provider_id,
-    rag_dataset_for_test,
 ):
+    # Skip braintrust if OpenAI API key is not available
+    if provider_id == "braintrust":
+        import os
+
+        if not os.environ.get("OPENAI_API_KEY"):
+            pytest.skip("OPENAI_API_KEY not set, skipping braintrust provider test")
+
     df = pd.read_csv(Path(__file__).parent.parent / "datasets" / "test_dataset.csv")
     rows = df.to_dict(orient="records")
 
