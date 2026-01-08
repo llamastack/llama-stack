@@ -14,6 +14,7 @@ from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack_api import (
     EmbeddedChunk,
+    Filter,
     HealthResponse,
     HealthStatus,
     Inference,
@@ -139,9 +140,10 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         logger.debug(f"VectorIORouter.query_chunks: {vector_store_id}")
-        return await self.routing_table.query_chunks(vector_store_id, query, params)
+        return await self.routing_table.query_chunks(vector_store_id, query, params, filters)
 
     # OpenAI Vector Stores API endpoints
     async def openai_create_vector_store(

@@ -27,6 +27,7 @@ from llama_stack.providers.utils.vector_io.vector_utils import (
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
+    Filter,
     Inference,
     InterleavedContent,
     QueryChunksResponse,
@@ -506,8 +507,15 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
+        self,
+        vector_store_id: str,
+        query: InterleavedContent,
+        params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("PGVector provider does not yet support native filtering")
+
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         return await index.query_chunks(query, params)
 
