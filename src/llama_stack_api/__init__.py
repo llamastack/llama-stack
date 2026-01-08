@@ -99,6 +99,7 @@ from .connectors import (
     ListToolsResponse,
 )
 from .conversations import (
+    AddItemsRequest,
     Conversation,
     ConversationDeletedResource,
     ConversationItem,
@@ -108,7 +109,14 @@ from .conversations import (
     ConversationItemList,
     ConversationMessage,
     Conversations,
+    CreateConversationRequest,
+    DeleteConversationRequest,
+    DeleteItemRequest,
+    GetConversationRequest,
+    ListItemsRequest,
     Metadata,
+    RetrieveItemRequest,
+    UpdateConversationRequest,
 )
 from .datasetio import DatasetIO, DatasetStore
 from .datasets import (
@@ -538,6 +546,7 @@ __all__ = [
     "ConnectorInput",
     "Connectors",
     "ConnectorType",
+    "AddItemsRequest",
     "Conversation",
     "ConversationDeletedResource",
     "ConversationItem",
@@ -547,6 +556,13 @@ __all__ = [
     "ConversationItemList",
     "ConversationMessage",
     "Conversations",
+    "CreateConversationRequest",
+    "DeleteConversationRequest",
+    "DeleteItemRequest",
+    "GetConversationRequest",
+    "ListItemsRequest",
+    "RetrieveItemRequest",
+    "UpdateConversationRequest",
     "DPOAlignmentConfig",
     "DPOLossType",
     "DataConfig",
