@@ -143,6 +143,13 @@ def pytest_configure(config):
     if getattr(config.option, "embedding_dimension", None) is None:
         config.option.embedding_dimension = 384
 
+    # Apply global fallback for embedding_model when using stack configs with embedding models
+    if getattr(config.option, "embedding_model", None) is None:
+        stack_config = config.getoption("--stack-config", default=None)
+        if stack_config and "inference=inline::sentence-transformers" in stack_config:
+            # Use the full qualified model ID that matches what's actually registered
+            config.option.embedding_model = "inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -247,8 +254,8 @@ def parse_vector_io_providers_from_config(config):
             part = part.strip()
             if part.startswith("vector_io="):
                 provider_spec = part.split("=", 1)[1].strip()
-                # Return the full provider specification (e.g. "inline::faiss")
-                # The runtime validation expects full provider IDs
+                # Return the full provider specification (e.g. "inline::milvus")
+                # The runtime system expects full provider IDs
                 return [provider_spec]
     except Exception as e:
         logger.debug(f"Failed to parse vector_io provider from config: {e}")
