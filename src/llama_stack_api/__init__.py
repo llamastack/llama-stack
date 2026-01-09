@@ -443,10 +443,13 @@ from .scoring_functions import (
 )
 from .shields import (
     CommonShieldFields,
+    GetShieldRequest,
     ListShieldsResponse,
+    RegisterShieldRequest,
     Shield,
     ShieldInput,
     Shields,
+    UnregisterShieldRequest,
 )
 from .tools import (
     ListToolDefsResponse,
@@ -898,6 +901,9 @@ __all__ = [
     "ShieldStore",
     "Shields",
     "ShieldsProtocolPrivate",
+    "GetShieldRequest",
+    "RegisterShieldRequest",
+    "UnregisterShieldRequest",
     "SpecialToolGroup",
     "StrictJsonType",
     "StringType",

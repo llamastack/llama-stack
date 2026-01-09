@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from llama_stack_api.inference import OpenAIMessageParam
 from llama_stack_api.schema_utils import json_schema_type, webmethod
-from llama_stack_api.shields import Shield
+from llama_stack_api.shields import GetShieldRequest, Shield
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
 
@@ -89,7 +89,7 @@ class RunShieldResponse(BaseModel):
 
 
 class ShieldStore(Protocol):
-    async def get_shield(self, identifier: str) -> Shield: ...
+    async def get_shield(self, request: GetShieldRequest) -> Shield: ...
 
 
 @runtime_checkable
