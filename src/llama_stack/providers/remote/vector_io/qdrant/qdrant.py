@@ -66,24 +66,23 @@ class QdrantIndex(EmbeddingIndex):
         # If the collection does not exist, it will be created in add_chunks.
         pass
 
-    async def add_chunks(self, chunks: list[EmbeddedChunk], embeddings: NDArray):
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
 
         if not await self.client.collection_exists(self.collection_name):
             await self.client.create_collection(
                 self.collection_name,
-                vectors_config=models.VectorParams(size=len(embeddings[0]), distance=models.Distance.COSINE),
+                vectors_config=models.VectorParams(size=len(chunks[0].embedding), distance=models.Distance.COSINE),
             )
 
         points = []
-        for _i, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=False)):
+        for chunk in chunks:
             chunk_id = chunk.chunk_id
             points.append(
                 PointStruct(
                     id=convert_id(chunk_id),
-                    vector=embedding,
+                    vector=chunk.embedding,  # Already a list[float]
                     payload={"chunk_content": chunk.model_dump()} | {CHUNK_ID_KEY: chunk_id},
                 )
             )
