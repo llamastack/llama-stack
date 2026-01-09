@@ -9,7 +9,9 @@ from llama_stack_api import (
     DatasetIO,
     Datasets,
     IterRowsRequest,
+    ScoreBatchRequest,
     ScoreBatchResponse,
+    ScoreRequest,
     ScoreResponse,
     Scoring,
     ScoringFn,
@@ -76,16 +78,15 @@ class BasicScoringImpl(
 
     async def score_batch(
         self,
-        dataset_id: str,
-        scoring_functions: dict[str, ScoringFnParams | None] = None,
-        save_results_dataset: bool = False,
+        request: ScoreBatchRequest,
     ) -> ScoreBatchResponse:
         all_rows = await self.datasetio_api.iterrows(IterRowsRequest(dataset_id=dataset_id, limit=-1))
-        res = await self.score(
+        score_request = ScoreRequest(
             input_rows=all_rows.data,
-            scoring_functions=scoring_functions,
+            scoring_functions=request.scoring_functions,
         )
-        if save_results_dataset:
+        res = await self.score(score_request)
+        if request.save_results_dataset:
             # TODO: persist and register dataset on to server for reading
             # self.datasets_api.register_dataset()
             raise NotImplementedError("Save results dataset not implemented yet")
@@ -96,16 +97,15 @@ class BasicScoringImpl(
 
     async def score(
         self,
-        input_rows: list[dict[str, Any]],
-        scoring_functions: dict[str, ScoringFnParams | None] = None,
+        request: ScoreRequest,
     ) -> ScoreResponse:
         res = {}
-        for scoring_fn_id in scoring_functions.keys():
+        for scoring_fn_id in request.scoring_functions.keys():
             if scoring_fn_id not in self.scoring_fn_id_impls:
                 raise ValueError(f"Scoring function {scoring_fn_id} is not supported.")
             scoring_fn = self.scoring_fn_id_impls[scoring_fn_id]
-            scoring_fn_params = scoring_functions.get(scoring_fn_id, None)
-            score_results = await scoring_fn.score(input_rows, scoring_fn_id, scoring_fn_params)
+            scoring_fn_params = request.scoring_functions.get(scoring_fn_id, None)
+            score_results = await scoring_fn.score(request.input_rows, scoring_fn_id, scoring_fn_params)
             agg_results = await scoring_fn.aggregate(score_results, scoring_fn_id, scoring_fn_params)
             res[scoring_fn_id] = ScoringResult(
                 score_rows=score_results,

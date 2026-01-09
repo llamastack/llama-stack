@@ -48,10 +48,7 @@ def create_router(impl: Scoring) -> APIRouter:
     async def score(
         request: Annotated[ScoreRequest, Body(...)],
     ) -> ScoreResponse:
-        return await impl.score(
-            input_rows=request.input_rows,
-            scoring_functions=request.scoring_functions,
-        )
+        return await impl.score(request)
 
     @router.post(
         "/scoring/score-batch",
@@ -65,10 +62,6 @@ def create_router(impl: Scoring) -> APIRouter:
     async def score_batch(
         request: Annotated[ScoreBatchRequest, Body(...)],
     ) -> ScoreBatchResponse:
-        return await impl.score_batch(
-            dataset_id=request.dataset_id,
-            scoring_functions=request.scoring_functions,
-            save_results_dataset=request.save_results_dataset,
-        )
+        return await impl.score_batch(request)
 
     return router

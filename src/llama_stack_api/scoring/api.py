@@ -11,11 +11,11 @@ Pydantic models are defined in llama_stack_api.scoring.models.
 The FastAPI router is defined in llama_stack_api.scoring.fastapi_routes.
 """
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-from llama_stack_api.scoring_functions import ScoringFn, ScoringFnParams
+from llama_stack_api.scoring_functions import ScoringFn
 
-from .models import ScoreBatchResponse, ScoreResponse
+from .models import ScoreBatchRequest, ScoreBatchResponse, ScoreRequest, ScoreResponse
 
 
 class ScoringFunctionStore(Protocol):
@@ -32,28 +32,22 @@ class Scoring(Protocol):
 
     async def score_batch(
         self,
-        dataset_id: str,
-        scoring_functions: dict[str, ScoringFnParams | None],
-        save_results_dataset: bool = False,
+        request: ScoreBatchRequest,
     ) -> ScoreBatchResponse:
         """Score a batch of rows.
 
-        :param dataset_id: The ID of the dataset to score.
-        :param scoring_functions: The scoring functions to use for the scoring.
-        :param save_results_dataset: Whether to save the results to a dataset.
+        :param request: The ScoreBatchRequest containing dataset_id, scoring_functions, and save_results_dataset.
         :returns: A ScoreBatchResponse.
         """
         ...
 
     async def score(
         self,
-        input_rows: list[dict[str, Any]],
-        scoring_functions: dict[str, ScoringFnParams | None],
+        request: ScoreRequest,
     ) -> ScoreResponse:
         """Score a list of rows.
 
-        :param input_rows: The rows to score.
-        :param scoring_functions: The scoring functions to use for the scoring.
+        :param request: The ScoreRequest containing input_rows and scoring_functions.
         :returns: A ScoreResponse object containing rows and aggregated results.
         """
         ...
