@@ -23,7 +23,7 @@ from llama_stack.providers.utils.memory.vector_store import (
 )
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     Files,
     Inference,
     InterleavedContent,
@@ -65,7 +65,7 @@ class MilvusIndex(EmbeddingIndex):
         if await asyncio.to_thread(self.client.has_collection, self.collection_name):
             await asyncio.to_thread(self.client.drop_collection, collection_name=self.collection_name)
 
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
+    async def add_chunks(self, chunks: list[EmbeddedChunk], embeddings: NDArray):
         assert len(chunks) == len(embeddings), (
             f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
         )
@@ -136,7 +136,7 @@ class MilvusIndex(EmbeddingIndex):
             output_fields=["*"],
             search_params={"params": {"radius": score_threshold}},
         )
-        chunks = [Chunk(**res["entity"]["chunk_content"]) for res in search_res[0]]
+        chunks = [EmbeddedChunk(**res["entity"]["chunk_content"]) for res in search_res[0]]
         scores = [res["distance"] for res in search_res[0]]
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
@@ -163,7 +163,7 @@ class MilvusIndex(EmbeddingIndex):
             chunks = []
             scores = []
             for res in search_res[0]:
-                chunk = Chunk(**res["entity"]["chunk_content"])
+                chunk = EmbeddedChunk(**res["entity"]["chunk_content"])
                 chunks.append(chunk)
                 scores.append(res["distance"])  # BM25 score from Milvus
 
@@ -191,7 +191,7 @@ class MilvusIndex(EmbeddingIndex):
             output_fields=["*"],
             limit=k,
         )
-        chunks = [Chunk(**res["chunk_content"]) for res in search_res]
+        chunks = [EmbeddedChunk(**res["chunk_content"]) for res in search_res]
         scores = [1.0] * len(chunks)  # Simple binary score for text search
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
@@ -243,7 +243,7 @@ class MilvusIndex(EmbeddingIndex):
         chunks = []
         scores = []
         for res in search_res[0]:
-            chunk = Chunk(**res["entity"]["chunk_content"])
+            chunk = EmbeddedChunk(**res["entity"]["chunk_content"])
             chunks.append(chunk)
             scores.append(res["distance"])
 
@@ -273,11 +273,10 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         inference_api: Inference,
         files_api: Files | None,
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
         self.cache = {}
         self.client = None
-        self.inference_api = inference_api
         self.vector_store_table = None
         self.metadata_collection_name = "openai_vector_stores_metadata"
 
@@ -356,7 +355,9 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
             await self.cache[vector_store_id].index.delete()
             del self.cache[vector_store_id]
 
-    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)

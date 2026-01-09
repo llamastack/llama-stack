@@ -567,7 +567,7 @@ if [[ "$TYPESCRIPT_ONLY" == "false" ]]; then
         $EXTRA_PARAMS \
         --color=yes \
         --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
-        --color=yes $EXTRA_PARAMS \
+        --color=yes \
         --capture=tee-sys
     exit_code=$?
 else

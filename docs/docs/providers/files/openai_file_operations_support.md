@@ -288,4 +288,4 @@ Planned improvements for file operations support:
 - **API Reference**: [Files API](files_api.md)
 - **Provider Docs**: [Vector Store Providers](../vector_io/index.md)
 - **Examples**: [Getting Started](../getting_started/index.md)
-- **Community**: [GitHub Discussions](https://github.com/meta-llama/llama-stack/discussions)
+- **Community**: [GitHub Issues](https://github.com/meta-llama/llama-stack/issues)
