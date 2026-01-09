@@ -27,6 +27,21 @@ from .models import (
     ScoringResultRow,
 )
 
+# Import scoring_functions for re-export
+from .scoring_functions import (
+    AggregationFunctionType,
+    BasicScoringFnParams,
+    CommonScoringFnFields,
+    LLMAsJudgeScoringFnParams,
+    ListScoringFunctionsResponse,
+    RegexParserScoringFnParams,
+    ScoringFn,
+    ScoringFnInput,
+    ScoringFnParams,
+    ScoringFnParamsType,
+    ScoringFunctions,
+)
+
 __all__ = [
     "Scoring",
     "ScoringFunctionStore",
@@ -36,5 +51,16 @@ __all__ = [
     "ScoreResponse",
     "ScoreRequest",
     "ScoreBatchRequest",
+    "AggregationFunctionType",
+    "BasicScoringFnParams",
+    "CommonScoringFnFields",
+    "LLMAsJudgeScoringFnParams",
+    "ListScoringFunctionsResponse",
+    "RegexParserScoringFnParams",
+    "ScoringFn",
+    "ScoringFnInput",
+    "ScoringFnParams",
+    "ScoringFnParamsType",
+    "ScoringFunctions",
     "fastapi_routes",
 ]

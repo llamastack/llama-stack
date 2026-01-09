@@ -14,7 +14,7 @@ from llama_stack_api.benchmarks import Benchmark
 from llama_stack_api.datasets import Dataset
 from llama_stack_api.models import Model
 from llama_stack_api.schema_utils import json_schema_type
-from llama_stack_api.scoring_functions import ScoringFn
+from llama_stack_api.scoring.scoring_functions import ScoringFn
 from llama_stack_api.shields import Shield
 from llama_stack_api.tools import ToolGroup
 from llama_stack_api.vector_stores import VectorStore
