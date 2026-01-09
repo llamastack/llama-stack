@@ -227,3 +227,54 @@ jobs:
               'source /etc/os-release && echo "$ID"' \
               | grep -qE '^(rhel|ubi)$' \
               || { echo "Base image is not UBI 9!"; exit 1; }
+
+  build-starter-ubi9-arm64-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Install dependencies
+        uses: ./.github/actions/setup-runner
+
+      - name: Set up QEMU for ARM64 emulation
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
+
+      - name: Build starter distribution on UBI9 ARM64
+        run: |
+          BASE_IMAGE="registry.access.redhat.com/ubi9:latest"
+          BUILD_ARGS="--build-arg INSTALL_MODE=editable --build-arg DISTRO_NAME=starter"
+          BUILD_ARGS="$BUILD_ARGS --build-arg BASE_IMAGE=$BASE_IMAGE"
+          if [ -n "${UV_EXTRA_INDEX_URL:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_EXTRA_INDEX_URL=$UV_EXTRA_INDEX_URL"
+          fi
+          if [ -n "${UV_INDEX_STRATEGY:-}" ]; then
+            BUILD_ARGS="$BUILD_ARGS --build-arg UV_INDEX_STRATEGY=$UV_INDEX_STRATEGY"
+          fi
+          docker buildx build --platform linux/arm64 --load . \
+            -f containers/Containerfile \
+            $BUILD_ARGS \
+            --tag llama-stack:starter-ubi9-arm64
+
+      - name: Inspect starter UBI9 ARM64 image
+        run: |
+          IMAGE_ID=$(docker images --format "{{.Repository}}:{{.Tag}}" | head -n 1)
+          if [ -z "$IMAGE_ID" ]; then
+            echo "No image found"
+            exit 1
+          fi
+          entrypoint=$(docker inspect --format '{{ .Config.Entrypoint }}' $IMAGE_ID)
+          echo "Entrypoint: $entrypoint"
+          if [ "$entrypoint" != "[/usr/local/bin/llama-stack-entrypoint.sh]" ]; then
+            echo "Entrypoint is not correct"
+            exit 1
+          fi
+
+          echo "Checking /etc/os-release in $IMAGE_ID"
+          docker run --rm --platform linux/arm64 --entrypoint sh "$IMAGE_ID" -c \
+              'source /etc/os-release && echo "$ID"' \
+              | grep -qE '^(rhel|ubi)$' \
+              || { echo "Base image is not UBI 9!"; exit 1; }
