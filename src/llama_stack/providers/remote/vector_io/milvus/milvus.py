@@ -8,6 +8,7 @@ import asyncio
 import os
 from typing import Any
 
+import numpy as np
 from numpy.typing import NDArray
 from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusClient, RRFRanker, WeightedRanker
 
@@ -65,7 +66,13 @@ class MilvusIndex(EmbeddingIndex):
         if await asyncio.to_thread(self.client.has_collection, self.collection_name):
             await asyncio.to_thread(self.client.drop_collection, collection_name=self.collection_name)
 
-    async def add_chunks(self, chunks: list[EmbeddedChunk], embeddings: NDArray):
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
+
+        # Extract embeddings from the chunks (consistent with other providers like FAISS)
+        embeddings = np.array([chunk.embedding for chunk in chunks], dtype=np.float32)
+
         assert len(chunks) == len(embeddings), (
             f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
         )
