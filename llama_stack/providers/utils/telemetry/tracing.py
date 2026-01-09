@@ -155,11 +155,10 @@ def enqueue_event(event: Event) -> None:
 
 
 class TraceContext:
-    spans: list[Span] = []
-
     def __init__(self, logger: BackgroundLogger, trace_id: str):
         self.logger = logger
         self.trace_id = trace_id
+        self.spans: list[Span] = []
 
     def push_span(self, name: str, attributes: dict[str, Any] = None) -> Span:
         current_span = self.get_current_span()
