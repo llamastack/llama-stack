@@ -191,6 +191,7 @@ def test_insert_chunks_with_precomputed_embeddings(
         "inline::milvus": {"score_threshold": -1.0},
         "inline::qdrant": {"score_threshold": -1.0},
         "remote::qdrant": {"score_threshold": -1.0},
+        "remote::elasticsearch": {"score_threshold": -1.0},
     }
     vector_store_name = "test_precomputed_embeddings_db"
     register_response = client_with_empty_registry.vector_stores.create(
@@ -251,6 +252,7 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
         "inline::milvus": {"score_threshold": 0.0},
         "remote::qdrant": {"score_threshold": 0.0},
         "inline::qdrant": {"score_threshold": 0.0},
+        "remote::elasticsearch": {"score_threshold": 0.0},
     }
     vector_store_name = "test_precomputed_embeddings_db"
     register_response = client_with_empty_registry.vector_stores.create(
