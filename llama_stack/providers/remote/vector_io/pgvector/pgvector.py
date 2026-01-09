@@ -125,19 +125,25 @@ class PGVectorIndex(EmbeddingIndex):
             log.exception(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}")
             raise RuntimeError(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}") from e
 
+<<<<<<< HEAD:llama_stack/providers/remote/vector_io/pgvector/pgvector.py
     async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
         assert len(chunks) == len(embeddings), (
             f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
         )
+=======
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
+>>>>>>> 08d01c8c (fix: Fix Vector Store Integration Tests (#4472)):src/llama_stack/providers/remote/vector_io/pgvector/pgvector.py
 
         values = []
-        for i, chunk in enumerate(chunks):
+        for chunk in chunks:
             content_text = interleaved_content_as_str(chunk.content)
             values.append(
                 (
                     f"{chunk.chunk_id}",
                     Json(chunk.model_dump()),
-                    embeddings[i].tolist(),
+                    chunk.embedding,  # Already a list[float]
                     content_text,
                     content_text,  # Pass content_text twice - once for content_text column, once for to_tsvector function. Eg. to_tsvector(content_text) = tokenized_content
                 )
@@ -301,7 +307,8 @@ class PGVectorIndex(EmbeddingIndex):
         """Remove a chunk from the PostgreSQL table."""
         chunk_ids = [c.chunk_id for c in chunks_for_deletion]
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-            cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s)", (chunk_ids))
+            # Fix: Use proper tuple parameter binding with explicit array cast
+            cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s::text[])", (chunk_ids,))
 
     def get_pgvector_search_function(self) -> str:
         return self.PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION[self.distance_metric]

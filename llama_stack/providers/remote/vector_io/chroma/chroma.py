@@ -53,10 +53,19 @@ class ChromaIndex(EmbeddingIndex):
     async def initialize(self):
         pass
 
+<<<<<<< HEAD:llama_stack/providers/remote/vector_io/chroma/chroma.py
     async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
         assert len(chunks) == len(embeddings), (
             f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
         )
+=======
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
+
+        # Extract embeddings directly from chunks (already list[float])
+        embeddings = [chunk.embedding for chunk in chunks]
+>>>>>>> 08d01c8c (fix: Fix Vector Store Integration Tests (#4472)):src/llama_stack/providers/remote/vector_io/chroma/chroma.py
 
         ids = [f"{c.metadata.get('document_id', '')}:{c.chunk_id}" for c in chunks]
         await maybe_await(

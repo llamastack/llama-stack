@@ -53,20 +53,26 @@ class WeaviateIndex(EmbeddingIndex):
     async def initialize(self):
         pass
 
+<<<<<<< HEAD:llama_stack/providers/remote/vector_io/weaviate/weaviate.py
     async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
         assert len(chunks) == len(embeddings), (
             f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
         )
+=======
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
+>>>>>>> 08d01c8c (fix: Fix Vector Store Integration Tests (#4472)):src/llama_stack/providers/remote/vector_io/weaviate/weaviate.py
 
         data_objects = []
-        for chunk, embedding in zip(chunks, embeddings, strict=False):
+        for chunk in chunks:
             data_objects.append(
                 wvc.data.DataObject(
                     properties={
                         "chunk_id": chunk.chunk_id,
                         "chunk_content": chunk.model_dump_json(),
                     },
-                    vector=embedding.tolist(),
+                    vector=chunk.embedding,  # Already a list[float]
                 )
             )
 
