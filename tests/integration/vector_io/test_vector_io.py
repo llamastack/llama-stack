@@ -89,6 +89,7 @@ def test_vector_store_retrieve(
         name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
+            "embedding_dimension": embedding_dimension,
             "embedding_model": embedding_model_id,
         },
     )
@@ -112,6 +113,7 @@ def test_vector_store_register(
         name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
+            "embedding_dimension": embedding_dimension,
             "embedding_model": embedding_model_id,
         },
     )
@@ -151,6 +153,7 @@ def test_insert_chunks(
         name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
+            "embedding_dimension": embedding_dimension
         },
     )
 
@@ -197,6 +200,7 @@ def test_insert_chunks_with_precomputed_embeddings(
         name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
+            "embedding_dimension": embedding_dimension
         },
     )
 
@@ -258,6 +262,7 @@ def test_query_returns_valid_object_when_identical_to_embedding_in_vdb(
         extra_body={
             "embedding_model": embedding_model_id,
             "provider_id": vector_io_provider_id,
+            "embedding_dimension": embedding_dimension
         },
     )
 
@@ -311,7 +316,11 @@ def test_auto_extract_embedding_dimension(
     # This test specifically tests embedding model override, so we keep embedding_model
     vs = client_with_empty_registry.vector_stores.create(
         name="test_auto_extract",
-        extra_body={"embedding_model": embedding_model_id, "provider_id": vector_io_provider_id},
+        extra_body={
+            "embedding_model": embedding_model_id, 
+            "provider_id": vector_io_provider_id,
+            "embedding_dimension": embedding_dimension
+            },
     )
     assert vs.id is not None
 
