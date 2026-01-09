@@ -93,3 +93,18 @@ class InvalidConversationIdError(ValueError):
     def __init__(self, conversation_id: str) -> None:
         message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
         super().__init__(message)
+
+
+class ConnectorNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced connector"""
+
+    def __init__(self, connector_id: str) -> None:
+        super().__init__(connector_id, "Connector", "client.connectors.list()")
+
+
+class ConnectorToolNotFoundError(ValueError):
+    """raised when Llama Stack cannot find a referenced tool in a connector"""
+
+    def __init__(self, connector_id: str, tool_name: str) -> None:
+        message = f"Tool '{tool_name}' not found in connector '{connector_id}'. Use 'client.connectors.list_tools(\"{connector_id}\")' to list available tools."
+        super().__init__(message)
