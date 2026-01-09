@@ -147,9 +147,9 @@ As a general guideline:
 
 ### Adding a New Provider
 
-Adding a new provider to Llama Stack requires community alignment before implementation begins. Please follow these steps:
+Please follow these steps:
 
-1. **Open a discussion issue**: Before writing any code, open a "discussion-type" issue describing the provider you want to add, its use case, and how it fits into the Llama Stack ecosystem.
+1. **Open a discussion issue**: Open a "discussion-type" issue describing the provider you want to add, its use case, and how it fits into the Llama Stack ecosystem.
 
 2. **Present at a community call**: Bring your proposal to a [community call](README.md#community) to gather feedback, answer questions, and build consensus with other contributors and maintainers.
 
