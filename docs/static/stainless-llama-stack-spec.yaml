@@ -1912,7 +1912,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Scoring
-      summary: Score
+      summary: Score a list of rows.
       description: Score a list of rows.
       operationId: score_v1_scoring_score_post
       requestBody:
@@ -1944,7 +1944,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Scoring
-      summary: Score Batch
+      summary: Score a batch of rows.
       description: Score a batch of rows.
       operationId: score_batch_v1_scoring_score_batch_post
       requestBody:
@@ -9472,6 +9472,7 @@ components:
             type: object
           type: array
           title: Input Rows
+          description: The rows to score.
         scoring_functions:
           additionalProperties:
             anyOf:
@@ -9493,11 +9494,13 @@ components:
             title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
+          description: The scoring functions to use for the scoring.
       type: object
       required:
       - input_rows
       - scoring_functions
       title: ScoreRequest
+      description: Request model for scoring a list of rows.
     ScoreResponse:
       properties:
         results:
@@ -9505,6 +9508,7 @@ components:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Results
+          description: A map of scoring function name to ScoringResult.
       type: object
       required:
       - results
@@ -9518,10 +9522,12 @@ components:
             type: object
           type: array
           title: Score Rows
+          description: The scoring result for each row. Each row is a map of column name to value.
         aggregated_results:
           additionalProperties: true
           type: object
           title: Aggregated Results
+          description: Map of metric name to aggregated value
       type: object
       required:
       - score_rows
@@ -9533,6 +9539,7 @@ components:
         dataset_id:
           type: string
           title: Dataset Id
+          description: The ID of the dataset to score.
         scoring_functions:
           additionalProperties:
             anyOf:
@@ -9554,26 +9561,31 @@ components:
             title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
+          description: The scoring functions to use for the scoring.
         save_results_dataset:
           type: boolean
           title: Save Results Dataset
+          description: Whether to save the results to a dataset.
           default: false
       type: object
       required:
       - dataset_id
       - scoring_functions
       title: ScoreBatchRequest
+      description: Request model for scoring a batch of rows from a dataset.
     ScoreBatchResponse:
       properties:
         dataset_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: (Optional) The identifier of the dataset that was scored
         results:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Results
+          description: A map of scoring function name to ScoringResult
       type: object
       required:
       - results
