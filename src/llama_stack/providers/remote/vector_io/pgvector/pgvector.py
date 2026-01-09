@@ -130,19 +130,18 @@ class PGVectorIndex(EmbeddingIndex):
             log.exception(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}")
             raise RuntimeError(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}") from e
 
-    async def add_chunks(self, chunks: list[EmbeddedChunk], embeddings: NDArray):
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
 
         values = []
-        for i, chunk in enumerate(chunks):
+        for chunk in chunks:
             content_text = interleaved_content_as_str(chunk.content)
             values.append(
                 (
                     f"{chunk.chunk_id}",
                     Json(chunk.model_dump()),
-                    embeddings[i].tolist(),
+                    chunk.embedding,  # Already a list[float]
                     content_text,
                     content_text,  # Pass content_text twice - once for content_text column, once for to_tsvector function. Eg. to_tsvector(content_text) = tokenized_content
                 )
