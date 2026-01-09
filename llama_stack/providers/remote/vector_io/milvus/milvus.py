@@ -60,10 +60,16 @@ class MilvusIndex(EmbeddingIndex):
         if await asyncio.to_thread(self.client.has_collection, self.collection_name):
             await asyncio.to_thread(self.client.drop_collection, collection_name=self.collection_name)
 
+<<<<<<< HEAD:llama_stack/providers/remote/vector_io/milvus/milvus.py
     async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
         assert len(chunks) == len(embeddings), (
             f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
         )
+=======
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
+>>>>>>> 08d01c8c (fix: Fix Vector Store Integration Tests (#4472)):src/llama_stack/providers/remote/vector_io/milvus/milvus.py
 
         if not await asyncio.to_thread(self.client.has_collection, self.collection_name):
             logger.info(f"Creating new collection {self.collection_name} with nullable sparse field")
@@ -76,7 +82,7 @@ class MilvusIndex(EmbeddingIndex):
                 max_length=65535,
                 enable_analyzer=True,  # Enable text analysis for BM25
             )
-            schema.add_field(field_name="vector", datatype=DataType.FLOAT_VECTOR, dim=len(embeddings[0]))
+            schema.add_field(field_name="vector", datatype=DataType.FLOAT_VECTOR, dim=len(chunks[0].embedding))
             schema.add_field(field_name="chunk_content", datatype=DataType.JSON)
             # Add sparse vector field for BM25 (required by the function)
             schema.add_field(field_name="sparse", datatype=DataType.SPARSE_FLOAT_VECTOR)
@@ -105,12 +111,12 @@ class MilvusIndex(EmbeddingIndex):
             )
 
         data = []
-        for chunk, embedding in zip(chunks, embeddings, strict=False):
+        for chunk in chunks:
             data.append(
                 {
                     "chunk_id": chunk.chunk_id,
                     "content": chunk.content,
-                    "vector": embedding,
+                    "vector": chunk.embedding,  # Already a list[float]
                     "chunk_content": chunk.model_dump(),
                     # sparse field will be handled by BM25 function automatically
                 }
