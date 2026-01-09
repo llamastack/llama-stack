@@ -49,8 +49,7 @@ uv pip install 'pre-commit>=4.4.0'
 uv run pre-commit install
 ```
 
-Note that the only version of pre-commit that works with the Llama Stack continuous integration is `4.3.0` so it is essential that you pull
-that specific version as shown above.  Once you have run these commands, pre-commit hooks will run automatically before each commit.
+Note that the pre-commit version used in continuous integration for Llama Stack is `>=4.4.0`. It is essential that you use the version specifier as shown above. Once you have run these commands, pre-commit hooks will run automatically before each commit.
 
 Alternatively, if you don't want to install the pre-commit hooks (or if you want to check if your changes are ready before committing),
 you can run the checks manually by running:
