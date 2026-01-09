@@ -292,8 +292,8 @@ def test_providers_flag_generates_config_with_api_keys():
         enable_ui=False,
     )
 
-    # Mock _uvicorn_run to prevent starting a server
-    with patch.object(stack_run, "_uvicorn_run"):
+    # Mock _run_server to prevent starting a server
+    with patch.object(stack_run, "_run_server"):
         stack_run._run_stack_run_cmd(args)
 
     # Read the generated config file
