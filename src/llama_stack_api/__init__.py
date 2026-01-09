@@ -99,6 +99,7 @@ from .connectors import (
     ListToolsResponse,
 )
 from .conversations import (
+    AddItemsRequest,
     Conversation,
     ConversationDeletedResource,
     ConversationItem,
@@ -108,7 +109,14 @@ from .conversations import (
     ConversationItemList,
     ConversationMessage,
     Conversations,
+    CreateConversationRequest,
+    DeleteConversationRequest,
+    DeleteItemRequest,
+    GetConversationRequest,
+    ListItemsRequest,
     Metadata,
+    RetrieveItemRequest,
+    UpdateConversationRequest,
 )
 from .datasetio import DatasetIO, DatasetStore
 from .datasets import (
@@ -241,6 +249,7 @@ from .inference import (
 from .inspect_api import Inspect
 from .models import (
     CommonModelFields,
+    GetModelRequest,
     ListModelsResponse,
     Model,
     ModelInput,
@@ -248,6 +257,8 @@ from .models import (
     ModelType,
     OpenAIListModelsResponse,
     OpenAIModel,
+    RegisterModelRequest,
+    UnregisterModelRequest,
 )
 from .openai_responses import (
     AllowedToolsFilter,
@@ -535,6 +546,7 @@ __all__ = [
     "ConnectorInput",
     "Connectors",
     "ConnectorType",
+    "AddItemsRequest",
     "Conversation",
     "ConversationDeletedResource",
     "ConversationItem",
@@ -544,6 +556,13 @@ __all__ = [
     "ConversationItemList",
     "ConversationMessage",
     "Conversations",
+    "CreateConversationRequest",
+    "DeleteConversationRequest",
+    "DeleteItemRequest",
+    "GetConversationRequest",
+    "ListItemsRequest",
+    "RetrieveItemRequest",
+    "UpdateConversationRequest",
     "DPOAlignmentConfig",
     "DPOLossType",
     "DataConfig",
@@ -648,6 +667,9 @@ __all__ = [
     "ModelType",
     "ModelTypeError",
     "Models",
+    "GetModelRequest",
+    "RegisterModelRequest",
+    "UnregisterModelRequest",
     "ModelsProtocolPrivate",
     "ModerationObject",
     "ModerationObjectResults",
