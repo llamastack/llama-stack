@@ -77,11 +77,11 @@ uv run --group dev --group type_checking mypy
 Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
 ```
 
-## Discussions -> Issues -> Pull Requests
+## Issues and Pull Requests
 
 We actively welcome your pull requests. However, please read the following. This is heavily inspired by [Ghostty](https://github.com/ghostty-org/ghostty/blob/main/CONTRIBUTING.md).
 
-If in doubt, please open a [discussion](https://github.com/llamastack/llama-stack/discussions); we can always convert that to an issue later.
+If in doubt, please open a [issue](https://github.com/llamastack/llama-stack/issues).
 
 ### Issues
 We use GitHub issues to track public bugs. Please ensure your description is
@@ -110,23 +110,22 @@ Please avoid picking up too many issues at once. This helps you stay focused and
 
 **I have a bug!**
 
-1. Search the issue tracker and discussions for similar issues.
-2. If you don't have steps to reproduce, open a discussion.
-3. If you have steps to reproduce, open an issue.
+1. Search the issue tracker for similar issues.
+2. If you don't have steps to reproduce, open a "discussion-type" issue.
+3. If you have steps to reproduce, open a "bug-type" issue.
 
 **I have an idea for a feature!**
 
-1. Open a discussion.
+1. Open a "discussion-type" issue.
 
 **I've implemented a feature!**
 
 1. If there is an issue for the feature, open a pull request.
-2. If there is no issue, open a discussion and link to your branch.
+2. If there is no issue, open a "discussion-type" issue and link to your branch.
 
 **I have a question!**
 
-1. Open a discussion or use [Discord](https://discord.gg/llama-stack).
-
+1. Open a "discussion-type" issue or use [Discord](https://discord.gg/llama-stack).
 
 **Opening a Pull Request**
 
