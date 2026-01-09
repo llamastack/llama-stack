@@ -21,6 +21,7 @@ from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, Em
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
+    Filter,
     Inference,
     InterleavedContent,
     QueryChunksResponse,
@@ -351,8 +352,15 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
+        self,
+        vector_store_id: str,
+        query: InterleavedContent,
+        params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)

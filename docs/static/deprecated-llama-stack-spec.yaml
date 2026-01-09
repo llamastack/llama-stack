@@ -6653,6 +6653,29 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+        filters:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/ComparisonFilter'
+              title: ComparisonFilter
+            - $ref: '#/components/schemas/CompoundFilter'
+              title: CompoundFilter
+            discriminator:
+              propertyName: type
+              mapping:
+                and: '#/components/schemas/CompoundFilter'
+                eq: '#/components/schemas/ComparisonFilter'
+                gt: '#/components/schemas/ComparisonFilter'
+                gte: '#/components/schemas/ComparisonFilter'
+                in: '#/components/schemas/ComparisonFilter'
+                lt: '#/components/schemas/ComparisonFilter'
+                lte: '#/components/schemas/ComparisonFilter'
+                ne: '#/components/schemas/ComparisonFilter'
+                nin: '#/components/schemas/ComparisonFilter'
+                or: '#/components/schemas/CompoundFilter'
+            title: ComparisonFilter | CompoundFilter
+          - type: 'null'
+          title: Filters
       type: object
       required:
       - vector_store_id
@@ -7255,9 +7278,27 @@ components:
           title: string | list[string]
         filters:
           anyOf:
-          - additionalProperties: true
-            type: object
+          - oneOf:
+            - $ref: '#/components/schemas/ComparisonFilter'
+              title: ComparisonFilter
+            - $ref: '#/components/schemas/CompoundFilter'
+              title: CompoundFilter
+            discriminator:
+              propertyName: type
+              mapping:
+                and: '#/components/schemas/CompoundFilter'
+                eq: '#/components/schemas/ComparisonFilter'
+                gt: '#/components/schemas/ComparisonFilter'
+                gte: '#/components/schemas/ComparisonFilter'
+                in: '#/components/schemas/ComparisonFilter'
+                lt: '#/components/schemas/ComparisonFilter'
+                lte: '#/components/schemas/ComparisonFilter'
+                ne: '#/components/schemas/ComparisonFilter'
+                nin: '#/components/schemas/ComparisonFilter'
+                or: '#/components/schemas/CompoundFilter'
+            title: ComparisonFilter | CompoundFilter
           - type: 'null'
+          title: Filters
         max_num_results:
           anyOf:
           - type: integer
@@ -8672,6 +8713,69 @@ components:
       - file
       - purpose
       title: Body_upload_file_v1_files_post
+    ComparisonFilter:
+      properties:
+        type:
+          type: string
+          enum:
+          - eq
+          - ne
+          - gt
+          - gte
+          - lt
+          - lte
+          - in
+          - nin
+          title: Type
+        key:
+          type: string
+          title: Key
+        value:
+          title: Value
+      type: object
+      required:
+      - type
+      - key
+      - value
+      title: ComparisonFilter
+      description: A filter that compares a metadata field against a value.
+    CompoundFilter:
+      properties:
+        type:
+          type: string
+          enum:
+          - and
+          - or
+          title: Type
+        filters:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/ComparisonFilter'
+              title: ComparisonFilter
+            - $ref: '#/components/schemas/CompoundFilter'
+              title: CompoundFilter
+            discriminator:
+              propertyName: type
+              mapping:
+                and: '#/components/schemas/CompoundFilter'
+                eq: '#/components/schemas/ComparisonFilter'
+                gt: '#/components/schemas/ComparisonFilter'
+                gte: '#/components/schemas/ComparisonFilter'
+                in: '#/components/schemas/ComparisonFilter'
+                lt: '#/components/schemas/ComparisonFilter'
+                lte: '#/components/schemas/ComparisonFilter'
+                ne: '#/components/schemas/ComparisonFilter'
+                nin: '#/components/schemas/ComparisonFilter'
+                or: '#/components/schemas/CompoundFilter'
+            title: ComparisonFilter | CompoundFilter
+          type: array
+          title: Filters
+      type: object
+      required:
+      - type
+      - filters
+      title: CompoundFilter
+      description: A filter that combines multiple filters with a logical operator.
     Connector:
       properties:
         identifier:
@@ -9748,6 +9852,26 @@ components:
       - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
         title: OpenAIChatCompletionToolChoiceCustomTool
       title: OpenAIChatCompletionToolChoiceAllowedTools | OpenAIChatCompletionToolChoiceFunctionTool | OpenAIChatCompletionToolChoiceCustomTool
+    Filter:
+      discriminator:
+        mapping:
+          and: '#/components/schemas/CompoundFilter'
+          eq: '#/components/schemas/ComparisonFilter'
+          gt: '#/components/schemas/ComparisonFilter'
+          gte: '#/components/schemas/ComparisonFilter'
+          in: '#/components/schemas/ComparisonFilter'
+          lt: '#/components/schemas/ComparisonFilter'
+          lte: '#/components/schemas/ComparisonFilter'
+          ne: '#/components/schemas/ComparisonFilter'
+          nin: '#/components/schemas/ComparisonFilter'
+          or: '#/components/schemas/CompoundFilter'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/ComparisonFilter'
+        title: ComparisonFilter
+      - $ref: '#/components/schemas/CompoundFilter'
+        title: CompoundFilter
+      title: ComparisonFilter | CompoundFilter
     OpenAIResponseInputToolChoice:
       anyOf:
       - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'

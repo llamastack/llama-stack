@@ -30,6 +30,7 @@ from llama_stack_api import (
     Chunk,
     EmbeddedChunk,
     Files,
+    Filter,
     Inference,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
@@ -365,7 +366,11 @@ class OpenAIVectorStoreMixin(ABC):
 
     @abstractmethod
     async def query_chunks(
-        self, vector_store_id: str, query: Any, params: dict[str, Any] | None = None
+        self,
+        vector_store_id: str,
+        query: Any,
+        params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """Query chunks from a vector database (provider-specific implementation)."""
         pass
@@ -609,7 +614,7 @@ class OpenAIVectorStoreMixin(ABC):
         self,
         vector_store_id: str,
         query: str | list[str],
-        filters: dict[str, Any] | None = None,
+        filters: Filter | None = None,
         max_num_results: int | None = 10,
         ranking_options: SearchRankingOptions | None = None,
         rewrite_query: bool | None = False,
@@ -621,6 +626,8 @@ class OpenAIVectorStoreMixin(ABC):
 
         Note: Query rewriting is handled at the router level, not here.
         The rewrite_query parameter is kept for API compatibility but is ignored.
+
+        Filters are passed directly to the provider for efficient database-level filtering.
         """
         max_num_results = max_num_results or 10
 
@@ -650,10 +657,12 @@ class OpenAIVectorStoreMixin(ABC):
             }
             # TODO: Add support for ranking_options.ranker
 
+            # Pass filters directly to the provider for database-level filtering
             response = await self.query_chunks(
                 vector_store_id=vector_store_id,
                 query=search_query,
                 params=params,
+                filters=filters,
             )
 
             # Convert response to OpenAI format
@@ -661,12 +670,6 @@ class OpenAIVectorStoreMixin(ABC):
             for embedded_chunk, score in zip(response.chunks, response.scores, strict=False):
                 # EmbeddedChunk inherits from Chunk, so use it directly
                 chunk = embedded_chunk
-
-                # Apply filters if provided
-                if filters:
-                    # Simple metadata filtering
-                    if not self._matches_filters(chunk.metadata, filters):
-                        continue
 
                 content = self._chunk_to_vector_store_content(chunk)
 
@@ -697,52 +700,6 @@ class OpenAIVectorStoreMixin(ABC):
                 has_more=False,
                 next_page=None,
             )
-
-    def _matches_filters(self, metadata: dict[str, Any], filters: dict[str, Any]) -> bool:
-        """Check if metadata matches the provided filters."""
-        if not filters:
-            return True
-
-        filter_type = filters.get("type")
-
-        if filter_type in ["eq", "ne", "gt", "gte", "lt", "lte"]:
-            # Comparison filter
-            key = filters.get("key")
-            value = filters.get("value")
-
-            if key not in metadata:
-                return False
-
-            metadata_value = metadata[key]
-
-            if filter_type == "eq":
-                return bool(metadata_value == value)
-            elif filter_type == "ne":
-                return bool(metadata_value != value)
-            elif filter_type == "gt":
-                return bool(metadata_value > value)
-            elif filter_type == "gte":
-                return bool(metadata_value >= value)
-            elif filter_type == "lt":
-                return bool(metadata_value < value)
-            elif filter_type == "lte":
-                return bool(metadata_value <= value)
-            else:
-                raise ValueError(f"Unsupported filter type: {filter_type}")
-
-        elif filter_type == "and":
-            # All filters must match
-            sub_filters = filters.get("filters", [])
-            return all(self._matches_filters(metadata, f) for f in sub_filters)
-
-        elif filter_type == "or":
-            # At least one filter must match
-            sub_filters = filters.get("filters", [])
-            return any(self._matches_filters(metadata, f) for f in sub_filters)
-
-        else:
-            # Unknown filter type, default to no match
-            raise ValueError(f"Unsupported filter type: {filter_type}")
 
     def _chunk_to_vector_store_content(
         self, chunk: EmbeddedChunk, include_embeddings: bool = False, include_metadata: bool = False
