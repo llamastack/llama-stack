@@ -10,10 +10,10 @@ import mimetypes
 import time
 import uuid
 from abc import ABC, abstractmethod
-from typing import Annotated, Any
+from typing import Annotated, Any, Self
 
 from fastapi import Body
-from pydantic import TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator, model_validator
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
@@ -36,6 +36,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIFileObject,
     QueryChunksResponse,
+    RetrieveFileRequest,
     SearchRankingOptions,
     VectorStore,
     VectorStoreChunkingStrategy,
@@ -61,7 +62,6 @@ from llama_stack_api import (
 )
 from llama_stack_api.files.models import (
     RetrieveFileContentRequest,
-    RetrieveFileRequest,
 )
 from llama_stack_api.internal.kvstore import KVStore
 
@@ -79,34 +79,68 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 OPENAI_VECTOR_STORES_FILE_BATCHES_PREFIX = f"openai_vector_stores_file_batches:{VERSION}::"
 
 
-class OpenAIVectorStoreMixin(ABC):
+class OpenAIVectorStoreMixin(BaseModel, ABC):
     """
     Mixin class that provides common OpenAI Vector Store API implementation.
     Providers need to implement the abstract storage methods and maintain
     an openai_vector_stores in-memory cache.
     """
 
-    # Implementing classes should call super().__init__() in their __init__ method
-    # to properly initialize the mixin attributes.
+    # Allow extra fields for runtime injection (like __provider_id__) and arbitrary types
+    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
+
+    # Configuration - only simple types as Pydantic fields
+    vector_stores_config: VectorStoresConfig = Field(
+        default_factory=VectorStoresConfig, description="Vector store configuration settings"
+    )
+
+    # Runtime state - Pydantic fields excluded from serialization
+    openai_vector_stores: dict[str, dict[str, Any]] = Field(default_factory=dict, exclude=True)
+    openai_file_batches: dict[str, dict[str, Any]] = Field(default_factory=dict, exclude=True)
+
+    # Instance attributes set in __init__ (for type checking)
+    inference_api: Any  # Type: Inference
+    files_api: Any | None  # Type: Files | None
+    kvstore: Any | None  # Type: KVStore | None
+
+    # Concurrency and lifecycle management (class attributes, instance-specific)
+    # These get assigned per instance in methods (like inference mixin pattern)
+    _vector_store_locks: dict[str, asyncio.Lock] = {}
+    _file_batch_tasks: dict[str, asyncio.Task] = {}
+    _last_file_batch_cleanup_time: int = 0
+
     def __init__(
         self,
         inference_api: Inference,
         files_api: Files | None = None,
         kvstore: KVStore | None = None,
         vector_stores_config: VectorStoresConfig | None = None,
+        **kwargs,
     ):
         if not inference_api:
             raise RuntimeError("Inference API is required for vector store operations")
 
-        self.inference_api = inference_api
-        self.openai_vector_stores: dict[str, dict[str, Any]] = {}
-        self.openai_file_batches: dict[str, dict[str, Any]] = {}
-        self.files_api = files_api
-        self.kvstore = kvstore
-        self.vector_stores_config = vector_stores_config or VectorStoresConfig()
-        self._last_file_batch_cleanup_time = 0
-        self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
-        self._vector_store_locks: dict[str, asyncio.Lock] = {}
+        super().__init__(
+            inference_api=inference_api,
+            files_api=files_api,
+            kvstore=kvstore,
+            vector_stores_config=vector_stores_config or VectorStoresConfig(),
+            **kwargs,
+        )
+
+    @model_validator(mode="after")
+    def _validate_and_initialize(self) -> Self:
+        """Validate required fields and initialize runtime state."""
+        if not self.inference_api:
+            raise RuntimeError("Inference API is required for vector store operations")
+
+        return self
+
+    @field_validator("vector_stores_config")
+    @classmethod
+    def validate_vector_stores_config(cls, v):
+        """Ensure vector_stores_config has proper default."""
+        return v or VectorStoresConfig()
 
     def _get_vector_store_lock(self, vector_store_id: str) -> asyncio.Lock:
         """Get or create a lock for a specific vector store."""
@@ -337,6 +371,32 @@ class OpenAIVectorStoreMixin(ABC):
                     await task
                 except asyncio.CancelledError:
                     pass
+
+    #
+    # The model_dump implementations are to avoid serializing the extra fields,
+    # e.g. __provider_id__, which are not pydantic fields but get injected at runtime.
+    #
+
+    def _filter_fields(self, **kwargs):
+        """Helper to exclude extra fields from serialization."""
+        # Exclude any extra fields stored in __pydantic_extra__
+        if hasattr(self, "__pydantic_extra__") and self.__pydantic_extra__:
+            exclude = kwargs.get("exclude", set())
+            if not isinstance(exclude, set):
+                exclude = set(exclude) if exclude else set()
+            exclude.update(self.__pydantic_extra__.keys())
+            kwargs["exclude"] = exclude
+        return kwargs
+
+    def model_dump(self, **kwargs):
+        """Override to exclude extra fields from serialization."""
+        kwargs = self._filter_fields(**kwargs)
+        return super().model_dump(**kwargs)
+
+    def model_dump_json(self, **kwargs):
+        """Override to exclude extra fields from JSON serialization."""
+        kwargs = self._filter_fields(**kwargs)
+        return super().model_dump_json(**kwargs)
 
     @abstractmethod
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
@@ -827,6 +887,7 @@ class OpenAIVectorStoreMixin(ABC):
 
         try:
             file_response = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
+            assert file_response is not None  # Type assertion for mypy
             mime_type, _ = mimetypes.guess_type(file_response.filename)
             content_response = await self.files_api.openai_retrieve_file_content(
                 RetrieveFileContentRequest(file_id=file_id)

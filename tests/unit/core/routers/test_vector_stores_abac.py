@@ -192,8 +192,6 @@ def router_with_real_routing_table(mock_provider):
                             chunk_id="c1",
                             created_timestamp=1234567890,
                             updated_timestamp=1234567890,
-                            chunk_embedding_model="test-model",
-                            chunk_embedding_dimension=768,
                             content_token_count=1,
                         ),
                     )
@@ -335,8 +333,6 @@ async def test_operations_fail_before_provider_when_unauthorized(router_with_rea
                             chunk_id="c1",
                             created_timestamp=1234567890,
                             updated_timestamp=1234567890,
-                            chunk_embedding_model="test-model",
-                            chunk_embedding_dimension=768,
                             content_token_count=1,
                         ),
                     )

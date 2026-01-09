@@ -28,10 +28,8 @@ from llama_stack_api import (
     Inference,
     InterleavedContent,
     QueryChunksResponse,
-    VectorIO,
     VectorStore,
     VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
 )
 from llama_stack_api.internal.kvstore import KVStore
 
@@ -265,7 +263,7 @@ class MilvusIndex(EmbeddingIndex):
             raise
 
 
-class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+class MilvusVectorIOAdapter(OpenAIVectorStoreMixin):
     def __init__(
         self,
         config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,
