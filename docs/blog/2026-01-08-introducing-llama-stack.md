@@ -119,7 +119,6 @@ We'd love to have you join our growing community:
 - [Join our Discord](https://discord.gg/llama-stack)
 - [Read the Documentation](/docs)
 - [Report Issues](https://github.com/llamastack/llama-stack/issues)
-- [Share Your Ideas](https://github.com/llamastack/llama-stack/discussions)
 
 ## Conclusion
 
