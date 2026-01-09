@@ -1,0 +1,72 @@
+---
+id: unregister-benchmark-v-1-alpha-eval-benchmarks-benchmark-id-delete
+title: "Unregister a benchmark."
+description: "Unregister a benchmark."
+sidebar_label: "Unregister a benchmark."
+hide_title: true
+hide_table_of_contents: true
+api: eJztVsFu20YQ/ZXBnlqDlhTDQRrenEgFDDioIduHwhGEEXcobrzcpXeXigmB39B7T/2Mfk9/oL9QDElRVKwERU8NYF1ErWaGM2/em52tcOQLazx5EW/F2eScvyT5xKkiKGtELG4zghWZJMvRPcBn9ODLJCHv01LrCkrjaK18IEdyJOpInE8mz4O8QwlzeizJBxGJxJpAJrAZFoVWCbLZ+JNn263wSUY5Pg8yc8462GUMqbM5hIzg4vpyBHNbrjNdQWq1tp89zH9+D29+mrwZiUgUzhbkgmqr9AFD2TwFFTSJWNy0J5EIVcG/lQm0JsfVdCZ729vmuzf1wSmzZktJAZUemk7bkyO2yviAJmkCo6l+SUV8v31m1p+YUmtRL6LmAVccPLiS6joSjh5L5UiK+H5X2C7pPqVFX0YL4T4ju/pESeCM6Anzoq10h8/5ZLJ3PGzgrtaGHK49bqihzAa1kmAd5KhT63KSoq450/Ozt0fIZS18QFPtYvsXdnwv7Dh7u3c81saeI7/aEjLcENBTQiRJNm1xGAi0ylUYwbUm9ATBVYBrVAY0BnKjjjivjw2USxPIGdRwQ25DDnapv5DneyDP6+Fo+VorewJdGCgNPRWUBJJATatskpTO9cNFUoqlDs8bO23/gHnX2heK/P8o0rYw4NpznHe7XcOz62EP7vplA3C/lDDIDHHTx0spYrFfSpa91XLzCnWR4ZI2qPfHfjkwUXK5lKQpcP4FOswpkPMNPgZzTnpoLBhLEYsCQyaGaDA+0YBJh9h+WRVfopdTsGnDp/2uFexguxqJwWXcm1zKtvn/IVzdoFs4SjDsc84pZJYhHMAQMhGLcQffmOEb7+Ebb4eI1CISvpFxC1rpWMBZCEU8HqOpTjPrA8lTrTHHUx8weRglNm+S8ZSUToWqcZzuBH2/4P+USe2Q3FfsDzfsDzcFJSrtZAynMO2LYm36I3ArD8o36PgD3w6yYfCQYYDC2Y2S5D8aOPJB8BTYl4wsrDLBA5rmklMOEuvakSGVWQNL26WYkG8Do6M2JivFOr4a7fGXrHjD0rQhh+tdhh+sJO1HH03rcnLy1+9//P3nbzCdXc9n7y9uZ9OTkxiuaI1J1UDRvjTHCla8tuV2QxKUgbQMpSPgrilr/AjueMBZ18bN1bqVFjhKyZFJCKzRFTOycxGx2LxiJhbWhxybOdrp5euSPejKdj+Wv+HS6SjQUxgXGpXhdzYc23Y8vRcdT0UkmKki2iuWqRAf6HcRCSYku223K/R053Rd8/FjSY6ZuIjEBp1qx979Vkjl+VmKOEXt6RtV/DDvxsGP8O8Ffqy+7hBNxYCjLvmXiMQDVV/Oo3pRRyIjlOSabFuTiyShIgycn117LLFe+dPZ1ex2Jur6H95j1ds=
+sidebar_class_name: "delete api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Unregister a benchmark."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1alpha/eval/benchmarks/{benchmark_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Unregister a benchmark.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"benchmark_id","in":"path","required":true,"schema":{"type":"string","description":"The ID of the benchmark to unregister.","title":"Benchmark Id"},"description":"The ID of the benchmark to unregister."}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"The benchmark was successfully unregistered."},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

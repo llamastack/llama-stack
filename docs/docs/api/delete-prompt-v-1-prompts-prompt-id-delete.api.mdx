@@ -1,0 +1,70 @@
+---
+id: delete-prompt-v-1-prompts-prompt-id-delete
+title: "Delete Prompt"
+description: "Delete prompt."
+sidebar_label: "Delete Prompt"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1uIzcMfhVCpzaY2E6QxXZ9yzYpECCLBol7KBIjoCXao41GmpU4TgxjjvsWfbo+ScH5sZ3EKXrsAvFlZqiP1Efyo+S1ipTK4BMlNV6r49GJPAwlHW3JNng1VjeV1pTSvHJw3YFVnamT0eg19jMauKZvFSVWmdLBM3kWGJalsxoFNvyaBLtWSedU4Osg5zGGCD0xmMdQAOcEp1cXA7gO1SJ3K5gH58JjguvffoWPv4w+DlSmyhhKimzbZBIjV80bW3YkmbSWTPGqlG/rmRYUJZsOssVOmucGmjhavxCkIUbrdqFnrWUP1vrE6HUTGP3q97ka365fwTYWXzmn6mnWvOBMgnOsqK4zFelbZSMZNb7tE+tJbyhNN2m0JdwyCrOvpFkY0RMWZZtpX5+T0Wjr+LyBfa5qkhPE1gyPmMD6JTprIEQo0M1DLMiouhamJ8efXrd0EgJ8Qb/qY6d3dfwo6jj+tHXc18aNRv4MFeS4JKAnTWTING2JyATOFpYHcOUIEwHHFeACrQeHTHHQCefDvgPlwjNFjw5uKC4pQk/9XTw/gng+7B4tb7VyI6BTD5Wnp5I0kwFqWhW0rmLcHC6G5lg5ft3Ys3Zhe0O9S+R/J5G2hYyLJHGuYihKTuL3spWOmKBs1gd3/s53FuxtKlNS6qafF0aNlWkA9+3y/fKoe0v3vcma+/sWJI3CiAUxxdQUxGMhLDdIJZUTA3KudnOXamQ7utnTnN08rpBz2Ow1hu0GUuSCOA9b7g0tztVYDZdHw47+cL3xqVWmUjM3LekqysTkzOV4OES/OsxDYjKHzmGBh4lRPwx0KJqtEukqWl41jmf9BN1OZc36edhV06X4w434w01J2s67uVEv05vkNoFNzWykXSSEeWPcDcU5shRgaQ2lOw97fgiJWHzJmzJYzwnQN3eIjaBDbCfSWL8AmZw4R02pDYyR2pgixBDl5gn7N5nJHxhHS4q46Bl+CYZcaoQmkIODv//6DjeT08+X5wcHY7iKwVRaEjuMhGYlB0GCR8s5zFA/PGI0oENRItuZdZZXsKgwomeiJEqVlrUVWx6JSMqQuMDmCOqU18m7HYiXdV5vz7H/NhmdKpmeeFg6tF42beSy7iR2K0yyTvAyyeOtNKeZEiUJaL2eYaI/oqtrMX+rKIqEpplaYrTtAXG7VsYmeTdqPEeX6F/o/3TdjdLP8PZsvJFAZ0S/kpKiq+RLZeqBVs9mt57WmcoJDcWGXbt+qjU1pe09X10Iz0by7PzyfHKu6vofQ3t9gQ==
+sidebar_class_name: "delete api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete Prompt"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/prompts/{prompt_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Delete prompt.
+
+Delete a prompt.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"prompt_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: prompt_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"Successful Response"},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

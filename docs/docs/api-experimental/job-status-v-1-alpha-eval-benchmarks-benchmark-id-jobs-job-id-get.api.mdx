@@ -1,0 +1,68 @@
+---
+id: job-status-v-1-alpha-eval-benchmarks-benchmark-id-jobs-job-id-get
+title: "Job Status"
+description: "Get the status of a job."
+sidebar_label: "Job Status"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV9tuGzcQ/ZUBnxJjbdlGgjT75jZq4CJpDdsFWjiGMOKOtLS55JqclS0I+y19LNCv6ycUsxdpZSsBWrRAA1gPEkVyLjznzCx3pQLF0rtIUaUrdXx4KD8ZRR1MycY7larLnCAychXBz4BzAlqgrVCW4cZPD1SitHdMjsUYy9Ia3ayObqJ4WKmocypQRmXwJQU2bbwbP52YTEa8LEmlKnIwbq4SxYatTPzgp3CaqTpRbQq79pKrCpVeKe2L0hJTphJl3KQMfh4oRpWoGRrbTEsiWdWONTpNVsbXW/Eu2kDJIxgu1hCgnBrogXQlaweqrpM+KT+9Ic0qUYHuKhMok8S6Y67PsB3vSaSTbf9gXGTJFe4N5z0VHFDfGjeX6BL/1S7qvsUMzumuosh/h6RtJ+MQfIBeJzALvmhUcHJ2egDnvprndgkzb62/j3D+/Xfw5pvDNyKKba4H/HVnXwPdYWcc05yCkN1t2ey9bH6TR9zXAh2jscOt79qZHXt7IBsE3PKnmUqvHsupTtYzrrJW1ddJM8CpOOdQkaA9ZDeuj9Hl2KU0YLmBUD0WSZ0oekDR7BCfV4eHG8NtAvuzNiUZ2mm4xwjGLdCaDHyAAu3Mh4KyXhfHb3eUtPfwEd2y9x2f1fG1qOP47cZwF41rjfzqK8hxQUAPmiijrKElIBNYUxg+gDNLGAk4LAHnaBxYZAp9Q3m9q6GcOqbg0MIFhQUF6FN/Fs/XIJ7Xw9byOSrXAjpxUDl6KEkzZUANVV7rKoR1c8lohpXlp8S+axfgvKP2WSL/P4m0FDLOo/gZL7Ax2kb/PXGDdty+/Ai+gm5D4Wmm0uaK026aLI7QljlO5JY4mZLTeYHhNk4244nJJpMbP43Nd/NvTvKAKzFgQUwhNtg4LCThoV1ztVOpKpHzrVuWYJMMVLSDquHBzpBzWIdLYSuGsNDFXl/d/pOonXdhuSDOvSDZI8G5StWoA3MkYI42YI5Ww4TrkYA5WrXuarloNjXdolgFqeacuUxHI3TL/dxHpmzfWixwPzLq2wPtiyaLSLoKhpeN4bu+uq+uZc24mR8q/YPYw4XYw0VJ2sy6moZ9GD+UFExBjtFKqT69Tl/mJoKJrbq2rLuXjKF7zpGhDH5hMoqfHOz4IERisSWXld44joCueeaZANqHtoNkxs1BKj3MUFNsHWOg1qcUjg/ypPS7g0zlwmVpQQHnfYYffUY2Hnxyrcne3p+//f4HjH85G5+ffhz/eHnyYW8vhbNA+4HaB67gAS86ZhNYHE2J8WWbS4FL0Dm6OcGUZr7PbEraF5J7ZGkFUn/Cbwvl4kiUVvrIBTa9tNOuvDvtfplZbbrxl0q8UzPTA49Ki8ZJnEZOq06gV6o7hryGSQdJNtUqUdNHtSs6lelO+NeJEjGKn9VqipF+DrauZfquoiAqvE7UAoNp+9/VSmUmyjhT6QxtpC+c68V5V6Uv4YvF/pljdpPoloI12kr+qUTd0vJxS5J28a/ktW42/yCjdSupE5UTZhQavNrFE62p5IHZkyfwVgt6P75Udf0XLFyAjA==
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Job Status"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get the status of a job.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"benchmark_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: benchmark_id"},{"name":"job_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: job_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The status of the evaluation job.","content":{"application/json":{"schema":{"properties":{"job_id":{"type":"string","title":"Job Id"},"status":{"type":"string","enum":["completed","in_progress","failed","scheduled","cancelled"],"title":"JobStatus","description":"Status of a job execution."}},"type":"object","required":["job_id","status"],"title":"Job","description":"A job execution instance with status tracking."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

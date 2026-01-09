@@ -1,0 +1,68 @@
+---
+id: job-cancel-v-1-alpha-eval-benchmarks-benchmark-id-jobs-job-id-delete
+title: "Job Cancel"
+description: "Cancel a job."
+sidebar_label: "Job Cancel"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1u40YMfhViTruBYjtBFtvVLd24QIqkDZwUaJENDEqirElGM8oM5Y1h6Fl6LNCn6yMUlOSfxN49FC3QBeKDJY1IzsePHzlaKk+hcjZQUPFSHY9O5JJRSL2uWDurYnVdpymFkNcGJr2xaiJ1Mhrt2n6PGUzosabAKlKps0yWxQyryugUxWx4H8R2qUJaUIm7QcbeOw8rYJB7VwIXBKdX5wOYuHpWmAXkzhj3OcDkh4/w/rvR+4GKVOVdRZ51l0xg5Lq9Y82GJJNuJVK8qORZW6YZecmmN9nY3rTXtWlgr+1MLDNi1Gbb9Kxb2WOrbWC0aRsY7eLnXMW3yx2z9YqtjVHNXdTeYCLB2dfUNJHy9FhrT5mKb1eJrUCvId2t0+go3CByyT2lLIjoCcuqy3TFz8lotHF8XsBVruqmIPDdMnzGANrO0egMnIcSTe58SZlqGkF6cvxht6Q3zsEl2sUqdnhVx7eijuMPG8d9ZVxr5DdXQ4FzAnpKiTLK2rJ4ZAKjS80DuDKEgYD9AnCG2oJBJj/ohfNu30A5t0zeooFr8nPysIL+Kp5vQTzvtkfLl0q5FtCphdrSU0UpUwbUlsqlae39erhklGNteLewZ92LzQn1KpH/nUS6EjLOgsQZz7F1es7+RwFsAOHeJUKqUNrW7TxTsbp3yTRtLabzIzRVgVOao5kmZNOiRP8Qppv7qc6m03uXhPa/fcrIEAvmCj2WxORDy4nFUoBuuyrhT8WqQi7UNgPCSbSlnj0l2k7oCrmA9XYxPNtD2O/37iD+V7v20aW6JXHhhMwtMrhQsRr2lA6F0uGG0uFyG3MzFEqHyy5ioyIV2nbuiKy9NHLBXMXDIdrFYeECU3ZoDJZ4GBjTh0HqyhZIoLT2mhet49mqsW/v5J22udsW+YX4w7X4w3VFqc77doZDGD9V5HVJltFIl3aH0rOvj0IH0KFt4/DM2+Xt4nZ4LpCh8m6uMwqfLOz5IQRi8SWbVU5bDoC2Pe60h9T5bnhk2s5AmtznmFLoAqOnLqb0jPNySLr9myTyrWVoTh5nK4SXLiMTBp9s53Jw8Nfvf/wJ41+vxpPzy/FPN6cXBwcxXHk69NSdtcIHvOkrG8H8KCHGtx2WEheQFmhnBAnlboUsodSVgj2wTAHpQqlvR+X8SMRWucAltmO0l++PLoGud1+yv9wM4p3u7lXM9MTDyqC2ErzV0LJX5a3qsatIiS5VtOlSKXT8omdFnLLcC/4uUqJAibNcJhjoF2+aRpYfa/IivbtIzdHrbt7dLlWmg9xnKs7RBPpKMm8mfXe+ha82+RfS7BfRLoRgNLU8qUg90OLlKJIx8a/gWg+Zf4BoPUKaSBWEGfmWr+7laZpSxVtuOyfus9FzNr4Y34xV0/wNoa3xpg==
+sidebar_class_name: "delete api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Job Cancel"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Cancel a job.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"benchmark_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: benchmark_id"},{"name":"job_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: job_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"Successful Response"},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

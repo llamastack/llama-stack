@@ -1,0 +1,68 @@
+---
+id: inspect-provider-v-1-alpha-admin-providers-provider-id-get
+title: "Get provider details"
+description: "Get detailed information about a specific provider."
+sidebar_label: "Get provider details"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81u20YQfpXBnhKDlpzAQRLd1NhNBSStYDtAC8cQVuRQ2mS5S+8OFQsCn6XHAn26PkIxuyRF/SRIc2qA+EJ5uPP3zTfD2Y1w6EtrPHox2oinZ2f8yNCnTpWkrBEjcbNEKJ1dqQwdKJNbV0h+BXb+AVMaiESk1hAaYl1Zllql4cDwg2cDG+HTJRaSf5XOluhIRXeyVPygdYliJDw5ZRYiEaRIs2BcKpEcCWY8nYCRBQItle+FVpQaCzTkRZ2IVjxT2Zd8TFvtSXbg651R9xWCytCQyhU6yK0D6sGx4yi6+ApXN3zgWGKsCTY/klLAk72l1uRqEcDLMsVSqac9UMlVmLQhxAL1QngVtfd9R3HlYllL6WSBhM4fzXeJUtPyWyP4JWofRFA5h4YgGgdPkirPUOx6rw8NO7yvlMNMjG4Dn3Yrv1+eDsAuj7vDAk1Mbg8inPSIL+e2IpDgcKE8ocOs3yCprjJlFqDIQ7qDrDTZboYDUdec1PmxvvtJZnCF9xV6+i8ttmvk0jnroG1yyJ0tAqbj6WQAV7ZaLPUacqu1/eTh6udX8PzF2fNBxK3XqTHcwO4GrOso6QqiDOEiMqQ5sj17E57JXmfUDDFJpftHL6LkyFllPEmTBsPSrH/Lxeh2v9nqpJOYSmtR3yXhh5yzcWYmo92njO/SaGJsQurRIkAo9plXJwIfJPdnH5/zs7Ot4m4B21xDp7sohk/SgzIrqVUG1kEhNbMMs44X54cl7eaIsQS5rUw24GjOn748MruthbfSrNs4/A8mfS9Mevpyq3isjB2f/rAVLOUKAR9SxAyzUBYnCUGrQtEAphqlRyC3BrmQyoCWhK4dPs+ODZ+JIXRGarhGt0IHbeg/yPM9kOdZfwx9rpQdgcYGKoMPJaaEGWAolU1T/iS3gyjDXFaaDgt7EV/AVVPaHxT5/1EklpDkwrOdcVYow1q78L9GgmgRs50tv112fImpylXarTqMPSMfjk2ygCwfolm3c62eSF0u5Uyyz07sZ7PejjabLZC/j9u1M8DFC74Y7S1ziiMtZVggt9jEjXPLq/0F/HDRnlzs75ZAFprwB5+5HtTfYInLWiAtLcPT5snbsxg22AwDNsMOm+Gml3ItEuFD10ZQKsf9uiQqR8OhNOvTpfWE2anWspCnnmT6cZDaIrj1mFZO0TooXrT9e3vH77i+fS6/YX24Zn24buocq38Klw8lOhUuIZqb0R9BVHlQPqDgd7QbaPrmaSmpxcq/N3DkT4JHYl00WWmVIR82Z1qicpBaF2dE3LF5tuUyRR8NS4fRJhPZ8mJO9riTOa9fGlfo5KKN8K3NUPvBexNVTk7++fOvv+Hy9+nl1eTt5a834zcnJyOYOjx1GD+pjAc8akqZwOrJHEk+jrEUcg3pUpoFwhxz20Y2x9QWHLsnbnZmG9c3Qrl6Eq6U1lMhw7Rs2oC7syNYbNODOmy2k/cbu7lpHMIHGpZaqnDjDJzbNLS9FU2uIhGBuL0bFgc06vfrXSKYn6y12cylx3dO1zWL7yt0TMy7RKykU3Ho3W5Epjz/zsQol9rjFxJ8dNW0/2P4uoY+llojlGbNRZC64v9EIj7iem/01Hfx5su3UA40nhinKZbU0z343u30/+vLG1HX/wItDQQS
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get provider details"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/admin/providers/{provider_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get detailed information about a specific provider.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"provider_id","in":"path","required":true,"schema":{"type":"string","description":"The ID of the provider to inspect.","title":"Provider Id"},"description":"The ID of the provider to inspect."}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The provider information object.","content":{"application/json":{"schema":{"properties":{"api":{"type":"string","title":"Api","description":"The API name this provider implements"},"provider_id":{"type":"string","title":"Provider Id","description":"Unique identifier for the provider"},"provider_type":{"type":"string","title":"Provider Type","description":"The type of provider implementation"},"config":{"additionalProperties":true,"type":"object","title":"Config","description":"Configuration parameters for the provider"},"health":{"additionalProperties":true,"type":"object","title":"Health","description":"Current health status of the provider"}},"type":"object","required":["api","provider_id","provider_type","config","health"],"title":"ProviderInfo","description":"Information about a registered provider including its configuration and health status."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"404":{"description":"Provider not found."},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

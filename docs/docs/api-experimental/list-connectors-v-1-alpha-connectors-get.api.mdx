@@ -1,0 +1,60 @@
+---
+id: list-connectors-v-1-alpha-connectors-get
+title: "List Connectors"
+description: "List all configured connectors."
+sidebar_label: "List Connectors"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWF9v2zYQ/yoEn7ZAcZKiRVe/ZU02GEi7IEmBDWkQnKWTxZYiFfLkxAj0WfY4YJ9uH2E40vpnu926vKxA/SKJPN4d7/e749GP0qGvrPHo5fRRPjs85EeGPnWqImWNnMpjcaY8vbbGYErW+Yv1iolMZGoNoSFeBFWlVQq86OCD55WP0qcFlsBvlbMVOlLRTgYURhVh6benVYaGVK7Q8RetKpRT6ckps5CJJEWaB2a9VLLh8juj7moUvR6RWyeoUF449LZ2KQplhNZQgvAE6UfZJOzEUmXobluZW5WFnZnVL7mcXm+60iTdiKm1ls3Nf/SDChSt8ZEj0f6nAnC+FhOzbCsCsxNh85FiQQWQsPfGjx1gg9HCtqXUGk9yys8I/sD6Fcuy2RxqPRZqkv7jttXdC5ZpJZMtW2jqUk6vw+xNb6bjXWdvuE0e5I125iZj458PYKd7ZwQ3QUMx2mHt9Od0v3N6m5YXZy0qI1Ue3RLdrYY56qcR7oxVtDai2oEBAyU+Tf9bKPGT6keiT7Fy0n9tGuvIKu38A6YkE+nwrlYOMyaPGtaEYRptkCLCt4tmW6Ad91j1SeuwcujZllkIGEkslCd0mHFin4UCc8kFZtLnmQTnYDXgygmXw3/aWqiZA493F+Ut99sJ9pFAmeiwVp5GeeMnsmnYhee7joAfIRMXeFejpy8p+mMlp87FEEZ/cmfLAO3x+WwiLmy9KPRK5FZre+/FxU+vxcsfDl9OIo6Dw8ETUB3e2khcxpEufMoQLiIz1yK97FV4blafhqNGoPRQ9CSO7JBVxhOY9ItziV9gzsrJ1cjRHgLsu22sfVy7NMA8hFBu8qRJJD5AWcWdtvF5fnjYLxwD2O5VXhVM5TAs7sELZZagVSasEyXo3LoSs5YXz15tQ3plrXgDZtXq9t/Y8bWw49mrwVG+A8aOI7/ZWhSwRIEPKWKGWYDFAaHQqlQ0EecawaMgtxKwAO6rgNC1BeXFroIyM4TOgBaXoa6L1vVv5PkayPNiWFo+BWVHoGMjaoMPFaaEmcAAlU3T2rmuuHS94SawJ3FCDI63bxT5n1EkQkiw8Kynb0nkdnfKXQdozW1HrhY1d0nDDiSRHOqA5yyTU8ldym0vcLs8Al0VMBxaIB9oJVJheUX8rIAKOZUHa/mDXl62zaoPQQs9vCyIqunBAZjVfmE9YbYfLob74WI4SW0ZwucxrZ2iVVh40hL2+obnlMntELxB3ycuK0xVvqap2BenDxU6VaIh0Mw+v32p4euZ8rHvHa1eN8ND9eFWt+50/XsjdvxAeAzdHpqsssqQF2BCGVdOpNbFpMi4M2TyuhxS9FExOIw6mQuW8SK728icewiNS3SwaD18YzPUfvLexCV7e3/9/sef4vTX89OL2ZvTt1fHZ3t7U3HucN9hPEM4HuK7NW6JWB7NkeD76EsJK5EWYBYo5pjb1rM5prZk3z0xu5lFjG8M5fIo3KetpxJCeYhXoMjE10NabFxeuirzL0i7zgfCBzqoNCgzuB5GKl7L9ZaG95CQIEw4nn98nIPHd043DQ/f1eiYaTeJXIJTMW2vb5pEFgj8LwGT8COuuLymKVbM+iXoOtwuNqsiM7TLkJ9Pr2TT/A3gYDEm
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List Connectors"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/connectors"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List all configured connectors.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListConnectorsResponse.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"identifier":{"type":"string","title":"Identifier","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","title":"Provider Id","description":"ID of the provider that owns this resource"},"type":{"type":"string","const":"connector","title":"Type","default":"connector"},"connector_type":{"default":"mcp","type":"string","enum":["mcp"],"title":"ConnectorType","description":"Type of connector."},"connector_id":{"type":"string","title":"Connector Id","description":"Identifier for the connector"},"url":{"type":"string","title":"Url","description":"URL of the connector"},"server_label":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Label of the server"},"server_name":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Name of the server"},"server_description":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Description of the server"}},"type":"object","required":["identifier","provider_id","connector_id","url"],"title":"Connector","description":"A connector resource representing a connector registered in Llama Stack."},"type":"array","title":"Data"}},"type":"object","required":["data"],"title":"ListConnectorsResponse","description":"Response containing a list of connectors."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

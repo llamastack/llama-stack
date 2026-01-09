@@ -1,0 +1,70 @@
+---
+id: get-conversation-v-1-conversations-conversation-id-get
+title: "Get Conversation"
+description: "Retrieve a conversation."
+sidebar_label: "Get Conversation"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81u20YQfpXBnlqD/kXaNLo5cRoISBDDdg6FYxij3ZG4MbnL7A5lEwKPfYs+XZ+kmCUlk7KStkAPDRAfLGk5Mzs/3zecWalAsfIuUlSTlTo5OpIPQ1EHW7H1Tk3UVU6gvVtSiChH4GefSPOBypT2jsmx6GBVFVYngcNPURRXKuqcSpRvVfAVBbbdNdbIf24qUhMVOVi3UJliy4UcTI3KdrhQO/u5JpiegZ8Db/l0oNpMdX7tMq29i6wmaqgyuPF9p7jr1s4miMEM7nOrc7ARsLjHJm55IOpzrIsnF7WZ0oGQydzi0D3rmBYUBo686sTgdLczbEsC5N6P7RzAPUboL8qgJIx1IAPWQSTtnYkQrdOU9D44+wBUeZ2nzJXEaJBTqdA17+dqcr1SaIwVw1icj8o3zm6brQ/6/LfZRsTVRaHam+1YLomliMc/wx01+0ssaoIKbYjAOTJodDCTQBl1TgbYA25QB1e5jWuROtK8LmDuA0T24g48Og3WzX0ou9zgzNecQu8rah0gRA615pSmTjQDdAY+1xQaMSaGO/kIS4twej4FH5IZgzGfeQwmJdAylXGcvcejnWnkUNPTzK0PMARs/kEmp86ylVDlMkmUdbqoDUl4T/CR2PrAB/Cbr6HERnIFdSVqJ0e9CWTAhLMD1T6pbKYCfa5tIKMm18LiEbBvBjge82zs8/uK3Ol0X/uyQraz4gvdpW3FgWe7OtJLNHBBn2uK/G+a0NjI6xB8gHX7g3nwZUrZ6fn0AC58vciLBua+KPx9hItfX8HzX46eC8vHvSwyct3Rog/+sjvJtmnebvLzKHuVPrOnlDLEaIuh6Fl3skPWusjoNI3xty32FEryBWdiXMAo2R6WN27C6H3sXRqUOaVQ7UAxPWBZdZGu8/Ps6OhRcVzAdaypx4XuODUz65ZYWCOUK7EQhpJZ4+LkxY43lffwDl2zth2/o+NbQcfJi0fFXWXcYER6V45LAnrQREZeD4IaZILClpYP4LwgjAQcGsAFWgcFMoV1Q/lpV0OZOqYgr4xLCksKsHb9O3i+BfD8NGwtXyrlBkCnDmpHDxVpmbQolcprXYewaS6bOW67sGfdA7joS/sdIv8/iHQlZFxEsTOcRKJ6Mj9dEAdLSwIcD/Mf3Uf3hnjrGO4td3P3wi7JwfRMKiL1SI+nRk3Ugvh2qHO7PB79jrfjx9bc3i5IXoMVBiyJKcSUQYclbW0St2nksuJ4hZyP5rFunnyE246aDgM/R85hc+MEtq+RCpXEue9jSv5xribqcHl8OArocLWl3KpMxcS+LpI6CO9y5mpyeIiu2c99ZDL7RYEl7kdGfXegfZnujKTrYLlJimdrHl7fyDOZ54eYfCv6cCn6cFmRtvOefTuWJxtlb5PSxaHkepccmko7SBX80hqKHx3s+EOI3QpDzlTeOo5pb+CcbADtQ8drIyuE8C/MUVO/3GCgzqbA2Ye03uy+ZCZjUEFLCrhYe/jOGypigqeI7O39+cfvcHl1+vLt6729CZwHb2otge0HQtNIO4kdameo7+4xGFjP3baw3MCixoCOiaJAWUrWZWx5LJipfOQSUyPr4Sik+Np0v3psiP8JuXoYy95yWBVo0zadALXqAXktvmYjnkjfmGwj+iZTgjtRWK1mGOlDKNpWjtO6JyDL1BKD7ZrS9UoZG+W7UZM5FpG+EukPFz0Pf4S/I9YXQlrvfa6RMshGrCZKZeqOmh1NoL1pM5UTGgrJ007qVGuqeKD/5IU0YvWb11eqbf8CyuE6SA==
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get Conversation"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/conversations/{conversation_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Retrieve a conversation.
+
+Get a conversation with the given ID.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"conversation_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: conversation_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The conversation object.","content":{"application/json":{"schema":{"properties":{"id":{"type":"string","title":"Id","description":"The unique ID of the conversation."},"object":{"type":"string","const":"conversation","title":"Object","description":"The object type, which is always conversation.","default":"conversation"},"created_at":{"type":"integer","title":"Created At","description":"The time at which the conversation was created, measured in seconds since the Unix epoch."},"metadata":{"anyOf":[{"additionalProperties":{"type":"string"},"type":"object"},{"type":"null"}],"description":"Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard."},"items":{"anyOf":[{"items":{"additionalProperties":true,"type":"object"},"type":"array"},{"type":"null"}],"description":"Initial items to include in the conversation context. You may add up to 20 items at a time."}},"type":"object","required":["id","created_at"],"title":"Conversation","description":"OpenAI-compatible conversation object."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

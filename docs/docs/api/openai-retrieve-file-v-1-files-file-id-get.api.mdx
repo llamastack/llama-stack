@@ -1,0 +1,70 @@
+---
+id: openai-retrieve-file-v-1-files-file-id-get
+title: "Openai Retrieve File"
+description: "Retrieve file."
+sidebar_label: "Openai Retrieve File"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV8Fu3DYQ/ZUBT60he50gQRvdNoldGEhgw3YLFI6xmBVnV0woUiFHay8WOvYv+nX9kmIoaa21NymKXhogvqxMvhk+vnlDURsVKNbeRYoq36jnx8fyoykWwdRsvFO5mjo4r8lNz06NpfP5RyoYCu8YjTNuCQtjCYxb+FChRBypTMk0OZZcWNfWFGlm8jFKwo2KRUkVylMdfE2BTbe8T8nlidc1qVxFDsYtu4SRVa5kMZUpNmxlvmOjMqVpgY3dItpMGb0vzxB4pgUzX3O3cA8zjmlJYYR7nRBtpopAyKRnyF/Fv+lgMGUJovvaBIr/FHTSwfog2YDDir5G/3TAtJmqm1D7uBdOrqlUfqMwRhMZHUeVqTlyUarbkYjb4l70qbJHDvgNrdHQLwQrtA1FWPjQ+wIkNsL04uxItW020PBDcQJ9bkwgLVSMVoPuO6LuiDUS4WF/exmPDDAmPOIFHQ3ACJoWxpEG44BL2kte6L/Y1wSvUcMlfW4o8r/x926SkxB8gKHjYBF8lZjI4nDpm2Vp17Dw1vq7CJenb+Cnn49/kn7abZPIyE3n216Qq24ke+yxdqvZA/Y6/WaPzNKKhIzGjqFvu5E9WOPET0VKjG59vlD5zWP/tdl2xDXWqvY2Sw84l+QcGhK1x+aI2230HHtKo9InCdVjj6Vew6rudjro8+L4eNTJOwUc9qquS4LQDcMdRjBulczuA1Ro5VAjPfji+aunJb32Ht6jWw+543d3fCvueP7qIXBfGbce+d03UOKKgO4LIk06lSUgE1hTGT6CC0sYCTisAZdoHFhkCsOB8nLfgXLmmIJDC1cUVhRgoP7dPN+CeV6Oj5YvlXJroKmDxtF9TYXcDSiVyhdFE8L2cNleYB4X9m03AZd9ab9b5P9nka6EjMsoedKFQqJ25b8kDoZWlC7MRx/cB3dJ3AQXx5dnwLlvGBBiTYVZmKJDq0xJCRLkTMvKNTk0s9DnnAlqtnqWfuOs+9fo2WxJ8rarMWBFTCEmobrbpepBSvRUuaqRy53LmmiUjdy0p2Tj/V0gl7BdKYchvQhfEZdeeA98uFS5mqyeTRLhyaYHtypTMTVRx7QJ0j4lc51PJujWh6WPTPrQWqzwMDIWn44KX6U1IhVNMLxOgW+Hdrq5lTlReGytdxIPVxIPV73SSdwnN8nr0kQwMTVKHCPBL9LgOBWXyFAHvzKa4gcHe/4QIrHEktO1N44joEsvFBOg8KFrTy0fVtJGYYEFxS4xBupyiit9kNeQ37/IXG4zllYUcDkwfO812Zh8J5CDg7/+/AOurqev350cHORwEbxuCtnYYSDUazkVItwZLmGOxac7DBoKX9XIZm6s4TUsGwzomCiKPaVknWKrZ+mrxEeuMJ1Hvd3Ok2Vh2wanxj750tg8nG3/tV96tzLd86S2aJywSn7a9P67Eardp4Z0fT4Y9jZTYjMBbDZzjPRrsG0rw58bCuKv20ytMJjuKLnZKG2iPGuVL9BG+sqmfrjs2+tH+FK/fIF6P4huLWrLJ5jKlcrUJ1qPerm9bTNVEmoKiVk3Oy0KqnkU9+S1sdOkv5xcq7b9GzkOfy4=
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Openai Retrieve File"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/files/{file_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Retrieve file.
+
+Returns information about a specific file.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"file_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: file_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"An OpenAIFileObject containing file information.","content":{"application/json":{"schema":{"properties":{"object":{"type":"string","const":"file","title":"Object","default":"file"},"id":{"type":"string","title":"Id"},"bytes":{"type":"integer","title":"Bytes"},"created_at":{"type":"integer","title":"Created At"},"expires_at":{"type":"integer","title":"Expires At"},"filename":{"type":"string","title":"Filename"},"purpose":{"type":"string","enum":["assistants","batch"],"title":"OpenAIFilePurpose","description":"Valid purpose values for OpenAI Files API."}},"type":"object","required":["id","bytes","created_at","expires_at","filename","purpose"],"title":"OpenAIFileObject","description":"OpenAI File object as defined in the OpenAI Files API."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

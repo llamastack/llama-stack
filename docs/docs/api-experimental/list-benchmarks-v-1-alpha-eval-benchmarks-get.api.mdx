@@ -1,0 +1,60 @@
+---
+id: list-benchmarks-v-1-alpha-eval-benchmarks-get
+title: "List all benchmarks."
+description: "List all benchmarks."
+sidebar_label: "List all benchmarks."
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81u20YQfpXBnlqDlhwjQRrd7NopBNitYStAC8cwRsuhuPFyl95dyhYEPUuPBfp0fYRilqRI/ThBemqA6CJpOT/fzHwznF0KR760xpMXo6U4Pjrir5S8dKoMyhoxEidwoXw4JSPzAt2Dv240BiIR0ppAJrASlqVWEllp+Mmz5lJ4mVOB/Kt0tiQXVO0nxRBPVaDC7z5WKZmgMkWO/4VFSWIkfHDKzEQiggqaD8adVLIF+YNRjxVBZwcy6yDkyoMjbysnCZQBrbFA8AHlg1glDGKuUnL3rcy9SmNkZvFbJka321BWyfrEVFqL1d1/xBFygtb5BpDa/0sJuGrEYJzuZGB8BjbbMAwhxwD2yfhNAOyw9rDrSVrjgxiJaVv8nvcJy267neTURcbWEkD9hAsPaxODqJRhpTctr5JIC0/hC2Gf1VJ7o+4S3UTfmIRgofLUpJ86NEBz1FVk7YAheGnZ3X1WGcmHfoOm2/VvD9A5XPQg3tRW4P3ayjZSbinG2PiD1l+PK55Bc1ctIK2i0BbWggK2nYRpqvgB6qteKwVX0RqknX4iGXooL1v9bXDtg46tnWcI6B8GYrXatevosVKOUjG67bfwJp83qrwv33cdwNMe7bZnUlfBNd8YbQvUzKCwKWkoyWXWFWgkDT5TsbN9eWiL1PmqY/Vfjj/mtRfK/hG647F9ADxYURmOA0F/Dgcjeb1vbp9iCtf0WJEPXzOpN42cO2cdtC8JyJwtYgOdXI0HcG2rWa4XkFmt7ZOH6/c/w9ufjt4O6pr3JroPGKq6hdoWqU/WWVQm0Kwef41IJzuJ38lu+6UUUOm+6Fl9skdWGR+YBV870fkHTtk4dxNnu19nvw6jwdhA6pU+plBs02WVCHrGoqwjbfPz+uioR/+NAraxNjM2HsMTelBmjlqlYB0UqJnslLa8OH63W9KJtXCJZtHa9t/Z8a2w4/hd7/27p4xrjvxhK8hxTkDPkiilNJbFYSDQqlBhAFea0BMEtwCcIS9DGMi1A+XNvoEyNoGcQQ035ObkoIX+nTzfAnne9EfLS6VcE+jEQGXouSQZKAWKpbJSVs6th8t6idsu7Fn9AHpvue8U+Z9RpC5hwJlnO91mInbuMHEJQq277cNzhjm/sYjjVIwEbyj3ncD9/BXqMsd7Xsf65zPiV1lBIbesVv8tMeRiJIaN0pCVhp0Sb4mRpT7mrHLMzzyEcjQcolkc5tYHSg/jZe4wXuYG0hYxe55k5VRYRMWzlq+3d/xMmcz2a3cRL4M3rA83JUmVNSyFQzh/LsmpgkxAzeTb3ecnvCUrH9npN7Sbi0jffLyJNUux/2hgzweBby02AzJpaZUJHtDEKa4cSOvqnkh5P2Tuugwl+dowOqptMhWs49lv9zuZ8gqhaU4OZy3CS96a/eCjqVUODv7586+/4fz3q/Pr8eX5r5OTi4ODEVw5OnRUv0I4H/BDU7wE5q+mFPDHGkuBC5A5mhlfuTLbIpuStAVj94HJzXzi+tapnL+Kd2DrQ4FxOhgs6GUibtRh2U2al+SbRgj0HIalRmXYWyTVsmHirWiCEYlgLopETDcahBnHYsvlFD19cHq14uPHihxT7S4Rc3Sqbtvbu1UickK+2jMLH2jB41VKKpn7fF2J95HtqcgUXffJL+cTsVr9Cw/mGSY=
+sidebar_class_name: "get api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List all benchmarks."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1alpha/eval/benchmarks"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List all benchmarks.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListBenchmarksResponse.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"identifier":{"type":"string","title":"Identifier","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","title":"Provider Id","description":"ID of the provider that owns this resource"},"type":{"type":"string","const":"benchmark","title":"Type","description":"The resource type, always benchmark.","default":"benchmark"},"dataset_id":{"type":"string","title":"Dataset Id","description":"Identifier of the dataset to use for the benchmark evaluation."},"scoring_functions":{"items":{"type":"string"},"type":"array","title":"Scoring Functions","description":"List of scoring function identifiers to apply during evaluation."},"metadata":{"additionalProperties":true,"type":"object","title":"Metadata","description":"Metadata for this evaluation task."}},"type":"object","required":["identifier","provider_id","dataset_id","scoring_functions"],"title":"Benchmark","description":"A benchmark resource for evaluating model performance."},"type":"array","title":"Data","description":"List of benchmark objects."}},"type":"object","required":["data"],"title":"ListBenchmarksResponse","description":"Response containing a list of benchmark objects."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

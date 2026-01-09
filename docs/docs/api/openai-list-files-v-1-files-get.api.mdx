@@ -1,0 +1,70 @@
+---
+id: openai-list-files-v-1-files-get
+title: "Openai List Files"
+description: "List files."
+sidebar_label: "Openai List Files"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWN1u2zYUfpUD3gwIlMQpWnT1ndskW4AUCZJswJAEwbF0bLOlSJWknHiGLvcWe7o9yXBISaYdN+mwYliB+sY2df7Pdz6SWgpLrjLakRPDpXgxGPBXQS63svLSaDEUIw2n0vmzivTo5FgqumhVIDfao9RST8HPCJR0HswEJlKR2xOZ4OekPZvEqlIyRza5/8Gx3aVw+YxK5F+VNRVZL2MUBfqwKj2V7vFjM/5AeTDqFxWJoXDeSj2N/pwXQ8EBiEx46RU/P4sKmShogrXqJZpMyGKbnU7xpGCZ8cJHx62Y1J6mZBO5t0GiyURuCT0Vd+iflH8XxWDkWYkeKmnJPad0FMVaJU5AY0lPhX/cyTSZqGpbGbdVnHRdiuG1QOek86i9E5kYo89n4jYpYt/+89ZUtoGTX1HJAlpHMEdVk4OJsRBVgXUdjM5P9kTTZF0YpmuOpU+1tFRwKLIQXd3XirpWrKQIq/y2RpwAIA04iQtiGIAOCppITQVIHUC9Jfg+drQWF0nBDxm4TSZm6O5KY9Nqj41RhDoR/hkdvGeh0E3r/N3TYDxmGYiQVPis+Cn20s8PDE/u0wMTJJ5rWxjcJP0ksVXMSYe208qjPvV8w2DiQJhwAslwk7ahiwN9uY3L3mIBF/SpppDvF/PTupEja40F20dlTRmgws7hwtTTmVrAxChl7h1cHL+D1z8OXjMfrvOY8+jrSCxtPS7jSrZJAk1fspXsVfjONlracO08SpWKHsaVLbJS88DnwTDqxdlEDK83UdJk/YqulRLNbRZ+4JiNe1sTVzuFgevTaGNsQ0o6H0ooNtEUyBDLKmba1eflYJBQ7VoDu1zF1YzAxmW4R8bFPLCRsVCimhhbUtHh4sWbxy29Mgbeo150tt13dHwr6HjxZqW4rY09Rn4zNcxwTkAPOVFBRWiLRc8nl1L6PThXhI7A2wXgFKUGhZ5sRyivthHKifZkNSq4JDsnC13o38HzLYDnVUotn2tlD6CRhlrTQ0U5H94otMrkeW1tTy79hrnZ2MP4AJJN7jtE/mcQiS30OHVsJxwoWGu9/HxmaW84N/pGX5CvrXaA67cf8DP0MCZl+G5kQoNqR/YHB8ZOUcvfQ7O5LdyU8Oek4Fgq0ijv2NhdsHQ3P2h/TIm3vAotluTJulCteAcQOPHhsiA5xE812cXa0WyCylGWQOqflLur2ij4aFik9Rpo8994XUHssdt+lA4Gg3RMT4PTNAxji6+SfHoVyttT6NqFovWzDohLYz2EEML5tMKp1OF219+s957OL/rZdJMmWPU3rq+Z4n9323sCVJ35hhdL8jPDU9BB3c/EUOzPD/bDBIhMuEDNEfq1ZVKeeV8N9/dRL3ZnxnkqdpXCEnedx/zjXm7K4M5RXlvpF0HxsKv89S0/k3piUsI6ZX24ZH24rCiXk5aaH9XgaiYdSBem26WSzAO8mJoKjFBZM5cFuRsNWz4IjgKHkC4qI7V3gDocU6SF3NiIqIKvPzw5doJ5RzVoKdpkrjOWDzdmu5Mxn5EVzcnitIvwvSlIRUJjkZ2dv/78Ay6vRm9Pj3Z2hnBuTVHnnNiuJSwW3FYH99LPYIz5x3u0BeSmrNDLsVTSL2Bao0XtKb4H4pbFis0PwssI43yJYZdrEX4WaC+8Z4rI2az1crVdfn0KbsHp6cHvVwql5iADvJYtCK858vjCIewJDDVeXS7H6OgXq5qGl+NkMsYK6XiLWs3mR1okPB3mRQxFmI3PyHbs+iWyHQV+ieyKTVbSt/zHyrirXt/yOwxCNsm5RLVRnlOVxvPo0LI2wj8dXYmm+RtfdeoJ
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Openai List Files"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/files"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+List files.
+
+Returns a list of files that belong to the user's organization.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"after","in":"query","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"After"}},{"name":"limit","in":"query","required":false,"schema":{"anyOf":[{"type":"integer"},{"type":"null"}],"default":10000,"title":"Limit"}},{"name":"order","in":"query","required":false,"schema":{"anyOf":[{"type":"string","enum":["asc","desc"],"title":"Order","description":"Sort order for paginated responses."},{"type":"null"}],"default":"desc","title":"Order"}},{"name":"purpose","in":"query","required":false,"schema":{"anyOf":[{"type":"string","enum":["assistants","batch"],"title":"OpenAIFilePurpose","description":"Valid purpose values for OpenAI Files API."},{"type":"null"}],"title":"Purpose"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"An ListOpenAIFileResponse containing the list of files.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"object":{"type":"string","const":"file","title":"Object","default":"file"},"id":{"type":"string","title":"Id"},"bytes":{"type":"integer","title":"Bytes"},"created_at":{"type":"integer","title":"Created At"},"expires_at":{"type":"integer","title":"Expires At"},"filename":{"type":"string","title":"Filename"},"purpose":{"type":"string","enum":["assistants","batch"],"title":"OpenAIFilePurpose","description":"Valid purpose values for OpenAI Files API."}},"type":"object","required":["id","bytes","created_at","expires_at","filename","purpose"],"title":"OpenAIFileObject","description":"OpenAI File object as defined in the OpenAI Files API."},"type":"array","title":"Data"},"has_more":{"type":"boolean","title":"Has More"},"first_id":{"type":"string","title":"First Id"},"last_id":{"type":"string","title":"Last Id"},"object":{"type":"string","const":"list","title":"Object","default":"list"}},"type":"object","required":["data","has_more","first_id","last_id"],"title":"ListOpenAIFileResponse","description":"Response for listing files in OpenAI Files API."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

@@ -1,0 +1,70 @@
+---
+id: get-model-v-1-models-model-id-get
+title: "Get Model"
+description: "Get model."
+sidebar_label: "Get Model"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV82O2zYQfpUBT+3Ca2+CBG10c+NtYCBBjV3nUGwWxlgaWUwkUktSzgqGnqH3nvoYfZ6+QF+hGFKS5Z8tkJ4aIL6YIoczH2e+GQ53wpAttbJkRbQTz6+u+C8hGxtZOqmViMQU3umE8rEYiVgrR8qxDJZlLmNkmclHy4I7YeOMCuRRaXRJxsmgViaknEwlGf5ydUkiEtYZqTZiJJx0OU/M91KjIwjvlXyoCPZ6INUGXCYtGLK6MjGBVJDnWCBYh/En0YwYxFYmZFadzEomHrqqf0lFdHcMpRn1M6rKc9Hc/0ccLiPojB8ACfafcsCiFYN5cuKB+Qx0eqAYXIYO9GdlDwGwwWDh1FKslXUiEgUHdGB5yXJsMsUq3ws0I1GQwwSdDyomiWQ4mC8G4XWmos6i0OuPFLuB5nfd/uMDTVUNe4XQ2dk7dA+BB6vuSHuMeV6I0ckRSVWFiO7aVSrWlCRhxZBB9UncD8Cx5v7sQ3TXqirIeHaz321Vlto4SgIqYKOWI/3WM+6WGTcWTXPqB0MPlTSUMCQ5JPiQE8eQTp3V2u1JZqg0ZFmd2gAqmM57iY20jgwlZ+AxwBfnUvwnTOCGHiqy7kuy/MhnxmgDXT2B1OjCE3a6mI/hRlebLK8h1XmuP1u4+fk1/PDj1Q/j4IpBsbAOXeVHnU9uw0zvXKkcbUJmtSJ72aX/P6ZFww51KPOh6CzMnJGVyjpUMX1pseABrlk5JwV7exh+2x+jxdhCGkTfu1Acs6gZCXrEogwn7fzz4upqv/EwgN1ZxTJjqvhp+IzM2C3mMgFtoMA81aagpOPF81enIV1qDe9Q1Z1u+40dXws7nr8alPczYew58quuIMMtAT3GRAklPiwGHUEuC+nGsMgJLYEzNeAG+Z5FR6YrKC/PFZS5cmS4rt+S2ZKBDvo38nwN5Hk5LC1PhbIn0FRBpeixpJgvSPKh0nFcGdMXl/7SPg7sLCzATRvabxT5/1EkhNDhxrIe36BYcdIavyEXWpDxB/VB8Re2Lcm6BunsoGlmr7PPfWDniYjEhtwqtHnbZ2FgV+2ETFarDfGtVqLBghwZ6x2isKCuU+Umih0nIlGiyw76rtCf7mlzJjbDcyzQZdCbiqDXzy4uyGW6BewRuUxEYrJ9NgmgJ7tOvBEjYX3CBLSV4VTJnCujyQRVfZlp6yi59E+WS/9kGce68FYsxZWRrvYbZ13q3N3zmlSpHtJo0OHBbUmxTNuEgUuYcZMYI2fldDG3J13lkttsaX2a2IO97VNjqNy/Ntqm1X5QcOaHYMnxXlJJqaVyFlD560QaiLUJycndOHASmRRjskExGgo6mZOau1enzxtZcy+T05YMbjqEgZOeeCxycfHX73/8/edvMLte3Fy/ni6vZxcXEbylDca1d0UwWmANa26QCr0N/XJaucoQcNSkVnYM77mUaBP0FnLTPgkMpWRIxQRa5TXzud0iIrF95p982roCfcVqicopcba73+1L3pdmUctlR49uUuYoFZv2VNu15LxjPO0bihkQ9Xy+HwnmIIvsdmu09N7kTcPTDxUZJt/9SGzRyFBT7nYikZbHiYhSzC39yzG+u2nT73t4Mp+eQN9OoqrZq5hX/CVG4hPVw2xv7puRyAj5hc3YwvI0jql0g40nN8hBFr+5Xoqm+Qee5tXe
+sidebar_class_name: "get api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get Model"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/models/{model_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get model.
+
+Get a model by its identifier.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"model_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: model_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A Model.","content":{"application/json":{"schema":{"properties":{"identifier":{"type":"string","title":"Identifier","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","title":"Provider Id","description":"ID of the provider that owns this resource"},"type":{"type":"string","const":"model","title":"Type","default":"model"},"metadata":{"additionalProperties":true,"type":"object","title":"Metadata","description":"Any additional metadata for this model"},"model_type":{"default":"llm","type":"string","enum":["llm","embedding","rerank"],"title":"ModelType","description":"Enumeration of supported model types in Llama Stack."}},"type":"object","required":["identifier","provider_id"],"title":"Model","description":"A model resource representing an AI model registered in Llama Stack."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

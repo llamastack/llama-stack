@@ -1,0 +1,70 @@
+---
+id: openai-retrieve-file-content-v-1-files-file-id-content-get
+title: "Openai Retrieve File Content"
+description: "Retrieve file content."
+sidebar_label: "Openai Retrieve File Content"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1u20YQfpXBnlqDlmwjQRrenNgpDCSIIbuHwhaEETkSN17u0rtD2YTAY96iT9cnKYZ/pmq5QIEeGsC6iJyd+XZmvm92uVWeQuFsoKDirTo5OpK/lELidcHaWRWr64zA4wOstCFInGWyDBgAYakt+gp6iImKVLcuKFgURicoKNNvQaC2KiQZ5ShPrNmQitWsC1aR4qoQi1t+o4RVXdd1pN7sy+gDpjCj+5IC/5std0HOvXd+yB1W3uXAGcHp5cUEZq5cZ6aClTPGPQSYffoI7345eiclFt4V5Fm3LQuMXIZxRVetZahHW6Y1eVVHvcuT73XzP7gG9tquxTMlRm3GrmetZY+vtoHRJg0w2urrSsU322dug8WWxqh6HjUPuBRw9iVJtz3dl9pTquKbvrA+6SGl+VBG28LnxEWKHjEv2kr7/rw5OnoK3CWwr7VVWmuGBwyg7QaNTsF5yNGsnM8p7XVx8n6PUp2DL2irHju8quNHUcfJ+6fAfTQOGvndlZDhhoAeE6KU0oYWj0xgdK55ApeGMBCwrwDXqC0YZPKTTjhv9x0oF5bJWzRwRX5DHvrUX8XzI4jn7fhoeYnKQUCnFkpLjwUlTClQQ5VLktL74XBJaYWl4efEnrULMLq0XiXyP5NISyHjOgjOJ20oSNRu+2fEXtOGdj5qJrf21s6IS29DQ0ZnD+BWzXsoKNErTWkTJmwIFw3hF6mkUJBFvfAd+EK8Fh3IYnPcvIdFa9bpYlhak1yDBXrMicmHpoMWcymrc1bSaBWrAjlT41ZJ86Lxd9VzLseFXyJnMOwUQw8vjOTEmZM6+nw4U7Gabo6nTeLTbedcT3vRRyo0U9ZmXHqZr4y5iKdTtNVh5gJTemgM5ngYGJO7SeLyZq9ASek1V03gWT9vN3NZ03blxtr7LPFwJfFw1VLQTpn6e3XXmQ6gw5is1rNncAzFGTIU3m10SuHWwp4fQiCWWLJp4bRIAW1z42gPifPt/KbarkHmzK8wodACo6cWU2TrvNxTbv8mS/ncMbQhj+s+wy8uJRMaQYrLwcGff3yHq+vTD5/PDw5iuPQuLRMp7NATppUcGwEeNGewxOTuAX0KicsLZL3URnMF6xI9WiYKIluhrO3Y5lg0UrjAOTYHVie7r42UYZgTmSP4ONC+0/bt0yH4nw1WJ2OmR54WBrWVNBuBbTth3kjuUTMfck7ET4PSZzOPlChQXLfbJQb6zZu6FvN9SV6kN4/UBr1uj6GbrUp1kOdUxSs0gf6hzp9m3QT+DC+N1AtFdEa0lRCBppQ3Fak7qkbjXs/rSGWEKfkms3b1NEmo4FHcsytnZ45/Pb9Wdf0XfWjCng==
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Openai Retrieve File Content"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/files/{file_id}/content"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Retrieve file content.
+
+Returns the contents of the specified file.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"file_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: file_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"The raw file content as a binary response.","content":{"application/json":{"schema":{"title":"Response","type":"object"}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

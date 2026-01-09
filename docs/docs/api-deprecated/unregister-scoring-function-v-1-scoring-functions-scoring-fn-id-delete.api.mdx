@@ -1,0 +1,72 @@
+---
+id: unregister-scoring-function-v-1-scoring-functions-scoring-fn-id-delete
+title: "Unregister Scoring Function"
+description: "Unregister a scoring function."
+sidebar_label: "Unregister Scoring Function"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1u20YQfpXBnlqDlmTDQRre3EgBDDioIduHwhGE8XIobrLcpXeXigmBz5B7T32MPk9foK9QDElRVKSk1wawLqJG38zOz/fNciMc+cIaT17EG3E+ueCvhLx0qgjKGhGL21JK8j4tNcw7sKgjcTGZHGJ/xQTm9FSSDyIS0ppAJjAMi0IriQwbf/SM3QgvM8rxMMjMOetgmxikzuYQMoLLm6sRzG25ynQFqdXafvYwf/cWXv8yeT0SkSicLcgF1RbjA4ayeQoqaOJKWkskQlXwb2UCrchxNR1kh71rvnuoD06ZFSMTCqj0EDptLUewyviARjaB0VS/pSJ+2BzAeosptRb1Imoe8JGDB1dSXUfC0VOpHCUiftgWtk26T2nRl9G2cJeRffxIMnBG9Ix50Va67c/FZLJz3B/gtlZxlxG41gyf0YMya9QqAesgR51al1Mi6pozvTh/czjSO2vhPZpqG9u/sONHYcf5m53jsTH2HPndlpDhmoCeJVFCSTMWh4FAq1yFEdxoQk8QXAW4QmVAYyA36ojz6thCuTKBnEENt+TW5GCb+gt5fgTyvBqulm+NsifQpYHS0HNBMlAC1IzKSlk61y+XhFIsdTgc7LT9Y3dDvVDkf0eRdoQBV57j3ErLGcC70khuvecI+6O4N45WygdygOA7fNrhueXc8GaqV4mIRdnDlx14uQUv12cHNr/cmcxSJctlQpoCl1Sgw5wCOd+0zGDetGyIFtxfEYsCQyaGHeKeRQN2HRnhsMYbDBn058Wwf0jd9KRwJDHsgucUMssVDxIOmYjFeH027gKc9mWON3sxaxEJ3yiwLa50rL0shCIej9FUp5n1gZJTrTHHUx9QfhpJmzepeJKlU6FqHKdbLT4s+D9lUjvk5TX7wy37w21BUqWdAuEUpn1JLKv2Ftl7XciUB+Ub3fk9X5s2xmHwkGGAwtm1Ssh/MHDkg+ApsC+ZpLDKBA9omvtJOZDWtWpPmF6sSpeiJN8GRkdtTCa5dXyr2eOHPPLLkaY1OVxtM3xvE9J+9MG0Licnf//x5z9/fYHp7GY+e3t5N5uenMRwTSuUVdOK9tAcK3jkN67crikBZSAtQ+kIeGo80xHc826yro2bq1WrA3CUkiMjCazRFWukcxGxWJ8x/QrrQ47NCux4PZDZ16L8ejKb3Vb9b3V2zA/0HMaFRmX4+IZum46wD5xTJA4oKyIR7wthEQnmJbtsNo/o6d7pumbzU0mOCbmIxBqdahfXw0YkyvNzIuIUtafvFPLTvBPvz/B9NX6jpM6IpuJ2oy75l4jEJ6oOtka9qCORESbkmixbzKWUVISB98GFxQrrZT+dXc/uZqKu/wXKNrmH
+sidebar_class_name: "delete api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Unregister Scoring Function"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/scoring-functions/{scoring_fn_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Unregister a scoring function.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"scoring_fn_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: scoring_fn_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"Successful Response"},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>
