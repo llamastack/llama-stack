@@ -476,10 +476,10 @@ def _convert_string_to_proper_type(value: str) -> Any:
     return value
 
 
-def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
-    """Ensure that any value for a key 'image_name' in a config_dict is a string"""
-    if "image_name" in config_dict and config_dict["image_name"] is not None:
-        config_dict["image_name"] = str(config_dict["image_name"])
+def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
+    """Ensure that any value for a key 'distro_name' in a config_dict is a string"""
+    if "distro_name" in config_dict and config_dict["distro_name"] is not None:
+        config_dict["distro_name"] = str(config_dict["distro_name"])
     return config_dict
 
 
@@ -561,7 +561,7 @@ class Stack:
         stores = self.run_config.storage.stores
         if not stores.metadata:
             raise ValueError("storage.stores.metadata must be configured with a kv_* backend")
-        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.image_name)
+        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.distro_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
 
         internal_impls = {}
@@ -700,7 +700,7 @@ def run_config_from_adhoc_config_spec(
             )
         ]
     config = StackConfig(
-        image_name="distro-test",
+        distro_name="distro-test",
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
         storage=StorageConfig(
