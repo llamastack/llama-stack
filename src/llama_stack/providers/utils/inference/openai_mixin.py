@@ -5,13 +5,14 @@
 # the root directory of this source tree.
 
 import base64
+import ssl
 import uuid
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
-from openai import AsyncOpenAI
-from pydantic import BaseModel, ConfigDict
+from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -64,7 +65,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     """
 
     # Allow extra fields so the routing infra can inject model_store, __provider_id__, etc.
-    model_config = ConfigDict(extra="allow")
+    # Allow arbitrary types for shared_ssl_context
+    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
     config: RemoteInferenceProviderConfig
 
@@ -93,6 +95,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
+
+    # Shared SSL context for all calls to improve performance
+    # SSL context construction touches disk and is expensive
+    # Trade-off: SSL context changes require server restart
+    shared_ssl_context: ssl.SSLContext | bool = Field(default_factory=ssl.create_default_context, exclude=True)
 
     def get_api_key(self) -> str | None:
         """
@@ -205,10 +212,15 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                 message += f' Please provide a valid API key in the provider data header, e.g. x-llamastack-provider-data: {{"{self.provider_data_api_key_field}": "<API_KEY>"}}.'
             raise ValueError(message)
 
+        extra_params = self.get_extra_client_params()
+
+        if "http_client" not in extra_params or extra_params["http_client"] is True:
+            extra_params["http_client"] = DefaultAsyncHttpxClient(verify=self.shared_ssl_context)
+
         return AsyncOpenAI(
             api_key=api_key,
             base_url=self.get_base_url(),
-            **self.get_extra_client_params(),
+            **extra_params,
         )
 
     def _get_api_key_from_config_or_provider_data(self) -> str | None:
