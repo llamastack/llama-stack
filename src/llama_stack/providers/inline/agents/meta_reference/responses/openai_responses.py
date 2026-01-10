@@ -332,6 +332,7 @@ class OpenAIResponsesImpl:
         model: str,
         prompt: OpenAIResponsePrompt | None = None,
         instructions: str | None = None,
+        parallel_tool_calls: bool | None = True,
         previous_response_id: str | None = None,
         conversation: str | None = None,
         store: bool | None = True,
@@ -343,9 +344,9 @@ class OpenAIResponsesImpl:
         include: list[ResponseItemInclude] | None = None,
         max_infer_iters: int | None = 10,
         guardrails: list[str | ResponseGuardrailSpec] | None = None,
-        parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
+        top_logprobs: int | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -403,6 +404,7 @@ class OpenAIResponsesImpl:
             max_tool_calls=max_tool_calls,
             metadata=metadata,
             include=include,
+            top_logprobs=top_logprobs,
         )
 
         if stream:
@@ -458,6 +460,7 @@ class OpenAIResponsesImpl:
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        top_logprobs: int | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -509,6 +512,7 @@ class OpenAIResponsesImpl:
             max_tool_calls=max_tool_calls,
             metadata=metadata,
             include=include,
+            top_logprobs=top_logprobs,
         )
 
         # Stream the response
