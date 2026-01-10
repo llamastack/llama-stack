@@ -535,9 +535,9 @@ llm = next(
     if m.custom_metadata
     and m.custom_metadata.get("model_type") == "llm"
     and m.custom_metadata.get("provider_id") == "ollama"
-    and "llama3" in m.id
+    and "llama3.1" in m.id
 )
-model = llm.id
+model = llm.id # used llama3.1:8b
 
 print(model)
 
