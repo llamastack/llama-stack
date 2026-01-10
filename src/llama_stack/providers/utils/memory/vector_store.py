@@ -135,15 +135,20 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
 
 async def content_from_doc(doc: RAGDocument) -> str:
     if isinstance(doc.content, URL):
-        if doc.content.uri.startswith("data:"):
-            return content_from_data(doc.content.uri)
+        uri = doc.content.uri
+        if uri.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        if uri.startswith("data:"):
+            return content_from_data(uri)
         async with httpx.AsyncClient() as client:
-            r = await client.get(doc.content.uri)
+            r = await client.get(uri)
         if doc.mime_type == "application/pdf":
             return parse_pdf(r.content)
         return r.text
     elif isinstance(doc.content, str):
-        pattern = re.compile("^(https?://|file://|data:)")
+        if doc.content.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        pattern = re.compile("^(https?://|data:)")
         if pattern.match(doc.content):
             if doc.content.startswith("data:"):
                 return content_from_data(doc.content)
