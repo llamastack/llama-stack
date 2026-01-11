@@ -57,6 +57,9 @@ if no model is specified.
 Examples
 
 ```bash
+# Run conversations tests with GPT for high-quality responses
+pytest -s -v tests/integration/conversations --stack-config=server:starter --setup=gpt
+
 # Fast responses run with a strong tool-calling model
 pytest -s -v tests/integration --stack-config=server:starter --suite=responses --setup=gpt
 
@@ -75,11 +78,11 @@ pytest -s -v tests/integration --stack-config=server:starter \
 
 ### Testing against a Server
 
-Run all text inference tests by auto-starting a server with the `starter` config:
+Run all inference tests by auto-starting a server with the `starter` config:
 
 ```bash
 OLLAMA_URL=http://localhost:11434 \
-  pytest -s -v tests/integration/inference/test_text_inference.py \
+  pytest -s -v tests/integration/inference \
    --stack-config=server:starter \
    --text-model=ollama/llama3.2:3b-instruct-fp16 \
    --embedding-model=nomic-embed-text-v1.5

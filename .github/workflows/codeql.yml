@@ -1,12 +1,6 @@
 name: "CodeQL Workflow Security Scan"
 
 on:
-  push:
-    # Running on push for workflows not going through PRs
-    branches: [ "main" ]
-    # Limit scans to changes in the .github directory, bash scripts are not scanned anyway
-    paths:
-      - '.github/**'
   pull_request:
     # PRs are checked for new issues
     branches: [ "main" ]

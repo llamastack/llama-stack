@@ -143,6 +143,13 @@ def pytest_configure(config):
     if getattr(config.option, "embedding_dimension", None) is None:
         config.option.embedding_dimension = 384
 
+    # Apply global fallback for embedding_model when using stack configs with embedding models
+    if getattr(config.option, "embedding_model", None) is None:
+        stack_config = config.getoption("--stack-config", default=None)
+        if stack_config and "inference=inline::sentence-transformers" in stack_config:
+            # Use the full qualified model ID that matches what's actually registered
+            config.option.embedding_model = "inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -234,6 +241,28 @@ def get_short_id(value):
     return MODEL_SHORT_IDS.get(value, value)
 
 
+def parse_vector_io_providers_from_config(config):
+    """Parse stack config to extract vector_io provider from command line."""
+    config_str = config.getoption("--stack-config", default=None) or os.environ.get("LLAMA_STACK_CONFIG")
+
+    if not config_str:
+        return None
+
+    try:
+        # Handle stack-config format: "files=inline::localfs,inference=inline::sentence-transformers,vector_io=inline::milvus"
+        for part in config_str.replace(";", ",").split(","):
+            part = part.strip()
+            if part.startswith("vector_io="):
+                provider_spec = part.split("=", 1)[1].strip()
+                # Return the full provider specification (e.g. "inline::milvus")
+                # The runtime system expects full provider IDs
+                return [provider_spec]
+    except Exception as e:
+        logger.debug(f"Failed to parse vector_io provider from config: {e}")
+
+    return None
+
+
 def pytest_generate_tests(metafunc):
     """
     This is the main function which processes CLI arguments and generates various combinations of parameters.
@@ -241,6 +270,25 @@ def pytest_generate_tests(metafunc):
 
     Each option can be comma separated list of values which results in multiple parameter combinations.
     """
+    # Handle vector_io_provider_id dynamically
+    if "vector_io_provider_id" in metafunc.fixturenames:
+        providers = parse_vector_io_providers_from_config(metafunc.config)
+        if providers:
+            # Use the configured provider instead of letting decorator handle it
+            # Use short names in test IDs for readability
+            test_ids = [f"vector_io={p.split('::')[-1] if '::' in p else p}" for p in providers]
+            metafunc.parametrize("vector_io_provider_id", providers, ids=test_ids)
+        else:
+            # No stack config found, apply fallback parametrization here
+            inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
+            if inference_mode == "live":
+                all_providers = ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant"]
+            else:
+                all_providers = ["faiss", "sqlite-vec"]
+
+            test_ids = [f"vector_io={p.split('::')[-1] if '::' in p else p}" for p in all_providers]
+            metafunc.parametrize("vector_io_provider_id", all_providers, ids=test_ids)
+
     params = []
     param_values = {}
     id_parts = []
@@ -342,13 +390,11 @@ def get_vector_io_provider_ids(client):
 
 
 def vector_provider_wrapper(func):
-    """Decorator to run a test against all available vector_io providers."""
+    """Decorator with runtime validation and fallback parametrization."""
     import functools
-    import os
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Get the vector_io_provider_id from the test arguments
         import inspect
 
         sig = inspect.signature(func)
@@ -368,23 +414,10 @@ def vector_provider_wrapper(func):
 
         return func(*args, **kwargs)
 
-    inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
-    if inference_mode == "live":
-        # For live tests, try all providers (they'll skip if not available)
-        all_providers = [
-            "faiss",
-            "sqlite-vec",
-            "milvus",
-            "chromadb",
-            "pgvector",
-            "weaviate",
-            "qdrant",
-        ]
-    else:
-        # For CI tests (replay/record), only use providers that are available in ci-tests environment
-        all_providers = ["faiss", "sqlite-vec"]
-
-    return pytest.mark.parametrize("vector_io_provider_id", all_providers)(wrapper)
+    # Always return just the wrapper - pytest_generate_tests handles parametrization
+    # If pytest_generate_tests doesn't parametrize, that means there was no
+    # vector_io_provider_id in fixturenames, so no parametrization is needed
+    return wrapper
 
 
 @pytest.fixture

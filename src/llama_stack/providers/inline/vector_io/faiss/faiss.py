@@ -72,9 +72,19 @@ class FaissIndex(EmbeddingIndex):
 
         if stored_data:
             data = json.loads(stored_data)
-            self.chunk_by_index = {
-                int(k): EmbeddedChunk.model_validate_json(v) for k, v in data["chunk_by_index"].items()
-            }
+            self.chunk_by_index = {}
+            for k, v in data["chunk_by_index"].items():
+                chunk_data = json.loads(v)
+                # Migrate old data: extract embedding_model/embedding_dimension from chunk_metadata if missing
+                if "embedding_model" not in chunk_data:
+                    chunk_metadata = chunk_data.get("chunk_metadata", {})
+                    chunk_data["embedding_model"] = chunk_metadata.get("chunk_embedding_model", "unknown")
+                if "embedding_dimension" not in chunk_data:
+                    chunk_metadata = chunk_data.get("chunk_metadata", {})
+                    chunk_data["embedding_dimension"] = chunk_metadata.get(
+                        "chunk_embedding_dimension", len(chunk_data.get("embedding", []))
+                    )
+                self.chunk_by_index[int(k)] = EmbeddedChunk.model_validate(chunk_data)
 
             buffer = io.BytesIO(base64.b64decode(data["faiss_index"]))
             try:

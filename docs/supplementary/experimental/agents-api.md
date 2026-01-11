@@ -18,4 +18,4 @@ This API is actively being developed. We welcome feedback on:
 - Missing features or capabilities
 - Integration patterns
 
-**Provide Feedback**: [GitHub Discussions](https://github.com/llamastack/llama-stack/discussions) or [GitHub Issues](https://github.com/llamastack/llama-stack/issues)
+**Provide Feedback**: [GitHub Issues](https://github.com/llamastack/llama-stack/issues)
