@@ -510,9 +510,11 @@ ALL_RESOURCES = {
             "cancel": "post /v1/batches/{batch_id}/cancel",
         }
     },
+    "inference": {
+        "methods": {"rerank": "post /v1/inference/rerank"},
+    },
     "alpha": {
         "subresources": {
-            "inference": {"methods": {"rerank": "post /v1alpha/inference/rerank"}},
             "post_training": {
                 "models": {
                     "algorithm_config": "AlgorithmConfig",
