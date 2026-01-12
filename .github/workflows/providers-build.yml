@@ -29,6 +29,9 @@ on:
       - 'containers/Containerfile'
       - '.dockerignore'
 
+  schedule:
+    - cron: '0 0 * * *'  # Daily at 12 AM UTC
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
@@ -89,6 +92,7 @@ jobs:
             --tag llama-stack:${{ matrix.distro }}-ci
 
   build-arm64:
+    if: github.event_name == 'schedule'
     needs: generate-matrix
     runs-on: ubuntu-latest
     strategy:
@@ -101,7 +105,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -229,6 +233,7 @@ jobs:
               || { echo "Base image is not UBI 9!"; exit 1; }
 
   build-starter-ubi9-arm64-container:
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -238,7 +243,7 @@ jobs:
         uses: ./.github/actions/setup-runner
 
       - name: Set up QEMU for ARM64 emulation
-        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435
