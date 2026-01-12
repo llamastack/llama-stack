@@ -25,6 +25,24 @@ from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+<<<<<<< HEAD:llama_stack/providers/inline/vector_io/faiss/faiss.py
+=======
+from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
+from llama_stack_api import (
+    EmbeddedChunk,
+    Files,
+    HealthResponse,
+    HealthStatus,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoreNotFoundError,
+    VectorStoresProtocolPrivate,
+)
+from llama_stack_api.internal.kvstore import KVStore
+>>>>>>> 7d821e02 (chore: Add backwards compatibility for Milvus Chunks (#4484)):src/llama_stack/providers/inline/vector_io/faiss/faiss.py
 
 from .config import FaissVectorIOConfig
 
@@ -65,7 +83,15 @@ class FaissIndex(EmbeddingIndex):
 
         if stored_data:
             data = json.loads(stored_data)
+<<<<<<< HEAD:llama_stack/providers/inline/vector_io/faiss/faiss.py
             self.chunk_by_index = {int(k): Chunk.model_validate_json(v) for k, v in data["chunk_by_index"].items()}
+=======
+            self.chunk_by_index = {}
+            for k, v in data["chunk_by_index"].items():
+                chunk_data = json.loads(v)
+                # Use generic backward compatibility utility
+                self.chunk_by_index[int(k)] = load_embedded_chunk_with_backward_compat(chunk_data)
+>>>>>>> 7d821e02 (chore: Add backwards compatibility for Milvus Chunks (#4484)):src/llama_stack/providers/inline/vector_io/faiss/faiss.py
 
             buffer = io.BytesIO(base64.b64decode(data["faiss_index"]))
             try:
