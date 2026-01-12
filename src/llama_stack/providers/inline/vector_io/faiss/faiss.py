@@ -18,6 +18,7 @@ from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
@@ -75,16 +76,8 @@ class FaissIndex(EmbeddingIndex):
             self.chunk_by_index = {}
             for k, v in data["chunk_by_index"].items():
                 chunk_data = json.loads(v)
-                # Migrate old data: extract embedding_model/embedding_dimension from chunk_metadata if missing
-                if "embedding_model" not in chunk_data:
-                    chunk_metadata = chunk_data.get("chunk_metadata", {})
-                    chunk_data["embedding_model"] = chunk_metadata.get("chunk_embedding_model", "unknown")
-                if "embedding_dimension" not in chunk_data:
-                    chunk_metadata = chunk_data.get("chunk_metadata", {})
-                    chunk_data["embedding_dimension"] = chunk_metadata.get(
-                        "chunk_embedding_dimension", len(chunk_data.get("embedding", []))
-                    )
-                self.chunk_by_index[int(k)] = EmbeddedChunk.model_validate(chunk_data)
+                # Use generic backward compatibility utility
+                self.chunk_by_index[int(k)] = load_embedded_chunk_with_backward_compat(chunk_data)
 
             buffer = io.BytesIO(base64.b64decode(data["faiss_index"]))
             try:
