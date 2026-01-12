@@ -9,23 +9,24 @@ import json
 from array import array
 from typing import Any
 
-from numpy.typing import NDArray
-import oracledb
 import numpy as np
+import oracledb
+from numpy.typing import NDArray
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin, VERSION as OpenAIMixinVersion
+from llama_stack.providers.remote.vector_io.oci.config import OCI26aiVectorIOConfig
+from llama_stack.providers.utils.memory.openai_vector_store_mixin import VERSION as OpenAIMixinVersion
+from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
-    RERANKER_TYPE_WEIGHTED,
     ChunkForDeletion,
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import (
-    sanitize_collection_name, 
     WeightedInMemoryAggregator,
-    normalize_embedding
+    normalize_embedding,
+    sanitize_collection_name,
 )
 from llama_stack_api import (
     EmbeddedChunk,
@@ -39,8 +40,6 @@ from llama_stack_api import (
     VectorStoresProtocolPrivate,
 )
 from llama_stack_api.internal.kvstore import KVStore
-
-from llama_stack.providers.remote.vector_io.oci.config import OCI26aiVectorIOConfig
 
 logger = get_logger(name=__name__, category="vector_io::oci26ai")
 
@@ -72,7 +71,7 @@ class OCI26aiIndex(EmbeddingIndex):
         "MANHATTAN": "1 / (1 + dist)",
         "L1": "1 / (1 + dist)",
     }
-    
+
     def __init__(
         self,
         connection,
@@ -111,7 +110,7 @@ class OCI26aiIndex(EmbeddingIndex):
 
     def get_oracle_distance_function(self) -> str:
         return self.ORACLE_DISTANCE_METRICS[self.distance_metric]
-    
+
     async def initialize(self) -> None:
         logger.info(f"Attempting to create table: {self.table_name}")
         cursor = self.connection.cursor()
@@ -137,16 +136,18 @@ class OCI26aiIndex(EmbeddingIndex):
     async def index_exists(self, index_name: str) -> bool:
         cursor = self.connection.cursor()
         try:
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT COUNT(*) 
                 FROM USER_INDEXES 
                 WHERE INDEX_NAME = :index_name
-            """, index_name=index_name.upper())
-            count, = cursor.fetchone()
+            """,
+                index_name=index_name.upper(),
+            )
+            (count,) = cursor.fetchone()
             return count > 0
         finally:
             cursor.close()
-
 
     async def create_indexes(self):
         indexes = [
@@ -157,7 +158,7 @@ class OCI26aiIndex(EmbeddingIndex):
                     ON {self.table_name}(content)
                     INDEXTYPE IS CTXSYS.CONTEXT 
                     PARAMETERS ('SYNC (EVERY "FREQ=SECONDLY;INTERVAL=5")');
-                """
+                """,
             },
             {
                 "name": f"{self.table_name}_vector_ivf_idx",
@@ -167,8 +168,8 @@ class OCI26aiIndex(EmbeddingIndex):
                     ORGANIZATION NEIGHBOR PARTITIONS
                     DISTANCE {self.get_oracle_distance_function()}
                     WITH TARGET ACCURACY 95
-                """
-            }
+                """,
+            },
         ]
 
         for idx in indexes:
@@ -176,13 +177,13 @@ class OCI26aiIndex(EmbeddingIndex):
                 logger.info(f"Creating index: {idx['name']}")
                 cursor = self.connection.cursor()
                 try:
-                    cursor.execute(idx['sql'])
+                    cursor.execute(idx["sql"])
                     logger.info(f"Index {idx['name']} created successfully")
                 finally:
                     cursor.close()
             else:
                 logger.info(f"Index {idx['name']} already exists, skipping")
-    
+
     async def add_chunks(self, embedded_chunks: list[EmbeddedChunk]):
         array_type = "d" if self.vector_datatype == "FLOAT64" else "f"
         data = []
@@ -193,8 +194,8 @@ class OCI26aiIndex(EmbeddingIndex):
                     "chunk_id": chunk.chunk_id,
                     "content": chunk.content,
                     "vector": array(array_type, normalize_embedding(np.array(chunk.embedding))),
-                    "metadata": json.dumps(chunk_step.get('metadata')),
-                    "chunk_metadata": json.dumps(chunk_step.get('chunk_metadata'))
+                    "metadata": json.dumps(chunk_step.get("metadata")),
+                    "chunk_metadata": json.dumps(chunk_step.get("chunk_metadata")),
                 }
             )
         cursor = self.connection.cursor()
@@ -228,11 +229,11 @@ class OCI26aiIndex(EmbeddingIndex):
                 query,
                 data,
             )
-            logger.info('Merge completed successfully')
+            logger.info("Merge completed successfully")
         except Exception as e:
             logger.error(f"Error inserting chunks into Oracle 26AI table {self.table_name}: {e}")
             raise
-        finally: 
+        finally:
             cursor.close()
 
     async def query_vector(
@@ -282,7 +283,7 @@ class OCI26aiIndex(EmbeddingIndex):
             query += f" WHERE {score_transform} >= :score_threshold"
             params["score_threshold"] = score_threshold
 
-        query += f" ORDER BY score DESC FETCH FIRST :k ROWS ONLY"
+        query += " ORDER BY score DESC FETCH FIRST :k ROWS ONLY"
         params["k"] = k
 
         logger.debug(query)
@@ -318,7 +319,6 @@ class OCI26aiIndex(EmbeddingIndex):
         finally:
             cursor.close()
 
-
     async def query_keyword(self, query_string: str, k: int, score_threshold: float | None) -> QueryChunksResponse:
         cursor = self.connection.cursor()
 
@@ -345,10 +345,7 @@ class OCI26aiIndex(EmbeddingIndex):
                 )
         """
 
-        params = {
-            "query_string": query_string,
-            "k": k
-        }
+        params = {"query_string": query_string, "k": k}
 
         if score_threshold is not None:
             base_query += " WHERE score >= :score_threshold"
@@ -373,7 +370,7 @@ class OCI26aiIndex(EmbeddingIndex):
                     embedding=vector,
                     chunk_metadata=chunk_metadata,
                     embedding_model=self.vector_store.embedding_model,
-                    embedding_dimension=self.vector_store.embedding_dimension
+                    embedding_dimension=self.vector_store.embedding_dimension,
                 )
                 chunks.append(chunk)
                 scores.append(float(score))
@@ -463,13 +460,13 @@ class OCI26aiIndex(EmbeddingIndex):
             cursor.execute(
                 f"""
                 DELETE FROM {self.table_name}
-                WHERE chunk_id IN ({', '.join([f"'{chunk_id}'" for chunk_id in chunk_ids])})
+                WHERE chunk_id IN ({", ".join([f"'{chunk_id}'" for chunk_id in chunk_ids])})
                 """
             )
         except Exception as e:
             logger.error(f"Error deleting chunks from Oracle 26AI table {self.table_name}: {e}")
             raise
-        finally: 
+        finally:
             cursor.close()
 
 
@@ -506,7 +503,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
         except Exception as e:
             logger.error(f"Error creating Oracle connection: {e}")
             raise
-        
+
         # Load State
         start_key = OPENAI_VECTOR_STORES_PREFIX
         end_key = f"{OPENAI_VECTOR_STORES_PREFIX}\xff"
@@ -515,11 +512,11 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             vector_store = VectorStore.model_validate_json(vector_store_data)
             logger.info(f"Loading index {vector_store.vector_store_name}: {vector_store.vector_store_id}")
             oci_index = OCI26aiIndex(
-                    connection=self.connection,
-                    vector_store=vector_store,
-                    kvstore=self.kvstore,
-                    vector_datatype=self.config.vector_datatype,
-                    distance_metric=self.config.distance_metric,
+                connection=self.connection,
+                vector_store=vector_store,
+                kvstore=self.kvstore,
+                vector_datatype=self.config.vector_datatype,
+                distance_metric=self.config.distance_metric,
             )
             await oci_index.initialize()
             index = VectorStoreWithIndex(vector_store, index=oci_index, inference_api=self.inference_api)
@@ -528,7 +525,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
         logger.info(f"Completed loading {len(stored_vector_stores)} indexes")
 
     async def shutdown(self) -> None:
-        logger.info('Shutting down Oracle connection')
+        logger.info("Shutting down Oracle connection")
         if self.connection is not None:
             self.connection.close()
         # Clean up mixin resources (file batch tasks)
@@ -537,22 +534,22 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
     async def register_vector_store(self, vector_store: VectorStore) -> None:
         if self.kvstore is None:
             raise RuntimeError("KVStore not initialized. Call initialize() before registering vector stores.")
-        
+
         # # Save to kvstore for persistence
         key = f"{OPENAI_VECTOR_STORES_PREFIX}{vector_store.identifier}"
         await self.kvstore.set(key=key, value=vector_store.model_dump_json())
-        
+
         if isinstance(self.config, OCI26aiVectorIOConfig):
             consistency_level = self.config.consistency_level
         else:
             consistency_level = "Strong"
         oci_index = OCI26aiIndex(
             connection=self.connection,
-                vector_store=vector_store,
-                consistency_level=consistency_level,
-                vector_datatype=self.config.vector_datatype,
-                distance_metric=self.config.distance_metric,
-            )
+            vector_store=vector_store,
+            consistency_level=consistency_level,
+            vector_datatype=self.config.vector_datatype,
+            distance_metric=self.config.distance_metric,
+        )
         index = VectorStoreWithIndex(
             vector_store=vector_store,
             index=oci_index,
@@ -600,7 +597,9 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
         await self.kvstore.delete(key=f"{OPENAI_VECTOR_STORES_PREFIX}{vector_store_id}")
 
-    async def insert_chunks(self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None) -> None:
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)
@@ -616,8 +615,8 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
 
         if params is None:
             params = {}
-        if 'embedding_dimensions' not in params:
-            params['embedding_dimensions'] = index.vector_store.embedding_dimension
+        if "embedding_dimensions" not in params:
+            params["embedding_dimensions"] = index.vector_store.embedding_dimension
 
         return await index.query_chunks(query, params)
 

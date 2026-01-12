@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
 from llama_stack.core.storage.datatypes import KVStoreReference
 from llama_stack_api import json_schema_type
@@ -28,12 +28,12 @@ class OCI26aiVectorIOConfig(BaseModel):
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:
         return {
-            "conn_str": "${env.OCI26AI_CONNECTION_STRING}" ,
-            "user": "${env.OCI26AI_USER}" ,
-            "password": "${env.OCI26AI_PASSWORD}" ,
-            "tnsnames_loc": "${env.OCI26AI_TNSNAMES_LOC}" ,
+            "conn_str": "${env.OCI26AI_CONNECTION_STRING}",
+            "user": "${env.OCI26AI_USER}",
+            "password": "${env.OCI26AI_PASSWORD}",
+            "tnsnames_loc": "${env.OCI26AI_TNSNAMES_LOC}",
             "ewallet_pem_loc": "${env.OCI26AI_EWALLET_PEM_LOC}",
-            "ewallet_password": "${env.OCI26AI_EWALLET_PWD}" ,
+            "ewallet_password": "${env.OCI26AI_EWALLET_PWD}",
             "vector_datatype": "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}",
             "distance_metric": "${env.OCI26AI_DISTANCE_METRIC:=COSINE}",
             "persistence": KVStoreReference(

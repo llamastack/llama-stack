@@ -7,8 +7,9 @@
 import hashlib
 import re
 import uuid
-import numpy as np
 from typing import Any
+
+import numpy as np
 
 from llama_stack_api import EmbeddedChunk
 
@@ -42,21 +43,21 @@ def sanitize_collection_name(name: str, weaviate_format=False) -> str:
 
 
 def normalize_embedding(embedding: np.typing.NDArray) -> np.typing.NDArray:
-        """
-        Normalize an embedding vector to unit length (L2 norm).
+    """
+    Normalize an embedding vector to unit length (L2 norm).
 
-        This is required for cosine similarity to behave correctly.
-        """
-        if embedding is None:
-            raise ValueError("Embedding cannot be None")
+    This is required for cosine similarity to behave correctly.
+    """
+    if embedding is None:
+        raise ValueError("Embedding cannot be None")
 
-        emb = np.asarray(embedding, dtype=np.float64)
+    emb = np.asarray(embedding, dtype=np.float64)
 
-        norm = np.linalg.norm(emb)
-        if norm == 0.0:
-            raise ValueError("Cannot normalize zero-length vector")
+    norm = np.linalg.norm(emb)
+    if norm == 0.0:
+        raise ValueError("Cannot normalize zero-length vector")
 
-        return emb / norm
+    return emb / norm
 
 
 class WeightedInMemoryAggregator:
