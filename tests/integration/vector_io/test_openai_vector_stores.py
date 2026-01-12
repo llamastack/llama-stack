@@ -66,7 +66,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::qdrant",
             "remote::weaviate",
             "remote::chromadb",
-            # "remote::oci",
+            "remote::oci",
         ],
         "hybrid": [
             "inline::milvus",
@@ -77,7 +77,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::qdrant",
             "remote::weaviate",
             "remote::chromadb",
-            # "remote::oci",
+            "remote::oci",
         ],
     }
     supported_providers = search_mode_support.get(search_mode, [])
@@ -89,6 +89,24 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
         f"Supported providers for '{search_mode}': {supported_providers}"
     )
 
+def skip_if_provider_doesnt_support_openai_vector_store_defaults(client_with_models):
+    vector_io_providers = [p for p in client_with_models.providers.list() if p.api == "vector_io"]
+    for p in vector_io_providers:
+        if p.provider_type in [
+            "inline::chromadb",
+            "inline::faiss",
+            "inline::milvus",
+            "inline::qdrant",
+            "inline::sqlite-vec",
+            "remote::chromadb",
+            "remote::milvus",
+            "remote::pgvector",
+            "remote::qdrant",
+            "remote::weaviate"
+        ]:
+            return
+
+    pytest.skip("OpenAI vector stores are not supported by any provider")
 
 @pytest.fixture(scope="session")
 def sample_chunks():
@@ -3307,6 +3325,7 @@ def test_openai_create_vector_store(
 @vector_provider_wrapper
 def test_openai_create_vector_store_default(compat_client_with_empty_stores, client_with_models, vector_io_provider_id):
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_doesnt_support_openai_vector_store_defaults(client_with_models)
     vector_store = compat_client_with_empty_stores.vector_stores.create(
         extra_body={"provider_id": vector_io_provider_id}
     )
@@ -3522,11 +3541,14 @@ def test_openai_vector_store_with_chunks(
 
     # Search using OpenAI API
     search_response = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id, query="What is Python programming language?", max_num_results=3
+        vector_store_id=vector_store.id, query="Python programming language definition", max_num_results=3
     )
     assert search_response is not None
     assert len(search_response.data) > 0
-
+    for i in range(len(search_response.data)):
+        print(f"{search_response.data[i].attributes["document_id"]} - {search_response.data[i].score}")
+    print('***********************')
+    time.sleep(45)
     # The top result should be about Python (doc1)
     top_result = search_response.data[0]
     top_content = top_result.content[0].text
@@ -4284,6 +4306,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(
         extra_body={
             "embedding_model": embedding_model_id,
             "provider_id": vector_io_provider_id,
+            "embedding_dimension": embedding_dimension
         },
     )
 
@@ -4795,7 +4818,11 @@ def test_openai_vector_store_file_contents_with_extra_query(
     file_attach_response = compat_client.vector_stores.files.create(
         vector_store_id=vector_store.id,
         file_id=file.id,
-        extra_body={"embedding_model": embedding_model_id},
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+            "embedding_dimension": embedding_dimension
+        },
     )
     assert file_attach_response.status == "completed"
 

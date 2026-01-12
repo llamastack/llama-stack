@@ -148,12 +148,13 @@ class VectorIORouter(VectorIO):
         self,
         params: Annotated[OpenAICreateVectorStoreRequestWithExtraBody, Body(...)],
     ) -> VectorStoreObject:
-        # Extract llama-stack-specific parameters from extra_body
+        # Extract llama-stack-specific parameters from extra_body or metadata
         extra = params.model_extra or {}
-        embedding_model = extra.get("embedding_model")
-        embedding_dimension = extra.get("embedding_dimension")
-        provider_id = extra.get("provider_id")
-
+        metadata = params.metadata or {}
+        embedding_model = extra.get("embedding_model", metadata.get('embedding_model'))
+        embedding_dimension = extra.get("embedding_dimension", metadata.get('embedding_dimension'))
+        provider_id = extra.get("provider_id", metadata.get('provider_id'))
+        
         # Use default embedding model if not specified
         if (
             embedding_model is None

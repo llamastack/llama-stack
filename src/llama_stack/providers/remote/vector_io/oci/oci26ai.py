@@ -4,12 +4,14 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import heapq
 import json
 from array import array
 from typing import Any
 
 from numpy.typing import NDArray
 import oracledb
+import numpy as np
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
@@ -20,9 +22,13 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
+from llama_stack.providers.utils.vector_io.vector_utils import (
+    sanitize_collection_name, 
+    WeightedInMemoryAggregator,
+    normalize_embedding
+)
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     Files,
     Inference,
     InterleavedContent,
@@ -47,20 +53,64 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 
 class OCI26aiIndex(EmbeddingIndex):
+    # Oracle 26AI VECTOR_DISTANCE supported metrics
+    ORACLE_DISTANCE_METRICS: dict[str, str] = {
+        "COSINE": "COSINE",
+        "L2": "EUCLIDEAN",
+        "EUCLIDEAN": "EUCLIDEAN",
+        "L1": "MANHATTAN",
+        "MANHATTAN": "MANHATTAN",
+        "INNER_PRODUCT": "DOT",
+        "DOT": "DOT",
+    }
+    ORACLE_SCORE_TRANSFORMS = {
+        "COSINE": "1 - dist",
+        "DOT": "dist",
+        "INNER_PRODUCT": "dist",
+        "EUCLIDEAN": "1 / (1 + dist)",
+        "L2": "1 / (1 + dist)",
+        "MANHATTAN": "1 / (1 + dist)",
+        "L1": "1 / (1 + dist)",
+    }
+    
     def __init__(
         self,
         connection,
-        vector_store: VectorStore, 
+        vector_store: VectorStore,
         consistency_level="Strong",
         kvstore: KVStore | None = None,
+        vector_datatype: str = "FLOAT32",
+        distance_metric: str = "COSINE",
     ):
         self.connection = connection
         self.vector_store = vector_store
-        self.table_name = sanitize_collection_name(vector_store.vector_store_name)
-        self.identifier = vector_store.vector_store_id
+        self.table_name = sanitize_collection_name(vector_store.vector_store_id)
+        # self.identifier = vector_store.vector_store_id
         self.dimensions = vector_store.embedding_dimension
         self.consistency_level = consistency_level
         self.kvstore = kvstore
+        self.vector_datatype = vector_datatype
+        self.check_distance_metric_availability(distance_metric)
+        self.distance_metric = distance_metric
+
+    def check_distance_metric_availability(self, distance_metric: str) -> None:
+        """Check if the distance metric is supported by Oracle 26AI.
+
+        Args:
+            distance_metric: The distance metric to check
+
+        Raises:
+            ValueError: If the distance metric is not supported
+        """
+        if distance_metric not in self.ORACLE_DISTANCE_METRICS:
+            supported_metrics = list(self.ORACLE_DISTANCE_METRICS.keys())
+            raise ValueError(
+                f"Distance metric '{distance_metric}' is not supported by Oracle 26AI. "
+                f"Supported metrics are: {', '.join(supported_metrics)}"
+            )
+
+    def get_oracle_distance_function(self) -> str:
+        return self.ORACLE_DISTANCE_METRICS[self.distance_metric]
     
     async def initialize(self) -> None:
         logger.info(f"Attempting to create table: {self.table_name}")
@@ -71,7 +121,7 @@ class OCI26aiIndex(EmbeddingIndex):
                 CREATE TABLE IF NOT EXISTS {self.table_name} (
                     chunk_id VARCHAR2(100) PRIMARY KEY,
                     content CLOB,
-                    vector VECTOR({self.dimensions}, FLOAT32),
+                    vector VECTOR({self.dimensions}, {self.vector_datatype}),
                     metadata JSON,
                     chunk_metadata JSON
                 );
@@ -103,8 +153,8 @@ class OCI26aiIndex(EmbeddingIndex):
             {
                 "name": f"{self.table_name}_content_idx",
                 "sql": f"""
-                    CREATE INDEX RRILEY_TEST_CONTENT_IDX
-                    ON rriley_test(content)
+                    CREATE INDEX {self.table_name}_CONTENT_IDX
+                    ON {self.table_name}(content)
                     INDEXTYPE IS CTXSYS.CONTEXT 
                     PARAMETERS ('SYNC (EVERY "FREQ=SECONDLY;INTERVAL=5")');
                 """
@@ -115,7 +165,7 @@ class OCI26aiIndex(EmbeddingIndex):
                     CREATE VECTOR INDEX {self.table_name}_vector_ivf_idx
                     ON {self.table_name}(vector)
                     ORGANIZATION NEIGHBOR PARTITIONS
-                    DISTANCE COSINE
+                    DISTANCE {self.get_oracle_distance_function()}
                     WITH TARGET ACCURACY 95
                 """
             }
@@ -132,20 +182,17 @@ class OCI26aiIndex(EmbeddingIndex):
                     cursor.close()
             else:
                 logger.info(f"Index {idx['name']} already exists, skipping")
-
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
-
+    
+    async def add_chunks(self, embedded_chunks: list[EmbeddedChunk]):
+        array_type = "d" if self.vector_datatype == "FLOAT64" else "f"
         data = []
-        for chunk, embedding in zip(chunks, embeddings, strict=False):
+        for chunk in embedded_chunks:
             chunk_step = chunk.model_dump()
             data.append(
                 {
                     "chunk_id": chunk.chunk_id,
                     "content": chunk.content,
-                    "vector": array("f", embedding),
+                    "vector": array(array_type, normalize_embedding(np.array(chunk.embedding))),
                     "metadata": json.dumps(chunk_step.get('metadata')),
                     "chunk_metadata": json.dumps(chunk_step.get('chunk_metadata'))
                 }
@@ -168,13 +215,13 @@ class OCI26aiIndex(EmbeddingIndex):
                 WHEN MATCHED THEN
                 UPDATE SET
                     t.content           = s.content,
-                    t.vector            = TO_VECTOR(s.vector),
+                    t.vector            = TO_VECTOR(s.vector, {self.dimensions}, {self.vector_datatype}),
                     t.metadata          = s.metadata,
                     t.chunk_metadata    = s.chunk_metadata
 
                 WHEN NOT MATCHED THEN
                 INSERT (chunk_id, content, vector, metadata, chunk_metadata)
-                VALUES (s.chunk_id, s.content, TO_VECTOR(s.vector), s.metadata, s.chunk_metadata)
+                VALUES (s.chunk_id, s.content, TO_VECTOR(s.vector, {self.dimensions}, {self.vector_datatype}), s.metadata, s.chunk_metadata)
                 """
             logger.debug(f"query: {query}")
             cursor.executemany(
@@ -192,57 +239,91 @@ class OCI26aiIndex(EmbeddingIndex):
         self,
         embedding: NDArray,
         k: int,
-        score_threshold: float,
+        score_threshold: float | None,
     ) -> QueryChunksResponse:
         """
-        Oracle vector search using literal vector string and COSINE similarity.
-        Returns top-k chunks and their similarity scores.
+        Oracle vector search using COSINE similarity.
+        Returns top-k chunks and normalized similarity scores in [0, 1].
         """
         cursor = self.connection.cursor()
-        query_vector = array("f", embedding.astype("float32"))
+
+        # Ensure query vector is L2-normalized
+        array_type = "d" if self.vector_datatype == "FLOAT64" else "f"
+        query_vector = array(array_type, normalize_embedding(np.array(embedding)))
+
+        oracle_distance_function = self.get_oracle_distance_function()
+        score_transform = self.ORACLE_SCORE_TRANSFORMS[self.distance_metric]
+
         query = f"""
             SELECT
-                content, chunk_id, metadata, chunk_metadata, vector,
-                1 - VECTOR_DISTANCE(:query_vector, vector, COSINE) AS similarity
-            FROM {self.table_name}
-            WHERE 1 - VECTOR_DISTANCE(:query_vector, vector, COSINE) >= :score_threshold
-            ORDER BY similarity DESC FETCH FIRST :k ROWS ONLY
+                content,
+                chunk_id,
+                metadata,
+                chunk_metadata,
+                vector,
+                {score_transform} AS score
+            FROM (
+                SELECT
+                    content,
+                    chunk_id,
+                    metadata,
+                    chunk_metadata,
+                    vector,
+                    VECTOR_DISTANCE(vector, :query_vector, {oracle_distance_function}) AS dist
+                FROM {self.table_name}
+            )
         """
+
+        params = {
+            "query_vector": query_vector,
+        }
+
+        if score_threshold is not None:
+            query += f" WHERE {score_transform} >= :score_threshold"
+            params["score_threshold"] = score_threshold
+
+        query += f" ORDER BY score DESC FETCH FIRST :k ROWS ONLY"
+        params["k"] = k
+
         logger.debug(query)
         try:
-            cursor.execute(
-                query, 
-                {
-                    "query_vector": query_vector,
-                    "score_threshold": score_threshold,
-                    "k": k
-                }
-            )
+            cursor.execute(query, params)
             results = cursor.fetchall()
 
-            chunks = []
-            scores = []            
+            chunks: list[EmbeddedChunk] = []
+            scores: list[float] = []
+
             for row in results:
                 content, chunk_id, metadata, chunk_metadata, vector, score = row
-                chunk = Chunk(
+
+                chunk = EmbeddedChunk(
                     content=content.read(),
                     chunk_id=chunk_id,
                     metadata=metadata,
                     embedding=vector,
-                    chunk_metadata=chunk_metadata
+                    chunk_metadata=chunk_metadata,
+                    embedding_model=self.vector_store.embedding_model,
+                    embedding_dimension=self.vector_store.embedding_dimension,
                 )
+
                 chunks.append(chunk)
                 scores.append(float(score))
+
             return QueryChunksResponse(chunks=chunks, scores=scores)
+
         except Exception as e:
             logger.error("Error querying vector: %s", e)
             raise
-        finally: 
+
+        finally:
             cursor.close()
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float | None) -> QueryChunksResponse:
         cursor = self.connection.cursor()
-        query = f"""
+
+        # Build base query
+        base_query = f"""
                 SELECT
                     content,
                     chunk_id,
@@ -262,33 +343,37 @@ class OCI26aiIndex(EmbeddingIndex):
                     FROM {self.table_name}
                     WHERE CONTAINS(content, :query_string, 1) > 0
                 )
-                WHERE score >= :score_threshold
-                ORDER BY score DESC
-                FETCH FIRST :k ROWS ONLY;
-                """
+        """
+
+        params = {
+            "query_string": query_string,
+            "k": k
+        }
+
+        if score_threshold is not None:
+            base_query += " WHERE score >= :score_threshold"
+            params["score_threshold"] = score_threshold
+
+        query = base_query + " ORDER BY score DESC FETCH FIRST :k ROWS ONLY;"
+
         logger.debug(query)
 
         try:
-            cursor.execute(
-                query,
-                {
-                    "query_string": query_string,
-                    "score_threshold": score_threshold,
-                    "k": k
-                },
-            )
+            cursor.execute(query, params)
             results = cursor.fetchall()
 
             chunks = []
             scores = []
             for row in results:
                 content, chunk_id, metadata, chunk_metadata, vector, score = row
-                chunk = Chunk(
+                chunk = EmbeddedChunk(
                     content=content.read(),
                     chunk_id=chunk_id,
                     metadata=metadata,
                     embedding=vector,
-                    chunk_metadata=chunk_metadata
+                    chunk_metadata=chunk_metadata,
+                    embedding_model=self.vector_store.embedding_model,
+                    embedding_dimension=self.vector_store.embedding_dimension
                 )
                 chunks.append(chunk)
                 scores.append(float(score))
@@ -304,61 +389,63 @@ class OCI26aiIndex(EmbeddingIndex):
         embedding: NDArray,
         query_string: str,
         k: int,
-        score_threshold: float,
+        score_threshold: float | None,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
-        cursor = self.connection.cursor()
-        filter_limit = 100  # Should this be set somewhere else?
-        query_vector = array("f", embedding.astype("float32"))
-        query = f"""
-                WITH vec_candidates AS (
-                    SELECT content, chunk_id, metadata, chunk_metadata, vector
-                    FROM {self.table_name}
-                    WHERE 1 - VECTOR_DISTANCE(vector, :query_vector, COSINE) >= :score_threshold
-                    ORDER BY VECTOR_DISTANCE(vector, :query_vector, COSINE)
-                    FETCH FIRST {filter_limit} ROWS ONLY
-                )
-                SELECT content, chunk_id, metadata, chunk_metadata, vector,
-                    1- VECTOR_DISTANCE(vector, :query_vector, COSINE) AS score
-                FROM vec_candidates vc
-                WHERE CONTAINS(vc.content, :query_string, 1) > 0
-                ORDER BY score
-                FETCH FIRST :k ROWS ONLY
-            """
-        logger.debug(query)
+        """
+        Hybrid search combining vector similarity and keyword search using configurable reranking.
 
-        try:
-            cursor.execute(
-                query,
-                {
-                    "query_vector": query_vector,
-                    "query_string": query_string,
-                    "score_threshold": score_threshold,
-                    "k": k
-                },
-            )
-            results = cursor.fetchall()
+        Args:
+            embedding: The query embedding vector
+            query_string: The text query for keyword search
+            k: Number of results to return
+            score_threshold: Minimum similarity score threshold
+            reranker_type: Type of reranker to use ("rrf" or "weighted")
+            reranker_params: Parameters for the reranker
 
-            chunks = []
-            scores = []
-            for row in results:
-                content, chunk_id, metadata, chunk_metadata, vector, score = row
-                chunk = Chunk(
-                    content=content.read(),
-                    chunk_id=chunk_id,
-                    metadata=metadata,
-                    embedding=vector,
-                    chunk_metadata=chunk_metadata
-                )
-                chunks.append(chunk)
-                scores.append(float(score))
-            return QueryChunksResponse(chunks=chunks, scores=scores)
-        except Exception as e:
-            logger.error(f"Error performing hybrid search: {e}")
-            raise
-        finally:
-            cursor.close()
+        Returns:
+            QueryChunksResponse with combined results
+        """
+        if reranker_params is None:
+            reranker_params = {}
+
+        # Get results from both search methods
+        vector_response = await self.query_vector(embedding, k, score_threshold)
+        keyword_response = await self.query_keyword(query_string, k, score_threshold)
+
+        # Convert responses to score dictionaries using chunk_id
+        vector_scores = {
+            chunk.chunk_id: score for chunk, score in zip(vector_response.chunks, vector_response.scores, strict=False)
+        }
+        keyword_scores = {
+            chunk.chunk_id: score
+            for chunk, score in zip(keyword_response.chunks, keyword_response.scores, strict=False)
+        }
+
+        # Combine scores using the reranking utility
+        combined_scores = WeightedInMemoryAggregator.combine_search_results(
+            vector_scores, keyword_scores, reranker_type, reranker_params
+        )
+
+        # Efficient top-k selection because it only tracks the k best candidates it's seen so far
+        top_k_items = heapq.nlargest(k, combined_scores.items(), key=lambda x: x[1])
+
+        # Filter by score threshold
+        filtered_items = [(doc_id, score) for doc_id, score in top_k_items if score >= (score_threshold or 0)]
+
+        # Create a map of chunk_id to chunk for both responses
+        chunk_map = {c.chunk_id: c for c in vector_response.chunks + keyword_response.chunks}
+
+        # Use the map to look up chunks by their IDs
+        chunks = []
+        scores = []
+        for doc_id, score in filtered_items:
+            if doc_id in chunk_map:
+                chunks.append(chunk_map[doc_id])
+                scores.append(score)
+
+        return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def delete(self):
         try:
@@ -393,7 +480,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
         inference_api: Inference,
         files_api: Files | None,
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
         self.cache = {}
         self.pool = None
@@ -431,6 +518,8 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
                     connection=self.connection,
                     vector_store=vector_store,
                     kvstore=self.kvstore,
+                    vector_datatype=self.config.vector_datatype,
+                    distance_metric=self.config.distance_metric,
             )
             await oci_index.initialize()
             index = VectorStoreWithIndex(vector_store, index=oci_index, inference_api=self.inference_api)
@@ -461,6 +550,8 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             connection=self.connection,
                 vector_store=vector_store,
                 consistency_level=consistency_level,
+                vector_datatype=self.config.vector_datatype,
+                distance_metric=self.config.distance_metric,
             )
         index = VectorStoreWithIndex(
             vector_store=vector_store,
@@ -490,6 +581,8 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
                 connection=self.connection,
                 vector_store=vector_store,
                 kvstore=self.kvstore,
+                vector_datatype=self.config.vector_datatype,
+                distance_metric=self.config.distance_metric,
             ),
             inference_api=self.inference_api,
         )
@@ -507,7 +600,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
         await self.kvstore.delete(key=f"{OPENAI_VECTOR_STORES_PREFIX}{vector_store_id}")
 
-    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+    async def insert_chunks(self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None) -> None:
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)
@@ -520,6 +613,12 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)
+
+        if params is None:
+            params = {}
+        if 'embedding_dimensions' not in params:
+            params['embedding_dimensions'] = index.vector_store.embedding_dimension
+
         return await index.query_chunks(query, params)
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:

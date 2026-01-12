@@ -153,7 +153,8 @@ def test_insert_chunks(
         name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
-            "embedding_dimension": embedding_dimension
+            "embedding_dimension": embedding_dimension,
+            "embedding_model": embedding_model_id,
         },
     )
 
@@ -200,7 +201,8 @@ def test_insert_chunks_with_precomputed_embeddings(
         name=vector_store_name,
         extra_body={
             "provider_id": vector_io_provider_id,
-            "embedding_dimension": embedding_dimension
+            "embedding_dimension": embedding_dimension,
+            "embedding_model": embedding_model_id,
         },
     )
 
