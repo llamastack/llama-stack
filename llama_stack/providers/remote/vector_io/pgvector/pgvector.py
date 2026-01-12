@@ -25,7 +25,27 @@ from llama_stack.providers.utils.kvstore import kvstore_impl
 from llama_stack.providers.utils.kvstore.api import KVStore
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+<<<<<<< HEAD:llama_stack/providers/remote/vector_io/pgvector/pgvector.py
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator, sanitize_collection_name
+=======
+from llama_stack.providers.utils.vector_io.vector_utils import (
+    WeightedInMemoryAggregator,
+    load_embedded_chunk_with_backward_compat,
+    sanitize_collection_name,
+)
+from llama_stack_api import (
+    EmbeddedChunk,
+    Files,
+    Inference,
+    InterleavedContent,
+    QueryChunksResponse,
+    VectorIO,
+    VectorStore,
+    VectorStoreNotFoundError,
+    VectorStoresProtocolPrivate,
+)
+from llama_stack_api.internal.kvstore import KVStore
+>>>>>>> 75257ed1 (chore: Add backwards compatibility for pgvector chunks (#4506)):src/llama_stack/providers/remote/vector_io/pgvector/pgvector.py
 
 from .config import PGVectorVectorIOConfig
 
@@ -189,7 +209,11 @@ class PGVectorIndex(EmbeddingIndex):
                 score = 1.0 / float(dist) if dist != 0 else float("inf")
                 if score < score_threshold:
                     continue
+<<<<<<< HEAD:llama_stack/providers/remote/vector_io/pgvector/pgvector.py
                 chunks.append(Chunk(**doc))
+=======
+                chunks.append(load_embedded_chunk_with_backward_compat(doc))
+>>>>>>> 75257ed1 (chore: Add backwards compatibility for pgvector chunks (#4506)):src/llama_stack/providers/remote/vector_io/pgvector/pgvector.py
                 scores.append(score)
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
@@ -225,7 +249,11 @@ class PGVectorIndex(EmbeddingIndex):
             for doc, score in results:
                 if score < score_threshold:
                     continue
+<<<<<<< HEAD:llama_stack/providers/remote/vector_io/pgvector/pgvector.py
                 chunks.append(Chunk(**doc))
+=======
+                chunks.append(load_embedded_chunk_with_backward_compat(doc))
+>>>>>>> 75257ed1 (chore: Add backwards compatibility for pgvector chunks (#4506)):src/llama_stack/providers/remote/vector_io/pgvector/pgvector.py
                 scores.append(float(score))
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
