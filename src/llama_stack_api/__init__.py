@@ -146,12 +146,17 @@ from .datatypes import (
 from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
 from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
+    DeleteFileRequest,
     ExpiresAfter,
     Files,
+    ListFilesRequest,
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
     OpenAIFileObject,
     OpenAIFilePurpose,
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+    UploadFileRequest,
 )
 from .inference import (
     Bf16QuantizationConfig,
@@ -236,6 +241,7 @@ from .inference import (
 from .inspect_api import Inspect
 from .models import (
     CommonModelFields,
+    GetModelRequest,
     ListModelsResponse,
     Model,
     ModelInput,
@@ -243,6 +249,8 @@ from .models import (
     ModelType,
     OpenAIListModelsResponse,
     OpenAIModel,
+    RegisterModelRequest,
+    UnregisterModelRequest,
 )
 from .openai_responses import (
     AllowedToolsFilter,
@@ -447,6 +455,7 @@ from .tools import (
 from .vector_io import (
     Chunk,
     ChunkMetadata,
+    EmbeddedChunk,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     QueryChunksResponse,
@@ -516,6 +525,7 @@ __all__ = [
     "Checkpoint",
     "Chunk",
     "ChunkMetadata",
+    "EmbeddedChunk",
     "CommonBenchmarkFields",
     "ConflictError",
     "CommonDatasetFields",
@@ -552,6 +562,7 @@ __all__ = [
     "Datasets",
     "DatasetsProtocolPrivate",
     "DefaultRAGQueryGeneratorConfig",
+    "DeleteFileRequest",
     "Docstring",
     "DynamicApiMeta",
     "EfficiencyConfig",
@@ -612,6 +623,7 @@ __all__ = [
     "UnregisterBenchmarkRequest",
     "ListConnectorsResponse",
     "ListDatasetsResponse",
+    "ListFilesRequest",
     "ListModelsResponse",
     "ListOpenAIChatCompletionResponse",
     "ListOpenAIFileResponse",
@@ -639,6 +651,9 @@ __all__ = [
     "ModelType",
     "ModelTypeError",
     "Models",
+    "GetModelRequest",
+    "RegisterModelRequest",
+    "UnregisterModelRequest",
     "ModelsProtocolPrivate",
     "ModerationObject",
     "ModerationObjectResults",
@@ -836,6 +851,8 @@ __all__ = [
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
     "ResponseItemInclude",
+    "RetrieveFileContentRequest",
+    "RetrieveFileRequest",
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",
@@ -892,6 +909,7 @@ __all__ = [
     "unwrap_generic_list",
     "unwrap_optional_type",
     "unwrap_union_types",
+    "UploadFileRequest",
     "URIDataSource",
     "URL",
     "_URLOrData",

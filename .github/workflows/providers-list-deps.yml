@@ -41,7 +41,11 @@ jobs:
       - name: Generate Distribution List
         id: set-matrix
         run: |
-          distros=$(ls src/llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
+          distros=$(ls -d src/llama_stack/distributions/*/ 2>/dev/null | \
+            awk -F'/' '{print $(NF-1)}' | \
+            grep -v '^__pycache__$' | \
+            grep -v '^ci-tests$' | \
+            jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "distros=$distros" >> "$GITHUB_OUTPUT"
 
   list-deps:

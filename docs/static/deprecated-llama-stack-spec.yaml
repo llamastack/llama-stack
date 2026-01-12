@@ -17,7 +17,7 @@ paths:
     get:
       responses:
         '200':
-          description: A OpenAIListModelsResponse.
+          description: A list of OpenAI model objects.
           content:
             application/json:
               schema:
@@ -36,13 +36,13 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Models
-      summary: Openai List Models
+      summary: List models using the OpenAI API.
       description: List models using the OpenAI API.
       operationId: openai_list_models_v1_models_get
     post:
       responses:
         '200':
-          description: A Model.
+          description: The registered model object.
           content:
             application/json:
               schema:
@@ -61,11 +61,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Models
-      summary: Register Model
-      description: |-
-        Register model.
-
-        Register a model.
+      summary: Register a model.
+      description: Register a model.
       operationId: register_model_v1_models_post
       requestBody:
         content:
@@ -78,30 +75,27 @@ paths:
     get:
       responses:
         '200':
-          description: A Model.
+          description: The model object.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Model'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Models
-      summary: Get Model
-      description: |-
-        Get model.
-
-        Get a model by its identifier.
+      summary: Get a model by its identifier.
+      description: Get a model by its identifier.
       operationId: get_model_v1_models__model_id__get
       parameters:
       - name: model_id
@@ -109,30 +103,29 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: model_id'
+          description: The ID of the model to get.
+          title: Model Id
+        description: The ID of the model to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The model was successfully unregistered.
       tags:
       - Models
-      summary: Unregister Model
-      description: |-
-        Unregister model.
-
-        Unregister a model.
+      summary: Unregister a model.
+      description: Unregister a model.
       operationId: unregister_model_v1_models__model_id__delete
       parameters:
       - name: model_id
@@ -140,7 +133,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: model_id'
+          description: The ID of the model to unregister.
+          title: Model Id
+        description: The ID of the model to unregister.
       deprecated: true
   /v1/scoring-functions:
     get:
@@ -3092,19 +3087,24 @@ components:
             $ref: '#/components/schemas/OpenAIFileObject'
           type: array
           title: Data
+          description: The list of files.
         has_more:
           type: boolean
           title: Has More
+          description: Whether there are more files available beyond this page.
         first_id:
           type: string
           title: First Id
+          description: The ID of the first file in the list for pagination.
         last_id:
           type: string
           title: Last Id
+          description: The ID of the last file in the list for pagination.
         object:
           type: string
           const: list
           title: Object
+          description: The object type, which is always 'list'.
           default: list
       type: object
       required:
@@ -3120,24 +3120,31 @@ components:
           type: string
           const: file
           title: Object
+          description: The object type, which is always 'file'.
           default: file
         id:
           type: string
           title: Id
+          description: The file identifier, which can be referenced in the API endpoints.
         bytes:
           type: integer
           title: Bytes
+          description: The size of the file, in bytes.
         created_at:
           type: integer
           title: Created At
+          description: The Unix timestamp (in seconds) for when the file was created.
         expires_at:
           type: integer
           title: Expires At
+          description: The Unix timestamp (in seconds) for when the file expires.
         filename:
           type: string
           title: Filename
+          description: The name of the file.
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the file.
       type: object
       required:
       - id
@@ -3154,35 +3161,35 @@ components:
           type: string
           const: created_at
           title: Anchor
+          description: The anchor point for expiration, must be 'created_at'.
         seconds:
           type: integer
           maximum: 2592000.0
           minimum: 3600.0
           title: Seconds
+          description: Seconds until expiration, between 3600 (1 hour) and 2592000 (30 days).
       type: object
       required:
       - anchor
       - seconds
       title: ExpiresAfter
-      description: |-
-        Control expiration of uploaded files.
-
-        Params:
-         - anchor, must be "created_at"
-         - seconds, must be int between 3600 and 2592000 (1 hour to 30 days)
+      description: Control expiration of uploaded files.
     OpenAIFileDeleteResponse:
       properties:
         id:
           type: string
           title: Id
+          description: The file identifier that was deleted.
         object:
           type: string
           const: file
           title: Object
+          description: The object type, which is always 'file'.
           default: file
         deleted:
           type: boolean
           title: Deleted
+          description: Whether the file was successfully deleted.
       type: object
       required:
       - id
@@ -3280,10 +3287,12 @@ components:
             $ref: '#/components/schemas/OpenAIModel'
           type: array
           title: Data
+          description: List of OpenAI model objects.
       type: object
       required:
       - data
       title: OpenAIListModelsResponse
+      description: Response containing a list of OpenAI model objects.
     Model:
       properties:
         identifier:
@@ -6487,7 +6496,7 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content that can be inserted into a vector database.
+      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
@@ -6525,23 +6534,12 @@ components:
           additionalProperties: true
           title: Metadata
           type: object
-        embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-          nullable: true
         chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          nullable: true
-          title: ChunkMetadata
+          $ref: '#/components/schemas/ChunkMetadata'
       required:
       - content
       - chunk_id
+      - chunk_metadata
       title: Chunk
       type: object
     ChunkMetadata:
@@ -6574,14 +6572,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-        chunk_embedding_model:
-          anyOf:
-          - type: string
-          - type: 'null'
-        chunk_embedding_dimension:
-          anyOf:
-          - type: integer
-          - type: 'null'
         content_token_count:
           anyOf:
           - type: integer
@@ -6604,7 +6594,7 @@ components:
           title: Vector Store Id
         chunks:
           items:
-            $ref: '#/components/schemas/Chunk-Input'
+            $ref: '#/components/schemas/EmbeddedChunk-Input'
           type: array
           title: Chunks
         ttl_seconds:
@@ -6664,7 +6654,7 @@ components:
       properties:
         chunks:
           items:
-            $ref: '#/components/schemas/Chunk-Output'
+            $ref: '#/components/schemas/EmbeddedChunk-Output'
           type: array
           title: Chunks
         scores:
@@ -8306,29 +8296,35 @@ components:
         model_id:
           type: string
           title: Model Id
+          description: The identifier of the model to register.
         provider_model_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the model in the provider.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the provider.
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: Any additional metadata for this model.
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
             title: ModelType
           - type: 'null'
+          description: The type of model to register.
           title: ModelType
       type: object
       required:
       - model_id
       title: RegisterModelRequest
+      description: Request model for registering a model.
     ParamType:
       discriminator:
         mapping:
@@ -8646,137 +8642,28 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
-    Body_openai_upload_file_v1_files_post:
+    Body_upload_file_v1_files_post:
       properties:
         file:
           type: string
           format: binary
           title: File
+          description: The file to upload.
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the uploaded file.
         expires_after:
           anyOf:
           - $ref: '#/components/schemas/ExpiresAfter'
             title: ExpiresAfter
           - type: 'null'
+          description: Optional expiration settings.
           title: ExpiresAfter
       type: object
       required:
       - file
       - purpose
-      title: Body_openai_upload_file_v1_files_post
-    Chunk-Input:
-      properties:
-        content:
-          anyOf:
-          - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Input'
-              title: ImageContentItem-Input
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Input'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Input | TextContentItem
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Input'
-                title: ImageContentItem-Input
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Input'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Input | TextContentItem
-            type: array
-            title: list[ImageContentItem-Input | TextContentItem]
-          title: string | list[ImageContentItem-Input | TextContentItem]
-        chunk_id:
-          type: string
-          title: Chunk Id
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-        embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-        chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          title: ChunkMetadata
-      type: object
-      required:
-      - content
-      - chunk_id
-      title: Chunk
-      description: A chunk of content that can be inserted into a vector database.
-    Chunk-Output:
-      properties:
-        content:
-          anyOf:
-          - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Output'
-              title: ImageContentItem-Output
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Output'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Output | TextContentItem
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Output'
-                title: ImageContentItem-Output
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Output'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Output | TextContentItem
-            type: array
-            title: list[ImageContentItem-Output | TextContentItem]
-          title: string | list[ImageContentItem-Output | TextContentItem]
-        chunk_id:
-          type: string
-          title: Chunk Id
-        metadata:
-          additionalProperties: true
-          type: object
-          title: Metadata
-        embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-        chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          title: ChunkMetadata
-      type: object
-      required:
-      - content
-      - chunk_id
-      title: Chunk
-      description: A chunk of content that can be inserted into a vector database.
+      title: Body_upload_file_v1_files_post
     Connector:
       properties:
         identifier:
@@ -8857,6 +8744,132 @@ components:
       - eval/messages-answer
       title: DatasetPurpose
       description: Purpose of the dataset. Each purpose has a required input data schema.
+    EmbeddedChunk-Input:
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Input'
+              title: ImageContentItem-Input
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Input'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Input | TextContentItem
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Input'
+                title: ImageContentItem-Input
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Input'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Input | TextContentItem
+            type: array
+            title: list[ImageContentItem-Input | TextContentItem]
+          title: string | list[ImageContentItem-Input | TextContentItem]
+        chunk_id:
+          type: string
+          title: Chunk Id
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+        embedding:
+          items:
+            type: number
+          type: array
+          title: Embedding
+        embedding_model:
+          type: string
+          title: Embedding Model
+        embedding_dimension:
+          type: integer
+          title: Embedding Dimension
+      type: object
+      required:
+      - content
+      - chunk_id
+      - chunk_metadata
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
+    EmbeddedChunk-Output:
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+              title: ImageContentItem-Output
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Output | TextContentItem
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+                title: ImageContentItem-Output
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Output | TextContentItem
+            type: array
+            title: list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem-Output | TextContentItem]
+        chunk_id:
+          type: string
+          title: Chunk Id
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+        embedding:
+          items:
+            type: number
+          type: array
+          title: Embedding
+        embedding_model:
+          type: string
+          title: Embedding Model
+        embedding_dimension:
+          type: integer
+          title: Embedding Dimension
+      type: object
+      required:
+      - content
+      - chunk_id
+      - chunk_metadata
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
     Errors:
       properties:
         data:
@@ -9822,6 +9835,41 @@ components:
       - dataset_id
       title: UnregisterDatasetRequest
       type: object
+    ListModelsResponse:
+      description: Response containing a list of model objects.
+      properties:
+        data:
+          description: List of model objects.
+          items:
+            $ref: '#/components/schemas/Model'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListModelsResponse
+      type: object
+    GetModelRequest:
+      description: Request model for getting a model by ID.
+      properties:
+        model_id:
+          description: The ID of the model to get.
+          title: Model Id
+          type: string
+      required:
+      - model_id
+      title: GetModelRequest
+      type: object
+    UnregisterModelRequest:
+      description: Request model for unregistering a model.
+      properties:
+        model_id:
+          description: The ID of the model to unregister.
+          title: Model Id
+          type: string
+      required:
+      - model_id
+      title: UnregisterModelRequest
+      type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
       properties:
@@ -10439,6 +10487,69 @@ components:
           nullable: true
       title: OpenAICompletionLogprobs
       type: object
+    EmbeddedChunk:
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+        chunk_id:
+          title: Chunk Id
+          type: string
+        metadata:
+          additionalProperties: true
+          title: Metadata
+          type: object
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+        embedding:
+          items:
+            type: number
+          title: Embedding
+          type: array
+        embedding_model:
+          title: Embedding Model
+          type: string
+        embedding_dimension:
+          title: Embedding Dimension
+          type: integer
+      required:
+      - content
+      - chunk_id
+      - chunk_metadata
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      type: object
     VectorStoreCreateRequest:
       description: Request to create a vector store.
       properties:
@@ -10701,6 +10812,90 @@ components:
       - chunks
       - metadata
       title: ProcessFileResponse
+      type: object
+    ListFilesRequest:
+      description: Request model for listing files.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: A cursor for pagination. Returns files after this ID.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 10000
+          description: Maximum number of files to return (1-10,000).
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: Sort order by created_at timestamp ('asc' or 'desc').
+          title: Order
+        purpose:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIFilePurpose'
+            title: OpenAIFilePurpose
+          - type: 'null'
+          description: Filter files by purpose.
+          nullable: true
+          title: OpenAIFilePurpose
+      title: ListFilesRequest
+      type: object
+    RetrieveFileRequest:
+      description: Request model for retrieving a file.
+      properties:
+        file_id:
+          description: The ID of the file to retrieve.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: RetrieveFileRequest
+      type: object
+    DeleteFileRequest:
+      description: Request model for deleting a file.
+      properties:
+        file_id:
+          description: The ID of the file to delete.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: DeleteFileRequest
+      type: object
+    RetrieveFileContentRequest:
+      description: Request model for retrieving file content.
+      properties:
+        file_id:
+          description: The ID of the file to retrieve content from.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: RetrieveFileContentRequest
+      type: object
+    UploadFileRequest:
+      description: Request model for uploading a file.
+      properties:
+        purpose:
+          $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the uploaded file.
+        expires_after:
+          anyOf:
+          - $ref: '#/components/schemas/ExpiresAfter'
+            title: ExpiresAfter
+          - type: 'null'
+          description: Optional expiration settings for the file.
+          nullable: true
+          title: ExpiresAfter
+      required:
+      - purpose
+      title: UploadFileRequest
       type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.

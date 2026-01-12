@@ -267,6 +267,7 @@ const config: Config = {
 
   themes: [
     "docusaurus-theme-openapi-docs",
+    "@docusaurus/theme-mermaid",
     [
       require.resolve("@easyops-cn/docusaurus-search-local"),
       {
@@ -301,6 +302,10 @@ const config: Config = {
       },
     ],
   ],
+
+  markdown: {
+    mermaid: true,
+  },
 };
 
 export default config;
