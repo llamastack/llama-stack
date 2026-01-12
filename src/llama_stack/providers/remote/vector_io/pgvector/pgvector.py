@@ -18,7 +18,11 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
-from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator, sanitize_collection_name
+from llama_stack.providers.utils.vector_io.vector_utils import (
+    WeightedInMemoryAggregator,
+    load_embedded_chunk_with_backward_compat,
+    sanitize_collection_name,
+)
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
@@ -193,7 +197,7 @@ class PGVectorIndex(EmbeddingIndex):
                 score = 1.0 / float(dist) if dist != 0 else float("inf")
                 if score < score_threshold:
                     continue
-                chunks.append(EmbeddedChunk(**doc))
+                chunks.append(load_embedded_chunk_with_backward_compat(doc))
                 scores.append(score)
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
@@ -229,7 +233,7 @@ class PGVectorIndex(EmbeddingIndex):
             for doc, score in results:
                 if score < score_threshold:
                     continue
-                chunks.append(EmbeddedChunk(**doc))
+                chunks.append(load_embedded_chunk_with_backward_compat(doc))
                 scores.append(float(score))
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
