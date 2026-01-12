@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "PyYAML>=6.0",
-    "aiohttp",
+    "aiohttp>=3.13.3",
     "fastapi>=0.115.0,<1.0",                          # server
     "fire",                                           # for MCP in LLS client
     "httpx",
