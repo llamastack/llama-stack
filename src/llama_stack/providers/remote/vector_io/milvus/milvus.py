@@ -21,7 +21,10 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
-from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
+from llama_stack.providers.utils.vector_io.vector_utils import (
+    load_embedded_chunk_with_backward_compat,
+    sanitize_collection_name,
+)
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
@@ -38,6 +41,7 @@ from llama_stack_api.internal.kvstore import KVStore
 from .config import MilvusVectorIOConfig as RemoteMilvusVectorIOConfig
 
 logger = get_logger(name=__name__, category="vector_io::milvus")
+
 
 VERSION = "v3"
 VECTOR_DBS_PREFIX = f"vector_stores:milvus:{VERSION}::"
@@ -136,7 +140,7 @@ class MilvusIndex(EmbeddingIndex):
             output_fields=["*"],
             search_params={"params": {"radius": score_threshold}},
         )
-        chunks = [EmbeddedChunk(**res["entity"]["chunk_content"]) for res in search_res[0]]
+        chunks = [load_embedded_chunk_with_backward_compat(res["entity"]["chunk_content"]) for res in search_res[0]]
         scores = [res["distance"] for res in search_res[0]]
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
@@ -163,7 +167,7 @@ class MilvusIndex(EmbeddingIndex):
             chunks = []
             scores = []
             for res in search_res[0]:
-                chunk = EmbeddedChunk(**res["entity"]["chunk_content"])
+                chunk = load_embedded_chunk_with_backward_compat(res["entity"]["chunk_content"])
                 chunks.append(chunk)
                 scores.append(res["distance"])  # BM25 score from Milvus
 
@@ -191,7 +195,7 @@ class MilvusIndex(EmbeddingIndex):
             output_fields=["*"],
             limit=k,
         )
-        chunks = [EmbeddedChunk(**res["chunk_content"]) for res in search_res]
+        chunks = [load_embedded_chunk_with_backward_compat(res["chunk_content"]) for res in search_res]
         scores = [1.0] * len(chunks)  # Simple binary score for text search
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
@@ -243,7 +247,7 @@ class MilvusIndex(EmbeddingIndex):
         chunks = []
         scores = []
         for res in search_res[0]:
-            chunk = EmbeddedChunk(**res["entity"]["chunk_content"])
+            chunk = load_embedded_chunk_with_backward_compat(res["entity"]["chunk_content"])
             chunks.append(chunk)
             scores.append(res["distance"])
 
