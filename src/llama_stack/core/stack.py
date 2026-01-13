@@ -44,7 +44,6 @@ from llama_stack_api import (
     Batches,
     Benchmarks,
     Connectors,
-    ConnectorSource,
     Conversations,
     DatasetIO,
     Datasets,
@@ -250,27 +249,11 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
 
 
 async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
-    """Register connectors from config.
-
-    Connectors are not resources, so they're handled separately from register_resources().
-    This function syncs config-sourced connectors: removes stale ones and registers/updates new/changed ones.
-    API-sourced connectors are left untouched.
-    """
+    """Register connectors from config"""
     if Api.connectors not in impls:
         return
 
     connectors_impl = impls[Api.connectors]
-
-    # Build sets of connector IDs for comparison
-    config_ids = {c.connector_id for c in run_config.connectors}
-    registered = await connectors_impl.list_connectors(source=ConnectorSource.config)
-    registered_ids = {c.connector_id for c in registered.data}
-
-    # Delete stale config connectors (in KVStore but no longer in config)
-    stale_ids = registered_ids - config_ids
-    for connector_id in stale_ids:
-        logger.debug(f"Removing stale config connector: {connector_id}")
-        await connectors_impl.unregister_connector(connector_id)
 
     # Register/Update config connectors
     for connector in run_config.connectors:
@@ -279,7 +262,6 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
             connector_id=connector.connector_id,
             connector_type=connector.connector_type,
             url=connector.url,
-            source=ConnectorSource.config,
             server_label=connector.server_label,
         )
 

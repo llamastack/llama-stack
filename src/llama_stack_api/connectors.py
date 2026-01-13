@@ -8,7 +8,6 @@ from enum import StrEnum
 from typing import Protocol
 
 from pydantic import BaseModel, Field
-from pydantic.json_schema import SkipJsonSchema
 from typing_extensions import runtime_checkable
 
 from llama_stack_api.schema_utils import json_schema_type, webmethod
@@ -21,13 +20,6 @@ class ConnectorType(StrEnum):
     """Type of connector."""
 
     MCP = "mcp"
-
-
-class ConnectorSource(StrEnum):
-    """Source of connector registration."""
-
-    config = "config"  # Registered from run.yaml config
-    api = "api"  # Registered via API call
 
 
 class CommonConnectorFields(BaseModel):
@@ -49,19 +41,12 @@ class CommonConnectorFields(BaseModel):
 class Connector(CommonConnectorFields):
     """A connector registered in Llama Stack.
 
-    :param source: How the connector was registered (config or api)
     :param server_name: (Optional) Name of the server
     :param server_description: (Optional) Description of the server
     :param server_version: (Optional) Version of the server
     """
 
     model_config = {"populate_by_name": True}
-    # source: ConnectorSource = Field(
-    #     exclude=True,
-    #     default=ConnectorSource.config,
-    #     description="How the connector was registered: 'config' (from run.yaml) or 'api' (via API call)",
-    # )
-    source: SkipJsonSchema[ConnectorSource] = Field(default=ConnectorSource.config)
     server_name: str | None = Field(default=None, description="Name of the server")
     server_description: str | None = Field(default=None, description="Description of the server")
     server_version: str | None = Field(default=None, description="Version of the server")

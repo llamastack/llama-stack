@@ -17,11 +17,7 @@ from llama_stack.core.connectors.connectors import (
 from llama_stack_api import (
     Connector,
     ConnectorNotFoundError,
-    ConnectorSource,
-    ConnectorToolNotFoundError,
     ConnectorType,
-    ListConnectorsResponse,
-    ListToolsResponse,
     OpenAIResponseInputToolMCP,
     ToolDef,
 )
@@ -99,7 +95,6 @@ def sample_connector():
         url="http://localhost:8080/mcp",
         server_label="My MCP Server",
         server_name="Test Server",
-        source=ConnectorSource.config,
     )
 
 
@@ -116,7 +111,6 @@ class TestRegisterConnector:
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
             server_label="My MCP",
-            source=ConnectorSource.config,
         )
 
         assert result.connector_id == "my-mcp"
@@ -136,15 +130,6 @@ class TestRegisterConnector:
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
             server_label="Original Label",
-            source=ConnectorSource.config,
-        )
-
-        _ = await connector_service.register_connector(
-            connector_id="my-mcp-2",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8081/mcp",
-            server_label="Original Label 2",
-            source=ConnectorSource.api,
         )
 
         # Attempt to update with a different URL
@@ -153,150 +138,12 @@ class TestRegisterConnector:
             connector_type=ConnectorType.MCP,
             url="http://different-host:9090/mcp",
             server_label="Original Label",
-            source=ConnectorSource.config,
-        )
-
-        _ = await connector_service.register_connector(
-            connector_id="my-mcp-2",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:9091/mcp",
-            server_label="Original Label 2",
-            source=ConnectorSource.config,
         )
 
         # Existing connector should be returned and updated
         stored = await mock_kvstore.get(f"{KEY_PREFIX}my-mcp")
         persisted = Connector.model_validate_json(stored)
         assert persisted.url == "http://different-host:9090/mcp"
-
-        stored_2 = await mock_kvstore.get(f"{KEY_PREFIX}my-mcp-2")
-        persisted_2 = Connector.model_validate_json(stored_2)
-        assert persisted_2.url == "http://localhost:9091/mcp"
-        assert persisted_2.source == ConnectorSource.config
-
-    async def test_register_connector_different_source_ignores(self, connector_service, mock_kvstore):
-        """Attempting to register an existing connector with different values and source should fail to register the new connector."""
-        # Register the original connector
-        original = await connector_service.register_connector(
-            connector_id="my-mcp",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8080/mcp",
-            server_label="Original Label",
-            source=ConnectorSource.config,
-        )
-
-        # Attempt to register with a different source
-        result = await connector_service.register_connector(
-            connector_id="my-mcp",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:9090/mcp",
-            server_label="Original Label",
-            source=ConnectorSource.api,
-        )
-
-        # Existing connector should be returned and not updated
-        assert result == original
-        stored = await mock_kvstore.get(f"{KEY_PREFIX}my-mcp")
-        persisted = Connector.model_validate_json(stored)
-        assert persisted.url == "http://localhost:8080/mcp"
-
-
-# --- list_connectors tests ---
-
-
-class TestListConnectors:
-    """Tests for list_connectors method."""
-
-    async def test_list_connectors_empty(self, connector_service):
-        """Test listing connectors when none registered."""
-        result = await connector_service.list_connectors()
-
-        assert isinstance(result, ListConnectorsResponse)
-        assert result.data == []
-
-    async def test_list_connectors_returns_all(self, connector_service):
-        """Test listing returns all registered connectors."""
-        # Register multiple connectors
-        await connector_service.register_connector(
-            connector_id="mcp-1",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8081/mcp",
-            source=ConnectorSource.config,
-        )
-        await connector_service.register_connector(
-            connector_id="mcp-2",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8082/mcp",
-            source=ConnectorSource.config,
-        )
-
-        result = await connector_service.list_connectors()
-
-        assert len(result.data) == 2
-        connector_ids = {c.connector_id for c in result.data}
-        assert connector_ids == {"mcp-1", "mcp-2"}
-
-    async def test_list_connectors_filters_by_source(self, connector_service):
-        """Test listing connectors can filter by source."""
-        # Register connectors with different sources
-        await connector_service.register_connector(
-            connector_id="config-connector",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8081/mcp",
-            source=ConnectorSource.config,
-        )
-        await connector_service.register_connector(
-            connector_id="api-connector",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8082/mcp",
-            source=ConnectorSource.api,
-        )
-
-        # List only config connectors
-        config_result = await connector_service.list_connectors(source=ConnectorSource.config)
-        assert len(config_result.data) == 1
-        assert config_result.data[0].connector_id == "config-connector"
-
-        # List only api connectors
-        api_result = await connector_service.list_connectors(source=ConnectorSource.api)
-        assert len(api_result.data) == 1
-        assert api_result.data[0].connector_id == "api-connector"
-
-        # List all (no filter)
-        all_result = await connector_service.list_connectors()
-        assert len(all_result.data) == 2
-
-
-# --- unregister_connector tests ---
-
-
-class TestUnregisterConnector:
-    """Tests for unregister_connector method."""
-
-    async def test_unregister_connector_removes_from_store(self, connector_service, mock_kvstore):
-        """Test that unregistering a connector removes it from the store."""
-        await connector_service.register_connector(
-            connector_id="my-mcp",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8080/mcp",
-            source=ConnectorSource.config,
-        )
-
-        # Verify it exists
-        keys = await mock_kvstore.keys_in_range(KEY_PREFIX, KEY_PREFIX + "\uffff")
-        assert len(keys) == 1
-
-        # Unregister
-        await connector_service.unregister_connector("my-mcp")
-
-        # Verify it's gone
-        keys = await mock_kvstore.keys_in_range(KEY_PREFIX, KEY_PREFIX + "\uffff")
-        assert len(keys) == 0
-
-    async def test_unregister_nonexistent_connector_is_noop(self, connector_service):
-        """Test that unregistering a non-existent connector doesn't raise."""
-        # Should not raise
-        await connector_service.unregister_connector("nonexistent")
 
 
 # --- get_connector tests ---
@@ -319,7 +166,6 @@ class TestGetConnector:
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
-            source=ConnectorSource.config,
         )
 
         # Mock the MCP server info response
@@ -344,7 +190,6 @@ class TestGetConnector:
             connector_id="my-mcp",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
-            source=ConnectorSource.config,
         )
 
         mock_server_info = MagicMock()
@@ -363,108 +208,6 @@ class TestGetConnector:
             )
 
 
-# --- list_connector_tools tests ---
-
-
-class TestListConnectorTools:
-    """Tests for list_connector_tools method."""
-
-    async def test_list_connector_tools_returns_tools(self, connector_service, sample_tool_def):
-        """Test listing tools from a connector."""
-        await connector_service.register_connector(
-            connector_id="my-mcp",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8080/mcp",
-            source=ConnectorSource.config,
-        )
-
-        mock_server_info = MagicMock()
-        mock_server_info.name = "Server"
-        mock_server_info.description = None
-        mock_server_info.version = None
-
-        mock_tools_response = MagicMock()
-        mock_tools_response.data = [sample_tool_def]
-
-        with (
-            patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info,
-            patch("llama_stack.core.connectors.connectors.list_mcp_tools") as mock_list_tools,
-        ):
-            mock_get_info.return_value = mock_server_info
-            mock_list_tools.return_value = mock_tools_response
-
-            result = await connector_service.list_connector_tools("my-mcp")
-
-        assert isinstance(result, ListToolsResponse)
-        assert len(result.data) == 1
-        assert result.data[0].name == "get_weather"
-
-
-# --- get_connector_tool tests ---
-
-
-class TestGetConnectorTool:
-    """Tests for get_connector_tool method."""
-
-    async def test_get_connector_tool_found(self, connector_service, sample_tool_def):
-        """Test getting a specific tool by name."""
-        await connector_service.register_connector(
-            connector_id="my-mcp",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8080/mcp",
-            source=ConnectorSource.config,
-        )
-
-        mock_server_info = MagicMock()
-        mock_server_info.name = "Server"
-        mock_server_info.description = None
-        mock_server_info.version = None
-
-        mock_tools_response = MagicMock()
-        mock_tools_response.data = [sample_tool_def]
-
-        with (
-            patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info,
-            patch("llama_stack.core.connectors.connectors.list_mcp_tools") as mock_list_tools,
-        ):
-            mock_get_info.return_value = mock_server_info
-            mock_list_tools.return_value = mock_tools_response
-
-            result = await connector_service.get_connector_tool("my-mcp", "get_weather")
-
-        assert result.name == "get_weather"
-
-    async def test_get_connector_tool_not_found(self, connector_service, sample_tool_def):
-        """Test getting a non-existent tool raises error."""
-        await connector_service.register_connector(
-            connector_id="my-mcp",
-            connector_type=ConnectorType.MCP,
-            url="http://localhost:8080/mcp",
-            source=ConnectorSource.config,
-        )
-
-        mock_server_info = MagicMock()
-        mock_server_info.name = "Server"
-        mock_server_info.description = None
-        mock_server_info.version = None
-
-        mock_tools_response = MagicMock()
-        mock_tools_response.data = [sample_tool_def]
-
-        with (
-            patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info,
-            patch("llama_stack.core.connectors.connectors.list_mcp_tools") as mock_list_tools,
-        ):
-            mock_get_info.return_value = mock_server_info
-            mock_list_tools.return_value = mock_tools_response
-
-            with pytest.raises(ConnectorToolNotFoundError) as exc_info:
-                await connector_service.get_connector_tool("my-mcp", "non_existent_tool")
-
-        assert "my-mcp" in str(exc_info.value)
-        assert "non_existent_tool" in str(exc_info.value)
-
-
 # --- Key prefix tests ---
 
 
@@ -477,7 +220,6 @@ class TestKeyPrefix:
             connector_id="test-connector",
             connector_type=ConnectorType.MCP,
             url="http://localhost:8080/mcp",
-            source=ConnectorSource.config,
         )
 
         # Check the key was stored with prefix
