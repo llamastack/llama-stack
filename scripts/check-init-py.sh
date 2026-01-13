@@ -27,7 +27,7 @@ find "$PACKAGE_DIR" \
     -name "*.py" ! -name "__init__.py" \
     ! -path "*/.venv/*" \
     ! -path "*/node_modules/*" \
-    -exec dirname {} \; | sort -u | while IFS= read -r dir; do
+    -exec dirname {} + | sort -u | while IFS= read -r dir; do
     if [ ! -f "$dir/__init__.py" ]; then
         echo "ERROR: Missing __init__.py in directory: $dir"
         echo "This directory contains Python files but no __init__.py, which may cause packaging issues."
