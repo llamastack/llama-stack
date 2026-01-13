@@ -472,7 +472,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Post-Training
+      - Post Training
       summary: Get the artifacts of a training job.
       description: Get the artifacts of a training job.
       operationId: get_training_job_artifacts_v1alpha_post_training_job_artifacts_get
@@ -503,7 +503,7 @@ paths:
         '204':
           description: Successfully cancelled the training job.
       tags:
-      - Post-Training
+      - Post Training
       summary: Cancel a training job.
       description: Cancel a training job.
       operationId: cancel_training_job_v1alpha_post_training_job_cancel_post
@@ -538,7 +538,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
       tags:
-      - Post-Training
+      - Post Training
       summary: Get the status of a training job.
       description: Get the status of a training job.
       operationId: get_training_job_status_v1alpha_post_training_job_status_get
@@ -573,7 +573,7 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
       tags:
-      - Post-Training
+      - Post Training
       summary: Get all training jobs.
       description: Get all training jobs.
       operationId: get_training_jobs_v1alpha_post_training_jobs_get
@@ -599,7 +599,7 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
       tags:
-      - Post-Training
+      - Post Training
       summary: Run preference optimization of a model.
       description: Run preference optimization of a model.
       operationId: preference_optimize_v1alpha_post_training_preference_optimize_post
@@ -631,7 +631,7 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
       tags:
-      - Post-Training
+      - Post Training
       summary: Run supervised fine-tuning of a model.
       description: Run supervised fine-tuning of a model.
       operationId: supervised_fine_tune_v1alpha_post_training_supervised_fine_tune_post

@@ -40,7 +40,7 @@ def create_router(impl: PostTraining) -> APIRouter:
     """Create a FastAPI router for the Post-Training API."""
     router = APIRouter(
         prefix=f"/{LLAMA_STACK_API_V1ALPHA}",
-        tags=["Post-Training"],
+        tags=["Post Training"],
         responses=standard_responses,
     )
 
