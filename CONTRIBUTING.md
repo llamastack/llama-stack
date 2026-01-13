@@ -147,7 +147,9 @@ As a general guideline:
 
 ### Adding a New Provider
 
-Please follow these steps:
+Llama Stack has "out-of-tree" providers referred to as [external providers](https://llamastack.github.io/docs/providers/external) as well as "in-tree" providers that are a part of the core project. The Llama Stack community is accepting of [new in-tree provider contributions](https://llamastack.github.io/docs/contributing/new_api_provider) so long as there is merit seen in the addition.
+
+If you wish to include a new in-tree provider in the Core project, please follow these steps:
 
 1. **Open a discussion issue**: Open a "discussion-type" issue describing the provider you want to add, its use case, and how it fits into the Llama Stack ecosystem.
 
