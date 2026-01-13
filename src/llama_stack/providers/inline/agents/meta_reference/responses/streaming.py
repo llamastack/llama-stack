@@ -136,6 +136,7 @@ class StreamingResponseOrchestrator:
         prompt: OpenAIResponsePrompt | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
+        max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
     ):
@@ -155,6 +156,8 @@ class StreamingResponseOrchestrator:
         self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
+        # An upper bound for the number of tokens that can be generated for a response
+        self.max_output_tokens = max_output_tokens
         self.metadata = metadata
         self.include = include
         self.sequence_number = 0
@@ -191,6 +194,7 @@ class StreamingResponseOrchestrator:
             model=self.ctx.model,
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
+            max_output_tokens=self.max_output_tokens,
             metadata=self.metadata,
         )
 
@@ -228,6 +232,7 @@ class StreamingResponseOrchestrator:
             prompt=self.prompt,
             parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
+            max_output_tokens=self.max_output_tokens,
             metadata=self.metadata,
         )
 
@@ -324,6 +329,7 @@ class StreamingResponseOrchestrator:
                         "include_usage": True,
                     },
                     logprobs=logprobs,
+                    max_tokens=self.max_output_tokens,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

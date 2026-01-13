@@ -5701,6 +5701,10 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -6142,6 +6146,10 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -6308,6 +6316,10 @@ components:
           - type: string
           - type: 'null'
         max_tool_calls:
+          anyOf:
+          - type: integer
+          - type: 'null'
+        max_output_tokens:
           anyOf:
           - type: integer
           - type: 'null'
