@@ -202,6 +202,9 @@ class StackRun(Subcommand):
         # Set the config file in environment so create_app can find it
         os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
 
+        # disable together banner that spams llama stack run every time
+        os.environ["TOGETHER_NO_BANNER"] = "1"
+
         uvicorn_config = {
             "factory": True,
             "host": host,
