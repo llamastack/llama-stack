@@ -295,16 +295,7 @@ class PostTrainingJobArtifactsResponse(BaseModel):
 
 @json_schema_type
 class SupervisedFineTuneRequest(BaseModel):
-    """Request to run supervised fine-tuning of a model.
-
-    :param job_uuid: The UUID of the job to create
-    :param training_config: The training configuration
-    :param hyperparam_search_config: The hyperparam search configuration
-    :param logger_config: The logger configuration
-    :param model: (Optional) Model descriptor for training if not in provider config
-    :param checkpoint_dir: (Optional) The directory to save checkpoint(s) to
-    :param algorithm_config: (Optional) The algorithm configuration
-    """
+    """Request to run supervised fine-tuning of a model."""
 
     job_uuid: str = Field(..., description="The UUID of the job to create.")
     training_config: TrainingConfig = Field(..., description="The training configuration.")
@@ -320,15 +311,7 @@ class SupervisedFineTuneRequest(BaseModel):
 
 @json_schema_type
 class PreferenceOptimizeRequest(BaseModel):
-    """Request to run preference optimization of a model.
-
-    :param job_uuid: The UUID of the job to create
-    :param finetuned_model: The model to fine-tune
-    :param algorithm_config: The algorithm configuration
-    :param training_config: The training configuration
-    :param hyperparam_search_config: The hyperparam search configuration
-    :param logger_config: The logger configuration
-    """
+    """Request to run preference optimization of a model."""
 
     job_uuid: str = Field(..., description="The UUID of the job to create.")
     finetuned_model: str = Field(..., description="The model to fine-tune.")
@@ -340,29 +323,20 @@ class PreferenceOptimizeRequest(BaseModel):
 
 @json_schema_type
 class GetTrainingJobStatusRequest(BaseModel):
-    """Request to get the status of a training job.
-
-    :param job_uuid: The UUID of the job to get the status of
-    """
+    """Request to get the status of a training job."""
 
     job_uuid: str = Field(..., description="The UUID of the job to get the status of.")
 
 
 @json_schema_type
 class CancelTrainingJobRequest(BaseModel):
-    """Request to cancel a training job.
-
-    :param job_uuid: The UUID of the job to cancel
-    """
+    """Request to cancel a training job."""
 
     job_uuid: str = Field(..., description="The UUID of the job to cancel.")
 
 
 @json_schema_type
 class GetTrainingJobArtifactsRequest(BaseModel):
-    """Request to get the artifacts of a training job.
-
-    :param job_uuid: The UUID of the job to get the artifacts of
-    """
+    """Request to get the artifacts of a training job."""
 
     job_uuid: str = Field(..., description="The UUID of the job to get the artifacts of.")
