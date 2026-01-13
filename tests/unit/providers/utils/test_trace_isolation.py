@@ -1,3 +1,9 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
 """
 Test demonstrating TraceContext span isolation bug and fix.
 """
@@ -73,11 +79,11 @@ async def test_fixed_version():
 async def test_trace_context_span_isolation():
     """
     Test that demonstrates the TraceContext span isolation bug and validates the fix.
-    
-    Before fix: When spans was a class variable, all TraceContext instances 
-    shared the same list object, causing all spans from all users to be mixed 
+
+    Before fix: When spans was a class variable, all TraceContext instances
+    shared the same list object, causing all spans from all users to be mixed
     together in one shared list.
-    
+
     After fix: When spans is an instance variable, each TraceContext instance
     has its own isolated list of spans.
     """
@@ -87,7 +93,7 @@ async def test_trace_context_span_isolation():
     # Verify buggy behavior - both instances share the same list object
     assert trace1_buggy.spans is trace2_buggy.spans, "Buggy version should share the same spans list object"
     assert len(trace1_buggy.spans) == 4, "Buggy version: both traces see all 4 spans"
-    
+
     # Both traces see spans from both trace ids mixed together
     buggy_trace_ids = {s.trace_id for s in trace1_buggy.spans}
     assert buggy_trace_ids == {"trace-user-1", "trace-user-2"}, "Buggy version mixes spans from different trace IDs"
@@ -99,7 +105,7 @@ async def test_trace_context_span_isolation():
     assert trace1_fixed.spans is not trace2_fixed.spans, "Fixed version should have separate spans lists"
     assert len(trace1_fixed.spans) == 2, "Fixed version: trace-user-1 has only its 2 spans"
     assert len(trace2_fixed.spans) == 2, "Fixed version: trace-user-2 has only its 2 spans"
-    
+
     # Each trace sees only its own trace ID
     fixed_trace_ids_1 = {s.trace_id for s in trace1_fixed.spans}
     fixed_trace_ids_2 = {s.trace_id for s in trace2_fixed.spans}
