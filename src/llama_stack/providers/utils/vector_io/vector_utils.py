@@ -7,6 +7,9 @@
 import hashlib
 import re
 import uuid
+from typing import Any
+
+from llama_stack_api import EmbeddedChunk
 
 
 def generate_chunk_id(document_id: str, chunk_text: str, chunk_window: str | None = None) -> str:
@@ -154,3 +157,36 @@ class WeightedInMemoryAggregator:
             # Default to RRF for None, RRF, or any unknown types
             impact_factor = reranker_params.get("impact_factor", 60.0)
             return WeightedInMemoryAggregator.rrf_rerank(vector_scores, keyword_scores, impact_factor)
+
+
+def load_embedded_chunk_with_backward_compat(
+    chunk_data: dict[str, Any],
+) -> EmbeddedChunk:
+    """
+    Load EmbeddedChunk data with backward compatibility for legacy field locations.
+
+    Handles migration from old format where embedding_model and embedding_dimension
+    were stored in chunk_metadata to current top-level format.
+
+    Args:
+        chunk_data: Dictionary containing chunk data to load
+
+    Returns:
+        EmbeddedChunk object with migrated data
+    """
+    # Migrate old data: extract embedding_model/embedding_dimension from chunk_metadata if missing
+    if "embedding_model" not in chunk_data:
+        chunk_metadata = chunk_data.get("chunk_metadata", {})
+        chunk_data["embedding_model"] = chunk_metadata.get("chunk_embedding_model", "unknown")
+
+    if "embedding_dimension" not in chunk_data:
+        chunk_metadata = chunk_data.get("chunk_metadata", {})
+        chunk_data["embedding_dimension"] = chunk_metadata.get(
+            "chunk_embedding_dimension", len(chunk_data.get("embedding", []))
+        )
+
+    # Ensure embedding field exists (required by EmbeddedChunk)
+    if "embedding" not in chunk_data:
+        chunk_data["embedding"] = []
+
+    return EmbeddedChunk(**chunk_data)
