@@ -109,3 +109,30 @@ Each release includes:
 - **Documentation**: Updated docs at https://llamastack.github.io
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for general contribution guidelines.
+
+## Maintenance Policy
+
+Llama Stack actively maintains the **last 2 stable minor releases**.
+
+### What "Maintained" Means
+
+- **Bug fixes**: Critical bugs are backported to maintained release branches
+- **Security patches**: Security vulnerabilities are patched in maintained releases
+- **Patch releases (Z-stream)**: Maintained releases receive regular patch releases
+
+### Maintenance Timeline
+
+| Release | Status | Notes |
+|---------|--------|-------|
+| Current minor (0.Y.0) | ✅ Actively maintained | Bug fixes and security patches |
+| Previous minor (0.Y-1.0) | ✅ Maintained | Bug fixes and security patches |
+| Older releases | ❌ Unmaintained | No backports; upgrade recommended |
+
+### Example
+
+If the current release is `v0.4.x`:
+- `v0.4.x` — Actively maintained (current)
+- `v0.3.x` — Maintained (bug fixes only)
+- `v0.2.x` and earlier — Unmaintained
+
+Users on unmaintained versions are encouraged to upgrade to continue receiving fixes.
