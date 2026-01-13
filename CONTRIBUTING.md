@@ -153,9 +153,7 @@ Please follow these steps:
 
 2. **Present at a community call**: Bring your proposal to a [community call](README.md#community) to gather feedback, answer questions, and build consensus with other contributors and maintainers.
 
-3. **Get approval**: Wait for approval from the maintainers before starting implementation. This ensures your contribution aligns with the project's direction and avoids wasted effort.
-
-4. **Implement and submit a PR**: Use the [Adding a New API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) guide to help you get started. Once approved, follow the standard pull request process outlined above.
+3. **Implement and submit a PR**: Once approved, use the [Adding a New API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) guide to help you get started. Once approved, follow the standard pull request process outlined above.
 
 This process helps ensure that new providers are well-designed, avoid duplication of effort, and integrate smoothly with the rest of the project.
 
