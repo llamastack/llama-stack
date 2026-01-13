@@ -13,8 +13,8 @@ The FastAPI router is defined in llama_stack_api.scoring.fastapi_routes.
 
 from typing import Protocol, runtime_checkable
 
-from .scoring_functions import ScoringFn
 from .models import ScoreBatchRequest, ScoreBatchResponse, ScoreRequest, ScoreResponse
+from .scoring_functions import ScoringFn
 
 
 class ScoringFunctionStore(Protocol):

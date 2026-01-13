@@ -34,9 +34,7 @@ class ScoringResult(BaseModel):
     score_rows: list[ScoringResultRow] = Field(
         ..., description="The scoring result for each row. Each row is a map of column name to value."
     )
-    aggregated_results: dict[str, Any] = Field(
-        ..., description="Map of metric name to aggregated value"
-    )
+    aggregated_results: dict[str, Any] = Field(..., description="Map of metric name to aggregated value")
 
 
 @json_schema_type
@@ -47,12 +45,8 @@ class ScoreBatchResponse(BaseModel):
     :param results: A map of scoring function name to ScoringResult
     """
 
-    dataset_id: str | None = Field(
-        default=None, description="(Optional) The identifier of the dataset that was scored"
-    )
-    results: dict[str, ScoringResult] = Field(
-        ..., description="A map of scoring function name to ScoringResult"
-    )
+    dataset_id: str | None = Field(default=None, description="(Optional) The identifier of the dataset that was scored")
+    results: dict[str, ScoringResult] = Field(..., description="A map of scoring function name to ScoringResult")
 
 
 @json_schema_type
@@ -63,9 +57,7 @@ class ScoreResponse(BaseModel):
     :param results: A map of scoring function name to ScoringResult.
     """
 
-    results: dict[str, ScoringResult] = Field(
-        ..., description="A map of scoring function name to ScoringResult."
-    )
+    results: dict[str, ScoringResult] = Field(..., description="A map of scoring function name to ScoringResult.")
 
 
 # Request models for each endpoint
@@ -75,9 +67,7 @@ class ScoreResponse(BaseModel):
 class ScoreRequest(BaseModel):
     """Request model for scoring a list of rows."""
 
-    input_rows: list[dict[str, Any]] = Field(
-        ..., description="The rows to score."
-    )
+    input_rows: list[dict[str, Any]] = Field(..., description="The rows to score.")
     scoring_functions: dict[str, ScoringFnParams | None] = Field(
         ..., description="The scoring functions to use for the scoring."
     )
@@ -91,9 +81,7 @@ class ScoreBatchRequest(BaseModel):
     scoring_functions: dict[str, ScoringFnParams | None] = Field(
         ..., description="The scoring functions to use for the scoring."
     )
-    save_results_dataset: bool = Field(
-        default=False, description="Whether to save the results to a dataset."
-    )
+    save_results_dataset: bool = Field(default=False, description="Whether to save the results to a dataset.")
 
 
 __all__ = [

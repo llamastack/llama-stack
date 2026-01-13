@@ -36,7 +36,6 @@ from llama_stack_api import (
     ScoreResponse,
     Scoring,
     ScoringFn,
-    ScoringFnParams,
     ScoringFunctionsProtocolPrivate,
     ScoringResult,
     ScoringResultRow,
