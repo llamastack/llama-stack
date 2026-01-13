@@ -9,7 +9,7 @@ Llama Stack follows [Semantic Versioning](https://semver.org/) with three releas
 | Release Type | Cadence | Description |
 |-------------|---------|-------------|
 | **Major (X.0.0)** | Every 6-8 months | Breaking changes, major new features, architectural changes |
-| **Minor (0.Y.0)** | Every 2 months | New features, non-breaking API additions, significant improvements |
+| **Minor (0.Y.0)** | Monthly | New features, non-breaking API additions, significant improvements |
 | **Patch (0.0.Z)** | Weekly | Bug fixes, security patches, documentation updates |
 
 ## Version Numbering
