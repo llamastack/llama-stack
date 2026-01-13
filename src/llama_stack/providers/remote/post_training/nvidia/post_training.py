@@ -300,8 +300,6 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
             User is informed about unsupported parameters via warnings.
         """
 
-        # TODO (eoinfennessy): properly update this provider to use TrainingConfig type.
-        # It looks like the provider looks for some parameters that TrainingConfig does not provide when constructing its job_config.
         # Convert training_config to dict for internal processing
         training_config = request.training_config.model_dump()
 
