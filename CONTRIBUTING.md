@@ -30,15 +30,17 @@ Note that you can create a dotenv file `.env` that includes necessary environmen
 LLAMA_STACK_BASE_URL=http://localhost:8321
 LLAMA_STACK_CLIENT_LOG=debug
 LLAMA_STACK_PORT=8321
-LLAMA_STACK_CONFIG=<provider-name>
+LLAMA_STACK_CONFIG=server:ci-tests
 TAVILY_SEARCH_API_KEY=
 BRAVE_SEARCH_API_KEY=
 ```
 
 And then use this dotenv file when running client SDK tests via the following:
 ```bash
-uv run --env-file .env -- pytest -v tests/integration/inference/test_text_inference.py --text-model=meta-llama/Llama-3.1-8B-Instruct
+uv run --env-file .env -- pytest -v tests/integration/conversations/test_openai_conversations.py --setup=gpt
 ```
+
+For additional information about testing, please refer to the [tests documentation](tests/README.md) for both unit and integration test.
 
 ### Pre-commit Hooks
 
@@ -49,8 +51,7 @@ uv pip install 'pre-commit>=4.4.0'
 uv run pre-commit install
 ```
 
-Note that the only version of pre-commit that works with the Llama Stack continuous integration is `4.3.0` so it is essential that you pull
-that specific version as shown above.  Once you have run these commands, pre-commit hooks will run automatically before each commit.
+Note that the pre-commit version used in continuous integration for Llama Stack is `>=4.4.0`. It is essential that you use the version specifier as shown above. Once you have run these commands, pre-commit hooks will run automatically before each commit.
 
 Alternatively, if you don't want to install the pre-commit hooks (or if you want to check if your changes are ready before committing),
 you can run the checks manually by running:
@@ -77,11 +78,11 @@ uv run --group dev --group type_checking mypy
 Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
 ```
 
-## Discussions -> Issues -> Pull Requests
+## Issues and Pull Requests
 
 We actively welcome your pull requests. However, please read the following. This is heavily inspired by [Ghostty](https://github.com/ghostty-org/ghostty/blob/main/CONTRIBUTING.md).
 
-If in doubt, please open a [discussion](https://github.com/llamastack/llama-stack/discussions); we can always convert that to an issue later.
+If in doubt, please open a [issue](https://github.com/llamastack/llama-stack/issues).
 
 ### Issues
 We use GitHub issues to track public bugs. Please ensure your description is
@@ -110,23 +111,22 @@ Please avoid picking up too many issues at once. This helps you stay focused and
 
 **I have a bug!**
 
-1. Search the issue tracker and discussions for similar issues.
-2. If you don't have steps to reproduce, open a discussion.
-3. If you have steps to reproduce, open an issue.
+1. Search the issue tracker for similar issues.
+2. If you don't have steps to reproduce, open a "discussion-type" issue.
+3. If you have steps to reproduce, open a "bug-type" issue.
 
 **I have an idea for a feature!**
 
-1. Open a discussion.
+1. Open a "discussion-type" issue.
 
 **I've implemented a feature!**
 
 1. If there is an issue for the feature, open a pull request.
-2. If there is no issue, open a discussion and link to your branch.
+2. If there is no issue, open a "discussion-type" issue and link to your branch.
 
 **I have a question!**
 
-1. Open a discussion or use [Discord](https://discord.gg/llama-stack).
-
+1. Open a "discussion-type" issue or use [Discord](https://discord.gg/llama-stack).
 
 **Opening a Pull Request**
 
@@ -235,3 +235,7 @@ uv run ./scripts/run_openapi_generator.sh
 ```
 
 The generated API schema will be available in `docs/static/`. Make sure to review the changes before committing.
+
+## Release Process
+
+For information about how Llama Stack versions are released, including release schedules, testing requirements, and how to contribute to releases, see [RELEASE_PROCESS.md](./RELEASE_PROCESS.md).

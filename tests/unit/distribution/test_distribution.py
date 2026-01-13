@@ -56,7 +56,7 @@ def _default_storage() -> StorageConfig:
 def make_stack_config(**overrides) -> StackConfig:
     storage = overrides.pop("storage", _default_storage())
     defaults = dict(
-        image_name="test_image",
+        distro_name="test_image",
         apis=[],
         providers={},
         storage=storage,
@@ -327,7 +327,7 @@ pip_packages:
 
         with patch("importlib.import_module", side_effect=import_module_side_effect) as mock_import:
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -355,7 +355,7 @@ pip_packages:
 
         with patch("importlib.import_module", side_effect=import_module_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -378,7 +378,7 @@ pip_packages:
 
         with patch("importlib.import_module", side_effect=import_module_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -400,7 +400,7 @@ pip_packages:
 
         # No importlib patch needed, should not import module when listing
         config = StackConfig(
-            image_name="test_image",
+            distro_name="test_image",
             apis=[],
             providers={
                 "inference": [
@@ -434,7 +434,7 @@ class TestGetExternalProvidersFromModule:
 
         with patch("importlib.import_module", side_effect=import_module_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -472,7 +472,7 @@ class TestGetExternalProvidersFromModule:
 
         with patch("importlib.import_module", side_effect=import_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -495,7 +495,7 @@ class TestGetExternalProvidersFromModule:
         from llama_stack.core.distribution import get_external_providers_from_module
 
         config = StackConfig(
-            image_name="test_image",
+            distro_name="test_image",
             apis=[],
             providers={
                 "inference": [
@@ -531,7 +531,7 @@ class TestGetExternalProvidersFromModule:
         from llama_stack.core.distribution import get_external_providers_from_module
 
         config = StackConfig(
-            image_name="test_image",
+            distro_name="test_image",
             apis=[],
             providers={
                 "inference": [
@@ -610,7 +610,7 @@ class TestGetExternalProvidersFromModule:
 
         with patch("importlib.import_module", side_effect=import_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -658,7 +658,7 @@ class TestGetExternalProvidersFromModule:
 
         with patch("importlib.import_module", side_effect=import_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -707,7 +707,7 @@ class TestGetExternalProvidersFromModule:
 
         with patch("importlib.import_module", side_effect=import_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -745,7 +745,7 @@ class TestGetExternalProvidersFromModule:
 
         with patch("importlib.import_module", side_effect=import_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -782,7 +782,7 @@ class TestGetExternalProvidersFromModule:
 
         with patch("importlib.import_module", side_effect=import_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(
@@ -806,7 +806,7 @@ class TestGetExternalProvidersFromModule:
         from llama_stack.core.distribution import get_external_providers_from_module
 
         config = make_stack_config(
-            image_name="test_image",
+            distro_name="test_image",
             providers={},
         )
         registry = {Api.inference: {}}
@@ -845,7 +845,7 @@ class TestGetExternalProvidersFromModule:
 
         with patch("importlib.import_module", side_effect=import_side_effect):
             config = make_stack_config(
-                image_name="test_image",
+                distro_name="test_image",
                 providers={
                     "inference": [
                         Provider(

@@ -15,6 +15,7 @@ on:
       - 'src/llama_stack/**'
       - '!src/llama_stack_ui/**'
       - 'tests/integration/vector_io/**'
+      - 'tests/integration/conftest.py' # Test configuration that affects vector IO tests
       - 'uv.lock'
       - 'pyproject.toml'
       - 'requirements.txt'

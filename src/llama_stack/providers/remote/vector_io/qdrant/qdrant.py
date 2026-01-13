@@ -18,6 +18,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
@@ -66,24 +67,23 @@ class QdrantIndex(EmbeddingIndex):
         # If the collection does not exist, it will be created in add_chunks.
         pass
 
-    async def add_chunks(self, chunks: list[EmbeddedChunk], embeddings: NDArray):
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
 
         if not await self.client.collection_exists(self.collection_name):
             await self.client.create_collection(
                 self.collection_name,
-                vectors_config=models.VectorParams(size=len(embeddings[0]), distance=models.Distance.COSINE),
+                vectors_config=models.VectorParams(size=len(chunks[0].embedding), distance=models.Distance.COSINE),
             )
 
         points = []
-        for _i, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=False)):
+        for chunk in chunks:
             chunk_id = chunk.chunk_id
             points.append(
                 PointStruct(
                     id=convert_id(chunk_id),
-                    vector=embedding,
+                    vector=chunk.embedding,  # Already a list[float]
                     payload={"chunk_content": chunk.model_dump()} | {CHUNK_ID_KEY: chunk_id},
                 )
             )
@@ -118,7 +118,7 @@ class QdrantIndex(EmbeddingIndex):
             assert point.payload is not None
 
             try:
-                chunk = EmbeddedChunk(**point.payload["chunk_content"])
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
             except Exception:
                 log.exception("Failed to parse chunk")
                 continue
@@ -172,7 +172,7 @@ class QdrantIndex(EmbeddingIndex):
                 raise RuntimeError("Qdrant query returned point with no payload")
 
             try:
-                chunk = EmbeddedChunk(**point.payload["chunk_content"])
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
             except Exception:
                 chunk_id = point.payload.get(CHUNK_ID_KEY, "unknown") if point.payload else "unknown"
                 point_id = getattr(point, "id", "unknown")
@@ -242,7 +242,7 @@ class QdrantIndex(EmbeddingIndex):
                 raise RuntimeError("Qdrant query returned point with no payload")
 
             try:
-                chunk = EmbeddedChunk(**point.payload["chunk_content"])
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
             except Exception:
                 chunk_id = point.payload.get(CHUNK_ID_KEY, "unknown") if point.payload else "unknown"
                 point_id = getattr(point, "id", "unknown")

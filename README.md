@@ -107,6 +107,7 @@ Please checkout our [Documentation](https://llamastack.github.io/docs) page for 
     * A [Zero-to-Hero Guide](https://github.com/meta-llama/llama-stack/tree/main/docs/zero_to_hero_guide) that guide you through all the key components of llama stack with code samples.
 * [Contributing](CONTRIBUTING.md)
     * [Adding a new API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) to walk-through how to add a new API provider.
+    * [Release Process](RELEASE_PROCESS.md) for information about release schedules and versioning.
 
 ### Llama Stack Client SDKs
 
