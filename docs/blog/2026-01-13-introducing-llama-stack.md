@@ -7,7 +7,7 @@ authors:
     url: https://github.com/llamastack
     image_url: https://github.com/llama-stack.png
 tags: [announcement, introduction, getting-started]
-date: 2026-01-08
+date: 2026-01-13
 ---
 
 Welcome to the Llama Stack blog! In this inaugural post, we're excited to introduce you to **Llama Stack** - the open-source platform that simplifies building production-ready generative AI applications.
