@@ -471,6 +471,7 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
     ):
         stream = bool(stream)
@@ -528,6 +529,7 @@ class OpenAIResponsesImpl:
             parallel_tool_calls=parallel_tool_calls,
             max_tool_calls=max_tool_calls,
             reasoning=reasoning,
+            max_output_tokens=max_output_tokens,
             metadata=metadata,
             include=include,
         )
@@ -584,6 +586,7 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = True,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -650,6 +653,7 @@ class OpenAIResponsesImpl:
             instructions=instructions,
             max_tool_calls=max_tool_calls,
             reasoning=reasoning,
+            max_output_tokens=max_output_tokens,
             metadata=metadata,
             include=include,
             store=store,

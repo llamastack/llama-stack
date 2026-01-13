@@ -115,6 +115,10 @@ class CreateResponseRequest(BaseModel):
         default=None,
         description="Max number of total calls to built-in tools that can be processed in a response.",
     )
+    max_output_tokens: int | None = Field(
+        default=None,
+        description="Upper bound for the number of tokens that can be generated for a response.",
+    )
     reasoning: OpenAIResponseReasoning | None = Field(
         default=None,
         description="Configuration for reasoning effort in responses.",

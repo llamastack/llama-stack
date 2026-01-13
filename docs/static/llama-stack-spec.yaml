@@ -5850,6 +5850,10 @@ components:
             title: OpenAIResponseReasoning
           - type: 'null'
           title: OpenAIResponseReasoning
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -6301,6 +6305,10 @@ components:
             title: OpenAIResponseReasoning
           - type: 'null'
           title: OpenAIResponseReasoning
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -10667,6 +10675,11 @@ components:
           - type: integer
           - type: 'null'
           description: Max number of total calls to built-in tools that can be processed in a response.
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Upper bound for the number of tokens that can be generated for a response.
         reasoning:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseReasoning'
