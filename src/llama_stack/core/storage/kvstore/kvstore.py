@@ -126,3 +126,12 @@ async def kvstore_impl(reference: KVStoreReference) -> KVStore:
         await impl.initialize()
         _KVSTORE_INSTANCES[cache_key] = impl
         return impl
+
+
+async def shutdown_kvstore_instances() -> None:
+    """Shutdown all cached KVStore instances."""
+    global _KVSTORE_INSTANCES
+    for impl in _KVSTORE_INSTANCES.values():
+        if hasattr(impl, "shutdown"):
+            await impl.shutdown()
+    _KVSTORE_INSTANCES.clear()

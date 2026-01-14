@@ -161,6 +161,20 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
         """
         pass
 
+    def close(self) -> None:
+        """Shutdown the client and release all resources."""
+        loop = self.loop
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self.async_client.shutdown())
+        finally:
+            # Clean up pending tasks
+            pending = asyncio.all_tasks(loop)
+            if pending:
+                loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            loop.close()
+            asyncio.set_event_loop(None)
+
     def request(self, *args, **kwargs):
         loop = self.loop
         asyncio.set_event_loop(loop)
@@ -224,6 +238,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         self.custom_provider_registry = custom_provider_registry
         self.provider_data = provider_data
         self.route_impls: RouteImpls | None = None  # Initialize to None to prevent AttributeError
+        self._stack: Stack | None = None  # Store Stack for proper shutdown
 
     def _remove_root_logger_handlers(self):
         """
@@ -246,9 +261,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         try:
             self.route_impls = None
 
-            stack = Stack(self.config, self.custom_provider_registry)
-            await stack.initialize()
-            self.impls = stack.impls
+            self._stack = Stack(self.config, self.custom_provider_registry)
+            await self._stack.initialize()
+            self.impls = self._stack.impls
         except ModuleNotFoundError as _e:
             cprint(_e.msg, color="red", file=sys.stderr)
             cprint(
@@ -282,6 +297,13 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         self.route_impls = initialize_route_impls(self.impls)
         return True
+
+    async def shutdown(self) -> None:
+        """Shutdown the client and release all resources."""
+        if self._stack:
+            await self._stack.shutdown()
+            self._stack = None
+        self.route_impls = None
 
     async def request(
         self,

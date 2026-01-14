@@ -539,6 +539,23 @@ def _initialize_storage(run_config: StackConfig):
     register_sqlstore_backends(sql_backends)
 
 
+async def _shutdown_storage():
+    """Shutdown all storage backend instances (KVStore and SQLStore)."""
+    from llama_stack.core.storage.kvstore.kvstore import shutdown_kvstore_instances
+    from llama_stack.core.storage.sqlstore.sqlstore import shutdown_sqlstore_instances
+
+    logger.debug("Shutting down storage backends")
+    try:
+        await shutdown_kvstore_instances()
+    except Exception as e:
+        logger.exception(f"Failed to shutdown KVStore instances: {e}")
+
+    try:
+        await shutdown_sqlstore_instances()
+    except Exception as e:
+        logger.exception(f"Failed to shutdown SQLStore instances: {e}")
+
+
 class Stack:
     def __init__(self, run_config: StackConfig, provider_registry: ProviderRegistry | None = None):
         self.run_config = run_config
@@ -608,7 +625,7 @@ class Stack:
     async def shutdown(self):
         for impl in self.impls.values():
             impl_name = impl.__class__.__name__
-            logger.info(f"Shutting down {impl_name}")
+            logger.debug(f"Shutting down {impl_name}")
             try:
                 if hasattr(impl, "shutdown"):
                     await asyncio.wait_for(impl.shutdown(), timeout=5)
@@ -618,6 +635,9 @@ class Stack:
                 logger.exception(f"Shutdown timeout for {impl_name}")
             except (Exception, asyncio.CancelledError) as e:
                 logger.exception(f"Failed to shutdown {impl_name}: {e}")
+
+        # Shutdown storage backends (KVStore and SQLStore instances)
+        await _shutdown_storage()
 
         global TEST_RECORDING_CONTEXT
         if TEST_RECORDING_CONTEXT:

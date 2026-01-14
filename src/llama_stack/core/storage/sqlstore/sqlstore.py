@@ -85,3 +85,12 @@ def register_sqlstore_backends(backends: dict[str, StorageBackendConfig]) -> Non
     _SQLSTORE_LOCKS.clear()
     for name, cfg in backends.items():
         _SQLSTORE_BACKENDS[name] = cfg
+
+
+async def shutdown_sqlstore_instances() -> None:
+    """Shutdown all cached SQL store instances."""
+    global _SQLSTORE_INSTANCES
+    for impl in _SQLSTORE_INSTANCES.values():
+        if hasattr(impl, "shutdown"):
+            await impl.shutdown()
+    _SQLSTORE_INSTANCES.clear()
