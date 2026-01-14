@@ -290,9 +290,6 @@ class PostTrainingJobArtifactsResponse(BaseModel):
     # TODO(ashwin): metrics, evals
 
 
-# Request models for API endpoints
-
-
 @json_schema_type
 class SupervisedFineTuneRequest(BaseModel):
     """Request to run supervised fine-tuning of a model."""
