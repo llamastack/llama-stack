@@ -4,26 +4,22 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-# TODO: use enum.StrEnum when we drop support for python 3.10
+"""Pydantic models for ScoringFunctions API requests and responses.
+
+This module defines the request and response models for the ScoringFunctions API
+using Pydantic with Field descriptions for OpenAPI schema generation.
+"""
+
 from enum import StrEnum
-from typing import (
-    Annotated,
-    Any,
-    Literal,
-    Protocol,
-    runtime_checkable,
-)
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
 from llama_stack_api.common.type_system import ParamType
 from llama_stack_api.resource import Resource, ResourceType
-from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
-from llama_stack_api.version import LLAMA_STACK_API_V1
+from llama_stack_api.schema_utils import json_schema_type, register_schema
 
 
-# Perhaps more structure can be imposed on these functions. Maybe they could be associated
-# with standard metrics so they can be rolled up?
 @json_schema_type
 class ScoringFnParamsType(StrEnum):
     """Types of scoring function parameter configurations.
@@ -117,6 +113,44 @@ ScoringFnParams = Annotated[
 register_schema(ScoringFnParams, name="ScoringFnParams")
 
 
+@json_schema_type
+class ListScoringFunctionsRequest(BaseModel):
+    """Request model for listing scoring functions."""
+
+    pass
+
+
+@json_schema_type
+class GetScoringFunctionRequest(BaseModel):
+    """Request model for getting a scoring function."""
+
+    scoring_fn_id: str = Field(..., description="The ID of the scoring function to get.")
+
+
+@json_schema_type
+class RegisterScoringFunctionRequest(BaseModel):
+    """Request model for registering a scoring function."""
+
+    scoring_fn_id: str = Field(..., description="The ID of the scoring function to register.")
+    description: str = Field(..., description="The description of the scoring function.")
+    return_type: ParamType = Field(..., description="The return type of the scoring function.")
+    provider_scoring_fn_id: str | None = Field(
+        default=None, description="The ID of the provider scoring function to use for the scoring function."
+    )
+    provider_id: str | None = Field(default=None, description="The ID of the provider to use for the scoring function.")
+    params: ScoringFnParams | None = Field(
+        default=None,
+        description="The parameters for the scoring function for benchmark eval, these can be overridden for app eval.",
+    )
+
+
+@json_schema_type
+class UnregisterScoringFunctionRequest(BaseModel):
+    """Request model for unregistering a scoring function."""
+
+    scoring_fn_id: str = Field(..., description="The ID of the scoring function to unregister.")
+
+
 class CommonScoringFnFields(BaseModel):
     description: str | None = None
     metadata: dict[str, Any] = Field(
@@ -157,55 +191,24 @@ class ScoringFnInput(CommonScoringFnFields, BaseModel):
 
 @json_schema_type
 class ListScoringFunctionsResponse(BaseModel):
-    data: list[ScoringFn]
+    """Response containing a list of scoring function objects."""
+
+    data: list[ScoringFn] = Field(..., description="List of scoring function objects.")
 
 
-@runtime_checkable
-class ScoringFunctions(Protocol):
-    @webmethod(route="/scoring-functions", method="GET", level=LLAMA_STACK_API_V1)
-    async def list_scoring_functions(self) -> ListScoringFunctionsResponse:
-        """List all scoring functions.
-
-        :returns: A ListScoringFunctionsResponse.
-        """
-        ...
-
-    @webmethod(route="/scoring-functions/{scoring_fn_id:path}", method="GET", level=LLAMA_STACK_API_V1)
-    async def get_scoring_function(self, scoring_fn_id: str, /) -> ScoringFn:
-        """Get a scoring function by its ID.
-
-        :param scoring_fn_id: The ID of the scoring function to get.
-        :returns: A ScoringFn.
-        """
-        ...
-
-    @webmethod(route="/scoring-functions", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
-    async def register_scoring_function(
-        self,
-        scoring_fn_id: str,
-        description: str,
-        return_type: ParamType,
-        provider_scoring_fn_id: str | None = None,
-        provider_id: str | None = None,
-        params: ScoringFnParams | None = None,
-    ) -> None:
-        """Register a scoring function.
-
-        :param scoring_fn_id: The ID of the scoring function to register.
-        :param description: The description of the scoring function.
-        :param return_type: The return type of the scoring function.
-        :param provider_scoring_fn_id: The ID of the provider scoring function to use for the scoring function.
-        :param provider_id: The ID of the provider to use for the scoring function.
-        :param params: The parameters for the scoring function for benchmark eval, these can be overridden for app eval.
-        """
-        ...
-
-    @webmethod(
-        route="/scoring-functions/{scoring_fn_id:path}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True
-    )
-    async def unregister_scoring_function(self, scoring_fn_id: str) -> None:
-        """Unregister a scoring function.
-
-        :param scoring_fn_id: The ID of the scoring function to unregister.
-        """
-        ...
+__all__ = [
+    "ScoringFnParamsType",
+    "AggregationFunctionType",
+    "LLMAsJudgeScoringFnParams",
+    "RegexParserScoringFnParams",
+    "BasicScoringFnParams",
+    "ScoringFnParams",
+    "ListScoringFunctionsRequest",
+    "GetScoringFunctionRequest",
+    "RegisterScoringFunctionRequest",
+    "UnregisterScoringFunctionRequest",
+    "CommonScoringFnFields",
+    "ScoringFn",
+    "ScoringFnInput",
+    "ListScoringFunctionsResponse",
+]
