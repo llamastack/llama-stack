@@ -29,24 +29,6 @@ class Scoring(Protocol):
 
     scoring_function_store: ScoringFunctionStore
 
-    async def score_batch(
-        self,
-        request: ScoreBatchRequest,
-    ) -> ScoreBatchResponse:
-        """Score a batch of rows.
+    async def score_batch(self, request: ScoreBatchRequest) -> ScoreBatchResponse: ...
 
-        :param request: The ScoreBatchRequest containing dataset_id, scoring_functions, and save_results_dataset.
-        :returns: A ScoreBatchResponse.
-        """
-        ...
-
-    async def score(
-        self,
-        request: ScoreRequest,
-    ) -> ScoreResponse:
-        """Score a list of rows.
-
-        :param request: The ScoreRequest containing input_rows and scoring_functions.
-        :returns: A ScoreResponse object containing rows and aggregated results.
-        """
-        ...
+    async def score(self, request: ScoreRequest) -> ScoreResponse: ...

@@ -60,9 +60,6 @@ class ScoreResponse(BaseModel):
     results: dict[str, ScoringResult] = Field(..., description="A map of scoring function name to ScoringResult.")
 
 
-# Request models for each endpoint
-
-
 @json_schema_type
 class ScoreRequest(BaseModel):
     """Request model for scoring a list of rows."""
