@@ -89,6 +89,7 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
         f"Supported providers for '{search_mode}': {supported_providers}"
     )
 
+
 @pytest.fixture(scope="session")
 def sample_chunks():
     import time
@@ -3288,7 +3289,7 @@ def test_openai_create_vector_store(
         metadata={"purpose": "testing", "environment": "integration"},
         extra_body={
             "embedding_model": embedding_model_id,
-            "provider_id": vector_io_provider_id
+            "provider_id": vector_io_provider_id,
         },
     )
 
@@ -3502,7 +3503,6 @@ def test_openai_vector_store_with_chunks(
         extra_body={
             "embedding_model": embedding_model_id,
             "provider_id": vector_io_provider_id,
-            "embedding_dimension": embedding_dimension,
         },
     )
 
@@ -4022,7 +4022,7 @@ def test_openai_vector_store_retrieve_file_contents(
         file_id=file.id,
         attributes=attributes,
         extra_body={
-            "embedding_model": embedding_model_id
+            "embedding_model": embedding_model_id,
         },
     )
 
@@ -4273,7 +4273,7 @@ def test_create_vector_store_files_duplicate_vector_store_name(
         vector_store_id=vector_store.id,
         file_id=file_ids[0],
         extra_body={
-            "embedding_model": embedding_model_id
+            "embedding_model": embedding_model_id,
         },
     )
     assert created_file.status == "completed"
@@ -4425,7 +4425,9 @@ def test_openai_vector_store_file_batch_list_files(
     batch = compat_client.vector_stores.file_batches.create(
         vector_store_id=vector_store.id,
         file_ids=file_ids,
-        extra_body={"embedding_model": embedding_model_id, "embedding_dimension": embedding_dimension},
+        extra_body={
+            "embedding_model": embedding_model_id,
+        },
     )
 
     # Wait for batch processing to complete

@@ -152,8 +152,8 @@ vector_stores:
   default_provider_id: oci
   default_embedding_model:
     provider_id: oci
-    model_id: openai.text-embedding-3-small 
-    embedding_dimensions: 1538
+    model_id: openai.text-embedding-3-small
+    embedding_dimensions: 768
   file_search_params:
     header_template: 'knowledge_search tool found {num_chunks} chunks:
 
