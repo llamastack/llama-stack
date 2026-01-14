@@ -48,3 +48,8 @@ jobs:
         llama stack list-apis
         llama stack list-providers inference
         llama stack list-deps starter
+
+    - name: Verify packages are importable
+      run: |
+        uv run python -c "import llama_stack; print(f'llama_stack imported successfully from {llama_stack.__file__}')"
+        uv run python -c "import llama_stack_api; print(f'llama_stack_api imported successfully from {llama_stack_api.__file__}')"

@@ -2333,6 +2333,7 @@ source = { editable = "src/llama_stack_api" }
 dependencies = [
     { name = "fastapi" },
     { name = "jsonschema" },
+    { name = "openai" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic" },
@@ -2342,6 +2343,7 @@ dependencies = [
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115.0,<1.0" },
     { name = "jsonschema" },
+    { name = "openai", specifier = ">=2.5.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
     { name = "pydantic", specifier = ">=2.11.9" },
