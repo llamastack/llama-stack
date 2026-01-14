@@ -454,7 +454,7 @@ from .scoring import (
     ScoringResult,
     ScoringResultRow,
 )
-from .scoring.scoring_functions import (
+from .scoring_functions import (
     AggregationFunctionType,
     BasicScoringFnParams,
     CommonScoringFnFields,

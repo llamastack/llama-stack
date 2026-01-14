@@ -12,6 +12,21 @@ The FastAPI router is defined in llama_stack_api.scoring.fastapi_routes.
 """
 
 # Import fastapi_routes for router factory access
+# Import scoring_functions for re-export
+from llama_stack_api.scoring_functions import (
+    AggregationFunctionType,
+    BasicScoringFnParams,
+    CommonScoringFnFields,
+    ListScoringFunctionsResponse,
+    LLMAsJudgeScoringFnParams,
+    RegexParserScoringFnParams,
+    ScoringFn,
+    ScoringFnInput,
+    ScoringFnParams,
+    ScoringFnParamsType,
+    ScoringFunctions,
+)
+
 from . import fastapi_routes
 
 # Import protocol for FastAPI router
@@ -25,21 +40,6 @@ from .models import (
     ScoreResponse,
     ScoringResult,
     ScoringResultRow,
-)
-
-# Import scoring_functions for re-export
-from .scoring_functions import (
-    AggregationFunctionType,
-    BasicScoringFnParams,
-    CommonScoringFnFields,
-    ListScoringFunctionsResponse,
-    LLMAsJudgeScoringFnParams,
-    RegexParserScoringFnParams,
-    ScoringFn,
-    ScoringFnInput,
-    ScoringFnParams,
-    ScoringFnParamsType,
-    ScoringFunctions,
 )
 
 __all__ = [

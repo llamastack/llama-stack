@@ -15,8 +15,7 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from llama_stack_api.schema_utils import json_schema_type
-
-from .scoring_functions import ScoringFnParams
+from llama_stack_api.scoring_functions import ScoringFnParams
 
 # mapping of metric to value
 ScoringResultRow = dict[str, Any]
