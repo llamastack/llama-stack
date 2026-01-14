@@ -153,7 +153,7 @@ If you wish to include a new in-tree provider in the Core project, please follow
 
 1. **Open a discussion issue**: Open a "discussion-type" issue describing the provider you want to add, its use case, and how it fits into the Llama Stack ecosystem.
 
-2. **Present at a community call**: Bring your proposal to a [community call](README.md#community) to gather feedback, answer questions, and build consensus with other contributors and maintainers.
+2. **Present at a community call** (optional): Bring your proposal to a [community call](README.md#community) to gather feedback, answer questions, and build consensus with other contributors and maintainers.
 
 3. **Implement and submit a PR**: Once approved, use the [Adding a New API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) guide to help you get started. Once approved, follow the standard pull request process outlined above.
 

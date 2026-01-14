@@ -128,7 +128,6 @@ We hold regular community calls to discuss the latest developments and get feedb
 
 - Date: every Thursday
 - Time: 09:00 AM PST (check the [Community Event on Discord](https://discord.com/events/1257833999603335178/1413266296748900513) for the latest details)
-- Join: [Zoom](https://fb.zoom.us/j/97456548564?pwd=oAJXNiiNTtAV2qebQr3K4JHHOCj8bf.1)
 
 ## 🌟 GitHub Star History
 ## Star History
