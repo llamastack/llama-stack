@@ -21,17 +21,31 @@ providers:
       oci_region: ${env.OCI_REGION:=us-ashburn-1}
       oci_compartment_id: ${env.OCI_COMPARTMENT_OCID:=}
   vector_io:
-  - provider_id: faiss
-    provider_type: inline::faiss
+  # - provider_id: faiss
+  #   provider_type: inline::faiss
+  #   config:
+  #     persistence:
+  #       namespace: vector_io::faiss
+  #       backend: kv_default
+  - provider_id: oci
+    provider_type: remote::oci
     config:
+      conn_str: "${env.OCI26AI_CONNECTION_STRING}" 
+      user: "${env.OCI26AI_USER}" 
+      password: "${env.OCI26AI_PASSWORD}" 
+      tnsnames_loc: "${env.OCI26AI_TNSNAMES_LOC}" 
+      vector_datatype: "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}"
+      distance_metric: "${env.OCI26AI_DISTANCE_METRIC:=COSINE}"
+      ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
+      ewallet_password: "${env.OCI26AI_EWALLET_PWD}" 
       persistence:
-        namespace: vector_io::faiss
+        namespace: vector_id::oci26ai
         backend: kv_default
-  safety:
-  - provider_id: llama-guard
-    provider_type: inline::llama-guard
-    config:
-      excluded_categories: []
+  # safety:
+  # - provider_id: llama-guard
+  #   provider_type: inline::llama-guard
+  #   config:
+  #     excluded_categories: []
   agents:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
@@ -130,5 +144,59 @@ registered_resources:
   tool_groups:
   - toolgroup_id: builtin::websearch
     provider_id: tavily-search
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime
 server:
   port: 8321
+vector_stores:
+  default_provider_id: oci
+  default_embedding_model:
+    provider_id: oci
+    model_id: openai.text-embedding-3-small 
+    embedding_dimensions: 1538
+  file_search_params:
+    header_template: 'knowledge_search tool found {num_chunks} chunks:
+
+      BEGIN of knowledge_search tool results.
+
+      '
+    footer_template: 'END of knowledge_search tool results.
+
+      '
+  context_prompt_params:
+    chunk_annotation_template: 'Result {index}
+
+      Content: {chunk.content}
+
+      Metadata: {metadata}
+
+      '
+    context_template: 'The above results were retrieved to help answer the user''s
+      query: "{query}". Use them as supporting information only in answering this
+      query. {annotation_instruction}
+
+      '
+  annotation_prompt_params:
+    enable_annotations: true
+    annotation_instruction_template: Cite sources immediately at the end of sentences
+      before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'.
+      Do not add extra punctuation. Use only the file IDs provided, do not invent
+      new ones.
+    chunk_annotation_template: '[{index}] {metadata_text} cite as <|{file_id}|>
+
+      {chunk_text}
+
+      '
+  file_ingestion_params:
+    default_chunk_size_tokens: 512
+    default_chunk_overlap_tokens: 128
+  chunk_retrieval_params:
+    chunk_multiplier: 5
+    max_tokens_in_context: 4000
+    default_reranker_strategy: rrf
+    rrf_impact_factor: 60.0
+    weighted_search_alpha: 0.5
+  file_batch_params:
+    max_concurrent_files_per_batch: 3
+    file_batch_chunk_size: 10
+    cleanup_interval_seconds: 86400

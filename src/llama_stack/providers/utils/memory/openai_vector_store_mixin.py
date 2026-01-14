@@ -889,7 +889,7 @@ class OpenAIVectorStoreMixin(ABC):
                         embedding_dimension=len(embedding),
                     )
                     embedded_chunks.append(embedded_chunk)
-
+                print('inserting these chunks')
                 await self.insert_chunks(
                     vector_store_id=vector_store_id,
                     chunks=embedded_chunks,

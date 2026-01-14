@@ -309,7 +309,7 @@ class OCI26aiIndex(EmbeddingIndex):
 
                 chunks.append(chunk)
                 scores.append(float(score))
-
+            logger.debug(f"result count: {len(chunks)}")
             return QueryChunksResponse(chunks=chunks, scores=scores)
 
         except Exception as e:
@@ -374,6 +374,7 @@ class OCI26aiIndex(EmbeddingIndex):
                 )
                 chunks.append(chunk)
                 scores.append(float(score))
+            logger.debug(f"result count: {len(chunks)}")
             return QueryChunksResponse(chunks=chunks, scores=scores)
         except Exception as e:
             logger.error(f"Error performing keyword search: {e}")
