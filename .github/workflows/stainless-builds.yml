@@ -1,10 +1,22 @@
 name: Stainless SDK Builds
 run-name: Build Stainless SDK from OpenAPI spec changes
 
-# This workflow uses pull_request_target, which allows it to run on pull requests
-# from forks with access to secrets. This is safe because the workflow definition
-# comes from the base branch (trusted), and the action only reads OpenAPI spec
-# files without executing any code from the PR.
+# SECURITY NOTE: This workflow uses pull_request_target, which runs with access to
+# secrets and a privileged GITHUB_TOKEN even for fork PRs.
+#
+# Security measures in place:
+# 1. The preview and merge jobs only use Stainless actions that read OAS/config files
+#    without executing arbitrary code from the PR.
+#
+# 2. The integration test job (stainless-integration-tests) does execute PR code, but:
+#    - The test matrix is hardcoded (not dynamically generated from PR code)
+#    - Caching is disabled to prevent cache poisoning
+#    - Secrets are not passed to the job (STAINLESS_API_KEY not accessible)
+#    - Permissions are explicitly restricted to contents: read only
+#    - No composite actions from the PR checkout are used
+#
+# References:
+# - https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 
 on:
   pull_request_target:
@@ -173,21 +185,101 @@ jobs:
           commit_message: ${{ needs.compute-branch.outputs.pr_title }}
           make_comment: true
 
-  run-integration-tests:
+  # Integration tests for validating the preview SDK build.
+  # Runs the same test configuration as ci_matrix.json "stainless" key across
+  # all client types (library, server, docker).
+  #
+  # Security: This job executes PR code but has these mitigations:
+  # - Test matrix is hardcoded (not dynamically generated from PR code)
+  # - Caching is disabled to prevent cache poisoning
+  # - Secrets are not passed (STAINLESS_API_KEY not accessible)
+  # - Permissions restricted to contents: read only
+  # - No composite actions from the PR checkout are used
+  stainless-integration-tests:
     needs: [compute-branch, preview]
     if: |
       always() &&
       (needs.preview.result == 'success' || needs.preview.result == 'skipped') &&
       (github.event_name == 'workflow_dispatch' || github.event.action != 'closed')
-    uses: ./.github/workflows/integration-tests.yml
-    with:
-      # Use provided sdk_install_url from workflow_dispatch, or from preview build
-      sdk_install_url: ${{ inputs.sdk_install_url || needs.preview.outputs.sdk_install_url }}
-      matrix_key: 'stainless'
-      test-all-client-versions: false
-      pr_head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
-      pr_head_ref: ${{ needs.compute-branch.outputs.pr_head_ref }}
-      is_fork_pr: ${{ needs.compute-branch.outputs.is_fork_pr == 'true' }}
+    runs-on: ubuntu-latest
+    name: Stainless SDK Test (${{ matrix.client }})
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test all client types with appropriate stack configs
+        # Equivalent to integration-tests.yml matrix with stainless config
+        include:
+          - client: library
+            stack-config: ci-tests
+          - client: server
+            stack-config: server:ci-tests
+          - client: docker
+            stack-config: docker:ci-tests
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        with:
+          repository: ${{ needs.compute-branch.outputs.pr_head_repo }}
+          ref: ${{ needs.compute-branch.outputs.pr_head_sha }}
+
+      # Caching is disabled to prevent cache poisoning from fork PRs.
+      - name: Install uv (no cache)
+        uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+        with:
+          python-version: '3.12'
+          enable-cache: false
+
+      - name: Install dependencies
+        run: |
+          uv sync --all-groups
+          uv pip install faiss-cpu
+
+      - name: Install preview SDK
+        run: |
+          SDK_URL="${{ inputs.sdk_install_url || needs.preview.outputs.sdk_install_url }}"
+          if [ -n "$SDK_URL" ]; then
+            echo "Installing preview SDK from: $SDK_URL"
+            uv pip install "$SDK_URL"
+          else
+            echo "No SDK URL provided, using default from uv.lock"
+          fi
+
+      - name: Verify SDK installation
+        run: |
+          echo "Installed llama packages:"
+          uv pip list | grep llama || echo "Warning: No llama packages found"
+
+      - name: Build Llama Stack
+        run: |
+          LLAMA_STACK_DIR=. uv run --no-sync llama stack list-deps ci-tests | xargs -L1 uv pip install
+
+      - name: Run integration tests
+        env:
+          OPENAI_API_KEY: dummy
+        run: |
+          # Hardcoded test config (equivalent to ci_matrix.json "stainless" key):
+          #   suite: base, setup: ollama, inference_mode: record-if-missing
+          #
+          # Tests run in "record-if-missing" mode which uses pre-recorded API
+          # responses. No live ollama instance is needed as long as recordings
+          # exist. If recordings are missing, tests will fail (by design).
+          uv run --no-sync ./scripts/integration-tests.sh \
+            --stack-config ${{ matrix.stack-config }} \
+            --suite base \
+            --setup ollama \
+            --inference-mode record-if-missing
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: stainless-test-logs-${{ github.run_id }}-${{ matrix.client }}
+          path: "*.log"
+          retention-days: 7
+          if-no-files-found: ignore
 
   merge:
     needs: compute-branch
