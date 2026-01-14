@@ -192,35 +192,30 @@ paths:
         in: query
         required: false
         schema:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
           title: After
       - name: limit
         in: query
         required: false
         schema:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
           default: 20
           title: Limit
       - name: model
         in: query
         required: false
         schema:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
           title: Model
       - name: order
         in: query
         required: false
         schema:
-          anyOf:
-          - $ref: '#/components/schemas/Order'
-          - type: 'null'
-          default: desc
+          enum:
+          - asc
+          - desc
+          type: string
+          default: asc
           title: Order
     post:
       responses:
@@ -3123,8 +3118,9 @@ components:
               tool: '#/components/schemas/OpenAIToolMessageParam'
               user: '#/components/schemas/OpenAIUserMessageParam-Output'
         finish_reason:
-          type: string
-          title: Finish Reason
+          anyOf:
+          - type: string
+          - type: 'null'
         index:
           type: integer
           title: Index
@@ -3723,8 +3719,9 @@ components:
         delta:
           $ref: '#/components/schemas/OpenAIChoiceDelta'
         finish_reason:
-          title: Finish Reason
-          type: string
+          anyOf:
+          - type: string
+          - type: 'null'
         index:
           title: Index
           type: integer
@@ -3769,36 +3766,36 @@ components:
           - type: 'null'
           title: OpenAIChatCompletionUsage
         input_messages:
-          items:
-            oneOf:
-            - $ref: '#/components/schemas/OpenAIUserMessageParam-Output'
-              title: OpenAIUserMessageParam-Output
-            - $ref: '#/components/schemas/OpenAISystemMessageParam'
-              title: OpenAISystemMessageParam
-            - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Output'
-              title: OpenAIAssistantMessageParam-Output
-            - $ref: '#/components/schemas/OpenAIToolMessageParam'
-              title: OpenAIToolMessageParam
-            - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-              title: OpenAIDeveloperMessageParam
-            discriminator:
-              propertyName: role
-              mapping:
-                assistant: '#/components/schemas/OpenAIAssistantMessageParam-Output'
-                developer: '#/components/schemas/OpenAIDeveloperMessageParam'
-                system: '#/components/schemas/OpenAISystemMessageParam'
-                tool: '#/components/schemas/OpenAIToolMessageParam'
-                user: '#/components/schemas/OpenAIUserMessageParam-Output'
-            title: OpenAIUserMessageParam-Output | ... (5 variants)
-          type: array
-          title: Input Messages
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIUserMessageParam-Output'
+                title: OpenAIUserMessageParam-Output
+              - $ref: '#/components/schemas/OpenAISystemMessageParam'
+                title: OpenAISystemMessageParam
+              - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Output'
+                title: OpenAIAssistantMessageParam-Output
+              - $ref: '#/components/schemas/OpenAIToolMessageParam'
+                title: OpenAIToolMessageParam
+              - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
+                title: OpenAIDeveloperMessageParam
+              discriminator:
+                propertyName: role
+                mapping:
+                  assistant: '#/components/schemas/OpenAIAssistantMessageParam-Output'
+                  developer: '#/components/schemas/OpenAIDeveloperMessageParam'
+                  system: '#/components/schemas/OpenAISystemMessageParam'
+                  tool: '#/components/schemas/OpenAIToolMessageParam'
+                  user: '#/components/schemas/OpenAIUserMessageParam-Output'
+              title: OpenAIUserMessageParam-Output | ... (5 variants)
+            type: array
+          - type: 'null'
       type: object
       required:
       - id
       - choices
       - created
       - model
-      - input_messages
       title: OpenAICompletionWithInputMessages
     OpenAICompletionRequestWithExtraBody:
       properties:

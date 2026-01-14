@@ -58,7 +58,6 @@ jobs:
       # Checkout the base branch to compare against (usually main)
       # This allows us to diff the current changes against the previous state
       - name: Checkout Base Branch
-        if: steps.skip-check.outputs.skip != 'true'
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           ref: ${{ github.event.pull_request.base.ref }}
@@ -67,7 +66,6 @@ jobs:
 
       # Cache oasdiff to avoid checksum failures and speed up builds
       - name: Cache oasdiff
-        if: steps.skip-check.outputs.skip != 'true'
         id: cache-oasdiff
         uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7
         with:
@@ -76,14 +74,14 @@ jobs:
 
       # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
       - name: Install oasdiff
-        if: steps.skip-check.outputs.skip != 'true' && steps.cache-oasdiff.outputs.cache-hit != 'true'
+        if: steps.cache-oasdiff.outputs.cache-hit != 'true'
         run: |
           curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
           cp /usr/local/bin/oasdiff ~/oasdiff
 
       # Setup cached oasdiff
       - name: Setup cached oasdiff
-        if: steps.skip-check.outputs.skip != 'true' && steps.cache-oasdiff.outputs.cache-hit == 'true'
+        if: steps.cache-oasdiff.outputs.cache-hit == 'true'
         run: |
           sudo cp ~/oasdiff /usr/local/bin/oasdiff
           sudo chmod +x /usr/local/bin/oasdiff
@@ -96,7 +94,6 @@ jobs:
 
       # Verify API specs exist for conformance testing
       - name: Check API Specs
-        if: steps.skip-check.outputs.skip != 'true'
         run: |
           echo "Checking for API specification files..."
 
@@ -133,13 +130,14 @@ jobs:
       # Run oasdiff to detect breaking changes in the API specification
       # This step will fail if incompatible changes are detected, preventing breaking changes from being merged
       - name: Run OpenAPI Breaking Change Diff
-        if: steps.skip-check.outputs.skip != 'true'
+        id: breaking-change-diff
+        continue-on-error: true
         run: |
           oasdiff breaking --fail-on ERR $BASE_SPEC $CURRENT_SPEC --match-path '^/v1/'
 
       # Run oasdiff to detect breaking changes in the API specification when compared to the OpenAI openAPI spec
       - name: Run OpenAPI Breaking Change Diff Against OpenAI API
-        if: steps.skip-check.outputs.skip != 'true'
+        id: openai-breaking-change-diff
         continue-on-error: true
         shell: bash
         run: |
@@ -154,8 +152,16 @@ jobs:
             "$OPENAI_SPEC" \
             --strip-prefix-base "/v1"
 
-      # Report when test is skipped
-      - name: Report skip reason
-        if: steps.skip-check.outputs.skip == 'true'
+      # Report when breaking changes are allowed
+      - name: Report breaking changes allowed
+        if: steps.skip-check.outputs.skip == 'true' && (steps.breaking-change-diff.outcome == 'failure' || steps.openai-breaking-change-diff.outcome == 'failure')
         run: |
-          echo "Conformance test skipped due to breaking change indicator"
+          echo "Breaking changes detected but allowed due to breaking change indicator in PR"
+          echo "The diff checks ran but failures are being ignored for this PR"
+
+      # Fail the job if the breaking change diff failed and skip is not set
+      - name: Check Breaking Change Diff Result
+        if: steps.skip-check.outputs.skip != 'true' && steps.breaking-change-diff.outcome == 'failure'
+        run: |
+          echo "Breaking change diff detected incompatible API changes"
+          exit 1
