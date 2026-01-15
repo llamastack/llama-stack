@@ -15,7 +15,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     Files,
     Inference,
     InterleavedContent,
@@ -44,7 +44,7 @@ class ElasticsearchIndex(EmbeddingIndex):
         self.client = client
         self.collection_name = collection_name
 
-    # Check if the rerank_params contains contains the following structure:
+    # Check if the rerank_params contains the following structure:
     # {
     #   "retrievers": {
     #       "standard": {"weight": 0.7},
@@ -52,46 +52,42 @@ class ElasticsearchIndex(EmbeddingIndex):
     #   }
     # }
     async def _is_rerank_linear_param_valid(self, value: dict) -> bool:
-        if not isinstance(value.get("retrievers"), dict):
+        """Validate linear reranker parameters structure."""
+        try:
+            retrievers = value.get("retrievers", {})
+            return (
+                isinstance(retrievers.get("standard"), dict)
+                and isinstance(retrievers.get("knn"), dict)
+                and "weight" in retrievers["standard"]
+                and "weight" in retrievers["knn"]
+            )
+        except (AttributeError, TypeError):
             return False
-
-        retrievers = value["retrievers"]
-
-        if not isinstance(retrievers.get("standard"), dict):
-            return False
-
-        if not isinstance(retrievers.get("knn"), dict):
-            return False
-
-        if "weight" not in retrievers["standard"]:
-            return False
-
-        if "weight" not in retrievers["knn"]:
-            return False
-
-        return True
 
     async def initialize(self) -> None:
         # Elasticsearch collections (indexes) are created on-demand in add_chunks
         # If the index does not exist, it will be created in add_chunks.
         pass
 
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
-        """Adds chunks and their embeddings to the Elasticsearch index."""
-
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        """Adds chunks to the Elasticsearch index."""
+        if not chunks:
+            return
 
         try:
-            if not await self.client.indices.exists(self.collection_name):
+            if not await self.client.indices.exists(index=self.collection_name):
                 await self.client.indices.create(
                     index=self.collection_name,
                     body={
                         "mappings": {
                             "properties": {
-                                "vector": {"type": "dense_vector", "dims": len(embeddings[0])},
-                                "chunk_content": {"type": "object"},
+                                "content": {"type": "text"},
+                                "chunk_id": {"type": "keyword"},
+                                "metadata": {"type": "object"},
+                                "chunk_metadata": {"type": "object"},
+                                "embedding": {"type": "dense_vector", "dims": len(chunks[0].embedding)},
+                                "embedding_dimension": {"type": "integer"},
+                                "embedding_model": {"type": "keyword"},
                             }
                         }
                     },
@@ -101,13 +97,13 @@ class ElasticsearchIndex(EmbeddingIndex):
             raise
 
         actions = []
-        for chunk, embedding in zip(chunks, embeddings, strict=False):
+        for chunk in chunks:
             actions.append(
                 {
                     "_op_type": "index",
                     "_index": self.collection_name,
                     "_id": chunk.chunk_id,
-                    "_source": {"vector": embedding, "chunk_content": chunk.model_dump_json()},
+                    "_source": chunk.model_dump(exclude_none=True),
                 }
             )
 
@@ -153,10 +149,14 @@ class ElasticsearchIndex(EmbeddingIndex):
         for result in results.get("hits", {}).get("hits", []):
             try:
                 source = result.get("_source", {})
-                chunk = Chunk(
-                    content=source.get("chunk_content"),
-                    stored_chunk_id=result.get("_id"),
-                    embedding=source.get("vector"),
+                chunk = EmbeddedChunk(
+                    content=source.get("content"),
+                    chunk_id=result.get("_id"),
+                    embedding=source.get("embedding", []),
+                    embedding_dimension=source.get("embedding_dimension", len(source.get("embedding", []))),
+                    embedding_model=source.get("embedding_model", "unknown"),
+                    chunk_metadata=source.get("chunk_metadata", {}),
+                    metadata=source.get("metadata", {}),
                 )
             except Exception:
                 log.exception("Failed to parse chunk")
@@ -173,9 +173,11 @@ class ElasticsearchIndex(EmbeddingIndex):
         try:
             results = await self.client.search(
                 index=self.collection_name,
-                query={"knn": {"field": "vector", "query_vector": embedding.tolist(), "k": k}},
+                query={"knn": {"field": "embedding", "query_vector": embedding.tolist(), "k": k}},
                 min_score=score_threshold,
-                limit=k,
+                size=k,
+                source={"exclude_vectors": False},  # Retrieve the embedding
+                ignore_unavailable=True,  # In case the index does not exist
             )
         except Exception as e:
             log.error(f"Error performing vector query on Elasticsearch index {self.collection_name}: {e}")
@@ -189,9 +191,11 @@ class ElasticsearchIndex(EmbeddingIndex):
         try:
             results = await self.client.search(
                 index=self.collection_name,
-                query={"match": {"chunk_content": {"query": query_string}}},
+                query={"match": {"content": {"query": query_string}}},
                 min_score=score_threshold,
-                limit=k,
+                size=k,
+                source={"exclude_vectors": False},  # Retrieve the embedding
+                ignore_unavailable=True,  # In case the index does not exist
             )
         except Exception as e:
             log.error(f"Error performing keyword query on Elasticsearch index {self.collection_name}: {e}")
@@ -215,8 +219,8 @@ class ElasticsearchIndex(EmbeddingIndex):
         retriever = {
             reranker_type: {
                 "retrievers": [
-                    {"retriever": {"standard": {"query": {"match": {"chunk_content": query_string}}}}},
-                    {"retriever": {"knn": {"field": "vector", "query_vector": embedding.tolist(), "k": k}}},
+                    {"retriever": {"standard": {"query": {"match": {"content": query_string}}}}},
+                    {"retriever": {"knn": {"field": "embedding", "query_vector": embedding.tolist(), "k": k}}},
                 ]
             }
         }
@@ -249,7 +253,12 @@ class ElasticsearchIndex(EmbeddingIndex):
                 raise
         try:
             results = await self.client.search(
-                index=self.collection_name, size=k, retriever=retriever, min_score=score_threshold
+                index=self.collection_name,
+                size=k,
+                retriever=retriever,
+                min_score=score_threshold,
+                source={"exclude_vectors": False},  # Retrieve the embedding
+                ignore_unavailable=True,  # In case the index does not exist
             )
         except Exception as e:
             log.error(f"Error performing hybrid query on Elasticsearch index {self.collection_name}: {e}")
@@ -261,7 +270,7 @@ class ElasticsearchIndex(EmbeddingIndex):
         """Delete the entire Elasticsearch index with collection_name."""
 
         try:
-            await self.client.delete(index=self.collection_name)
+            await self.client.indices.delete(index=self.collection_name, ignore_unavailable=True)
         except Exception as e:
             log.error(f"Error deleting Elasticsearch index {self.collection_name}: {e}")
             raise
@@ -342,7 +351,9 @@ class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStore
         self.cache[vector_store_id] = index
         return index
 
-    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)
