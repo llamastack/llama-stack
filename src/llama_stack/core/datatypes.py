@@ -348,7 +348,7 @@ class QualifiedModel(BaseModel):
 
     provider_id: str
     model_id: str
-    embedding_dimensions: int | None
+    embedding_dimensions: int | None = None
 
 
 class RewriteQueryParams(BaseModel):
