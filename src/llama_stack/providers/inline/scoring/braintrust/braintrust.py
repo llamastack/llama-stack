@@ -164,7 +164,7 @@ class BraintrustScoringImpl(
     ) -> ScoreBatchResponse:
         await self.set_api_key()
 
-        all_rows = await self.datasetio_api.iterrows(IterRowsRequest(dataset_id=dataset_id, limit=-1))
+        all_rows = await self.datasetio_api.iterrows(IterRowsRequest(dataset_id=request.dataset_id, limit=-1))
         score_request = ScoreRequest(
             input_rows=all_rows.data,
             scoring_functions=request.scoring_functions,
