@@ -54,7 +54,6 @@ from llama_stack_api import (
     Prompts,
     Providers,
     RegisterBenchmarkRequest,
-    RegisterModelRequest,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -97,7 +96,7 @@ class LlamaStack(
 # Resources to register based on configuration.
 # If a request class is specified, the configuration object will be converted to this class before invoking the registration method.
 RESOURCES = [
-    ("models", Api.models, "register_model", "list_models", RegisterModelRequest),
+    ("models", Api.models, "register_model", "list_models", None),
     ("shields", Api.shields, "register_shield", "list_shields", None),
     ("datasets", Api.datasets, "register_dataset", "list_datasets", RegisterDatasetRequest),
     (
