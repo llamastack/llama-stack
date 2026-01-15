@@ -122,6 +122,13 @@ Check out our client SDKs for connecting to a Llama Stack server in your preferr
 
 You can find more example scripts with client SDKs to talk with the Llama Stack server in our [llama-stack-apps](https://github.com/meta-llama/llama-stack-apps/tree/main/examples) repo.
 
+## Community
+
+We hold regular community calls to discuss the latest developments and get feedback from the community.
+
+- Date: every Thursday
+- Time: 09:00 AM PST (check the [Community Event on Discord](https://discord.com/events/1257833999603335178/1413266296748900513) for the latest details)
+
 ## 🌟 GitHub Star History
 ## Star History
 

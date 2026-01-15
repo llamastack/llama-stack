@@ -11,15 +11,19 @@ from llama_stack.providers.utils.inference.model_registry import ModelRegistryHe
 from llama_stack_api import (
     Agents,
     Benchmark,
-    BenchmarkConfig,
     BenchmarksProtocolPrivate,
     DatasetIO,
     Datasets,
     Eval,
     EvaluateResponse,
+    EvaluateRowsRequest,
     Inference,
     Job,
+    JobCancelRequest,
+    JobResultRequest,
     JobStatus,
+    JobStatusRequest,
+    RunEvalRequest,
     Scoring,
     ScoringResult,
 )
@@ -91,21 +95,20 @@ class NVIDIAEvalImpl(
 
     async def run_eval(
         self,
-        benchmark_id: str,
-        benchmark_config: BenchmarkConfig,
+        request: RunEvalRequest,
     ) -> Job:
         """Run an evaluation job for a benchmark."""
         model = (
-            benchmark_config.eval_candidate.model
-            if benchmark_config.eval_candidate.type == "model"
-            else benchmark_config.eval_candidate.config.model
+            request.benchmark_config.eval_candidate.model
+            if request.benchmark_config.eval_candidate.type == "model"
+            else request.benchmark_config.eval_candidate.config.model
         )
         nvidia_model = self.get_provider_model_id(model) or model
 
         result = await self._evaluator_post(
             "/v1/evaluation/jobs",
             {
-                "config": f"{DEFAULT_NAMESPACE}/{benchmark_id}",
+                "config": f"{DEFAULT_NAMESPACE}/{request.benchmark_id}",
                 "target": {"type": "model", "model": nvidia_model},
             },
         )
@@ -114,20 +117,17 @@ class NVIDIAEvalImpl(
 
     async def evaluate_rows(
         self,
-        benchmark_id: str,
-        input_rows: list[dict[str, Any]],
-        scoring_functions: list[str],
-        benchmark_config: BenchmarkConfig,
+        request: EvaluateRowsRequest,
     ) -> EvaluateResponse:
         raise NotImplementedError()
 
-    async def job_status(self, benchmark_id: str, job_id: str) -> Job:
+    async def job_status(self, request: JobStatusRequest) -> Job:
         """Get the status of an evaluation job.
 
         EvaluatorStatus: "created", "pending", "running", "cancelled", "cancelling", "failed", "completed".
         JobStatus: "scheduled", "in_progress", "completed", "cancelled", "failed"
         """
-        result = await self._evaluator_get(f"/v1/evaluation/jobs/{job_id}")
+        result = await self._evaluator_get(f"/v1/evaluation/jobs/{request.job_id}")
         result_status = result["status"]
 
         job_status = JobStatus.failed
@@ -140,27 +140,28 @@ class NVIDIAEvalImpl(
         elif result_status in ["cancelled"]:
             job_status = JobStatus.cancelled
 
-        return Job(job_id=job_id, status=job_status)
+        return Job(job_id=request.job_id, status=job_status)
 
-    async def job_cancel(self, benchmark_id: str, job_id: str) -> None:
+    async def job_cancel(self, request: JobCancelRequest) -> None:
         """Cancel the evaluation job."""
-        await self._evaluator_post(f"/v1/evaluation/jobs/{job_id}/cancel", {})
+        await self._evaluator_post(f"/v1/evaluation/jobs/{request.job_id}/cancel", {})
 
-    async def job_result(self, benchmark_id: str, job_id: str) -> EvaluateResponse:
+    async def job_result(self, request: JobResultRequest) -> EvaluateResponse:
         """Returns the results of the evaluation job."""
 
-        job = await self.job_status(benchmark_id, job_id)
+        job_status_request = JobStatusRequest(benchmark_id=request.benchmark_id, job_id=request.job_id)
+        job = await self.job_status(job_status_request)
         status = job.status
         if not status or status != JobStatus.completed:
-            raise ValueError(f"Job {job_id} not completed. Status: {status.value}")
+            raise ValueError(f"Job {request.job_id} not completed. Status: {status.value}")
 
-        result = await self._evaluator_get(f"/v1/evaluation/jobs/{job_id}/results")
+        result = await self._evaluator_get(f"/v1/evaluation/jobs/{request.job_id}/results")
 
         return EvaluateResponse(
             # TODO: these are stored in detailed results on NeMo Evaluator side; can be added
             generations=[],
             scores={
-                benchmark_id: ScoringResult(
+                request.benchmark_id: ScoringResult(
                     score_rows=[],
                     aggregated_results=result,
                 )
