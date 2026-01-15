@@ -102,14 +102,7 @@ Refer to the [Quick Start Guide](https://llamastack.github.io/docs/getting_start
 
 ## What's Next?
 
-This is just the beginning! In future blog posts, we'll cover:
-
-- Building your first RAG system
-- Creating intelligent agents
-- Best practices for production deployments
-- Case studies from the community
-- Latest features and updates
-- Comparing Llama Stack with other AI platforms in the ecosystem
+See the [Llama Stack Office Hours Content Calendar](https://docs.google.com/document/d/1it-OsGFgAIwAUctQRQ-j1CBxFHhvSm530YR67eYGW1I/edit?tab=t.4uf22mux1a94) for upcoming topics and the blog roadmap.
 
 ## Join the Community
 
