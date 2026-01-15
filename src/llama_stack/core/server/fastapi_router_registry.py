@@ -21,12 +21,15 @@ from llama_stack_api import (
     batches,
     benchmarks,
     conversations,
+    datasetio,
     datasets,
+    eval,
     files,
     inspect_api,
     models,
     post_training,
     providers,
+    shields,
 )
 
 # Router factories for APIs that have FastAPI routers
@@ -37,13 +40,16 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "admin": admin.fastapi_routes.create_router,
     "batches": batches.fastapi_routes.create_router,
     "benchmarks": benchmarks.fastapi_routes.create_router,
-    "datasets": datasets.fastapi_routes.create_router,
-    "models": models.fastapi_routes.create_router,
-    "providers": providers.fastapi_routes.create_router,
-    "inspect": inspect_api.fastapi_routes.create_router,
-    "files": files.fastapi_routes.create_router,
     "conversations": conversations.fastapi_routes.create_router,
+    "datasetio": datasetio.fastapi_routes.create_router,
+    "datasets": datasets.fastapi_routes.create_router,
+    "eval": eval.fastapi_routes.create_router,
+    "files": files.fastapi_routes.create_router,
+    "inspect": inspect_api.fastapi_routes.create_router,
+    "models": models.fastapi_routes.create_router,
     "post_training": post_training.fastapi_routes.create_router,
+    "providers": providers.fastapi_routes.create_router,
+    "shields": shields.fastapi_routes.create_router,
 }
 
 

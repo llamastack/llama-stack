@@ -23,6 +23,7 @@ from llama_stack_api import (
     Dataset,
     DatasetPurpose,
     GetBenchmarkRequest,
+    GetShieldRequest,
     ListBenchmarksRequest,
     ListToolDefsResponse,
     Model,
@@ -30,10 +31,12 @@ from llama_stack_api import (
     ModelType,
     NumberType,
     RegisterBenchmarkRequest,
+    RegisterShieldRequest,
     Shield,
     ToolDef,
     ToolGroup,
     UnregisterBenchmarkRequest,
+    UnregisterShieldRequest,
     URIDataSource,
 )
 from llama_stack_api.datasets import (
@@ -220,8 +223,8 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     await table.initialize()
 
     # Register multiple shields and verify listing
-    await table.register_shield(shield_id="test-shield", provider_id="test_provider")
-    await table.register_shield(shield_id="test-shield-2", provider_id="test_provider")
+    await table.register_shield(RegisterShieldRequest(shield_id="test-shield", provider_id="test_provider"))
+    await table.register_shield(RegisterShieldRequest(shield_id="test-shield-2", provider_id="test_provider"))
     shields = await table.list_shields()
     assert len(shields.data) == 2
 
@@ -230,7 +233,7 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     assert "test-shield-2" in shield_ids
 
     # Test get specific shield
-    test_shield = await table.get_shield(identifier="test-shield")
+    test_shield = await table.get_shield(GetShieldRequest(identifier="test-shield"))
     assert test_shield is not None
     assert test_shield.identifier == "test-shield"
     assert test_shield.provider_id == "test_provider"
@@ -239,10 +242,10 @@ async def test_shields_routing_table(cached_disk_dist_registry):
 
     # Test get non-existent shield - should raise ValueError with specific message
     with pytest.raises(ValueError, match="Shield 'non-existent' not found"):
-        await table.get_shield(identifier="non-existent")
+        await table.get_shield(GetShieldRequest(identifier="non-existent"))
 
     # Test unregistering shields
-    await table.unregister_shield(identifier="test-shield")
+    await table.unregister_shield(UnregisterShieldRequest(identifier="test-shield"))
     shields = await table.list_shields()
 
     assert len(shields.data) == 1
@@ -251,13 +254,13 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     assert "test-shield-2" in shield_ids
 
     # Unregister the remaining shield
-    await table.unregister_shield(identifier="test-shield-2")
+    await table.unregister_shield(UnregisterShieldRequest(identifier="test-shield-2"))
     shields = await table.list_shields()
     assert len(shields.data) == 0
 
     # Test unregistering non-existent shield - should raise ValueError with specific message
     with pytest.raises(ValueError, match="Shield 'non-existent' not found"):
-        await table.unregister_shield(identifier="non-existent")
+        await table.unregister_shield(UnregisterShieldRequest(identifier="non-existent"))
 
 
 async def test_datasets_routing_table(cached_disk_dist_registry):

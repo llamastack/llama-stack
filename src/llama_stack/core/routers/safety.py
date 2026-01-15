@@ -11,7 +11,16 @@ from opentelemetry import trace
 from llama_stack.core.datatypes import SafetyConfig
 from llama_stack.log import get_logger
 from llama_stack.telemetry.helpers import safety_request_span_attributes, safety_span_name
-from llama_stack_api import ModerationObject, OpenAIMessageParam, RoutingTable, RunShieldResponse, Safety, Shield
+from llama_stack_api import (
+    ModerationObject,
+    OpenAIMessageParam,
+    RegisterShieldRequest,
+    RoutingTable,
+    RunShieldResponse,
+    Safety,
+    Shield,
+    UnregisterShieldRequest,
+)
 
 logger = get_logger(name=__name__, category="core::routers")
 tracer = trace.get_tracer(__name__)
@@ -35,19 +44,13 @@ class SafetyRouter(Safety):
         logger.debug("SafetyRouter.shutdown")
         pass
 
-    async def register_shield(
-        self,
-        shield_id: str,
-        provider_shield_id: str | None = None,
-        provider_id: str | None = None,
-        params: dict[str, Any] | None = None,
-    ) -> Shield:
-        logger.debug(f"SafetyRouter.register_shield: {shield_id}")
-        return await self.routing_table.register_shield(shield_id, provider_shield_id, provider_id, params)
+    async def register_shield(self, request: RegisterShieldRequest) -> Shield:
+        logger.debug(f"SafetyRouter.register_shield: {request.shield_id}")
+        return await self.routing_table.register_shield(request)
 
     async def unregister_shield(self, identifier: str) -> None:
         logger.debug(f"SafetyRouter.unregister_shield: {identifier}")
-        return await self.routing_table.unregister_shield(identifier)
+        return await self.routing_table.unregister_shield(UnregisterShieldRequest(identifier=identifier))
 
     async def run_shield(
         self,

@@ -10,6 +10,7 @@ import requests
 
 from llama_stack.log import get_logger
 from llama_stack_api import (
+    GetShieldRequest,
     ModerationObject,
     OpenAIMessageParam,
     RunShieldResponse,
@@ -65,7 +66,7 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
         Raises:
             ValueError: If the shield with the provided shield_id is not found.
         """
-        shield = await self.shield_store.get_shield(shield_id)
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=shield_id))
         if not shield:
             raise ValueError(f"Shield {shield_id} not found")
 

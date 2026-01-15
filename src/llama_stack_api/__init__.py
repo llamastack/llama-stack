@@ -120,7 +120,12 @@ from .conversations import (
     RetrieveItemRequest,
     UpdateConversationRequest,
 )
-from .datasetio import DatasetIO, DatasetStore
+from .datasetio import (
+    AppendRowsRequest,
+    DatasetIO,
+    DatasetStore,
+    IterRowsRequest,
+)
 from .datasets import (
     CommonDatasetFields,
     Dataset,
@@ -153,7 +158,21 @@ from .datatypes import (
     ToolGroupsProtocolPrivate,
     VectorStoresProtocolPrivate,
 )
-from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
+from .eval import (
+    BenchmarkConfig,
+    BenchmarkIdRequest,
+    Eval,
+    EvalCandidate,
+    EvaluateResponse,
+    EvaluateRowsBodyRequest,
+    EvaluateRowsRequest,
+    JobCancelRequest,
+    JobResultRequest,
+    JobStatusRequest,
+    ModelCandidate,
+    RunEvalBodyRequest,
+    RunEvalRequest,
+)
 from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
     DeleteFileRequest,
@@ -450,10 +469,13 @@ from .scoring_functions import (
 )
 from .shields import (
     CommonShieldFields,
+    GetShieldRequest,
     ListShieldsResponse,
+    RegisterShieldRequest,
     Shield,
     ShieldInput,
     Shields,
+    UnregisterShieldRequest,
 )
 from .tools import (
     ListToolDefsResponse,
@@ -585,6 +607,8 @@ __all__ = [
     "DatasetNotFoundError",
     "DatasetStore",
     "DatasetType",
+    "AppendRowsRequest",
+    "IterRowsRequest",
     "Datasets",
     "DatasetsProtocolPrivate",
     "DefaultRAGQueryGeneratorConfig",
@@ -598,6 +622,14 @@ __all__ = [
     "Eval",
     "EvalCandidate",
     "EvaluateResponse",
+    "EvaluateRowsBodyRequest",
+    "EvaluateRowsRequest",
+    "BenchmarkIdRequest",
+    "JobCancelRequest",
+    "JobResultRequest",
+    "JobStatusRequest",
+    "RunEvalBodyRequest",
+    "RunEvalRequest",
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",
@@ -911,6 +943,9 @@ __all__ = [
     "ShieldStore",
     "Shields",
     "ShieldsProtocolPrivate",
+    "GetShieldRequest",
+    "RegisterShieldRequest",
+    "UnregisterShieldRequest",
     "SpecialToolGroup",
     "StrictJsonType",
     "StringType",
