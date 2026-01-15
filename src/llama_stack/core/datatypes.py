@@ -703,9 +703,18 @@ class ServerConfig(BaseModel):
 class StackConfig(BaseModel):
     version: int = LLAMA_STACK_RUN_CONFIG_VERSION
 
-    image_name: str = Field(
-        ...,
+    distro_name: str | None = Field(
+        default=None,
         description="""
+Reference to the distribution this package refers to. For unregistered (adhoc) packages,
+this could be just a hash
+""",
+    )
+    image_name: str | None = Field(
+        default=None,
+        deprecated=True,
+        description="""
+DEPRECATED: Use 'distro_name' instead. This field is maintained for backward compatibility.
 Reference to the distribution this package refers to. For unregistered (adhoc) packages,
 this could be just a hash
 """,
@@ -771,6 +780,34 @@ can be instantiated multiple times (with different configs) if necessary.
         if isinstance(v, str):
             return Path(v)
         return v
+
+    @model_validator(mode="after")
+    def validate_distro_name_migration(self) -> "StackConfig":
+        """Handle migration from image_name to distro_name."""
+        import warnings
+
+        if self.distro_name is None and self.image_name is None:
+            raise ValueError("Either 'distro_name' or 'image_name' must be provided")
+
+        if self.image_name is not None and self.distro_name is None:
+            # Migrate from image_name to distro_name
+            warnings.warn(
+                "The 'image_name' field is deprecated. Please use 'distro_name' instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            self.distro_name = self.image_name
+        elif self.image_name is not None and self.distro_name is not None:
+            # Both provided - warn and prefer distro_name
+            warnings.warn(
+                "Both 'image_name' and 'distro_name' were provided. "
+                "The 'image_name' field is deprecated and will be ignored. "
+                "Please use only 'distro_name' in your configuration.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        return self
 
     @model_validator(mode="after")
     def validate_server_stores(self) -> "StackConfig":

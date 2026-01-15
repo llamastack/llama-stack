@@ -9,7 +9,7 @@ Llama Stack follows [Semantic Versioning](https://semver.org/) with three releas
 | Release Type | Cadence | Description |
 |-------------|---------|-------------|
 | **Major (X.0.0)** | Every 6-8 months | Breaking changes, major new features, architectural changes |
-| **Minor (0.Y.0)** | Every 2 months | New features, non-breaking API additions, significant improvements |
+| **Minor (0.Y.0)** | Monthly | New features, non-breaking API additions, significant improvements |
 | **Patch (0.0.Z)** | Weekly | Bug fixes, security patches, documentation updates |
 
 ## Version Numbering
@@ -109,3 +109,30 @@ Each release includes:
 - **Documentation**: Updated docs at https://llamastack.github.io
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for general contribution guidelines.
+
+## Maintenance Policy
+
+Llama Stack actively maintains the **last 2 stable minor releases**.
+
+### What "Maintained" Means
+
+- **Bug fixes**: Critical bugs are backported to maintained release branches
+- **Security patches**: Security vulnerabilities are patched in maintained releases
+- **Patch releases (Z-stream)**: Maintained releases receive regular patch releases
+
+### Maintenance Timeline
+
+| Release | Status | Notes |
+|---------|--------|-------|
+| Current minor (0.Y.0) | ✅ Actively maintained | Bug fixes and security patches |
+| Previous minor (0.Y-1.0) | ✅ Maintained | Bug fixes and security patches |
+| Older releases | ❌ Unmaintained | No backports; upgrade recommended |
+
+### Example
+
+If the current release is `v0.4.x`:
+- `v0.4.x` — Actively maintained (current)
+- `v0.3.x` — Maintained (bug fixes only)
+- `v0.2.x` and earlier — Unmaintained
+
+Users on unmaintained versions are encouraged to upgrade to continue receiving fixes.

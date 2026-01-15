@@ -15,11 +15,10 @@ import uvicorn
 import yaml
 from termcolor import cprint
 
-from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
 from llama_stack.core.datatypes import Api, Provider, StackConfig
 from llama_stack.core.distribution import get_provider_registry
-from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
+from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
     KVStoreReference,
@@ -66,18 +65,6 @@ class StackRun(Subcommand):
             default=int(os.getenv("LLAMA_STACK_PORT", 8321)),
         )
         self.parser.add_argument(
-            "--image-name",
-            type=str,
-            default=None,
-            help="[DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running.",
-        )
-        self.parser.add_argument(
-            "--image-type",
-            type=str,
-            help="[DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running.",
-            choices=[e.value for e in ImageType if e.value != ImageType.CONTAINER.value],
-        )
-        self.parser.add_argument(
             "--enable-ui",
             action="store_true",
             help="Start the UI server",
@@ -93,15 +80,6 @@ class StackRun(Subcommand):
         import yaml
 
         from llama_stack.core.configure import parse_and_maybe_upgrade_config
-
-        if args.image_type or args.image_name:
-            self.parser.error(
-                "The --image-type and --image-name flags are no longer supported.\n\n"
-                "Please activate your virtual environment manually before running `llama stack run`.\n\n"
-                "For example:\n"
-                "  source /path/to/venv/bin/activate\n"
-                "  llama stack run <config>\n"
-            )
 
         if args.enable_ui:
             self._start_ui_development_server(args.port)
@@ -194,13 +172,16 @@ class StackRun(Subcommand):
                 logger_config = LoggingConfig(**cfg)
             else:
                 logger_config = None
-            config = StackConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
+            config = StackConfig(**cast_distro_name_to_string(replace_env_vars(config_contents)))
 
         port = args.port or config.server.port
         host = config.server.host or ["::", "0.0.0.0"]
 
         # Set the config file in environment so create_app can find it
         os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
+
+        # disable together banner that spams llama stack run every time
+        os.environ["TOGETHER_NO_BANNER"] = "1"
 
         uvicorn_config = {
             "factory": True,
@@ -319,7 +300,7 @@ class StackRun(Subcommand):
         )
 
         return StackConfig(
-            image_name="providers-run",
+            distro_name="providers-run",
             apis=apis,
             providers=providers,
             storage=storage,

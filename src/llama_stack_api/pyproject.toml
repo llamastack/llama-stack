@@ -24,6 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Information Analysis",
 ]
 dependencies = [
+    "openai>=2.5.0",
     "fastapi>=0.115.0,<1.0",
     "pydantic>=2.11.9",
     "jsonschema",
@@ -35,7 +36,7 @@ dependencies = [
 Homepage = "https://github.com/llamastack/llama-stack"
 
 [tool.setuptools.packages.find]
-where = ["."]
+where = [".."]
 include = ["llama_stack_api", "llama_stack_api.*"]
 
 [tool.setuptools.package-data]

@@ -190,7 +190,7 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
 
 
 async def create_dist_registry(
-    metadata_store: KVStoreReference, image_name: str
+    metadata_store: KVStoreReference, distro_name: str
 ) -> tuple[CachedDiskDistributionRegistry, KVStore]:
     # instantiate kvstore for storing and retrieving distribution metadata
     dist_kvstore = await kvstore_impl(metadata_store)

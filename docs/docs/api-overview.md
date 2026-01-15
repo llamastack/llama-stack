@@ -8,7 +8,7 @@ The Llama Stack provides a comprehensive set of APIs organized by stability leve
 
 These APIs are fully tested, documented, and stable. They follow semantic versioning principles and maintain backward compatibility within major versions. Recommended for production applications.
 
-[**Browse Stable APIs →**](./api/llama-stack-specification)
+[**Browse Stable APIs →**](./api/index.mdx)
 
 **Key Features:**
 - ✅ Backward compatibility guaranteed
@@ -24,7 +24,7 @@ These APIs are fully tested, documented, and stable. They follow semantic versio
 
 These APIs include v1alpha and v1beta endpoints that are feature-complete but may undergo changes based on feedback. Great for exploring new capabilities and providing feedback.
 
-[**Browse Experimental APIs →**](./api-experimental/llama-stack-specification-experimental-apis)
+[**Browse Experimental APIs →**](./api-experimental/index.mdx)
 
 **Key Features:**
 - 🧪 Latest features and capabilities
@@ -40,7 +40,7 @@ These APIs include v1alpha and v1beta endpoints that are feature-complete but ma
 
 These APIs are deprecated and will be removed in future versions. They are provided for migration purposes and to help transition to newer, stable alternatives.
 
-[**Browse Deprecated APIs →**](./api-deprecated/llama-stack-specification-deprecated-apis)
+[**Browse Deprecated APIs →**](./api-deprecated/index.mdx)
 
 **Key Features:**
 - ⚠️ Will be removed in future versions

@@ -22,6 +22,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
+from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from llama_stack_api import (
     EmbeddedChunk,
@@ -115,7 +116,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunk_json = doc.properties["chunk_content"]
             try:
                 chunk_dict = json.loads(chunk_json)
-                chunk = EmbeddedChunk(**chunk_dict)
+                chunk = load_embedded_chunk_with_backward_compat(chunk_dict)
             except Exception:
                 log.exception(f"Failed to parse document: {chunk_json}")
                 continue
@@ -175,7 +176,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunk_json = doc.properties["chunk_content"]
             try:
                 chunk_dict = json.loads(chunk_json)
-                chunk = EmbeddedChunk(**chunk_dict)
+                chunk = load_embedded_chunk_with_backward_compat(chunk_dict)
             except Exception:
                 log.exception(f"Failed to parse document: {chunk_json}")
                 continue
@@ -244,7 +245,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunk_json = doc.properties["chunk_content"]
             try:
                 chunk_dict = json.loads(chunk_json)
-                chunk = EmbeddedChunk(**chunk_dict)
+                chunk = load_embedded_chunk_with_backward_compat(chunk_dict)
             except Exception:
                 log.exception(f"Failed to parse document: {chunk_json}")
                 continue
