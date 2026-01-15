@@ -4,17 +4,22 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+"""Pydantic models for Post-Training API requests and responses.
+
+This module defines the request and response models for the Post-Training API
+using Pydantic with Field descriptions for OpenAPI schema generation.
+"""
+
 from datetime import datetime
 from enum import Enum
-from typing import Annotated, Any, Literal, Protocol
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
 
 from llama_stack_api.common.content_types import URL
 from llama_stack_api.common.job_types import JobStatus
 from llama_stack_api.common.training_types import Checkpoint
-from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
-from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
+from llama_stack_api.schema_utils import json_schema_type, register_schema
 
 
 @json_schema_type
@@ -285,86 +290,50 @@ class PostTrainingJobArtifactsResponse(BaseModel):
     # TODO(ashwin): metrics, evals
 
 
-class PostTraining(Protocol):
-    @webmethod(route="/post-training/supervised-fine-tune", method="POST", level=LLAMA_STACK_API_V1ALPHA)
-    async def supervised_fine_tune(
-        self,
-        job_uuid: str,
-        training_config: TrainingConfig,
-        hyperparam_search_config: dict[str, Any],
-        logger_config: dict[str, Any],
-        model: str | None = Field(
-            default=None,
-            description="Model descriptor for training if not in provider config`",
-        ),
-        checkpoint_dir: str | None = None,
-        algorithm_config: AlgorithmConfig | None = None,
-    ) -> PostTrainingJob:
-        """Run supervised fine-tuning of a model.
+@json_schema_type
+class SupervisedFineTuneRequest(BaseModel):
+    """Request to run supervised fine-tuning of a model."""
 
-        :param job_uuid: The UUID of the job to create.
-        :param training_config: The training configuration.
-        :param hyperparam_search_config: The hyperparam search configuration.
-        :param logger_config: The logger configuration.
-        :param model: The model to fine-tune.
-        :param checkpoint_dir: The directory to save checkpoint(s) to.
-        :param algorithm_config: The algorithm configuration.
-        :returns: A PostTrainingJob.
-        """
-        ...
+    job_uuid: str = Field(..., description="The UUID of the job to create.")
+    training_config: TrainingConfig = Field(..., description="The training configuration.")
+    hyperparam_search_config: dict[str, Any] = Field(..., description="The hyperparam search configuration.")
+    logger_config: dict[str, Any] = Field(..., description="The logger configuration.")
+    model: str | None = Field(
+        default=None,
+        description="Model descriptor for training if not in provider config",
+    )
+    checkpoint_dir: str | None = Field(default=None, description="The directory to save checkpoint(s) to.")
+    algorithm_config: AlgorithmConfig | None = Field(default=None, description="The algorithm configuration.")
 
-    @webmethod(route="/post-training/preference-optimize", method="POST", level=LLAMA_STACK_API_V1ALPHA)
-    async def preference_optimize(
-        self,
-        job_uuid: str,
-        finetuned_model: str,
-        algorithm_config: DPOAlignmentConfig,
-        training_config: TrainingConfig,
-        hyperparam_search_config: dict[str, Any],
-        logger_config: dict[str, Any],
-    ) -> PostTrainingJob:
-        """Run preference optimization of a model.
 
-        :param job_uuid: The UUID of the job to create.
-        :param finetuned_model: The model to fine-tune.
-        :param algorithm_config: The algorithm configuration.
-        :param training_config: The training configuration.
-        :param hyperparam_search_config: The hyperparam search configuration.
-        :param logger_config: The logger configuration.
-        :returns: A PostTrainingJob.
-        """
-        ...
+@json_schema_type
+class PreferenceOptimizeRequest(BaseModel):
+    """Request to run preference optimization of a model."""
 
-    @webmethod(route="/post-training/jobs", method="GET", level=LLAMA_STACK_API_V1ALPHA)
-    async def get_training_jobs(self) -> ListPostTrainingJobsResponse:
-        """Get all training jobs.
+    job_uuid: str = Field(..., description="The UUID of the job to create.")
+    finetuned_model: str = Field(..., description="The model to fine-tune.")
+    algorithm_config: DPOAlignmentConfig = Field(..., description="The algorithm configuration.")
+    training_config: TrainingConfig = Field(..., description="The training configuration.")
+    hyperparam_search_config: dict[str, Any] = Field(..., description="The hyperparam search configuration.")
+    logger_config: dict[str, Any] = Field(..., description="The logger configuration.")
 
-        :returns: A ListPostTrainingJobsResponse.
-        """
-        ...
 
-    @webmethod(route="/post-training/job/status", method="GET", level=LLAMA_STACK_API_V1ALPHA)
-    async def get_training_job_status(self, job_uuid: str) -> PostTrainingJobStatusResponse:
-        """Get the status of a training job.
+@json_schema_type
+class GetTrainingJobStatusRequest(BaseModel):
+    """Request to get the status of a training job."""
 
-        :param job_uuid: The UUID of the job to get the status of.
-        :returns: A PostTrainingJobStatusResponse.
-        """
-        ...
+    job_uuid: str = Field(..., description="The UUID of the job to get the status of.")
 
-    @webmethod(route="/post-training/job/cancel", method="POST", level=LLAMA_STACK_API_V1ALPHA)
-    async def cancel_training_job(self, job_uuid: str) -> None:
-        """Cancel a training job.
 
-        :param job_uuid: The UUID of the job to cancel.
-        """
-        ...
+@json_schema_type
+class CancelTrainingJobRequest(BaseModel):
+    """Request to cancel a training job."""
 
-    @webmethod(route="/post-training/job/artifacts", method="GET", level=LLAMA_STACK_API_V1ALPHA)
-    async def get_training_job_artifacts(self, job_uuid: str) -> PostTrainingJobArtifactsResponse:
-        """Get the artifacts of a training job.
+    job_uuid: str = Field(..., description="The UUID of the job to cancel.")
 
-        :param job_uuid: The UUID of the job to get the artifacts of.
-        :returns: A PostTrainingJobArtifactsResponse.
-        """
-        ...
+
+@json_schema_type
+class GetTrainingJobArtifactsRequest(BaseModel):
+    """Request to get the artifacts of a training job."""
+
+    job_uuid: str = Field(..., description="The UUID of the job to get the artifacts of.")
