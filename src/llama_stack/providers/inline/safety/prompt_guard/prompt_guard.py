@@ -13,6 +13,7 @@ from llama_stack.core.utils.model_utils import model_local_dir
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack_api import (
+    GetShieldRequest,
     ModerationObject,
     OpenAIMessageParam,
     RunShieldResponse,
@@ -57,7 +58,7 @@ class PromptGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
         messages: list[OpenAIMessageParam],
         params: dict[str, Any],
     ) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(shield_id)
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=shield_id))
         if not shield:
             raise ValueError(f"Unknown shield {shield_id}")
 
