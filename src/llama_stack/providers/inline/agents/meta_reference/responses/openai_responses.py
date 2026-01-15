@@ -56,6 +56,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
+from llama_stack_api.common.errors import ServiceNotEnabledError
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
@@ -374,10 +375,9 @@ class OpenAIResponsesImpl:
 
         # Validate that Safety API is available if guardrails are requested
         if guardrail_ids and self.safety_api is None:
-            raise ValueError(
-                "Cannot process guardrails: Safety API is not configured.\n\n"
-                "To use guardrails, ensure the Safety API is configured in your stack, or remove "
-                "the 'guardrails' parameter from your request."
+            raise ServiceNotEnabledError(
+                "Safety API",
+                provider_specific_message="Ensure the Safety API is enabled in your stack, otherwise remove the 'guardrails' parameter from your request.",
             )
 
         if conversation is not None:
