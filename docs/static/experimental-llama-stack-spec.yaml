@@ -473,44 +473,49 @@ paths:
           description: Default Response
       tags:
       - Post Training
-      summary: Get Training Job Artifacts
+      summary: Get the artifacts of a training job.
       description: Get the artifacts of a training job.
       operationId: get_training_job_artifacts_v1alpha_post_training_job_artifacts_get
       parameters:
       - name: job_uuid
-        in: query
+        in: path
         required: true
         schema:
           type: string
+          description: The UUID of the job to get the artifacts of.
           title: Job Uuid
+        description: The UUID of the job to get the artifacts of.
   /v1alpha/post-training/job/cancel:
     post:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: Successfully cancelled the training job.
       tags:
       - Post Training
-      summary: Cancel Training Job
+      summary: Cancel a training job.
       description: Cancel a training job.
       operationId: cancel_training_job_v1alpha_post_training_job_cancel_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CancelTrainingJobRequest'
+      parameters:
+      - name: job_uuid
+        in: path
         required: true
+        schema:
+          type: string
+          description: The UUID of the job to cancel.
+          title: Job Uuid
+        description: The UUID of the job to cancel.
   /v1alpha/post-training/job/status:
     get:
       responses:
@@ -534,16 +539,18 @@ paths:
           description: Default Response
       tags:
       - Post Training
-      summary: Get Training Job Status
+      summary: Get the status of a training job.
       description: Get the status of a training job.
       operationId: get_training_job_status_v1alpha_post_training_job_status_get
       parameters:
       - name: job_uuid
-        in: query
+        in: path
         required: true
         schema:
           type: string
+          description: The UUID of the job to get the status of.
           title: Job Uuid
+        description: The UUID of the job to get the status of.
   /v1alpha/post-training/jobs:
     get:
       responses:
@@ -567,7 +574,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Post Training
-      summary: Get Training Jobs
+      summary: Get all training jobs.
       description: Get all training jobs.
       operationId: get_training_jobs_v1alpha_post_training_jobs_get
   /v1alpha/post-training/preference-optimize:
@@ -593,7 +600,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Post Training
-      summary: Preference Optimize
+      summary: Run preference optimization of a model.
       description: Run preference optimization of a model.
       operationId: preference_optimize_v1alpha_post_training_preference_optimize_post
       requestBody:
@@ -625,7 +632,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Post Training
-      summary: Supervised Fine Tune
+      summary: Run supervised fine-tuning of a model.
       description: Run supervised fine-tuning of a model.
       operationId: supervised_fine_tune_v1alpha_post_training_supervised_fine_tune_post
       requestBody:
@@ -7451,14 +7458,16 @@ components:
       title: PostTrainingMetric
       description: Training metrics captured during post-training jobs.
     CancelTrainingJobRequest:
+      description: Request to cancel a training job.
       properties:
         job_uuid:
-          type: string
+          description: The UUID of the job to cancel.
           title: Job Uuid
-      type: object
+          type: string
       required:
       - job_uuid
       title: CancelTrainingJobRequest
+      type: object
     PostTrainingJobStatusResponse:
       properties:
         job_uuid:
@@ -7676,21 +7685,27 @@ components:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job to create.
         finetuned_model:
           type: string
           title: Finetuned Model
+          description: The model to fine-tune.
         algorithm_config:
           $ref: '#/components/schemas/DPOAlignmentConfig'
+          description: The algorithm configuration.
         training_config:
           $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration.
         hyperparam_search_config:
           additionalProperties: true
           type: object
           title: Hyperparam Search Config
+          description: The hyperparam search configuration.
         logger_config:
           additionalProperties: true
           type: object
           title: Logger Config
+          description: The logger configuration.
       type: object
       required:
       - job_uuid
@@ -7700,6 +7715,7 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PreferenceOptimizeRequest
+      description: Request to run preference optimization of a model.
     PostTrainingJob:
       properties:
         job_uuid:
@@ -7788,25 +7804,30 @@ components:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job to create.
         training_config:
           $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration.
         hyperparam_search_config:
           additionalProperties: true
           type: object
           title: Hyperparam Search Config
+          description: The hyperparam search configuration.
         logger_config:
           additionalProperties: true
           type: object
           title: Logger Config
+          description: The logger configuration.
         model:
           anyOf:
           - type: string
           - type: 'null'
-          description: Model descriptor for training if not in provider config`
+          description: Model descriptor for training if not in provider config
         checkpoint_dir:
           anyOf:
           - type: string
           - type: 'null'
+          description: The directory to save checkpoint(s) to.
         algorithm_config:
           anyOf:
           - oneOf:
@@ -7822,6 +7843,7 @@ components:
             title: LoraFinetuningConfig | QATFinetuningConfig
           - type: 'null'
           title: Algorithm Config
+          description: The algorithm configuration.
       type: object
       required:
       - job_uuid
@@ -7829,6 +7851,7 @@ components:
       - hyperparam_search_config
       - logger_config
       title: SupervisedFineTuneRequest
+      description: Request to run supervised fine-tuning of a model.
     RegisterModelRequest:
       properties:
         model_id:
@@ -10389,6 +10412,28 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
+      type: object
+    GetTrainingJobStatusRequest:
+      description: Request to get the status of a training job.
+      properties:
+        job_uuid:
+          description: The UUID of the job to get the status of.
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: GetTrainingJobStatusRequest
+      type: object
+    GetTrainingJobArtifactsRequest:
+      description: Request to get the artifacts of a training job.
+      properties:
+        job_uuid:
+          description: The UUID of the job to get the artifacts of.
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: GetTrainingJobArtifactsRequest
       type: object
   responses:
     BadRequest400:
