@@ -420,6 +420,12 @@ async def instantiate_provider(
             if run_config.vector_stores is not None:
                 provider_config["vector_stores_config"] = run_config.vector_stores
 
+        # Inject trusted_model_prefixes for providers that need it (introspection-based)
+        if hasattr(config_type, "__fields__") and "trusted_model_prefixes" in config_type.__fields__:
+            # Only inject from config if not already set in provider config
+            if "trusted_model_prefixes" not in provider_config:
+                provider_config["trusted_model_prefixes"] = run_config.server.trusted_model_prefixes
+
         config = config_type(**provider_config)
         args = [config, deps]
         if "policy" in inspect.signature(getattr(module, method)).parameters:

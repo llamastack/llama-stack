@@ -14,11 +14,12 @@ HuggingFace-based post-training provider for fine-tuning models using the Huggin
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `trusted_model_prefixes` | `list[str]` | No | ['nomic-ai/'] | List of trusted model prefixes/organizations. Models from these sources will be loaded with trust_remote_code=True. Others will be loaded with trust_remote_code=False for security. |
 | `device` | `str` | No | cuda |  |
 | `distributed_backend` | `Literal[fsdp, deepspeed] \| None` | No |  |  |
 | `checkpoint_format` | `Literal[full_state, huggingface] \| None` | No | huggingface |  |
 | `chat_template` | `str` | No | `&lt;|user|&gt;`<br/>`{input}`<br/>`&lt;|assistant|&gt;`<br/>`{output}` |  |
-| `model_specific_config` | `dict` | No | `{'trust_remote_code': True, 'attn_implementation': 'sdpa'}` |  |
+| `model_specific_config` | `dict` | No | `{'attn_implementation': 'sdpa'}` |  |
 | `max_seq_length` | `int` | No | 2048 |  |
 | `gradient_checkpointing` | `bool` | No | False |  |
 | `save_total_limit` | `int` | No | 3 |  |

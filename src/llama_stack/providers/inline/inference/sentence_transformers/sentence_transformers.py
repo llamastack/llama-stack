@@ -36,6 +36,7 @@ class SentenceTransformersInferenceImpl(
 
     def __init__(self, config: SentenceTransformersInferenceConfig) -> None:
         self.config = config
+        self.trusted_model_config = config
 
     async def initialize(self) -> None:
         pass

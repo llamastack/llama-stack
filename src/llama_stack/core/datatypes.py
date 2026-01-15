@@ -18,6 +18,9 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.log import LoggingConfig
+from llama_stack.providers.utils.common.security_config import (
+    DEFAULT_TRUSTED_MODEL_PREFIXES,
+)
 from llama_stack_api import (
     Api,
     Benchmark,
@@ -701,6 +704,13 @@ class ServerConfig(BaseModel):
     workers: int = Field(
         default=1,
         description="Number of workers to use for the server",
+    )
+    trusted_model_prefixes: list[str] = Field(
+        default=DEFAULT_TRUSTED_MODEL_PREFIXES,
+        description="Global security configuration: List of trusted model prefixes/organizations. "
+        "Models from these sources will be loaded with trust_remote_code=True. "
+        "Others will be loaded with trust_remote_code=False for security. "
+        "This setting is injected into all provider configurations.",
     )
 
 
