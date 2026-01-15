@@ -825,4 +825,53 @@ For more details on TLS configuration, refer to the [TLS setup guide](https://mi
 Please refer to the remote provider documentation.
 """,
         ),
+        RemoteProviderSpec(
+            api=Api.vector_io,
+            adapter_type="elasticsearch",
+            provider_type="remote::elasticsearch",
+            pip_packages=["elasticsearch>=8.16.0,<9.0.0"] + DEFAULT_VECTOR_IO_DEPS,
+            module="llama_stack.providers.remote.vector_io.elasticsearch",
+            config_class="llama_stack.providers.remote.vector_io.elasticsearch.ElasticsearchVectorIOConfig",
+            api_dependencies=[Api.inference],
+            optional_api_dependencies=[Api.files, Api.models],
+            description="""
+[Elasticsearch](https://www.elastic.co/) is a vector database provider for Llama Stack.
+It allows you to store and query vectors directly within an Elasticsearch database.
+That means you're not limited to storing vectors in memory or in a separate service.
+
+## Features
+Elasticsearch supports:
+- Store embeddings and their metadata
+- Vector search
+- Full-text search
+- Fuzzy search
+- Hybrid search
+- Document storage
+- Metadata filtering
+- Inference service
+- Machine Learning integrations
+
+## Usage
+
+To use Elasticsearch in your Llama Stack project, follow these steps:
+
+1. Install the necessary dependencies.
+2. Configure your Llama Stack project to use Elasticsearch.
+3. Start storing and querying vectors.
+
+## Installation
+
+You can test Elasticsearch locally by running this script in the terminal:
+
+```bash
+curl -fsSL https://elastic.co/start-local | sh
+```
+
+Or you can [start a free trial](https://www.elastic.co/cloud/cloud-trial-overview?utm_campaign=llama-stack-integration) on Elastic Cloud.
+For more information on how to deploy Elasticsearch, see the [official documentation](https://www.elastic.co/docs/deploy-manage/deploy).
+
+## Documentation
+See [Elasticsearch's documentation](https://www.elastic.co/docs/solutions/search) for more details about Elasticsearch in general.
+""",
+        ),
     ]

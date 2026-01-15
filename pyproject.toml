@@ -153,6 +153,7 @@ test = [
     "pymilvus>=2.6.1",
     "milvus-lite>=2.5.0",
     "weaviate-client>=4.16.4",
+    "elasticsearch>=8.16.0, <9.0.0"
 ]
 docs = [
     "setuptools",
@@ -335,6 +336,7 @@ exclude = [
     "^src/llama_stack/providers/remote/vector_io/qdrant/",
     "^src/llama_stack/providers/remote/vector_io/sample/",
     "^src/llama_stack/providers/remote/vector_io/weaviate/",
+    "^src/llama_stack/providers/remote/vector_io/elasticsearch/",
     "^src/llama_stack/providers/utils/bedrock/client\\.py$",
     "^src/llama_stack/providers/utils/bedrock/refreshable_boto_session\\.py$",
     "^src/llama_stack/providers/utils/inference/embedding_mixin\\.py$",
