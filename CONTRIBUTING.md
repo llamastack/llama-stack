@@ -151,7 +151,7 @@ Llama Stack has "out-of-tree" providers referred to as [external providers](http
 
 If you wish to include a new in-tree provider in the Core project, please follow these steps:
 
-1. **Open a discussion issue**: Open a "discussion-type" issue describing the provider you want to add, its use case, and how it fits into the Llama Stack ecosystem.
+1. **Open a discussion issue**: Open an issue with label "discussion" describing the provider you want to add, its use case, and how it fits into the Llama Stack ecosystem.
 
 2. **Present at a community call** (optional): Bring your proposal to a [community call](README.md#community) to gather feedback, answer questions, and build consensus with other contributors and maintainers.
 
