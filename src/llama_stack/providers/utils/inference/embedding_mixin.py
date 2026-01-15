@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING
 import torch
 
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.common.security_config import TrustedModelConfig
 
 if TYPE_CHECKING:
     from sentence_transformers import SentenceTransformer
@@ -35,6 +36,7 @@ log = get_logger(name=__name__, category="providers::utils")
 
 class SentenceTransformerEmbeddingMixin:
     model_store: ModelStore
+    trusted_model_config: TrustedModelConfig
 
     async def openai_embeddings(
         self,
@@ -84,6 +86,17 @@ class SentenceTransformerEmbeddingMixin:
 
         log.info(f"Loading sentence transformer for {model}...")
 
+        trust_remote = self.trusted_model_config.is_trusted_model(model)
+
+        if not trust_remote:
+            log.warning(
+                f"Model {model} is not in trusted list. "
+                f"Loading with trust_remote_code=False for security. "
+                f"Trusted prefixes: {self.trusted_model_config.trusted_model_prefixes}"
+            )
+        else:
+            log.info(f"Model {model} is in trusted list, loading with trust_remote_code=True")
+
         def _load_model():
             from sentence_transformers import SentenceTransformer
 
@@ -94,7 +107,7 @@ class SentenceTransformerEmbeddingMixin:
                 log.debug(f"Constraining torch threads on {platform_name} to a single worker")
                 torch.set_num_threads(1)
 
-            return SentenceTransformer(model, trust_remote_code=True)
+            return SentenceTransformer(model, trust_remote_code=trust_remote)
 
         loaded_model = await asyncio.to_thread(_load_model)
         EMBEDDING_MODELS[model] = loaded_model
