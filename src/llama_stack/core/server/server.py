@@ -56,6 +56,7 @@ from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
+from llama_stack_api.common.errors import LlamaStackError
 
 from .auth import AuthenticationMiddleware
 from .quota import QuotaMiddleware
@@ -91,7 +92,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
 
 
-def translate_exception(exc: Exception) -> HTTPException | RequestValidationError:
+def translate_exception(exc: Exception) -> HTTPException:
     if isinstance(exc, ValidationError):
         exc = RequestValidationError(exc.errors())
 
@@ -101,18 +102,16 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
             detail={
                 "errors": [
                     {
-                        "loc": list(error["loc"]),
-                        "msg": error["msg"],
-                        "type": error["type"],
+                        "loc": list(error.get("loc", [])),
+                        "msg": error.get("msg", "Validation error"),
+                        "type": error.get("type", "unknown"),
                     }
                     for error in exc.errors()
                 ]
             },
         )
-    elif isinstance(exc, ConflictError):
-        return HTTPException(status_code=httpx.codes.CONFLICT, detail=str(exc))
-    elif isinstance(exc, ResourceNotFoundError):
-        return HTTPException(status_code=httpx.codes.NOT_FOUND, detail=str(exc))
+    if isinstance(exc, LlamaStackError):
+        return exc.http_exception()
     elif isinstance(exc, ValueError):
         return HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=f"Invalid value: {str(exc)}")
     elif isinstance(exc, BadRequestError):
@@ -131,7 +130,7 @@ def translate_exception(exc: Exception) -> HTTPException | RequestValidationErro
         # Handle provider SDK exceptions (e.g., OpenAI's APIStatusError and subclasses)
         # These include AuthenticationError (401), PermissionDeniedError (403), etc.
         # This preserves the actual HTTP status code from the provider
-        status_code = exc.status_code
+        status_code = getattr(exc, "status_code", httpx.codes.INTERNAL_SERVER_ERROR)
         detail = str(exc)
         return HTTPException(status_code=status_code, detail=detail)
     else:

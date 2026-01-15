@@ -9,8 +9,27 @@
 #   2. All classes should have a custom error message with the goal of informing the Llama Stack user specifically
 #   3. All classes should propogate the inherited __init__ function otherwise via 'super().__init__(message)'
 
+from abc import ABC, abstractmethod
 
-class ResourceNotFoundError(ValueError):
+import httpx
+from fastapi import HTTPException
+
+
+class LlamaStackError(ABC):
+    """A Llama Stack error that can be translated to a fastapi HTTPException"""
+
+    @property
+    @abstractmethod
+    def status_code(self) -> httpx.codes:
+        """The HTTP status code for this exception"""
+        ...
+
+    def http_exception(self) -> HTTPException:
+        """A fastapi HTTPException with the appropriate status code and detail"""
+        return HTTPException(status_code=self.status_code, detail=str(self))
+
+
+class ResourceNotFoundError(ValueError, LlamaStackError):
     """generic exception for a missing Llama Stack resource"""
 
     def __init__(self, resource_name: str, resource_type: str, client_list: str) -> None:
@@ -19,13 +38,9 @@ class ResourceNotFoundError(ValueError):
         )
         super().__init__(message)
 
-
-class UnsupportedModelError(ValueError):
-    """raised when model is not present in the list of supported models"""
-
-    def __init__(self, model_name: str, supported_models_list: list[str]):
-        message = f"'{model_name}' model is not supported. Supported models are: {', '.join(supported_models_list)}"
-        super().__init__(message)
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.NOT_FOUND
 
 
 class ModelNotFoundError(ResourceNotFoundError):
@@ -56,7 +71,19 @@ class ToolGroupNotFoundError(ResourceNotFoundError):
         super().__init__(toolgroup_name, "Tool Group", "client.toolgroups.list()")
 
 
-class ModelTypeError(TypeError):
+class UnsupportedModelError(ValueError, LlamaStackError):
+    """raised when model is not present in the list of supported models"""
+
+    def __init__(self, model_name: str, supported_models_list: list[str]):
+        message = f"'{model_name}' model is not supported. Supported models are: {', '.join(supported_models_list)}"
+        super().__init__(message)
+
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.BAD_REQUEST
+
+
+class ModelTypeError(TypeError, LlamaStackError):
     """raised when a model is present but not the correct type"""
 
     def __init__(self, model_name: str, model_type: str, expected_model_type: str) -> None:
@@ -65,34 +92,68 @@ class ModelTypeError(TypeError):
         )
         super().__init__(message)
 
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.BAD_REQUEST
 
-class ConflictError(ValueError):
+
+class ConflictError(ValueError, LlamaStackError):
     """raised when an operation cannot be performed due to a conflict with the current state"""
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
 
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.CONFLICT
 
-class TokenValidationError(ValueError):
+
+class TokenValidationError(ValueError, LlamaStackError):
     """raised when token validation fails during authentication"""
 
     def __init__(self, message: str) -> None:
         super().__init__(message)
 
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.UNAUTHORIZED
 
-class ConversationNotFoundError(ResourceNotFoundError):
+
+class ConversationNotFoundError(ResourceNotFoundError, LlamaStackError):
     """raised when Llama Stack cannot find a referenced conversation"""
 
     def __init__(self, conversation_id: str) -> None:
         super().__init__(conversation_id, "Conversation", "client.conversations.list()")
 
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.NOT_FOUND
 
-class InvalidConversationIdError(ValueError):
+
+class InvalidConversationIdError(ValueError, LlamaStackError):
     """raised when a conversation ID has an invalid format"""
 
     def __init__(self, conversation_id: str) -> None:
         message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
         super().__init__(message)
+    
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.BAD_REQUEST
+
+
+class ServiceNotEnabledError(LlamaStackError, ValueError):
+    """raised when a llama stack service is not enabled"""
+
+    def __init__(self, service_name: str, *, provider_specific_message: str | None = None) -> None:
+        message = f"Service '{service_name}' is not enabled. Please check your configuration and enable the service before trying again."
+        if provider_specific_message:
+            message += f"\n\n{provider_specific_message}"
+        super().__init__(message)
+
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.SERVICE_UNAVAILABLE
 
 
 class ConnectorNotFoundError(ResourceNotFoundError):
@@ -108,3 +169,4 @@ class ConnectorToolNotFoundError(ValueError):
     def __init__(self, connector_id: str, tool_name: str) -> None:
         message = f"Tool '{tool_name}' not found in connector '{connector_id}'. Use 'client.connectors.list_tools(\"{connector_id}\")' to list available tools."
         super().__init__(message)
+
