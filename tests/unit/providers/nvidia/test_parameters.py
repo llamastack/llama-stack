@@ -10,7 +10,6 @@ from unittest.mock import patch
 
 import pytest
 
-from llama_stack.core.library_client import convert_pydantic_to_json_value
 from llama_stack.providers.remote.post_training.nvidia.post_training import (
     NvidiaPostTrainingAdapter,
     NvidiaPostTrainingConfig,
@@ -24,6 +23,7 @@ from llama_stack_api import (
     OptimizerType,
     TrainingConfig,
 )
+from llama_stack_api.post_training import SupervisedFineTuneRequest
 
 
 class TestNvidiaParameters:
@@ -95,17 +95,16 @@ class TestNvidiaParameters:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
 
-            self.run_async(
-                self.adapter.supervised_fine_tune(
-                    job_uuid="test-job",
-                    model="meta-llama/Llama-3.1-8B-Instruct",
-                    checkpoint_dir="",
-                    algorithm_config=algorithm_config,
-                    training_config=convert_pydantic_to_json_value(training_config),
-                    logger_config={},
-                    hyperparam_search_config={},
-                )
+            request = SupervisedFineTuneRequest(
+                job_uuid="test-job",
+                model="meta-llama/Llama-3.1-8B-Instruct",
+                checkpoint_dir="",
+                algorithm_config=algorithm_config,
+                training_config=training_config,
+                logger_config={},
+                hyperparam_search_config={},
             )
+            self.run_async(self.adapter.supervised_fine_tune(request))
 
             warning_texts = [str(warning.message) for warning in w]
 
@@ -163,17 +162,16 @@ class TestNvidiaParameters:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
 
-            self.run_async(
-                self.adapter.supervised_fine_tune(
-                    job_uuid=required_job_uuid,
-                    model=required_model,
-                    checkpoint_dir="",
-                    algorithm_config=algorithm_config,
-                    training_config=convert_pydantic_to_json_value(training_config),
-                    logger_config={},
-                    hyperparam_search_config={},
-                )
+            request = SupervisedFineTuneRequest(
+                job_uuid=required_job_uuid,
+                model=required_model,
+                checkpoint_dir="",
+                algorithm_config=algorithm_config,
+                training_config=training_config,
+                logger_config={},
+                hyperparam_search_config={},
             )
+            self.run_async(self.adapter.supervised_fine_tune(request))
 
             warning_texts = [str(warning.message) for warning in w]
 
@@ -225,24 +223,23 @@ class TestNvidiaParameters:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
 
-            self.run_async(
-                self.adapter.supervised_fine_tune(
-                    job_uuid="test-job",
-                    model="meta-llama/Llama-3.1-8B-Instruct",
-                    checkpoint_dir="test-dir",
-                    algorithm_config=LoraFinetuningConfig(
-                        type="LoRA",
-                        apply_lora_to_mlp=True,
-                        apply_lora_to_output=True,
-                        alpha=16,
-                        rank=16,
-                        lora_attn_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-                    ),
-                    training_config=convert_pydantic_to_json_value(training_config),
-                    logger_config={"test": "value"},
-                    hyperparam_search_config={"test": "value"},
-                )
+            request = SupervisedFineTuneRequest(
+                job_uuid="test-job",
+                model="meta-llama/Llama-3.1-8B-Instruct",
+                checkpoint_dir="test-dir",
+                algorithm_config=LoraFinetuningConfig(
+                    type="LoRA",
+                    apply_lora_to_mlp=True,
+                    apply_lora_to_output=True,
+                    alpha=16,
+                    rank=16,
+                    lora_attn_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+                ),
+                training_config=training_config,
+                logger_config={"test": "value"},
+                hyperparam_search_config={"test": "value"},
             )
+            self.run_async(self.adapter.supervised_fine_tune(request))
 
             assert len(w) >= 4
             warning_texts = [str(warning.message) for warning in w]

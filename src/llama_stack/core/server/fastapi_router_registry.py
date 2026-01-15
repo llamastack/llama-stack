@@ -16,7 +16,18 @@ from typing import Any, cast
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
 
-from llama_stack_api import admin, batches, benchmarks, conversations, datasets, files, inspect_api, models, providers
+from llama_stack_api import (
+    admin,
+    batches,
+    benchmarks,
+    conversations,
+    datasets,
+    files,
+    inspect_api,
+    models,
+    post_training,
+    providers,
+)
 
 # Router factories for APIs that have FastAPI routers
 # Add new APIs here as they are migrated to the router system
@@ -32,6 +43,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "inspect": inspect_api.fastapi_routes.create_router,
     "files": files.fastapi_routes.create_router,
     "conversations": conversations.fastapi_routes.create_router,
+    "post_training": post_training.fastapi_routes.create_router,
 }
 
 

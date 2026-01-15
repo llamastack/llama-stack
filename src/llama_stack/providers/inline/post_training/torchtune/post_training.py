@@ -12,18 +12,20 @@ from llama_stack.providers.inline.post_training.torchtune.config import (
 from llama_stack.providers.utils.scheduler import JobArtifact, Scheduler
 from llama_stack.providers.utils.scheduler import JobStatus as SchedulerJobStatus
 from llama_stack_api import (
-    AlgorithmConfig,
+    CancelTrainingJobRequest,
     Checkpoint,
     DatasetIO,
     Datasets,
-    DPOAlignmentConfig,
+    GetTrainingJobArtifactsRequest,
+    GetTrainingJobStatusRequest,
     JobStatus,
     ListPostTrainingJobsResponse,
     LoraFinetuningConfig,
     PostTrainingJob,
     PostTrainingJobArtifactsResponse,
     PostTrainingJobStatusResponse,
-    TrainingConfig,
+    PreferenceOptimizeRequest,
+    SupervisedFineTuneRequest,
 )
 
 
@@ -69,15 +71,9 @@ class TorchtunePostTrainingImpl:
 
     async def supervised_fine_tune(
         self,
-        job_uuid: str,
-        training_config: TrainingConfig,
-        hyperparam_search_config: dict[str, Any],
-        logger_config: dict[str, Any],
-        model: str,
-        checkpoint_dir: str | None,
-        algorithm_config: AlgorithmConfig | None,
+        request: SupervisedFineTuneRequest,
     ) -> PostTrainingJob:
-        if isinstance(algorithm_config, LoraFinetuningConfig):
+        if isinstance(request.algorithm_config, LoraFinetuningConfig):
 
             async def handler(on_log_message_cb, on_status_change_cb, on_artifact_collected_cb):
                 from llama_stack.providers.inline.post_training.torchtune.recipes.lora_finetuning_single_device import (
@@ -88,13 +84,13 @@ class TorchtunePostTrainingImpl:
 
                 recipe = LoraFinetuningSingleDevice(
                     self.config,
-                    job_uuid,
-                    training_config,
-                    hyperparam_search_config,
-                    logger_config,
-                    model,
-                    checkpoint_dir,
-                    algorithm_config,
+                    request.job_uuid,
+                    request.training_config,
+                    request.hyperparam_search_config,
+                    request.logger_config,
+                    request.model,
+                    request.checkpoint_dir,
+                    request.algorithm_config,
                     self.datasetio_api,
                     self.datasets_api,
                 )
@@ -112,17 +108,12 @@ class TorchtunePostTrainingImpl:
         else:
             raise NotImplementedError()
 
-        job_uuid = self._scheduler.schedule(_JOB_TYPE_SUPERVISED_FINE_TUNE, job_uuid, handler)
+        job_uuid = self._scheduler.schedule(_JOB_TYPE_SUPERVISED_FINE_TUNE, request.job_uuid, handler)
         return PostTrainingJob(job_uuid=job_uuid)
 
     async def preference_optimize(
         self,
-        job_uuid: str,
-        finetuned_model: str,
-        algorithm_config: DPOAlignmentConfig,
-        training_config: TrainingConfig,
-        hyperparam_search_config: dict[str, Any],
-        logger_config: dict[str, Any],
+        request: PreferenceOptimizeRequest,
     ) -> PostTrainingJob:
         raise NotImplementedError()
 
@@ -144,8 +135,10 @@ class TorchtunePostTrainingImpl:
         data = cls._get_artifacts_metadata_by_type(job, TrainingArtifactType.RESOURCES_STATS.value)
         return data[0] if data else None
 
-    async def get_training_job_status(self, job_uuid: str) -> PostTrainingJobStatusResponse | None:
-        job = self._scheduler.get_job(job_uuid)
+    async def get_training_job_status(
+        self, request: GetTrainingJobStatusRequest
+    ) -> PostTrainingJobStatusResponse | None:
+        job = self._scheduler.get_job(request.job_uuid)
 
         match job.status:
             # TODO: Add support for other statuses to API
@@ -161,7 +154,7 @@ class TorchtunePostTrainingImpl:
                 raise NotImplementedError()
 
         return PostTrainingJobStatusResponse(
-            job_uuid=job_uuid,
+            job_uuid=request.job_uuid,
             status=status,
             scheduled_at=job.scheduled_at,
             started_at=job.started_at,
@@ -170,9 +163,11 @@ class TorchtunePostTrainingImpl:
             resources_allocated=self._get_resources_allocated(job),
         )
 
-    async def cancel_training_job(self, job_uuid: str) -> None:
-        self._scheduler.cancel(job_uuid)
+    async def cancel_training_job(self, request: CancelTrainingJobRequest) -> None:
+        self._scheduler.cancel(request.job_uuid)
 
-    async def get_training_job_artifacts(self, job_uuid: str) -> PostTrainingJobArtifactsResponse | None:
-        job = self._scheduler.get_job(job_uuid)
-        return PostTrainingJobArtifactsResponse(job_uuid=job_uuid, checkpoints=self._get_checkpoints(job))
+    async def get_training_job_artifacts(
+        self, request: GetTrainingJobArtifactsRequest
+    ) -> PostTrainingJobArtifactsResponse | None:
+        job = self._scheduler.get_job(request.job_uuid)
+        return PostTrainingJobArtifactsResponse(job_uuid=request.job_uuid, checkpoints=self._get_checkpoints(job))

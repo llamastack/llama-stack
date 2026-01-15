@@ -144,8 +144,22 @@ Please keep pull requests (PRs) small and focused. If you have a large set of ch
 ```{tip}
 As a general guideline:
 - Experienced contributors should try to keep no more than 5 open PRs at a time.
-- New contributors are encouraged to have only one open PR at a time until they’re familiar with the codebase and process.
+- New contributors are encouraged to have only one open PR at a time until they're familiar with the codebase and process.
 ```
+
+### Adding a New Provider
+
+Llama Stack has "out-of-tree" providers referred to as [external providers](https://llamastack.github.io/docs/providers/external) as well as "in-tree" providers that are a part of the core project. The Llama Stack community is accepting of [new in-tree provider contributions](https://llamastack.github.io/docs/contributing/new_api_provider) so long as there is merit seen in the addition.
+
+If you wish to include a new in-tree provider in the Core project, please follow these steps:
+
+1. **Open a discussion issue**: Open an issue with label "discussion" describing the provider you want to add, its use case, and how it fits into the Llama Stack ecosystem.
+
+2. **Present at a community call** (optional): Bring your proposal to a [community call](README.md#community) to gather feedback, answer questions, and build consensus with other contributors and maintainers.
+
+3. **Implement and submit a PR**: Once approved, use the [Adding a New API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) guide to help you get started. Once approved, follow the standard pull request process outlined above.
+
+This process helps ensure that new providers are well-designed, avoid duplication of effort, and integrate smoothly with the rest of the project.
 
 ## Repository guidelines
 
