@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from elasticsearch import AsyncElasticsearch
+from elasticsearch import ApiError, AsyncElasticsearch
 from elasticsearch.helpers import async_bulk
 from numpy.typing import NDArray
 
@@ -75,26 +75,26 @@ class ElasticsearchIndex(EmbeddingIndex):
             return
 
         try:
-            if not await self.client.indices.exists(index=self.collection_name):
-                await self.client.indices.create(
-                    index=self.collection_name,
-                    body={
-                        "mappings": {
-                            "properties": {
-                                "content": {"type": "text"},
-                                "chunk_id": {"type": "keyword"},
-                                "metadata": {"type": "object"},
-                                "chunk_metadata": {"type": "object"},
-                                "embedding": {"type": "dense_vector", "dims": len(chunks[0].embedding)},
-                                "embedding_dimension": {"type": "integer"},
-                                "embedding_model": {"type": "keyword"},
-                            }
+            await self.client.indices.create(
+                index=self.collection_name,
+                body={
+                    "mappings": {
+                        "properties": {
+                            "content": {"type": "text"},
+                            "chunk_id": {"type": "keyword"},
+                            "metadata": {"type": "object"},
+                            "chunk_metadata": {"type": "object"},
+                            "embedding": {"type": "dense_vector", "dims": len(chunks[0].embedding)},
+                            "embedding_dimension": {"type": "integer"},
+                            "embedding_model": {"type": "keyword"},
                         }
-                    },
-                )
-        except Exception as e:
-            log.error(f"Error creating Elasticsearch index {self.collection_name}: {e}")
-            raise
+                    }
+                },
+            )
+        except ApiError as e:
+            if e.status_code != 400 or "resource_already_exists_exception" not in e.message:
+                log.error(f"Error creating Elasticsearch index {self.collection_name}: {e}")
+                raise
 
         actions = []
         for chunk in chunks:
@@ -103,7 +103,18 @@ class ElasticsearchIndex(EmbeddingIndex):
                     "_op_type": "index",
                     "_index": self.collection_name,
                     "_id": chunk.chunk_id,
-                    "_source": chunk.model_dump(exclude_none=True),
+                    "_source": chunk.model_dump(
+                        exclude_none=True,
+                        include={
+                            "content",
+                            "chunk_id",
+                            "metadata",
+                            "chunk_metadata",
+                            "embedding",
+                            "embedding_dimension",
+                            "embedding_model",
+                        },
+                    ),
                 }
             )
 
