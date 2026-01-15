@@ -48,7 +48,7 @@ from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
-    cast_image_name_to_string,
+    cast_distro_name_to_string,
     replace_env_vars,
 )
 from llama_stack.core.utils.config import redact_sensitive_fields
@@ -396,7 +396,7 @@ def create_app() -> StackApp:
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
-        config = StackConfig(**cast_image_name_to_string(config))
+        config = StackConfig(**cast_distro_name_to_string(config))
 
     _log_run_config(run_config=config)
 

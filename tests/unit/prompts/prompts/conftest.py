@@ -42,7 +42,7 @@ async def temp_prompt_store(tmp_path_factory):
         ),
     )
     mock_run_config = StackConfig(
-        image_name="test-distribution",
+        distro_name="test-distribution",
         apis=[],
         providers={},
         storage=storage,

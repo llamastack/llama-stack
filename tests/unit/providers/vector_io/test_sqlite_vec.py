@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import time
 
 import numpy as np
 import pytest
@@ -14,7 +15,7 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import (
     SQLiteVecVectorIOAdapter,
     _create_sqlite_connection,
 )
-from llama_stack_api import Chunk, QueryChunksResponse
+from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, QueryChunksResponse
 
 # This test is a unit test for the SQLiteVecVectorIOAdapter class. This should only contain
 # tests which are specific to this class. More general (API-level) tests should be placed in
@@ -43,13 +44,39 @@ async def sqlite_vec_index(embedding_dimension, tmp_path_factory):
 
 
 async def test_query_chunk_metadata(sqlite_vec_index, sample_chunks_with_metadata, sample_embeddings_with_metadata):
-    await sqlite_vec_index.add_chunks(sample_chunks_with_metadata, sample_embeddings_with_metadata)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks_with_metadata, sample_embeddings_with_metadata, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
     response = await sqlite_vec_index.query_vector(sample_embeddings_with_metadata[-1], k=2, score_threshold=0.0)
     assert response.chunks[0].chunk_metadata == sample_chunks_with_metadata[-1].chunk_metadata
 
 
 async def test_query_chunks_full_text_search(sqlite_vec_index, sample_chunks, sample_embeddings):
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
     query_string = "Sentence 5"
     response = await sqlite_vec_index.query_keyword(k=3, score_threshold=0.0, query_string=query_string)
 
@@ -66,7 +93,20 @@ async def test_query_chunks_full_text_search(sqlite_vec_index, sample_chunks, sa
 
 
 async def test_query_chunks_hybrid(sqlite_vec_index, sample_chunks, sample_embeddings):
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # Create a query embedding that's similar to the first chunk
     query_embedding = sample_embeddings[0]
@@ -87,15 +127,29 @@ async def test_query_chunks_hybrid(sqlite_vec_index, sample_chunks, sample_embed
 
 
 async def test_query_chunks_full_text_search_k_greater_than_results(sqlite_vec_index, sample_chunks, sample_embeddings):
-    # Re-initialize with a clean index
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     query_str = "Sentence 1 from document 0"  # Should match only one chunk
     response = await sqlite_vec_index.query_keyword(k=5, score_threshold=0.0, query_string=query_str)
 
     assert isinstance(response, QueryChunksResponse)
     assert 0 < len(response.chunks) < 5, f"Expected results between [1, 4], got {len(response.chunks)}"
-    assert any("Sentence 1 from document 0" in chunk.content for chunk in response.chunks), "Expected chunk not found"
+    assert any("Sentence 1 from document 0" in embedded_chunk.content for embedded_chunk in response.chunks), (
+        "Expected chunk not found"
+    )
 
 
 async def test_chunk_id_conflict(sqlite_vec_index, sample_chunks, embedding_dimension):
@@ -105,7 +159,20 @@ async def test_chunk_id_conflict(sqlite_vec_index, sample_chunks, embedding_dime
     batch_size = 2
     sample_embeddings = np.random.rand(len(sample_chunks), embedding_dimension).astype(np.float32)
 
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings, batch_size=batch_size)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks, batch_size=batch_size)
     connection = _create_sqlite_connection(sqlite_vec_index.db_path)
     cur = connection.cursor()
 
@@ -130,7 +197,20 @@ async def sqlite_vec_adapter(sqlite_connection):
 
 async def test_query_chunks_hybrid_no_keyword_matches(sqlite_vec_index, sample_chunks, sample_embeddings):
     """Test hybrid search when keyword search returns no matches - should still return vector results."""
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # Use a non-existent keyword but a valid vector query
     query_embedding = sample_embeddings[0]
@@ -158,7 +238,20 @@ async def test_query_chunks_hybrid_no_keyword_matches(sqlite_vec_index, sample_c
 
 async def test_query_chunks_hybrid_score_threshold(sqlite_vec_index, sample_chunks, sample_embeddings):
     """Test hybrid search with a high score threshold."""
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # Use a very high score threshold that no results will meet
     query_embedding = sample_embeddings[0]
@@ -181,7 +274,20 @@ async def test_query_chunks_hybrid_different_embedding(
     sqlite_vec_index, sample_chunks, sample_embeddings, embedding_dimension
 ):
     """Test hybrid search with a different embedding than the stored ones."""
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # Create a random embedding that's different from stored ones
     query_embedding = np.random.rand(embedding_dimension).astype(np.float32)
@@ -204,7 +310,20 @@ async def test_query_chunks_hybrid_different_embedding(
 
 async def test_query_chunks_hybrid_rrf_ranking(sqlite_vec_index, sample_chunks, sample_embeddings):
     """Test that RRF properly combines rankings when documents appear in both search methods."""
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # Create a query embedding that's similar to the first chunk
     query_embedding = sample_embeddings[0]
@@ -227,7 +346,20 @@ async def test_query_chunks_hybrid_rrf_ranking(sqlite_vec_index, sample_chunks, 
 
 
 async def test_query_chunks_hybrid_score_selection(sqlite_vec_index, sample_chunks, sample_embeddings):
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # Create a query embedding that's similar to the first chunk
     query_embedding = sample_embeddings[0]
@@ -275,7 +407,20 @@ async def test_query_chunks_hybrid_score_selection(sqlite_vec_index, sample_chun
 
 async def test_query_chunks_hybrid_mixed_results(sqlite_vec_index, sample_chunks, sample_embeddings):
     """Test hybrid search with documents that appear in only one search method."""
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # Create a query embedding that's similar to the first chunk
     query_embedding = sample_embeddings[0]
@@ -296,7 +441,10 @@ async def test_query_chunks_hybrid_mixed_results(sqlite_vec_index, sample_chunks
     # Verify scores are in descending order
     assert all(response.scores[i] >= response.scores[i + 1] for i in range(len(response.scores) - 1))
     # Verify we get results from both the vector-similar document and keyword-matched document
-    doc_ids = {chunk.metadata.get("document_id") or chunk.chunk_metadata.document_id for chunk in response.chunks}
+    doc_ids = {
+        embedded_chunk.metadata.get("document_id") or embedded_chunk.chunk_metadata.document_id
+        for embedded_chunk in response.chunks
+    }
     assert "document-0" in doc_ids  # From vector search
     assert "document-2" in doc_ids  # From keyword search
 
@@ -306,7 +454,20 @@ async def test_query_chunks_hybrid_weighted_reranker_parametrization(
 ):
     """Test WeightedReRanker with different alpha values."""
     # Re-add data before each search to ensure test isolation
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
     query_embedding = sample_embeddings[0]
     query_string = "Sentence 0 from document 0"
 
@@ -322,8 +483,11 @@ async def test_query_chunks_hybrid_weighted_reranker_parametrization(
     assert len(response.chunks) > 0  # Should get at least one result
     assert any(
         "document-0"
-        in (chunk.metadata.get("document_id") or (chunk.chunk_metadata.document_id if chunk.chunk_metadata else ""))
-        for chunk in response.chunks
+        in (
+            embedded_chunk.metadata.get("document_id")
+            or (embedded_chunk.chunk_metadata.document_id if embedded_chunk.chunk_metadata else "")
+        )
+        for embedded_chunk in response.chunks
     )
 
     # alpha=0.0 (should behave like pure vector)
@@ -336,9 +500,22 @@ async def test_query_chunks_hybrid_weighted_reranker_parametrization(
         reranker_params={"alpha": 0.0},
     )
     assert len(response.chunks) > 0  # Should get at least one result
-    assert any("document-0" in chunk.metadata["document_id"] for chunk in response.chunks)
+    assert any("document-0" in embedded_chunk.metadata["document_id"] for embedded_chunk in response.chunks)
 
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
     # alpha=0.7 (should be a mix)
     response = await sqlite_vec_index.query_hybrid(
         embedding=query_embedding,
@@ -351,14 +528,30 @@ async def test_query_chunks_hybrid_weighted_reranker_parametrization(
     assert len(response.chunks) > 0  # Should get at least one result
     assert any(
         "document-0"
-        in (chunk.metadata.get("document_id") or (chunk.chunk_metadata.document_id if chunk.chunk_metadata else ""))
-        for chunk in response.chunks
+        in (
+            embedded_chunk.metadata.get("document_id")
+            or (embedded_chunk.chunk_metadata.document_id if embedded_chunk.chunk_metadata else "")
+        )
+        for embedded_chunk in response.chunks
     )
 
 
 async def test_query_chunks_hybrid_rrf_impact_factor(sqlite_vec_index, sample_chunks, sample_embeddings):
     """Test RRFReRanker with different impact factors."""
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
     query_embedding = sample_embeddings[0]
     query_string = "Sentence 0 from document 0"
 
@@ -388,7 +581,20 @@ async def test_query_chunks_hybrid_rrf_impact_factor(sqlite_vec_index, sample_ch
 
 
 async def test_query_chunks_hybrid_edge_cases(sqlite_vec_index, sample_chunks, sample_embeddings):
-    await sqlite_vec_index.add_chunks(sample_chunks, sample_embeddings)
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(embedding),
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # No results from either search - use a completely different embedding and a nonzero threshold
     query_embedding = np.ones_like(sample_embeddings[0]) * -1  # Very different from sample embeddings
@@ -437,23 +643,64 @@ async def test_query_chunks_hybrid_tie_breaking(
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
     # Create two chunks with the same content and embedding
+    chunk1_id = generate_chunk_id("docA", "identical")
+    chunk2_id = generate_chunk_id("docB", "identical")
+
     chunk1 = Chunk(
-        content="identical", chunk_id=generate_chunk_id("docA", "identical"), metadata={"document_id": "docA"}
+        content="identical",
+        chunk_id=chunk1_id,
+        metadata={"document_id": "docA"},
+        chunk_metadata=ChunkMetadata(
+            document_id="docA",
+            chunk_id=chunk1_id,
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            content_token_count=1,
+        ),
     )
     chunk2 = Chunk(
-        content="identical", chunk_id=generate_chunk_id("docB", "identical"), metadata={"document_id": "docB"}
+        content="identical",
+        chunk_id=chunk2_id,
+        metadata={"document_id": "docB"},
+        chunk_metadata=ChunkMetadata(
+            document_id="docB",
+            chunk_id=chunk2_id,
+            created_timestamp=int(time.time()),
+            updated_timestamp=int(time.time()),
+            content_token_count=1,
+        ),
     )
-    chunks = [chunk1, chunk2]
     # Use the same embedding for both chunks to ensure equal scores
     same_embedding = sample_embeddings[0]
-    embeddings = np.array([same_embedding, same_embedding])
+
+    # Create EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk1.content,
+            chunk_id=chunk1.chunk_id,
+            metadata=chunk1.metadata,
+            chunk_metadata=chunk1.chunk_metadata,
+            embedding=same_embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(same_embedding),
+        ),
+        EmbeddedChunk(
+            content=chunk2.content,
+            chunk_id=chunk2.chunk_id,
+            metadata=chunk2.metadata,
+            chunk_metadata=chunk2.chunk_metadata,
+            embedding=same_embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=len(same_embedding),
+        ),
+    ]
 
     # Clear existing data and recreate index
     await sqlite_vec_index.delete()
     temp_dir = tmp_path_factory.getbasetemp()
     db_path = str(temp_dir / "test_sqlite.db")
     sqlite_vec_index = await SQLiteVecIndex.create(dimension=embedding_dimension, db_path=db_path, bank_id="test_bank")
-    await sqlite_vec_index.add_chunks(chunks, embeddings)
+    await sqlite_vec_index.add_chunks(embedded_chunks)
 
     # Query with the same embedding and content to ensure equal scores
     query_embedding = same_embedding
@@ -481,4 +728,7 @@ async def test_query_chunks_hybrid_tie_breaking(
     # Verify both chunks are returned with equal scores
     assert len(first_response.chunks) == 2
     assert first_response.scores[0] == first_response.scores[1]
-    assert {chunk.metadata["document_id"] for chunk in first_response.chunks} == {"docA", "docB"}
+    assert {embedded_chunk.metadata["document_id"] for embedded_chunk in first_response.chunks} == {
+        "docA",
+        "docB",
+    }

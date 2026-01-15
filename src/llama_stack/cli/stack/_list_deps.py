@@ -119,7 +119,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                     file=sys.stderr,
                 )
                 sys.exit(1)
-        config = StackConfig(providers=provider_list, image_name="providers-run")
+        config = StackConfig(providers=provider_list, distro_name="providers-run")
 
     normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(config)
     normal_deps += SERVER_DEPENDENCIES

@@ -9,7 +9,15 @@ from unittest.mock import patch
 import pytest
 from botocore.exceptions import ClientError
 
-from llama_stack_api import OpenAIFilePurpose, ResourceNotFoundError
+from llama_stack_api import (
+    DeleteFileRequest,
+    ListFilesRequest,
+    OpenAIFilePurpose,
+    ResourceNotFoundError,
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+    UploadFileRequest,
+)
 
 
 class TestS3FilesImpl:
@@ -19,8 +27,8 @@ class TestS3FilesImpl:
         """Test successful file upload."""
         sample_text_file.filename = "test_upload_file"
         result = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.ASSISTANTS,
         )
 
         assert result.filename == sample_text_file.filename
@@ -34,7 +42,7 @@ class TestS3FilesImpl:
 
     async def test_list_files_empty(self, s3_provider):
         """Test listing files when no files exist."""
-        result = await s3_provider.openai_list_files()
+        result = await s3_provider.openai_list_files(request=ListFilesRequest())
 
         assert len(result.data) == 0
         assert not result.has_more
@@ -45,11 +53,11 @@ class TestS3FilesImpl:
         """Test retrieving file metadata."""
         sample_text_file.filename = "test_retrieve_file"
         uploaded = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.ASSISTANTS,
         )
 
-        retrieved = await s3_provider.openai_retrieve_file(uploaded.id)
+        retrieved = await s3_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id=uploaded.id))
 
         assert retrieved.id == uploaded.id
         assert retrieved.filename == uploaded.filename
@@ -60,11 +68,13 @@ class TestS3FilesImpl:
         """Test retrieving file content."""
         sample_text_file.filename = "test_retrieve_file_content"
         uploaded = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.ASSISTANTS,
         )
 
-        response = await s3_provider.openai_retrieve_file_content(uploaded.id)
+        response = await s3_provider.openai_retrieve_file_content(
+            request=RetrieveFileContentRequest(file_id=uploaded.id)
+        )
 
         assert response.body == sample_text_file.content
         assert response.headers["Content-Disposition"] == f'attachment; filename="{sample_text_file.filename}"'
@@ -73,17 +83,17 @@ class TestS3FilesImpl:
         """Test deleting a file."""
         sample_text_file.filename = "test_delete_file"
         uploaded = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.ASSISTANTS,
         )
 
-        delete_response = await s3_provider.openai_delete_file(uploaded.id)
+        delete_response = await s3_provider.openai_delete_file(request=DeleteFileRequest(file_id=uploaded.id))
 
         assert delete_response.id == uploaded.id
         assert delete_response.deleted is True
 
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await s3_provider.openai_retrieve_file(uploaded.id)
+            await s3_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id=uploaded.id))
 
         # Verify file is gone from S3 backend
         with pytest.raises(ClientError) as exc_info:
@@ -94,17 +104,17 @@ class TestS3FilesImpl:
         """Test listing files after uploading some."""
         sample_text_file.filename = "test_list_files_with_content_file1"
         file1 = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.ASSISTANTS,
         )
 
         sample_text_file2.filename = "test_list_files_with_content_file2"
         file2 = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.BATCH),
             file=sample_text_file2,
-            purpose=OpenAIFilePurpose.BATCH,
         )
 
-        result = await s3_provider.openai_list_files()
+        result = await s3_provider.openai_list_files(request=ListFilesRequest())
 
         assert len(result.data) == 2
         file_ids = {f.id for f in result.data}
@@ -115,17 +125,17 @@ class TestS3FilesImpl:
         """Test listing files with purpose filter."""
         sample_text_file.filename = "test_list_files_with_purpose_filter_file1"
         file1 = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.ASSISTANTS,
         )
 
         sample_text_file2.filename = "test_list_files_with_purpose_filter_file2"
         await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.BATCH),
             file=sample_text_file2,
-            purpose=OpenAIFilePurpose.BATCH,
         )
 
-        result = await s3_provider.openai_list_files(purpose=OpenAIFilePurpose.ASSISTANTS)
+        result = await s3_provider.openai_list_files(request=ListFilesRequest(purpose=OpenAIFilePurpose.ASSISTANTS))
 
         assert len(result.data) == 1
         assert result.data[0].id == file1.id
@@ -134,48 +144,50 @@ class TestS3FilesImpl:
     async def test_nonexistent_file_retrieval(self, s3_provider):
         """Test retrieving a non-existent file raises error."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await s3_provider.openai_retrieve_file("file-nonexistent")
+            await s3_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id="file-nonexistent"))
 
     async def test_nonexistent_file_content_retrieval(self, s3_provider):
         """Test retrieving content of a non-existent file raises error."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await s3_provider.openai_retrieve_file_content("file-nonexistent")
+            await s3_provider.openai_retrieve_file_content(
+                request=RetrieveFileContentRequest(file_id="file-nonexistent")
+            )
 
     async def test_nonexistent_file_deletion(self, s3_provider):
         """Test deleting a non-existent file raises error."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await s3_provider.openai_delete_file("file-nonexistent")
+            await s3_provider.openai_delete_file(request=DeleteFileRequest(file_id="file-nonexistent"))
 
     async def test_upload_file_without_filename(self, s3_provider, sample_text_file):
         """Test uploading a file without a filename uses the fallback."""
         del sample_text_file.filename
         result = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.ASSISTANTS,
         )
 
         assert result.purpose == OpenAIFilePurpose.ASSISTANTS
         assert result.bytes == len(sample_text_file.content)
 
-        retrieved = await s3_provider.openai_retrieve_file(result.id)
+        retrieved = await s3_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id=result.id))
         assert retrieved.filename == result.filename
 
     async def test_file_operations_when_s3_object_deleted(self, s3_provider, sample_text_file, s3_config, s3_client):
         """Test file operations when S3 object is deleted but metadata exists (negative test)."""
         sample_text_file.filename = "test_orphaned_metadata"
         uploaded = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.ASSISTANTS,
         )
 
         # Directly delete the S3 object from the backend
         s3_client.delete_object(Bucket=s3_config.bucket_name, Key=uploaded.id)
 
         with pytest.raises(ResourceNotFoundError, match="not found") as exc_info:
-            await s3_provider.openai_retrieve_file_content(uploaded.id)
+            await s3_provider.openai_retrieve_file_content(request=RetrieveFileContentRequest(file_id=uploaded.id))
         assert uploaded.id in str(exc_info).lower()
 
-        listed_files = await s3_provider.openai_list_files()
+        listed_files = await s3_provider.openai_list_files(request=ListFilesRequest())
         assert uploaded.id not in [file.id for file in listed_files.data]
 
     async def test_upload_file_s3_put_object_failure(self, s3_provider, sample_text_file, s3_config, s3_client):
@@ -190,11 +202,11 @@ class TestS3FilesImpl:
         with patch.object(s3_provider.client, "put_object", side_effect=failing_put_object):
             with pytest.raises(RuntimeError, match="Failed to upload file to S3"):
                 await s3_provider.openai_upload_file(
+                    request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS),
                     file=sample_text_file,
-                    purpose=OpenAIFilePurpose.ASSISTANTS,
                 )
 
-        files_list = await s3_provider.openai_list_files()
+        files_list = await s3_provider.openai_list_files(request=ListFilesRequest())
         assert len(files_list.data) == 0, "No file metadata should remain after failed upload"
 
     @pytest.mark.parametrize("purpose", [p for p in OpenAIFilePurpose if p != OpenAIFilePurpose.BATCH])
@@ -202,8 +214,8 @@ class TestS3FilesImpl:
         """Test that by default files have no expiration."""
         sample_text_file.filename = "test_default_no_expiration"
         uploaded = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=purpose),
             file=sample_text_file,
-            purpose=purpose,
         )
         assert uploaded.expires_at is None, "By default files should have no expiration"
 
@@ -211,8 +223,8 @@ class TestS3FilesImpl:
         """Test that by default batch files have an expiration."""
         sample_text_file.filename = "test_default_batch_an_expiration"
         uploaded = await s3_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.BATCH),
             file=sample_text_file,
-            purpose=OpenAIFilePurpose.BATCH,
         )
         assert uploaded.expires_at is not None, "By default batch files should have an expiration"
         thirty_days_seconds = 30 * 24 * 3600
@@ -231,24 +243,26 @@ class TestS3FilesImpl:
 
             sample_text_file.filename = "test_expired_file"
             uploaded = await s3_provider.openai_upload_file(
+                request=UploadFileRequest(
+                    purpose=OpenAIFilePurpose.ASSISTANTS,
+                    expires_after=ExpiresAfter(anchor="created_at", seconds=two_hours),
+                ),
                 file=sample_text_file,
-                purpose=OpenAIFilePurpose.ASSISTANTS,
-                expires_after=ExpiresAfter(anchor="created_at", seconds=two_hours),
             )
 
             mock_now.return_value = two_hours * 2  # fast forward 4 hours
 
-            listed = await s3_provider.openai_list_files()
+            listed = await s3_provider.openai_list_files(request=ListFilesRequest())
             assert uploaded.id not in [f.id for f in listed.data]
 
             with pytest.raises(ResourceNotFoundError, match="not found"):
-                await s3_provider.openai_retrieve_file(uploaded.id)
+                await s3_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id=uploaded.id))
 
             with pytest.raises(ResourceNotFoundError, match="not found"):
-                await s3_provider.openai_retrieve_file_content(uploaded.id)
+                await s3_provider.openai_retrieve_file_content(request=RetrieveFileContentRequest(file_id=uploaded.id))
 
             with pytest.raises(ResourceNotFoundError, match="not found"):
-                await s3_provider.openai_delete_file(uploaded.id)
+                await s3_provider.openai_delete_file(request=DeleteFileRequest(file_id=uploaded.id))
 
         with pytest.raises(ClientError) as exc_info:
             s3_client.head_object(Bucket=s3_config.bucket_name, Key=uploaded.id)

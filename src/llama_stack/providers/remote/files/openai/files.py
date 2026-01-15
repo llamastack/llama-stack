@@ -5,24 +5,28 @@
 # the root directory of this source tree.
 
 from datetime import UTC, datetime
-from typing import Annotated, Any
+from typing import Any
 
-from fastapi import Depends, File, Form, Response, UploadFile
+from fastapi import Response, UploadFile
 
 from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
-from llama_stack.providers.utils.files.form_data import parse_expires_after
 from llama_stack_api import (
+    DeleteFileRequest,
     ExpiresAfter,
     Files,
+    ListFilesRequest,
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
     OpenAIFileObject,
     OpenAIFilePurpose,
     Order,
     ResourceNotFoundError,
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+    UploadFileRequest,
 )
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 from openai import OpenAI
@@ -132,10 +136,12 @@ class OpenAIFilesImpl(Files):
 
     async def openai_upload_file(
         self,
-        file: Annotated[UploadFile, File()],
-        purpose: Annotated[OpenAIFilePurpose, Form()],
-        expires_after: Annotated[ExpiresAfter | None, Depends(parse_expires_after)] = None,
+        request: UploadFileRequest,
+        file: UploadFile,
     ) -> OpenAIFileObject:
+        purpose = request.purpose
+        expires_after = request.expires_after
+
         filename = getattr(file, "filename", None) or "uploaded_file"
         content = await file.read()
         file_size = len(content)
@@ -180,11 +186,13 @@ class OpenAIFilesImpl(Files):
 
     async def openai_list_files(
         self,
-        after: str | None = None,
-        limit: int | None = 10000,
-        order: Order | None = Order.desc,
-        purpose: OpenAIFilePurpose | None = None,
+        request: ListFilesRequest,
     ) -> ListOpenAIFileResponse:
+        after = request.after
+        limit = request.limit
+        order = request.order
+        purpose = request.purpose
+
         if not order:
             order = Order.desc
 
@@ -209,18 +217,21 @@ class OpenAIFilesImpl(Files):
             last_id=files[-1].id if files else "",
         )
 
-    async def openai_retrieve_file(self, file_id: str) -> OpenAIFileObject:
+    async def openai_retrieve_file(self, request: RetrieveFileRequest) -> OpenAIFileObject:
+        file_id = request.file_id
         await self._delete_if_expired(file_id)
         row = await self._get_file(file_id)
         return _make_file_object(**row)
 
-    async def openai_delete_file(self, file_id: str) -> OpenAIFileDeleteResponse:
+    async def openai_delete_file(self, request: DeleteFileRequest) -> OpenAIFileDeleteResponse:
+        file_id = request.file_id
         await self._delete_if_expired(file_id)
         _ = await self._get_file(file_id, action=Action.DELETE)
         await self._delete_file(file_id)
         return OpenAIFileDeleteResponse(id=file_id, deleted=True)
 
-    async def openai_retrieve_file_content(self, file_id: str) -> Response:
+    async def openai_retrieve_file_content(self, request: RetrieveFileContentRequest) -> Response:
+        file_id = request.file_id
         await self._delete_if_expired(file_id)
 
         row = await self._get_file(file_id)
