@@ -53,6 +53,8 @@ from llama_stack_api import (
     PostTraining,
     Prompts,
     Providers,
+    RegisterBenchmarkRequest,
+    RegisterModelRequest,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -61,6 +63,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
+from llama_stack_api.datasets import RegisterDatasetRequest
 
 logger = get_logger(name=__name__, category="core")
 
@@ -91,18 +94,21 @@ class LlamaStack(
     pass
 
 
+# Resources to register based on configuration.
+# If a request class is specified, the configuration object will be converted to this class before invoking the registration method.
 RESOURCES = [
-    ("models", Api.models, "register_model", "list_models"),
-    ("shields", Api.shields, "register_shield", "list_shields"),
-    ("datasets", Api.datasets, "register_dataset", "list_datasets"),
+    ("models", Api.models, "register_model", "list_models", RegisterModelRequest),
+    ("shields", Api.shields, "register_shield", "list_shields", None),
+    ("datasets", Api.datasets, "register_dataset", "list_datasets", RegisterDatasetRequest),
     (
         "scoring_fns",
         Api.scoring_functions,
         "register_scoring_function",
         "list_scoring_functions",
+        None,
     ),
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
+    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
+    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
 ]
 
 
@@ -199,7 +205,7 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
-    for rsrc, api, register_method, list_method in RESOURCES:
+    for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
             continue
@@ -213,10 +219,17 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
                     continue
                 logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
 
-            # we want to maintain the type information in arguments to method.
-            # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
-            # we use model_dump() to find all the attrs and then getattr to get the still typed value.
-            await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+            # TODO: Once all register methods are migrated to accept request objects,
+            # remove this conditional and always use the request_class pattern.
+            if request_class is not None:
+                request = request_class(**obj.model_dump())
+                await method(request)
+            else:
+                # we want to maintain the type information in arguments to method.
+                # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
+                # we use model_dump() to find all the attrs and then getattr to get the still typed
+                # value.
+                await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
 
         method = getattr(impls[api], list_method)
         response = await invoke_with_optional_request(method)
