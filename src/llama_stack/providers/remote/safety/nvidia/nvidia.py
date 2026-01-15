@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 from typing import Any
+from urllib.parse import urljoin
 
 import httpx
 
@@ -114,7 +115,7 @@ class NeMoGuardrails:
     async def _guardrails_post(self, path: str, data: Any | None) -> dict[str, Any]:
         """Make a POST request to the guardrails service."""
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
-        url = f"{self.guardrails_service_url}{path}"
+        url = urljoin(self.guardrails_service_url, path)
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(url=url, headers=headers, json=data)
@@ -192,31 +193,13 @@ class NeMoGuardrails:
             f"Guardrails request (openai) to {self.guardrails_service_url}: config_id={self.config_id}, model={self.model}"
         )
         response = await self._guardrails_post(path="/v1/guardrail/chat/completions", data=request_data)
+        return self._parse_guardrails_response(response)
 
+    def _parse_guardrails_response(self, response: dict[str, Any]) -> RunShieldResponse:
+        """Parse guardrails API response and return appropriate RunShieldResponse."""
         error = response.get("error")
         if error:
-            error_type = error.get("type", "")
-            error_code = error.get("code", "")
-            if error_type == "guardrails_violation" or error_code == "content_blocked":
-                logger.info(
-                    f"Guardrails violation: type={error_type}, code={error_code}, rail={error.get('param', 'unknown')}"
-                )
-                return RunShieldResponse(
-                    violation=SafetyViolation(
-                        user_message=error.get("message", self.blocked_message),
-                        violation_level=ViolationLevel.ERROR,
-                        metadata={
-                            "error_type": error_type,
-                            "error_code": error_code,
-                            "rail_name": error.get("param", "unknown"),
-                        },
-                    )
-                )
-            # Unknown error type - log and raise to avoid silent failure
-            logger.error(
-                f"Guardrails service error: type={error_type}, code={error_code}, message={error.get('message', 'unknown')}"
-            )
-            raise RuntimeError(f"Failed to run guardrails check: {error.get('message', 'Unknown error')}")
+            return self._handle_error_response(error)
 
         # Check for legacy format with status field
         if response.get("status") == "blocked":
@@ -229,9 +212,39 @@ class NeMoGuardrails:
                 )
             )
 
-        # Extract response content - handle both OpenAI format (choices) and NeMo format (messages)
+        return self._parse_response_content(response)
+
+    def _handle_error_response(self, error: dict[str, Any]) -> RunShieldResponse:
+        """Handle error object in guardrails response."""
+        error_type = error.get("type", "")
+        error_code = error.get("code", "")
+
+        if error_type == "guardrails_violation" or error_code == "content_blocked":
+            logger.info(
+                f"Guardrails violation: type={error_type}, code={error_code}, rail={error.get('param', 'unknown')}"
+            )
+            return RunShieldResponse(
+                violation=SafetyViolation(
+                    user_message=error.get("message", self.blocked_message),
+                    violation_level=ViolationLevel.ERROR,
+                    metadata={
+                        "error_type": error_type,
+                        "error_code": error_code,
+                        "rail_name": error.get("param", "unknown"),
+                    },
+                )
+            )
+
+        logger.error(
+            f"Guardrails service error: type={error_type}, code={error_code}, message={error.get('message', 'unknown')}"
+        )
+        raise RuntimeError(f"Failed to run guardrails check: {error.get('message', 'Unknown error')}")
+
+    def _parse_response_content(self, response: dict[str, Any]) -> RunShieldResponse:
+        """Extract content from response and check for blocked message pattern."""
         content = ""
         choices = response.get("choices", [])
+
         if choices:
             message = choices[0].get("message") or {}
             content = message.get("content", "")
