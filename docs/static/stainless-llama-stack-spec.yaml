@@ -3517,17 +3517,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/EvaluateResponse'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Eval
       summary: Evaluate Rows
@@ -3539,13 +3539,15 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          description: The ID of the benchmark
+          title: Benchmark Id
+        description: The ID of the benchmark
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EvaluateRowsRequest'
-        required: true
+              $ref: '#/components/schemas/EvaluateRowsBodyRequest'
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs:
     post:
       responses:
@@ -3556,17 +3558,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Job'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Eval
       summary: Run Eval
@@ -3578,13 +3580,15 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          description: The ID of the benchmark
+          title: Benchmark Id
+        description: The ID of the benchmark
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RunEvalRequest'
-        required: true
+              $ref: '#/components/schemas/RunEvalBodyRequest'
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}:
     get:
       responses:
@@ -3595,17 +3599,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/Job'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Eval
       summary: Job Status
@@ -3617,27 +3621,27 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          title: Benchmark Id
       - name: job_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: job_id'
+          title: Job Id
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
           description: Successful Response
       tags:
@@ -3651,13 +3655,13 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          title: Benchmark Id
       - name: job_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: job_id'
+          title: Job Id
   /v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result:
     get:
       responses:
@@ -3668,17 +3672,17 @@ paths:
               schema:
                 $ref: '#/components/schemas/EvaluateResponse'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Eval
       summary: Job Result
@@ -3690,13 +3694,13 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          title: Benchmark Id
       - name: job_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: job_id'
+          title: Job Id
   /v1alpha/inference/rerank:
     post:
       responses:
@@ -10894,6 +10898,7 @@ components:
       properties:
         eval_candidate:
           $ref: '#/components/schemas/ModelCandidate'
+          description: The candidate to evaluate
         scoring_params:
           additionalProperties:
             oneOf:
@@ -10916,6 +10921,7 @@ components:
         num_examples:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated
       type: object
@@ -10942,14 +10948,18 @@ components:
           default: model
         model:
           type: string
+          minLength: 1
           title: Model
+          description: The model ID to evaluate
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
+          description: The sampling parameters for the model
         system_message:
           anyOf:
           - $ref: '#/components/schemas/SystemMessage'
             title: SystemMessage
           - type: 'null'
+          description: The system message providing instructions or context to the model
           title: SystemMessage
       type: object
       required:
@@ -11072,26 +11082,38 @@ components:
       title: TopPSamplingStrategy
       description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
     EvaluateRowsRequest:
+      description: Request model for evaluating a list of rows on a benchmark.
       properties:
+        benchmark_id:
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
+          title: Benchmark Id
+          type: string
         input_rows:
+          description: The rows to evaluate
           items:
             additionalProperties: true
             type: object
-          type: array
+          minItems: 1
           title: Input Rows
+          type: array
         scoring_functions:
+          description: The scoring functions to use for the evaluation
           items:
             type: string
-          type: array
+          minItems: 1
           title: Scoring Functions
+          type: array
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
+          description: The configuration for the benchmark
       required:
+      - benchmark_id
       - input_rows
       - scoring_functions
       - benchmark_config
       title: EvaluateRowsRequest
+      type: object
     EvaluateResponse:
       properties:
         generations:
@@ -11100,11 +11122,13 @@ components:
             type: object
           type: array
           title: Generations
+          description: The generations from the evaluation
         scores:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Scores
+          description: The scores from the evaluation. Each key in the dict is a scoring function name
       type: object
       required:
       - generations
@@ -11112,13 +11136,21 @@ components:
       title: EvaluateResponse
       description: The response from an evaluation.
     RunEvalRequest:
+      description: Request model for running an evaluation on a benchmark.
       properties:
+        benchmark_id:
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
+          title: Benchmark Id
+          type: string
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
+          description: The configuration for the benchmark
       required:
+      - benchmark_id
       - benchmark_config
       title: RunEvalRequest
+      type: object
     Job:
       properties:
         job_id:
@@ -12251,6 +12283,33 @@ components:
       additionalProperties: true
       type: object
       title: Errors
+    EvaluateRowsBodyRequest:
+      properties:
+        input_rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          minItems: 1
+          title: Input Rows
+          description: The rows to evaluate
+        scoring_functions:
+          items:
+            type: string
+          type: array
+          minItems: 1
+          title: Scoring Functions
+          description: The scoring functions to use for the evaluation
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark
+      type: object
+      required:
+      - input_rows
+      - scoring_functions
+      - benchmark_config
+      title: EvaluateRowsBodyRequest
+      description: Request body model for evaluating rows (without path parameter).
     HealthStatus:
       type: string
       enum:
@@ -12922,6 +12981,16 @@ components:
       - reasoning.encrypted_content
       title: ResponseItemInclude
       description: Specify additional output data to include in the model response.
+    RunEvalBodyRequest:
+      properties:
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark
+      type: object
+      required:
+      - benchmark_config
+      title: RunEvalBodyRequest
+      description: Request body model for running an evaluation (without path parameter).
     SearchRankingOptions:
       properties:
         ranker:
@@ -14249,6 +14318,72 @@ components:
       - conversation_id
       - item_id
       title: DeleteItemRequest
+      type: object
+    BenchmarkIdRequest:
+      description: Request model containing benchmark_id path parameter.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark
+          minLength: 1
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: BenchmarkIdRequest
+      type: object
+    JobStatusRequest:
+      description: Request model for getting the status of a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to get the status of
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobStatusRequest
+      type: object
+    JobCancelRequest:
+      description: Request model for canceling a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to cancel
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobCancelRequest
+      type: object
+    JobResultRequest:
+      description: Request model for getting the result of a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to get the result of
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobResultRequest
       type: object
     ProcessFileResponse:
       description: |-

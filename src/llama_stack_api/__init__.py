@@ -151,7 +151,21 @@ from .datatypes import (
     ToolGroupsProtocolPrivate,
     VectorStoresProtocolPrivate,
 )
-from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
+from .eval import (
+    BenchmarkConfig,
+    BenchmarkIdRequest,
+    Eval,
+    EvalCandidate,
+    EvaluateResponse,
+    EvaluateRowsBodyRequest,
+    EvaluateRowsRequest,
+    JobCancelRequest,
+    JobResultRequest,
+    JobStatusRequest,
+    ModelCandidate,
+    RunEvalBodyRequest,
+    RunEvalRequest,
+)
 from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
     DeleteFileRequest,
@@ -594,6 +608,14 @@ __all__ = [
     "Eval",
     "EvalCandidate",
     "EvaluateResponse",
+    "EvaluateRowsBodyRequest",
+    "EvaluateRowsRequest",
+    "BenchmarkIdRequest",
+    "JobCancelRequest",
+    "JobResultRequest",
+    "JobStatusRequest",
+    "RunEvalBodyRequest",
+    "RunEvalRequest",
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",

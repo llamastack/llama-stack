@@ -23,6 +23,12 @@ from llama_stack_api import (
     SamplingParams,
     TopPSamplingStrategy,
 )
+from llama_stack_api.eval.models import (
+    JobCancelRequest,
+    JobResultRequest,
+    JobStatusRequest,
+    RunEvalRequest,
+)
 
 MOCK_DATASET_ID = "default/test-dataset"
 MOCK_BENCHMARK_ID = "test-benchmark"
@@ -144,7 +150,9 @@ async def test_run_eval(nvidia_eval_setup):
     mock_evaluator_post.return_value = mock_evaluator_response
 
     # Run the Evaluation job
-    result = await eval_impl.run_eval(benchmark_id=MOCK_BENCHMARK_ID, benchmark_config=benchmark_config)
+    result = await eval_impl.run_eval(
+        request=RunEvalRequest(benchmark_id=MOCK_BENCHMARK_ID, benchmark_config=benchmark_config)
+    )
 
     # Verify the Evaluator API was called correctly
     mock_evaluator_post.assert_called_once()
@@ -171,7 +179,7 @@ async def test_job_status(nvidia_eval_setup):
     mock_evaluator_get.return_value = mock_evaluator_response
 
     # Get the Evaluation job
-    result = await eval_impl.job_status(benchmark_id=MOCK_BENCHMARK_ID, job_id="job-123")
+    result = await eval_impl.job_status(request=JobStatusRequest(benchmark_id=MOCK_BENCHMARK_ID, job_id="job-123"))
 
     # Verify the result
     assert isinstance(result, Job)
@@ -191,7 +199,7 @@ async def test_job_cancel(nvidia_eval_setup):
     mock_evaluator_post.return_value = mock_evaluator_response
 
     # Cancel the Evaluation job
-    await eval_impl.job_cancel(benchmark_id=MOCK_BENCHMARK_ID, job_id="job-123")
+    await eval_impl.job_cancel(request=JobCancelRequest(benchmark_id=MOCK_BENCHMARK_ID, job_id="job-123"))
 
     # Verify the API was called correctly
     mock_evaluator_post.assert_called_once_with("/v1/evaluation/jobs/job-123/cancel", {})
@@ -214,7 +222,7 @@ async def test_job_result(nvidia_eval_setup):
     ]
 
     # Get the Evaluation job results
-    result = await eval_impl.job_result(benchmark_id=MOCK_BENCHMARK_ID, job_id="job-123")
+    result = await eval_impl.job_result(request=JobResultRequest(benchmark_id=MOCK_BENCHMARK_ID, job_id="job-123"))
 
     # Verify the result
     assert isinstance(result, EvaluateResponse)
