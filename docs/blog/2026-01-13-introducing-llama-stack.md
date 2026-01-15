@@ -27,11 +27,10 @@ Think of Llama Stack as a universal interface that abstracts away the complexity
 Llama Stack provides standardized APIs across six core capabilities:
 
 - **Inference**: Run models locally or in the cloud with a consistent interface
-- **RAG (Retrieval-Augmented Generation)**: Build knowledge retrieval systems
-- **Agents**: Create intelligent agent workflows
-- **Tools**: Integrate with external tools and services
-- **Safety**: Built-in safety guardrails and content filtering
-- **Evals**: Comprehensive evaluation and testing toolkit
+- **Vector Stores**: Build knowledge retrieval systems
+- **Agents**: Create intelligent agent flows with responses/conversations
+- **Tools and MCP**: Integrate with external tools and services directly or via MCP
+- **Moderations**: Built-in safety guardrails and content filtering via moderations api
 
 ### Plugin Architecture
 
@@ -40,11 +39,10 @@ The plugin architecture supports a rich ecosystem of API implementations across 
 - **Local Development**: Start with CPU-only setups for rapid iteration
 - **On-Premises**: Deploy in your own infrastructure
 - **Cloud**: Scale with hosted providers
-- **Mobile**: Run on iOS and Android devices
 
 ### Prepackaged Distributions
 
-Distributions are pre-configured bundles of provider implementations that make it easy to get started. You can begin with a local setup using Ollama and seamlessly transition to production with Fireworks - all without changing your application code.
+Distributions are pre-configured bundles of provider implementations that make it easy to get started. You can begin with a local setup using Ollama and seamlessly transition to production with vLLM - all without changing your application code.
 
 ### Multiple Developer Interfaces
 
@@ -53,8 +51,6 @@ Llama Stack supports various developer interfaces:
 - **CLI**: Command-line tools for server management
 - **Python SDK**: [`llama-stack-client-python`](https://github.com/meta-llama/llama-stack-client-python)
 - **TypeScript SDK**: [`llama-stack-client-typescript`](https://github.com/meta-llama/llama-stack-client-typescript)
-- **Swift SDK**: [`llama-stack-client-swift`](https://github.com/meta-llama/llama-stack-client-swift) for iOS applications
-- **Kotlin SDK**: [`llama-stack-client-kotlin`](https://github.com/meta-llama/llama-stack-client-kotlin) for Android applications
 
 ## Why Llama Stack?
 
