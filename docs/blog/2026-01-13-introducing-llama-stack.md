@@ -31,7 +31,6 @@ Llama Stack provides standardized APIs across six core capabilities:
 - **Agents**: Create intelligent agent workflows
 - **Tools**: Integrate with external tools and services
 - **Safety**: Built-in safety guardrails and content filtering
-- **Evals**: Comprehensive evaluation and testing toolkit
 
 ### Plugin Architecture
 
