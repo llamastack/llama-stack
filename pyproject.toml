@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "PyYAML>=6.0",
-    "aiohttp",
+    "aiohttp>=3.13.3",
     "fastapi>=0.115.0,<1.0",                          # server
     "fire",                                           # for MCP in LLS client
     "httpx",
@@ -52,12 +52,12 @@ dependencies = [
     "starlette>=0.49.1",
     "psycopg2-binary",
     "tornado>=6.5.3",
-    "urllib3>=2.6.0",
+    "urllib3>=2.6.3",
 ]
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.3.0", # Optional for library-only usage
+    "llama-stack-client>=0.4.0.dev0", # Optional for library-only usage
 ]
 
 [dependency-groups]
@@ -104,7 +104,7 @@ type_checking = [
     "sqlite-vec",
     "faiss-cpu",
     "lm-format-enforcer",
-    "mcp",
+    "mcp>=1.23.0",
     "ollama",
     "llama-stack-client>=0.3.0",
 ]
@@ -118,7 +118,7 @@ unit = [
     "aiohttp",
     "psycopg2-binary>=2.9.0",
     "pypdf>=6.1.3",
-    "mcp",
+    "mcp>=1.23.0",
     "chardet",
     "sqlalchemy",
     "sqlalchemy[asyncio]>=2.0.41",
@@ -141,7 +141,7 @@ test = [
     "chardet",
     "psycopg2-binary>=2.9.0",
     "pypdf>=6.1.3",
-    "mcp",
+    "mcp>=1.23.0",
     "datasets>=4.0.0",
     "autoevals",
     "transformers",

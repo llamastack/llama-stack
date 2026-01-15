@@ -110,6 +110,18 @@ REGISTRY_REFRESH_INTERVAL_SECONDS = 300
 REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
+# ID fields for registered resources that should trigger skipping
+# when they resolve to empty/None (from conditional env vars like :+)
+RESOURCE_ID_FIELDS = [
+    "vector_store_id",
+    "model_id",
+    "shield_id",
+    "dataset_id",
+    "scoring_fn_id",
+    "benchmark_id",
+    "toolgroup_id",
+]
+
 
 def is_request_model(t: Any) -> bool:
     """Check if a type is a request model (Pydantic BaseModel).
@@ -346,15 +358,33 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                             logger.debug(
                                 f"Skipping config env variable expansion for disabled provider: {v.get('provider_id', '')}"
                             )
-                            # Create a copy with resolved provider_id but original config
-                            disabled_provider = v.copy()
-                            disabled_provider["provider_id"] = resolved_provider_id
                             continue
                     except EnvVarError:
                         # If we can't resolve the provider_id, continue with normal processing
                         pass
 
-                # Normal processing for non-disabled providers
+                # Special handling for registered resources: check if ID field resolves to empty/None
+                # from conditional env vars (e.g., ${env.VAR:+value}) and skip the entry if so
+                if isinstance(v, dict):
+                    should_skip = False
+                    for id_field in RESOURCE_ID_FIELDS:
+                        if id_field in v:
+                            try:
+                                resolved_id = replace_env_vars(v[id_field], f"{path}[{i}].{id_field}")
+                                if resolved_id is None or resolved_id == "":
+                                    logger.debug(
+                                        f"Skipping {path}[{i}] with empty {id_field} (conditional env var not set)"
+                                    )
+                                    should_skip = True
+                                    break
+                            except EnvVarError as e:
+                                logger.warning(
+                                    f"Could not resolve {id_field} in {path}[{i}], env var '{e.var_name}': {e}"
+                                )
+                    if should_skip:
+                        continue
+
+                # Normal processing
                 result.append(replace_env_vars(v, f"{path}[{i}]"))
             except EnvVarError as e:
                 raise EnvVarError(e.var_name, e.path) from None
@@ -446,10 +476,10 @@ def _convert_string_to_proper_type(value: str) -> Any:
     return value
 
 
-def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
-    """Ensure that any value for a key 'image_name' in a config_dict is a string"""
-    if "image_name" in config_dict and config_dict["image_name"] is not None:
-        config_dict["image_name"] = str(config_dict["image_name"])
+def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
+    """Ensure that any value for a key 'distro_name' in a config_dict is a string"""
+    if "distro_name" in config_dict and config_dict["distro_name"] is not None:
+        config_dict["distro_name"] = str(config_dict["distro_name"])
     return config_dict
 
 
@@ -531,7 +561,7 @@ class Stack:
         stores = self.run_config.storage.stores
         if not stores.metadata:
             raise ValueError("storage.stores.metadata must be configured with a kv_* backend")
-        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.image_name)
+        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.distro_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
 
         internal_impls = {}
@@ -670,7 +700,7 @@ def run_config_from_adhoc_config_spec(
             )
         ]
     config = StackConfig(
-        image_name="distro-test",
+        distro_name="distro-test",
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
         storage=StorageConfig(

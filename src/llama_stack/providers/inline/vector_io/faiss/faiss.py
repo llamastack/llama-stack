@@ -18,6 +18,7 @@ from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
@@ -72,9 +73,11 @@ class FaissIndex(EmbeddingIndex):
 
         if stored_data:
             data = json.loads(stored_data)
-            self.chunk_by_index = {
-                int(k): EmbeddedChunk.model_validate_json(v) for k, v in data["chunk_by_index"].items()
-            }
+            self.chunk_by_index = {}
+            for k, v in data["chunk_by_index"].items():
+                chunk_data = json.loads(v)
+                # Use generic backward compatibility utility
+                self.chunk_by_index[int(k)] = load_embedded_chunk_with_backward_compat(chunk_data)
 
             buffer = io.BytesIO(base64.b64decode(data["faiss_index"]))
             try:

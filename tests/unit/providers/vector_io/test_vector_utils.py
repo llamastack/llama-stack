@@ -6,7 +6,10 @@
 
 import time
 
-from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+from llama_stack.providers.utils.vector_io.vector_utils import (
+    generate_chunk_id,
+    load_embedded_chunk_with_backward_compat,
+)
 from llama_stack_api import Chunk, ChunkMetadata, VectorStoreFileObject
 
 # This test is a unit test for the chunk_utils.py helpers. This should only contain
@@ -185,3 +188,89 @@ def test_vector_store_file_object_attributes_constraints():
         vector_store_id="vs-123",
     )
     assert len(file_obj.attributes["key"]) == 512
+
+
+def test_load_embedded_chunk_backward_compatibility():
+    """Test backward compatibility migration from legacy to current format"""
+    timestamp = int(time.time())
+
+    # Test current format (no migration needed)
+    current_data = {
+        "chunk_id": "current",
+        "content": "test",
+        "metadata": {},
+        "chunk_metadata": {
+            "document_id": "doc1",
+            "chunk_id": "current",
+            "created_timestamp": timestamp,
+            "updated_timestamp": timestamp,
+            "content_token_count": 1,
+        },
+        "embedding": [0.1, 0.2, 0.3],
+        "embedding_model": "current-model",
+        "embedding_dimension": 3,
+    }
+    chunk = load_embedded_chunk_with_backward_compat(current_data)
+    assert chunk.embedding_model == "current-model"
+    assert chunk.embedding_dimension == 3
+
+    # Test legacy format (fields in chunk_metadata)
+    legacy_data = {
+        "chunk_id": "legacy",
+        "content": "test",
+        "metadata": {},
+        "chunk_metadata": {
+            "document_id": "doc1",
+            "chunk_id": "legacy",
+            "created_timestamp": timestamp,
+            "updated_timestamp": timestamp,
+            "content_token_count": 1,
+            "chunk_embedding_model": "legacy-model",
+            "chunk_embedding_dimension": 3,
+        },
+        "embedding": [0.4, 0.5, 0.6],
+    }
+    chunk = load_embedded_chunk_with_backward_compat(legacy_data)
+    assert chunk.embedding_model == "legacy-model"  # Migrated
+    assert chunk.embedding_dimension == 3  # Migrated
+
+
+def test_load_embedded_chunk_fallbacks():
+    """Test fallback behavior when embedding metadata is missing"""
+    timestamp = int(time.time())
+
+    # Test missing model (should fallback to "unknown")
+    base_data = {
+        "chunk_id": "fallback",
+        "content": "test",
+        "metadata": {},
+        "chunk_metadata": {
+            "document_id": "doc1",
+            "chunk_id": "fallback",
+            "created_timestamp": timestamp,
+            "updated_timestamp": timestamp,
+            "content_token_count": 1,
+        },
+        "embedding": [0.1, 0.2],
+    }
+    chunk = load_embedded_chunk_with_backward_compat(base_data)
+    assert chunk.embedding_model == "unknown"
+    assert chunk.embedding_dimension == 2  # Inferred from embedding length
+
+    # Test missing embedding vector (should add empty list)
+    no_embedding_data = {
+        "chunk_id": "fallback",
+        "content": "test",
+        "metadata": {},
+        "chunk_metadata": {
+            "document_id": "doc1",
+            "chunk_id": "fallback",
+            "created_timestamp": timestamp,
+            "updated_timestamp": timestamp,
+            "content_token_count": 1,
+        },
+    }
+    chunk = load_embedded_chunk_with_backward_compat(no_embedding_data)
+    assert chunk.embedding_model == "unknown"
+    assert chunk.embedding_dimension == 0
+    assert chunk.embedding == []
