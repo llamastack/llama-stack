@@ -15,7 +15,7 @@ import httpx
 from fastapi import HTTPException
 
 
-class LlamaStackError(ABC):
+class LlamaStackError(Exception, ABC):
     """A Llama Stack error that can be translated to a fastapi HTTPException"""
 
     @property
@@ -170,3 +170,18 @@ class ConnectorToolNotFoundError(ValueError):
         message = f"Tool '{tool_name}' not found in connector '{connector_id}'. Use 'client.connectors.list_tools(\"{connector_id}\")' to list available tools."
         super().__init__(message)
 
+
+class InternalServerError(LlamaStackError):
+    """
+    A generic server side error that is not caused by the user's request. Sensitive data
+    or details of the internal workings of the server should never be exposed to the user.
+    Instead, sanitized error information should be logged for debugging purposes.
+    """
+
+    def __init__(self) -> None:
+        message = "An internal error occurred while processing your request."
+        super().__init__(message)
+
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.INTERNAL_SERVER_ERROR
