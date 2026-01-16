@@ -5703,6 +5703,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -6144,6 +6150,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -6313,6 +6325,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -10373,6 +10391,7 @@ components:
       - failed
       - total
       title: BatchRequestCounts
+      description: The request counts for different statuses within the batch.
     BatchUsage:
       properties:
         input_tokens:
@@ -10397,6 +10416,10 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
+      description: |-
+        Represents token usage details including input tokens, output tokens, a
+        breakdown of output tokens, and the total tokens used. Only populated on
+        batches created after September 7, 2025.
     Body_upload_file_v1_files_post:
       properties:
         file:
@@ -10712,6 +10735,7 @@ components:
       required:
       - cached_tokens
       title: InputTokensDetails
+      description: A detailed breakdown of the input tokens.
     JobStatus:
       type: string
       enum:
@@ -11194,6 +11218,22 @@ components:
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
       description: Search results returned by the file search operation.
+    OpenAIResponseReasoning:
+      properties:
+        effort:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          title: Effort
+          default: medium
+      type: object
+      title: OpenAIResponseReasoning
+      description: |-
+        Configuration for reasoning effort in OpenAI responses.
+
+        Controls how much reasoning the model performs before generating a response.
     OpenAIResponseTextFormat:
       properties:
         type:
@@ -11326,6 +11366,7 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+      description: A detailed breakdown of the output tokens.
     ResponseItemInclude:
       type: string
       enum:
