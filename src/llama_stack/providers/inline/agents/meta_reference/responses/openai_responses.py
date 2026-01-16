@@ -56,7 +56,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
-from llama_stack_api.common.errors import ServiceNotEnabledError
+from llama_stack_api.common.errors import InternalServerError, ServiceNotEnabledError
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
@@ -424,24 +424,24 @@ class OpenAIResponsesImpl:
                 match stream_chunk.type:
                     case "response.completed" | "response.incomplete":
                         if final_response is not None:
-                            raise ValueError(
-                                "The response stream produced multiple terminal responses! "
-                                f"Earlier response from {final_event_type}"
+                            logger.error(
+                                "The response stream produced multiple terminal events, when it should produce exactly one. "
+                                f"First event: {final_event_type}; second event: {stream_chunk.type}",
                             )
+                            raise InternalServerError()
                         final_response = stream_chunk.response
                         final_event_type = stream_chunk.type
                     case "response.failed":
                         failed_response = stream_chunk.response
+                        error_message = (
+                            failed_response.error.message
+                            if failed_response.error
+                            else "response failed but no error message was provided"
+                        )
+                        logger.error(f"response creation failed: {error_message}")
+                        raise InternalServerError()
                     case _:
                         pass  # Other event types don't have .response
-
-            if failed_response is not None:
-                error_message = (
-                    failed_response.error.message
-                    if failed_response and failed_response.error
-                    else "Response stream failed without error details"
-                )
-                raise RuntimeError(f"OpenAI response failed: {error_message}")
 
             if final_response is None:
                 raise ValueError("The response stream never reached a terminal state")
