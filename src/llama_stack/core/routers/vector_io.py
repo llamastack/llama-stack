@@ -167,10 +167,14 @@ class VectorIORouter(VectorIO):
             embedding_model = f"{embedding_provider_id}/{model_id}"
 
         if embedding_model is not None and embedding_dimension is None:
-            if not self.vector_stores_config.default_embedding_model.embedding_dimensions:
-                embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
-            else:
+            if (
+                self.vector_stores_config
+                and self.vector_stores_config.default_embedding_model is not None
+                and self.vector_stores_config.default_embedding_model.embedding_dimensions
+            ):
                 embedding_dimension = self.vector_stores_config.default_embedding_model.embedding_dimensions
+            else:
+                embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
         # Validate that embedding model exists and is of the correct type
         if embedding_model is not None:
             model = await self.routing_table.get_object_by_identifier("model", embedding_model)
