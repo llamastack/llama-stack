@@ -24,10 +24,9 @@ class TelemetryConfig(BaseModel):
         default=None,
         description="The OpenTelemetry collector endpoint URL (base URL for traces, metrics, and logs). If not set, the SDK will use OTEL_EXPORTER_OTLP_ENDPOINT environment variable.",
     )
-    service_name: str = Field(
-        # service name is always the same, use zero-width space to avoid clutter
-        default="\u200b",
-        description="The service name to use for telemetry",
+    service_name: str | None = Field(
+        default=None,
+        description="The service name to use for telemetry. Defaults to 'llama-stack' if not set.",
     )
     sinks: list[TelemetrySink] = Field(
         default=[TelemetrySink.CONSOLE, TelemetrySink.SQLITE],
@@ -48,7 +47,7 @@ class TelemetryConfig(BaseModel):
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, db_name: str = "trace_store.db") -> dict[str, Any]:
         return {
-            "service_name": "${env.OTEL_SERVICE_NAME:=\u200b}",
+            "service_name": "${env.OTEL_SERVICE_NAME:=}",
             "sinks": "${env.TELEMETRY_SINKS:=console,sqlite}",
             "sqlite_db_path": "${env.SQLITE_STORE_DIR:=" + __distro_dir__ + "}/" + db_name,
             "otel_exporter_otlp_endpoint": "${env.OTEL_EXPORTER_OTLP_ENDPOINT:=}",

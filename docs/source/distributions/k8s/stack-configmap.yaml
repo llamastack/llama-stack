@@ -68,7 +68,7 @@ data:
       - provider_id: meta-reference
         provider_type: inline::meta-reference
         config:
-          service_name: "${env.OTEL_SERVICE_NAME:=\u200B}"
+          service_name: "${env.OTEL_SERVICE_NAME:=}"
           sinks: ${env.TELEMETRY_SINKS:=console}
       tool_runtime:
       - provider_id: brave-search

@@ -51,6 +51,9 @@ from llama_stack.providers.utils.telemetry.tracing import ROOT_SPAN_MARKERS
 
 from .config import TelemetryConfig, TelemetrySink
 
+# Default service name when not explicitly configured
+DEFAULT_SERVICE_NAME = "llama-stack"
+
 _GLOBAL_STORAGE: dict[str, dict[str | int, Any]] = {
     "active_spans": {},
     "counters": {},
@@ -74,9 +77,12 @@ class TelemetryAdapter(TelemetryDatasetMixin, Telemetry):
         self.datasetio_api = deps.get(Api.datasetio)
         self.meter = None
 
+        # Use configured service name or default to "llama-stack"
+        effective_service_name = self.config.service_name or DEFAULT_SERVICE_NAME
+
         resource = Resource.create(
             {
-                ResourceAttributes.SERVICE_NAME: self.config.service_name,
+                ResourceAttributes.SERVICE_NAME: effective_service_name,
             }
         )
 
