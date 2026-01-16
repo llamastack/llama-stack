@@ -495,7 +495,7 @@ for content, metadata in docs:
       file_ids.append(create_file_response.id)
 
 
-# Create vector store with those files 
+# Create vector store with those files
 vector_store = client.vector_stores.create(
   name="torchtune_docs",
   # file_ids=file_ids,
@@ -508,7 +508,7 @@ vector_store = client.vector_stores.create(
   # This isn't working ... defaults to using `auto`
   chunking_strategy={
       "type": "static",
-      "static": {  
+      "static": {
           "chunk_overlap_tokens": 50,
           "max_chunk_size_tokens": 200
       }
