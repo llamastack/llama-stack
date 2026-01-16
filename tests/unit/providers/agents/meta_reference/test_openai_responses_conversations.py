@@ -41,6 +41,7 @@ def responses_impl_with_conversations(
     mock_safety_api,
     mock_prompts_api,
     mock_files_api,
+    mock_connectors_api,
 ):
     """Create OpenAIResponsesImpl instance with conversations API."""
     return OpenAIResponsesImpl(
@@ -53,6 +54,7 @@ def responses_impl_with_conversations(
         safety_api=mock_safety_api,
         prompts_api=mock_prompts_api,
         files_api=mock_files_api,
+        connectors_api=mock_connectors_api,
     )
 
 

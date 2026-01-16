@@ -6,6 +6,7 @@
 
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, cast
 
@@ -227,4 +228,40 @@ async def invoke_mcp_tool(
         return ToolInvocationResult(
             content=content,
             error_code=1 if result.isError else 0,
+        )
+
+
+@dataclass
+class MCPServerInfo:
+    """Server information from an MCP server."""
+
+    name: str
+    version: str
+    title: str | None = None
+    description: str | None = None
+
+
+async def get_mcp_server_info(
+    endpoint: str,
+    headers: dict[str, str] | None = None,
+    authorization: str | None = None,
+) -> MCPServerInfo:
+    """Get server info from an MCP server.
+    Args:
+        endpoint: MCP server endpoint URL
+        headers: Optional base headers to include
+        authorization: Optional OAuth access token (just the token, not "Bearer <token>")
+    Returns:
+        MCPServerInfo containing name, version, title, and description
+    """
+    final_headers = prepare_mcp_headers(headers, authorization)
+
+    async with client_wrapper(endpoint, final_headers) as session:
+        init_result = await session.initialize()
+
+        return MCPServerInfo(
+            name=init_result.serverInfo.name,
+            version=init_result.serverInfo.version,
+            title=init_result.serverInfo.title,
+            description=init_result.instructions,
         )
