@@ -276,7 +276,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Shields
-      summary: List Shields
+      summary: List all shields.
       description: List all shields.
       operationId: list_shields_v1_shields_get
     post:
@@ -301,7 +301,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Shields
-      summary: Register Shield
+      summary: Register a shield.
       description: Register a shield.
       operationId: register_shield_v1_shields_post
       requestBody:
@@ -321,20 +321,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Shield'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Shields
-      summary: Get Shield
+      summary: Get a shield by its identifier.
       description: Get a shield by its identifier.
       operationId: get_shield_v1_shields__identifier__get
       parameters:
@@ -343,26 +343,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: identifier'
+          description: The identifier of the shield to get.
+          title: Identifier
+        description: The identifier of the shield to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The shield was successfully unregistered.
       tags:
       - Shields
-      summary: Unregister Shield
+      summary: Unregister a shield.
       description: Unregister a shield.
       operationId: unregister_shield_v1_shields__identifier__delete
       parameters:
@@ -371,7 +373,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: identifier'
+          description: The identifier of the shield to unregister.
+          title: Identifier
+        description: The identifier of the shield to unregister.
       deprecated: true
   /v1/tool-runtime/invoke:
     post:
@@ -6259,10 +6263,12 @@ components:
             $ref: '#/components/schemas/Shield'
           type: array
           title: Data
+          description: List of shield objects
       type: object
       required:
       - data
       title: ListShieldsResponse
+      description: Response containing a list of all shields.
     InvokeToolRequest:
       properties:
         tool_name:
@@ -7360,16 +7366,23 @@ components:
       description: Version information for the service.
     AppendRowsRequest:
       properties:
+        dataset_id:
+          type: string
+          title: Dataset Id
+          description: The ID of the dataset to append the rows to.
         rows:
           items:
             additionalProperties: true
             type: object
           type: array
           title: Rows
+          description: The rows to append to the dataset.
       type: object
       required:
+      - dataset_id
       - rows
       title: AppendRowsRequest
+      description: Request model for appending rows to a dataset.
     PaginatedResponse:
       properties:
         data:
@@ -7552,6 +7565,7 @@ components:
       properties:
         eval_candidate:
           $ref: '#/components/schemas/ModelCandidate'
+          description: The candidate to evaluate
         scoring_params:
           additionalProperties:
             oneOf:
@@ -7574,6 +7588,7 @@ components:
         num_examples:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated
       type: object
@@ -7600,14 +7615,18 @@ components:
           default: model
         model:
           type: string
+          minLength: 1
           title: Model
+          description: The model ID to evaluate
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
+          description: The sampling parameters for the model
         system_message:
           anyOf:
           - $ref: '#/components/schemas/SystemMessage'
             title: SystemMessage
           - type: 'null'
+          description: The system message providing instructions or context to the model
           title: SystemMessage
       type: object
       required:
@@ -7730,26 +7749,38 @@ components:
       title: TopPSamplingStrategy
       description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
     EvaluateRowsRequest:
+      description: Request model for evaluating a list of rows on a benchmark.
       properties:
+        benchmark_id:
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
+          title: Benchmark Id
+          type: string
         input_rows:
+          description: The rows to evaluate
           items:
             additionalProperties: true
             type: object
-          type: array
+          minItems: 1
           title: Input Rows
+          type: array
         scoring_functions:
+          description: The scoring functions to use for the evaluation
           items:
             type: string
-          type: array
+          minItems: 1
           title: Scoring Functions
+          type: array
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
+          description: The configuration for the benchmark
       required:
+      - benchmark_id
       - input_rows
       - scoring_functions
       - benchmark_config
       title: EvaluateRowsRequest
+      type: object
     EvaluateResponse:
       properties:
         generations:
@@ -7758,11 +7789,13 @@ components:
             type: object
           type: array
           title: Generations
+          description: The generations from the evaluation
         scores:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Scores
+          description: The scores from the evaluation. Each key in the dict is a scoring function name
       type: object
       required:
       - generations
@@ -7770,13 +7803,21 @@ components:
       title: EvaluateResponse
       description: The response from an evaluation.
     RunEvalRequest:
+      description: Request model for running an evaluation on a benchmark.
       properties:
+        benchmark_id:
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
+          title: Benchmark Id
+          type: string
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
+          description: The configuration for the benchmark
       required:
+      - benchmark_id
       - benchmark_config
       title: RunEvalRequest
+      type: object
     Job:
       properties:
         job_id:
@@ -7921,14 +7962,16 @@ components:
       title: PostTrainingMetric
       description: Training metrics captured during post-training jobs.
     CancelTrainingJobRequest:
+      description: Request to cancel a training job.
       properties:
         job_uuid:
-          type: string
+          description: The UUID of the job to cancel.
           title: Job Uuid
-      type: object
+          type: string
       required:
       - job_uuid
       title: CancelTrainingJobRequest
+      type: object
     PostTrainingJobStatusResponse:
       properties:
         job_uuid:
@@ -8146,21 +8189,27 @@ components:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job to create.
         finetuned_model:
           type: string
           title: Finetuned Model
+          description: The model to fine-tune.
         algorithm_config:
           $ref: '#/components/schemas/DPOAlignmentConfig'
+          description: The algorithm configuration.
         training_config:
           $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration.
         hyperparam_search_config:
           additionalProperties: true
           type: object
           title: Hyperparam Search Config
+          description: The hyperparam search configuration.
         logger_config:
           additionalProperties: true
           type: object
           title: Logger Config
+          description: The logger configuration.
       type: object
       required:
       - job_uuid
@@ -8170,6 +8219,7 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PreferenceOptimizeRequest
+      description: Request to run preference optimization of a model.
     PostTrainingJob:
       properties:
         job_uuid:
@@ -8258,25 +8308,30 @@ components:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job to create.
         training_config:
           $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration.
         hyperparam_search_config:
           additionalProperties: true
           type: object
           title: Hyperparam Search Config
+          description: The hyperparam search configuration.
         logger_config:
           additionalProperties: true
           type: object
           title: Logger Config
+          description: The logger configuration.
         model:
           anyOf:
           - type: string
           - type: 'null'
-          description: Model descriptor for training if not in provider config`
+          description: Model descriptor for training if not in provider config
         checkpoint_dir:
           anyOf:
           - type: string
           - type: 'null'
+          description: The directory to save checkpoint(s) to.
         algorithm_config:
           anyOf:
           - oneOf:
@@ -8292,6 +8347,7 @@ components:
             title: LoraFinetuningConfig | QATFinetuningConfig
           - type: 'null'
           title: Algorithm Config
+          description: The algorithm configuration.
       type: object
       required:
       - job_uuid
@@ -8299,6 +8355,7 @@ components:
       - hyperparam_search_config
       - logger_config
       title: SupervisedFineTuneRequest
+      description: Request to run supervised fine-tuning of a model.
     RegisterModelRequest:
       properties:
         model_id:
@@ -8432,23 +8489,28 @@ components:
         shield_id:
           type: string
           title: Shield Id
+          description: The identifier of the shield to register.
         provider_shield_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the shield in the provider.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the provider.
         params:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The parameters of the shield.
       type: object
       required:
       - shield_id
       title: RegisterShieldRequest
+      description: Request model for registering a shield.
     RegisterToolGroupRequest:
       properties:
         toolgroup_id:
@@ -8893,6 +8955,33 @@ components:
       additionalProperties: true
       type: object
       title: Errors
+    EvaluateRowsBodyRequest:
+      properties:
+        input_rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          minItems: 1
+          title: Input Rows
+          description: The rows to evaluate
+        scoring_functions:
+          items:
+            type: string
+          type: array
+          minItems: 1
+          title: Scoring Functions
+          description: The scoring functions to use for the evaluation
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark
+      type: object
+      required:
+      - input_rows
+      - scoring_functions
+      - benchmark_config
+      title: EvaluateRowsBodyRequest
+      description: Request body model for evaluating rows (without path parameter).
     HealthStatus:
       type: string
       enum:
@@ -9564,6 +9653,16 @@ components:
       - reasoning.encrypted_content
       title: ResponseItemInclude
       description: Specify additional output data to include in the model response.
+    RunEvalBodyRequest:
+      properties:
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark
+      type: object
+      required:
+      - benchmark_config
+      title: RunEvalBodyRequest
+      description: Request body model for running an evaluation (without path parameter).
     SearchRankingOptions:
       properties:
         ranker:
@@ -9887,6 +9986,28 @@ components:
           title: Type
           type: string
       title: DialogType
+      type: object
+    GetShieldRequest:
+      description: Request model for getting a shield by identifier.
+      properties:
+        identifier:
+          description: The identifier of the shield to get.
+          title: Identifier
+          type: string
+      required:
+      - identifier
+      title: GetShieldRequest
+      type: object
+    UnregisterShieldRequest:
+      description: Request model for unregistering a shield.
+      properties:
+        identifier:
+          description: The identifier of the shield to unregister.
+          title: Identifier
+          type: string
+      required:
+      - identifier
+      title: UnregisterShieldRequest
       type: object
     TextDelta:
       description: A text content delta for streaming responses.
@@ -10892,6 +11013,95 @@ components:
       - item_id
       title: DeleteItemRequest
       type: object
+    IterRowsRequest:
+      description: Request model for iterating over rows in a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get the rows from.
+          title: Dataset Id
+          type: string
+        start_index:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Index into dataset for the first row to get. Get all rows if None.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The number of rows to get.
+          nullable: true
+      required:
+      - dataset_id
+      title: IterRowsRequest
+      type: object
+    BenchmarkIdRequest:
+      description: Request model containing benchmark_id path parameter.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark
+          minLength: 1
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: BenchmarkIdRequest
+      type: object
+    JobStatusRequest:
+      description: Request model for getting the status of a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to get the status of
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobStatusRequest
+      type: object
+    JobCancelRequest:
+      description: Request model for canceling a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to cancel
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobCancelRequest
+      type: object
+    JobResultRequest:
+      description: Request model for getting the result of a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to get the result of
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobResultRequest
+      type: object
     ProcessFileResponse:
       description: |-
         Response model for file processing operation.
@@ -11063,6 +11273,28 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
+      type: object
+    GetTrainingJobStatusRequest:
+      description: Request to get the status of a training job.
+      properties:
+        job_uuid:
+          description: The UUID of the job to get the status of.
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: GetTrainingJobStatusRequest
+      type: object
+    GetTrainingJobArtifactsRequest:
+      description: Request to get the artifacts of a training job.
+      properties:
+        job_uuid:
+          description: The UUID of the job to get the artifacts of.
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: GetTrainingJobArtifactsRequest
       type: object
   responses:
     BadRequest400:

@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant"]
+        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant", "remote::elasticsearch"]
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
       fail-fast: false # we want to run all tests regardless of failure
 
@@ -147,6 +147,14 @@ jobs:
           docker logs weaviate
           exit 1
 
+      - name: Setup Elasticsearch
+        if: matrix.vector-io-provider == 'remote::elasticsearch'
+        id: setup-elasticsearch
+        run: |
+          curl -fsSL https://elastic.co/start-local | sh -s -- -v 9.2.0 --esonly
+          source elastic-start-local/.env
+          echo "ELASTICSEARCH_API_KEY=$ES_LOCAL_API_KEY" >> "$GITHUB_ENV"
+
       - name: Build Llama Stack
         run: |
           uv run --no-sync llama stack list-deps ci-tests | xargs -L1 uv pip install
@@ -171,6 +179,7 @@ jobs:
           QDRANT_URL: ${{ matrix.vector-io-provider == 'remote::qdrant' && 'http://localhost:6333' || '' }}
           ENABLE_WEAVIATE: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'true' || '' }}
           WEAVIATE_CLUSTER_URL: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'localhost:8080' || '' }}
+          ELASTICSEARCH_URL: ${{ matrix.vector-io-provider == 'remote::elasticsearch' && 'http://localhost:9200' || '' }}
         run: |
           uv run --no-sync \
             pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
@@ -196,6 +205,11 @@ jobs:
         if: ${{ always() && matrix.vector-io-provider == 'remote::qdrant' }}
         run: |
           docker logs qdrant > qdrant.log
+
+      - name: Write Elasticsearch logs to file
+        if: ${{ always() && matrix.vector-io-provider == 'remote::elasticsearch' }}
+        run: |
+          docker logs es-local-dev > elasticsearch.log
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}

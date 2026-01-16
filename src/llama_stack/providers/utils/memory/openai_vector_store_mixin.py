@@ -122,6 +122,39 @@ class OpenAIVectorStoreMixin(ABC):
         # update in-memory cache
         self.openai_vector_stores[store_id] = store_info
 
+    async def _ensure_openai_metadata_exists(self, vector_store: VectorStore, name: str | None = None) -> None:
+        """
+        Ensure OpenAI-compatible metadata exists for a vector store.
+        """
+        if vector_store.identifier not in self.openai_vector_stores:
+            store_info = {
+                "id": vector_store.identifier,
+                "object": "vector_store",
+                "created_at": int(time.time()),
+                "name": name or vector_store.vector_store_name or vector_store.identifier,
+                "usage_bytes": 0,
+                "file_counts": VectorStoreFileCounts(
+                    cancelled=0,
+                    completed=0,
+                    failed=0,
+                    in_progress=0,
+                    total=0,
+                ).model_dump(),
+                "status": "completed",
+                "expires_after": None,
+                "expires_at": None,
+                "last_active_at": int(time.time()),
+                "file_ids": [],
+                "chunking_strategy": None,
+                "metadata": {
+                    "provider_id": vector_store.provider_id,
+                    "provider_vector_store_id": vector_store.provider_resource_id,
+                    "embedding_model": vector_store.embedding_model,
+                    "embedding_dimension": str(vector_store.embedding_dimension),
+                },
+            }
+            await self._save_openai_vector_store(vector_store.identifier, store_info)
+
     async def _load_openai_vector_stores(self) -> dict[str, dict[str, Any]]:
         """Load all vector store metadata from persistent storage."""
         assert self.kvstore
