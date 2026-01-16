@@ -77,7 +77,18 @@ const config: Config = {
             }]
           ],
         },
-        blog: false,
+        blog: {
+          showReadingTime: true,
+          readingTime: ({content, frontMatter, defaultReadingTime}) =>
+            defaultReadingTime({content, options: {wordsPerMinute: 300}}),
+          feedOptions: {
+            type: 'all',
+            title: 'Llama Stack Blog',
+            description: 'Blog posts about Llama Stack',
+            copyright: `Copyright © ${new Date().getFullYear()} Meta Platforms, Inc.`,
+            language: 'en',
+          },
+        },
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
         },
@@ -122,6 +133,11 @@ const config: Config = {
               label: '🔴 Deprecated APIs',
             },
           ],
+        },
+        {
+          to: '/blog',
+          label: 'Blogs',
+          position: 'left',
         },
         {
           href: 'https://github.com/llamastack/llama-stack',
@@ -275,7 +291,7 @@ const config: Config = {
 
         // Content indexing settings
         indexDocs: true,
-        indexBlog: false, // No blog in Llama Stack
+        indexBlog: true, // Enable blog indexing
         indexPages: true,
 
         // Route configuration
