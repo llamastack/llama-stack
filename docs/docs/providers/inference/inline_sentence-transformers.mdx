@@ -10,6 +10,12 @@ title: inline::sentence-transformers
 
 Sentence Transformers inference provider for text embeddings and similarity search.
 
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `trusted_model_prefixes` | `list[str]` | No | ['nomic-ai/'] | List of trusted model prefixes/organizations. Models from these sources will be loaded with trust_remote_code=True. Others will be loaded with trust_remote_code=False for security. |
+
 ## Sample Configuration
 
 ```yaml
