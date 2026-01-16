@@ -32,10 +32,10 @@ class LlamaStackError(Exception, ABC):
 class ResourceNotFoundError(ValueError, LlamaStackError):
     """generic exception for a missing Llama Stack resource"""
 
-    def __init__(self, resource_name: str, resource_type: str, client_list: str) -> None:
-        message = (
-            f"{resource_type} '{resource_name}' not found. Use '{client_list}' to list available {resource_type}s."
-        )
+    def __init__(self, resource_name: str, resource_type: str, client_list: str | None = None) -> None:
+        message = f"{resource_type} '{resource_name}' not found."
+        if client_list:
+            message += f" Use '{client_list}' to list available {resource_type}s."
         super().__init__(message)
 
     @property
@@ -69,6 +69,28 @@ class ToolGroupNotFoundError(ResourceNotFoundError):
 
     def __init__(self, toolgroup_name: str) -> None:
         super().__init__(toolgroup_name, "Tool Group", "client.toolgroups.list()")
+
+
+class ConversationNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced conversation"""
+
+    def __init__(self, conversation_id: str) -> None:
+        super().__init__(conversation_id, "Conversation")
+
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.NOT_FOUND
+
+
+class ResponseNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced response"""
+
+    def __init__(self, response_id: str) -> None:
+        super().__init__(response_id, "Response")
+
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.NOT_FOUND
 
 
 class UnsupportedModelError(ValueError, LlamaStackError):
@@ -117,17 +139,6 @@ class TokenValidationError(ValueError, LlamaStackError):
     @property
     def status_code(self) -> httpx.codes:
         return httpx.codes.UNAUTHORIZED
-
-
-class ConversationNotFoundError(ResourceNotFoundError, LlamaStackError):
-    """raised when Llama Stack cannot find a referenced conversation"""
-
-    def __init__(self, conversation_id: str) -> None:
-        super().__init__(conversation_id, "Conversation", "client.conversations.list()")
-
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.NOT_FOUND
 
 
 class InvalidConversationIdError(ValueError, LlamaStackError):
