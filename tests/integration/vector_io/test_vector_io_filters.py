@@ -164,7 +164,7 @@ def test_filter_eq_string(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -205,7 +205,7 @@ def test_filter_ne_string(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="programming",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -246,7 +246,7 @@ def test_filter_gt_numeric(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -287,7 +287,7 @@ def test_filter_gte_numeric(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -328,7 +328,7 @@ def test_filter_lt_numeric(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -369,7 +369,7 @@ def test_filter_lte_numeric(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -410,7 +410,7 @@ def test_filter_in_list(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -451,7 +451,7 @@ def test_filter_nin_list(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="fundamentals",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -492,7 +492,7 @@ def test_filter_eq_boolean(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -544,7 +544,7 @@ def test_filter_and_compound(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -592,7 +592,7 @@ def test_filter_or_compound(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -647,7 +647,7 @@ def test_filter_nested_compound(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -695,7 +695,7 @@ def test_filter_no_matches(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="technology",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -775,7 +775,7 @@ def test_filter_multiple_and_conditions(
     response = client.vector_io.query(
         vector_store_id=vector_store.id,
         query="neural networks",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
     )
 
     assert response is not None
@@ -831,7 +831,7 @@ def test_openai_search_with_comparison_filter(
     response = client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="programming language",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
         max_num_results=5,
     )
 
@@ -880,7 +880,7 @@ def test_openai_search_with_compound_filter(
     response = client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="artificial intelligence",
-        filters=filter_obj,
+        params={"filters": filter_obj.model_dump()},
         max_num_results=5,
     )
 
