@@ -26,11 +26,11 @@ from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
 )
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack_api import (
     Chunk,
     EmbeddedChunk,
     Files,
-    Filter,
     Inference,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,

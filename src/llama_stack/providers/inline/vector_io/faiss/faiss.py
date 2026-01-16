@@ -19,12 +19,10 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
+from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter, Filter
 from llama_stack_api import (
-    ComparisonFilter,
-    CompoundFilter,
     EmbeddedChunk,
     Files,
-    Filter,
     HealthResponse,
     HealthStatus,
     Inference,
