@@ -13,7 +13,7 @@ from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 from fastapi import Body, Query
 from pydantic import BaseModel, Field, field_validator
 
-from llama_stack_api.filters import Filter
+# Filter type is defined in the implementation layer
 from llama_stack_api.inference import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
 from llama_stack_api.vector_stores import VectorStore
@@ -610,7 +610,7 @@ class VectorIO(Protocol):
         vector_store_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
-        filters: Filter | None = None,
+        filters: Any | None = None,
     ) -> QueryChunksResponse:
         """Query chunks from a vector database.
 
@@ -714,7 +714,7 @@ class VectorIO(Protocol):
         self,
         vector_store_id: str,
         query: str | list[str],
-        filters: Filter | None = None,
+        filters: Any | None = None,
         max_num_results: int | None = 10,
         ranking_options: SearchRankingOptions | None = None,
         rewrite_query: bool | None = False,
