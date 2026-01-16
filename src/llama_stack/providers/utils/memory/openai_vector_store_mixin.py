@@ -26,7 +26,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
 )
-from llama_stack.providers.utils.vector_io.filters import Filter
+from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter, Filter
 from llama_stack_api import (
     Chunk,
     EmbeddedChunk,
@@ -610,11 +610,29 @@ class OpenAIVectorStoreMixin(ABC):
             deleted=True,
         )
 
+    def _convert_dict_to_filter(self, filter_dict: dict | None) -> Filter | None:
+        """Convert a dictionary filter to a typed Filter object."""
+        if filter_dict is None:
+            return None
+
+        # Handle ComparisonFilter
+        if "type" in filter_dict and filter_dict["type"] in ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin"]:
+            return ComparisonFilter(type=filter_dict["type"], key=filter_dict["key"], value=filter_dict["value"])
+
+        # Handle CompoundFilter
+        elif "type" in filter_dict and filter_dict["type"] in ["and", "or"]:
+            # Recursively convert nested filters
+            converted_filters = [self._convert_dict_to_filter(f) for f in filter_dict.get("filters", [])]
+            return CompoundFilter(type=filter_dict["type"], filters=[f for f in converted_filters if f is not None])
+
+        else:
+            raise ValueError(f"Unknown filter format: {filter_dict}")
+
     async def openai_search_vector_store(
         self,
         vector_store_id: str,
         query: str | list[str],
-        filters: Filter | None = None,
+        filters: Filter | dict | None = None,
         max_num_results: int | None = 10,
         ranking_options: SearchRankingOptions | None = None,
         rewrite_query: bool | None = False,
@@ -630,6 +648,10 @@ class OpenAIVectorStoreMixin(ABC):
         Filters are passed directly to the provider for efficient database-level filtering.
         """
         max_num_results = max_num_results or 10
+
+        # Convert dict filters to typed Filter objects if needed
+        if isinstance(filters, dict):
+            filters = self._convert_dict_to_filter(filters)
 
         # Validate search_mode
         valid_modes = {"keyword", "vector", "hybrid"}

@@ -12,7 +12,6 @@ from fastapi import Body
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack_api import (
     EmbeddedChunk,
     HealthResponse,
@@ -44,6 +43,7 @@ from llama_stack_api import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
+from llama_stack_api.filters import Filter
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -143,6 +143,26 @@ class VectorIORouter(VectorIO):
         filters: Filter | None = None,
     ) -> QueryChunksResponse:
         logger.debug(f"VectorIORouter.query_chunks: {vector_store_id}")
+
+        # Backwards compatibility: extract filters from params if not passed directly
+        # This handles cases where the client SDK doesn't yet support the filters parameter
+        if filters is None and params and "filters" in params:
+            from llama_stack_api.filters import ComparisonFilter, CompoundFilter
+
+            filter_data = params.pop("filters")  # Remove from params to avoid duplication
+            if isinstance(filter_data, dict):
+                # Convert dict to typed filter
+                if filter_data.get("type") in ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin"]:
+                    filters = ComparisonFilter(**filter_data)
+                elif filter_data.get("type") in ["and", "or"]:
+                    # Handle nested filters recursively
+                    converted_sub_filters = []
+                    for sub_filter in filter_data.get("filters", []):
+                        if sub_filter.get("type") in ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin"]:
+                            converted_sub_filters.append(ComparisonFilter(**sub_filter))
+                        # Add more nesting support if needed
+                    filters = CompoundFilter(type=filter_data["type"], filters=converted_sub_filters)
+
         return await self.routing_table.query_chunks(vector_store_id, query, params, filters)
 
     # OpenAI Vector Stores API endpoints
