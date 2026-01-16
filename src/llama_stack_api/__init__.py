@@ -445,7 +445,9 @@ from .schema_utils import (
     webmethod,
 )
 from .scoring import (
+    ScoreBatchRequest,
     ScoreBatchResponse,
+    ScoreRequest,
     ScoreResponse,
     Scoring,
     ScoringFunctionStore,
@@ -918,7 +920,9 @@ __all__ = [
     "SafetyViolation",
     "SamplingParams",
     "SamplingStrategy",
+    "ScoreBatchRequest",
     "ScoreBatchResponse",
+    "ScoreRequest",
     "ScoreResponse",
     "Scoring",
     "ScoringFn",
