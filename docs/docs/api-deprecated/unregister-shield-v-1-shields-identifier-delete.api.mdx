@@ -1,0 +1,72 @@
+---
+id: unregister-shield-v-1-shields-identifier-delete
+title: "Unregister Shield"
+description: "Unregister a shield."
+sidebar_label: "Unregister Shield"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVs1u20YQfpXBnlqDlmTDQRre3EgFDDioIduHwhGEMTkUN1nuMrNDxYTAZ+i9pz5Gn6cv0FcolqQouZJzbgDrwuXqm9n5+b5ZbhSTL5315FW8UeeTi/BIySesS9HOqljdVklC3meVgXkPVk2kLiaTQ+zPmMKcvlTkRUUqcVbISoBhWRqdYICNP/mA3Sif5FTgoZMZs2PYBgYZuwIkJ7i8uRrB3FWr3NSQOWPcVw/zX97D258mb0cqUiW7klh0l4wXlKpdiRZDIZNuJ1JSl+FdW6EVccimh+ywd+1zgHphbVcBmZKgNvvQabdzBKutF7RJ6xht/Wum4ofNAWzYsZUxqllE7QIfg3PhipomUkxfKs2Uqvhhm9g26CGkxZBGV8JdRO7xEyUSIqInLMou0219LiaTneHzBm5zVXc5AXfb8BU9aLtGo1NwDAWazHFBqWqaEOnF+bvDlt45Bx/Q1lvf/pUd3ws7zt/tDI+1ceDIb66CHNcE9JQQpZS2bWEUAqMLLSO4MYSeQLgGXKG2YFCIRz1x3hwbKFdWiC0auCVeE8M29FfyfA/kebM/Wl5q5UCgSwuVpaeSEqEUqG2VS5KKeRguKWVYGTls7LT7Y3dDvVLkf0eRroWCKx/83OaaTOqD3fMG3FumlfZCDAi+RYXyhuK2HbxKVayqAbTsIMv1Wb/yy6VOyYrONPFymZIhCXGWyFiQEPu2DhaLtgsDVIWKqViVKLnazzlUIdrjy5Gm7Md/g5LDcFgMeyc0bbIlU4Ky81yQ5C4ktReq5CpW4/XZuM9pvNm5aVSkfKuhLpOKg3pykTIej9HWp7nzQumpMVjgqRdMPo8SV7Sne0oq1lK3htOtmh4W4T9tM7fPrOtgD7fBHm5LSnTWawhOYTpkEYTR3QPPLvxce9C+VY5/ZuuydnPfueQoULJb65T8RwtHfgieJNiSTUunrXhA294wmiFx3Ok11XYFQVecYUK+c4xMnc9AU8fhXnLHD3kMnzeG1sS42kb4waVk/Oij7UxOTv7+489//vodprOb+ez95d1senISwzWtMKnbUnSHFljDY/hmKtyaUtAWskoqJghd0876EdyH6eK481voVcduYMqIySYEzpo6ML83UbFanwW6lc5Lge0Q60m8J5lOVv/tx2Y3DV/SV89qoScZlwa1DUe11Nr0fHwI50eqZ6SKVLxH7UWkAu0CarN5RE/3bJombH+piAPfFpFaI+tusjxsVKp9WKcqztB4+kbEP8x7Lf4I3xDXCyn0m2jrUEo0VXhTkfpM9XP5N4smUjlhStzG1wEuk4RK2TM9uEuCdAYJT2fXs7uZapp/AZjCkMg=
+sidebar_class_name: "delete api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Unregister Shield"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/v1/shields/{identifier}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Unregister a shield.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"identifier","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: identifier"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"Successful Response"},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

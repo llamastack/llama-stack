@@ -32,8 +32,10 @@ CLAUDE.md
 docs/.docusaurus/
 docs/node_modules/
 docs/static/imported-files/
-docs/docs/api-deprecated/
-docs/docs/api-experimental/
-docs/docs/api/
+# Keep only the docusaurus cache and build output ignored
+# API docs are now pre-generated and committed (see scripts/gen-api-mdx.sh)
+# docs/docs/api-deprecated/  # Tracked - pre-generated
+# docs/docs/api-experimental/  # Tracked - pre-generated
+# docs/docs/api/  # Tracked - pre-generated
 tests/integration/client-typescript/node_modules/
 .ts-client-checkout/

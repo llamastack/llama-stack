@@ -1,0 +1,60 @@
+---
+id: health-v-1-health-get
+title: "Get health status."
+description: "Get the current health status of the service."
+sidebar_label: "Get health status."
+hide_title: true
+hide_table_of_contents: true
+api: eJztls1uGzcQx19lwKOx+rCRII1uTuymQpPGsN1D4QjBiDvSMuaSa3JWtiDssW/Rp+uTFMPV6iNSAuTWANZFC2pmdvj//zjiSgWKlXeRohqt1NlwKF85RR1MxcY7NVK/EVouwLiZDyXKIhiXG41s3BzMDLggiBQWRhOYCL6ikMLQ9lWmtHdMjqUuVpVNed4NvkQpvlJRF1SiPFVBMtm0rURGruNhN7cFQdF21IaA3+tAZYqXFamRihyMm6tMkatLNbpTH39XmboMwQeVqT88w7isLJXkmHI1yRQbtrTZ8E3bQNNsCvrpF9KsMhXooTaBcim67vMgfexmXmXHpVw3vqvozIfdXfRV08ibXxwz5A3mcE0PNUX+EX33iyQdoHMfZsGXqYHzq3Efrn09L+wSZt5a/xjh+te38OqX4Svx81s2ddtf67ZRzTimOQXVbBTaxt6m768da0Q2RmN3Qy/alSOxxkVGp1NhdMuPMzW6Wx2EbVZcba1qJll6wKkU51CTqH3E167pTUs7Rnco7ePRZIqeUMja1efFcLhN3Dew22tCO7TL8IjCxwKtycEHKNEKK5R3XJy9PnI0vIcP6JZd7fhMx89Cx9nrbeIxGzeM/OVrKHBBQE+aKKc82RKQCawpDffhyhJGAg5LwDkaBxaZQjdQXh4bKGPHFBxauKGwoABd68/w/AzwvNwdLd+ycgPQuYPa0VNFmikHSlZ5resQNsMlpxnWlg+NvWh/gOu1tc+I/P8QaS1knEepM3ZRnJa8fQPeESfBk/GOv3ulEt03l7pxrkaqjf68OP28fpqT/JM99ap6ao1u9ySwMrlovItJlHtaqtE2KFMLtHUnwCRTJXHhpXxbrUIu1EgNFqeD9i0qUzFR3Zarg/BcMFejwQDdslf4yJT3rMUSe5FR3/e1L5PakXQdDC9T4kXH991EfpNr2K7X7yUfbiQfbirSZram+uA6d1uYKDfepNVuZCfgbikukKEKfmFyip8cHPkgRGLJJZdX3jiOgC5NeBNA+9Celzxdu+Wcz1BTbAtjoLamYOKD/C/44y+ZyvXC0oICzrsOP/icbOx/cm3Kycm///wNN7fnb95fnpyM4Cr4vNaysV4gzJdyTCM8Gi5givr+EUMO2pcVspkaa3gJ8xoDOiaKAo9Y1iq2OJUzU/nIJaYB4bCkNY57CPa/Fnu1HTU/DO/6iDA98aCyaJw0kfBZrSm7k86yNddyWoQlWV6tphjpz2CbRpYfagoC0UTgDaY9wHeTJqXmFHY4P9eaKt5Sfjgf95h/d3mrmuY/3tGkKw==
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Get health status."}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/health"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Get the current health status of the service.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Health information indicating if the service is operational.","content":{"application/json":{"schema":{"properties":{"status":{"description":"The health status of the service","type":"string","enum":["OK","Error","Not Implemented"],"title":"HealthStatus"}},"type":"object","required":["status"],"title":"HealthInfo","description":"Health status information for the service."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

@@ -1,0 +1,72 @@
+---
+id: register-shield-v-1-shields-post
+title: "Register Shield"
+description: "Register a shield."
+sidebar_label: "Register Shield"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81uGzcQfpUBj4Ys/yBBGt0cywUMJIghK4fCMYwxd1bLmEuuSa7shaBnyL2nPkafpy/QVyiG3JVWlhLUORQNYF20ouaP8338drgQjnxljScvRgtxfHjIXxl56VQVlDViJE7gslCks6EYCGlNIBPYCKtKK4lsdPDFs+VCeFlQifxUOVuRCyrFVRmZoHJFjn+FpiIxEj44ZWZiIIIKmhfO11aDJzV8Muq+JljHgdw6CIXy4Mjb2kkCZUBrLBF8QHknlgMuYq4ycjedzY3KYumm+ZiL0dXTUpaD1YqptRbL6x+sIxQEXfKNQlL+bzXgojWD82yrA+djsPlGYAgFBrAPxm8WwAlThu1M0hofeCEi2ks9ZUPOmWOtexZcPDos/WbfMMsUF4b6ogd0cDV1uYW9/UIy7OjpcvnUZiAc3dfKUSZGV32ybHbuel3uZVf/U6p6zCk0kKpfYxJbJdHALUHtKYNgQRYk76Bl9FAsl1zYq10n4B1mMKH7mnx4zhnYDHLmnHXQHTfInS0jnCcX50OY2HpW6AZyq7V98DD59RTe/HL4Zpha0DtKPmCo49OqF2ll1VRlAs0S71qTte00fg+2eC8yCqh033ScVnbYKuMDGknPPUr8gLccnInC3e7D7lfbaGtsS+qhHlsothkm6BHLKu2068+rw8O14yaA3V7FtCBwaRke0IMyc9QqA+ugRJ1bV1LW8eL47TakU2vhA5qmi+1f2PGzsOP4bU/7dsC44shvtoYC5wT0KIkylg5mDQYCrUoVhnChCT1BcA3gDPkthIFcJyivdwnKuQnkDGq4JDcnB13pL+T5Gcjzui8t34JyRaATA7Whx4pkoAwoQmWlrJ1bicvqrfsU2HH6AyYttC8U+f9RJEEYcOY5ThpMvNiaHCc0Uz6QA2yHE24utzbid56JkXCtyU0yuJkftU/+prK+G5PIh3c2a3j7PziNt+G/P4umjfAk2p9fN1z/ffe3R+Dn+f7HE+h6lz34OwBTY7ppYrlJpEgthr5yJDF0SwNRUigsg9wiWWEoxEgczI8OWozFQPgoIT7ur3YsHkUI1ejgAE2zX1gfKNuPV5z9eMUZSltGanuStVOhiY7jTkyurvk/JsNkTZuznpytsVzDvwvpHf8+We7wWcbzmdv+SX4f72SXXDBcViRV3vIU9mG86hMLkd+a56d8r1E+KpXf8G3vQv3gccZvK/SfDez4IHgK7Esmq6wywQOa+EZXDqR1SR8zZWbAOuZylORTYHSUYrIsWBevELuT3PI4qWlODmddhR9sRtoPP5vksrf31+9//P3nVxifXUzOTk+mZ+O9vRG8pxnKJrYiJS2x4RuLo9LOKeObZV6H2hEwTZQ1fgifWM2tS3FLNUt6Ao5ycmQkgTW6Ya1pXcRIzI/imbY+lBiFwmDZZzjsvl319Ga3mrVHKtBjOKg0KsNpIo8XLd+vOPdA+LVIMqt5fbG4RU+fnF4uefm+Jsd0vh6IOTqVdPuKtaAg5Es1M/2OGjESp6mo/fYGO0ddcxVbgsgykDxOpKQqfNf2undiLz5eTsVA3LaiW9qMfRw+sGrggxiJqOTsHTUqri2ERjOrcca2KSZ//gFwIwBQ
+sidebar_class_name: "post api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Register Shield"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1/shields"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+Register a shield.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"properties":{"shield_id":{"type":"string","title":"Shield Id"},"provider_shield_id":{"anyOf":[{"type":"string"},{"type":"null"}]},"provider_id":{"anyOf":[{"type":"string"},{"type":"null"}]},"params":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]}},"type":"object","required":["shield_id"],"title":"RegisterShieldRequest"}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A Shield.","content":{"application/json":{"schema":{"properties":{"identifier":{"type":"string","title":"Identifier","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","title":"Provider Id","description":"ID of the provider that owns this resource"},"type":{"type":"string","const":"shield","title":"Type","default":"shield"},"params":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]}},"type":"object","required":["identifier","provider_id"],"title":"Shield","description":"A safety shield resource that can be used to check content."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

@@ -1,0 +1,68 @@
+---
+id: append-rows-v-1-beta-datasetio-append-rows-dataset-id-post
+title: "Append Rows"
+description: "Append rows to a dataset."
+sidebar_label: "Append Rows"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVsFu2zgQ/ZUBT20gx06Qoq1vaZMFAjRbw8kCu0gNYyyOLbYUqZCUE8PQt+xxgf26/YTFkJYt12mwxy0QXSRRM8OZeW8etRaOfGWNJy+Ga3E6OOObJJ87VQVljRiKmzrPyft5rWG8MRZNJs4Gg0PbDyhhTPc1+SAykVsTyAQ2w6rSKkc263/1bLsWPi+oxMMgl85ZB21iMHe2hFAQnI+ujmFs60WhVzC3WtsHD+NfPsLbd4O3xyITlbMVuaBSMT5gqONTUEETV5JWMhFWFb8rE2hBjqvZmOxsb+N9a+qDU2bBlpICKt01vUgrT9gq4wOaPAZGs/o8F8O79YHZdsXUWotmksUHnHHw4Gpqmkw4uq+VIymGd21hbdLblCbbMlILdxnZ2VfKA2dEj1hWqdK2P2eDwc5xH8C2VnFbELi0DA/oQZklaiXBOihRz60rSYqm4UzPTt8fQnprLVyjWbWx/Qs7fhZ2nL7fOT4F45Yjf9gaClwS0GNOJElGWBwGAq1KFY5hpAk9QXArwAUqAxoDueMNcd48JShXJpAzqOGG3JIctKm/kOdnIM+brrT8CMotgc4N1IYeK8oDSaAIlc3z2rmtuEiaY63DIbAX6cPuhHqhyP+OIgnCgAvPcS4woKegLHvuQ3BeVWQkOO5wsIAgky13mXscgbySYsjAkpFTtpwuT2YUcCrbuNPux3Z5quR0Wtl4ulXosKRAzsfGGCw5252h4BaKoagwFKLbBG5L1iHQEyh1yxlhKGC72RA6O3C7N+fqBytXHOw/03afb1wl31WgMj6glIo9UY86hin1g9ndLKBzuBI7IMcctGm+d9gnRNy5g35Cj13bH4lmn0ORVZkoKRSWQdzCEQoxFP2EY3+LYz/h2ON9+utd8xqRCR+lJOFXOxaRIoRq2O+jWfUK6wPJntZYYs8HzL8d57aMPfeU106FVXS8aEXlbsLfuNPjHSaXO1lLPb5bN5M4XXPbncNPvA3c8DZwU1Gu5hvooAeXjxU5VZIJqFlI0rm594NUKA/KR6Xxe952Hhe74UOBASpnl0qS/2LgiQvBU2BfMrKyygQPaOKJrBzk1iV9k8osgHXIzTEnnwKjoxSTx9o6Psft05vM+HdQ05IcLtoMr60k7Y+/mORydPTPn3/9DZe/jy7HV9eXv96efzo6GsLIUc9R+h3gfsCr5QnqqsAMEvyvUy4lriAv0CwIZjS3bWYzym3JufvAQsW6wDRIrVyeMKOZVCXGkdkM9kZVIqe/a39n6p4Vn80YBHoM/UqjMrxT5N16Q987kfLnHbYCl4kOhUUmhh0FmGSCecqe6/UMPf3mdNPw8n1Njgk6ycQSnUqKfLcWUnl+lmI4R+3pmVJejTcz9xqe0aAflNVKgmFBWKKu+U1k4hut9lUyTkNBKMnF/JLBx5RF75bD7AIcSBofQMnjPM+pCs/aTjqqMfp8cysyMdvIZmkl+zh8YHnCh5SsjV1JAslra6HRLGpcsG2Kyde/QWkmdQ==
+sidebar_class_name: "post api-method"
+info_path: docs/api-experimental/llama-stack-specification-experimental-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Append Rows"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"post"}
+  path={"/v1beta/datasetio/append-rows/{dataset_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Append rows to a dataset.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"dataset_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: dataset_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"content":{"application/json":{"schema":{"properties":{"rows":{"items":{"additionalProperties":true,"type":"object"},"type":"array","title":"Rows"}},"type":"object","required":["rows"],"title":"AppendRowsRequest"}}},"required":true}}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"204":{"description":"Successful Response"},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

@@ -1,0 +1,64 @@
+---
+id: list-tool-groups-v-1-toolgroups-get
+title: "List Tool Groups"
+description: "List tool groups with optional provider."
+sidebar_label: "List Tool Groups"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV81u20YQfpXBHg1a/kGCNLq5kRsIcFBDlg+FYwhjckhustyld5eyBYHPkHtPfYw+T1+gr1DM8kfUTxq4pwaILiKX8z/fzM6shSVXGu3IifFanJ+e8l9CLray9NJoMRYXcCWdnxuj3ltTlW7WcoxEJGKjPWnPTFiWSsbITCefHHOuhYtzKpCfSmtKsl42ehL04VR6Ktz+Z5mQ9jKVZPnNr0oSY+G8lToTkfDSKz6YbqiiHZNvtXysCDZyIDUWfC4dWHKmsjGB1KAUFgjOY/xZ1BEbsZQJ2UVHs5BJ8Eyvfk3F+G7XlDrqT3SllKjv/6MdPifolG8Z0uj/WgCuWzKYJnsRmE7ApFuCwefowTxpt20AK2w07GuKjXZejIU3Ri0yzv5A/ZyJWW+KldqhqiNRxOWCdFIa2eKjj+J2sisr/83JWytF3ZsozMMnir2IhKXHSlpKxPguiLgfsMyu9uJxAbezK7CUkiUdE3gD9OzJalTQgnh0MKFDoXUk0GZu2xtMEslKUF0P/PK2ol2j98V/yzE5hPgQFQPD+sI84HNIBgPBkkJPCXCKHBSoMQtvGfmc7GiDAYHW4moQ/wmX6rfsDPU8sOlww9gzsPsQMoBSS50BgpLOB/AaoxoP3EjUNdvw6lB/+hkTmNFjRc6/pCNtC7m01ljomiGk1hShei6upyOYmSrL1QpSo5R5cjD75R28+en0zajJygDMzqOvwlMXipvmpI+f1J6ypsxbkg3tPPxHe21GJORRqiHppDk5QCu186hjemnn4gd8YOGMXY72MMOud6O1sTVpkPQQQrEPekHPWJSNp118Xp2ebhi3E9j5KuY5gW2O4QkdSL1EJRMwFgpUqbEFJR0uzt/up3RuDHxAvepkux/o+F7Qcf52q7/tpbHHyG+mghyXBPQcEyXc0xg16AmULKQfwbUidATergAz5Esffeh4ATivDzWUqW4vhhuyS7LQmf4DPN8DeF4PW8vXUtkD6EJDpem5pJivRwqpMnFcWds3l37A2U3spPkAg/vtB0T+ZxBpUuiRp7a7MCtBM5SIvWGdh5bh0AFP0udgyma46+doDjsHPWR2moix4IFlsRl+3WJ5Fl7bt4yaa620FPMQ1g2HBfncMH9DUKLPxVicLM9ONswiEi4g14U4VpYxm3tfjk9OUK+Oc+M8JcdhkTkOi8woNkWIqKO4stKvAuOkw/DdPX+TOjXDfF6FReiG+eGmpFimLXLhGCa94QxHtzfEzXmZkC7g1W3xtgvIUHjYQdpIuo8aDvwQHIX5r1seHKAOfV1aiI1tqiThWZHRbFOMyTWC0VIjk8FhbJhwDyt54KFC0ZIsZp2FH0xCyo0+6obl6Oiv3//4+88vMLm8nl2+u5hfTo6OxnBFGcarEIpGaYEreOBJpTBLSnidSytfWQLOmjTajeCWa9rYRm4hswY7g23EaLViXLUsYiyWZ2ERNM4XGFqHxqKbrGEI4510rDct6CWAbqvG07M/KRVKzdoD2tYtMO/YpEgMoHkfCYYff1qvH9DRrVV1zcePFVnG3X0klmhlU9d393UkckLecRmSn2nF/TeOqWT4L1FVYf/YbZuM175U3l/ORV3/A0mawHY=
+sidebar_class_name: "get api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List Tool Groups"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/toolgroups"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+List tool groups with optional provider.
+
+<ParamsDetails
+  parameters={undefined}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListToolGroupsResponse.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"identifier":{"type":"string","title":"Identifier","description":"Unique identifier for this resource in llama stack"},"provider_resource_id":{"anyOf":[{"type":"string"},{"type":"null"}],"description":"Unique identifier for this resource in the provider"},"provider_id":{"type":"string","title":"Provider Id","description":"ID of the provider that owns this resource"},"type":{"type":"string","const":"tool_group","title":"Type","default":"tool_group"},"mcp_endpoint":{"anyOf":[{"properties":{"uri":{"type":"string","title":"Uri"}},"type":"object","required":["uri"],"title":"URL","description":"A URL reference to external content."},{"type":"null"}],"title":"URL"},"args":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]}},"type":"object","required":["identifier","provider_id"],"title":"ToolGroup","description":"A group of related tools managed together."},"type":"array","title":"Data"}},"type":"object","required":["data"],"title":"ListToolGroupsResponse","description":"Response containing a list of tool groups."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

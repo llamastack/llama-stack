@@ -1,0 +1,68 @@
+---
+id: openai-retrieve-vector-store-file-batch-v-1-vector-stores-vector-store-id-file-batches-batch-id-get
+title: "Openai Retrieve Vector Store File Batch"
+description: "Retrieve a vector store file batch."
+sidebar_label: "Openai Retrieve Vector Store File Batch"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV9tuGzcQ/ZUBn1pjbTlBgjZ6c26FgAQ2bLVA4RjCaHekZUKRG3JWtiDsY/+iX9cvKYaUVquLlbZogQaIH+w1d2Z4ZubMWXKpPIXK2UBB9Zfq6fm5/Cko5F5XrJ1VfXUBv1DOzt+w8/RWG3qJnJeX44+UM3iqPAWyrO0UuCSYaEMwFoszlancWSbLEhSryugcJWjvY5DISxXykmYoT5V3FXnWCYcu5DcvKlJ9FdhrO1WZYs1GFgaFajLlIoBjdgmiylRBE6wNq76ax0xGQVI5E6ijCFXi5Z6QqRhhN6a2TFPynaCvkhlcsDh1442Oo05FhFhFSCkERq5jwmujm7SS7UUhW89U/1blblYZYipUprQdVd5NPQXxyNHmZEx8M0EtD3fd1DeeTaZi6rmrLYf96m8sjxaiG2+z+VGX1qppMR6zf5tMmu1Uj3kMLFyt7ZpMsWM0Rx2G0aJp2oq7NWk8fa61F4TbVT9Q591WpG3vdnvfDtCrVPhsZ9DkFVTe5RSCjFOiB6Q2wcR5QEiEg0TgL+LWEfCG2PuEbUm4zYnHsXeGfy+By4rsxQC2mB6Tik6QIApqwf3skNa8xAKu6XNNgf+OemwHeeO987AWNph4N4vSdHE1OINrV09Ls4CJM8bdB7h++wp++PH8B1Gr7TH48nSu6dS01drYDuPf3UFupGSM2nRNX6eVA7baBha6xQrYxeVE9W93FabJ2hVbG6Oauyw+4FiCs69Jqt1lRdtxXmFcQeo0PZZQ7ZKryRQ9oIxCtz7Pzs83jtsNXOeqhiWBT8twjwG0naPRBTgPMzQT52cy54kXT1/st3ToHLxHu1jHDt/Y8bWw4+mLrtrut7HlyK+uhhLnBPSQExVUxLZ4ZAKjZ5rP4MoQBgL2C8ApagsGmfxaUJ4fEpSBZfIWDdyQn5OHNfRv5PkayPO8Ky2PtbIl0IWF2tJDRbkc0Ci2yuV57X0rLu1xaLexr9MLuF619htF/n8USS1knAaJszplDFw65nZbcE3sNc1p57y0czeRaseWDgrZpCKLeuRXrqOtg9LmpjCaP9l6FUajnSPVqGMtr5ObrE9JvokVepwRkw+xnBZntHMxSecyLZlUyOXWmU4qmnW4d6DB3UpcIZfQ7tiH3W2kfSsEa5z/1dZtfKHIjLh0UvZ1TbhUfdWbP+ltFbe33AHc9LrF7S3XQRs5yEZZSFWtvQhCyVz1ez20i9PSBabi1Bic4WlgzD+d5W4WsQTKa695ER1frwXi9k7eaTtx3WF5J/5wI/5wU1GuJytZ2DsLD0sdQIc4+qFrCW4SF7uhuESWk/9cFxQ+WDjwgxCIxZdsUTktNwK08ROpPeTOJ8Ep5N4gwuAnmFNIgdFTiilz5rx8WN3hTcZyPjM0J4/TNcL3riATzj7Y5HJy8sfvv8HN8OLluzcnJ325bhV1LomdesJiIToX4F5zCWPMP92jL0CuT8h6rI3mBUxr9GiZKJzFC4kPqWLzJ0KiygWeYVTYFTEv42RCO9SPXC92O7DcCPhfFIQVoZkeuFcZ1FbwRCYtVwy9FZDblyhRsv7+9HZpKhYt++8yJVyUWMvlGAP97E3TyPLnmryQ8C5Tc/Q6KejtUhU6yHOh+hM0gY6k+d31ali/hy8N/iPZrhbRLiRNNLX8pzL1iRYHRErU419B19GefwCroyxNpkrCgnysXHp9kedUccdx72u+pUg/vRmqpvkTwmWU/Q==
+sidebar_class_name: "get api-method"
+info_path: docs/api/llama-stack-specification
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Openai Retrieve Vector Store File Batch"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+
+
+Retrieve a vector store file batch.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"vector_store_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: vector_store_id"},{"name":"batch_id","in":"path","required":true,"schema":{"type":"string"},"description":"Path parameter: batch_id"}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A VectorStoreFileBatchObject representing the file batch.","content":{"application/json":{"schema":{"properties":{"id":{"type":"string","title":"Id"},"object":{"type":"string","title":"Object","default":"vector_store.file_batch"},"created_at":{"type":"integer","title":"Created At"},"vector_store_id":{"type":"string","title":"Vector Store Id"},"status":{"title":"Status","type":"string","enum":["completed","in_progress","cancelled","failed"],"default":"completed"},"file_counts":{"properties":{"completed":{"type":"integer","title":"Completed"},"cancelled":{"type":"integer","title":"Cancelled"},"failed":{"type":"integer","title":"Failed"},"in_progress":{"type":"integer","title":"In Progress"},"total":{"type":"integer","title":"Total"}},"type":"object","required":["completed","cancelled","failed","in_progress","total"],"title":"VectorStoreFileCounts","description":"File processing status counts for a vector store."}},"type":"object","required":["id","created_at","vector_store_id","status","file_counts"],"title":"VectorStoreFileBatchObject","description":"OpenAI Vector Store File Batch object."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>

@@ -1,0 +1,72 @@
+---
+id: list-tools-v-1-tools-get
+title: "List Tools"
+description: "List tools with optional tool group."
+sidebar_label: "List Tools"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV9tuGzcQ/ZUBH421fEGCNHpzIzcw4LSGrTwUjmGMd2e1TLjkmpyVvRD0DX3vUz+j39Mf6C8UQ2p1sVSkBlqgAawXLUjOcC7nzJ6dKU+hcTZQUMOZOj48lL+CQu51w9pZNVQncK4Dj50zIyrD5eL8QGUqd5bJsphg0xido5gcfA5iN1Mhr6hGeWq8a8izTrcUyHFVM9Vhe5udMxPv2uZWF9G17X4q1fB6prhrSA1VYK/tRM2z5YptjVHzm3mmLNYUnWwczRRrNrLwo+zPs80Un3mHtk3Lt6vsVsZYFFpcorlYS4l9S1nvxt19ppx3O3Yt/0eea2Lsy/4vOZ0/PZMpT/et9lSo4XVqxM2q8Av8qCelj+tQUKltDAXaQAVoC761rGuCiLFHDgO1uhC9x26tqSPJ7GsBxfTXAtoF6q3o+o0YBmqr7QQQjA4MrgTejF1inEsYr3bR6Hss4JLuWwr8HOpsOjn13nnoOQuldzVwRXBycTaAS9dOKtNB6YxxDwEuf3gHb747fCNU3aRYYOQ2kW1Rjau0siyhtkwT8rHo6cjq7Dj+Z1tUUQUxarN+dJRWdpzVNjDanJ7Hviw+4J04F5xKtdebHJZpLGJchLTW91hCtQ1wRY9YNynTvj6vDg9XhpsN7HNV44rAp2V4wADaTtHoApyHGk3pfE1Fj4vjt9stHTsHH9B2ve/wgo5vBR3Hbzfm21Yblxj52bVQ4ZSAHnOigorYFo9MYHSteQAXhjAQsO8AJ6gtGGTy/UB5vWugnFkmb9HAFfkpeehDfwHPtwCe1+uj5e9auQTQiYXW0mNDOVMBFFvl8rz1fjlcCiqxNbzd2FHagLWX3AtE/mcQSS1knATxEzXRe5HAQWw3myC6JSqPAA+aK3BNknBJjUThLCWXgseunhVqqESx3Eaj2+nR4mFC8h5r0GNNTD7EEiT9vKnBpVxqqO5b8t2GqCrRBMrULr369VKuC8N4FZwJlGO+jaccWa5IYrQmrpzk0cfMlRqqg+nRQUxFZSpE4qQcWi+UqZib4cEB2m6/coGp2DcGa9wPjPmXQe7qGEWgvPWau2g46il0fSN72pZuHU7nYg9XYg9XDeW6XBAH9mG0jFnYELZlbqUD6BDpEjZsRUdWBOvOuUKGxrupLih8srDjhxAoalCyReO05QBo42tFe8idTyQtRK8KmXyJOYXkGD0ln4JN5+Vl5HZfcieaxtCUPE76CD+4gkwYfLLJZG/vj19/+/P3X2B0enF5+u5kfDra2xvCOU0w72Ip0qU1dnAnQql20yTwy5ZbTyBdi9oZPspIcT75rfUkwRc8leTJ5gTOmk6gvTBRQzU9EjI3LnCNcXIt4Bs5Ml5A48mn3nL2/VMmLYArXyEHjUFt5c6IsdkCidcSSKYSFm8yJXiT1dnsDgN99GY+l+VEIAFaoYNMkRWFvlC3zbopmlZujkCdotdp8lzLB11FWJCPzpLtSZ5Tw2tWW4NdvCyJ9P50rObzvwDTNH3A
+sidebar_class_name: "get api-method"
+info_path: docs/api-deprecated/llama-stack-specification-deprecated-apis
+custom_edit_url: null
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List Tools"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/v1/tools"}
+  context={"endpoint"}
+>
+
+</MethodEndpoint>
+
+:::caution deprecated
+
+This endpoint has been deprecated and may be replaced or removed in future versions of the API.
+
+:::
+
+List tools with optional tool group.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"name":"toolgroup_id","in":"query","required":false,"schema":{"anyOf":[{"type":"string"},{"type":"null"}],"title":"Toolgroup Id"}}]}
+>
+
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"A ListToolDefsResponse.","content":{"application/json":{"schema":{"properties":{"data":{"items":{"properties":{"toolgroup_id":{"anyOf":[{"type":"string"},{"type":"null"}]},"name":{"type":"string","title":"Name"},"description":{"anyOf":[{"type":"string"},{"type":"null"}]},"input_schema":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]},"output_schema":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]},"metadata":{"anyOf":[{"additionalProperties":true,"type":"object"},{"type":"null"}]}},"type":"object","required":["name"],"title":"ToolDef","description":"Tool definition used in runtime contexts."},"type":"array","title":"Data"}},"type":"object","required":["data"],"title":"ListToolDefsResponse","description":"Response containing a list of tool definitions."}}}},"400":{"description":"Bad Request","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":400,"title":"Bad Request","detail":"The request was invalid or malformed"}}}},"429":{"description":"Too Many Requests","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":429,"title":"Too Many Requests","detail":"You have exceeded the rate limit. Please try again later."}}}},"500":{"description":"Internal Server Error","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"},"example":{"status":500,"title":"Internal Server Error","detail":"An unexpected error occurred"}}}},"default":{"description":"Default Response","content":{"application/json":{"schema":{"description":"Error response from the API. Roughly follows RFC 7807.","properties":{"status":{"title":"Status","type":"integer"},"title":{"title":"Title","type":"string"},"detail":{"title":"Detail","type":"string"},"instance":{"anyOf":[{"type":"string"},{"type":"null"}],"nullable":true}},"required":["status","title","detail"],"title":"Error","type":"object"}}}}}}
+>
+
+</StatusCodes>
