@@ -7235,6 +7235,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -7676,6 +7682,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -7845,6 +7857,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -12863,6 +12881,22 @@ components:
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
       description: Search results returned by the file search operation.
+    OpenAIResponseReasoning:
+      properties:
+        effort:
+          type: string
+          enum:
+          - low
+          - medium
+          - high
+          title: Effort
+          default: medium
+      type: object
+      title: OpenAIResponseReasoning
+      description: |-
+        Configuration for reasoning effort in OpenAI responses.
+
+        Controls how much reasoning the model performs before generating a response.
     OpenAIResponseTextFormat:
       properties:
         type:
