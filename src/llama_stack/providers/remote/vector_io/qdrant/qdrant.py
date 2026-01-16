@@ -18,6 +18,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
@@ -117,7 +118,7 @@ class QdrantIndex(EmbeddingIndex):
             assert point.payload is not None
 
             try:
-                chunk = EmbeddedChunk(**point.payload["chunk_content"])
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
             except Exception:
                 log.exception("Failed to parse chunk")
                 continue
@@ -171,7 +172,7 @@ class QdrantIndex(EmbeddingIndex):
                 raise RuntimeError("Qdrant query returned point with no payload")
 
             try:
-                chunk = EmbeddedChunk(**point.payload["chunk_content"])
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
             except Exception:
                 chunk_id = point.payload.get(CHUNK_ID_KEY, "unknown") if point.payload else "unknown"
                 point_id = getattr(point, "id", "unknown")
@@ -241,7 +242,7 @@ class QdrantIndex(EmbeddingIndex):
                 raise RuntimeError("Qdrant query returned point with no payload")
 
             try:
-                chunk = EmbeddedChunk(**point.payload["chunk_content"])
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
             except Exception:
                 chunk_id = point.payload.get(CHUNK_ID_KEY, "unknown") if point.payload else "unknown"
                 point_id = getattr(point, "id", "unknown")

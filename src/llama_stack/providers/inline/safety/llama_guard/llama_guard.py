@@ -17,6 +17,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
 from llama_stack_api import (
+    GetShieldRequest,
     ImageContentItem,
     Inference,
     ModerationObject,
@@ -167,7 +168,7 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
         messages: list[OpenAIMessageParam],
         params: dict[str, Any] = None,
     ) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(shield_id)
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=shield_id))
         if not shield:
             raise ValueError(f"Unknown shield {shield_id}")
 

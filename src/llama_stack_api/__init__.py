@@ -118,7 +118,12 @@ from .conversations import (
     RetrieveItemRequest,
     UpdateConversationRequest,
 )
-from .datasetio import DatasetIO, DatasetStore
+from .datasetio import (
+    AppendRowsRequest,
+    DatasetIO,
+    DatasetStore,
+    IterRowsRequest,
+)
 from .datasets import (
     CommonDatasetFields,
     Dataset,
@@ -151,7 +156,21 @@ from .datatypes import (
     ToolGroupsProtocolPrivate,
     VectorStoresProtocolPrivate,
 )
-from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
+from .eval import (
+    BenchmarkConfig,
+    BenchmarkIdRequest,
+    Eval,
+    EvalCandidate,
+    EvaluateResponse,
+    EvaluateRowsBodyRequest,
+    EvaluateRowsRequest,
+    JobCancelRequest,
+    JobResultRequest,
+    JobStatusRequest,
+    ModelCandidate,
+    RunEvalBodyRequest,
+    RunEvalRequest,
+)
 from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
     DeleteFileRequest,
@@ -361,11 +380,14 @@ from .openai_responses import (
 )
 from .post_training import (
     AlgorithmConfig,
+    CancelTrainingJobRequest,
     DataConfig,
     DatasetFormat,
     DPOAlignmentConfig,
     DPOLossType,
     EfficiencyConfig,
+    GetTrainingJobArtifactsRequest,
+    GetTrainingJobStatusRequest,
     ListPostTrainingJobsResponse,
     LoraFinetuningConfig,
     OptimizerConfig,
@@ -376,8 +398,10 @@ from .post_training import (
     PostTrainingJobLogStream,
     PostTrainingJobStatusResponse,
     PostTrainingRLHFRequest,
+    PreferenceOptimizeRequest,
     QATFinetuningConfig,
     RLHFAlgorithm,
+    SupervisedFineTuneRequest,
     TrainingConfig,
 )
 from .prompts import ListPromptsResponse, Prompt, Prompts
@@ -443,10 +467,13 @@ from .scoring_functions import (
 )
 from .shields import (
     CommonShieldFields,
+    GetShieldRequest,
     ListShieldsResponse,
+    RegisterShieldRequest,
     Shield,
     ShieldInput,
     Shields,
+    UnregisterShieldRequest,
 )
 from .tools import (
     ListToolDefsResponse,
@@ -519,6 +546,7 @@ __all__ = [
     "Batches",
     "BatchObject",
     "CancelBatchRequest",
+    "CancelTrainingJobRequest",
     "CreateBatchRequest",
     "ListBatchesRequest",
     "Benchmark",
@@ -575,6 +603,8 @@ __all__ = [
     "DatasetNotFoundError",
     "DatasetStore",
     "DatasetType",
+    "AppendRowsRequest",
+    "IterRowsRequest",
     "Datasets",
     "DatasetsProtocolPrivate",
     "DefaultRAGQueryGeneratorConfig",
@@ -588,6 +618,14 @@ __all__ = [
     "Eval",
     "EvalCandidate",
     "EvaluateResponse",
+    "EvaluateRowsBodyRequest",
+    "EvaluateRowsRequest",
+    "BenchmarkIdRequest",
+    "JobCancelRequest",
+    "JobResultRequest",
+    "JobStatusRequest",
+    "RunEvalBodyRequest",
+    "RunEvalRequest",
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",
@@ -668,6 +706,8 @@ __all__ = [
     "ModelTypeError",
     "Models",
     "GetModelRequest",
+    "GetTrainingJobArtifactsRequest",
+    "GetTrainingJobStatusRequest",
     "RegisterModelRequest",
     "UnregisterModelRequest",
     "ModelsProtocolPrivate",
@@ -833,6 +873,7 @@ __all__ = [
     "PostTrainingJobLogStream",
     "PostTrainingJobStatusResponse",
     "PostTrainingRLHFRequest",
+    "PreferenceOptimizeRequest",
     "Prompt",
     "Prompts",
     "ProviderInfo",
@@ -898,9 +939,13 @@ __all__ = [
     "ShieldStore",
     "Shields",
     "ShieldsProtocolPrivate",
+    "GetShieldRequest",
+    "RegisterShieldRequest",
+    "UnregisterShieldRequest",
     "SpecialToolGroup",
     "StrictJsonType",
     "StringType",
+    "SupervisedFineTuneRequest",
     "SystemMessage",
     "SystemMessageBehavior",
     "TextContentItem",
