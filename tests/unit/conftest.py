@@ -26,4 +26,4 @@ def suppress_httpx_logs(caplog):
     caplog.set_level(logging.WARNING, logger="httpx")
 
 
-pytest_plugins = ["tests.unit.fixtures"]
+# Plugin loading moved to root conftest.py for pytest 8.4+ compatibility

@@ -4086,15 +4086,16 @@ components:
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
     ResponseGuardrailSpec:
-      description: Specification for a guardrail to apply during response generation.
       properties:
         type:
-          title: Type
           type: string
+          title: Type
+      additionalProperties: false
+      type: object
       required:
       - type
       title: ResponseGuardrailSpec
-      type: object
+      description: Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       discriminator:
         mapping:
@@ -8244,6 +8245,211 @@ components:
       - reasoning.encrypted_content
       title: ConversationItemInclude
       description: Specify additional output data to include in the model response.
+    CreateResponseRequest:
+      properties:
+        input:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - oneOf:
+                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                  title: OpenAIResponseMessage-Input
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                  title: OpenAIResponseOutputMessageWebSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  title: OpenAIResponseOutputMessageFileSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  title: OpenAIResponseOutputMessageFunctionToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  title: OpenAIResponseOutputMessageMCPCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  title: OpenAIResponseOutputMessageMCPListTools
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  title: OpenAIResponseMCPApprovalRequest
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                title: OpenAIResponseMessage-Input | ... (7 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                title: OpenAIResponseInputFunctionToolCallOutput
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                title: OpenAIResponseMCPApprovalResponse
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                title: OpenAIResponseMessage-Input
+              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
+            type: array
+            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          description: Input message(s) to create the response.
+        model:
+          type: string
+          title: Model
+          description: The underlying LLM used for completions.
+        prompt:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponsePrompt'
+            title: OpenAIResponsePrompt
+          - type: 'null'
+          description: Prompt object with ID, version, and variables.
+          title: OpenAIResponsePrompt
+        instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Instructions to guide the model's behavior.
+        parallel_tool_calls:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to enable parallel tool calls.
+          default: true
+        previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional ID of a previous response to continue from.
+        conversation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional ID of a conversation to add the response to.
+        store:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to store the response in the database.
+          default: true
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to stream the response.
+          default: false
+        temperature:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: 0.0
+          - type: 'null'
+          description: Sampling temperature.
+        text:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseText'
+            title: OpenAIResponseText
+          - type: 'null'
+          description: Configuration for text response generation.
+          title: OpenAIResponseText
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
+          description: How the model should select which tool to call (if any).
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                title: OpenAIResponseInputToolWebSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                title: OpenAIResponseInputToolFileSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+                title: OpenAIResponseInputToolFunction
+              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+                title: OpenAIResponseInputToolMCP
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+            type: array
+          - type: 'null'
+          description: List of tools available to the model.
+        include:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ResponseItemInclude'
+            type: array
+          - type: 'null'
+          description: Additional fields to include in the response.
+        max_infer_iters:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Maximum number of inference iterations.
+          default: 10
+        guardrails:
+          anyOf:
+          - items:
+              anyOf:
+              - type: string
+              - $ref: '#/components/schemas/ResponseGuardrailSpec'
+                title: ResponseGuardrailSpec
+              title: string | ResponseGuardrailSpec
+            type: array
+          - type: 'null'
+          description: List of guardrails to apply during response generation.
+        max_tool_calls:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Max number of total calls to built-in tools that can be processed in a response.
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          description: Dictionary of metadata key-value pairs to attach to the response.
+      additionalProperties: false
+      type: object
+      required:
+      - input
+      - model
+      title: CreateResponseRequest
+      description: Request model for creating a response.
     DatasetPurpose:
       type: string
       enum:
@@ -9016,6 +9222,18 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ResponseItemInclude:
+      type: string
+      enum:
+      - web_search_call.action.sources
+      - code_interpreter_call.outputs
+      - computer_call_output.output.image_url
+      - file_search_call.results
+      - message.input_image.image_url
+      - message.output_text.logprobs
+      - reasoning.encrypted_content
+      title: ResponseItemInclude
+      description: Specify additional output data to include in the model response.
     RunEvalBodyRequest:
       properties:
         benchmark_config:
@@ -10129,6 +10347,115 @@ components:
       required:
       - query
       title: VectorStoreSearchRequest
+      type: object
+    RetrieveResponseRequest:
+      additionalProperties: false
+      description: Request model for retrieving a response.
+      properties:
+        response_id:
+          description: The ID of the OpenAI response to retrieve.
+          minLength: 1
+          title: Response Id
+          type: string
+      required:
+      - response_id
+      title: RetrieveResponseRequest
+      type: object
+    ListResponsesRequest:
+      additionalProperties: false
+      description: Request model for listing responses.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the last response to return.
+          nullable: true
+        limit:
+          anyOf:
+          - maximum: 100
+            minimum: 1
+            type: integer
+          - type: 'null'
+          default: 50
+          description: The number of responses to return.
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The model to filter responses by.
+          nullable: true
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: The order to sort responses by when sorted by created_at ('asc' or 'desc').
+          title: Order
+      title: ListResponsesRequest
+      type: object
+    ListResponseInputItemsRequest:
+      additionalProperties: false
+      description: Request model for listing input items of a response.
+      properties:
+        response_id:
+          description: The ID of the response to retrieve input items for.
+          minLength: 1
+          title: Response Id
+          type: string
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: An item ID to list items after, used for pagination.
+          nullable: true
+        before:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: An item ID to list items before, used for pagination.
+          nullable: true
+        include:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ResponseItemInclude'
+            type: array
+          - type: 'null'
+          description: Additional fields to include in the response.
+          nullable: true
+        limit:
+          anyOf:
+          - maximum: 100
+            minimum: 1
+            type: integer
+          - type: 'null'
+          default: 20
+          description: A limit on the number of objects to be returned. Limit can range between 1 and 100, and the default is 20.
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: The order to return the input items in.
+          title: Order
+      required:
+      - response_id
+      title: ListResponseInputItemsRequest
+      type: object
+    DeleteResponseRequest:
+      additionalProperties: false
+      description: Request model for deleting a response.
+      properties:
+        response_id:
+          description: The ID of the OpenAI response to delete.
+          minLength: 1
+          title: Response Id
+          type: string
+      required:
+      - response_id
+      title: DeleteResponseRequest
       type: object
     ListBatchesRequest:
       description: Request model for listing batches.

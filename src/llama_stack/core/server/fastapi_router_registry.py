@@ -18,6 +18,7 @@ from fastapi.routing import APIRoute
 
 from llama_stack_api import (
     admin,
+    agents,
     batches,
     benchmarks,
     conversations,
@@ -38,6 +39,7 @@ from llama_stack_api.datatypes import Api
 
 _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "admin": admin.fastapi_routes.create_router,
+    "agents": agents.fastapi_routes.create_router,
     "batches": batches.fastapi_routes.create_router,
     "benchmarks": benchmarks.fastapi_routes.create_router,
     "conversations": conversations.fastapi_routes.create_router,
