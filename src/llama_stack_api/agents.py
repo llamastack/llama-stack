@@ -107,6 +107,7 @@ class Agents(Protocol):
         ] = None,
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
+        top_logprobs: int | None = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
         """Create a model response.
 
@@ -119,6 +120,7 @@ class Agents(Protocol):
         :param guardrails: (Optional) List of guardrails to apply during response generation. Can be guardrail IDs (strings) or guardrail specifications.
         :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response.
         :param metadata: (Optional) Dictionary of metadata key-value pairs to attach to the response.
+        :param top_logprobs: (Optional) The number of top log probabilities to return for each token. Only used when logprobs are requested via the include parameter.
         :returns: An OpenAIResponseObject.
         """
         ...
