@@ -579,7 +579,6 @@ class VectorIO(Protocol):
 
     # this will just block now until chunks are inserted, but it should
     # probably return a Job instance which can be polled for completion
-    # TODO: rename vector_store_id to vector_store_id once Stainless is working
     async def insert_chunks(
         self,
         vector_store_id: str,
@@ -595,7 +594,6 @@ class VectorIO(Protocol):
         """
         ...
 
-    # TODO: rename vector_store_id to vector_store_id once Stainless is working
     async def query_chunks(
         self,
         vector_store_id: str,
