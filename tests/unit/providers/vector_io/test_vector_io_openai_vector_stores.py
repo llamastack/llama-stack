@@ -269,7 +269,7 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
                 created_timestamp=int(time.time()),
                 updated_timestamp=int(time.time()),
                 chunk_embedding_model="test-model",
-                chunk_embedding_dimension=768,
+                chunk_embedding_dimension=384,
                 content_token_count=5,
             ),
         ),
