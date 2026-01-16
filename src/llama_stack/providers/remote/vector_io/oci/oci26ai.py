@@ -16,7 +16,7 @@ from numpy.typing import NDArray
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.vector_io.oci.config import OCI26aiVectorIOConfig
-from llama_stack.providers.utils.memory.openai_vector_store_mixin import VERSION as OpenAIMixinVersion
+from llama_stack.providers.utils.memory.openai_vector_store_mixin import VERSION as OPENAIMIXINVERSION
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
@@ -46,8 +46,8 @@ logger = get_logger(name=__name__, category="vector_io::oci26ai")
 VERSION = "v1"
 VECTOR_DBS_PREFIX = f"vector_stores:oci26ai:{VERSION}::"
 VECTOR_INDEX_PREFIX = f"vector_index:oci26ai:{VERSION}::"
-OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:oci26ai:{OpenAIMixinVersion}::"
-OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:oci26ai:{OpenAIMixinVersion}::"
+OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:oci26ai:{OPENAIMIXINVERSION}::"
+OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:oci26ai:{OPENAIMIXINVERSION}::"
 OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_contents:oci26ai:{VERSION}::"
 
 
@@ -138,14 +138,14 @@ class OCI26aiIndex(EmbeddingIndex):
         try:
             cursor.execute(
                 """
-                SELECT COUNT(*) 
-                FROM USER_INDEXES 
+                SELECT COUNT(*)
+                FROM USER_INDEXES
                 WHERE INDEX_NAME = :index_name
             """,
                 index_name=index_name.upper(),
             )
             (count,) = cursor.fetchone()
-            return count > 0
+            return bool(count > 0)
         finally:
             cursor.close()
 
@@ -156,7 +156,7 @@ class OCI26aiIndex(EmbeddingIndex):
                 "sql": f"""
                     CREATE INDEX {self.table_name}_CONTENT_IDX
                     ON {self.table_name}(content)
-                    INDEXTYPE IS CTXSYS.CONTEXT 
+                    INDEXTYPE IS CTXSYS.CONTEXT
                     PARAMETERS ('SYNC (EVERY "FREQ=SECONDLY;INTERVAL=5")');
                 """,
             },
@@ -193,7 +193,7 @@ class OCI26aiIndex(EmbeddingIndex):
                 {
                     "chunk_id": chunk.chunk_id,
                     "content": chunk.content,
-                    "vector": array(array_type, normalize_embedding(np.array(chunk.embedding))),
+                    "vector": array(array_type, normalize_embedding(np.array(chunk.embedding)).astype(float).tolist()),
                     "metadata": json.dumps(chunk_step.get("metadata")),
                     "chunk_metadata": json.dumps(chunk_step.get("chunk_metadata")),
                 }
@@ -275,7 +275,7 @@ class OCI26aiIndex(EmbeddingIndex):
             )
         """
 
-        params = {
+        params: dict = {
             "query_vector": query_vector,
         }
 
@@ -480,7 +480,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
     ) -> None:
         super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
-        self.cache = {}
+        self.cache: dict[str, VectorStoreWithIndex] = {}
         self.pool = None
         self.inference_api = inference_api
         self.vector_store_table = None

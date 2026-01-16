@@ -28,7 +28,7 @@ from .config import (
 )
 
 
-def kvstore_dependencies():
+def kvstore_dependencies() -> list[str]:
     """
     Returns all possible kvstore dependencies for registry/provider specifications.
 
