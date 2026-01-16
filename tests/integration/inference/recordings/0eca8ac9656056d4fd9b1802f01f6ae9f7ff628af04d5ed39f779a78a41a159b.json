@@ -1,0 +1,58 @@
+{
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming[client_with_models-txt=bedrock/openai.gpt-oss-20b-1:0-inference:chat_completion:non_streaming_01]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-runtime.us-west-2.amazonaws.com/openai/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b-1:0",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Which planet do humans live on?"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b-1:0"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-0eca8ac96560",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "<reasoning>User asks: \"Which planet do humans live on?\" They likely want answer about Earth. Could also consider fictional contexts? But simple answer: Humans live on Earth. Could add that Earth is the sixth planet from the Sun in our solar system, named after the ground. Provide brief explanation.</reasoning>Humans live on **Earth**\u2014the world that surrounds our Sun and hosts all of our known life. It\u2019s the third\u2011closest planet to the Sun (sometimes called the \u201cthird rock\u201d from the Sun) and the only place in the solar system that has the conditions (liquid water, atmosphere, etc.) known to support life.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "openai.gpt-oss-20b-1:0",
+        "object": "chat.completion",
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 138,
+          "prompt_tokens": 76,
+          "total_tokens": 214,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

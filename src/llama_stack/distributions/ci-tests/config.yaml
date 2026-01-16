@@ -47,8 +47,8 @@ providers:
   - provider_id: bedrock
     provider_type: remote::bedrock
     config:
-      api_key: ${env.AWS_BEARER_TOKEN_BEDROCK:=}
-      region_name: ${env.AWS_DEFAULT_REGION:=us-east-2}
+      api_key: ${env.AWS_BEARER_TOKEN_BEDROCK:=replay-mode-dummy-key}
+      region_name: ${env.AWS_DEFAULT_REGION:=us-west-2}
   - provider_id: ${env.NVIDIA_API_KEY:+nvidia}
     provider_type: remote::nvidia
     config:
@@ -261,7 +261,13 @@ storage:
       namespace: prompts
       backend: kv_default
 registered_resources:
-  models: []
+  models:
+  - metadata:
+      description: OpenAI GPT-OSS 20B on Bedrock (us-west-2)
+    model_id: openai.gpt-oss-20b-1:0
+    provider_id: bedrock
+    provider_model_id: openai.gpt-oss-20b-1:0
+    model_type: llm
   shields:
   - shield_id: llama-guard
     provider_id: ${env.SAFETY_MODEL:+llama-guard}

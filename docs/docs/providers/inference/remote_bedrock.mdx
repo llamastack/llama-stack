@@ -17,11 +17,11 @@ AWS Bedrock inference provider using OpenAI compatible endpoint.
 | `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
 | `api_key` | `SecretStr \| None` | No |  | Authentication credential for the provider |
-| `region_name` | `str` | No | us-east-2 | AWS Region for the Bedrock Runtime endpoint |
+| `region_name` | `str` | No | us-west-2 | AWS Region for the Bedrock Runtime endpoint |
 
 ## Sample Configuration
 
 ```yaml
-api_key: ${env.AWS_BEARER_TOKEN_BEDROCK:=}
-region_name: ${env.AWS_DEFAULT_REGION:=us-east-2}
+api_key: ${env.AWS_BEARER_TOKEN_BEDROCK:=replay-mode-dummy-key}
+region_name: ${env.AWS_DEFAULT_REGION:=us-west-2}
 ```
