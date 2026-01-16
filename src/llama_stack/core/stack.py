@@ -110,6 +110,7 @@ RESOURCES = [
     ),
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
     ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
+    ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
 
