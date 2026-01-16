@@ -282,7 +282,7 @@ def pytest_generate_tests(metafunc):
             # No stack config found, apply fallback parametrization here
             inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
             if inference_mode == "live":
-                all_providers = ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant"]
+                all_providers = ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant", "oci"]
             else:
                 all_providers = ["faiss", "sqlite-vec"]
 
