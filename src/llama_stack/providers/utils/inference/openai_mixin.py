@@ -414,6 +414,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                     index=i,
                 )
             )
+
         usage = OpenAIEmbeddingUsage(
             prompt_tokens=response.usage.prompt_tokens,
             total_tokens=response.usage.total_tokens,

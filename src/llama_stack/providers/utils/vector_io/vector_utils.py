@@ -7,9 +7,8 @@
 import hashlib
 import re
 import uuid
-from typing import Any
-
 import numpy as np
+from typing import Any
 
 from llama_stack_api import EmbeddedChunk
 

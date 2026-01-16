@@ -55,6 +55,7 @@ def get_provider_dependencies(
         for provider in providers:
             # Providers from BuildConfig and RunConfig are subtly different - not great
             provider_type = provider if isinstance(provider, str) else provider.provider_type
+
             if provider_type not in providers_for_api:
                 raise ValueError(f"Provider `{provider}` is not available for API `{api_str}`")
 
