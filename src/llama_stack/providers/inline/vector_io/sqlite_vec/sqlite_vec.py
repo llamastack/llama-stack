@@ -59,9 +59,23 @@ def serialize_vector(vector: list[float]) -> bytes:
     return struct.pack(f"{len(vector)}f", *vector)
 
 
-def _create_sqlite_connection(db_path):
+def _create_sqlite_connection(db_path: str):
     """Create a SQLite connection with sqlite_vec extension loaded."""
     connection = sqlite3.connect(db_path)
+
+    if not hasattr(connection, "enable_load_extension") or not hasattr(connection, "load_extension"):
+        import importlib
+
+        try:
+            sqlite3_ext = importlib.import_module("pysqlite3")
+        except ImportError as e:
+            raise RuntimeError(
+                "Failed to initialize sqlite-vec: Python sqlite3 has extension loading disabled. "
+                "Install pysqlite3-binary or use a Python build with loadable extensions enabled."
+            ) from e
+
+        connection = sqlite3_ext.connect(db_path)
+
     connection.enable_load_extension(True)
     sqlite_vec.load(connection)
     connection.enable_load_extension(False)
