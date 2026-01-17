@@ -123,3 +123,11 @@ class PostgresKVStoreImpl(KVStore):
             (start_key, end_key),
         )
         return [row[0] for row in cursor.fetchall()]
+
+    async def shutdown(self) -> None:
+        if self._cursor:
+            self._cursor.close()
+            self._cursor = None
+        if self._conn:
+            self._conn.close()
+            self._conn = None
