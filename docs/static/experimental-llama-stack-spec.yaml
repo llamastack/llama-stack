@@ -1235,6 +1235,16 @@ components:
             type: array
           - type: 'null'
           nullable: true
+        reasoning_content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        reasoning:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
       title: OpenAIAssistantMessageParam
       type: object
     OpenAIChatCompletionContentPartImageParam:
@@ -1302,6 +1312,11 @@ components:
             title: OpenAIChatCompletionToolCallFunction
           - type: 'null'
           title: OpenAIChatCompletionToolCallFunction
+        extra_content:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
       type: object
       title: OpenAIChatCompletionToolCall
       description: Tool call specification for OpenAI-compatible chat completion responses.
@@ -1960,6 +1975,11 @@ components:
           - type: 'null'
           nullable: true
         reasoning_content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        reasoning:
           anyOf:
           - type: string
           - type: 'null'
@@ -8481,6 +8501,14 @@ components:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+        reasoning_content:
+          anyOf:
+          - type: string
+          - type: 'null'
+        reasoning:
+          anyOf:
+          - type: string
+          - type: 'null'
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -8509,6 +8537,14 @@ components:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
+          - type: 'null'
+        reasoning_content:
+          anyOf:
+          - type: string
+          - type: 'null'
+        reasoning:
+          anyOf:
+          - type: string
           - type: 'null'
       type: object
       title: OpenAIAssistantMessageParam
