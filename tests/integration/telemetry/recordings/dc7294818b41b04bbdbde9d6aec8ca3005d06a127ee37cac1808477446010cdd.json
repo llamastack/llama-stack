@@ -1,0 +1,58 @@
+{
+  "test_id": "tests/integration/telemetry/test_inference_metrics.py::test_metric_attributes_are_consistent[txt=ollama/llama3.2:3b-instruct-fp16]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Test attributes"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-dc7294818b41",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "Attribute Testing\n================\n\nAttributes allow you to provide metadata about an object, such as its name, description, or other relevant information. Here are some common use cases for testing attributes:\n\n### 1. Basic Attribute Tests\n\nYou can test whether an attribute is present on a class or instance using the `hasattr()` function.\n\n```python\nimport unittest\n\nclass TestClass:\n    def __init__(self):\n        self.name = \"Test Class\"\n\ndef test_has_attribute():\n    obj = TestClass()\n    assert hasattr(obj, \"name\")\n\ndef test_no_attribute():\n    obj = object()\n    assert not hasattr(obj, \"name\")\n```\n\n### 2. Attribute Getters\n\nYou can write tests to verify that attribute getters are working correctly.\n\n```python\nimport unittest\n\nclassTestClass:\n    def __init__(self):\n        self._name = \"Test Class\"\n\n    @property\n    def name(self):\n        return self._name\n\ndef test_attribute_getter():\n    obj = TestClass()\n    assert obj.name == \"Test Class\"\n```\n\n### 3. Attribute Setters\n\nSimilarly, you can write tests to verify that attribute setters are working correctly.\n\n```python\nimport unittest\n\nclassTestClass:\n    def __init__(self):\n        self._name = \"Test Class\"\n\n    @name.setter\n    def name(self, value):\n        self._name = value\n\ndef test_attribute_setter():\n    obj = TestClass()\n    obj.name = \"New Name\"\n    assert obj.name == \"New Name\"\n```\n\n### 4. Type Checking with `assert isinstance()`\n\nYou can use the `isinstance()` function to test whether an attribute has a specific type.\n\n```python\nimport unittest\n\nclass TestClass:\n    def __init__(self):\n        self.number = 10\n\ndef test_type_checking():\n    obj = TestClass()\n    assert isinstance(obj.number, int)\n```\n\n### 5. Attribute Validation with `@validator`\n\nYou can use the `@validator` decorator from the `pydantic` library to validate attributes.\n\n```python\nfrom pydantic import validator\nimport unittest\n\nclass TestClass:\n    @validator(\"name\")\n    def name_must_not_be_empty(cls, v):\n        if not v:\n            raise ValueError(\"Name must not be empty\")\n        return v\n\ndef test_attribute_validation():\n    obj = TestClass(name=\"Test Value\")\n    assert obj.name == \"Test Value\"\n```\n\nBest Practices\n--------------\n\n*   Use meaningful and descriptive names for your tests.\n*   Keep each test focused on a specific use case or scenario.\n*   Use assertions to verify the expected behavior of your code.\n*   Consider using mocking libraries to isolate dependencies in your unit tests.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "llama3.2:3b-instruct-fp16",
+        "object": "chat.completion",
+        "service_tier": null,
+        "system_fingerprint": "fp_ollama",
+        "usage": {
+          "completion_tokens": 560,
+          "prompt_tokens": 27,
+          "total_tokens": 587,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

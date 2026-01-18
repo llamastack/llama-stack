@@ -25,3 +25,16 @@ SAFETY_RESPONSE_PREFIX = f"{llama_stack_prefix}.safety.response"
 SAFETY_RESPONSE_METADATA_ATTRIBUTE = f"{SAFETY_RESPONSE_PREFIX}.metadata"
 SAFETY_RESPONSE_VIOLATION_LEVEL_ATTRIBUTE = f"{SAFETY_RESPONSE_PREFIX}.violation.level"
 SAFETY_RESPONSE_USER_MESSAGE_ATTRIBUTE = f"{SAFETY_RESPONSE_PREFIX}.violation.user_message"
+
+# Inference Metrics
+# These constants define the names for OpenTelemetry metrics tracking inference operations
+INFERENCE_PREFIX = f"{llama_stack_prefix}.inference"
+
+# Request-level metrics
+REQUESTS_TOTAL = f"{INFERENCE_PREFIX}.requests_total"
+REQUEST_DURATION = f"{INFERENCE_PREFIX}.request_duration_seconds"
+CONCURRENT_REQUESTS = f"{INFERENCE_PREFIX}.concurrent_requests"
+
+# Token-level metrics
+INFERENCE_DURATION = f"{INFERENCE_PREFIX}.inference_duration_seconds"
+TIME_TO_FIRST_TOKEN = f"{INFERENCE_PREFIX}.time_to_first_token_seconds"

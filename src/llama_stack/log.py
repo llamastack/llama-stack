@@ -51,6 +51,7 @@ CATEGORIES = [
     "post_training",
     "scoring",
     "tests",
+    "telemetry",
 ]
 UNCATEGORIZED = "uncategorized"
 

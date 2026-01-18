@@ -266,9 +266,7 @@ class BaseTelemetryCollector:
     ) -> None:
         """Accumulate a metric, preferring those matching expected model_id."""
         metric_name = metric.name
-        matches_model_id = (
-            expect_model_id and metric.attributes and metric.attributes.get("model_id") == expect_model_id
-        )
+        matches_model_id = expect_model_id and metric.attributes and metric.attributes.get("model") == expect_model_id
 
         if metric_name not in accumulated:
             accumulated[metric_name] = metric
@@ -278,7 +276,7 @@ class BaseTelemetryCollector:
 
         existing = accumulated[metric_name]
         existing_matches = (
-            expect_model_id and existing.attributes and existing.attributes.get("model_id") == expect_model_id
+            expect_model_id and existing.attributes and existing.attributes.get("model") == expect_model_id
         )
 
         if matches_model_id and not existing_matches:

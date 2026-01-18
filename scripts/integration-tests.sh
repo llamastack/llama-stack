@@ -317,21 +317,39 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
             echo "No Llama Stack Server processes found ?!"
         fi
         echo "Llama Stack Server stopped"
+
+        # Stop the OTLP collector if it was started
+        if [[ -n "${COLLECTOR_PID:-}" ]]; then
+            echo "Stopping OTLP Collector (PID: $COLLECTOR_PID)..."
+            kill $COLLECTOR_PID 2>/dev/null || true
+            wait $COLLECTOR_PID 2>/dev/null || true
+            echo "OTLP Collector stopped"
+        fi
     }
 
-    echo "=== Starting Llama Stack Server ==="
-    export LLAMA_STACK_LOG_WIDTH=120
-
-    # Configure telemetry collector for server mode
+    echo "=== Starting OTLP Collector for Telemetry ==="
+    # Start the OTLP collector BEFORE the server so it's ready to receive metrics
     # Use a fixed port for the OTEL collector so the server can connect to it
-    COLLECTOR_PORT=4317
+    # Note: Using HTTP port 4318 (not gRPC port 4317) because OTEL_EXPORTER_OTLP_PROTOCOL is http/protobuf
+    COLLECTOR_PORT=4318
     export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
-    # Disabled: https://github.com/llamastack/llama-stack/issues/4089
-    #export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
+    export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
     export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+    export OTEL_SERVICE_NAME="llama-stack-test"
     export OTEL_BSP_SCHEDULE_DELAY="200"
     export OTEL_BSP_EXPORT_TIMEOUT="2000"
     export OTEL_METRIC_EXPORT_INTERVAL="200"
+
+    # Start the OTLP collector in the background
+    # It will be used by pytest fixtures to collect telemetry
+    nohup python "$THIS_DIR/start_otlp_collector.py" >collector.log 2>&1 &
+    COLLECTOR_PID=$!
+
+    # Wait for collector to be ready
+    sleep 2
+
+    echo "=== Starting Llama Stack Server ==="
+    export LLAMA_STACK_LOG_WIDTH=120
 
     # remove "server:" from STACK_CONFIG
     stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
