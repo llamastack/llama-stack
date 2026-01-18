@@ -38,3 +38,67 @@ If you've created a [custom distribution](./building_distro), you can also use t
 ```python
 client = LlamaStackAsLibraryClient(config_path)
 ```
+
+## Resource Management
+
+When you're done using the client, you should properly release resources such as database connections. There are two ways to do this:
+
+### Using Context Managers (Recommended)
+
+The easiest and most Pythonic way is to use the client as a context manager, which automatically handles cleanup:
+
+```python
+# Synchronous client
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
+
+with LlamaStackAsLibraryClient("starter") as client:
+    response = client.models.list()
+# Client is automatically shut down here
+```
+
+For the async client:
+
+```python
+from llama_stack.core.library_client import AsyncLlamaStackAsLibraryClient
+
+async with AsyncLlamaStackAsLibraryClient("starter") as client:
+    response = await client.models.list()
+# Client is automatically shut down here
+```
+
+### Using Explicit shutdown()
+
+Alternatively, you can manually call `shutdown()` when you're done:
+
+```python
+# Synchronous client
+client = LlamaStackAsLibraryClient("starter")
+try:
+    # ... use the client ...
+    response = client.models.list()
+finally:
+    client.shutdown()
+```
+
+For the async client:
+
+```python
+from llama_stack.core.library_client import AsyncLlamaStackAsLibraryClient
+
+client = AsyncLlamaStackAsLibraryClient("starter")
+await client.initialize()
+try:
+    # ... use the client ...
+    response = await client.models.list()
+finally:
+    await client.shutdown()
+```
+
+The `shutdown()` method:
+- Closes all database connections (SQLite, PostgreSQL, etc.)
+- Releases any held resources
+- Can be called multiple times safely (idempotent)
+
+:::tip
+If you don't call `shutdown()` or use a context manager, your program may hang on exit while waiting for background threads to complete, especially when using SQLite-based storage backends.
+:::

@@ -62,6 +62,9 @@ class InmemoryKVStoreImpl(KVStore):
     async def delete(self, key: str) -> None:
         del self._store[key]
 
+    async def shutdown(self) -> None:
+        self._store.clear()
+
 
 _KVSTORE_BACKENDS: dict[str, KVStoreConfig] = {}
 _KVSTORE_INSTANCES: dict[tuple[str, str], KVStore] = {}
@@ -126,3 +129,11 @@ async def kvstore_impl(reference: KVStoreReference) -> KVStore:
         await impl.initialize()
         _KVSTORE_INSTANCES[cache_key] = impl
         return impl
+
+
+async def shutdown_kvstore_backends() -> None:
+    """Shutdown all cached KV store instances."""
+    global _KVSTORE_INSTANCES
+    for instance in _KVSTORE_INSTANCES.values():
+        await instance.shutdown()
+    _KVSTORE_INSTANCES.clear()

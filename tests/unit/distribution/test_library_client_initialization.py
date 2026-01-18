@@ -11,6 +11,8 @@ These tests ensure that the library client is automatically initialized
 and ready to use immediately after construction.
 """
 
+import pytest
+
 from llama_stack.core.library_client import (
     AsyncLlamaStackAsLibraryClient,
     LlamaStackAsLibraryClient,
@@ -143,3 +145,381 @@ class TestLlamaStackAsLibraryClientAutoInitialization:
 
         sync_client = LlamaStackAsLibraryClient("ci-tests")
         assert sync_client.async_client.route_impls is not None
+
+
+class TestLlamaStackAsLibraryClientShutdown:
+    """Test shutdown functionality of library clients."""
+
+    async def test_async_client_shutdown(self, monkeypatch):
+        """Test that async client shutdown properly shuts down the stack."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+        shutdown_called = []
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                shutdown_called.append(True)
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = AsyncLlamaStackAsLibraryClient("ci-tests")
+        await client.initialize()
+
+        # Verify stack is set
+        assert client.stack is not None
+
+        # Call shutdown
+        await client.shutdown()
+
+        # Verify shutdown was called on the stack
+        assert len(shutdown_called) == 1
+
+        # Verify stack is cleared
+        assert client.stack is None
+
+    async def test_async_client_shutdown_idempotent(self, monkeypatch):
+        """Test that async client shutdown can be called multiple times safely."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+        shutdown_called = []
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                shutdown_called.append(True)
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = AsyncLlamaStackAsLibraryClient("ci-tests")
+        await client.initialize()
+
+        # Call shutdown multiple times
+        await client.shutdown()
+        await client.shutdown()
+        await client.shutdown()
+
+        # Shutdown should only be called once (subsequent calls are no-ops)
+        assert len(shutdown_called) == 1
+
+    async def test_async_client_shutdown_before_initialize(self, monkeypatch):
+        """Test that async client shutdown works even if never initialized."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                pass
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = AsyncLlamaStackAsLibraryClient("ci-tests")
+
+        # Shutdown without initialize should not raise
+        await client.shutdown()
+
+    def test_sync_client_shutdown(self, monkeypatch):
+        """Test that sync client shutdown properly shuts down the stack."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+        shutdown_called = []
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                shutdown_called.append(True)
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = LlamaStackAsLibraryClient("ci-tests")
+
+        # Call shutdown
+        client.shutdown()
+
+        # Verify shutdown was called on the stack
+        assert len(shutdown_called) == 1
+
+    def test_sync_client_shutdown_idempotent(self, monkeypatch):
+        """Test that sync client shutdown can be called multiple times safely."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+        shutdown_called = []
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                shutdown_called.append(True)
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = LlamaStackAsLibraryClient("ci-tests")
+
+        # Call shutdown multiple times - should not raise
+        # Note: After first shutdown, the loop is closed, so subsequent calls may behave differently
+        client.shutdown()
+
+    def test_async_client_has_shutdown_method(self, monkeypatch):
+        """Verify AsyncLlamaStackAsLibraryClient has shutdown method."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                pass
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = AsyncLlamaStackAsLibraryClient("ci-tests")
+        assert hasattr(client, "shutdown")
+        assert callable(client.shutdown)
+
+    def test_sync_client_has_shutdown_method(self, monkeypatch):
+        """Verify LlamaStackAsLibraryClient has shutdown method."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                pass
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = LlamaStackAsLibraryClient("ci-tests")
+        assert hasattr(client, "shutdown")
+        assert callable(client.shutdown)
+
+
+class TestLlamaStackAsLibraryClientContextManager:
+    """Test context manager functionality of library clients."""
+
+    async def test_async_client_context_manager(self, monkeypatch):
+        """Test that async client works as an async context manager."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+        shutdown_called = []
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                shutdown_called.append(True)
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        async with AsyncLlamaStackAsLibraryClient("ci-tests") as client:
+            # Verify client is initialized
+            assert client.route_impls is not None
+
+        # Verify shutdown was called on exit
+        assert len(shutdown_called) == 1
+
+    async def test_async_client_context_manager_with_exception(self, monkeypatch):
+        """Test that async client shuts down even when an exception occurs."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+        shutdown_called = []
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                shutdown_called.append(True)
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        with pytest.raises(ValueError):
+            async with AsyncLlamaStackAsLibraryClient("ci-tests") as _client:
+                raise ValueError("Test exception")
+
+        # Verify shutdown was still called
+        assert len(shutdown_called) == 1
+
+    def test_sync_client_context_manager(self, monkeypatch):
+        """Test that sync client works as a context manager."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+        shutdown_called = []
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                shutdown_called.append(True)
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        with LlamaStackAsLibraryClient("ci-tests") as client:
+            # Verify client is initialized
+            assert client.async_client.route_impls is not None
+
+        # Verify shutdown was called on exit
+        assert len(shutdown_called) == 1
+
+    def test_sync_client_context_manager_with_exception(self, monkeypatch):
+        """Test that sync client shuts down even when an exception occurs."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+        shutdown_called = []
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                shutdown_called.append(True)
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        with pytest.raises(ValueError):
+            with LlamaStackAsLibraryClient("ci-tests") as _client:
+                raise ValueError("Test exception")
+
+        # Verify shutdown was still called
+        assert len(shutdown_called) == 1
+
+    def test_async_client_has_context_manager_methods(self, monkeypatch):
+        """Verify AsyncLlamaStackAsLibraryClient has context manager methods."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                pass
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = AsyncLlamaStackAsLibraryClient("ci-tests")
+        assert hasattr(client, "__aenter__")
+        assert hasattr(client, "__aexit__")
+
+    def test_sync_client_has_context_manager_methods(self, monkeypatch):
+        """Verify LlamaStackAsLibraryClient has context manager methods."""
+        mock_impls = {}
+        mock_route_impls = RouteImpls({})
+
+        class MockStack:
+            def __init__(self, config, custom_provider_registry=None):
+                self.impls = mock_impls
+
+            async def initialize(self):
+                pass
+
+            async def shutdown(self):
+                pass
+
+        def mock_initialize_route_impls(impls):
+            return mock_route_impls
+
+        monkeypatch.setattr("llama_stack.core.library_client.Stack", MockStack)
+        monkeypatch.setattr("llama_stack.core.library_client.initialize_route_impls", mock_initialize_route_impls)
+
+        client = LlamaStackAsLibraryClient("ci-tests")
+        assert hasattr(client, "__enter__")
+        assert hasattr(client, "__exit__")

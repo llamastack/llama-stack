@@ -107,6 +107,14 @@ class SqlAlchemySqlStoreImpl(SqlStore):
 
         return engine
 
+    async def shutdown(self) -> None:
+        """Dispose the session maker's engine and close all connections."""
+        # The async_session holds a reference to the engine created in __init__
+        if self.async_session:
+            engine = self.async_session.kw.get("bind")
+            if engine:
+                await engine.dispose()
+
     async def create_table(
         self,
         table: str,
