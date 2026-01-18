@@ -9,6 +9,8 @@ import json
 import httpx
 from aiohttp import hdrs
 
+from llama_stack.core.access_control.conditions import parse_conditions
+from llama_stack.core.access_control.datatypes import EndpointAccessRule
 from llama_stack.core.datatypes import AuthenticationConfig, User
 from llama_stack.core.request_headers import user_from_scope
 from llama_stack.core.server.auth_providers import create_auth_provider
@@ -16,6 +18,7 @@ from llama_stack.core.server.routes import find_matching_route, initialize_route
 from llama_stack.log import get_logger
 
 logger = get_logger(name=__name__, category="core::auth")
+endpoint_logger = get_logger(name=__name__, category="core::endpoint_auth")
 
 
 class AuthenticationMiddleware:
@@ -187,3 +190,201 @@ def _has_required_scope(required_scope: str, user: User | None) -> bool:
 
     user_scopes = user.attributes.get("scopes", [])
     return required_scope in user_scopes
+
+
+class EndpointAuthorizationMiddleware:
+    """Middleware that enforces endpoint-level access control.
+
+    This middleware runs after authentication and checks if the authenticated user
+    has permission to access the requested API endpoint based on endpoint_policy rules.
+
+    """
+
+    def __init__(self, app, endpoint_policy: list[EndpointAccessRule]):
+        self.app = app
+        self.endpoint_policy = endpoint_policy
+
+    async def __call__(self, scope, receive, send):
+        # Only process HTTP requests
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+
+        # If no endpoint policy configured, allow all endpoints (backward compatible)
+        if not self.endpoint_policy:
+            return await self.app(scope, receive, send)
+
+        path = scope.get("path", "")
+        # Normalize path: remove trailing slash (except for root "/")
+        if path != "/" and path.endswith("/"):
+            path = path.rstrip("/")
+
+        # Get authenticated user from scope (set by AuthenticationMiddleware if present)
+        user = user_from_scope(scope)
+
+        # Check if user has permission to access this endpoint
+        if not self._is_endpoint_allowed(path, user):
+            return await self._send_error(
+                send, f"Access denied: insufficient permissions for endpoint {path}", status=403
+            )
+
+        return await self.app(scope, receive, send)
+
+    def _is_endpoint_allowed(self, path: str, user: User | None) -> bool:
+        """Check if the user is allowed to access the given endpoint path.
+
+        Rules are evaluated in order. First matching rule determines access.
+        If no rule matches, access is denied.
+
+        Args:
+            path: The endpoint path being accessed
+            user: The authenticated user, or None if no authentication is configured
+        """
+        user_str = user.principal if user else "anonymous"
+
+        for index, rule in enumerate(self.endpoint_policy):
+            if self._rule_matches(rule, path, user):
+                # Check if this is a permit or forbid rule
+                if rule.permit:
+                    decision = "APPROVED"
+                    reason = rule.description or ""
+                    endpoint_logger.debug(
+                        f"ENDPOINT_AUTHZ,decision={decision},user={user_str},"
+                        f"endpoint={path},rule_index={index},reason={reason!r}"
+                    )
+                    return True
+                else:  # forbid
+                    decision = "DENIED"
+                    reason = rule.description or ""
+                    endpoint_logger.debug(
+                        f"ENDPOINT_AUTHZ,decision={decision},user={user_str},"
+                        f"endpoint={path},rule_index={index},reason={reason!r}"
+                    )
+                    return False
+
+        # No matching rule found - deny by default
+        decision = "DENIED"
+        reason = "no matching rule"
+        endpoint_logger.debug(
+            f"ENDPOINT_AUTHZ,decision={decision},user={user_str},endpoint={path},rule_index=-1,reason={reason!r}"
+        )
+        return False
+
+    def _rule_matches(self, rule: EndpointAccessRule, path: str, user: User | None) -> bool:
+        """Check if a rule matches the given path and user.
+
+        Args:
+            rule: The rule to evaluate
+            path: The endpoint path being accessed
+            user: The authenticated user, or None if no authentication is configured
+        """
+        # Get the scope (permit or forbid)
+        scope = rule.permit if rule.permit else rule.forbid
+        if not scope:
+            return False
+
+        # Check if path matches
+        if not self._path_matches(path, scope.paths):
+            return False
+
+        # Evaluate conditions
+        return self._evaluate_conditions(rule, user)
+
+    def _path_matches(self, request_path: str, rule_paths: str | list[str]) -> bool:
+        """Check if request path matches any of the rule paths.
+
+        Supports:
+        - Exact match: "/v1/chat/completions"
+        - Prefix wildcard: "/v1/files*" matches "/v1/files", "/v1/files/upload", "/v1/files/list", etc.
+        - Full wildcard: "*" matches all paths
+        """
+        paths = [rule_paths] if isinstance(rule_paths, str) else rule_paths
+
+        for pattern in paths:
+            if pattern == "*":
+                # Full wildcard matches everything
+                return True
+            elif pattern.endswith("*"):
+                # Prefix wildcard: check if request path starts with the prefix
+                prefix = pattern[:-1]  # Remove "*"
+                if request_path.startswith(prefix):
+                    return True
+            elif pattern == request_path:
+                # Exact match
+                return True
+
+        return False
+
+    def _evaluate_conditions(self, rule: EndpointAccessRule, user: User | None) -> bool:
+        """Evaluate when/unless conditions for the rule.
+
+        Reuses the existing condition parsing from access_control.conditions.
+
+        Args:
+            rule: The rule whose conditions to evaluate
+            user: The authenticated user, or None if no authentication is configured
+
+        Returns:
+            True if conditions are met (or no conditions exist), False otherwise
+        """
+        # If rule has conditions but no user is available, conditions cannot be met
+        if (rule.when or rule.unless) and not user:
+            return False
+
+        if rule.when:
+            # At this point, if rule.when exists and we got past the check above,
+            # user is guaranteed to be non-None
+            assert user is not None
+            conditions_list = rule.when if isinstance(rule.when, list) else [rule.when]
+            conditions = parse_conditions(conditions_list)
+            # For 'when', all conditions must match (AND logic)
+            # Note: Since we're checking endpoint access, we don't have a resource,
+            # so we create a dummy resource object
+            dummy_resource = _DummyResource()
+            for condition in conditions:
+                if not condition.matches(dummy_resource, user):
+                    return False
+            return True
+
+        if rule.unless:
+            # At this point, if rule.unless exists and we got past the check above,
+            # user is guaranteed to be non-None
+            assert user is not None
+            conditions_list = rule.unless if isinstance(rule.unless, list) else [rule.unless]
+            conditions = parse_conditions(conditions_list)
+            # For 'unless', no conditions should match (NOT logic)
+            dummy_resource = _DummyResource()
+            for condition in conditions:
+                if condition.matches(dummy_resource, user):
+                    return False
+            return True
+
+        # No conditions specified - rule applies regardless of user
+        return True
+
+    async def _send_error(self, send, message: str, status: int = 403):
+        """Send an error response."""
+        await send(
+            {
+                "type": "http.response.start",
+                "status": status,
+                "headers": [[b"content-type", b"application/json"]],
+            }
+        )
+        error_key = "message" if status == 401 else "detail"
+        error_msg = json.dumps({"error": {error_key: message}}).encode()
+        await send({"type": "http.response.body", "body": error_msg})
+
+
+class _DummyResource:
+    """Dummy resource for endpoint-level condition evaluation.
+
+    Endpoint rules don't have a real resource, so we use this dummy
+    to satisfy the condition.matches() interface. Most endpoint conditions
+    will be simple attribute checks (e.g., "user with admin in roles")
+    that don't need resource properties.
+    """
+
+    def __init__(self):
+        self.type = "endpoint"
+        self.identifier = "endpoint"
+        self.owner = None
