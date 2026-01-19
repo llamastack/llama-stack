@@ -8,6 +8,7 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
+from openai import APIStatusError
 from openai.types.chat import ChatCompletionToolParam
 from opentelemetry import trace
 
@@ -98,6 +99,54 @@ from .utils import (
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
 tracer = trace.get_tracer(__name__)
+
+# Maps OpenAI Chat Completions error codes to Responses API error codes
+_RESPONSES_API_ERROR_CODES = {
+    "invalid_base64": "invalid_base64_image",
+}
+
+
+def extract_openai_error(exc: APIStatusError) -> tuple[str, str]:
+    """Extract error code and message from an OpenAI APIStatusError.
+
+    The SDK provides the error in exc.body in one of two formats:
+        1. Nested: {"error": {"code": "...", "message": "...", ...}}
+        2. Direct: {"code": "...", "message": "...", ...}
+
+    Args:
+        exc: The APIStatusError exception from the OpenAI SDK
+
+    Returns:
+        Tuple of (error_code, error_message). Falls back to ("server_error", str(exc))
+        if the body doesn't contain a valid code. The message is always preserved.
+    """
+    body = exc.body
+    fallback_message = str(exc)
+
+    # body should be a dict
+    if not isinstance(body, dict):
+        logger.warning(f"Unexpected body type {type(body)}, expected dict: {exc}")
+        return ("server_error", fallback_message)
+
+    # Try nested format first: {"error": {"code": "...", ...}}
+    error_obj = body.get("error")
+    if isinstance(error_obj, dict):
+        raw_code = error_obj.get("code")
+        raw_message = error_obj.get("message")
+    else:
+        raw_code = body.get("code")
+        raw_message = body.get("message")
+
+    # Use the code if present, otherwise fall back to server_error
+    # The message always contains the real error details
+    if raw_code and isinstance(raw_code, str):
+        final_code = _RESPONSES_API_ERROR_CODES.get(raw_code, raw_code)
+    else:
+        final_code = "server_error"
+
+    message: str = raw_message if isinstance(raw_message, str) else fallback_message
+
+    return final_code, message
 
 
 def convert_tooldef_to_chat_tool(tool_def):
@@ -417,10 +466,31 @@ class StreamingResponseOrchestrator:
 
         except ModelNotFoundError:
             raise
-        except Exception as exc:  # noqa: BLE001
+        except APIStatusError as exc:
+            # OpenAI SDK error - extract the actual error code from the response
+            logger.warning(f"OpenAI API error during response generation: {exc}")
             self.final_messages = messages.copy()
             self.sequence_number += 1
-            error = OpenAIResponseError(code="internal_error", message=str(exc))
+
+            error_code, error_message = extract_openai_error(exc)
+
+            error = OpenAIResponseError(code=error_code, message=error_message)
+            failure_response = self._snapshot_response("failed", output_messages, error=error)
+            yield OpenAIResponseObjectStreamResponseFailed(
+                response=failure_response,
+                sequence_number=self.sequence_number,
+            )
+            return
+        except Exception as exc:  # noqa: BLE001
+            logger.exception(f"Unexpected '{type(exc).__name__}' error during response generation", exc_info=exc)
+            self.final_messages = messages.copy()
+            self.sequence_number += 1
+            # Use 'server_error' code per OpenAI ResponseError spec; sanitize message to avoid leaking internal details
+            # https://github.com/openai/openai-python/blob/main/src/openai/types/responses/response_error.py
+            error = OpenAIResponseError(
+                code="server_error",
+                message="An unexpected error occurred while generating the response.",
+            )
             failure_response = self._snapshot_response("failed", output_messages, error=error)
             yield OpenAIResponseObjectStreamResponseFailed(
                 response=failure_response,

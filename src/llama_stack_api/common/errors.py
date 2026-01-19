@@ -12,21 +12,16 @@
 from abc import ABC, abstractmethod
 
 import httpx
-from fastapi import HTTPException
 
 
 class LlamaStackError(Exception, ABC):
-    """A Llama Stack error that can be translated to a fastapi HTTPException"""
+    """A Llama Stack error with an HTTP status code for API responses."""
 
     @property
     @abstractmethod
     def status_code(self) -> httpx.codes:
         """The HTTP status code for this exception"""
         ...
-
-    def http_exception(self) -> HTTPException:
-        """A fastapi HTTPException with the appropriate status code and detail"""
-        return HTTPException(status_code=self.status_code, detail=str(self))
 
 
 class ResourceNotFoundError(ValueError, LlamaStackError):
@@ -148,6 +143,18 @@ class InvalidConversationIdError(ValueError, LlamaStackError):
         message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
         super().__init__(message)
     
+    @property
+    def status_code(self) -> httpx.codes:
+        return httpx.codes.BAD_REQUEST
+
+
+class InvalidParameterError(ValueError, LlamaStackError):
+    """raised when a request parameter has an invalid value"""
+
+    def __init__(self, param_name: str, value: object, constraint: str) -> None:
+        message = f"Invalid value for '{param_name}': {value}. {constraint}"
+        super().__init__(message)
+
     @property
     def status_code(self) -> httpx.codes:
         return httpx.codes.BAD_REQUEST
