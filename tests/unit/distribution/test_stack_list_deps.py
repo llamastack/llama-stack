@@ -57,3 +57,19 @@ def test_list_deps_formatting_quotes_only_for_uv():
 
     uv_format = format_output_deps_only(["mcp>=1.23.0"], [], [], uv=True)
     assert uv_format.strip() == "uv pip install 'mcp>=1.23.0'"
+
+
+def test_stack_list_deps_expands_provider_dependencies():
+    args = argparse.Namespace(
+        config=None,
+        env_name="test-env",
+        providers="agents=inline::meta-reference",
+        format="deps-only",
+    )
+
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        run_stack_list_deps_command(args)
+        output = mock_stdout.getvalue()
+
+        # Agents provider depends on inference and others; ensure at least inference deps show up.
+        assert "torch" in output
