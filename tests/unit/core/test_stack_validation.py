@@ -26,7 +26,7 @@ class TestVectorStoresValidation:
     async def test_validate_missing_model(self):
         """Test validation fails when model not found."""
         run_config = StackConfig(
-            image_name="test",
+            distro_name="test",
             providers={},
             storage=StorageConfig(
                 backends={},
@@ -54,7 +54,7 @@ class TestVectorStoresValidation:
     async def test_validate_success(self):
         """Test validation passes with valid model."""
         run_config = StackConfig(
-            image_name="test",
+            distro_name="test",
             providers={},
             storage=StorageConfig(
                 backends={},

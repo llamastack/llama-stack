@@ -53,6 +53,9 @@ from llama_stack_api import (
     PostTraining,
     Prompts,
     Providers,
+    RegisterBenchmarkRequest,
+    RegisterModelRequest,
+    RegisterShieldRequest,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -61,6 +64,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
+from llama_stack_api.datasets import RegisterDatasetRequest
 
 logger = get_logger(name=__name__, category="core")
 
@@ -91,24 +95,40 @@ class LlamaStack(
     pass
 
 
+# Resources to register based on configuration.
+# If a request class is specified, the configuration object will be converted to this class before invoking the registration method.
 RESOURCES = [
-    ("models", Api.models, "register_model", "list_models"),
-    ("shields", Api.shields, "register_shield", "list_shields"),
-    ("datasets", Api.datasets, "register_dataset", "list_datasets"),
+    ("models", Api.models, "register_model", "list_models", RegisterModelRequest),
+    ("shields", Api.shields, "register_shield", "list_shields", RegisterShieldRequest),
+    ("datasets", Api.datasets, "register_dataset", "list_datasets", RegisterDatasetRequest),
     (
         "scoring_fns",
         Api.scoring_functions,
         "register_scoring_function",
         "list_scoring_functions",
+        None,
     ),
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
+    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
+    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
+    ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
 
 REGISTRY_REFRESH_INTERVAL_SECONDS = 300
 REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
+
+# ID fields for registered resources that should trigger skipping
+# when they resolve to empty/None (from conditional env vars like :+)
+RESOURCE_ID_FIELDS = [
+    "vector_store_id",
+    "model_id",
+    "shield_id",
+    "dataset_id",
+    "scoring_fn_id",
+    "benchmark_id",
+    "toolgroup_id",
+]
 
 
 def is_request_model(t: Any) -> bool:
@@ -187,7 +207,7 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
-    for rsrc, api, register_method, list_method in RESOURCES:
+    for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
             continue
@@ -201,10 +221,17 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
                     continue
                 logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
 
-            # we want to maintain the type information in arguments to method.
-            # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
-            # we use model_dump() to find all the attrs and then getattr to get the still typed value.
-            await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+            # TODO: Once all register methods are migrated to accept request objects,
+            # remove this conditional and always use the request_class pattern.
+            if request_class is not None:
+                request = request_class(**obj.model_dump())
+                await method(request)
+            else:
+                # we want to maintain the type information in arguments to method.
+                # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
+                # we use model_dump() to find all the attrs and then getattr to get the still typed
+                # value.
+                await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
 
         method = getattr(impls[api], list_method)
         response = await invoke_with_optional_request(method)
@@ -346,15 +373,33 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                             logger.debug(
                                 f"Skipping config env variable expansion for disabled provider: {v.get('provider_id', '')}"
                             )
-                            # Create a copy with resolved provider_id but original config
-                            disabled_provider = v.copy()
-                            disabled_provider["provider_id"] = resolved_provider_id
                             continue
                     except EnvVarError:
                         # If we can't resolve the provider_id, continue with normal processing
                         pass
 
-                # Normal processing for non-disabled providers
+                # Special handling for registered resources: check if ID field resolves to empty/None
+                # from conditional env vars (e.g., ${env.VAR:+value}) and skip the entry if so
+                if isinstance(v, dict):
+                    should_skip = False
+                    for id_field in RESOURCE_ID_FIELDS:
+                        if id_field in v:
+                            try:
+                                resolved_id = replace_env_vars(v[id_field], f"{path}[{i}].{id_field}")
+                                if resolved_id is None or resolved_id == "":
+                                    logger.debug(
+                                        f"Skipping {path}[{i}] with empty {id_field} (conditional env var not set)"
+                                    )
+                                    should_skip = True
+                                    break
+                            except EnvVarError as e:
+                                logger.warning(
+                                    f"Could not resolve {id_field} in {path}[{i}], env var '{e.var_name}': {e}"
+                                )
+                    if should_skip:
+                        continue
+
+                # Normal processing
                 result.append(replace_env_vars(v, f"{path}[{i}]"))
             except EnvVarError as e:
                 raise EnvVarError(e.var_name, e.path) from None
@@ -446,10 +491,10 @@ def _convert_string_to_proper_type(value: str) -> Any:
     return value
 
 
-def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
-    """Ensure that any value for a key 'image_name' in a config_dict is a string"""
-    if "image_name" in config_dict and config_dict["image_name"] is not None:
-        config_dict["image_name"] = str(config_dict["image_name"])
+def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
+    """Ensure that any value for a key 'distro_name' in a config_dict is a string"""
+    if "distro_name" in config_dict and config_dict["distro_name"] is not None:
+        config_dict["distro_name"] = str(config_dict["distro_name"])
     return config_dict
 
 
@@ -531,7 +576,7 @@ class Stack:
         stores = self.run_config.storage.stores
         if not stores.metadata:
             raise ValueError("storage.stores.metadata must be configured with a kv_* backend")
-        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.image_name)
+        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.distro_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
 
         internal_impls = {}
@@ -670,7 +715,7 @@ def run_config_from_adhoc_config_spec(
             )
         ]
     config = StackConfig(
-        image_name="distro-test",
+        distro_name="distro-test",
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
         storage=StorageConfig(

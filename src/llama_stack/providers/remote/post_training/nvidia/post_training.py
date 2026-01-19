@@ -14,13 +14,15 @@ from llama_stack.providers.remote.post_training.nvidia.config import NvidiaPostT
 from llama_stack.providers.remote.post_training.nvidia.utils import warn_unsupported_params
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack_api import (
-    AlgorithmConfig,
-    DPOAlignmentConfig,
+    CancelTrainingJobRequest,
+    GetTrainingJobArtifactsRequest,
+    GetTrainingJobStatusRequest,
     JobStatus,
     PostTrainingJob,
     PostTrainingJobArtifactsResponse,
     PostTrainingJobStatusResponse,
-    TrainingConfig,
+    PreferenceOptimizeRequest,
+    SupervisedFineTuneRequest,
 )
 
 from .models import _MODEL_ENTRIES
@@ -156,7 +158,9 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
 
         return ListNvidiaPostTrainingJobs(data=jobs)
 
-    async def get_training_job_status(self, job_uuid: str) -> NvidiaPostTrainingJobStatusResponse:
+    async def get_training_job_status(
+        self, request: GetTrainingJobStatusRequest
+    ) -> NvidiaPostTrainingJobStatusResponse:
         """Get the status of a customization job.
         Updated the base class return type from PostTrainingJobResponse to NvidiaPostTrainingJob.
 
@@ -178,8 +182,8 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
         """
         response = await self._make_request(
             "GET",
-            f"/v1/customization/jobs/{job_uuid}/status",
-            params={"job_id": job_uuid},
+            f"/v1/customization/jobs/{request.job_uuid}/status",
+            params={"job_id": request.job_uuid},
         )
 
         api_status = response.pop("status").lower()
@@ -187,18 +191,20 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
 
         return NvidiaPostTrainingJobStatusResponse(
             status=JobStatus(mapped_status),
-            job_uuid=job_uuid,
+            job_uuid=request.job_uuid,
             started_at=datetime.fromisoformat(response.pop("created_at")),
             updated_at=datetime.fromisoformat(response.pop("updated_at")),
             **response,
         )
 
-    async def cancel_training_job(self, job_uuid: str) -> None:
+    async def cancel_training_job(self, request: CancelTrainingJobRequest) -> None:
         await self._make_request(
-            method="POST", path=f"/v1/customization/jobs/{job_uuid}/cancel", params={"job_id": job_uuid}
+            method="POST", path=f"/v1/customization/jobs/{request.job_uuid}/cancel", params={"job_id": request.job_uuid}
         )
 
-    async def get_training_job_artifacts(self, job_uuid: str) -> PostTrainingJobArtifactsResponse:
+    async def get_training_job_artifacts(
+        self, request: GetTrainingJobArtifactsRequest
+    ) -> PostTrainingJobArtifactsResponse:
         raise NotImplementedError("Job artifacts are not implemented yet")
 
     async def get_post_training_artifacts(self, job_uuid: str) -> PostTrainingJobArtifactsResponse:
@@ -206,13 +212,7 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
 
     async def supervised_fine_tune(
         self,
-        job_uuid: str,
-        training_config: dict[str, Any],
-        hyperparam_search_config: dict[str, Any],
-        logger_config: dict[str, Any],
-        model: str,
-        checkpoint_dir: str | None,
-        algorithm_config: AlgorithmConfig | None = None,
+        request: SupervisedFineTuneRequest,
     ) -> NvidiaPostTrainingJob:
         """
         Fine-tunes a model on a dataset.
@@ -300,13 +300,16 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
             User is informed about unsupported parameters via warnings.
         """
 
+        # Convert training_config to dict for internal processing
+        training_config = request.training_config.model_dump()
+
         # Check for unsupported method parameters
         unsupported_method_params = []
-        if checkpoint_dir:
-            unsupported_method_params.append(f"checkpoint_dir={checkpoint_dir}")
-        if hyperparam_search_config:
+        if request.checkpoint_dir:
+            unsupported_method_params.append(f"checkpoint_dir={request.checkpoint_dir}")
+        if request.hyperparam_search_config:
             unsupported_method_params.append("hyperparam_search_config")
-        if logger_config:
+        if request.logger_config:
             unsupported_method_params.append("logger_config")
 
         if unsupported_method_params:
@@ -344,7 +347,7 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
 
         # Prepare base job configuration
         job_config = {
-            "config": model,
+            "config": request.model,
             "dataset": {
                 "name": training_config["data_config"]["dataset_id"],
                 "namespace": self.config.dataset_namespace,
@@ -388,14 +391,14 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
             job_config["hyperparameters"].pop("sft")
 
         # Handle LoRA-specific configuration
-        if algorithm_config:
-            if algorithm_config.type == "LoRA":
-                warn_unsupported_params(algorithm_config, supported_params["lora_config"], "LoRA config")
+        if request.algorithm_config:
+            if request.algorithm_config.type == "LoRA":
+                warn_unsupported_params(request.algorithm_config, supported_params["lora_config"], "LoRA config")
                 job_config["hyperparameters"]["lora"] = {
-                    k: v for k, v in {"alpha": algorithm_config.alpha}.items() if v is not None
+                    k: v for k, v in {"alpha": request.algorithm_config.alpha}.items() if v is not None
                 }
             else:
-                raise NotImplementedError(f"Unsupported algorithm config: {algorithm_config}")
+                raise NotImplementedError(f"Unsupported algorithm config: {request.algorithm_config}")
 
         # Create the customization job
         response = await self._make_request(
@@ -416,12 +419,7 @@ class NvidiaPostTrainingAdapter(ModelRegistryHelper):
 
     async def preference_optimize(
         self,
-        job_uuid: str,
-        finetuned_model: str,
-        algorithm_config: DPOAlignmentConfig,
-        training_config: TrainingConfig,
-        hyperparam_search_config: dict[str, Any],
-        logger_config: dict[str, Any],
+        request: PreferenceOptimizeRequest,
     ) -> PostTrainingJob:
         """Optimize a model based on preference data."""
         raise NotImplementedError("Preference optimization is not implemented yet")

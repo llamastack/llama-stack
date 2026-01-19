@@ -53,7 +53,7 @@ def _base_run_config(**overrides):
     )
     return StackConfig(
         version=LLAMA_STACK_RUN_CONFIG_VERSION,
-        image_name="test-distro",
+        distro_name="test-distro",
         apis=[],
         providers={},
         storage=storage,

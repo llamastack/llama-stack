@@ -4,19 +4,23 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Any
 
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    BenchmarkConfig,
     Eval,
     EvaluateResponse,
+    EvaluateRowsRequest,
     Job,
+    JobCancelRequest,
+    JobResultRequest,
+    JobStatusRequest,
     RoutingTable,
+    RunEvalRequest,
+    ScoreBatchRequest,
     ScoreBatchResponse,
+    ScoreRequest,
     ScoreResponse,
     Scoring,
-    ScoringFnParams,
 )
 
 logger = get_logger(name=__name__, category="core::routers")
@@ -40,21 +44,22 @@ class ScoringRouter(Scoring):
 
     async def score_batch(
         self,
-        dataset_id: str,
-        scoring_functions: dict[str, ScoringFnParams | None] = None,
-        save_results_dataset: bool = False,
+        request: ScoreBatchRequest,
     ) -> ScoreBatchResponse:
-        logger.debug(f"ScoringRouter.score_batch: {dataset_id}")
+        logger.debug(f"ScoringRouter.score_batch: {request.dataset_id}")
         res = {}
-        for fn_identifier in scoring_functions.keys():
+        for fn_identifier in request.scoring_functions.keys():
             provider = await self.routing_table.get_provider_impl(fn_identifier)
-            score_response = await provider.score_batch(
-                dataset_id=dataset_id,
-                scoring_functions={fn_identifier: scoring_functions[fn_identifier]},
+            # Create a request for this specific scoring function
+            single_fn_request = ScoreBatchRequest(
+                dataset_id=request.dataset_id,
+                scoring_functions={fn_identifier: request.scoring_functions[fn_identifier]},
+                save_results_dataset=request.save_results_dataset,
             )
+            score_response = await provider.score_batch(single_fn_request)
             res.update(score_response.results)
 
-        if save_results_dataset:
+        if request.save_results_dataset:
             raise NotImplementedError("Save results dataset not implemented yet")
 
         return ScoreBatchResponse(
@@ -63,18 +68,19 @@ class ScoringRouter(Scoring):
 
     async def score(
         self,
-        input_rows: list[dict[str, Any]],
-        scoring_functions: dict[str, ScoringFnParams | None] = None,
+        request: ScoreRequest,
     ) -> ScoreResponse:
-        logger.debug(f"ScoringRouter.score: {len(input_rows)} rows, {len(scoring_functions)} functions")
+        logger.debug(f"ScoringRouter.score: {len(request.input_rows)} rows, {len(request.scoring_functions)} functions")
         res = {}
         # look up and map each scoring function to its provider impl
-        for fn_identifier in scoring_functions.keys():
+        for fn_identifier in request.scoring_functions.keys():
             provider = await self.routing_table.get_provider_impl(fn_identifier)
-            score_response = await provider.score(
-                input_rows=input_rows,
-                scoring_functions={fn_identifier: scoring_functions[fn_identifier]},
+            # Create a request for this specific scoring function
+            single_fn_request = ScoreRequest(
+                input_rows=request.input_rows,
+                scoring_functions={fn_identifier: request.scoring_functions[fn_identifier]},
             )
+            score_response = await provider.score(single_fn_request)
             res.update(score_response.results)
 
         return ScoreResponse(results=res)
@@ -98,61 +104,40 @@ class EvalRouter(Eval):
 
     async def run_eval(
         self,
-        benchmark_id: str,
-        benchmark_config: BenchmarkConfig,
+        request: RunEvalRequest,
     ) -> Job:
-        logger.debug(f"EvalRouter.run_eval: {benchmark_id}")
-        provider = await self.routing_table.get_provider_impl(benchmark_id)
-        return await provider.run_eval(
-            benchmark_id=benchmark_id,
-            benchmark_config=benchmark_config,
-        )
+        logger.debug(f"EvalRouter.run_eval: {request.benchmark_id}")
+        provider = await self.routing_table.get_provider_impl(request.benchmark_id)
+        return await provider.run_eval(request)
 
     async def evaluate_rows(
         self,
-        benchmark_id: str,
-        input_rows: list[dict[str, Any]],
-        scoring_functions: list[str],
-        benchmark_config: BenchmarkConfig,
+        request: EvaluateRowsRequest,
     ) -> EvaluateResponse:
-        logger.debug(f"EvalRouter.evaluate_rows: {benchmark_id}, {len(input_rows)} rows")
-        provider = await self.routing_table.get_provider_impl(benchmark_id)
-        return await provider.evaluate_rows(
-            benchmark_id=benchmark_id,
-            input_rows=input_rows,
-            scoring_functions=scoring_functions,
-            benchmark_config=benchmark_config,
-        )
+        logger.debug(f"EvalRouter.evaluate_rows: {request.benchmark_id}, {len(request.input_rows)} rows")
+        provider = await self.routing_table.get_provider_impl(request.benchmark_id)
+        return await provider.evaluate_rows(request)
 
     async def job_status(
         self,
-        benchmark_id: str,
-        job_id: str,
+        request: JobStatusRequest,
     ) -> Job:
-        logger.debug(f"EvalRouter.job_status: {benchmark_id}, {job_id}")
-        provider = await self.routing_table.get_provider_impl(benchmark_id)
-        return await provider.job_status(benchmark_id, job_id)
+        logger.debug(f"EvalRouter.job_status: {request.benchmark_id}, {request.job_id}")
+        provider = await self.routing_table.get_provider_impl(request.benchmark_id)
+        return await provider.job_status(request)
 
     async def job_cancel(
         self,
-        benchmark_id: str,
-        job_id: str,
+        request: JobCancelRequest,
     ) -> None:
-        logger.debug(f"EvalRouter.job_cancel: {benchmark_id}, {job_id}")
-        provider = await self.routing_table.get_provider_impl(benchmark_id)
-        await provider.job_cancel(
-            benchmark_id,
-            job_id,
-        )
+        logger.debug(f"EvalRouter.job_cancel: {request.benchmark_id}, {request.job_id}")
+        provider = await self.routing_table.get_provider_impl(request.benchmark_id)
+        await provider.job_cancel(request)
 
     async def job_result(
         self,
-        benchmark_id: str,
-        job_id: str,
+        request: JobResultRequest,
     ) -> EvaluateResponse:
-        logger.debug(f"EvalRouter.job_result: {benchmark_id}, {job_id}")
-        provider = await self.routing_table.get_provider_impl(benchmark_id)
-        return await provider.job_result(
-            benchmark_id,
-            job_id,
-        )
+        logger.debug(f"EvalRouter.job_result: {request.benchmark_id}, {request.job_id}")
+        provider = await self.routing_table.get_provider_impl(request.benchmark_id)
+        return await provider.job_result(request)

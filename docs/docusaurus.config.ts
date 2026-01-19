@@ -158,10 +158,6 @@ const config: Config = {
               href: 'https://discord.gg/llama-stack',
             },
             {
-              label: 'GitHub Discussions',
-              href: 'https://github.com/llamastack/llama-stack/discussions',
-            },
-            {
               label: 'Issues',
               href: 'https://github.com/llamastack/llama-stack/issues',
             },

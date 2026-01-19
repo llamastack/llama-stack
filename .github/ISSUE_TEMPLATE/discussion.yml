@@ -1,0 +1,10 @@
+name: 💬 Discussion
+description: Open up a topic for discussion in the community
+labels: ["discussion"]
+body:
+- type: textarea
+  id: discussion-topic
+  attributes:
+    label: What would you like to discuss with the community?
+  validations:
+    required: true

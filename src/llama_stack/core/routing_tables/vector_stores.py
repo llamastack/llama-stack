@@ -55,6 +55,10 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
 
     # Internal methods only - no public API exposure
 
+    async def list_vector_stores(self) -> list[VectorStoreWithOwner]:
+        """List all registered vector stores."""
+        return await self.get_all_with_type(ResourceType.vector_store.value)
+
     async def register_vector_store(
         self,
         vector_store_id: str,
