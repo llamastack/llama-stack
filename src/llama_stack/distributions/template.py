@@ -36,7 +36,7 @@ from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
-from llama_stack_api import DatasetPurpose, ModelType
+from llama_stack_api import ConnectorInput, DatasetPurpose, ModelType
 
 
 def filter_empty_values(obj: Any) -> Any:
@@ -181,6 +181,7 @@ class RunConfigSettings(BaseModel):
     default_tool_groups: list[ToolGroupInput] | None = None
     default_datasets: list[DatasetInput] | None = None
     default_benchmarks: list[BenchmarkInput] | None = None
+    default_connectors: list[ConnectorInput] | None = None
     vector_stores_config: VectorStoresConfig | None = None
     safety_config: SafetyConfig | None = None
     storage_backends: dict[str, Any] | None = None
@@ -255,6 +256,10 @@ class RunConfigSettings(BaseModel):
                 backend="kv_default",
                 namespace="prompts",
             ).model_dump(exclude_none=True),
+            "connectors": KVStoreReference(
+                backend="kv_default",
+                namespace="connectors",
+            ).model_dump(exclude_none=True),
         }
 
         storage_config = dict(
@@ -289,6 +294,9 @@ class RunConfigSettings(BaseModel):
 
         if self.safety_config:
             config["safety"] = self.safety_config.model_dump(exclude_none=True)
+
+        if self.default_connectors is not None:
+            config["connectors"] = [c.model_dump(exclude_none=True) for c in self.default_connectors]
 
         return config
 

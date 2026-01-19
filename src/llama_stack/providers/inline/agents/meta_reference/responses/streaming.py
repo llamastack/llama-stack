@@ -1508,9 +1508,6 @@ async def resolve_mcp_connector_id(
 
     Returns:
         The mcp_tool with server_url populated (may be same instance if already set)
-
-    Raises:
-        ConnectorNotFoundError: If the connector_id doesn't exist
     """
     if mcp_tool.connector_id and not mcp_tool.server_url:
         connector = await connectors_api.get_connector(mcp_tool.connector_id)
