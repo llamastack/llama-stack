@@ -44,9 +44,9 @@ class ModerationObject(BaseModel):
 class ViolationLevel(Enum):
     """Severity level of a safety violation."""
 
-    INFO = "info"
-    WARN = "warn"
-    ERROR = "error"
+    INFO = "info"  # Informational level violation that does not require action
+    WARN = "warn"  # Warning level violation that suggests caution but allows continuation
+    ERROR = "error"  # Error level violation that requires blocking or intervention
 
 
 @json_schema_type
