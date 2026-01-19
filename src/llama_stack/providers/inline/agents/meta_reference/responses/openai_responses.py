@@ -16,6 +16,7 @@ from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
 )
+from llama_stack.providers.utils.tools.mcp import MCPSessionManager
 from llama_stack_api import (
     AddItemsRequest,
     Connectors,
@@ -498,8 +499,6 @@ class OpenAIResponsesImpl:
 
         # Create a per-request MCP session manager for session reuse (fix for #4452)
         # This avoids redundant tools/list calls when making multiple MCP tool invocations
-        from llama_stack.providers.utils.tools.mcp import MCPSessionManager
-
         mcp_session_manager = MCPSessionManager()
 
         # Create a per-request ToolExecutor with the session manager
