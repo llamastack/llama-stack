@@ -43,7 +43,6 @@ from llama_stack_api import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
-from llama_stack_api.filters import Filter
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -140,13 +139,12 @@ class VectorIORouter(VectorIO):
         vector_store_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
-        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         logger.debug(f"VectorIORouter.query_chunks: {vector_store_id}")
 
-        # Backwards compatibility: extract filters from params if not passed directly
-        # This handles cases where the client SDK doesn't yet support the filters parameter
-        if filters is None and params and "filters" in params:
+        # Extract filters from params for internal processing
+        filters = None
+        if params and "filters" in params:
             from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 
             filter_data = params.pop("filters")  # Remove from params to avoid duplication
