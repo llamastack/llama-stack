@@ -1495,7 +1495,7 @@ async def _process_tool_choice(
 
 async def resolve_mcp_connector_id(
     mcp_tool: OpenAIResponseInputToolMCP,
-    connectors_api: Connectors | None,
+    connectors_api: Connectors,
 ) -> OpenAIResponseInputToolMCP:
     """Resolve connector_id to server_url for an MCP tool.
 
@@ -1510,12 +1510,9 @@ async def resolve_mcp_connector_id(
         The mcp_tool with server_url populated (may be same instance if already set)
 
     Raises:
-        ValueError: If connector_id is provided but connectors_api is not available
         ConnectorNotFoundError: If the connector_id doesn't exist
     """
     if mcp_tool.connector_id and not mcp_tool.server_url:
-        if not connectors_api:
-            raise ValueError("Connectors API not available to resolve connector_id")
         connector = await connectors_api.get_connector(mcp_tool.connector_id)
         return mcp_tool.model_copy(update={"server_url": connector.url})
     return mcp_tool

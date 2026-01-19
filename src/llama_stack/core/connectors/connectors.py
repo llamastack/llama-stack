@@ -6,7 +6,7 @@
 
 import json
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
@@ -26,11 +26,9 @@ logger = get_logger(name=__name__, category="connectors")
 
 
 class ConnectorServiceConfig(BaseModel):
-    """Configuration for the built-in connector service.
-    :param run_config: Stack run configuration for resolving persistence
-    """
+    """Configuration for the built-in connector service."""
 
-    config: StackConfig
+    config: StackConfig = Field(..., description="Stack run configuration for resolving persistence")
 
 
 async def get_provider_impl(config: ConnectorServiceConfig):
@@ -59,7 +57,7 @@ class ConnectorServiceImpl(Connectors):
         # Use connectors store reference from run config
         connectors_ref = self.config.config.storage.stores.connectors
         if not connectors_ref:
-            raise ValueError("storage.stores.connectors must be configured in run config")
+            raise ValueError("storage.stores.connectors must be configured in config")
         self.kvstore = await kvstore_impl(connectors_ref)
 
     async def register_connector(
