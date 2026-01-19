@@ -9,7 +9,7 @@
 import json
 from unittest.mock import AsyncMock
 
-from llama_stack.apis.model import Model, ModelType
+from llama_stack.apis.models import Model, ModelType
 from llama_stack.apis.vector_stores import VectorStore, VectorStoreInput
 from llama_stack.core.datatypes import RegisteredResources, StackConfig, VectorStoresConfig
 from llama_stack.core.routing_tables.vector_stores import VectorStoresRoutingTable
