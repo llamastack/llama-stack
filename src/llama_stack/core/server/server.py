@@ -55,8 +55,8 @@ from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
-from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
-from llama_stack_api.common.errors import LlamaStackError
+from llama_stack_api import Api, ConflictError, PaginatedResponse
+from llama_stack_api.common.errors import LlamaStackError, ResourceNotFoundError
 
 from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
 from .quota import QuotaMiddleware
@@ -64,6 +64,11 @@ from .quota import QuotaMiddleware
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
 logger = get_logger(name=__name__, category="core::server")
+
+
+def to_http_exception(exc: LlamaStackError) -> HTTPException:
+    """Convert a LlamaStackError to a FastAPI HTTPException."""
+    return HTTPException(status_code=exc.status_code, detail=str(exc))
 
 
 def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
@@ -118,7 +123,7 @@ def translate_exception(exc: Exception) -> HTTPException:
             },
         )
     if isinstance(exc, LlamaStackError):
-        return exc.http_exception()
+        return to_http_exception(exc)
     elif isinstance(exc, ValueError):
         return HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=f"Invalid value: {str(exc)}")
     elif isinstance(exc, BadRequestError):

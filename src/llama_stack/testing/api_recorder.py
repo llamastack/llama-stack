@@ -802,6 +802,7 @@ def patch_inference_clients():
     from openai.resources.completions import AsyncCompletions
     from openai.resources.embeddings import AsyncEmbeddings
     from openai.resources.models import AsyncModels
+    from openai.resources.responses import AsyncResponses
 
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
@@ -811,6 +812,7 @@ def patch_inference_clients():
         "completions_create": AsyncCompletions.create,
         "embeddings_create": AsyncEmbeddings.create,
         "models_list": AsyncModels.list,
+        "responses_create": AsyncResponses.create,
         "ollama_generate": OllamaAsyncClient.generate,
         "ollama_chat": OllamaAsyncClient.chat,
         "ollama_embed": OllamaAsyncClient.embed,
@@ -845,11 +847,17 @@ def patch_inference_clients():
 
         return _iter()
 
+    async def patched_responses_create(self, *args, **kwargs):
+        return await _patched_inference_method(
+            _original_methods["responses_create"], self, "openai", "/v1/responses", *args, **kwargs
+        )
+
     # Apply OpenAI patches
     AsyncChatCompletions.create = patched_chat_completions_create
     AsyncCompletions.create = patched_completions_create
     AsyncEmbeddings.create = patched_embeddings_create
     AsyncModels.list = patched_models_list
+    AsyncResponses.create = patched_responses_create
 
     # Create patched methods for Ollama client
     async def patched_ollama_generate(self, *args, **kwargs):
@@ -915,6 +923,7 @@ def unpatch_inference_clients():
     from openai.resources.completions import AsyncCompletions
     from openai.resources.embeddings import AsyncEmbeddings
     from openai.resources.models import AsyncModels
+    from openai.resources.responses import AsyncResponses
 
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
@@ -923,6 +932,7 @@ def unpatch_inference_clients():
     AsyncCompletions.create = _original_methods["completions_create"]
     AsyncEmbeddings.create = _original_methods["embeddings_create"]
     AsyncModels.list = _original_methods["models_list"]
+    AsyncResponses.create = _original_methods["responses_create"]
 
     # Restore Ollama client methods if they were patched
     OllamaAsyncClient.generate = _original_methods["ollama_generate"]

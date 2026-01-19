@@ -26,6 +26,7 @@ from llama_stack_api import (
     Files,
     Inference,
     InvalidConversationIdError,
+    InvalidParameterError,
     ListItemsRequest,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -391,6 +392,10 @@ class OpenAIResponsesImpl:
 
         if max_tool_calls is not None and max_tool_calls < 1:
             raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
+
+        # Validate temperature per OpenResponses spec: "between 0 and 2"
+        if temperature is not None and (temperature < 0 or temperature > 2):
+            raise InvalidParameterError("temperature", temperature, "Must be between 0 and 2.")
 
         stream_gen = self._create_streaming_response(
             input=input,
