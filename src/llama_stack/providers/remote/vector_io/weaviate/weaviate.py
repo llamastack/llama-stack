@@ -87,16 +87,23 @@ class WeaviateIndex(EmbeddingIndex):
         chunk_ids = [chunk.chunk_id for chunk in chunks_for_deletion]
         collection.data.delete_many(where=Filter.by_property("chunk_id").contains_any(chunk_ids))
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
         """
         Performs vector search using Weaviate's built-in vector search.
         Args:
             embedding: The query embedding vector
             k: Limit of number of results to return
             score_threshold: Minimum similarity score threshold
+            filters: Optional filters (not yet supported for Weaviate provider)
         Returns:
             QueryChunksResponse with chunks and scores.
         """
+        # Filters are not yet implemented for Weaviate provider
+        if filters is not None:
+            raise NotImplementedError("Weaviate provider does not yet support native filtering")
+
         log.debug(
             f"WEAVIATE VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
         )

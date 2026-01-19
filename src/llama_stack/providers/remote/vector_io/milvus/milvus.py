@@ -130,7 +130,12 @@ class MilvusIndex(EmbeddingIndex):
             logger.error(f"Error inserting chunks into Milvus collection {self.collection_name}: {e}")
             raise e
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
+        # Filters are not yet implemented for Milvus provider
+        if filters is not None:
+            raise NotImplementedError("Milvus provider does not yet support native filtering")
         search_res = await asyncio.to_thread(
             self.client.search,
             collection_name=self.collection_name,

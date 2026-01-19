@@ -102,7 +102,13 @@ class QdrantIndex(EmbeddingIndex):
             log.error(f"Error deleting chunks from Qdrant collection {self.collection_name}: {e}")
             raise
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
+        # Filters are not yet implemented for Qdrant provider
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         results = (
             await self.client.query_points(
                 collection_name=self.collection_name,

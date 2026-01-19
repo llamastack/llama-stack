@@ -74,7 +74,13 @@ class ChromaIndex(EmbeddingIndex):
             self.collection.add(documents=[chunk.model_dump_json() for chunk in chunks], embeddings=embeddings, ids=ids)
         )
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
+        # Filters are not yet implemented for Chroma provider
+        if filters is not None:
+            raise NotImplementedError("Chroma provider does not yet support native filtering")
+
         results = await maybe_await(
             self.collection.query(
                 query_embeddings=[embedding.tolist()], n_results=k, include=["documents", "distances"]
