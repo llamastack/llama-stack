@@ -9,13 +9,14 @@
 import json
 from unittest.mock import AsyncMock
 
+from llama_stack_api import Api, Model, ModelType, VectorStore
+from llama_stack_api.vector_stores import VectorStoreInput
+
 from llama_stack.core.datatypes import RegisteredResources, StackConfig, VectorStoresConfig
 from llama_stack.core.routing_tables.vector_stores import VectorStoresRoutingTable
 from llama_stack.core.stack import register_resources
 from llama_stack.core.storage.datatypes import ServerStoresConfig, StorageConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack_api import Api, Model, ModelType, VectorStore
-from llama_stack_api.vector_stores import VectorStoreInput
 
 
 class TestVectorStoreRegistration:
