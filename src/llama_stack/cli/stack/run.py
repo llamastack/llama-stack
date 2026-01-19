@@ -22,6 +22,8 @@ from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.log import LoggingConfig, get_logger
 
+from .utils import add_dependent_providers
+
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
 logger = get_logger(name=__name__, category="cli")
@@ -92,6 +94,57 @@ class StackRun(Subcommand):
             except ValueError as e:
                 cprint(str(e), color="red", file=sys.stderr)
                 sys.exit(1)
+            provider_list: dict[str, list[Provider]] = dict()
+            provider_registry = get_provider_registry()
+            requested_provider_types = []
+            for api_provider in args.providers.split(","):
+                if "=" not in api_provider:
+                    cprint(
+                        "Could not parse `--providers`. Please ensure the list is in the format api1=provider1,api2=provider2",
+                        color="red",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+                api, provider_type = api_provider.split("=")
+                providers_for_api = provider_registry.get(Api(api), None)
+                if providers_for_api is None:
+                    cprint(
+                        f"{api} is not a valid API.",
+                        color="red",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+                if provider_type in providers_for_api:
+                    config_type = instantiate_class_type(providers_for_api[provider_type].config_class)
+                    if config_type is not None and hasattr(config_type, "sample_run_config"):
+                        config = config_type.sample_run_config(__distro_dir__="~/.llama/distributions/providers-run")
+                    else:
+                        config = {}
+                    provider = Provider(
+                        provider_type=provider_type,
+                        config=config,
+                        provider_id=provider_type.split("::")[1],
+                    )
+                    provider_list.setdefault(api, []).append(provider)
+                    requested_provider_types.append(provider_type)
+                else:
+                    cprint(
+                        f"{provider} is not a valid provider for the {api} API.",
+                        color="red",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+
+            # Expand transitive API dependencies for the requested providers.
+            add_dependent_providers(
+                provider_list=provider_list,
+                provider_registry=provider_registry,
+                requested_provider_types=requested_provider_types,
+                distro_dir="~/.llama/distributions/providers-run",
+                include_configs=True,
+            )
+
+            run_config = self._generate_run_config_from_providers(providers=provider_list)
             config_dict = run_config.model_dump(mode="json")
 
             config_file = distro_dir / "config.yaml"
