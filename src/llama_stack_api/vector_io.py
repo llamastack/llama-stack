@@ -14,7 +14,6 @@ from fastapi import Body, Query
 from pydantic import BaseModel, Field, field_validator
 
 # Filter type is defined in the implementation layer
-from llama_stack_api.filters import Filter
 from llama_stack_api.inference import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
 from llama_stack_api.vector_stores import VectorStore
@@ -611,7 +610,6 @@ class VectorIO(Protocol):
         vector_store_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
-        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """Query chunks from a vector database.
 

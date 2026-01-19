@@ -644,22 +644,34 @@ class OpenAIVectorStoreMixin(ABC):
         )
 
     def _convert_dict_to_filter(self, filter_dict: dict | None) -> Filter | None:
-        """Convert a dictionary filter to a typed Filter object."""
+        """Convert a dictionary filter to a typed Filter object.
+
+        Supports two formats:
+        1. Full OpenAI format: {"type": "eq", "key": "field", "value": "val"}
+        2. Simplified format: {"field": "val"} (interpreted as equality filter)
+        """
         if filter_dict is None:
             return None
 
-        # Handle ComparisonFilter
+        # Handle full OpenAI format - ComparisonFilter
         if "type" in filter_dict and filter_dict["type"] in ["eq", "ne", "gt", "gte", "lt", "lte", "in", "nin"]:
             return ComparisonFilter(type=filter_dict["type"], key=filter_dict["key"], value=filter_dict["value"])
 
-        # Handle CompoundFilter
+        # Handle full OpenAI format - CompoundFilter
         elif "type" in filter_dict and filter_dict["type"] in ["and", "or"]:
             # Recursively convert nested filters
             converted_filters = [self._convert_dict_to_filter(f) for f in filter_dict.get("filters", [])]
             return CompoundFilter(type=filter_dict["type"], filters=[f for f in converted_filters if f is not None])
 
+        # Handle simplified format: {"field": "value"} -> equality filter
+        elif len(filter_dict) == 1 and "type" not in filter_dict and "filters" not in filter_dict:
+            key, value = next(iter(filter_dict.items()))
+            return ComparisonFilter(type="eq", key=key, value=value)
+
         else:
-            raise ValueError(f"Unknown filter format: {filter_dict}")
+            raise ValueError(
+                f"Unknown filter format: {filter_dict}. Expected either full OpenAI format with 'type' field or simplified key-value format."
+            )
 
     async def openai_search_vector_store(
         self,
