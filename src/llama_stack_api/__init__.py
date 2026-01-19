@@ -423,6 +423,8 @@ from .resource import Resource, ResourceType
 from .safety import (
     ModerationObject,
     ModerationObjectResults,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
@@ -913,6 +915,8 @@ __all__ = [
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",
+    "RunModerationRequest",
+    "RunShieldRequest",
     "RunShieldResponse",
     "Safety",
     "SafetyViolation",

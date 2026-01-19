@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 import uuid
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from codeshield.cs import CodeShieldScanResult
@@ -18,7 +18,8 @@ from llama_stack_api import (
     GetShieldRequest,
     ModerationObject,
     ModerationObjectResults,
-    OpenAIMessageParam,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
@@ -52,19 +53,14 @@ class MetaReferenceCodeScannerSafetyImpl(Safety):
                 f"Unsupported Code Scanner ID: {shield.provider_resource_id}. Allowed IDs: {ALLOWED_CODE_SCANNER_MODEL_IDS}"
             )
 
-    async def run_shield(
-        self,
-        shield_id: str,
-        messages: list[OpenAIMessageParam],
-        params: dict[str, Any] = None,
-    ) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=shield_id))
+    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
         if not shield:
-            raise ValueError(f"Shield {shield_id} not found")
+            raise ValueError(f"Shield {request.shield_id} not found")
 
         from codeshield.cs import CodeShield
 
-        text = "\n".join([interleaved_content_as_str(m.content) for m in messages])
+        text = "\n".join([interleaved_content_as_str(m.content) for m in request.messages])
         log.info(f"Running CodeScannerShield on {text[50:]}")
         result = await CodeShield.scan_code(text)
 
@@ -103,11 +99,11 @@ class MetaReferenceCodeScannerSafetyImpl(Safety):
             metadata=metadata,
         )
 
-    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
-        if model is None:
+    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
+        if request.model is None:
             raise ValueError("Code scanner moderation requires a model identifier.")
 
-        inputs = input if isinstance(input, list) else [input]
+        inputs = request.input if isinstance(request.input, list) else [request.input]
         results = []
 
         from codeshield.cs import CodeShield
@@ -130,4 +126,4 @@ class MetaReferenceCodeScannerSafetyImpl(Safety):
                 )
             results.append(moderation_result)
 
-        return ModerationObject(id=str(uuid.uuid4()), model=model, results=results)
+        return ModerationObject(id=str(uuid.uuid4()), model=request.model, results=results)
