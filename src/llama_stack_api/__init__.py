@@ -406,7 +406,19 @@ from .post_training import (
     SupervisedFineTuneRequest,
     TrainingConfig,
 )
-from .prompts import ListPromptsResponse, Prompt, Prompts
+from .prompts import (
+    CreatePromptRequest,
+    DeletePromptRequest,
+    GetPromptRequest,
+    ListPromptsResponse,
+    ListPromptVersionsRequest,
+    Prompt,
+    Prompts,
+    SetDefaultVersionBodyRequest,
+    SetDefaultVersionRequest,
+    UpdatePromptBodyRequest,
+    UpdatePromptRequest,
+)
 from .providers import Providers
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
@@ -884,6 +896,14 @@ __all__ = [
     "PreferenceOptimizeRequest",
     "Prompt",
     "Prompts",
+    "CreatePromptRequest",
+    "DeletePromptRequest",
+    "GetPromptRequest",
+    "ListPromptVersionsRequest",
+    "SetDefaultVersionBodyRequest",
+    "SetDefaultVersionRequest",
+    "UpdatePromptBodyRequest",
+    "UpdatePromptRequest",
     "ProviderInfo",
     "ProviderSpec",
     "Providers",

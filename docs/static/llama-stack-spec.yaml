@@ -1117,7 +1117,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Prompts
-      summary: List Prompts
+      summary: List all prompts.
       description: List all prompts.
       operationId: list_prompts_v1_prompts_get
     post:
@@ -1142,11 +1142,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Prompts
-      summary: Create Prompt
-      description: |-
-        Create prompt.
-
-        Create a new prompt.
+      summary: Create a prompt.
+      description: Create a new prompt.
       operationId: create_prompt_v1_prompts_post
       requestBody:
         content:
@@ -1177,13 +1174,18 @@ paths:
           description: Default Response
       tags:
       - Prompts
-      summary: Get Prompt
-      description: |-
-        Get prompt.
-
-        Get a prompt by its identifier and optional version.
+      summary: Get a prompt.
+      description: Get a prompt by its identifier and optional version.
       operationId: get_prompt_v1_prompts__prompt_id__get
       parameters:
+      - name: prompt_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The identifier of the prompt to get.
+          title: Prompt Id
+        description: The identifier of the prompt to get.
       - name: version
         in: query
         required: false
@@ -1191,14 +1193,10 @@ paths:
           anyOf:
           - type: integer
           - type: 'null'
+          description: The version of the prompt to get (defaults to latest).
           title: Version
-      - name: prompt_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: prompt_id'
-    post:
+        description: The version of the prompt to get (defaults to latest).
+    put:
       responses:
         '200':
           description: The updated Prompt resource with incremented version.
@@ -1220,25 +1218,24 @@ paths:
           description: Default Response
       tags:
       - Prompts
-      summary: Update Prompt
-      description: |-
-        Update prompt.
-
-        Update an existing prompt (increments version).
-      operationId: update_prompt_v1_prompts__prompt_id__post
+      summary: Update a prompt.
+      description: Update an existing prompt (increments version).
+      operationId: update_prompt_v1_prompts__prompt_id__put
       parameters:
       - name: prompt_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: prompt_id'
+          description: The identifier of the prompt to update.
+          title: Prompt Id
+        description: The identifier of the prompt to update.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdatePromptRequest'
+              $ref: '#/components/schemas/UpdatePromptBodyRequest'
     delete:
       responses:
         '400':
@@ -1254,14 +1251,11 @@ paths:
           $ref: '#/components/responses/DefaultError'
           description: Default Response
         '204':
-          description: Successful Response
+          description: The prompt was successfully deleted.
       tags:
       - Prompts
-      summary: Delete Prompt
-      description: |-
-        Delete prompt.
-
-        Delete a prompt.
+      summary: Delete a prompt.
+      description: Delete a prompt.
       operationId: delete_prompt_v1_prompts__prompt_id__delete
       parameters:
       - name: prompt_id
@@ -1269,9 +1263,11 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: prompt_id'
+          description: The identifier of the prompt to delete.
+          title: Prompt Id
+        description: The identifier of the prompt to delete.
   /v1/prompts/{prompt_id}/set-default-version:
-    post:
+    put:
       responses:
         '200':
           description: The prompt with the specified version now set as default.
@@ -1280,38 +1276,37 @@ paths:
               schema:
                 $ref: '#/components/schemas/Prompt'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Prompts
-      summary: Set Default Version
-      description: |-
-        Set prompt version.
-
-        Set which version of a prompt should be the default in get_prompt (latest).
-      operationId: set_default_version_v1_prompts__prompt_id__set_default_version_post
+      summary: Set prompt version.
+      description: Set which version of a prompt should be the default in get_prompt (latest).
+      operationId: set_default_version_v1_prompts__prompt_id__set_default_version_put
       parameters:
       - name: prompt_id
         in: path
         required: true
         schema:
           type: string
-        description: 'Path parameter: prompt_id'
+          description: The identifier of the prompt.
+          title: Prompt Id
+        description: The identifier of the prompt.
       requestBody:
+        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SetDefaultVersionRequest'
-        required: true
+              $ref: '#/components/schemas/SetDefaultVersionBodyRequest'
   /v1/prompts/{prompt_id}/versions:
     get:
       responses:
@@ -1322,24 +1317,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListPromptsResponse'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Prompts
-      summary: List Prompt Versions
-      description: |-
-        List prompt versions.
-
-        List all versions of a specific prompt.
+      summary: List prompt versions.
+      description: List all versions of a specific prompt.
       operationId: list_prompt_versions_v1_prompts__prompt_id__versions_get
       parameters:
       - name: prompt_id
@@ -1347,7 +1339,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: prompt_id'
+          description: The identifier of the prompt to list versions for.
+          title: Prompt Id
+        description: The identifier of the prompt to list versions for.
   /v1/providers:
     get:
       responses:
@@ -5301,48 +5295,69 @@ components:
         prompt:
           type: string
           title: Prompt
+          description: The prompt text content with variable placeholders.
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: List of variable names that can be used in the prompt template.
       type: object
       required:
       - prompt
       title: CreatePromptRequest
+      description: Request model for creating a new prompt.
     UpdatePromptRequest:
+      description: Request model for updating a prompt (combines path and body parameters).
       properties:
-        prompt:
+        prompt_id:
+          description: The identifier of the prompt to update.
+          title: Prompt Id
           type: string
+        prompt:
+          description: The updated prompt text content.
           title: Prompt
+          type: string
         version:
-          type: integer
+          description: The current version of the prompt being updated.
           title: Version
+          type: integer
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+          nullable: true
         set_as_default:
-          type: boolean
-          title: Set As Default
           default: true
-      type: object
+          description: Set the new version as the default (default=True).
+          title: Set As Default
+          type: boolean
       required:
+      - prompt_id
       - prompt
       - version
       title: UpdatePromptRequest
-    SetDefaultVersionRequest:
-      properties:
-        version:
-          type: integer
-          title: Version
       type: object
+    SetDefaultVersionRequest:
+      description: Request model for setting the default version of a prompt (combines path and body parameters).
+      properties:
+        prompt_id:
+          description: The identifier of the prompt.
+          title: Prompt Id
+          type: string
+        version:
+          description: The version to set as default.
+          title: Version
+          type: integer
       required:
+      - prompt_id
       - version
       title: SetDefaultVersionRequest
+      type: object
     ProviderInfo:
       properties:
         api:
@@ -11372,6 +11387,45 @@ components:
       type: object
       title: SearchRankingOptions
       description: Options for ranking and filtering search results.
+    SetDefaultVersionBodyRequest:
+      properties:
+        version:
+          type: integer
+          title: Version
+          description: The version to set as default.
+      type: object
+      required:
+      - version
+      title: SetDefaultVersionBodyRequest
+      description: Request body model for setting the default version of a prompt.
+    UpdatePromptBodyRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+          description: The updated prompt text content.
+        version:
+          type: integer
+          title: Version
+          description: The current version of the prompt being updated.
+        variables:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+        set_as_default:
+          type: boolean
+          title: Set As Default
+          description: Set the new version as the default (default=True).
+          default: true
+      type: object
+      required:
+      - prompt
+      - version
+      title: UpdatePromptBodyRequest
+      description: Request body model for updating a prompt.
     _URLOrData:
       properties:
         url:
@@ -12982,6 +13036,45 @@ components:
       required:
       - job_uuid
       title: GetTrainingJobArtifactsRequest
+      type: object
+    ListPromptVersionsRequest:
+      description: Request model for listing all versions of a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to list versions for.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: ListPromptVersionsRequest
+      type: object
+    GetPromptRequest:
+      description: Request model for getting a prompt by ID and optional version.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to get.
+          title: Prompt Id
+          type: string
+        version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The version of the prompt to get (defaults to latest).
+          nullable: true
+      required:
+      - prompt_id
+      title: GetPromptRequest
+      type: object
+    DeletePromptRequest:
+      description: Request model for deleting a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to delete.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: DeletePromptRequest
       type: object
   responses:
     BadRequest400:
