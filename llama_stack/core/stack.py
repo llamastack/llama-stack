@@ -98,14 +98,9 @@ RESOURCES = [
         "register_scoring_function",
         "list_scoring_functions",
     ),
-<<<<<<< HEAD:llama_stack/core/stack.py
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
     ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
-=======
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
-    ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
->>>>>>> 07c3fd0b (fix: enable vector store registration from config with OpenAI metadata (#4616)):src/llama_stack/core/stack.py
+    ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores"),
 ]
 
 
