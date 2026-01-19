@@ -25,9 +25,6 @@ ScoringResultRow = dict[str, Any]
 class ScoringResult(BaseModel):
     """
     A scoring result for a single row.
-
-    :param score_rows: The scoring result for each row. Each row is a map of column name to value.
-    :param aggregated_results: Map of metric name to aggregated value
     """
 
     score_rows: list[ScoringResultRow] = Field(
@@ -38,11 +35,7 @@ class ScoringResult(BaseModel):
 
 @json_schema_type
 class ScoreBatchResponse(BaseModel):
-    """Response from batch scoring operations on datasets.
-
-    :param dataset_id: (Optional) The identifier of the dataset that was scored
-    :param results: A map of scoring function name to ScoringResult
-    """
+    """Response from batch scoring operations on datasets."""
 
     dataset_id: str | None = Field(default=None, description="(Optional) The identifier of the dataset that was scored")
     results: dict[str, ScoringResult] = Field(..., description="A map of scoring function name to ScoringResult")
@@ -52,8 +45,6 @@ class ScoreBatchResponse(BaseModel):
 class ScoreResponse(BaseModel):
     """
     The response from scoring.
-
-    :param results: A map of scoring function name to ScoringResult.
     """
 
     results: dict[str, ScoringResult] = Field(..., description="A map of scoring function name to ScoringResult.")
