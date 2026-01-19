@@ -18,6 +18,7 @@ from llama_stack.core.storage.datatypes import ServerStoresConfig, StorageConfig
 from llama_stack.providers.datatypes import Api
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 
+
 class TestVectorStoreRegistration:
     """Test vector store registration from configuration."""
 
