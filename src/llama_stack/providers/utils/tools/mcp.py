@@ -267,14 +267,6 @@ class MCPSessionManager:
         if errors:
             logger.warning(f"Encountered {len(errors)} errors while closing MCP sessions")
 
-    async def __aenter__(self) -> "MCPSessionManager":
-        """Enter the async context manager."""
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
-        """Exit the async context manager and close all sessions."""
-        await self.close_all()
-
 
 @asynccontextmanager
 async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerator[ClientSession, Any]:
