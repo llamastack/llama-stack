@@ -148,7 +148,6 @@ def test_unsafe_text_examples(client_with_models, text_shield_id, example):
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=text_shield_id,
-        params={},
     )
     assert response.violation is not None
     assert response.violation.violation_level == ViolationLevel.ERROR.value
@@ -174,7 +173,6 @@ def test_safe_text_examples(client_with_models, text_shield_id, example):
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=text_shield_id,
-        params={},
     )
     assert response.violation is None
 
@@ -209,7 +207,6 @@ def test_llama_guard_for_code_interpreter_abuse(client_with_models, text_shield_
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=text_shield_id,
-        params={},
     )
     assert response is not None
     assert response.violation is not None
@@ -239,7 +236,6 @@ def test_llama_guard_with_conversation_history(client_with_models, text_shield_i
     response = client_with_models.safety.run_shield(
         messages=[message1, message2, message3],
         shield_id=text_shield_id,
-        params={},
     )
     assert response.violation is not None
     assert response.violation.violation_level == ViolationLevel.ERROR.value
@@ -291,7 +287,6 @@ def test_vision_safety_with_safe_image(client_with_models, vision_shield_id, saf
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=vision_shield_id,
-        params={},
     )
 
     # Safe image should not trigger a violation
@@ -314,7 +309,6 @@ def test_vision_safety_with_unsafe_image(client_with_models, vision_shield_id, u
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=vision_shield_id,
-        params={},
     )
 
     # Unsafe image should trigger a violation
