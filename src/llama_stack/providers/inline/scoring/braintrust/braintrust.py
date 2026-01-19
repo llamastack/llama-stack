@@ -30,11 +30,12 @@ from llama_stack_api import (
     DatasetIO,
     Datasets,
     IterRowsRequest,
+    ScoreBatchRequest,
     ScoreBatchResponse,
+    ScoreRequest,
     ScoreResponse,
     Scoring,
     ScoringFn,
-    ScoringFnParams,
     ScoringFunctionsProtocolPrivate,
     ScoringResult,
     ScoringResultRow,
@@ -159,15 +160,17 @@ class BraintrustScoringImpl(
 
     async def score_batch(
         self,
-        dataset_id: str,
-        scoring_functions: dict[str, ScoringFnParams | None],
-        save_results_dataset: bool = False,
+        request: ScoreBatchRequest,
     ) -> ScoreBatchResponse:
         await self.set_api_key()
 
-        all_rows = await self.datasetio_api.iterrows(IterRowsRequest(dataset_id=dataset_id, limit=-1))
-        res = await self.score(input_rows=all_rows.data, scoring_functions=scoring_functions)
-        if save_results_dataset:
+        all_rows = await self.datasetio_api.iterrows(IterRowsRequest(dataset_id=request.dataset_id, limit=-1))
+        score_request = ScoreRequest(
+            input_rows=all_rows.data,
+            scoring_functions=request.scoring_functions,
+        )
+        res = await self.score(score_request)
+        if request.save_results_dataset:
             # TODO: persist and register dataset on to server for reading
             # self.datasets_api.register_dataset()
             raise NotImplementedError("Save results dataset not implemented yet")
@@ -196,21 +199,20 @@ class BraintrustScoringImpl(
 
     async def score(
         self,
-        input_rows: list[dict[str, Any]],
-        scoring_functions: dict[str, ScoringFnParams | None],
+        request: ScoreRequest,
     ) -> ScoreResponse:
         await self.set_api_key()
         res = {}
-        for scoring_fn_id in scoring_functions:
+        for scoring_fn_id in request.scoring_functions:
             if scoring_fn_id not in self.supported_fn_defs_registry:
                 raise ValueError(f"Scoring function {scoring_fn_id} is not supported.")
 
-            score_results = [await self.score_row(input_row, scoring_fn_id) for input_row in input_rows]
+            score_results = [await self.score_row(input_row, scoring_fn_id) for input_row in request.input_rows]
             aggregation_functions = self.supported_fn_defs_registry[scoring_fn_id].params.aggregation_functions
 
             # override scoring_fn params if provided
-            if scoring_functions[scoring_fn_id] is not None:
-                override_params = scoring_functions[scoring_fn_id]
+            if request.scoring_functions[scoring_fn_id] is not None:
+                override_params = request.scoring_functions[scoring_fn_id]
                 if override_params.aggregation_functions:
                     aggregation_functions = override_params.aggregation_functions
 
