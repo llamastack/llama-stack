@@ -185,6 +185,13 @@ def test_scoring_score_with_aggregation_functions(
     judge_model_id,
     provider_id,
 ):
+    # Skip braintrust if OpenAI API key is not available
+    if provider_id == "braintrust":
+        import os
+
+        if not os.environ.get("OPENAI_API_KEY"):
+            pytest.skip("OPENAI_API_KEY not set, skipping braintrust provider test")
+
     df = pd.read_csv(Path(__file__).parent.parent / "datasets" / "test_dataset.csv")
     rows = df.to_dict(orient="records")
 
