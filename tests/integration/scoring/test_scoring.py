@@ -184,7 +184,6 @@ def test_scoring_score_with_aggregation_functions(
     sample_judge_prompt_template,
     judge_model_id,
     provider_id,
-    rag_dataset_for_test,
 ):
     df = pd.read_csv(Path(__file__).parent.parent / "datasets" / "test_dataset.csv")
     rows = df.to_dict(orient="records")
