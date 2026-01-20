@@ -13,6 +13,8 @@ from llama_stack_api import (
     GetShieldRequest,
     ModerationObject,
     OpenAIMessageParam,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
@@ -49,31 +51,16 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
     async def unregister_shield(self, identifier: str) -> None:
         pass
 
-    async def run_shield(
-        self, shield_id: str, messages: list[OpenAIMessageParam], params: dict[str, Any] | None = None
-    ) -> RunShieldResponse:
-        """
-        Run a safety shield check against the provided messages.
-
-        Args:
-            shield_id (str): The unique identifier for the shield to be used.
-            messages (List[Message]): A list of Message objects representing the conversation history.
-            params (Optional[dict[str, Any]]): Additional parameters for the shield check.
-
-        Returns:
-            RunShieldResponse: The response containing safety violation details if any.
-
-        Raises:
-            ValueError: If the shield with the provided shield_id is not found.
-        """
-        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=shield_id))
+    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
+        """Run a safety shield check against the provided messages."""
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
         if not shield:
-            raise ValueError(f"Shield {shield_id} not found")
+            raise ValueError(f"Shield {request.shield_id} not found")
 
         self.shield = NeMoGuardrails(self.config, shield.shield_id)
-        return await self.shield.run(messages)
+        return await self.shield.run(request.messages)
 
-    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
+    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
         raise NotImplementedError("NVIDIA safety provider currently does not implement run_moderation")
 
 

@@ -8,7 +8,13 @@ from unittest.mock import AsyncMock
 
 from llama_stack.core.datatypes import SafetyConfig
 from llama_stack.core.routers.safety import SafetyRouter
-from llama_stack_api import ListShieldsResponse, ModerationObject, ModerationObjectResults, Shield
+from llama_stack_api import (
+    ListShieldsResponse,
+    ModerationObject,
+    ModerationObjectResults,
+    RunModerationRequest,
+    Shield,
+)
 
 
 async def test_run_moderation_uses_default_shield_when_model_missing():
@@ -32,11 +38,13 @@ async def test_run_moderation_uses_default_shield_when_model_missing():
 
     router = SafetyRouter(routing_table=routing_table, safety_config=SafetyConfig(default_shield_id="shield-1"))
 
-    result = await router.run_moderation("hello world")
+    request = RunModerationRequest(input="hello world")
+    result = await router.run_moderation(request)
 
     assert result is moderation_response
     routing_table.get_provider_impl.assert_awaited_once_with("shield-1")
     provider.run_moderation.assert_awaited_once()
-    _, kwargs = provider.run_moderation.call_args
-    assert kwargs["model"] == "provider/shield-model"
-    assert kwargs["input"] == "hello world"
+    call_args = provider.run_moderation.call_args
+    provider_request = call_args[0][0]
+    assert provider_request.model == "provider/shield-model"
+    assert provider_request.input == "hello world"
