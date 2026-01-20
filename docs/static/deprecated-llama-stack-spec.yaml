@@ -3485,48 +3485,69 @@ components:
         prompt:
           type: string
           title: Prompt
+          description: The prompt text content with variable placeholders.
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: List of variable names that can be used in the prompt template.
       type: object
       required:
       - prompt
       title: CreatePromptRequest
+      description: Request model for creating a new prompt.
     UpdatePromptRequest:
+      description: Request model for updating a prompt (combines path and body parameters).
       properties:
-        prompt:
+        prompt_id:
+          description: The identifier of the prompt to update.
+          title: Prompt Id
           type: string
+        prompt:
+          description: The updated prompt text content.
           title: Prompt
+          type: string
         version:
-          type: integer
+          description: The current version of the prompt being updated.
           title: Version
+          type: integer
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+          nullable: true
         set_as_default:
-          type: boolean
-          title: Set As Default
           default: true
-      type: object
+          description: Set the new version as the default (default=True).
+          title: Set As Default
+          type: boolean
       required:
+      - prompt_id
       - prompt
       - version
       title: UpdatePromptRequest
-    SetDefaultVersionRequest:
-      properties:
-        version:
-          type: integer
-          title: Version
       type: object
+    SetDefaultVersionRequest:
+      description: Request model for setting the default version of a prompt (combines path and body parameters).
+      properties:
+        prompt_id:
+          description: The identifier of the prompt.
+          title: Prompt Id
+          type: string
+        version:
+          description: The version to set as default.
+          title: Version
+          type: integer
       required:
+      - prompt_id
       - version
       title: SetDefaultVersionRequest
+      type: object
     ProviderInfo:
       properties:
         api:
@@ -9693,6 +9714,45 @@ components:
       type: object
       title: SearchRankingOptions
       description: Options for ranking and filtering search results.
+    SetDefaultVersionBodyRequest:
+      properties:
+        version:
+          type: integer
+          title: Version
+          description: The version to set as default.
+      type: object
+      required:
+      - version
+      title: SetDefaultVersionBodyRequest
+      description: Request body model for setting the default version of a prompt.
+    UpdatePromptBodyRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+          description: The updated prompt text content.
+        version:
+          type: integer
+          title: Version
+          description: The current version of the prompt being updated.
+        variables:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+        set_as_default:
+          type: boolean
+          title: Set As Default
+          description: Set the new version as the default (default=True).
+          default: true
+      type: object
+      required:
+      - prompt
+      - version
+      title: UpdatePromptBodyRequest
+      description: Request body model for updating a prompt.
     _URLOrData:
       properties:
         url:
@@ -11306,6 +11366,45 @@ components:
       required:
       - job_uuid
       title: GetTrainingJobArtifactsRequest
+      type: object
+    ListPromptVersionsRequest:
+      description: Request model for listing all versions of a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to list versions for.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: ListPromptVersionsRequest
+      type: object
+    GetPromptRequest:
+      description: Request model for getting a prompt by ID and optional version.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to get.
+          title: Prompt Id
+          type: string
+        version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The version of the prompt to get (defaults to latest).
+          nullable: true
+      required:
+      - prompt_id
+      title: GetPromptRequest
+      type: object
+    DeletePromptRequest:
+      description: Request model for deleting a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to delete.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: DeletePromptRequest
       type: object
   responses:
     BadRequest400:
