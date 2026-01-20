@@ -3599,9 +3599,11 @@ components:
           anyOf:
           - type: string
             enum:
+            - none
             - low
             - medium
             - high
+            - xhigh
           - type: 'null'
       additionalProperties: true
       type: object
@@ -11250,9 +11252,11 @@ components:
         effort:
           type: string
           enum:
+          - none
           - low
           - medium
           - high
+          - xhigh
           title: Effort
           default: medium
       type: object

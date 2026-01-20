@@ -9,7 +9,6 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from openai.types.chat import ChatCompletionToolParam
-from openai.types.shared import reasoning_effort
 from opentelemetry import trace
 
 from llama_stack.log import get_logger

@@ -415,7 +415,7 @@ class OpenAIResponseReasoning(BaseModel):
                    "high" favors more complete reasoning, "medium" is a balance between the two.
     """
 
-    effort: Literal["low", "medium", "high"] = "medium"
+    effort: Literal["none", "low", "medium", "high", "xhigh"] = "medium"
 
 
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
