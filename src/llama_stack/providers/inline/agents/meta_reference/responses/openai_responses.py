@@ -575,7 +575,13 @@ class OpenAIResponsesImpl:
         finally:
             # Clean up MCP sessions at the end of the request (fix for #4452)
             # Use shield() to prevent cancellation from interrupting cleanup and leaking resources
-            await asyncio.shield(mcp_session_manager.close_all())
+            # Wrap in try/except as cleanup errors should not mask the original response
+            try:
+                await asyncio.shield(mcp_session_manager.close_all())
+            except BaseException as e:
+                # Debug level - cleanup errors are expected in streaming scenarios where
+                # anyio cancel scopes may be in a different task context
+                logger.debug(f"Error during MCP session cleanup: {e}")
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)

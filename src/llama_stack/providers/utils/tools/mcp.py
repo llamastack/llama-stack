@@ -246,19 +246,27 @@ class MCPSessionManager:
         """Close all cached sessions.
 
         Should be called at the end of a request to clean up resources.
+
+        Note: We catch BaseException (not just Exception) because:
+        1. CancelledError is a BaseException and can occur during cleanup
+        2. anyio cancel scope errors can occur if cleanup runs in a different
+           task context than where the session was created
+        These are expected in streaming response scenarios and are handled gracefully.
         """
         errors = []
         session_count = len(self._sessions)
         for key, (session, client_ctx, _) in list(self._sessions.items()):
             try:
                 await session.__aexit__(None, None, None)
-            except Exception as e:
-                logger.warning(f"Error closing MCP session {key}: {e}")
+            except BaseException as e:
+                # Debug level since these errors are expected in streaming scenarios
+                # where cleanup runs in a different async context than session creation
+                logger.debug(f"Error closing MCP session {key}: {e}")
                 errors.append(e)
             try:
                 await client_ctx.__aexit__(None, None, None)
-            except Exception as e:
-                logger.warning(f"Error closing MCP client context {key}: {e}")
+            except BaseException as e:
+                logger.debug(f"Error closing MCP client context {key}: {e}")
                 errors.append(e)
 
         self._sessions.clear()
@@ -266,7 +274,7 @@ class MCPSessionManager:
         logger.debug(f"Closed {session_count} MCP sessions")
 
         if errors:
-            logger.warning(f"Encountered {len(errors)} errors while closing MCP sessions")
+            logger.debug(f"Encountered {len(errors)} errors while closing MCP sessions (expected in streaming)")
 
 
 @asynccontextmanager
