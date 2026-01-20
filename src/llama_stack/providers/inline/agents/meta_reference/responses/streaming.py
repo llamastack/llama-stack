@@ -106,21 +106,21 @@ _RESPONSES_API_ERROR_CODES = {
 }
 
 
-def extract_openai_error(exc: APIStatusError) -> tuple[str, str]:
-    """Extract error code and message from an OpenAI APIStatusError.
+def extract_openai_error(exc: Exception) -> tuple[str, str]:
+    """Extract error code and message from a provider SDK exception.
 
-    The SDK provides the error in exc.body in one of two formats:
+    The exception should have a `body` attribute containing error details in one of two formats:
         1. Nested: {"error": {"code": "...", "message": "...", ...}}
         2. Direct: {"code": "...", "message": "...", ...}
 
     Args:
-        exc: The APIStatusError exception from the OpenAI SDK
+        exc: An exception with a `body` attribute containing error details
 
     Returns:
         Tuple of (error_code, error_message). Falls back to ("server_error", str(exc))
         if the body doesn't contain a valid code. The message is always preserved.
     """
-    body = exc.body
+    body = getattr(exc, "body", None)
     fallback_message = str(exc)
 
     # body should be a dict
@@ -482,15 +482,24 @@ class StreamingResponseOrchestrator:
             )
             return
         except Exception as exc:  # noqa: BLE001
-            logger.exception(f"Unexpected '{type(exc).__name__}' error during response generation", exc_info=exc)
             self.final_messages = messages.copy()
             self.sequence_number += 1
-            # Use 'server_error' code per OpenAI ResponseError spec; sanitize message to avoid leaking internal details
-            # https://github.com/openai/openai-python/blob/main/src/openai/types/responses/response_error.py
-            error = OpenAIResponseError(
-                code="server_error",
-                message="An unexpected error occurred while generating the response.",
-            )
+
+            # Check if this is a provider SDK error (duck-typing: has status_code and body)
+            # This handles both real provider errors and reconstructed exceptions from test replay
+            if hasattr(exc, "status_code") and hasattr(exc, "body"):
+                logger.warning(f"Provider SDK error during response generation: {exc}")
+                error_code, error_message = extract_openai_error(exc)
+                error = OpenAIResponseError(code=error_code, message=error_message)
+            else:
+                logger.exception(f"Unexpected '{type(exc).__name__}' error during response generation", exc_info=exc)
+                # Use 'server_error' code per OpenAI ResponseError spec; sanitize message to avoid leaking internal details
+                # https://github.com/openai/openai-python/blob/main/src/openai/types/responses/response_error.py
+                error = OpenAIResponseError(
+                    code="server_error",
+                    message="An unexpected error occurred while generating the response.",
+                )
+
             failure_response = self._snapshot_response("failed", output_messages, error=error)
             yield OpenAIResponseObjectStreamResponseFailed(
                 response=failure_response,
