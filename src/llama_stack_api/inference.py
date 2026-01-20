@@ -1042,7 +1042,7 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     top_logprobs: int | None = None
     top_p: float | None = None
     user: str | None = None
-    reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"] | None = None
+    reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
 
 
 # extra_body can be accessed via .model_extra

@@ -3600,6 +3600,7 @@ components:
           - type: string
             enum:
             - none
+            - minimal
             - low
             - medium
             - high
@@ -11250,15 +11251,16 @@ components:
     OpenAIResponseReasoning:
       properties:
         effort:
-          type: string
-          enum:
-          - none
-          - low
-          - medium
-          - high
-          - xhigh
-          title: Effort
-          default: medium
+          anyOf:
+          - type: string
+            enum:
+            - none
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
+          - type: 'null'
       type: object
       title: OpenAIResponseReasoning
       description: |-
