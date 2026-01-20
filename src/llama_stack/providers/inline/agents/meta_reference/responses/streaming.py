@@ -16,6 +16,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import interleaved_con
 from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
+    Connectors,
     Inference,
     MCPListToolsTool,
     ModelNotFoundError,
@@ -133,6 +134,7 @@ class StreamingResponseOrchestrator:
         instructions: str | None,
         safety_api: Safety | None,
         guardrail_ids: list[str] | None = None,
+        connectors_api: Connectors | None = None,
         prompt: OpenAIResponsePrompt | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
@@ -147,6 +149,7 @@ class StreamingResponseOrchestrator:
         self.max_infer_iters = max_infer_iters
         self.tool_executor = tool_executor
         self.safety_api = safety_api
+        self.connectors_api = connectors_api
         self.guardrail_ids = guardrail_ids or []
         self.prompt = prompt
         # System message that is inserted into the model's context
@@ -1175,6 +1178,9 @@ class StreamingResponseOrchestrator:
         """Process an MCP tool configuration and emit appropriate streaming events."""
         from llama_stack.providers.utils.tools.mcp import list_mcp_tools
 
+        # Resolve connector_id to server_url if provided
+        mcp_tool = await resolve_mcp_connector_id(mcp_tool, self.connectors_api)
+
         # Emit mcp_list_tools.in_progress
         self.sequence_number += 1
         yield OpenAIResponseObjectStreamResponseMcpListToolsInProgress(
@@ -1485,3 +1491,25 @@ async def _process_tool_choice(
                         tools=tool_choice,
                         mode="required",
                     )
+
+
+async def resolve_mcp_connector_id(
+    mcp_tool: OpenAIResponseInputToolMCP,
+    connectors_api: Connectors,
+) -> OpenAIResponseInputToolMCP:
+    """Resolve connector_id to server_url for an MCP tool.
+
+    If the mcp_tool has a connector_id but no server_url, this function
+    looks up the connector and populates the server_url from it.
+
+    Args:
+        mcp_tool: The MCP tool configuration to resolve
+        connectors_api: The connectors API for looking up connectors
+
+    Returns:
+        The mcp_tool with server_url populated (may be same instance if already set)
+    """
+    if mcp_tool.connector_id and not mcp_tool.server_url:
+        connector = await connectors_api.get_connector(mcp_tool.connector_id)
+        return mcp_tool.model_copy(update={"server_url": connector.url})
+    return mcp_tool

@@ -4126,9 +4126,14 @@ components:
         server_label:
           type: string
           title: Server Label
+        connector_id:
+          anyOf:
+          - type: string
+          - type: 'null'
         server_url:
-          type: string
-          title: Server Url
+          anyOf:
+          - type: string
+          - type: 'null'
         headers:
           anyOf:
           - additionalProperties: true
@@ -4161,7 +4166,6 @@ components:
       type: object
       required:
       - server_label
-      - server_url
       title: OpenAIResponseInputToolMCP
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseObject:
@@ -8255,24 +8259,6 @@ components:
       title: BatchUsage
     Connector:
       properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Unique identifier for this resource in llama stack
-        provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for this resource in the provider
-        provider_id:
-          type: string
-          title: Provider Id
-          description: ID of the provider that owns this resource
-        type:
-          type: string
-          const: connector
-          title: Type
-          default: connector
         connector_type:
           $ref: '#/components/schemas/ConnectorType'
           default: mcp
@@ -8299,14 +8285,17 @@ components:
           - type: string
           - type: 'null'
           description: Description of the server
+        server_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Version of the server
       type: object
       required:
-      - identifier
-      - provider_id
       - connector_id
       - url
       title: Connector
-      description: A connector resource representing a connector registered in Llama Stack.
+      description: A connector registered in Llama Stack.
     ConnectorType:
       type: string
       enum:
@@ -10269,11 +10258,6 @@ components:
           - type: 'null'
           description: Label of the server
           nullable: true
-        type:
-          const: connector
-          default: connector
-          title: Type
-          type: string
       required:
       - connector_id
       - url

@@ -5,12 +5,11 @@
 # the root directory of this source tree.
 
 from enum import StrEnum
-from typing import Literal, Protocol
+from typing import Protocol
 
 from pydantic import BaseModel, Field
 from typing_extensions import runtime_checkable
 
-from llama_stack_api.resource import Resource, ResourceType
 from llama_stack_api.schema_utils import json_schema_type, webmethod
 from llama_stack_api.tools import ToolDef
 from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
@@ -39,28 +38,23 @@ class CommonConnectorFields(BaseModel):
 
 
 @json_schema_type
-class Connector(CommonConnectorFields, Resource):
-    """A connector resource representing a connector registered in Llama Stack.
+class Connector(CommonConnectorFields):
+    """A connector registered in Llama Stack.
 
-    :param type: Type of resource, always 'connector' for connectors
     :param server_name: (Optional) Name of the server
     :param server_description: (Optional) Description of the server
+    :param server_version: (Optional) Version of the server
     """
 
     model_config = {"populate_by_name": True}
-    type: Literal[ResourceType.connector] = ResourceType.connector
     server_name: str | None = Field(default=None, description="Name of the server")
     server_description: str | None = Field(default=None, description="Description of the server")
+    server_version: str | None = Field(default=None, description="Version of the server")
 
 
 @json_schema_type
 class ConnectorInput(CommonConnectorFields):
-    """Input for creating a connector
-
-    :param type: Type of resource, always 'connector' for connectors
-    """
-
-    type: Literal[ResourceType.connector] = ResourceType.connector
+    """Input for creating a connector"""
 
 
 @json_schema_type
@@ -85,6 +79,11 @@ class ListToolsResponse(BaseModel):
 
 @runtime_checkable
 class Connectors(Protocol):
+    """Connectors
+
+    APIs for managing connectors.
+    """
+
     # NOTE: Route order matters! More specific routes must come before less specific ones.
     # Routes with {param:path} are greedy and will match everything including slashes.
 

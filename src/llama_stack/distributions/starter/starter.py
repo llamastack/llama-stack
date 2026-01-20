@@ -257,6 +257,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         default_models=[],
         default_tool_groups=default_tool_groups,
         default_shields=default_shields,
+        default_connectors=[],
         vector_stores_config=VectorStoresConfig(
             default_provider_id="faiss",
             default_embedding_model=QualifiedModel(

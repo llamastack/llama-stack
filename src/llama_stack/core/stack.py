@@ -16,6 +16,7 @@ import yaml
 from pydantic import BaseModel
 
 from llama_stack.core.admin import AdminImpl, AdminImplConfig
+from llama_stack.core.connectors.connectors import ConnectorServiceConfig, ConnectorServiceImpl
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
@@ -42,6 +43,7 @@ from llama_stack_api import (
     Api,
     Batches,
     Benchmarks,
+    Connectors,
     Conversations,
     DatasetIO,
     Datasets,
@@ -91,6 +93,7 @@ class LlamaStack(
     Files,
     Prompts,
     Conversations,
+    Connectors,
 ):
     pass
 
@@ -242,6 +245,24 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             logger.debug(
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
+
+
+async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
+    """Register connectors from config"""
+    if Api.connectors not in impls:
+        return
+
+    connectors_impl = impls[Api.connectors]
+
+    # Register/Update config connectors
+    for connector in run_config.connectors:
+        logger.debug(f"Registering connector: {connector.connector_id}")
+        await connectors_impl.register_connector(
+            connector_id=connector.connector_id,
+            connector_type=connector.connector_type,
+            url=connector.url,
+            server_label=connector.server_label,
+        )
 
 
 async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
@@ -534,6 +555,11 @@ def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> 
     )
     impls[Api.conversations] = conversations_impl
 
+    connectors_impl = ConnectorServiceImpl(
+        ConnectorServiceConfig(config=config),
+    )
+    impls[Api.connectors] = connectors_impl
+
 
 def _initialize_storage(run_config: StackConfig):
     kv_backends: dict[str, StorageBackendConfig] = {}
@@ -594,8 +620,11 @@ class Stack:
             await impls[Api.prompts].initialize()
         if Api.conversations in impls:
             await impls[Api.conversations].initialize()
+        if Api.connectors in impls:
+            await impls[Api.connectors].initialize()
 
         await register_resources(self.run_config, impls)
+        await register_connectors(self.run_config, impls)
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
         await validate_safety_config(self.run_config.safety, impls)
@@ -728,6 +757,7 @@ def run_config_from_adhoc_config_spec(
                 inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
                 conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
                 prompts=KVStoreReference(backend="kv_default", namespace="prompts"),
+                connectors=KVStoreReference(backend="kv_default", namespace="connectors"),
             ),
         ),
     )

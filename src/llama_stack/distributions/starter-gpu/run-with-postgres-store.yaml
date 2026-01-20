@@ -272,6 +272,9 @@ storage:
     prompts:
       namespace: prompts
       backend: kv_default
+    connectors:
+      namespace: connectors
+      backend: kv_default
 registered_resources:
   models: []
   shields:
@@ -345,3 +348,4 @@ vector_stores:
     cleanup_interval_seconds: 86400
 safety:
   default_shield_id: llama-guard
+connectors: []
