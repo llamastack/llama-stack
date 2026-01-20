@@ -1,5 +1,5 @@
 version: 2
-image_name: starter
+distro_name: starter
 apis:
 - agents
 - batches
@@ -145,6 +145,14 @@ providers:
       persistence:
         namespace: vector_io::weaviate
         backend: kv_default
+  - provider_id: ${env.ELASTICSEARCH_URL:+elasticsearch}
+    provider_type: remote::elasticsearch
+    config:
+      elasticsearch_url: ${env.ELASTICSEARCH_URL:=localhost:9200}
+      elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
+      persistence:
+        namespace: vector_io::elasticsearch
+        backend: kv_default
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs
@@ -261,6 +269,9 @@ storage:
     prompts:
       namespace: prompts
       backend: kv_default
+    connectors:
+      namespace: connectors
+      backend: kv_default
 registered_resources:
   models: []
   shields:
@@ -286,5 +297,52 @@ vector_stores:
   default_embedding_model:
     provider_id: sentence-transformers
     model_id: nomic-ai/nomic-embed-text-v1.5
+  file_search_params:
+    header_template: 'knowledge_search tool found {num_chunks} chunks:
+
+      BEGIN of knowledge_search tool results.
+
+      '
+    footer_template: 'END of knowledge_search tool results.
+
+      '
+  context_prompt_params:
+    chunk_annotation_template: 'Result {index}
+
+      Content: {chunk.content}
+
+      Metadata: {metadata}
+
+      '
+    context_template: 'The above results were retrieved to help answer the user''s
+      query: "{query}". Use them as supporting information only in answering this
+      query. {annotation_instruction}
+
+      '
+  annotation_prompt_params:
+    enable_annotations: true
+    annotation_instruction_template: Cite sources immediately at the end of sentences
+      before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'.
+      Do not add extra punctuation. Use only the file IDs provided, do not invent
+      new ones.
+    chunk_annotation_template: '[{index}] {metadata_text} cite as <|{file_id}|>
+
+      {chunk_text}
+
+      '
+  file_ingestion_params:
+    default_chunk_size_tokens: 512
+    default_chunk_overlap_tokens: 128
+  chunk_retrieval_params:
+    chunk_multiplier: 5
+    max_tokens_in_context: 4000
+    default_reranker_strategy: rrf
+    rrf_impact_factor: 60.0
+    weighted_search_alpha: 0.5
+  file_batch_params:
+    max_concurrent_files_per_batch: 3
+    file_batch_chunk_size: 10
+    cleanup_interval_seconds: 86400
 safety:
   default_shield_id: llama-guard
+connectors: []

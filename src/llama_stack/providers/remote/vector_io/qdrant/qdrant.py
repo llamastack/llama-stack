@@ -18,8 +18,9 @@ from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     Files,
     Inference,
     InterleavedContent,
@@ -66,24 +67,23 @@ class QdrantIndex(EmbeddingIndex):
         # If the collection does not exist, it will be created in add_chunks.
         pass
 
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
 
         if not await self.client.collection_exists(self.collection_name):
             await self.client.create_collection(
                 self.collection_name,
-                vectors_config=models.VectorParams(size=len(embeddings[0]), distance=models.Distance.COSINE),
+                vectors_config=models.VectorParams(size=len(chunks[0].embedding), distance=models.Distance.COSINE),
             )
 
         points = []
-        for _i, (chunk, embedding) in enumerate(zip(chunks, embeddings, strict=False)):
+        for chunk in chunks:
             chunk_id = chunk.chunk_id
             points.append(
                 PointStruct(
                     id=convert_id(chunk_id),
-                    vector=embedding,
+                    vector=chunk.embedding,  # Already a list[float]
                     payload={"chunk_content": chunk.model_dump()} | {CHUNK_ID_KEY: chunk_id},
                 )
             )
@@ -118,7 +118,7 @@ class QdrantIndex(EmbeddingIndex):
             assert point.payload is not None
 
             try:
-                chunk = Chunk(**point.payload["chunk_content"])
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
             except Exception:
                 log.exception("Failed to parse chunk")
                 continue
@@ -129,7 +129,63 @@ class QdrantIndex(EmbeddingIndex):
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
-        raise NotImplementedError("Keyword search is not supported in Qdrant")
+        """
+        Performs keyword-based search using Qdrant's MatchText filter.
+
+        Uses Qdrant's query_filter with MatchText to search for chunks containing
+        the specified text query string in the chunk content.
+
+        Args:
+            query_string: The text query for keyword search
+            k: Number of results to return
+            score_threshold: Minimum similarity score threshold
+
+        Returns:
+            QueryChunksResponse with chunks and scores matching the keyword query
+        """
+        try:
+            results = (
+                await self.client.query_points(
+                    collection_name=self.collection_name,
+                    query_filter=models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="chunk_content.content", match=models.MatchText(text=query_string)
+                            )
+                        ]
+                    ),
+                    limit=k,
+                    with_payload=True,
+                    with_vectors=False,
+                    score_threshold=score_threshold,
+                )
+            ).points
+        except Exception as e:
+            log.error(f"Error querying keyword search in Qdrant collection {self.collection_name}: {e}")
+            raise
+
+        chunks, scores = [], []
+        for point in results:
+            if not isinstance(point, models.ScoredPoint):
+                raise RuntimeError(f"Expected ScoredPoint from Qdrant query, got {type(point).__name__}")
+            if point.payload is None:
+                raise RuntimeError("Qdrant query returned point with no payload")
+
+            try:
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
+            except Exception:
+                chunk_id = point.payload.get(CHUNK_ID_KEY, "unknown") if point.payload else "unknown"
+                point_id = getattr(point, "id", "unknown")
+                log.exception(
+                    f"Failed to parse chunk in collection {self.collection_name}: "
+                    f"chunk_id={chunk_id}, point_id={point_id}"
+                )
+                continue
+
+            chunks.append(chunk)
+            scores.append(point.score)
+
+        return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_hybrid(
         self,
@@ -140,7 +196,66 @@ class QdrantIndex(EmbeddingIndex):
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
-        raise NotImplementedError("Hybrid search is not supported in Qdrant")
+        """
+        Hybrid search combining vector similarity and keyword filtering in a single query.
+
+        Uses Qdrant's native capability to combine a vector query with a query_filter,
+        allowing vector similarity search to be filtered by keyword matches in one call.
+
+        Args:
+            embedding: The query embedding vector
+            query_string: The text query for keyword filtering
+            k: Number of results to return
+            score_threshold: Minimum similarity score threshold
+            reranker_type: Not used with this approach, but kept for API compatibility
+            reranker_params: Not used with this approach, but kept for API compatibility
+
+        Returns:
+            QueryChunksResponse with filtered vector search results
+        """
+        try:
+            results = (
+                await self.client.query_points(
+                    collection_name=self.collection_name,
+                    query=embedding.tolist(),
+                    query_filter=models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="chunk_content.content", match=models.MatchText(text=query_string)
+                            )
+                        ]
+                    ),
+                    limit=k,
+                    with_payload=True,
+                    score_threshold=score_threshold,
+                )
+            ).points
+        except Exception as e:
+            log.error(f"Error querying hybrid search in Qdrant collection {self.collection_name}: {e}")
+            raise
+
+        chunks, scores = [], []
+        for point in results:
+            if not isinstance(point, models.ScoredPoint):
+                raise RuntimeError(f"Expected ScoredPoint from Qdrant query, got {type(point).__name__}")
+            if point.payload is None:
+                raise RuntimeError("Qdrant query returned point with no payload")
+
+            try:
+                chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
+            except Exception:
+                chunk_id = point.payload.get(CHUNK_ID_KEY, "unknown") if point.payload else "unknown"
+                point_id = getattr(point, "id", "unknown")
+                log.exception(
+                    f"Failed to parse chunk in collection {self.collection_name}: "
+                    f"chunk_id={chunk_id}, point_id={point_id}"
+                )
+                continue
+
+            chunks.append(chunk)
+            scores.append(point.score)
+
+        return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def delete(self):
         await self.client.delete_collection(collection_name=self.collection_name)
@@ -153,11 +268,10 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         inference_api: Inference,
         files_api: Files | None = None,
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
         self.client: AsyncQdrantClient = None
         self.cache = {}
-        self.inference_api = inference_api
         self.vector_store_table = None
         self._qdrant_lock = asyncio.Lock()
 
@@ -228,7 +342,9 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         self.cache[vector_store_id] = index
         return index
 
-    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)

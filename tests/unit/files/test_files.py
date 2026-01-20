@@ -15,6 +15,13 @@ from llama_stack.providers.inline.files.localfs import (
     LocalfsFilesImplConfig,
 )
 from llama_stack_api import OpenAIFilePurpose, Order, ResourceNotFoundError
+from llama_stack_api.files.models import (
+    DeleteFileRequest,
+    ListFilesRequest,
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
+    UploadFileRequest,
+)
 
 
 class MockUploadFile:
@@ -74,7 +81,9 @@ class TestOpenAIFilesAPI:
     async def test_upload_file_success(self, files_provider, sample_text_file):
         """Test successful file upload."""
         # Upload file
-        result = await files_provider.openai_upload_file(file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS)
+        result = await files_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
+        )
 
         # Verify response
         assert result.id.startswith("file-")
@@ -90,7 +99,9 @@ class TestOpenAIFilesAPI:
 
         uploaded_files = []
         for purpose in purposes:
-            result = await files_provider.openai_upload_file(file=sample_text_file, purpose=purpose)
+            result = await files_provider.openai_upload_file(
+                request=UploadFileRequest(purpose=purpose), file=sample_text_file
+            )
             uploaded_files.append(result)
             assert result.purpose == purpose
 
@@ -103,13 +114,15 @@ class TestOpenAIFilesAPI:
         ]
 
         for file_obj, expected_filename in files_to_test:
-            result = await files_provider.openai_upload_file(file=file_obj, purpose=OpenAIFilePurpose.ASSISTANTS)
+            result = await files_provider.openai_upload_file(
+                request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=file_obj
+            )
             assert result.filename == expected_filename
             assert result.bytes == len(file_obj.content)
 
     async def test_list_files_empty(self, files_provider):
         """Test listing files when no files exist."""
-        result = await files_provider.openai_list_files()
+        result = await files_provider.openai_list_files(request=ListFilesRequest())
 
         assert result.data == []
         assert result.has_more is False
@@ -119,11 +132,15 @@ class TestOpenAIFilesAPI:
     async def test_list_files_with_content(self, files_provider, sample_text_file, sample_json_file):
         """Test listing files when files exist."""
         # Upload multiple files
-        file1 = await files_provider.openai_upload_file(file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS)
-        file2 = await files_provider.openai_upload_file(file=sample_json_file, purpose=OpenAIFilePurpose.ASSISTANTS)
+        file1 = await files_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
+        )
+        file2 = await files_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_json_file
+        )
 
         # List files
-        result = await files_provider.openai_list_files()
+        result = await files_provider.openai_list_files(request=ListFilesRequest())
 
         assert len(result.data) == 2
         file_ids = [f.id for f in result.data]
@@ -134,11 +151,11 @@ class TestOpenAIFilesAPI:
         """Test listing files with purpose filtering."""
         # Upload file with specific purpose
         uploaded_file = await files_provider.openai_upload_file(
-            file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
         )
 
         # List files with matching purpose
-        result = await files_provider.openai_list_files(purpose=OpenAIFilePurpose.ASSISTANTS)
+        result = await files_provider.openai_list_files(request=ListFilesRequest(purpose=OpenAIFilePurpose.ASSISTANTS))
         assert len(result.data) == 1
         assert result.data[0].id == uploaded_file.id
         assert result.data[0].purpose == OpenAIFilePurpose.ASSISTANTS
@@ -147,10 +164,12 @@ class TestOpenAIFilesAPI:
         """Test listing files with limit parameter."""
         # Upload multiple files
         for _ in range(5):
-            await files_provider.openai_upload_file(file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS)
+            await files_provider.openai_upload_file(
+                request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
+            )
 
         # List with limit
-        result = await files_provider.openai_list_files(limit=3)
+        result = await files_provider.openai_list_files(request=ListFilesRequest(limit=3))
         assert len(result.data) == 3
 
     async def test_list_files_with_order(self, files_provider, sample_text_file):
@@ -158,17 +177,19 @@ class TestOpenAIFilesAPI:
         # Upload multiple files
         files = []
         for _ in range(3):
-            file = await files_provider.openai_upload_file(file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS)
+            file = await files_provider.openai_upload_file(
+                request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
+            )
             files.append(file)
 
         # Test descending order (default)
-        result_desc = await files_provider.openai_list_files(order=Order.desc)
+        result_desc = await files_provider.openai_list_files(request=ListFilesRequest(order=Order.desc))
         assert len(result_desc.data) == 3
         # Most recent should be first
         assert result_desc.data[0].created_at >= result_desc.data[1].created_at >= result_desc.data[2].created_at
 
         # Test ascending order
-        result_asc = await files_provider.openai_list_files(order=Order.asc)
+        result_asc = await files_provider.openai_list_files(request=ListFilesRequest(order=Order.asc))
         assert len(result_asc.data) == 3
         # Oldest should be first
         assert result_asc.data[0].created_at <= result_asc.data[1].created_at <= result_asc.data[2].created_at
@@ -177,11 +198,13 @@ class TestOpenAIFilesAPI:
         """Test successful file retrieval."""
         # Upload file
         uploaded_file = await files_provider.openai_upload_file(
-            file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
         )
 
         # Retrieve file
-        retrieved_file = await files_provider.openai_retrieve_file(uploaded_file.id)
+        retrieved_file = await files_provider.openai_retrieve_file(
+            request=RetrieveFileRequest(file_id=uploaded_file.id)
+        )
 
         # Verify response
         assert retrieved_file.id == uploaded_file.id
@@ -194,17 +217,19 @@ class TestOpenAIFilesAPI:
     async def test_retrieve_file_not_found(self, files_provider):
         """Test retrieving a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await files_provider.openai_retrieve_file("file-nonexistent")
+            await files_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id="file-nonexistent"))
 
     async def test_retrieve_file_content_success(self, files_provider, sample_text_file):
         """Test successful file content retrieval."""
         # Upload file
         uploaded_file = await files_provider.openai_upload_file(
-            file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
         )
 
         # Retrieve file content
-        content = await files_provider.openai_retrieve_file_content(uploaded_file.id)
+        content = await files_provider.openai_retrieve_file_content(
+            request=RetrieveFileContentRequest(file_id=uploaded_file.id)
+        )
 
         # Verify content
         assert content.body == sample_text_file.content
@@ -212,20 +237,22 @@ class TestOpenAIFilesAPI:
     async def test_retrieve_file_content_not_found(self, files_provider):
         """Test retrieving content of a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await files_provider.openai_retrieve_file_content("file-nonexistent")
+            await files_provider.openai_retrieve_file_content(
+                request=RetrieveFileContentRequest(file_id="file-nonexistent")
+            )
 
     async def test_delete_file_success(self, files_provider, sample_text_file):
         """Test successful file deletion."""
         # Upload file
         uploaded_file = await files_provider.openai_upload_file(
-            file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
         )
 
         # Verify file exists
-        await files_provider.openai_retrieve_file(uploaded_file.id)
+        await files_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id=uploaded_file.id))
 
         # Delete file
-        delete_response = await files_provider.openai_delete_file(uploaded_file.id)
+        delete_response = await files_provider.openai_delete_file(request=DeleteFileRequest(file_id=uploaded_file.id))
 
         # Verify delete response
         assert delete_response.id == uploaded_file.id
@@ -233,60 +260,70 @@ class TestOpenAIFilesAPI:
 
         # Verify file no longer exists
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await files_provider.openai_retrieve_file(uploaded_file.id)
+            await files_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id=uploaded_file.id))
 
     async def test_delete_file_not_found(self, files_provider):
         """Test deleting a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await files_provider.openai_delete_file("file-nonexistent")
+            await files_provider.openai_delete_file(request=DeleteFileRequest(file_id="file-nonexistent"))
 
     async def test_file_persistence_across_operations(self, files_provider, sample_text_file):
         """Test that files persist correctly across multiple operations."""
         # Upload file
         uploaded_file = await files_provider.openai_upload_file(
-            file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
         )
 
         # Verify it appears in listing
-        files_list = await files_provider.openai_list_files()
+        files_list = await files_provider.openai_list_files(request=ListFilesRequest())
         assert len(files_list.data) == 1
         assert files_list.data[0].id == uploaded_file.id
 
         # Retrieve file info
-        retrieved_file = await files_provider.openai_retrieve_file(uploaded_file.id)
+        retrieved_file = await files_provider.openai_retrieve_file(
+            request=RetrieveFileRequest(file_id=uploaded_file.id)
+        )
         assert retrieved_file.id == uploaded_file.id
 
         # Retrieve file content
-        content = await files_provider.openai_retrieve_file_content(uploaded_file.id)
+        content = await files_provider.openai_retrieve_file_content(
+            request=RetrieveFileContentRequest(file_id=uploaded_file.id)
+        )
         assert content.body == sample_text_file.content
 
         # Delete file
-        await files_provider.openai_delete_file(uploaded_file.id)
+        await files_provider.openai_delete_file(request=DeleteFileRequest(file_id=uploaded_file.id))
 
         # Verify it's gone from listing
-        files_list = await files_provider.openai_list_files()
+        files_list = await files_provider.openai_list_files(request=ListFilesRequest())
         assert len(files_list.data) == 0
 
     async def test_multiple_files_operations(self, files_provider, sample_text_file, sample_json_file):
         """Test operations with multiple files."""
         # Upload multiple files
-        file1 = await files_provider.openai_upload_file(file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS)
-        file2 = await files_provider.openai_upload_file(file=sample_json_file, purpose=OpenAIFilePurpose.ASSISTANTS)
+        file1 = await files_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
+        )
+        file2 = await files_provider.openai_upload_file(
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_json_file
+        )
 
         # Verify both exist
-        files_list = await files_provider.openai_list_files()
+        files_list = await files_provider.openai_list_files(request=ListFilesRequest())
         assert len(files_list.data) == 2
 
         # Delete one file
-        await files_provider.openai_delete_file(file1.id)
+        await files_provider.openai_delete_file(request=DeleteFileRequest(file_id=file1.id))
 
         # Verify only one remains
-        files_list = await files_provider.openai_list_files()
+        files_list = await files_provider.openai_list_files(request=ListFilesRequest())
         assert len(files_list.data) == 1
         assert files_list.data[0].id == file2.id
 
         # Verify the remaining file is still accessible
-        content = await files_provider.openai_retrieve_file_content(file2.id)
+        content = await files_provider.openai_retrieve_file_content(
+            request=RetrieveFileContentRequest(file_id=file2.id)
+        )
         assert content.body == sample_json_file.content
 
     async def test_file_id_uniqueness(self, files_provider, sample_text_file):
@@ -296,7 +333,7 @@ class TestOpenAIFilesAPI:
         # Upload same file multiple times
         for _ in range(10):
             uploaded_file = await files_provider.openai_upload_file(
-                file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS
+                request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
             )
             assert uploaded_file.id not in file_ids, f"Duplicate file ID: {uploaded_file.id}"
             file_ids.add(uploaded_file.id)
@@ -307,7 +344,7 @@ class TestOpenAIFilesAPI:
         file_without_name = MockUploadFile(b"content", None)  # No filename
 
         uploaded_file = await files_provider.openai_upload_file(
-            file=file_without_name, purpose=OpenAIFilePurpose.ASSISTANTS
+            request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=file_without_name
         )
 
         assert uploaded_file.filename == "uploaded_file"  # Default filename
@@ -317,16 +354,20 @@ class TestOpenAIFilesAPI:
         # Upload multiple files to test pagination
         uploaded_files = []
         for _ in range(5):
-            file = await files_provider.openai_upload_file(file=sample_text_file, purpose=OpenAIFilePurpose.ASSISTANTS)
+            file = await files_provider.openai_upload_file(
+                request=UploadFileRequest(purpose=OpenAIFilePurpose.ASSISTANTS), file=sample_text_file
+            )
             uploaded_files.append(file)
 
         # Get first page without 'after' parameter
-        first_page = await files_provider.openai_list_files(limit=2, order=Order.desc)
+        first_page = await files_provider.openai_list_files(request=ListFilesRequest(limit=2, order=Order.desc))
         assert len(first_page.data) == 2
         assert first_page.has_more is True
 
         # Get second page using 'after' parameter
-        second_page = await files_provider.openai_list_files(after=first_page.data[-1].id, limit=2, order=Order.desc)
+        second_page = await files_provider.openai_list_files(
+            request=ListFilesRequest(after=first_page.data[-1].id, limit=2, order=Order.desc)
+        )
         assert len(second_page.data) <= 2
 
         # Verify no overlap between pages

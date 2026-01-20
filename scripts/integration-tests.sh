@@ -116,13 +116,13 @@ if [[ -z "$STACK_CONFIG" && "$COLLECT_ONLY" == false ]]; then
 fi
 
 if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" && "$COLLECT_ONLY" == false ]]; then
-    echo "Error: --test-setup is required when --test-subdirs is provided"
+    echo "Error: --setup is required when --subdirs is provided"
     usage
     exit 1
 fi
 
 if [[ -z "$TEST_SUITE" && -z "$TEST_SUBDIRS" ]]; then
-    echo "Error: --test-suite or --test-subdirs is required"
+    echo "Error: --suite or --subdirs is required"
     exit 1
 fi
 
@@ -161,7 +161,7 @@ echo "Setting SQLITE_STORE_DIR: $SQLITE_STORE_DIR"
 
 # Determine stack config type for api_recorder test isolation
 if [[ "$COLLECT_ONLY" == false ]]; then
-    if [[ "$STACK_CONFIG" == server:* ]] || [[ "$STACK_CONFIG" == docker:* ]]; then
+    if [[ "$STACK_CONFIG" == server:* ]] || [[ "$STACK_CONFIG" == docker:* ]] || [[ "$STACK_CONFIG" == http://* ]]; then
         export LLAMA_STACK_TEST_STACK_CONFIG_TYPE="server"
         echo "Setting stack config type: server"
     else
@@ -219,7 +219,7 @@ fi
 find_available_port() {
     local start_port=$1
     local port=$start_port
-    for ((i=0; i<100; i++)); do
+    for ((i = 0; i < 100; i++)); do
         if ! lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1; then
             echo $port
             return 0
@@ -322,16 +322,16 @@ if [[ "$STACK_CONFIG" == *"server:"* && "$COLLECT_ONLY" == false ]]; then
     echo "=== Starting Llama Stack Server ==="
     export LLAMA_STACK_LOG_WIDTH=120
 
-        # Configure telemetry collector for server mode
-        # Use a fixed port for the OTEL collector so the server can connect to it
-        COLLECTOR_PORT=4317
-        export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
-        # Disabled: https://github.com/llamastack/llama-stack/issues/4089
-        #export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
-        export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
-        export OTEL_BSP_SCHEDULE_DELAY="200"
-        export OTEL_BSP_EXPORT_TIMEOUT="2000"
-        export OTEL_METRIC_EXPORT_INTERVAL="200"
+    # Configure telemetry collector for server mode
+    # Use a fixed port for the OTEL collector so the server can connect to it
+    COLLECTOR_PORT=4317
+    export LLAMA_STACK_TEST_COLLECTOR_PORT="${COLLECTOR_PORT}"
+    # Disabled: https://github.com/llamastack/llama-stack/issues/4089
+    #export OTEL_EXPORTER_OTLP_ENDPOINT="http://127.0.0.1:${COLLECTOR_PORT}"
+    export OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
+    export OTEL_BSP_SCHEDULE_DELAY="200"
+    export OTEL_BSP_EXPORT_TIMEOUT="2000"
+    export OTEL_METRIC_EXPORT_INTERVAL="200"
 
     # remove "server:" from STACK_CONFIG
     stack_config=$(echo "$STACK_CONFIG" | sed 's/^server://')
@@ -567,7 +567,7 @@ if [[ "$TYPESCRIPT_ONLY" == "false" ]]; then
         $EXTRA_PARAMS \
         --color=yes \
         --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
-        --color=yes $EXTRA_PARAMS \
+        --color=yes \
         --capture=tee-sys
     exit_code=$?
 else

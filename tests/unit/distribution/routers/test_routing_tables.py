@@ -22,15 +22,26 @@ from llama_stack_api import (
     Api,
     Dataset,
     DatasetPurpose,
+    GetBenchmarkRequest,
+    GetShieldRequest,
+    ListBenchmarksRequest,
     ListToolDefsResponse,
     Model,
     ModelNotFoundError,
     ModelType,
     NumberType,
+    RegisterBenchmarkRequest,
+    RegisterShieldRequest,
     Shield,
     ToolDef,
     ToolGroup,
+    UnregisterBenchmarkRequest,
+    UnregisterShieldRequest,
     URIDataSource,
+)
+from llama_stack_api.datasets import (
+    RegisterDatasetRequest,
+    UnregisterDatasetRequest,
 )
 
 
@@ -212,8 +223,8 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     await table.initialize()
 
     # Register multiple shields and verify listing
-    await table.register_shield(shield_id="test-shield", provider_id="test_provider")
-    await table.register_shield(shield_id="test-shield-2", provider_id="test_provider")
+    await table.register_shield(RegisterShieldRequest(shield_id="test-shield", provider_id="test_provider"))
+    await table.register_shield(RegisterShieldRequest(shield_id="test-shield-2", provider_id="test_provider"))
     shields = await table.list_shields()
     assert len(shields.data) == 2
 
@@ -222,7 +233,7 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     assert "test-shield-2" in shield_ids
 
     # Test get specific shield
-    test_shield = await table.get_shield(identifier="test-shield")
+    test_shield = await table.get_shield(GetShieldRequest(identifier="test-shield"))
     assert test_shield is not None
     assert test_shield.identifier == "test-shield"
     assert test_shield.provider_id == "test_provider"
@@ -231,10 +242,10 @@ async def test_shields_routing_table(cached_disk_dist_registry):
 
     # Test get non-existent shield - should raise ValueError with specific message
     with pytest.raises(ValueError, match="Shield 'non-existent' not found"):
-        await table.get_shield(identifier="non-existent")
+        await table.get_shield(GetShieldRequest(identifier="non-existent"))
 
     # Test unregistering shields
-    await table.unregister_shield(identifier="test-shield")
+    await table.unregister_shield(UnregisterShieldRequest(identifier="test-shield"))
     shields = await table.list_shields()
 
     assert len(shields.data) == 1
@@ -243,13 +254,13 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     assert "test-shield-2" in shield_ids
 
     # Unregister the remaining shield
-    await table.unregister_shield(identifier="test-shield-2")
+    await table.unregister_shield(UnregisterShieldRequest(identifier="test-shield-2"))
     shields = await table.list_shields()
     assert len(shields.data) == 0
 
     # Test unregistering non-existent shield - should raise ValueError with specific message
     with pytest.raises(ValueError, match="Shield 'non-existent' not found"):
-        await table.unregister_shield(identifier="non-existent")
+        await table.unregister_shield(UnregisterShieldRequest(identifier="non-existent"))
 
 
 async def test_datasets_routing_table(cached_disk_dist_registry):
@@ -258,10 +269,18 @@ async def test_datasets_routing_table(cached_disk_dist_registry):
 
     # Register multiple datasets and verify listing
     await table.register_dataset(
-        dataset_id="test-dataset", purpose=DatasetPurpose.eval_messages_answer, source=URIDataSource(uri="test-uri")
+        RegisterDatasetRequest(
+            dataset_id="test-dataset",
+            purpose=DatasetPurpose.eval_messages_answer,
+            source=URIDataSource(uri="test-uri"),
+        )
     )
     await table.register_dataset(
-        dataset_id="test-dataset-2", purpose=DatasetPurpose.eval_messages_answer, source=URIDataSource(uri="test-uri-2")
+        RegisterDatasetRequest(
+            dataset_id="test-dataset-2",
+            purpose=DatasetPurpose.eval_messages_answer,
+            source=URIDataSource(uri="test-uri-2"),
+        )
     )
     datasets = await table.list_datasets()
 
@@ -270,8 +289,8 @@ async def test_datasets_routing_table(cached_disk_dist_registry):
     assert "test-dataset" in dataset_ids
     assert "test-dataset-2" in dataset_ids
 
-    await table.unregister_dataset(dataset_id="test-dataset")
-    await table.unregister_dataset(dataset_id="test-dataset-2")
+    await table.unregister_dataset(UnregisterDatasetRequest(dataset_id="test-dataset"))
+    await table.unregister_dataset(UnregisterDatasetRequest(dataset_id="test-dataset-2"))
 
     datasets = await table.list_datasets()
     assert len(datasets.data) == 0
@@ -420,24 +439,52 @@ async def test_benchmarks_routing_table(cached_disk_dist_registry):
 
     # Register multiple benchmarks and verify listing
     await table.register_benchmark(
-        benchmark_id="test-benchmark",
-        dataset_id="test-dataset",
-        scoring_functions=["test-scoring-fn", "test-scoring-fn-2"],
+        RegisterBenchmarkRequest(
+            benchmark_id="test-benchmark",
+            dataset_id="test-dataset",
+            scoring_functions=["test-scoring-fn", "test-scoring-fn-2"],
+        )
     )
-    benchmarks = await table.list_benchmarks()
+    benchmarks = await table.list_benchmarks(ListBenchmarksRequest())
 
     assert len(benchmarks.data) == 1
     benchmark_ids = {b.identifier for b in benchmarks.data}
     assert "test-benchmark" in benchmark_ids
 
     # Unregister the benchmark and verify removal
-    await table.unregister_benchmark(benchmark_id="test-benchmark")
-    benchmarks_after = await table.list_benchmarks()
+    await table.unregister_benchmark(UnregisterBenchmarkRequest(benchmark_id="test-benchmark"))
+    benchmarks_after = await table.list_benchmarks(ListBenchmarksRequest())
     assert len(benchmarks_after.data) == 0
 
     # Unregistering a non-existent benchmark should raise a clear error
     with pytest.raises(ValueError, match="Benchmark 'dummy_benchmark' not found"):
-        await table.unregister_benchmark(benchmark_id="dummy_benchmark")
+        await table.unregister_benchmark(UnregisterBenchmarkRequest(benchmark_id="dummy_benchmark"))
+
+
+async def test_benchmarks_routing_table_stores_dataset_id(cached_disk_dist_registry):
+    """Test that register_benchmark correctly stores dataset_id on the benchmark."""
+    table = BenchmarksRoutingTable({"test_provider": BenchmarksImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    test_dataset_id = "my-evaluation-dataset"
+    test_scoring_functions = ["accuracy", "f1-score"]
+
+    await table.register_benchmark(
+        RegisterBenchmarkRequest(
+            benchmark_id="test-benchmark-with-dataset",
+            dataset_id=test_dataset_id,
+            scoring_functions=test_scoring_functions,
+        )
+    )
+
+    benchmark = await table.get_benchmark(GetBenchmarkRequest(benchmark_id="test-benchmark-with-dataset"))
+
+    assert benchmark is not None
+    assert benchmark.identifier == "test-benchmark-with-dataset"
+    assert benchmark.dataset_id == test_dataset_id
+    assert benchmark.scoring_functions == test_scoring_functions
+
+    await table.unregister_benchmark(UnregisterBenchmarkRequest(benchmark_id="test-benchmark-with-dataset"))
 
 
 async def test_tool_groups_routing_table(cached_disk_dist_registry):

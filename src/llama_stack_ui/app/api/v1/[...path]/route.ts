@@ -37,28 +37,56 @@ async function proxyRequest(request: NextRequest, method: string) {
 
     // Add body for methods that support it
     if (["POST", "PUT", "PATCH"].includes(method) && request.body) {
-      requestOptions.body = await request.text();
+      requestOptions.body = request.body;
+      // Required for ReadableStream bodies in newer Node.js versions
+      requestOptions.duplex = "half" as RequestDuplex;
     }
 
     // Make the request to FastAPI backend
     const response = await fetch(targetUrl, requestOptions);
 
-    // Get response data
-    const responseText = await response.text();
-
     console.log(
       `Response from FastAPI: ${response.status} ${response.statusText}`
     );
 
-    // Create response with same status and headers
     // Handle 204 No Content responses specially
-    const proxyResponse =
-      response.status === 204
-        ? new NextResponse(null, { status: 204 })
-        : new NextResponse(responseText, {
-            status: response.status,
-            statusText: response.statusText,
-          });
+    if (response.status === 204) {
+      const proxyResponse = new NextResponse(null, { status: 204 });
+      // Copy response headers (except problematic ones)
+      response.headers.forEach((value, key) => {
+        if (!["connection", "transfer-encoding"].includes(key.toLowerCase())) {
+          proxyResponse.headers.set(key, value);
+        }
+      });
+      return proxyResponse;
+    }
+
+    // Check content type to handle binary vs text responses appropriately
+    const contentType = response.headers.get("content-type") || "";
+    const isBinaryContent =
+      contentType.includes("application/pdf") ||
+      contentType.includes("application/msword") ||
+      contentType.includes("application/vnd.openxmlformats-officedocument") ||
+      contentType.includes("application/octet-stream") ||
+      contentType.includes("image/") ||
+      contentType.includes("video/") ||
+      contentType.includes("audio/");
+
+    let responseData: string | ArrayBuffer;
+
+    if (isBinaryContent) {
+      // Handle binary content (PDFs, Word docs, images, etc.)
+      responseData = await response.arrayBuffer();
+    } else {
+      // Handle text content (JSON, plain text, etc.)
+      responseData = await response.text();
+    }
+
+    // Create response with same status and headers
+    const proxyResponse = new NextResponse(responseData, {
+      status: response.status,
+      statusText: response.statusText,
+    });
 
     // Copy response headers (except problematic ones)
     response.headers.forEach((value, key) => {

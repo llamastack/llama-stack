@@ -16,10 +16,8 @@ from llama_stack.core.datatypes import (
     LLAMA_STACK_RUN_CONFIG_VERSION,
     Api,
     BenchmarkInput,
-    BuildConfig,
     BuildProvider,
     DatasetInput,
-    DistributionSpec,
     ModelInput,
     Provider,
     SafetyConfig,
@@ -35,13 +33,10 @@ from llama_stack.core.storage.datatypes import (
     StorageBackendType,
 )
 from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
-from llama_stack.core.storage.kvstore.config import get_pip_packages as get_kv_pip_packages
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
-from llama_stack.core.storage.sqlstore.sqlstore import get_pip_packages as get_sql_pip_packages
 from llama_stack.core.utils.dynamic import instantiate_class_type
-from llama_stack.core.utils.image_types import LlamaStackImageType
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
-from llama_stack_api import DatasetPurpose, ModelType
+from llama_stack_api import ConnectorInput, DatasetPurpose, ModelType
 
 
 def filter_empty_values(obj: Any) -> Any:
@@ -186,6 +181,7 @@ class RunConfigSettings(BaseModel):
     default_tool_groups: list[ToolGroupInput] | None = None
     default_datasets: list[DatasetInput] | None = None
     default_benchmarks: list[BenchmarkInput] | None = None
+    default_connectors: list[ConnectorInput] | None = None
     vector_stores_config: VectorStoresConfig | None = None
     safety_config: SafetyConfig | None = None
     storage_backends: dict[str, Any] | None = None
@@ -260,6 +256,10 @@ class RunConfigSettings(BaseModel):
                 backend="kv_default",
                 namespace="prompts",
             ).model_dump(exclude_none=True),
+            "connectors": KVStoreReference(
+                backend="kv_default",
+                namespace="connectors",
+            ).model_dump(exclude_none=True),
         }
 
         storage_config = dict(
@@ -270,7 +270,7 @@ class RunConfigSettings(BaseModel):
         # Return a dict that matches StackRunConfig structure
         config = {
             "version": LLAMA_STACK_RUN_CONFIG_VERSION,
-            "image_name": name,
+            "distro_name": name,
             "container_image": container_image,
             "apis": apis,
             "providers": provider_configs,
@@ -295,6 +295,9 @@ class RunConfigSettings(BaseModel):
         if self.safety_config:
             config["safety"] = self.safety_config.model_dump(exclude_none=True)
 
+        if self.default_connectors is not None:
+            config["connectors"] = [c.model_dump(exclude_none=True) for c in self.default_connectors]
+
         return config
 
 
@@ -318,55 +321,6 @@ class DistributionTemplate(BaseModel):
     container_image: str | None = None
 
     available_models_by_provider: dict[str, list[ProviderModelEntry]] | None = None
-
-    # we may want to specify additional pip packages without necessarily indicating a
-    # specific "default" inference store (which is what typically used to dictate additional
-    # pip packages)
-    additional_pip_packages: list[str] | None = None
-
-    def build_config(self) -> BuildConfig:
-        additional_pip_packages: list[str] = []
-        for run_config in self.run_configs.values():
-            run_config_ = run_config.run_config(self.name, self.providers, self.container_image)
-
-            # TODO: This is a hack to get the dependencies for internal APIs into build
-            # We should have a better way to do this by formalizing the concept of "internal" APIs
-            # and providers, with a way to specify dependencies for them.
-
-            storage_cfg = run_config_.get("storage", {})
-            for backend_cfg in storage_cfg.get("backends", {}).values():
-                store_type = backend_cfg.get("type")
-                if not store_type:
-                    continue
-                if str(store_type).startswith("kv_"):
-                    additional_pip_packages.extend(get_kv_pip_packages(backend_cfg))
-                elif str(store_type).startswith("sql_"):
-                    additional_pip_packages.extend(get_sql_pip_packages(backend_cfg))
-
-        if self.additional_pip_packages:
-            additional_pip_packages.extend(self.additional_pip_packages)
-
-        # Create minimal providers for build config (without runtime configs)
-        build_providers = {}
-        for api, providers in self.providers.items():
-            build_providers[api] = []
-            for provider in providers:
-                # Create a minimal build provider object with only essential build information
-                build_provider = BuildProvider(
-                    provider_type=provider.provider_type,
-                    module=provider.module,
-                )
-                build_providers[api].append(build_provider)
-
-        return BuildConfig(
-            distribution_spec=DistributionSpec(
-                description=self.description,
-                container_image=self.container_image,
-                providers=build_providers,
-            ),
-            image_type=LlamaStackImageType.VENV.value,  # default to venv
-            additional_pip_packages=sorted(set(additional_pip_packages)),
-        )
 
     def generate_markdown_docs(self) -> str:
         providers_table = "| API | Provider(s) |\n"
@@ -438,14 +392,6 @@ class DistributionTemplate(BaseModel):
 
         for output_dir in [yaml_output_dir, doc_output_dir]:
             output_dir.mkdir(parents=True, exist_ok=True)
-
-        build_config = self.build_config()
-        with open(yaml_output_dir / "build.yaml", "w") as f:
-            yaml.safe_dump(
-                filter_empty_values(build_config.model_dump(exclude_none=True)),
-                f,
-                sort_keys=False,
-            )
 
         for yaml_pth, settings in self.run_configs.items():
             run_config = settings.run_config(self.name, self.providers, self.container_image)

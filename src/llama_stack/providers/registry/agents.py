@@ -20,10 +20,11 @@ def available_providers() -> list[ProviderSpec]:
             provider_type="inline::meta-reference",
             pip_packages=[
                 "matplotlib",
+                "fonttools>=4.60.2",
                 "pillow",
                 "pandas",
                 "scikit-learn",
-                "mcp>=1.8.1",
+                "mcp>=1.23.0",
             ]
             + kvstore_dependencies(),  # TODO make this dynamic based on the kvstore config
             module="llama_stack.providers.inline.agents.meta_reference",
@@ -36,6 +37,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.conversations,
                 Api.prompts,
                 Api.files,
+                Api.connectors,
             ],
             optional_api_dependencies=[
                 Api.safety,

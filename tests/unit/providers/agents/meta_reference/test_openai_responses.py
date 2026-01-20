@@ -122,6 +122,12 @@ def mock_files_api():
 
 
 @pytest.fixture
+def mock_connectors_api():
+    connectors_api = AsyncMock()
+    return connectors_api
+
+
+@pytest.fixture
 def openai_responses_impl(
     mock_inference_api,
     mock_tool_groups_api,
@@ -132,6 +138,7 @@ def openai_responses_impl(
     mock_conversations_api,
     mock_prompts_api,
     mock_files_api,
+    mock_connectors_api,
 ):
     return OpenAIResponsesImpl(
         inference_api=mock_inference_api,
@@ -143,6 +150,7 @@ def openai_responses_impl(
         conversations_api=mock_conversations_api,
         prompts_api=mock_prompts_api,
         files_api=mock_files_api,
+        connectors_api=mock_connectors_api,
     )
 
 
@@ -1755,3 +1763,50 @@ async def test_prepend_prompt_image_variable_missing_required_fields(openai_resp
     # Execute - should raise ValueError
     with pytest.raises(ValueError, match="Image content must have either 'image_url' or 'file_id'"):
         await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
+
+
+@patch("llama_stack.providers.utils.tools.mcp.list_mcp_tools")
+async def test_mcp_tool_connector_id_resolved_to_server_url(
+    mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api, mock_connectors_api
+):
+    """Test that connector_id is resolved to server_url when using MCP tools."""
+    from llama_stack_api import Connector, ConnectorType
+
+    # Setup mock connector that will be returned when resolving connector_id
+    mock_connector = Connector(
+        connector_id="my-mcp-connector",
+        connector_type=ConnectorType.MCP,
+        url="http://resolved-mcp-server:8080/mcp",
+        server_label="Resolved MCP Server",
+    )
+    mock_connectors_api.get_connector.return_value = mock_connector
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+    mock_list_mcp_tools.return_value = ListToolDefsResponse(
+        data=[ToolDef(name="resolved_tool", description="a resolved tool", input_schema={}, output_schema={})]
+    )
+
+    # Create a response using connector_id instead of server_url
+    result = await openai_responses_impl.create_openai_response(
+        input="Test connector resolution",
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        store=True,
+        tools=[
+            OpenAIResponseInputToolMCP(server_label="my-label", connector_id="my-mcp-connector"),
+        ],
+    )
+
+    # Verify the connector_id was resolved via the connectors API
+    mock_connectors_api.get_connector.assert_called_once_with("my-mcp-connector")
+
+    # Verify list_mcp_tools was called with the resolved URL
+    mock_list_mcp_tools.assert_called_once()
+    call_kwargs = mock_list_mcp_tools.call_args.kwargs
+    assert call_kwargs["endpoint"] == "http://resolved-mcp-server:8080/mcp"
+
+    # Verify the response contains the resolved tools
+    listings = [obj for obj in result.output if obj.type == "mcp_list_tools"]
+    assert len(listings) == 1
+    assert listings[0].server_label == "my-label"
+    assert len(listings[0].tools) == 1
+    assert listings[0].tools[0].name == "resolved_tool"

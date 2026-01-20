@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from pydantic import BaseModel, Field
 
-from llama_stack.core.datatypes import Api, Provider, StackRunConfig
+from llama_stack.core.datatypes import Api, Provider, StackConfig
 from llama_stack.core.resolver import resolve_impls
 from llama_stack.core.routers.inference import InferenceRouter
 from llama_stack.core.routing_tables.models import ModelsRoutingTable
@@ -71,7 +71,7 @@ class SampleImpl:
         pass
 
 
-def make_run_config(**overrides) -> StackRunConfig:
+def make_run_config(**overrides) -> StackConfig:
     storage = overrides.pop(
         "storage",
         StorageConfig(
@@ -91,13 +91,13 @@ def make_run_config(**overrides) -> StackRunConfig:
         {name: cfg for name, cfg in storage.backends.items() if cfg.type.value.startswith("sql_")}
     )
     defaults = dict(
-        image_name="test_image",
+        distro_name="test_image",
         apis=[],
         providers={},
         storage=storage,
     )
     defaults.update(overrides)
-    return StackRunConfig(**defaults)
+    return StackConfig(**defaults)
 
 
 async def test_resolve_impls_basic():
@@ -114,7 +114,7 @@ async def test_resolve_impls_basic():
     provider_registry = {Api.inference: {provider_spec.provider_type: provider_spec}}
 
     run_config = make_run_config(
-        image_name="test_image",
+        distro_name="test_image",
         providers={
             "inference": [
                 Provider(

@@ -15,11 +15,10 @@ import uvicorn
 import yaml
 from termcolor import cprint
 
-from llama_stack.cli.stack.utils import ImageType
 from llama_stack.cli.subcommand import Subcommand
-from llama_stack.core.datatypes import Api, Provider, StackRunConfig
+from llama_stack.core.datatypes import Api, Provider, StackConfig
 from llama_stack.core.distribution import get_provider_registry
-from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
+from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars
 from llama_stack.core.storage.datatypes import (
     InferenceStoreReference,
     KVStoreReference,
@@ -30,7 +29,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
-from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import LoggingConfig, get_logger
 
@@ -66,18 +65,6 @@ class StackRun(Subcommand):
             default=int(os.getenv("LLAMA_STACK_PORT", 8321)),
         )
         self.parser.add_argument(
-            "--image-name",
-            type=str,
-            default=None,
-            help="[DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running.",
-        )
-        self.parser.add_argument(
-            "--image-type",
-            type=str,
-            help="[DEPRECATED] This flag is no longer supported. Please activate your virtual environment before running.",
-            choices=[e.value for e in ImageType if e.value != ImageType.CONTAINER.value],
-        )
-        self.parser.add_argument(
             "--enable-ui",
             action="store_true",
             help="Start the UI server",
@@ -94,23 +81,14 @@ class StackRun(Subcommand):
 
         from llama_stack.core.configure import parse_and_maybe_upgrade_config
 
-        if args.image_type or args.image_name:
-            self.parser.error(
-                "The --image-type and --image-name flags are no longer supported.\n\n"
-                "Please activate your virtual environment manually before running `llama stack run`.\n\n"
-                "For example:\n"
-                "  source /path/to/venv/bin/activate\n"
-                "  llama stack run <config>\n"
-            )
-
         if args.enable_ui:
             self._start_ui_development_server(args.port)
 
         if args.config:
             try:
-                from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+                from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 
-                config_file = resolve_config_or_distro(args.config, Mode.RUN)
+                config_file = resolve_config_or_distro(args.config)
             except ValueError as e:
                 self.parser.error(str(e))
         elif args.providers:
@@ -156,7 +134,7 @@ class StackRun(Subcommand):
 
             # Write config to disk in providers-run directory
             distro_dir = DISTRIBS_BASE_DIR / "providers-run"
-            config_file = distro_dir / "run.yaml"
+            config_file = distro_dir / "config.yaml"
 
             logger.info(f"Writing generated config to: {config_file}")
             with open(config_file, "w") as f:
@@ -166,7 +144,7 @@ class StackRun(Subcommand):
             config_file = None
 
         if config_file:
-            logger.info(f"Using run configuration: {config_file}")
+            logger.info(f"Using stack configuration: {config_file}")
 
             try:
                 config_dict = yaml.safe_load(config_file.read_text())
@@ -187,20 +165,23 @@ class StackRun(Subcommand):
         if not config_file:
             self.parser.error("Config file is required")
 
-        config_file = resolve_config_or_distro(str(config_file), Mode.RUN)
+        config_file = resolve_config_or_distro(str(config_file))
         with open(config_file) as fp:
             config_contents = yaml.safe_load(fp)
             if isinstance(config_contents, dict) and (cfg := config_contents.get("logging_config")):
                 logger_config = LoggingConfig(**cfg)
             else:
                 logger_config = None
-            config = StackRunConfig(**cast_image_name_to_string(replace_env_vars(config_contents)))
+            config = StackConfig(**cast_distro_name_to_string(replace_env_vars(config_contents)))
 
         port = args.port or config.server.port
         host = config.server.host or ["::", "0.0.0.0"]
 
         # Set the config file in environment so create_app can find it
         os.environ["LLAMA_STACK_CONFIG"] = str(config_file)
+
+        # disable together banner that spams llama stack run every time
+        os.environ["TOGETHER_NO_BANNER"] = "1"
 
         uvicorn_config = {
             "factory": True,
@@ -318,8 +299,8 @@ class StackRun(Subcommand):
             ),
         )
 
-        return StackRunConfig(
-            image_name="providers-run",
+        return StackConfig(
+            distro_name="providers-run",
             apis=apis,
             providers=providers,
             storage=storage,

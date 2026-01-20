@@ -41,6 +41,7 @@ def responses_impl_with_conversations(
     mock_safety_api,
     mock_prompts_api,
     mock_files_api,
+    mock_connectors_api,
 ):
     """Create OpenAIResponsesImpl instance with conversations API."""
     return OpenAIResponsesImpl(
@@ -53,6 +54,7 @@ def responses_impl_with_conversations(
         safety_api=mock_safety_api,
         prompts_api=mock_prompts_api,
         files_api=mock_files_api,
+        connectors_api=mock_connectors_api,
     )
 
 
@@ -106,7 +108,8 @@ class TestMessageSyncing:
         call_args = mock_conversations_api.add_items.call_args
 
         assert call_args[0][0] == conv_id  # conversation_id
-        items = call_args[0][1]  # conversation_items
+        request = call_args[0][1]  # AddItemsRequest
+        items = request.items
 
         assert len(items) == 2
         # User message
@@ -152,7 +155,8 @@ class TestMessageSyncing:
         mock_conversations_api.add_items.assert_called_once()
         call_args = mock_conversations_api.add_items.call_args
 
-        items = call_args[0][1]
+        request = call_args[0][1]  # AddItemsRequest
+        items = request.items
         # Should have input message + output message
         assert len(items) == 2
 

@@ -14,6 +14,9 @@ from openai.types.chat import ChatCompletionToolChoiceOptionParam as OpenAIChatC
 from openai.types.chat import ChatCompletionToolParam as OpenAIChatCompletionToolParam
 from pydantic import TypeAdapter
 
+from llama_stack.core.access_control.access_control import is_action_allowed
+from llama_stack.core.datatypes import ModelWithOwner
+from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import (
@@ -40,7 +43,10 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
+    OpenAITokenLogProb,
+    OpenAITopLogProb,
     Order,
+    RegisterModelRequest,
     RerankResponse,
     RoutingTable,
 )
@@ -82,7 +88,14 @@ class InferenceRouter(Inference):
         logger.debug(
             f"InferenceRouter.register_model: {model_id=} {provider_model_id=} {provider_id=} {metadata=} {model_type=}",
         )
-        await self.routing_table.register_model(model_id, provider_model_id, provider_id, metadata, model_type)
+        request = RegisterModelRequest(
+            model_id=model_id,
+            provider_model_id=provider_model_id,
+            provider_id=provider_id,
+            metadata=metadata,
+            model_type=model_type,
+        )
+        await self.routing_table.register_model(request)
 
     async def _get_model_provider(self, model_id: str, expected_model_type: str) -> tuple[Inference, str]:
         model = await self.routing_table.get_object_by_identifier("model", model_id)
@@ -93,13 +106,39 @@ class InferenceRouter(Inference):
             provider = await self.routing_table.get_provider_impl(model.identifier)
             return provider, model.provider_resource_id
 
+        # Handles cases where clients use the provider format directly
+        return await self._get_provider_by_fallback(model_id, expected_model_type)
+
+    async def _get_provider_by_fallback(self, model_id: str, expected_model_type: str) -> tuple[Inference, str]:
+        """
+        Handle fallback case where model_id is in provider_id/provider_resource_id format.
+        """
         splits = model_id.split("/", maxsplit=1)
         if len(splits) != 2:
             raise ModelNotFoundError(model_id)
 
         provider_id, provider_resource_id = splits
+
+        # Check if provider exists
         if provider_id not in self.routing_table.impls_by_provider_id:
             logger.warning(f"Provider {provider_id} not found for model {model_id}")
+            raise ModelNotFoundError(model_id)
+
+        # Create a temporary model object for RBAC check
+        temp_model = ModelWithOwner(
+            identifier=model_id,
+            provider_id=provider_id,
+            provider_resource_id=provider_resource_id,
+            model_type=expected_model_type,
+            metadata={},  # Empty metadata for temporary object
+        )
+
+        # Perform RBAC check
+        user = get_authenticated_user()
+        if not is_action_allowed(self.routing_table.policy, "read", temp_model, user):
+            logger.debug(
+                f"Access denied to model '{model_id}' via fallback path for user {user.principal if user else 'anonymous'}"
+            )
             raise ModelNotFoundError(model_id)
 
         return self.routing_table.impls_by_provider_id[provider_id], provider_resource_id
@@ -313,8 +352,34 @@ class InferenceRouter(Inference):
                                             )
                         if choice_delta.finish_reason:
                             current_choice_data["finish_reason"] = choice_delta.finish_reason
+
+                        # Convert logprobs from chat completion format to responses format
+                        # Chat completion returns list of ChatCompletionTokenLogprob, but
+                        # expecting list of OpenAITokenLogProb in OpenAIChoice
                         if choice_delta.logprobs and choice_delta.logprobs.content:
-                            current_choice_data["logprobs_content_parts"].extend(choice_delta.logprobs.content)
+                            converted_logprobs = []
+                            for token_logprob in choice_delta.logprobs.content:
+                                top_logprobs = None
+                                if token_logprob.top_logprobs:
+                                    top_logprobs = [
+                                        OpenAITopLogProb(
+                                            token=tlp.token,
+                                            bytes=tlp.bytes,
+                                            logprob=tlp.logprob,
+                                        )
+                                        for tlp in token_logprob.top_logprobs
+                                    ]
+                                converted_logprobs.append(
+                                    OpenAITokenLogProb(
+                                        token=token_logprob.token,
+                                        bytes=token_logprob.bytes,
+                                        logprob=token_logprob.logprob,
+                                        top_logprobs=top_logprobs,
+                                    )
+                                )
+                            # Update choice delta with the newly formatted logprobs object
+                            choice_delta.logprobs.content = converted_logprobs
+                            current_choice_data["logprobs_content_parts"].extend(converted_logprobs)
 
                 # Compute metrics on final chunk
                 if chunk.choices and chunk.choices[0].finish_reason:

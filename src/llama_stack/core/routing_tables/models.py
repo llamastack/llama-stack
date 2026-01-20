@@ -7,14 +7,16 @@
 import time
 from typing import Any
 
+from llama_stack.core.access_control.access_control import is_action_allowed
 from llama_stack.core.datatypes import (
     ModelWithOwner,
     RegistryEntrySource,
 )
-from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData
+from llama_stack.core.request_headers import PROVIDER_DATA_VAR, NeedsRequestProviderData, get_authenticated_user
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import get_logger
 from llama_stack_api import (
+    GetModelRequest,
     ListModelsResponse,
     Model,
     ModelNotFoundError,
@@ -22,6 +24,8 @@ from llama_stack_api import (
     ModelType,
     OpenAIListModelsResponse,
     OpenAIModel,
+    RegisterModelRequest,
+    UnregisterModelRequest,
 )
 
 from .common import CommonRoutingTableImpl, lookup_model
@@ -66,6 +70,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             return []
 
         dynamic_models = []
+        user = get_authenticated_user()
 
         for provider_id, provider in self.impls_by_provider_id.items():
             # Check if this provider supports provider_data
@@ -93,15 +98,32 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
                 if not models:
                     continue
 
-                # Ensure models have fully qualified identifiers with provider_id prefix
+                # Ensure models have fully qualified identifiers and apply RBAC filtering
                 for model in models:
                     # Only add prefix if model identifier doesn't already have it
                     if not model.identifier.startswith(f"{provider_id}/"):
                         model.identifier = f"{provider_id}/{model.provider_resource_id}"
 
-                    dynamic_models.append(model)
+                    # Convert to ModelWithOwner for RBAC check
+                    temp_model = ModelWithOwner(
+                        identifier=model.identifier,
+                        provider_id=provider_id,
+                        provider_resource_id=model.provider_resource_id,
+                        model_type=model.model_type,
+                        metadata=model.metadata,
+                    )
 
-                logger.debug(f"Fetched {len(models)} models from provider {provider_id} using provider_data")
+                    # Apply RBAC check - only include models user has read permission for
+                    if is_action_allowed(self.policy, "read", temp_model, user):
+                        dynamic_models.append(model)
+                    else:
+                        logger.debug(
+                            f"Access denied to dynamic model '{model.identifier}' for user {user.principal if user else 'anonymous'}"
+                        )
+
+                logger.debug(
+                    f"Fetched {len(dynamic_models)} accessible models from provider {provider_id} using provider_data"
+                )
 
             except Exception as e:
                 logger.debug(f"Failed to list models from provider {provider_id} with provider_data: {e}")
@@ -152,7 +174,12 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         ]
         return OpenAIListModelsResponse(data=openai_models)
 
-    async def get_model(self, model_id: str) -> Model:
+    async def get_model(self, request_or_model_id: GetModelRequest | str) -> Model:
+        # Support both the public Models API (GetModelRequest) and internal ModelStore interface (string)
+        if isinstance(request_or_model_id, GetModelRequest):
+            model_id = request_or_model_id.model_id
+        else:
+            model_id = request_or_model_id
         return await lookup_model(self, model_id)
 
     async def get_provider_impl(self, model_id: str) -> Any:
@@ -176,12 +203,28 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
 
     async def register_model(
         self,
-        model_id: str,
+        request: RegisterModelRequest | str | None = None,
+        *,
+        model_id: str | None = None,
         provider_model_id: str | None = None,
         provider_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
     ) -> Model:
+        # Support both the public Models API (RegisterModelRequest) and legacy parameter-based interface
+        if isinstance(request, RegisterModelRequest):
+            model_id = request.model_id
+            provider_model_id = request.provider_model_id
+            provider_id = request.provider_id
+            metadata = request.metadata
+            model_type = request.model_type
+        elif isinstance(request, str):
+            # Legacy positional argument: register_model("model-id", ...)
+            model_id = request
+
+        if model_id is None:
+            raise ValueError("Either request or model_id must be provided")
+
         if provider_id is None:
             # If provider_id not specified, use the only provider if it supports this model
             if len(self.impls_by_provider_id) == 1:
@@ -210,7 +253,22 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         registered_model = await self.register_object(model)
         return registered_model
 
-    async def unregister_model(self, model_id: str) -> None:
+    async def unregister_model(
+        self,
+        request: UnregisterModelRequest | str | None = None,
+        *,
+        model_id: str | None = None,
+    ) -> None:
+        # Support both the public Models API (UnregisterModelRequest) and legacy parameter-based interface
+        if isinstance(request, UnregisterModelRequest):
+            model_id = request.model_id
+        elif isinstance(request, str):
+            # Legacy positional argument: unregister_model("model-id")
+            model_id = request
+
+        if model_id is None:
+            raise ValueError("Either request or model_id must be provided")
+
         existing_model = await self.get_model(model_id)
         if existing_model is None:
             raise ModelNotFoundError(model_id)
@@ -224,7 +282,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         existing_models = await self.get_all_with_type("model")
 
         # we may have an alias for the model registered by the user (or during initialization
-        # from run.yaml) that we need to keep track of
+        # from config.yaml) that we need to keep track of
         model_ids = {}
         for model in existing_models:
             if model.provider_id != provider_id:

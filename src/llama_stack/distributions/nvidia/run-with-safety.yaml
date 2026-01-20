@@ -1,5 +1,5 @@
 version: 2
-image_name: nvidia
+distro_name: nvidia
 apis:
 - agents
 - datasetio
@@ -112,6 +112,9 @@ storage:
       backend: sql_default
     prompts:
       namespace: prompts
+      backend: kv_default
+    connectors:
+      namespace: connectors
       backend: kv_default
 registered_resources:
   models:

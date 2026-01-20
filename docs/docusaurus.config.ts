@@ -158,10 +158,6 @@ const config: Config = {
               href: 'https://discord.gg/llama-stack',
             },
             {
-              label: 'GitHub Discussions',
-              href: 'https://github.com/llamastack/llama-stack/discussions',
-            },
-            {
               label: 'Issues',
               href: 'https://github.com/llamastack/llama-stack/issues',
             },
@@ -267,6 +263,7 @@ const config: Config = {
 
   themes: [
     "docusaurus-theme-openapi-docs",
+    "@docusaurus/theme-mermaid",
     [
       require.resolve("@easyops-cn/docusaurus-search-local"),
       {
@@ -301,6 +298,10 @@ const config: Config = {
       },
     ],
   ],
+
+  markdown: {
+    mermaid: true,
+  },
 };
 
 export default config;

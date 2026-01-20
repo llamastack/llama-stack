@@ -11,6 +11,7 @@ from typing import Any
 
 from opentelemetry import trace
 
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack_api import (
     ImageContentItem,
@@ -52,10 +53,15 @@ class ToolExecutor:
         tool_groups_api: ToolGroups,
         tool_runtime_api: ToolRuntime,
         vector_io_api: VectorIO,
+        vector_stores_config=None,
+        mcp_session_manager=None,
     ):
         self.tool_groups_api = tool_groups_api
         self.tool_runtime_api = tool_runtime_api
         self.vector_io_api = vector_io_api
+        self.vector_stores_config = vector_stores_config
+        # Optional MCPSessionManager for session reuse within a request (fix for #4452)
+        self.mcp_session_manager = mcp_session_manager
 
     async def execute_tool_call(
         self,
@@ -148,12 +154,34 @@ class ToolExecutor:
         for results in all_results:
             search_results.extend(results)
 
-        content_items = []
-        content_items.append(
-            TextContentItem(
-                text=f"knowledge_search tool found {len(search_results)} chunks:\nBEGIN of knowledge_search tool results.\n"
-            )
+        # Get templates from vector stores config, fallback to constants
+
+        # Check if annotations are enabled
+        enable_annotations = (
+            self.vector_stores_config
+            and self.vector_stores_config.annotation_prompt_params
+            and self.vector_stores_config.annotation_prompt_params.enable_annotations
         )
+
+        # Get templates
+        header_template = self.vector_stores_config.file_search_params.header_template
+        footer_template = self.vector_stores_config.file_search_params.footer_template
+        context_template = self.vector_stores_config.context_prompt_params.context_template
+
+        # Get annotation templates (use defaults if annotations disabled)
+        if enable_annotations:
+            chunk_annotation_template = self.vector_stores_config.annotation_prompt_params.chunk_annotation_template
+            annotation_instruction_template = (
+                self.vector_stores_config.annotation_prompt_params.annotation_instruction_template
+            )
+        else:
+            # Use defaults from VectorStoresConfig when annotations disabled
+            default_config = VectorStoresConfig()
+            chunk_annotation_template = default_config.annotation_prompt_params.chunk_annotation_template
+            annotation_instruction_template = default_config.annotation_prompt_params.annotation_instruction_template
+
+        content_items = []
+        content_items.append(TextContentItem(text=header_template.format(num_chunks=len(search_results))))
 
         unique_files = set()
         for i, result_item in enumerate(search_results):
@@ -166,22 +194,23 @@ class ToolExecutor:
             if result_item.attributes:
                 metadata_text += f", attributes: {result_item.attributes}"
 
-            text_content = f"[{i + 1}] {metadata_text} (cite as <|{file_id}|>)\n{chunk_text}\n"
+            text_content = chunk_annotation_template.format(
+                index=i + 1, metadata_text=metadata_text, file_id=file_id, chunk_text=chunk_text
+            )
             content_items.append(TextContentItem(text=text_content))
             unique_files.add(file_id)
 
-        content_items.append(TextContentItem(text="END of knowledge_search tool results.\n"))
+        content_items.append(TextContentItem(text=footer_template))
 
-        citation_instruction = ""
+        annotation_instruction = ""
         if unique_files:
-            citation_instruction = (
-                " Cite sources immediately at the end of sentences before punctuation, using `<|file-id|>` format (e.g., 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'). "
-                "Do not add extra punctuation. Use only the file IDs provided (do not invent new ones)."
-            )
+            annotation_instruction = annotation_instruction_template
 
         content_items.append(
             TextContentItem(
-                text=f'The above results were retrieved to help answer the user\'s query: "{query}". Use them as supporting information only in answering this query.{citation_instruction}\n',
+                text=context_template.format(
+                    query=query, num_chunks=len(search_results), annotation_instruction=annotation_instruction
+                )
             )
         )
 
@@ -301,12 +330,14 @@ class ToolExecutor:
                 # TODO: follow semantic conventions for Open Telemetry tool spans
                 # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
                 with tracer.start_as_current_span("invoke_mcp_tool", attributes=attributes):
+                    # Pass session_manager for session reuse within request (fix for #4452)
                     result = await invoke_mcp_tool(
                         endpoint=mcp_tool.server_url,
                         tool_name=function_name,
                         kwargs=tool_kwargs,
                         headers=mcp_tool.headers,
                         authorization=mcp_tool.authorization,
+                        session_manager=self.mcp_session_manager,
                     )
             elif function_name == "knowledge_search":
                 response_file_search_tool = (

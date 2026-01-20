@@ -11,15 +11,9 @@ from pathlib import Path
 import yaml
 from termcolor import cprint
 
-from llama_stack.cli.stack.utils import ImageType
 from llama_stack.core.build import get_provider_dependencies
-from llama_stack.core.datatypes import (
-    BuildConfig,
-    BuildProvider,
-    DistributionSpec,
-)
+from llama_stack.core.datatypes import Provider, StackConfig
 from llama_stack.core.distribution import get_provider_registry
-from llama_stack.core.stack import replace_env_vars
 from llama_stack.log import get_logger
 from llama_stack_api import Api
 
@@ -53,16 +47,20 @@ def format_output_deps_only(
     uv_str = ""
     if uv:
         uv_str = "uv pip install "
-
-    # Quote deps with commas
-    quoted_normal_deps = [quote_if_needed(dep) for dep in normal_deps]
-    lines.append(f"{uv_str}{' '.join(quoted_normal_deps)}")
+        # Only quote when emitting a shell command. In deps-only mode, keep raw
+        # specs so they can be safely consumed via command substitution.
+        formatted_normal_deps = [quote_if_needed(dep) for dep in normal_deps]
+    else:
+        formatted_normal_deps = normal_deps
+    lines.append(f"{uv_str}{' '.join(formatted_normal_deps)}")
 
     for special_dep in special_deps:
-        lines.append(f"{uv_str}{quote_special_dep(special_dep)}")
+        formatted = quote_special_dep(special_dep) if uv else special_dep
+        lines.append(f"{uv_str}{formatted}")
 
     for external_dep in external_deps:
-        lines.append(f"{uv_str}{quote_special_dep(external_dep)}")
+        formatted = quote_special_dep(external_dep) if uv else external_dep
+        lines.append(f"{uv_str}{formatted}")
 
     return "\n".join(lines)
 
@@ -70,9 +68,9 @@ def format_output_deps_only(
 def run_stack_list_deps_command(args: argparse.Namespace) -> None:
     if args.config:
         try:
-            from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+            from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 
-            config_file = resolve_config_or_distro(args.config, Mode.BUILD)
+            config_file = resolve_config_or_distro(args.config)
         except ValueError as e:
             cprint(
                 f"Could not parse config file {args.config}: {e}",
@@ -84,9 +82,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
             with open(config_file) as f:
                 try:
                     contents = yaml.safe_load(f)
-                    contents = replace_env_vars(contents)
-                    build_config = BuildConfig(**contents)
-                    build_config.image_type = "venv"
+                    config = StackConfig(**contents)
                 except Exception as e:
                     cprint(
                         f"Could not parse config file {config_file}: {e}",
@@ -95,7 +91,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                     )
                     sys.exit(1)
     elif args.providers:
-        provider_list: dict[str, list[BuildProvider]] = dict()
+        provider_list: dict[str, list[Provider]] = dict()
         for api_provider in args.providers.split(","):
             if "=" not in api_provider:
                 cprint(
@@ -114,8 +110,9 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                 )
                 sys.exit(1)
             if provider_type in providers_for_api:
-                provider = BuildProvider(
+                provider = Provider(
                     provider_type=provider_type,
+                    provider_id=provider_type.split("::")[1],
                     module=None,
                 )
                 provider_list.setdefault(api, []).append(provider)
@@ -126,20 +123,16 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                     file=sys.stderr,
                 )
                 sys.exit(1)
-        distribution_spec = DistributionSpec(
-            providers=provider_list,
-            description=",".join(args.providers),
-        )
-        build_config = BuildConfig(image_type=ImageType.VENV.value, distribution_spec=distribution_spec)
+        config = StackConfig(providers=provider_list, distro_name="providers-run")
 
-    normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(build_config)
+    normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(config)
     normal_deps += SERVER_DEPENDENCIES
 
     # Add external API dependencies
-    if build_config.external_apis_dir:
+    if config.external_apis_dir:
         from llama_stack.core.external import load_external_apis
 
-        external_apis = load_external_apis(build_config)
+        external_apis = load_external_apis(config)
         if external_apis:
             for _, api_spec in external_apis.items():
                 normal_deps.extend(api_spec.pip_packages)

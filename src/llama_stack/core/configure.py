@@ -10,13 +10,13 @@ from llama_stack.core.datatypes import (
     LLAMA_STACK_RUN_CONFIG_VERSION,
     DistributionSpec,
     Provider,
-    StackRunConfig,
+    StackConfig,
 )
 from llama_stack.core.distribution import (
     builtin_automatically_routed_apis,
     get_provider_registry,
 )
-from llama_stack.core.stack import cast_image_name_to_string, replace_env_vars
+from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.core.utils.prompt_for_config import prompt_for_config
 from llama_stack.log import get_logger
@@ -44,7 +44,7 @@ def configure_single_provider(registry: dict[str, ProviderSpec], provider: Provi
     )
 
 
-def configure_api_providers(config: StackRunConfig, build_spec: DistributionSpec) -> StackRunConfig:
+def configure_api_providers(config: StackConfig, build_spec: DistributionSpec) -> StackConfig:
     is_nux = len(config.providers) == 0
 
     if is_nux:
@@ -63,7 +63,7 @@ def configure_api_providers(config: StackRunConfig, build_spec: DistributionSpec
     if config.apis:
         apis_to_serve = config.apis
     else:
-        apis_to_serve = [a.value for a in Api if a not in (Api.inspect, Api.providers)]
+        apis_to_serve = [a.value for a in Api if a not in (Api.inspect, Api.providers, Api.admin)]
 
     for api_str in apis_to_serve:
         api = Api(api_str)
@@ -192,7 +192,7 @@ def upgrade_from_routing_table(
     return config_dict
 
 
-def parse_and_maybe_upgrade_config(config_dict: dict[str, Any]) -> StackRunConfig:
+def parse_and_maybe_upgrade_config(config_dict: dict[str, Any]) -> StackConfig:
     if "routing_table" in config_dict:
         logger.info("Upgrading config...")
         config_dict = upgrade_from_routing_table(config_dict)
@@ -200,4 +200,4 @@ def parse_and_maybe_upgrade_config(config_dict: dict[str, Any]) -> StackRunConfi
     config_dict["version"] = LLAMA_STACK_RUN_CONFIG_VERSION
 
     processed_config_dict = replace_env_vars(config_dict)
-    return StackRunConfig(**cast_image_name_to_string(processed_config_dict))
+    return StackConfig(**cast_distro_name_to_string(processed_config_dict))
