@@ -1200,6 +1200,9 @@ class StreamingResponseOrchestrator:
                 "mcp_list_tools_id": list_id,
             }
 
+            # Get session manager from tool_executor if available (fix for #4452)
+            session_manager = getattr(self.tool_executor, "mcp_session_manager", None)
+
             # TODO: follow semantic conventions for Open Telemetry tool spans
             # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
             with tracer.start_as_current_span("list_mcp_tools", attributes=attributes):
@@ -1207,6 +1210,7 @@ class StreamingResponseOrchestrator:
                     endpoint=mcp_tool.server_url,
                     headers=mcp_tool.headers,
                     authorization=mcp_tool.authorization,
+                    session_manager=session_manager,
                 )
 
             # Create the MCP list tools message
