@@ -93,19 +93,18 @@ from .common.content_types import (
     _URLOrData,
 )
 from .common.errors import (
+    BatchNotFoundError,
     ConflictError,
-<<<<<<< HEAD
     ConnectorNotFoundError,
     ConnectorToolNotFoundError,
-=======
     ConversationNotFoundError,
->>>>>>> fd0423bbf (first pass at covering streaming error returns with tests)
     DatasetNotFoundError,
     InternalServerError,
     InvalidConversationIdError,
     InvalidParameterError,
     ModelNotFoundError,
     ModelTypeError,
+    OpenAIFileObjectNotFoundError,
     ResourceNotFoundError,
     ResponseNotFoundError,
     ServiceNotEnabledError,
@@ -613,6 +612,7 @@ __all__ = [
     "Chunk",
     "ChunkMetadata",
     "EmbeddedChunk",
+    "BatchNotFoundError",
     "CommonBenchmarkFields",
     "ConflictError",
     "ConversationNotFoundError",
@@ -683,6 +683,7 @@ __all__ = [
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",
+    "OpenAIFileObjectNotFoundError",
     "FileProcessors",
     "Files",
     "Fp8QuantizationConfig",
