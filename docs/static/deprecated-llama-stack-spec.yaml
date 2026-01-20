@@ -3357,45 +3357,53 @@ components:
             type: array
             title: list[string]
           title: string | list[string]
+          description: Input (or inputs) to classify. Can be a single string or an array of strings.
         model:
           anyOf:
           - type: string
           - type: 'null'
+          description: The content moderation model to use. If not specified, the default shield will be used.
       type: object
       required:
       - input
       title: RunModerationRequest
+      description: Request model for running content moderation.
     ModerationObject:
       properties:
         id:
           type: string
           title: Id
+          description: The unique identifier for the moderation request
         model:
           type: string
           title: Model
+          description: The model used to generate the moderation results
         results:
           items:
             $ref: '#/components/schemas/ModerationObjectResults'
           type: array
           title: Results
+          description: A list of moderation result objects
       type: object
       required:
       - id
       - model
       - results
       title: ModerationObject
-      description: A moderation object.
+      description: A moderation object containing the results of content classification.
     ModerationObjectResults:
       properties:
         flagged:
           type: boolean
           title: Flagged
+          description: Whether any of the below categories are flagged
         categories:
           anyOf:
           - additionalProperties:
               type: boolean
             type: object
           - type: 'null'
+          description: A dictionary of the categories, and whether they are flagged or not
         category_applied_input_types:
           anyOf:
           - additionalProperties:
@@ -3404,25 +3412,29 @@ components:
               type: array
             type: object
           - type: 'null'
+          description: A dictionary of the categories along with the input type(s) that the score applies to
         category_scores:
           anyOf:
           - additionalProperties:
               type: number
             type: object
           - type: 'null'
+          description: A dictionary of the categories along with their scores as predicted by model
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          description: A message to convey to the user about the moderation result
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata about the moderation
       type: object
       required:
       - flagged
       title: ModerationObjectResults
-      description: A moderation object.
+      description: A moderation result object containing flagged status and category information.
     Prompt:
       properties:
         prompt:
@@ -5751,7 +5763,9 @@ components:
       properties:
         shield_id:
           type: string
+          minLength: 1
           title: Shield Id
+          description: The identifier of the shield to run
         messages:
           items:
             oneOf:
@@ -5776,16 +5790,13 @@ components:
             title: OpenAIUserMessageParam-Input | ... (5 variants)
           type: array
           title: Messages
-        params:
-          additionalProperties: true
-          type: object
-          title: Params
+          description: The messages to run the shield on
       type: object
       required:
       - shield_id
       - messages
-      - params
       title: RunShieldRequest
+      description: Request model for running a safety shield.
     RunShieldResponse:
       properties:
         violation:
@@ -5793,6 +5804,7 @@ components:
           - $ref: '#/components/schemas/SafetyViolation'
             title: SafetyViolation
           - type: 'null'
+          description: Safety violation detected by the shield, if any
           title: SafetyViolation
       type: object
       title: RunShieldResponse
@@ -5801,14 +5813,17 @@ components:
       properties:
         violation_level:
           $ref: '#/components/schemas/ViolationLevel'
+          description: Severity level of the violation
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          description: Message to convey to the user about the violation
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata including specific violation codes
       type: object
       required:
       - violation_level

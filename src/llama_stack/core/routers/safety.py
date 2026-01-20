@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Any
-
 from opentelemetry import trace
 
 from llama_stack.core.datatypes import SafetyConfig
@@ -13,9 +11,10 @@ from llama_stack.log import get_logger
 from llama_stack.telemetry.helpers import safety_request_span_attributes, safety_span_name
 from llama_stack_api import (
     ModerationObject,
-    OpenAIMessageParam,
     RegisterShieldRequest,
     RoutingTable,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     Shield,
@@ -52,40 +51,30 @@ class SafetyRouter(Safety):
         logger.debug(f"SafetyRouter.unregister_shield: {identifier}")
         return await self.routing_table.unregister_shield(UnregisterShieldRequest(identifier=identifier))
 
-    async def run_shield(
-        self,
-        shield_id: str,
-        messages: list[OpenAIMessageParam],
-        params: dict[str, Any] = None,
-    ) -> RunShieldResponse:
-        with tracer.start_as_current_span(name=safety_span_name(shield_id)):
-            logger.debug(f"SafetyRouter.run_shield: {shield_id}")
-            provider = await self.routing_table.get_provider_impl(shield_id)
-            response = await provider.run_shield(
-                shield_id=shield_id,
-                messages=messages,
-                params=params,
-            )
-
-            safety_request_span_attributes(shield_id, messages, response)
+    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
+        with tracer.start_as_current_span(name=safety_span_name(request.shield_id)):
+            logger.debug(f"SafetyRouter.run_shield: {request.shield_id}")
+            provider = await self.routing_table.get_provider_impl(request.shield_id)
+            response = await provider.run_shield(request)
+            safety_request_span_attributes(request.shield_id, request.messages, response)
         return response
 
-    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
+    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
         list_shields_response = await self.routing_table.list_shields()
         shields = list_shields_response.data
 
         selected_shield: Shield | None = None
-        provider_model: str | None = model
+        provider_model: str | None = request.model
 
-        if model:
-            matches: list[Shield] = [s for s in shields if model == s.provider_resource_id]
+        if request.model:
+            matches: list[Shield] = [s for s in shields if request.model == s.provider_resource_id]
             if not matches:
                 raise ValueError(
-                    f"No shield associated with provider_resource id {model}: choose from {[s.provider_resource_id for s in shields]}"
+                    f"No shield associated with provider_resource id {request.model}: choose from {[s.provider_resource_id for s in shields]}"
                 )
             if len(matches) > 1:
                 raise ValueError(
-                    f"Multiple shields associated with provider_resource id {model}: matched shields {[s.identifier for s in matches]}"
+                    f"Multiple shields associated with provider_resource id {request.model}: matched shields {[s.identifier for s in matches]}"
                 )
             selected_shield = matches[0]
         else:
@@ -108,9 +97,5 @@ class SafetyRouter(Safety):
         logger.debug(f"SafetyRouter.run_moderation: {shield_id}")
         provider = await self.routing_table.get_provider_impl(shield_id)
 
-        response = await provider.run_moderation(
-            input=input,
-            model=provider_model,
-        )
-
-        return response
+        provider_request = RunModerationRequest(input=request.input, model=provider_model)
+        return await provider.run_moderation(provider_request)
