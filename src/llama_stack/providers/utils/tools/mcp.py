@@ -470,5 +470,3 @@ async def invoke_mcp_tool(
     async with client_wrapper(endpoint, final_headers) as session:
         result = await session.call_tool(tool_name, kwargs)
         return _parse_mcp_result(result)
-
-
