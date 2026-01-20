@@ -7,7 +7,6 @@
 import re
 import uuid
 from string import Template
-from typing import Any
 
 from llama_stack.core.datatypes import Api
 from llama_stack.log import get_logger
@@ -25,6 +24,8 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAIMessageParam,
     OpenAIUserMessageParam,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
@@ -162,17 +163,12 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
         # The routing table handles the removal from the registry
         pass
 
-    async def run_shield(
-        self,
-        shield_id: str,
-        messages: list[OpenAIMessageParam],
-        params: dict[str, Any] = None,
-    ) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=shield_id))
+    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
         if not shield:
-            raise ValueError(f"Unknown shield {shield_id}")
+            raise ValueError(f"Unknown shield {request.shield_id}")
 
-        messages = messages.copy()
+        messages = request.messages.copy()
         # some shields like llama-guard require the first message to be a user message
         # since this might be a tool call, first role might not be user
         if len(messages) > 0 and messages[0].role != "user":
@@ -201,30 +197,30 @@ class LlamaGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
 
         return await impl.run(messages)
 
-    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
-        if model is None:
+    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
+        if request.model is None:
             raise ValueError("Llama Guard moderation requires a model identifier.")
 
-        if isinstance(input, list):
-            messages = input.copy()
+        if isinstance(request.input, list):
+            messages = request.input.copy()
         else:
-            messages = [input]
+            messages = [request.input]
 
         # convert to user messages format with role
         messages = [OpenAIUserMessageParam(content=m) for m in messages]
 
         # Determine safety categories based on the model type
         # For known Llama Guard models, use specific categories
-        if model in LLAMA_GUARD_MODEL_IDS:
+        if request.model in LLAMA_GUARD_MODEL_IDS:
             # Use the mapped model for categories but the original model_id for inference
-            mapped_model = LLAMA_GUARD_MODEL_IDS[model]
+            mapped_model = LLAMA_GUARD_MODEL_IDS[request.model]
             safety_categories = MODEL_TO_SAFETY_CATEGORIES_MAP.get(mapped_model, DEFAULT_LG_V3_SAFETY_CATEGORIES)
         else:
             # For unknown models, use default Llama Guard 3 8B categories
             safety_categories = DEFAULT_LG_V3_SAFETY_CATEGORIES + [CAT_CODE_INTERPRETER_ABUSE]
 
         impl = LlamaGuardShield(
-            model=model,
+            model=request.model,
             inference_api=self.inference_api,
             excluded_categories=self.config.excluded_categories,
             safety_categories=safety_categories,

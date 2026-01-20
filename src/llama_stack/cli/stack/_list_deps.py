@@ -47,16 +47,20 @@ def format_output_deps_only(
     uv_str = ""
     if uv:
         uv_str = "uv pip install "
-
-    # Quote deps with commas
-    quoted_normal_deps = [quote_if_needed(dep) for dep in normal_deps]
-    lines.append(f"{uv_str}{' '.join(quoted_normal_deps)}")
+        # Only quote when emitting a shell command. In deps-only mode, keep raw
+        # specs so they can be safely consumed via command substitution.
+        formatted_normal_deps = [quote_if_needed(dep) for dep in normal_deps]
+    else:
+        formatted_normal_deps = normal_deps
+    lines.append(f"{uv_str}{' '.join(formatted_normal_deps)}")
 
     for special_dep in special_deps:
-        lines.append(f"{uv_str}{quote_special_dep(special_dep)}")
+        formatted = quote_special_dep(special_dep) if uv else special_dep
+        lines.append(f"{uv_str}{formatted}")
 
     for external_dep in external_deps:
-        lines.append(f"{uv_str}{quote_special_dep(external_dep)}")
+        formatted = quote_special_dep(external_dep) if uv else external_dep
+        lines.append(f"{uv_str}{formatted}")
 
     return "\n".join(lines)
 

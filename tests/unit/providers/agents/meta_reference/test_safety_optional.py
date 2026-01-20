@@ -54,6 +54,7 @@ def mock_deps():
     conversations_api = AsyncMock()
     prompts_api = AsyncMock()
     files_api = AsyncMock()
+    connectors_api = AsyncMock()
 
     return {
         Api.inference: inference_api,
@@ -63,6 +64,7 @@ def mock_deps():
         Api.conversations: conversations_api,
         Api.prompts: prompts_api,
         Api.files: files_api,
+        Api.connectors: connectors_api,
     }
 
 
@@ -150,6 +152,7 @@ class TestGuardrailsFunctionality:
                 conversations_api=mock_deps[Api.conversations],
                 prompts_api=mock_deps[Api.prompts],
                 files_api=mock_deps[Api.files],
+                connectors_api=mock_deps[Api.connectors],
             )
 
             # Test with string guardrail
@@ -199,6 +202,7 @@ class TestGuardrailsFunctionality:
                 conversations_api=mock_deps[Api.conversations],
                 prompts_api=mock_deps[Api.prompts],
                 files_api=mock_deps[Api.files],
+                connectors_api=mock_deps[Api.connectors],
             )
 
             # Should not raise when no guardrails requested

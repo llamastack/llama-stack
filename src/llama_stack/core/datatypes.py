@@ -654,7 +654,6 @@ class RegisteredResources(BaseModel):
     scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
     benchmarks: list[BenchmarkInput] = Field(default_factory=list)
     tool_groups: list[ToolGroupInput] = Field(default_factory=list)
-    connectors: list[ConnectorInput] = Field(default_factory=list)
 
 
 class ServerConfig(BaseModel):
@@ -770,6 +769,11 @@ can be instantiated multiple times (with different configs) if necessary.
     safety: SafetyConfig | None = Field(
         default=None,
         description="Configuration for default moderations model",
+    )
+
+    connectors: list[ConnectorInput] = Field(
+        default_factory=list,
+        description="List of connectors to register at stack startup",
     )
 
     @field_validator("external_providers_dir")

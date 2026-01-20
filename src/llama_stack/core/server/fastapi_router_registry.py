@@ -28,7 +28,9 @@ from llama_stack_api import (
     inspect_api,
     models,
     post_training,
+    prompts,
     providers,
+    safety,
     scoring,
     shields,
 )
@@ -49,7 +51,9 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "inspect": inspect_api.fastapi_routes.create_router,
     "models": models.fastapi_routes.create_router,
     "post_training": post_training.fastapi_routes.create_router,
+    "prompts": prompts.fastapi_routes.create_router,
     "providers": providers.fastapi_routes.create_router,
+    "safety": safety.fastapi_routes.create_router,
     "scoring": scoring.fastapi_routes.create_router,
     "shields": shields.fastapi_routes.create_router,
 }

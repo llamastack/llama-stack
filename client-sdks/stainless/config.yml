@@ -228,9 +228,9 @@ resources:
         paginated: false
         endpoint: get /v1/prompts
       retrieve: get /v1/prompts/{prompt_id}
-      update: post /v1/prompts/{prompt_id}
+      update: put /v1/prompts/{prompt_id}
       delete: delete /v1/prompts/{prompt_id}
-      set_default_version: post /v1/prompts/{prompt_id}/set-default-version
+      set_default_version: put /v1/prompts/{prompt_id}/set-default-version
     subresources:
       versions:
         methods:

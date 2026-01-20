@@ -37,6 +37,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.conversations,
                 Api.prompts,
                 Api.files,
+                Api.connectors,
             ],
             optional_api_dependencies=[
                 Api.safety,

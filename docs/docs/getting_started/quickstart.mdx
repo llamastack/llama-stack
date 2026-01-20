@@ -33,7 +33,7 @@ We will use `uv` to install dependencies and run the Llama Stack server.
 uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip install
 
 # Run the server
-OLLAMA_URL=http://localhost:11434 uv run --with llama-stack llama stack run starter
+OLLAMA_URL=http://localhost:11434/v1 uv run --with llama-stack llama stack run starter
 ```
 #### Step 3: Run the demo
 Now open up a new terminal and copy the following script into a file named `demo_script.py`.
