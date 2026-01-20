@@ -127,6 +127,11 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
           UV_INDEX_STRATEGY: ${{ steps.client-config.outputs.uv-extra-index-url && 'unsafe-best-match' || '' }}
         run: |
+          # Unset UV_INDEX_STRATEGY if empty to avoid uv errors
+          if [ -z "${UV_INDEX_STRATEGY}" ]; then
+            unset UV_INDEX_STRATEGY
+          fi
+
           # Check if type_checking group exists, otherwise just use dev
           if grep -q "type.checking" pyproject.toml; then
             echo "Found type_checking group, syncing with both groups"
@@ -151,6 +156,11 @@ jobs:
           UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
           UV_INDEX_STRATEGY: ${{ steps.client-config.outputs.uv-extra-index-url && 'unsafe-best-match' || '' }}
         run: |
+          # Unset UV_INDEX_STRATEGY if empty to avoid uv errors
+          if [ -z "${UV_INDEX_STRATEGY}" ]; then
+            unset UV_INDEX_STRATEGY
+          fi
+
           set +e
           output=$($MYPY_CMD 2>&1)
           status=$?
