@@ -25,7 +25,6 @@ from llama_stack.providers.utils.memory.vector_store import (
 )
 from llama_stack.providers.utils.vector_io.vector_utils import (
     WeightedInMemoryAggregator,
-    normalize_embedding,
     sanitize_collection_name,
 )
 from llama_stack_api import (
@@ -49,6 +48,24 @@ VECTOR_INDEX_PREFIX = f"vector_index:oci26ai:{VERSION}::"
 OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:oci26ai:{OPENAIMIXINVERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:oci26ai:{OPENAIMIXINVERSION}::"
 OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_contents:oci26ai:{VERSION}::"
+
+
+def normalize_embedding(embedding: np.typing.NDArray) -> np.typing.NDArray:
+    """
+    Normalize an embedding vector to unit length (L2 norm).
+
+    This is required for cosine similarity to behave correctly.
+    """
+    if embedding is None:
+        raise ValueError("Embedding cannot be None")
+
+    emb = np.asarray(embedding, dtype=np.float64)
+
+    norm = np.linalg.norm(emb)
+    if norm == 0.0:
+        raise ValueError("Cannot normalize zero-length vector")
+
+    return emb / norm
 
 
 class OCI26aiIndex(EmbeddingIndex):

@@ -878,7 +878,7 @@ See [Elasticsearch's documentation](https://www.elastic.co/docs/solutions/search
             api=Api.vector_io,
             adapter_type="oci",
             provider_type="remote::oci",
-            pip_packages=["oracledb"] + DEFAULT_VECTOR_IO_DEPS,
+            pip_packages=["oracledb", "numpy"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.oci",
             config_class="llama_stack.providers.remote.vector_io.oci.OCI26aiVectorIOConfig",
             api_dependencies=[Api.inference],
