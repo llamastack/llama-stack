@@ -9,6 +9,7 @@ from collections.abc import AsyncIterator
 from typing import Any
 
 from openai.types.chat import ChatCompletionToolParam
+from openai.types.shared import reasoning_effort
 from opentelemetry import trace
 
 from llama_stack.log import get_logger
@@ -157,7 +158,6 @@ class StreamingResponseOrchestrator:
         self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
-        # Configuration for reasoning effort
         self.reasoning = reasoning
         self.metadata = metadata
         self.include = include
@@ -329,7 +329,7 @@ class StreamingResponseOrchestrator:
                         "include_usage": True,
                     },
                     logprobs=logprobs,
-                    **({"reasoning_effort": self.reasoning.effort} if self.reasoning else {}),
+                    reasoning_effort=self.reasoning.effort if self.reasoning else None,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

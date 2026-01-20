@@ -5139,6 +5139,14 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        reasoning_effort:
+          anyOf:
+          - type: string
+            enum:
+            - low
+            - medium
+            - high
+          - type: 'null'
       additionalProperties: true
       type: object
       required:
