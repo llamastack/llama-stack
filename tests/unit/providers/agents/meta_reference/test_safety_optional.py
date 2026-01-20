@@ -26,6 +26,7 @@ from llama_stack.providers.inline.agents.meta_reference.config import (
 from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
     run_guardrails,
 )
+from llama_stack_api.common.errors import ServiceNotEnabledError
 
 
 @pytest.fixture
@@ -156,22 +157,22 @@ class TestGuardrailsFunctionality:
             )
 
             # Test with string guardrail
-            with pytest.raises(ValueError) as exc_info:
+            with pytest.raises(ServiceNotEnabledError) as exc_info:
                 await impl.create_openai_response(
                     input="test input",
                     model="test-model",
                     guardrails=["llama-guard"],
                 )
-            assert "Cannot process guardrails: Safety API is not configured" in str(exc_info.value)
+            assert "Service 'Safety API' is not enabled" in str(exc_info.value)
 
             # Test with ResponseGuardrailSpec
-            with pytest.raises(ValueError) as exc_info:
+            with pytest.raises(ServiceNotEnabledError) as exc_info:
                 await impl.create_openai_response(
                     input="test input",
                     model="test-model",
                     guardrails=[ResponseGuardrailSpec(type="llama-guard")],
                 )
-            assert "Cannot process guardrails: Safety API is not configured" in str(exc_info.value)
+            assert "Service 'Safety API' is not enabled" in str(exc_info.value)
 
     async def test_create_response_succeeds_without_guardrails_and_no_safety_api(
         self, mock_persistence_config, mock_deps
