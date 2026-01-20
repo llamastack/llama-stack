@@ -24,13 +24,51 @@ class LlamaStackError(Exception, ABC):
         ...
 
 
+class ClientListCommand:
+    """
+    A formatted client list command string.
+    Args:
+        command: The command to list the resources.
+        arguments: The arguments to the command.
+        resource_name_plural: The plural name of the resource.
+
+    Returns:
+        A formatted client list command string: "Use 'client.files.list()' to list available files."
+    """
+
+    def __init__(
+        self,
+        command: str,
+        arguments: list[str] | str | None = None,
+        resource_name_plural: str | None = None,
+    ):
+        self.resource_name_plural = resource_name_plural
+        self.command = command
+        self.arguments = arguments
+
+    def __str__(self) -> str:
+        args_str = ""
+        resource_name_str = ""
+        if self.arguments:
+            if isinstance(self.arguments, list):
+                args_str = ", ".join(f'"{arg}"' for arg in self.arguments)
+            else:
+                args_str = f'"{self.arguments}"'
+        if self.resource_name_plural:
+            resource_name_str = f" to list available {self.resource_name_plural.lower()}"
+
+        return f"Use 'client.{self.command}({args_str})'{resource_name_str}."
+
+
 class ResourceNotFoundError(ValueError, LlamaStackError):
     """generic exception for a missing Llama Stack resource"""
 
-    def __init__(self, resource_name: str, resource_type: str, client_list: str | None = None) -> None:
+    def __init__(self, resource_name: str, resource_type: str, client_list: ClientListCommand | None = None) -> None:
         message = f"{resource_type} '{resource_name}' not found."
         if client_list:
-            message += f" Use '{client_list}' to list available {resource_type}s."
+            if not client_list.resource_name_plural:
+                client_list.resource_name_plural = f"{resource_type}s"
+            message += f" {client_list}"
         super().__init__(message)
 
     @property
@@ -42,28 +80,28 @@ class ModelNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced model"""
 
     def __init__(self, model_name: str) -> None:
-        super().__init__(model_name, "Model", "client.models.list()")
+        super().__init__(model_name, "Model", ClientListCommand("models.list"))
 
 
 class VectorStoreNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced vector store"""
 
     def __init__(self, vector_store_name: str) -> None:
-        super().__init__(vector_store_name, "Vector Store", "client.vector_dbs.list()")
+        super().__init__(vector_store_name, "Vector Store", ClientListCommand("vector_dbs.list"))
 
 
 class DatasetNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced dataset"""
 
     def __init__(self, dataset_name: str) -> None:
-        super().__init__(dataset_name, "Dataset", "client.datasets.list()")
+        super().__init__(dataset_name, "Dataset", ClientListCommand("datasets.list"))
 
 
 class ToolGroupNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced tool group"""
 
     def __init__(self, toolgroup_name: str) -> None:
-        super().__init__(toolgroup_name, "Tool Group", "client.toolgroups.list()")
+        super().__init__(toolgroup_name, "Tool Group", ClientListCommand("toolgroups.list"))
 
 
 class ConversationNotFoundError(ResourceNotFoundError):
@@ -72,10 +110,6 @@ class ConversationNotFoundError(ResourceNotFoundError):
     def __init__(self, conversation_id: str) -> None:
         super().__init__(conversation_id, "Conversation")
 
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.NOT_FOUND
-
 
 class ResponseNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced response"""
@@ -83,9 +117,38 @@ class ResponseNotFoundError(ResourceNotFoundError):
     def __init__(self, response_id: str) -> None:
         super().__init__(response_id, "Response")
 
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.NOT_FOUND
+
+class ConnectorNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced connector"""
+
+    def __init__(self, connector_id: str) -> None:
+        super().__init__(connector_id, "Connector", ClientListCommand("connectors.list"))
+
+
+class ConnectorToolNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced tool in a connector"""
+
+    def __init__(self, connector_id: str, tool_name: str) -> None:
+        super().__init__(
+            resource_name=f"{connector_id}.{tool_name}",
+            resource_type="Connector Tool",
+            client_list=ClientListCommand("connectors.list_tools", connector_id),
+        )
+
+
+class OpenAIFileObjectNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced file"""
+
+    def __init__(self, file_id: str) -> None:
+        super().__init__(file_id, "File", ClientListCommand("files.list"))
+
+
+class BatchNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced batch"""
+
+    def __init__(self, batch_id: str) -> None:
+        self.batch_id = batch_id
+        super().__init__(batch_id, "Batch", ClientListCommand("batches.list", resource_name_plural="batches"))
 
 
 class UnsupportedModelError(ValueError, LlamaStackError):
@@ -142,7 +205,7 @@ class InvalidConversationIdError(ValueError, LlamaStackError):
     def __init__(self, conversation_id: str) -> None:
         message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
         super().__init__(message)
-    
+
     @property
     def status_code(self) -> httpx.codes:
         return httpx.codes.BAD_REQUEST
@@ -172,21 +235,6 @@ class ServiceNotEnabledError(LlamaStackError, ValueError):
     @property
     def status_code(self) -> httpx.codes:
         return httpx.codes.SERVICE_UNAVAILABLE
-
-
-class ConnectorNotFoundError(ResourceNotFoundError):
-    """raised when Llama Stack cannot find a referenced connector"""
-
-    def __init__(self, connector_id: str) -> None:
-        super().__init__(connector_id, "Connector", "client.connectors.list()")
-
-
-class ConnectorToolNotFoundError(ValueError):
-    """raised when Llama Stack cannot find a referenced tool in a connector"""
-
-    def __init__(self, connector_id: str, tool_name: str) -> None:
-        message = f"Tool '{tool_name}' not found in connector '{connector_id}'. Use 'client.connectors.list_tools(\"{connector_id}\")' to list available tools."
-        super().__init__(message)
 
 
 class InternalServerError(LlamaStackError):
