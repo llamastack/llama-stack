@@ -31,6 +31,7 @@ from llama_stack_api import (
     OpenAISystemMessageParam,
     OpenAIUserMessageParam,
     RunEvalRequest,
+    ScoreRequest,
     Scoring,
 )
 
@@ -194,9 +195,11 @@ class MetaReferenceEvalImpl(
         else:
             scoring_functions_dict = dict.fromkeys(request.scoring_functions)
 
-        score_response = await self.scoring_api.score(
-            input_rows=score_input_rows, scoring_functions=scoring_functions_dict
+        score_request = ScoreRequest(
+            input_rows=score_input_rows,
+            scoring_functions=scoring_functions_dict,
         )
+        score_response = await self.scoring_api.score(score_request)
 
         return EvaluateResponse(generations=generations, scores=score_response.results)
 

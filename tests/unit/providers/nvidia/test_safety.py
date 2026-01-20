@@ -17,6 +17,7 @@ from llama_stack_api import (
     OpenAIAssistantMessageParam,
     OpenAIUserMessageParam,
     ResourceType,
+    RunShieldRequest,
     RunShieldResponse,
     Shield,
     ViolationLevel,
@@ -146,7 +147,8 @@ async def test_run_shield_allowed(nvidia_adapter, mock_guardrails_post):
             tool_calls=[],
         ),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
+    result = await adapter.run_shield(request)
 
     # Verify the shield store was called
     adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
@@ -200,7 +202,8 @@ async def test_run_shield_blocked(nvidia_adapter, mock_guardrails_post):
             tool_calls=[],
         ),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
+    result = await adapter.run_shield(request)
 
     # Verify the shield store was called
     adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
@@ -245,8 +248,9 @@ async def test_run_shield_not_found(nvidia_adapter, mock_guardrails_post):
         OpenAIUserMessageParam(content="Hello, how are you?"),
     ]
 
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
     with pytest.raises(ValueError):
-        await adapter.run_shield(shield_id, messages)
+        await adapter.run_shield(request)
 
     # Verify the shield store was called
     adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
@@ -279,8 +283,9 @@ async def test_run_shield_http_error(nvidia_adapter, mock_guardrails_post):
             tool_calls=[],
         ),
     ]
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
     with pytest.raises(Exception) as exc_info:
-        await adapter.run_shield(shield_id, messages)
+        await adapter.run_shield(request)
 
     # Verify the shield store was called
     adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))

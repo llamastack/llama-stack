@@ -9,6 +9,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from llama_stack.cli.stack._list_deps import (
+    format_output_deps_only,
     run_stack_list_deps_command,
 )
 
@@ -48,3 +49,11 @@ def test_stack_list_deps_with_distro_uv():
         output = mock_stdout.getvalue()
 
         assert "uv pip install" in output
+
+
+def test_list_deps_formatting_quotes_only_for_uv():
+    deps_only = format_output_deps_only(["mcp>=1.23.0"], [], [], uv=False)
+    assert deps_only.strip() == "mcp>=1.23.0"
+
+    uv_format = format_output_deps_only(["mcp>=1.23.0"], [], [], uv=True)
+    assert uv_format.strip() == "uv pip install 'mcp>=1.23.0'"

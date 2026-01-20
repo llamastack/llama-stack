@@ -11,7 +11,17 @@ from pydantic import BaseModel
 
 from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
-from llama_stack_api import ListPromptsResponse, Prompt, Prompts
+from llama_stack_api import (
+    CreatePromptRequest,
+    DeletePromptRequest,
+    GetPromptRequest,
+    ListPromptsResponse,
+    ListPromptVersionsRequest,
+    Prompt,
+    Prompts,
+    SetDefaultVersionRequest,
+    UpdatePromptRequest,
+)
 
 
 class PromptServiceConfig(BaseModel):
@@ -114,26 +124,23 @@ class PromptServiceImpl(Prompts):
         prompts.sort(key=lambda p: p.prompt_id or "", reverse=True)
         return ListPromptsResponse(data=prompts)
 
-    async def get_prompt(self, prompt_id: str, version: int | None = None) -> Prompt:
+    async def get_prompt(self, request: GetPromptRequest) -> Prompt:
         """Get a prompt by its identifier and optional version."""
-        key = await self._get_prompt_key(prompt_id, version)
+        key = await self._get_prompt_key(request.prompt_id, request.version)
         data = await self.kvstore.get(key)
         if data is None:
-            raise ValueError(f"Prompt {prompt_id}:{version if version else 'default'} not found")
+            raise ValueError(
+                f"Prompt {request.prompt_id}:{request.version if request.version else 'default'} not found"
+            )
         return self._deserialize_prompt(data)
 
-    async def create_prompt(
-        self,
-        prompt: str,
-        variables: list[str] | None = None,
-    ) -> Prompt:
+    async def create_prompt(self, request: CreatePromptRequest) -> Prompt:
         """Create a new prompt."""
-        if variables is None:
-            variables = []
+        variables = request.variables if request.variables is not None else []
 
         prompt_obj = Prompt(
             prompt_id=Prompt.generate_prompt_id(),
-            prompt=prompt,
+            prompt=request.prompt,
             version=1,
             variables=variables,
         )
@@ -147,55 +154,49 @@ class PromptServiceImpl(Prompts):
 
         return prompt_obj
 
-    async def update_prompt(
-        self,
-        prompt_id: str,
-        prompt: str,
-        version: int,
-        variables: list[str] | None = None,
-        set_as_default: bool = True,
-    ) -> Prompt:
+    async def update_prompt(self, request: UpdatePromptRequest) -> Prompt:
         """Update an existing prompt (increments version)."""
-        if version < 1:
+        if request.version < 1:
             raise ValueError("Version must be >= 1")
-        if variables is None:
-            variables = []
+        variables = request.variables if request.variables is not None else []
 
-        prompt_versions = await self.list_prompt_versions(prompt_id)
+        prompt_versions = await self.list_prompt_versions(ListPromptVersionsRequest(prompt_id=request.prompt_id))
         latest_prompt = max(prompt_versions.data, key=lambda x: int(x.version))
 
-        if version and latest_prompt.version != version:
+        if request.version and latest_prompt.version != request.version:
             raise ValueError(
-                f"'{version}' is not the latest prompt version for prompt_id='{prompt_id}'. Use the latest version '{latest_prompt.version}' in request."
+                f"'{request.version}' is not the latest prompt version for prompt_id='{request.prompt_id}'. Use the latest version '{latest_prompt.version}' in request."
             )
 
-        current_version = latest_prompt.version if version is None else version
+        current_version = latest_prompt.version if request.version is None else request.version
         new_version = current_version + 1
 
-        updated_prompt = Prompt(prompt_id=prompt_id, prompt=prompt, version=new_version, variables=variables)
+        updated_prompt = Prompt(
+            prompt_id=request.prompt_id, prompt=request.prompt, version=new_version, variables=variables
+        )
 
-        version_key = self._get_version_key(prompt_id, str(new_version))
+        version_key = self._get_version_key(request.prompt_id, str(new_version))
         data = self._serialize_prompt(updated_prompt)
         await self.kvstore.set(version_key, data)
 
-        if set_as_default:
-            await self.set_default_version(prompt_id, new_version)
+        if request.set_as_default:
+            await self.set_default_version(SetDefaultVersionRequest(prompt_id=request.prompt_id, version=new_version))
 
         return updated_prompt
 
-    async def delete_prompt(self, prompt_id: str) -> None:
+    async def delete_prompt(self, request: DeletePromptRequest) -> None:
         """Delete a prompt and all its versions."""
-        await self.get_prompt(prompt_id)
+        await self.get_prompt(GetPromptRequest(prompt_id=request.prompt_id))
 
-        prefix = f"prompts:v1:{prompt_id}:"
+        prefix = f"prompts:v1:{request.prompt_id}:"
         keys = await self.kvstore.keys_in_range(prefix, prefix + "\xff")
 
         for key in keys:
             await self.kvstore.delete(key)
 
-    async def list_prompt_versions(self, prompt_id: str) -> ListPromptsResponse:
+    async def list_prompt_versions(self, request: ListPromptVersionsRequest) -> ListPromptsResponse:
         """List all versions of a specific prompt."""
-        prefix = f"prompts:v1:{prompt_id}:"
+        prefix = f"prompts:v1:{request.prompt_id}:"
         keys = await self.kvstore.keys_in_range(prefix, prefix + "\xff")
 
         default_version = None
@@ -211,7 +212,7 @@ class PromptServiceImpl(Prompts):
                     prompts.append(prompt_obj)
 
         if not prompts:
-            raise ValueError(f"Prompt {prompt_id} not found")
+            raise ValueError(f"Prompt {request.prompt_id} not found")
 
         for prompt in prompts:
             prompt.is_default = str(prompt.version) == default_version
@@ -219,15 +220,15 @@ class PromptServiceImpl(Prompts):
         prompts.sort(key=lambda x: x.version)
         return ListPromptsResponse(data=prompts)
 
-    async def set_default_version(self, prompt_id: str, version: int) -> Prompt:
+    async def set_default_version(self, request: SetDefaultVersionRequest) -> Prompt:
         """Set which version of a prompt should be the default, If not set. the default is the latest."""
-        version_key = self._get_version_key(prompt_id, str(version))
+        version_key = self._get_version_key(request.prompt_id, str(request.version))
         data = await self.kvstore.get(version_key)
         if data is None:
-            raise ValueError(f"Prompt {prompt_id} version {version} not found")
+            raise ValueError(f"Prompt {request.prompt_id} version {request.version} not found")
 
-        default_key = self._get_default_key(prompt_id)
-        await self.kvstore.set(default_key, str(version))
+        default_key = self._get_default_key(request.prompt_id)
+        await self.kvstore.set(default_key, str(request.version))
 
         return self._deserialize_prompt(data)
 

@@ -70,6 +70,8 @@ from .common.content_types import (
 )
 from .common.errors import (
     ConflictError,
+    ConnectorNotFoundError,
+    ConnectorToolNotFoundError,
     DatasetNotFoundError,
     InvalidConversationIdError,
     ModelNotFoundError,
@@ -404,7 +406,19 @@ from .post_training import (
     SupervisedFineTuneRequest,
     TrainingConfig,
 )
-from .prompts import ListPromptsResponse, Prompt, Prompts
+from .prompts import (
+    CreatePromptRequest,
+    DeletePromptRequest,
+    GetPromptRequest,
+    ListPromptsResponse,
+    ListPromptVersionsRequest,
+    Prompt,
+    Prompts,
+    SetDefaultVersionBodyRequest,
+    SetDefaultVersionRequest,
+    UpdatePromptBodyRequest,
+    UpdatePromptRequest,
+)
 from .providers import Providers
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
@@ -423,6 +437,8 @@ from .resource import Resource, ResourceType
 from .safety import (
     ModerationObject,
     ModerationObjectResults,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
@@ -445,7 +461,9 @@ from .schema_utils import (
     webmethod,
 )
 from .scoring import (
+    ScoreBatchRequest,
     ScoreBatchResponse,
+    ScoreRequest,
     ScoreResponse,
     Scoring,
     ScoringFunctionStore,
@@ -571,6 +589,8 @@ __all__ = [
     "CompletionInputType",
     "CompletionRequest",
     "Connector",
+    "ConnectorNotFoundError",
+    "ConnectorToolNotFoundError",
     "ConnectorInput",
     "Connectors",
     "ConnectorType",
@@ -876,6 +896,14 @@ __all__ = [
     "PreferenceOptimizeRequest",
     "Prompt",
     "Prompts",
+    "CreatePromptRequest",
+    "DeletePromptRequest",
+    "GetPromptRequest",
+    "ListPromptVersionsRequest",
+    "SetDefaultVersionBodyRequest",
+    "SetDefaultVersionRequest",
+    "UpdatePromptBodyRequest",
+    "UpdatePromptRequest",
     "ProviderInfo",
     "ProviderSpec",
     "Providers",
@@ -913,12 +941,16 @@ __all__ = [
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",
+    "RunModerationRequest",
+    "RunShieldRequest",
     "RunShieldResponse",
     "Safety",
     "SafetyViolation",
     "SamplingParams",
     "SamplingStrategy",
+    "ScoreBatchRequest",
     "ScoreBatchResponse",
+    "ScoreRequest",
     "ScoreResponse",
     "Scoring",
     "ScoringFn",
