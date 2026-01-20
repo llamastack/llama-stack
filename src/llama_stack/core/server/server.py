@@ -23,13 +23,13 @@ from typing import Annotated, Any, get_origin
 import httpx
 import rich.pretty
 import yaml
-from fastapi import Body, FastAPI, HTTPException, Request, Response
+from fastapi import Body, FastAPI, Request, Response
 from fastapi import Path as FastapiPath
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from openai import BadRequestError
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
@@ -38,6 +38,7 @@ from llama_stack.core.datatypes import (
     process_cors_config,
 )
 from llama_stack.core.distribution import builtin_automatically_routed_apis
+from llama_stack.core.exceptions import translate_exception
 from llama_stack.core.external import load_external_apis
 from llama_stack.core.request_headers import (
     PROVIDER_DATA_VAR,
@@ -55,8 +56,7 @@ from llama_stack.core.utils.config import redact_sensitive_fields
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
-from llama_stack_api import Api, ConflictError, PaginatedResponse
-from llama_stack_api.common.errors import LlamaStackError, ResourceNotFoundError
+from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 
 from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
 from .quota import QuotaMiddleware
@@ -64,11 +64,6 @@ from .quota import QuotaMiddleware
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
 logger = get_logger(name=__name__, category="core::server")
-
-
-def to_http_exception(exc: LlamaStackError) -> HTTPException:
-    """Convert a LlamaStackError to a FastAPI HTTPException."""
-    return HTTPException(status_code=exc.status_code, detail=str(exc))
 
 
 def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
@@ -102,54 +97,6 @@ async def global_exception_handler(request: Request, exc: Exception):
         http_exc = HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
 
     return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
-
-
-def translate_exception(exc: Exception) -> HTTPException:
-    if isinstance(exc, ValidationError):
-        exc = RequestValidationError(exc.errors())
-
-    if isinstance(exc, RequestValidationError):
-        return HTTPException(
-            status_code=httpx.codes.BAD_REQUEST,
-            detail={
-                "errors": [
-                    {
-                        "loc": list(error.get("loc", [])),
-                        "msg": error.get("msg", "Validation error"),
-                        "type": error.get("type", "unknown"),
-                    }
-                    for error in exc.errors()
-                ]
-            },
-        )
-    if isinstance(exc, LlamaStackError):
-        return to_http_exception(exc)
-    elif isinstance(exc, ValueError):
-        return HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=f"Invalid value: {str(exc)}")
-    elif isinstance(exc, BadRequestError):
-        return HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
-    elif isinstance(exc, PermissionError | AccessDeniedError):
-        return HTTPException(status_code=httpx.codes.FORBIDDEN, detail=f"Permission denied: {str(exc)}")
-    elif isinstance(exc, ConnectionError | httpx.ConnectError):
-        return HTTPException(status_code=httpx.codes.BAD_GATEWAY, detail=str(exc))
-    elif isinstance(exc, asyncio.TimeoutError | TimeoutError):
-        return HTTPException(status_code=httpx.codes.GATEWAY_TIMEOUT, detail=f"Operation timed out: {str(exc)}")
-    elif isinstance(exc, NotImplementedError):
-        return HTTPException(status_code=httpx.codes.NOT_IMPLEMENTED, detail=f"Not implemented: {str(exc)}")
-    elif isinstance(exc, AuthenticationRequiredError):
-        return HTTPException(status_code=httpx.codes.UNAUTHORIZED, detail=f"Authentication required: {str(exc)}")
-    elif hasattr(exc, "status_code") and isinstance(getattr(exc, "status_code", None), int):
-        # Handle provider SDK exceptions (e.g., OpenAI's APIStatusError and subclasses)
-        # These include AuthenticationError (401), PermissionDeniedError (403), etc.
-        # This preserves the actual HTTP status code from the provider
-        status_code = getattr(exc, "status_code", httpx.codes.INTERNAL_SERVER_ERROR)
-        detail = str(exc)
-        return HTTPException(status_code=status_code, detail=detail)
-    else:
-        return HTTPException(
-            status_code=httpx.codes.INTERNAL_SERVER_ERROR,
-            detail="Internal server error: An unexpected error occurred.",
-        )
 
 
 class StackApp(FastAPI):
