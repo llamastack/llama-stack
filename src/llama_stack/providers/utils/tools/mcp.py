@@ -8,6 +8,7 @@ import asyncio
 import hashlib
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, cast
 
