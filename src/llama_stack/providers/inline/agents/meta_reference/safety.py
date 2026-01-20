@@ -7,7 +7,7 @@
 import asyncio
 
 from llama_stack.log import get_logger
-from llama_stack_api import OpenAIMessageParam, Safety, SafetyViolation, ViolationLevel
+from llama_stack_api import OpenAIMessageParam, RunShieldRequest, Safety, SafetyViolation, ViolationLevel
 
 log = get_logger(name=__name__, category="agents::meta_reference")
 
@@ -32,7 +32,7 @@ class ShieldRunnerMixin:
     async def run_multiple_shields(self, messages: list[OpenAIMessageParam], identifiers: list[str]) -> None:
         responses = await asyncio.gather(
             *[
-                self.safety_api.run_shield(shield_id=identifier, messages=messages, params={})
+                self.safety_api.run_shield(RunShieldRequest(shield_id=identifier, messages=messages))
                 for identifier in identifiers
             ]
         )

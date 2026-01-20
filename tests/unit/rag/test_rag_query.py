@@ -8,21 +8,26 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from llama_stack.providers.inline.tool_runtime.rag.config import RagToolRuntimeConfig
 from llama_stack.providers.inline.tool_runtime.rag.memory import MemoryToolRuntimeImpl
-from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, RAGQueryConfig
+from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, QueryChunksResponse, RAGQueryConfig
 
 
 class TestRagQuery:
     async def test_query_raises_on_empty_vector_store_ids(self):
+        config = RagToolRuntimeConfig()
         rag_tool = MemoryToolRuntimeImpl(
-            config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
+            config=config, vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         with pytest.raises(ValueError):
             await rag_tool.query(content=MagicMock(), vector_store_ids=[])
 
     async def test_query_chunk_metadata_handling(self):
+        # Create config with default templates
+        config = RagToolRuntimeConfig()
+
         rag_tool = MemoryToolRuntimeImpl(
-            config=MagicMock(), vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
+            config=config, vector_io_api=MagicMock(), inference_api=MagicMock(), files_api=MagicMock()
         )
         content = "test query content"
         vector_store_ids = ["db1"]
@@ -33,9 +38,8 @@ class TestRagQuery:
             source="test_source",
             metadata_token_count=5,
         )
-        interleaved_content = MagicMock()
         chunk = Chunk(
-            content=interleaved_content,
+            content="This is test chunk content from document 1",
             chunk_id="chunk1",
             metadata={
                 "key1": "value1",
@@ -47,7 +51,17 @@ class TestRagQuery:
             chunk_metadata=chunk_metadata,
         )
 
-        query_response = QueryChunksResponse(chunks=[chunk], scores=[1.0])
+        embedded_chunk = EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=[0.1, 0.2, 0.3],
+            embedding_model="test-model",
+            embedding_dimension=3,
+        )
+
+        query_response = QueryChunksResponse(chunks=[embedded_chunk], scores=[1.0])
 
         rag_tool.vector_io_api.query_chunks = AsyncMock(return_value=query_response)
         result = await rag_tool.query(content=content, vector_store_ids=vector_store_ids)
@@ -78,8 +92,11 @@ class TestRagQuery:
             RAGQueryConfig(mode="wrong_mode")
 
     async def test_query_adds_vector_store_id_to_chunk_metadata(self):
+        # Create config with default templates
+        config = RagToolRuntimeConfig()
+
         rag_tool = MemoryToolRuntimeImpl(
-            config=MagicMock(),
+            config=config,
             vector_io_api=MagicMock(),
             inference_api=MagicMock(),
             files_api=MagicMock(),
@@ -101,6 +118,16 @@ class TestRagQuery:
             chunk_metadata=chunk_metadata1,
         )
 
+        embedded_chunk1 = EmbeddedChunk(
+            content=chunk1.content,
+            chunk_id=chunk1.chunk_id,
+            metadata=chunk1.metadata,
+            chunk_metadata=chunk1.chunk_metadata,
+            embedding=[0.1, 0.2, 0.3],
+            embedding_model="test-model",
+            embedding_dimension=3,
+        )
+
         chunk_metadata2 = ChunkMetadata(
             document_id="doc2",
             chunk_id="chunk2",
@@ -114,10 +141,20 @@ class TestRagQuery:
             chunk_metadata=chunk_metadata2,
         )
 
+        embedded_chunk2 = EmbeddedChunk(
+            content=chunk2.content,
+            chunk_id=chunk2.chunk_id,
+            metadata=chunk2.metadata,
+            chunk_metadata=chunk2.chunk_metadata,
+            embedding=[0.4, 0.5, 0.6],
+            embedding_model="test-model",
+            embedding_dimension=3,
+        )
+
         rag_tool.vector_io_api.query_chunks = AsyncMock(
             side_effect=[
-                QueryChunksResponse(chunks=[chunk1], scores=[0.9]),
-                QueryChunksResponse(chunks=[chunk2], scores=[0.8]),
+                QueryChunksResponse(chunks=[embedded_chunk1], scores=[0.9]),
+                QueryChunksResponse(chunks=[embedded_chunk2], scores=[0.8]),
             ]
         )
 

@@ -21,14 +21,13 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
     - name: Install uv
-      uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
+      uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
       with:
         python-version: ${{ matrix.python-version }}
         activate-environment: true
-        version: 0.7.6
 
     - name: Build Llama Stack API package
       working-directory: src/llama_stack_api
@@ -49,3 +48,8 @@ jobs:
         llama stack list-apis
         llama stack list-providers inference
         llama stack list-deps starter
+
+    - name: Verify packages are importable
+      run: |
+        uv run python -c "import llama_stack; print(f'llama_stack imported successfully from {llama_stack.__file__}')"
+        uv run python -c "import llama_stack_api; print(f'llama_stack_api imported successfully from {llama_stack_api.__file__}')"

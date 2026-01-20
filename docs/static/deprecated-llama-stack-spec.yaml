@@ -17,7 +17,7 @@ paths:
     get:
       responses:
         '200':
-          description: A OpenAIListModelsResponse.
+          description: A list of OpenAI model objects.
           content:
             application/json:
               schema:
@@ -36,13 +36,13 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Models
-      summary: Openai List Models
+      summary: List models using the OpenAI API.
       description: List models using the OpenAI API.
       operationId: openai_list_models_v1_models_get
     post:
       responses:
         '200':
-          description: A Model.
+          description: The registered model object.
           content:
             application/json:
               schema:
@@ -61,11 +61,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Models
-      summary: Register Model
-      description: |-
-        Register model.
-
-        Register a model.
+      summary: Register a model.
+      description: Register a model.
       operationId: register_model_v1_models_post
       requestBody:
         content:
@@ -78,30 +75,27 @@ paths:
     get:
       responses:
         '200':
-          description: A Model.
+          description: The model object.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Model'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Models
-      summary: Get Model
-      description: |-
-        Get model.
-
-        Get a model by its identifier.
+      summary: Get a model by its identifier.
+      description: Get a model by its identifier.
       operationId: get_model_v1_models__model_id__get
       parameters:
       - name: model_id
@@ -109,30 +103,29 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: model_id'
+          description: The ID of the model to get.
+          title: Model Id
+        description: The ID of the model to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The model was successfully unregistered.
       tags:
       - Models
-      summary: Unregister Model
-      description: |-
-        Unregister model.
-
-        Unregister a model.
+      summary: Unregister a model.
+      description: Unregister a model.
       operationId: unregister_model_v1_models__model_id__delete
       parameters:
       - name: model_id
@@ -140,7 +133,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: model_id'
+          description: The ID of the model to unregister.
+          title: Model Id
+        description: The ID of the model to unregister.
       deprecated: true
   /v1/scoring-functions:
     get:
@@ -281,7 +276,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Shields
-      summary: List Shields
+      summary: List all shields.
       description: List all shields.
       operationId: list_shields_v1_shields_get
     post:
@@ -306,7 +301,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Shields
-      summary: Register Shield
+      summary: Register a shield.
       description: Register a shield.
       operationId: register_shield_v1_shields_post
       requestBody:
@@ -326,20 +321,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Shield'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Shields
-      summary: Get Shield
+      summary: Get a shield by its identifier.
       description: Get a shield by its identifier.
       operationId: get_shield_v1_shields__identifier__get
       parameters:
@@ -348,26 +343,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: identifier'
+          description: The identifier of the shield to get.
+          title: Identifier
+        description: The identifier of the shield to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The shield was successfully unregistered.
       tags:
       - Shields
-      summary: Unregister Shield
+      summary: Unregister a shield.
       description: Unregister a shield.
       operationId: unregister_shield_v1_shields__identifier__delete
       parameters:
@@ -376,7 +373,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: identifier'
+          description: The identifier of the shield to unregister.
+          title: Identifier
+        description: The identifier of the shield to unregister.
       deprecated: true
   /v1/tool-runtime/invoke:
     post:
@@ -655,7 +654,7 @@ paths:
     get:
       responses:
         '200':
-          description: A ListDatasetsResponse.
+          description: A list of dataset objects.
           content:
             application/json:
               schema:
@@ -674,13 +673,13 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Datasets
-      summary: List Datasets
+      summary: List all datasets.
       description: List all datasets.
       operationId: list_datasets_v1beta_datasets_get
     post:
       responses:
         '200':
-          description: A Dataset.
+          description: The registered dataset object.
           content:
             application/json:
               schema:
@@ -699,7 +698,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Datasets
-      summary: Register Dataset
+      summary: Register a new dataset.
       description: Register a new dataset.
       operationId: register_dataset_v1beta_datasets_post
       requestBody:
@@ -713,26 +712,26 @@ paths:
     get:
       responses:
         '200':
-          description: A Dataset.
+          description: The dataset object.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Dataset'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Datasets
-      summary: Get Dataset
+      summary: Get a dataset by its ID.
       description: Get a dataset by its ID.
       operationId: get_dataset_v1beta_datasets__dataset_id__get
       parameters:
@@ -741,26 +740,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: dataset_id'
+          description: The ID of the dataset to get.
+          title: Dataset Id
+        description: The ID of the dataset to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The dataset was successfully unregistered.
       tags:
       - Datasets
-      summary: Unregister Dataset
+      summary: Unregister a dataset by its ID.
       description: Unregister a dataset by its ID.
       operationId: unregister_dataset_v1beta_datasets__dataset_id__delete
       parameters:
@@ -769,7 +770,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: dataset_id'
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+        description: The ID of the dataset to unregister.
       deprecated: true
   /v1alpha/eval/benchmarks:
     get:
@@ -794,7 +797,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Benchmarks
-      summary: List Benchmarks
+      summary: List all benchmarks.
       description: List all benchmarks.
       operationId: list_benchmarks_v1alpha_eval_benchmarks_get
     post:
@@ -812,10 +815,10 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
         '204':
-          description: Successful Response
+          description: The benchmark was successfully registered.
       tags:
       - Benchmarks
-      summary: Register Benchmark
+      summary: Register a benchmark.
       description: Register a benchmark.
       operationId: register_benchmark_v1alpha_eval_benchmarks_post
       requestBody:
@@ -835,20 +838,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Benchmark'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Benchmarks
-      summary: Get Benchmark
+      summary: Get a benchmark by its ID.
       description: Get a benchmark by its ID.
       operationId: get_benchmark_v1alpha_eval_benchmarks__benchmark_id__get
       parameters:
@@ -857,26 +860,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          description: The ID of the benchmark to get.
+          title: Benchmark Id
+        description: The ID of the benchmark to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The benchmark was successfully unregistered.
       tags:
       - Benchmarks
-      summary: Unregister Benchmark
+      summary: Unregister a benchmark.
       description: Unregister a benchmark.
       operationId: unregister_benchmark_v1alpha_eval_benchmarks__benchmark_id__delete
       parameters:
@@ -885,7 +890,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: benchmark_id'
+          description: The ID of the benchmark to unregister.
+          title: Benchmark Id
+        description: The ID of the benchmark to unregister.
       deprecated: true
 components:
   schemas:
@@ -1456,15 +1463,15 @@ components:
           type: number
           title: Logprob
         top_logprobs:
-          items:
-            $ref: '#/components/schemas/OpenAITopLogProb'
-          type: array
-          title: Top Logprobs
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITopLogProb'
+            type: array
+          - type: 'null'
       type: object
       required:
       - token
       - logprob
-      - top_logprobs
       title: OpenAITokenLogProb
       description: |-
         The log probability for a token from an OpenAI-compatible chat completion response.
@@ -2552,15 +2559,22 @@ components:
     OpenAIResponseOutputMessageContentOutputText:
       properties:
         text:
-          type: string
           title: Text
-        type:
           type: string
+        type:
           const: output_text
-          title: Type
           default: output_text
+          title: Type
+          type: string
         annotations:
           items:
+            discriminator:
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              propertyName: type
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
               title: OpenAIResponseAnnotationFileCitation
@@ -2570,20 +2584,20 @@ components:
               title: OpenAIResponseAnnotationContainerFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
               title: OpenAIResponseAnnotationFilePath
-            discriminator:
-              propertyName: type
-              mapping:
-                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
             title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
-          type: array
           title: Annotations
-      type: object
+          type: array
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+          nullable: true
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
+      type: object
     OpenAIResponseOutputMessageFileSearchToolCall:
       properties:
         id:
@@ -2764,14 +2778,17 @@ components:
               title: OpenAIResponseMessage-Input | ... (9 variants)
             type: array
           - type: 'null'
+          description: Initial items to include in the conversation context.
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+          description: Set of key-value pairs that can be attached to an object.
       type: object
       title: CreateConversationRequest
+      description: Request model for creating a conversation.
     Conversation:
       properties:
         id:
@@ -2816,10 +2833,12 @@ components:
             type: string
           type: object
           title: Metadata
+          description: Set of key-value pairs that can be attached to an object.
       type: object
       required:
       - metadata
       title: UpdateConversationRequest
+      description: Request model for updating a conversation's metadata.
     ConversationDeletedResource:
       properties:
         id:
@@ -2942,11 +2961,14 @@ components:
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
             title: OpenAIResponseMessage-Input | ... (9 variants)
           type: array
+          maxItems: 20
           title: Items
+          description: Items to include in the conversation context. You may add up to 20 items at a time.
       type: object
       required:
       - items
       title: AddItemsRequest
+      description: Request model for adding items to a conversation.
     ConversationItemDeletedResource:
       properties:
         id:
@@ -3077,19 +3099,24 @@ components:
             $ref: '#/components/schemas/OpenAIFileObject'
           type: array
           title: Data
+          description: The list of files.
         has_more:
           type: boolean
           title: Has More
+          description: Whether there are more files available beyond this page.
         first_id:
           type: string
           title: First Id
+          description: The ID of the first file in the list for pagination.
         last_id:
           type: string
           title: Last Id
+          description: The ID of the last file in the list for pagination.
         object:
           type: string
           const: list
           title: Object
+          description: The object type, which is always 'list'.
           default: list
       type: object
       required:
@@ -3105,24 +3132,31 @@ components:
           type: string
           const: file
           title: Object
+          description: The object type, which is always 'file'.
           default: file
         id:
           type: string
           title: Id
+          description: The file identifier, which can be referenced in the API endpoints.
         bytes:
           type: integer
           title: Bytes
+          description: The size of the file, in bytes.
         created_at:
           type: integer
           title: Created At
+          description: The Unix timestamp (in seconds) for when the file was created.
         expires_at:
           type: integer
           title: Expires At
+          description: The Unix timestamp (in seconds) for when the file expires.
         filename:
           type: string
           title: Filename
+          description: The name of the file.
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the file.
       type: object
       required:
       - id
@@ -3139,35 +3173,35 @@ components:
           type: string
           const: created_at
           title: Anchor
+          description: The anchor point for expiration, must be 'created_at'.
         seconds:
           type: integer
           maximum: 2592000.0
           minimum: 3600.0
           title: Seconds
+          description: Seconds until expiration, between 3600 (1 hour) and 2592000 (30 days).
       type: object
       required:
       - anchor
       - seconds
       title: ExpiresAfter
-      description: |-
-        Control expiration of uploaded files.
-
-        Params:
-         - anchor, must be "created_at"
-         - seconds, must be int between 3600 and 2592000 (1 hour to 30 days)
+      description: Control expiration of uploaded files.
     OpenAIFileDeleteResponse:
       properties:
         id:
           type: string
           title: Id
+          description: The file identifier that was deleted.
         object:
           type: string
           const: file
           title: Object
+          description: The object type, which is always 'file'.
           default: file
         deleted:
           type: boolean
           title: Deleted
+          description: Whether the file was successfully deleted.
       type: object
       required:
       - id
@@ -3181,6 +3215,7 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/HealthStatus'
+          description: The health status of the service
       type: object
       required:
       - status
@@ -3191,14 +3226,17 @@ components:
         route:
           type: string
           title: Route
+          description: The API route path
         method:
           type: string
           title: Method
+          description: The HTTP method for the route
         provider_types:
           items:
             type: string
           type: array
           title: Provider Types
+          description: List of provider types implementing this route
       type: object
       required:
       - route
@@ -3213,6 +3251,7 @@ components:
             $ref: '#/components/schemas/RouteInfo'
           type: array
           title: Data
+          description: List of available API routes
       type: object
       required:
       - data
@@ -3260,10 +3299,12 @@ components:
             $ref: '#/components/schemas/OpenAIModel'
           type: array
           title: Data
+          description: List of OpenAI model objects.
       type: object
       required:
       - data
       title: OpenAIListModelsResponse
+      description: Response containing a list of OpenAI model objects.
     Model:
       properties:
         identifier:
@@ -3316,45 +3357,53 @@ components:
             type: array
             title: list[string]
           title: string | list[string]
+          description: Input (or inputs) to classify. Can be a single string or an array of strings.
         model:
           anyOf:
           - type: string
           - type: 'null'
+          description: The content moderation model to use. If not specified, the default shield will be used.
       type: object
       required:
       - input
       title: RunModerationRequest
+      description: Request model for running content moderation.
     ModerationObject:
       properties:
         id:
           type: string
           title: Id
+          description: The unique identifier for the moderation request
         model:
           type: string
           title: Model
+          description: The model used to generate the moderation results
         results:
           items:
             $ref: '#/components/schemas/ModerationObjectResults'
           type: array
           title: Results
+          description: A list of moderation result objects
       type: object
       required:
       - id
       - model
       - results
       title: ModerationObject
-      description: A moderation object.
+      description: A moderation object containing the results of content classification.
     ModerationObjectResults:
       properties:
         flagged:
           type: boolean
           title: Flagged
+          description: Whether any of the below categories are flagged
         categories:
           anyOf:
           - additionalProperties:
               type: boolean
             type: object
           - type: 'null'
+          description: A dictionary of the categories, and whether they are flagged or not
         category_applied_input_types:
           anyOf:
           - additionalProperties:
@@ -3363,25 +3412,29 @@ components:
               type: array
             type: object
           - type: 'null'
+          description: A dictionary of the categories along with the input type(s) that the score applies to
         category_scores:
           anyOf:
           - additionalProperties:
               type: number
             type: object
           - type: 'null'
+          description: A dictionary of the categories along with their scores as predicted by model
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          description: A message to convey to the user about the moderation result
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata about the moderation
       type: object
       required:
       - flagged
       title: ModerationObjectResults
-      description: A moderation object.
+      description: A moderation result object containing flagged status and category information.
     Prompt:
       properties:
         prompt:
@@ -3432,67 +3485,93 @@ components:
         prompt:
           type: string
           title: Prompt
+          description: The prompt text content with variable placeholders.
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: List of variable names that can be used in the prompt template.
       type: object
       required:
       - prompt
       title: CreatePromptRequest
+      description: Request model for creating a new prompt.
     UpdatePromptRequest:
+      description: Request model for updating a prompt (combines path and body parameters).
       properties:
-        prompt:
+        prompt_id:
+          description: The identifier of the prompt to update.
+          title: Prompt Id
           type: string
+        prompt:
+          description: The updated prompt text content.
           title: Prompt
+          type: string
         version:
-          type: integer
+          description: The current version of the prompt being updated.
           title: Version
+          type: integer
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+          nullable: true
         set_as_default:
-          type: boolean
-          title: Set As Default
           default: true
-      type: object
+          description: Set the new version as the default (default=True).
+          title: Set As Default
+          type: boolean
       required:
+      - prompt_id
       - prompt
       - version
       title: UpdatePromptRequest
-    SetDefaultVersionRequest:
-      properties:
-        version:
-          type: integer
-          title: Version
       type: object
+    SetDefaultVersionRequest:
+      description: Request model for setting the default version of a prompt (combines path and body parameters).
+      properties:
+        prompt_id:
+          description: The identifier of the prompt.
+          title: Prompt Id
+          type: string
+        version:
+          description: The version to set as default.
+          title: Version
+          type: integer
       required:
+      - prompt_id
       - version
       title: SetDefaultVersionRequest
+      type: object
     ProviderInfo:
       properties:
         api:
           type: string
           title: Api
+          description: The API name this provider implements
         provider_id:
           type: string
           title: Provider Id
+          description: Unique identifier for the provider
         provider_type:
           type: string
           title: Provider Type
+          description: The type of provider implementation
         config:
           additionalProperties: true
           type: object
           title: Config
+          description: Configuration parameters for the provider
         health:
           additionalProperties: true
           type: object
           title: Health
+          description: Current health status of the provider
       type: object
       required:
       - api
@@ -3509,6 +3588,7 @@ components:
             $ref: '#/components/schemas/ProviderInfo'
           type: array
           title: Data
+          description: List of provider information objects
       type: object
       required:
       - data
@@ -3784,6 +3864,38 @@ components:
               title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         truncation:
           anyOf:
           - type: string
@@ -4044,9 +4156,14 @@ components:
         server_label:
           type: string
           title: Server Label
+        connector_id:
+          anyOf:
+          - type: string
+          - type: 'null'
         server_url:
-          type: string
-          title: Server Url
+          anyOf:
+          - type: string
+          - type: 'null'
         headers:
           anyOf:
           - additionalProperties: true
@@ -4079,7 +4196,6 @@ components:
       type: object
       required:
       - server_label
-      - server_url
       title: OpenAIResponseInputToolMCP
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     CreateOpenaiResponseRequest:
@@ -4171,6 +4287,38 @@ components:
             title: OpenAIResponseText
           - type: 'null'
           title: OpenAIResponseText
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         tools:
           anyOf:
           - items:
@@ -4199,7 +4347,7 @@ components:
         include:
           anyOf:
           - items:
-              type: string
+              $ref: '#/components/schemas/ResponseItemInclude'
             type: array
           - type: 'null'
         max_infer_iters:
@@ -4330,6 +4478,38 @@ components:
               title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
         truncation:
           anyOf:
           - type: string
@@ -4398,8 +4578,7 @@ components:
         logprobs:
           anyOf:
           - items:
-              additionalProperties: true
-              type: object
+              $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
           nullable: true
@@ -5161,6 +5340,13 @@ components:
         item_id:
           title: Item Id
           type: string
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+          nullable: true
         output_index:
           title: Output Index
           type: integer
@@ -5598,7 +5784,9 @@ components:
       properties:
         shield_id:
           type: string
+          minLength: 1
           title: Shield Id
+          description: The identifier of the shield to run
         messages:
           items:
             oneOf:
@@ -5623,16 +5811,13 @@ components:
             title: OpenAIUserMessageParam-Input | ... (5 variants)
           type: array
           title: Messages
-        params:
-          additionalProperties: true
-          type: object
-          title: Params
+          description: The messages to run the shield on
       type: object
       required:
       - shield_id
       - messages
-      - params
       title: RunShieldRequest
+      description: Request model for running a safety shield.
     RunShieldResponse:
       properties:
         violation:
@@ -5640,6 +5825,7 @@ components:
           - $ref: '#/components/schemas/SafetyViolation'
             title: SafetyViolation
           - type: 'null'
+          description: Safety violation detected by the shield, if any
           title: SafetyViolation
       type: object
       title: RunShieldResponse
@@ -5648,14 +5834,17 @@ components:
       properties:
         violation_level:
           $ref: '#/components/schemas/ViolationLevel'
+          description: Severity level of the violation
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          description: Message to convey to the user about the violation
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata including specific violation codes
       type: object
       required:
       - violation_level
@@ -5969,6 +6158,7 @@ components:
             type: object
           type: array
           title: Input Rows
+          description: The rows to score.
         scoring_functions:
           additionalProperties:
             anyOf:
@@ -5990,11 +6180,13 @@ components:
             title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
+          description: The scoring functions to use for the scoring.
       type: object
       required:
       - input_rows
       - scoring_functions
       title: ScoreRequest
+      description: Request model for scoring a list of rows.
     ScoreResponse:
       properties:
         results:
@@ -6002,6 +6194,7 @@ components:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Results
+          description: A map of scoring function name to ScoringResult.
       type: object
       required:
       - results
@@ -6015,10 +6208,12 @@ components:
             type: object
           type: array
           title: Score Rows
+          description: The scoring result for each row. Each row is a map of column name to value.
         aggregated_results:
           additionalProperties: true
           type: object
           title: Aggregated Results
+          description: Map of metric name to aggregated value
       type: object
       required:
       - score_rows
@@ -6030,6 +6225,7 @@ components:
         dataset_id:
           type: string
           title: Dataset Id
+          description: The ID of the dataset to score.
         scoring_functions:
           additionalProperties:
             anyOf:
@@ -6051,26 +6247,31 @@ components:
             title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
+          description: The scoring functions to use for the scoring.
         save_results_dataset:
           type: boolean
           title: Save Results Dataset
+          description: Whether to save the results to a dataset.
           default: false
       type: object
       required:
       - dataset_id
       - scoring_functions
       title: ScoreBatchRequest
+      description: Request model for scoring a batch of rows from a dataset.
     ScoreBatchResponse:
       properties:
         dataset_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: (Optional) The identifier of the dataset that was scored
         results:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Results
+          description: A map of scoring function name to ScoringResult
       type: object
       required:
       - results
@@ -6114,10 +6315,12 @@ components:
             $ref: '#/components/schemas/Shield'
           type: array
           title: Data
+          description: List of shield objects
       type: object
       required:
       - data
       title: ListShieldsResponse
+      description: Response containing a list of all shields.
     InvokeToolRequest:
       properties:
         tool_name:
@@ -6359,7 +6562,7 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content that can be inserted into a vector database.
+      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
@@ -6397,23 +6600,12 @@ components:
           additionalProperties: true
           title: Metadata
           type: object
-        embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-          nullable: true
         chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          nullable: true
-          title: ChunkMetadata
+          $ref: '#/components/schemas/ChunkMetadata'
       required:
       - content
       - chunk_id
+      - chunk_metadata
       title: Chunk
       type: object
     ChunkMetadata:
@@ -6446,14 +6638,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-        chunk_embedding_model:
-          anyOf:
-          - type: string
-          - type: 'null'
-        chunk_embedding_dimension:
-          anyOf:
-          - type: integer
-          - type: 'null'
         content_token_count:
           anyOf:
           - type: integer
@@ -6476,7 +6660,7 @@ components:
           title: Vector Store Id
         chunks:
           items:
-            $ref: '#/components/schemas/Chunk-Input'
+            $ref: '#/components/schemas/EmbeddedChunk-Input'
           type: array
           title: Chunks
         ttl_seconds:
@@ -6536,7 +6720,7 @@ components:
       properties:
         chunks:
           items:
-            $ref: '#/components/schemas/Chunk-Output'
+            $ref: '#/components/schemas/EmbeddedChunk-Output'
           type: array
           title: Chunks
         scores:
@@ -7226,6 +7410,7 @@ components:
         version:
           type: string
           title: Version
+          description: The version string of the service
       type: object
       required:
       - version
@@ -7233,16 +7418,23 @@ components:
       description: Version information for the service.
     AppendRowsRequest:
       properties:
+        dataset_id:
+          type: string
+          title: Dataset Id
+          description: The ID of the dataset to append the rows to.
         rows:
           items:
             additionalProperties: true
             type: object
           type: array
           title: Rows
+          description: The rows to append to the dataset.
       type: object
       required:
+      - dataset_id
       - rows
       title: AppendRowsRequest
+      description: Request model for appending rows to a dataset.
     PaginatedResponse:
       properties:
         data:
@@ -7283,9 +7475,11 @@ components:
           type: string
           const: dataset
           title: Type
+          description: Type of resource, always 'dataset' for datasets
           default: dataset
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
+          description: Purpose of the dataset indicating its intended use
         source:
           oneOf:
           - $ref: '#/components/schemas/URIDataSource'
@@ -7293,6 +7487,7 @@ components:
           - $ref: '#/components/schemas/RowsDataSource'
             title: RowsDataSource
           title: URIDataSource | RowsDataSource
+          description: Data source configuration for the dataset
           discriminator:
             propertyName: type
             mapping:
@@ -7317,6 +7512,7 @@ components:
           type: string
           const: rows
           title: Type
+          description: The type of data source.
           default: rows
         rows:
           items:
@@ -7324,6 +7520,7 @@ components:
             type: object
           type: array
           title: Rows
+          description: 'The dataset is stored in rows. E.g. [{"messages": [{"role": "user", "content": "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}]}]'
       type: object
       required:
       - rows
@@ -7335,10 +7532,12 @@ components:
           type: string
           const: uri
           title: Type
+          description: The type of data source.
           default: uri
         uri:
           type: string
           title: Uri
+          description: The dataset can be obtained from a URI. E.g. "https://mywebsite.com/mydata.jsonl", "lsfs://mydata.jsonl", "data:csv;base64,{base64_content}"
       type: object
       required:
       - uri
@@ -7351,6 +7550,7 @@ components:
             $ref: '#/components/schemas/Dataset'
           type: array
           title: Data
+          description: List of datasets
       type: object
       required:
       - data
@@ -7375,20 +7575,23 @@ components:
           type: string
           const: benchmark
           title: Type
+          description: The resource type, always benchmark.
           default: benchmark
         dataset_id:
           type: string
           title: Dataset Id
+          description: Identifier of the dataset to use for the benchmark evaluation.
         scoring_functions:
           items:
             type: string
           type: array
           title: Scoring Functions
+          description: List of scoring function identifiers to apply during evaluation.
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
-          description: Metadata for this evaluation task
+          description: Metadata for this evaluation task.
       type: object
       required:
       - identifier
@@ -7404,14 +7607,17 @@ components:
             $ref: '#/components/schemas/Benchmark'
           type: array
           title: Data
+          description: List of benchmark objects.
       type: object
       required:
       - data
       title: ListBenchmarksResponse
+      description: Response containing a list of benchmark objects.
     BenchmarkConfig:
       properties:
         eval_candidate:
           $ref: '#/components/schemas/ModelCandidate'
+          description: The candidate to evaluate
         scoring_params:
           additionalProperties:
             oneOf:
@@ -7434,6 +7640,7 @@ components:
         num_examples:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated
       type: object
@@ -7460,14 +7667,18 @@ components:
           default: model
         model:
           type: string
+          minLength: 1
           title: Model
+          description: The model ID to evaluate
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
+          description: The sampling parameters for the model
         system_message:
           anyOf:
           - $ref: '#/components/schemas/SystemMessage'
             title: SystemMessage
           - type: 'null'
+          description: The system message providing instructions or context to the model
           title: SystemMessage
       type: object
       required:
@@ -7590,26 +7801,38 @@ components:
       title: TopPSamplingStrategy
       description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
     EvaluateRowsRequest:
+      description: Request model for evaluating a list of rows on a benchmark.
       properties:
+        benchmark_id:
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
+          title: Benchmark Id
+          type: string
         input_rows:
+          description: The rows to evaluate
           items:
             additionalProperties: true
             type: object
-          type: array
+          minItems: 1
           title: Input Rows
+          type: array
         scoring_functions:
+          description: The scoring functions to use for the evaluation
           items:
             type: string
-          type: array
+          minItems: 1
           title: Scoring Functions
+          type: array
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
+          description: The configuration for the benchmark
       required:
+      - benchmark_id
       - input_rows
       - scoring_functions
       - benchmark_config
       title: EvaluateRowsRequest
+      type: object
     EvaluateResponse:
       properties:
         generations:
@@ -7618,11 +7841,13 @@ components:
             type: object
           type: array
           title: Generations
+          description: The generations from the evaluation
         scores:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Scores
+          description: The scores from the evaluation. Each key in the dict is a scoring function name
       type: object
       required:
       - generations
@@ -7630,13 +7855,21 @@ components:
       title: EvaluateResponse
       description: The response from an evaluation.
     RunEvalRequest:
+      description: Request model for running an evaluation on a benchmark.
       properties:
+        benchmark_id:
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
+          title: Benchmark Id
+          type: string
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
+          description: The configuration for the benchmark
       required:
+      - benchmark_id
       - benchmark_config
       title: RunEvalRequest
+      type: object
     Job:
       properties:
         job_id:
@@ -7781,14 +8014,16 @@ components:
       title: PostTrainingMetric
       description: Training metrics captured during post-training jobs.
     CancelTrainingJobRequest:
+      description: Request to cancel a training job.
       properties:
         job_uuid:
-          type: string
+          description: The UUID of the job to cancel.
           title: Job Uuid
-      type: object
+          type: string
       required:
       - job_uuid
       title: CancelTrainingJobRequest
+      type: object
     PostTrainingJobStatusResponse:
       properties:
         job_uuid:
@@ -8006,21 +8241,27 @@ components:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job to create.
         finetuned_model:
           type: string
           title: Finetuned Model
+          description: The model to fine-tune.
         algorithm_config:
           $ref: '#/components/schemas/DPOAlignmentConfig'
+          description: The algorithm configuration.
         training_config:
           $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration.
         hyperparam_search_config:
           additionalProperties: true
           type: object
           title: Hyperparam Search Config
+          description: The hyperparam search configuration.
         logger_config:
           additionalProperties: true
           type: object
           title: Logger Config
+          description: The logger configuration.
       type: object
       required:
       - job_uuid
@@ -8030,6 +8271,7 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PreferenceOptimizeRequest
+      description: Request to run preference optimization of a model.
     PostTrainingJob:
       properties:
         job_uuid:
@@ -8118,25 +8360,30 @@ components:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job to create.
         training_config:
           $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration.
         hyperparam_search_config:
           additionalProperties: true
           type: object
           title: Hyperparam Search Config
+          description: The hyperparam search configuration.
         logger_config:
           additionalProperties: true
           type: object
           title: Logger Config
+          description: The logger configuration.
         model:
           anyOf:
           - type: string
           - type: 'null'
-          description: Model descriptor for training if not in provider config`
+          description: Model descriptor for training if not in provider config
         checkpoint_dir:
           anyOf:
           - type: string
           - type: 'null'
+          description: The directory to save checkpoint(s) to.
         algorithm_config:
           anyOf:
           - oneOf:
@@ -8152,6 +8399,7 @@ components:
             title: LoraFinetuningConfig | QATFinetuningConfig
           - type: 'null'
           title: Algorithm Config
+          description: The algorithm configuration.
       type: object
       required:
       - job_uuid
@@ -8159,34 +8407,41 @@ components:
       - hyperparam_search_config
       - logger_config
       title: SupervisedFineTuneRequest
+      description: Request to run supervised fine-tuning of a model.
     RegisterModelRequest:
       properties:
         model_id:
           type: string
           title: Model Id
+          description: The identifier of the model to register.
         provider_model_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the model in the provider.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the provider.
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: Any additional metadata for this model.
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
             title: ModelType
           - type: 'null'
+          description: The type of model to register.
           title: ModelType
       type: object
       required:
       - model_id
       title: RegisterModelRequest
+      description: Request model for registering a model.
     ParamType:
       discriminator:
         mapping:
@@ -8286,23 +8541,28 @@ components:
         shield_id:
           type: string
           title: Shield Id
+          description: The identifier of the shield to register.
         provider_shield_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the shield in the provider.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the provider.
         params:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The parameters of the shield.
       type: object
       required:
       - shield_id
       title: RegisterShieldRequest
+      description: Request model for registering a shield.
     RegisterToolGroupRequest:
       properties:
         toolgroup_id:
@@ -8343,59 +8603,76 @@ components:
       properties:
         purpose:
           $ref: '#/components/schemas/DatasetPurpose'
+          description: The purpose of the dataset.
         source:
-          anyOf:
+          oneOf:
           - $ref: '#/components/schemas/URIDataSource'
             title: URIDataSource
           - $ref: '#/components/schemas/RowsDataSource'
             title: RowsDataSource
           title: URIDataSource | RowsDataSource
+          description: The data source of the dataset.
+          discriminator:
+            propertyName: type
+            mapping:
+              rows: '#/components/schemas/RowsDataSource'
+              uri: '#/components/schemas/URIDataSource'
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The metadata for the dataset.
         dataset_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the dataset. If not provided, an ID will be generated.
       type: object
       required:
       - purpose
       - source
       title: RegisterDatasetRequest
+      description: Request model for registering a dataset.
     RegisterBenchmarkRequest:
       properties:
         benchmark_id:
           type: string
           title: Benchmark Id
+          description: The ID of the benchmark to register.
         dataset_id:
           type: string
           title: Dataset Id
+          description: The ID of the dataset to use for the benchmark.
         scoring_functions:
           items:
             type: string
           type: array
           title: Scoring Functions
+          description: The scoring functions to use for the benchmark.
         provider_benchmark_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the provider benchmark to use for the benchmark.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the provider to use for the benchmark.
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The metadata to use for the benchmark.
       type: object
       required:
       - benchmark_id
       - dataset_id
       - scoring_functions
       title: RegisterBenchmarkRequest
+      description: Request model for registering a benchmark.
     AllowedToolsFilter:
       properties:
         tool_names:
@@ -8487,26 +8764,94 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
-    Body_openai_upload_file_v1_files_post:
+    Body_upload_file_v1_files_post:
       properties:
         file:
           type: string
           format: binary
           title: File
+          description: The file to upload.
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the uploaded file.
         expires_after:
           anyOf:
           - $ref: '#/components/schemas/ExpiresAfter'
             title: ExpiresAfter
           - type: 'null'
+          description: Optional expiration settings.
           title: ExpiresAfter
       type: object
       required:
       - file
       - purpose
-      title: Body_openai_upload_file_v1_files_post
-    Chunk-Input:
+      title: Body_upload_file_v1_files_post
+    Connector:
+      properties:
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          type: string
+          title: Connector Id
+          description: Identifier for the connector
+        url:
+          type: string
+          title: Url
+          description: URL of the connector
+        server_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Label of the server
+        server_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Name of the server
+        server_description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Description of the server
+        server_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Version of the server
+      type: object
+      required:
+      - connector_id
+      - url
+      title: Connector
+      description: A connector registered in Llama Stack.
+    ConnectorType:
+      type: string
+      enum:
+      - mcp
+      title: ConnectorType
+      description: Type of connector.
+    ConversationItemInclude:
+      type: string
+      enum:
+      - web_search_call.action.sources
+      - code_interpreter_call.outputs
+      - computer_call_output.output.image_url
+      - file_search_call.results
+      - message.input_image.image_url
+      - message.output_text.logprobs
+      - reasoning.encrypted_content
+      title: ConversationItemInclude
+      description: Specify additional output data to include in the model response.
+    DatasetPurpose:
+      type: string
+      enum:
+      - post-training/messages
+      - eval/question-answer
+      - eval/messages-answer
+      title: DatasetPurpose
+      description: Purpose of the dataset. Each purpose has a required input data schema.
+    EmbeddedChunk-Input:
       properties:
         content:
           anyOf:
@@ -8544,25 +8889,32 @@ components:
           additionalProperties: true
           type: object
           title: Metadata
-        embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
         chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          title: ChunkMetadata
+          $ref: '#/components/schemas/ChunkMetadata'
+        embedding:
+          items:
+            type: number
+          type: array
+          title: Embedding
+        embedding_model:
+          type: string
+          title: Embedding Model
+        embedding_dimension:
+          type: integer
+          title: Embedding Dimension
       type: object
       required:
       - content
       - chunk_id
-      title: Chunk
-      description: A chunk of content that can be inserted into a vector database.
-    Chunk-Output:
+      - chunk_metadata
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
+    EmbeddedChunk-Output:
       properties:
         content:
           anyOf:
@@ -8600,44 +8952,31 @@ components:
           additionalProperties: true
           type: object
           title: Metadata
-        embedding:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
         chunk_metadata:
-          anyOf:
-          - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
-          - type: 'null'
-          title: ChunkMetadata
+          $ref: '#/components/schemas/ChunkMetadata'
+        embedding:
+          items:
+            type: number
+          type: array
+          title: Embedding
+        embedding_model:
+          type: string
+          title: Embedding Model
+        embedding_dimension:
+          type: integer
+          title: Embedding Dimension
       type: object
       required:
       - content
       - chunk_id
-      title: Chunk
-      description: A chunk of content that can be inserted into a vector database.
-    ConversationItemInclude:
-      type: string
-      enum:
-      - web_search_call.action.sources
-      - code_interpreter_call.outputs
-      - computer_call_output.output.image_url
-      - file_search_call.results
-      - message.input_image.image_url
-      - message.output_text.logprobs
-      - reasoning.encrypted_content
-      title: ConversationItemInclude
-      description: Specify additional output data to include in the model response.
-    DatasetPurpose:
-      type: string
-      enum:
-      - post-training/messages
-      - eval/question-answer
-      - eval/messages-answer
-      title: DatasetPurpose
-      description: Purpose of the dataset. Each purpose has a required input data schema.
+      - chunk_metadata
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
     Errors:
       properties:
         data:
@@ -8653,6 +8992,33 @@ components:
       additionalProperties: true
       type: object
       title: Errors
+    EvaluateRowsBodyRequest:
+      properties:
+        input_rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          minItems: 1
+          title: Input Rows
+          description: The rows to evaluate
+        scoring_functions:
+          items:
+            type: string
+          type: array
+          minItems: 1
+          title: Scoring Functions
+          description: The scoring functions to use for the evaluation
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark
+      type: object
+      required:
+      - input_rows
+      - scoring_functions
+      - benchmark_config
+      title: EvaluateRowsBodyRequest
+      description: Request body model for evaluating rows (without path parameter).
     HealthStatus:
       type: string
       enum:
@@ -8708,6 +9074,30 @@ components:
       - cancelled
       title: JobStatus
       description: Status of a job execution.
+    ListConnectorsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/Connector'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListConnectorsResponse
+      description: Response containing a list of connectors.
+    ListToolsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/ToolDef'
+          type: array
+          title: Data
+      type: object
+      required:
+      - data
+      title: ListToolsResponse
+      description: Response containing a list of tools.
     MCPListToolsTool:
       properties:
         input_schema:
@@ -8803,6 +9193,112 @@ components:
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
+    OpenAIResponseInputToolChoiceAllowedTools:
+      properties:
+        mode:
+          type: string
+          enum:
+          - auto
+          - required
+          title: Mode
+          default: auto
+        tools:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          type: array
+          title: Tools
+        type:
+          type: string
+          const: allowed_tools
+          title: Type
+          default: allowed_tools
+      type: object
+      required:
+      - tools
+      title: OpenAIResponseInputToolChoiceAllowedTools
+      description: Constrains the tools available to the model to a pre-defined set.
+    OpenAIResponseInputToolChoiceCustomTool:
+      properties:
+        type:
+          type: string
+          const: custom
+          title: Type
+          default: custom
+        name:
+          type: string
+          title: Name
+      type: object
+      required:
+      - name
+      title: OpenAIResponseInputToolChoiceCustomTool
+      description: Forces the model to call a custom tool.
+    OpenAIResponseInputToolChoiceFileSearch:
+      properties:
+        type:
+          type: string
+          const: file_search
+          title: Type
+          default: file_search
+      type: object
+      title: OpenAIResponseInputToolChoiceFileSearch
+      description: Indicates that the model should use file search to generate a response.
+    OpenAIResponseInputToolChoiceFunctionTool:
+      properties:
+        name:
+          type: string
+          title: Name
+        type:
+          type: string
+          const: function
+          title: Type
+          default: function
+      type: object
+      required:
+      - name
+      title: OpenAIResponseInputToolChoiceFunctionTool
+      description: Forces the model to call a specific function.
+    OpenAIResponseInputToolChoiceMCPTool:
+      properties:
+        server_label:
+          type: string
+          title: Server Label
+        type:
+          type: string
+          const: mcp
+          title: Type
+          default: mcp
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+      type: object
+      required:
+      - server_label
+      title: OpenAIResponseInputToolChoiceMCPTool
+      description: Forces the model to call a specific tool on a remote MCP server
+    OpenAIResponseInputToolChoiceMode:
+      type: string
+      enum:
+      - auto
+      - required
+      - none
+      title: OpenAIResponseInputToolChoiceMode
+    OpenAIResponseInputToolChoiceWebSearch:
+      properties:
+        type:
+          title: Type
+          default: web_search
+          type: string
+          enum:
+          - web_search
+          - web_search_preview
+          - web_search_preview_2025_03_11
+          - web_search_2025_08_26
+      type: object
+      title: OpenAIResponseInputToolChoiceWebSearch
+      description: Indicates that the model should use web search to generate a response
     OpenAIResponseMessage-Input:
       properties:
         content:
@@ -8827,19 +9323,19 @@ components:
             title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
           - items:
               oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
-                title: OpenAIResponseOutputMessageContentOutputText
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input'
+                title: OpenAIResponseOutputMessageContentOutputText-Input
               - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
                 title: OpenAIResponseContentPartRefusal
               discriminator:
                 propertyName: type
                 mapping:
-                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input'
                   refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
-              title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
+              title: OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal
             type: array
-            title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
-          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
+            title: list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
         role:
           title: Role
           type: string
@@ -8896,19 +9392,19 @@ components:
             title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
           - items:
               oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
-                title: OpenAIResponseOutputMessageContentOutputText
+              - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output'
+                title: OpenAIResponseOutputMessageContentOutputText-Output
               - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
                 title: OpenAIResponseContentPartRefusal
               discriminator:
                 propertyName: type
                 mapping:
-                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
+                  output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output'
                   refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
-              title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
+              title: OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal
             type: array
-            title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
-          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
+            title: list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
         role:
           title: Role
           type: string
@@ -8941,6 +9437,88 @@ components:
         They are all under one type because the Responses API gives them all
         the same "type" value, and there is no way to tell them apart in certain
         scenarios.
+    OpenAIResponseOutputMessageContentOutputText-Input:
+      properties:
+        text:
+          type: string
+          title: Text
+        type:
+          type: string
+          const: output_text
+          title: Type
+          default: output_text
+        annotations:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              title: OpenAIResponseAnnotationFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              title: OpenAIResponseAnnotationCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              title: OpenAIResponseAnnotationContainerFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+              title: OpenAIResponseAnnotationFilePath
+            discriminator:
+              propertyName: type
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
+          type: array
+          title: Annotations
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+      type: object
+      required:
+      - text
+      title: OpenAIResponseOutputMessageContentOutputText
+    OpenAIResponseOutputMessageContentOutputText-Output:
+      properties:
+        text:
+          type: string
+          title: Text
+        type:
+          type: string
+          const: output_text
+          title: Type
+          default: output_text
+        annotations:
+          items:
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+              title: OpenAIResponseAnnotationFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
+              title: OpenAIResponseAnnotationCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+              title: OpenAIResponseAnnotationContainerFileCitation
+            - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+              title: OpenAIResponseAnnotationFilePath
+            discriminator:
+              propertyName: type
+              mapping:
+                container_file_citation: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
+                file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
+                file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
+                url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
+            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
+          type: array
+          title: Annotations
+        logprobs:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/OpenAITokenLogProb'
+            type: array
+          - type: 'null'
+      type: object
+      required:
+      - text
+      title: OpenAIResponseOutputMessageContentOutputText
     OpenAIResponseOutputMessageFileSearchToolCallResults:
       properties:
         attributes:
@@ -9100,6 +9678,28 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ResponseItemInclude:
+      type: string
+      enum:
+      - web_search_call.action.sources
+      - code_interpreter_call.outputs
+      - computer_call_output.output.image_url
+      - file_search_call.results
+      - message.input_image.image_url
+      - message.output_text.logprobs
+      - reasoning.encrypted_content
+      title: ResponseItemInclude
+      description: Specify additional output data to include in the model response.
+    RunEvalBodyRequest:
+      properties:
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark
+      type: object
+      required:
+      - benchmark_config
+      title: RunEvalBodyRequest
+      description: Request body model for running an evaluation (without path parameter).
     SearchRankingOptions:
       properties:
         ranker:
@@ -9114,6 +9714,45 @@ components:
       type: object
       title: SearchRankingOptions
       description: Options for ranking and filtering search results.
+    SetDefaultVersionBodyRequest:
+      properties:
+        version:
+          type: integer
+          title: Version
+          description: The version to set as default.
+      type: object
+      required:
+      - version
+      title: SetDefaultVersionBodyRequest
+      description: Request body model for setting the default version of a prompt.
+    UpdatePromptBodyRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+          description: The updated prompt text content.
+        version:
+          type: integer
+          title: Version
+          description: The current version of the prompt being updated.
+        variables:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+        set_as_default:
+          type: boolean
+          title: Set As Default
+          description: Set the new version as the default (default=True).
+          default: true
+      type: object
+      required:
+      - prompt
+      - version
+      title: UpdatePromptBodyRequest
+      description: Request body model for updating a prompt.
     _URLOrData:
       properties:
         url:
@@ -9189,6 +9828,132 @@ components:
       - $ref: '#/components/schemas/GrammarResponseFormat'
         title: GrammarResponseFormat
       title: JsonSchemaResponseFormat | GrammarResponseFormat
+    AllowedToolsConfig:
+      properties:
+        tools:
+          items:
+            additionalProperties: true
+            type: object
+          title: Tools
+          type: array
+        mode:
+          enum:
+          - auto
+          - required
+          title: Mode
+          type: string
+      required:
+      - tools
+      - mode
+      title: AllowedToolsConfig
+      type: object
+    CustomToolConfig:
+      description: Custom tool configuration for OpenAI-compatible chat completion requests.
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: CustomToolConfig
+      type: object
+    FunctionToolConfig:
+      properties:
+        name:
+          title: Name
+          type: string
+      required:
+      - name
+      title: FunctionToolConfig
+      type: object
+    OpenAIChatCompletionToolChoiceAllowedTools:
+      description: Allowed tools response format for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: allowed_tools
+          default: allowed_tools
+          title: Type
+          type: string
+        allowed_tools:
+          $ref: '#/components/schemas/AllowedToolsConfig'
+      required:
+      - allowed_tools
+      title: OpenAIChatCompletionToolChoiceAllowedTools
+      type: object
+    OpenAIChatCompletionToolChoiceCustomTool:
+      description: Custom tool choice for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: custom
+          default: custom
+          title: Type
+          type: string
+        custom:
+          $ref: '#/components/schemas/CustomToolConfig'
+      required:
+      - custom
+      title: OpenAIChatCompletionToolChoiceCustomTool
+      type: object
+    OpenAIChatCompletionToolChoiceFunctionTool:
+      description: Function tool choice for OpenAI-compatible chat completion requests.
+      properties:
+        type:
+          const: function
+          default: function
+          title: Type
+          type: string
+        function:
+          $ref: '#/components/schemas/FunctionToolConfig'
+      required:
+      - function
+      title: OpenAIChatCompletionToolChoiceFunctionTool
+      type: object
+    OpenAIChatCompletionToolChoice:
+      discriminator:
+        mapping:
+          allowed_tools: '#/components/schemas/OpenAIChatCompletionToolChoiceAllowedTools'
+          custom: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
+          function: '#/components/schemas/OpenAIChatCompletionToolChoiceFunctionTool'
+        propertyName: type
+      oneOf:
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceAllowedTools'
+        title: OpenAIChatCompletionToolChoiceAllowedTools
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceFunctionTool'
+        title: OpenAIChatCompletionToolChoiceFunctionTool
+      - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
+        title: OpenAIChatCompletionToolChoiceCustomTool
+      title: OpenAIChatCompletionToolChoiceAllowedTools | OpenAIChatCompletionToolChoiceFunctionTool | OpenAIChatCompletionToolChoiceCustomTool
+    OpenAIResponseInputToolChoice:
+      anyOf:
+      - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+        title: OpenAIResponseInputToolChoiceMode
+      - discriminator:
+          mapping:
+            allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+            custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+            file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+            function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+            mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+            web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+          propertyName: type
+        oneOf:
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+          title: OpenAIResponseInputToolChoiceAllowedTools
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+          title: OpenAIResponseInputToolChoiceFileSearch
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+          title: OpenAIResponseInputToolChoiceWebSearch
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+          title: OpenAIResponseInputToolChoiceFunctionTool
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+          title: OpenAIResponseInputToolChoiceMCPTool
+        - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+          title: OpenAIResponseInputToolChoiceCustomTool
+        title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+      title: OpenAIResponseInputToolChoiceMode
     OpenAIResponseContentPart:
       discriminator:
         mapping:
@@ -9204,26 +9969,121 @@ components:
       - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
         title: OpenAIResponseContentPartReasoningText
       title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
-    MetricInResponse:
-      description: A metric value included in API responses.
+    ListBenchmarksRequest:
+      description: Request model for listing benchmarks.
+      properties: {}
+      title: ListBenchmarksRequest
+      type: object
+    GetBenchmarkRequest:
+      description: Request model for getting a benchmark.
       properties:
-        metric:
-          title: Metric
+        benchmark_id:
+          description: The ID of the benchmark to get.
+          title: Benchmark Id
           type: string
-        value:
-          anyOf:
-          - type: integer
-          - type: number
-          title: integer | number
-        unit:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
       required:
-      - metric
-      - value
-      title: MetricInResponse
+      - benchmark_id
+      title: GetBenchmarkRequest
+      type: object
+    UnregisterBenchmarkRequest:
+      description: Request model for unregistering a benchmark.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark to unregister.
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: UnregisterBenchmarkRequest
+      type: object
+    GetDatasetRequest:
+      description: Request model for getting a dataset by ID.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: GetDatasetRequest
+      type: object
+    UnregisterDatasetRequest:
+      description: Request model for unregistering a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to unregister.
+          title: Dataset Id
+          type: string
+      required:
+      - dataset_id
+      title: UnregisterDatasetRequest
+      type: object
+    ListModelsResponse:
+      description: Response containing a list of model objects.
+      properties:
+        data:
+          description: List of model objects.
+          items:
+            $ref: '#/components/schemas/Model'
+          title: Data
+          type: array
+      required:
+      - data
+      title: ListModelsResponse
+      type: object
+    GetModelRequest:
+      description: Request model for getting a model by ID.
+      properties:
+        model_id:
+          description: The ID of the model to get.
+          title: Model Id
+          type: string
+      required:
+      - model_id
+      title: GetModelRequest
+      type: object
+    UnregisterModelRequest:
+      description: Request model for unregistering a model.
+      properties:
+        model_id:
+          description: The ID of the model to unregister.
+          title: Model Id
+          type: string
+      required:
+      - model_id
+      title: UnregisterModelRequest
+      type: object
+    DialogType:
+      description: Parameter type for dialog data with semantic output labels.
+      properties:
+        type:
+          const: dialog
+          default: dialog
+          title: Type
+          type: string
+      title: DialogType
+      type: object
+    GetShieldRequest:
+      description: Request model for getting a shield by identifier.
+      properties:
+        identifier:
+          description: The identifier of the shield to get.
+          title: Identifier
+          type: string
+      required:
+      - identifier
+      title: GetShieldRequest
+      type: object
+    UnregisterShieldRequest:
+      description: Request model for unregistering a shield.
+      properties:
+        identifier:
+          description: The identifier of the shield to unregister.
+          title: Identifier
+          type: string
+      required:
+      - identifier
+      title: UnregisterShieldRequest
       type: object
     TextDelta:
       description: A text content delta for streaming responses.
@@ -9255,445 +10115,6 @@ components:
       required:
       - image
       title: ImageDelta
-      type: object
-    Fp8QuantizationConfig:
-      description: Configuration for 8-bit floating point quantization.
-      properties:
-        type:
-          const: fp8_mixed
-          default: fp8_mixed
-          title: Type
-          type: string
-      title: Fp8QuantizationConfig
-      type: object
-    Bf16QuantizationConfig:
-      description: Configuration for BFloat16 precision (typically no quantization).
-      properties:
-        type:
-          const: bf16
-          default: bf16
-          title: Type
-          type: string
-      title: Bf16QuantizationConfig
-      type: object
-    Int4QuantizationConfig:
-      description: Configuration for 4-bit integer quantization.
-      properties:
-        type:
-          const: int4_mixed
-          default: int4_mixed
-          title: Type
-          type: string
-        scheme:
-          anyOf:
-          - type: string
-          - type: 'null'
-          default: int4_weight_int8_dynamic_activation
-      title: Int4QuantizationConfig
-      type: object
-    UserMessage:
-      description: A message from the user in a chat conversation.
-      properties:
-        role:
-          const: user
-          default: user
-          title: Role
-          type: string
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
-        context:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          - type: 'null'
-          title: string | list[ImageContentItem | TextContentItem]
-          nullable: true
-      required:
-      - content
-      title: UserMessage
-      type: object
-    ToolResponseMessage:
-      description: A message representing the result of a tool invocation.
-      properties:
-        role:
-          const: tool
-          default: tool
-          title: Role
-          type: string
-        call_id:
-          title: Call Id
-          type: string
-        content:
-          anyOf:
-          - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
-            - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
-          - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
-              oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
-              - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
-            type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
-      required:
-      - call_id
-      - content
-      title: ToolResponseMessage
-      type: object
-    TokenLogProbs:
-      description: Log probabilities for generated tokens.
-      properties:
-        logprobs_by_token:
-          additionalProperties:
-            type: number
-          title: Logprobs By Token
-          type: object
-      required:
-      - logprobs_by_token
-      title: TokenLogProbs
-      type: object
-    EmbeddingsResponse:
-      description: Response containing generated embeddings.
-      properties:
-        embeddings:
-          items:
-            items:
-              type: number
-            type: array
-          title: Embeddings
-          type: array
-      required:
-      - embeddings
-      title: EmbeddingsResponse
-      type: object
-    OpenAICompletionLogprobs:
-      description: |-
-        The log probabilities for the tokens in the message from an OpenAI-compatible completion response.
-
-        :text_offset: (Optional) The offset of the token in the text
-        :token_logprobs: (Optional) The log probabilities for the tokens
-        :tokens: (Optional) The tokens
-        :top_logprobs: (Optional) The top log probabilities for the tokens
-      properties:
-        text_offset:
-          anyOf:
-          - items:
-              type: integer
-            type: array
-          - type: 'null'
-          nullable: true
-        token_logprobs:
-          anyOf:
-          - items:
-              type: number
-            type: array
-          - type: 'null'
-          nullable: true
-        tokens:
-          anyOf:
-          - items:
-              type: string
-            type: array
-          - type: 'null'
-          nullable: true
-        top_logprobs:
-          anyOf:
-          - items:
-              additionalProperties:
-                type: number
-              type: object
-            type: array
-          - type: 'null'
-          nullable: true
-      title: OpenAICompletionLogprobs
-      type: object
-    VectorStoreCreateRequest:
-      description: Request to create a vector store.
-      properties:
-        name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        file_ids:
-          items:
-            type: string
-          title: File Ids
-          type: array
-        expires_after:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        chunking_strategy:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        metadata:
-          additionalProperties: true
-          title: Metadata
-          type: object
-      title: VectorStoreCreateRequest
-      type: object
-    VectorStoreModifyRequest:
-      description: Request to modify a vector store.
-      properties:
-        name:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
-        expires_after:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-      title: VectorStoreModifyRequest
-      type: object
-    VectorStoreSearchRequest:
-      description: Request to search a vector store.
-      properties:
-        query:
-          anyOf:
-          - type: string
-          - items:
-              type: string
-            type: array
-            title: list[string]
-          title: string | list[string]
-        filters:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        max_num_results:
-          default: 10
-          title: Max Num Results
-          type: integer
-        ranking_options:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          nullable: true
-        rewrite_query:
-          default: false
-          title: Rewrite Query
-          type: boolean
-      required:
-      - query
-      title: VectorStoreSearchRequest
-      type: object
-    ListBatchesRequest:
-      description: Request model for listing batches.
-      properties:
-        after:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Optional cursor for pagination. Returns batches after this ID.
-          nullable: true
-        limit:
-          default: 20
-          description: Maximum number of batches to return. Defaults to 20.
-          title: Limit
-          type: integer
-      title: ListBatchesRequest
-      type: object
-    RetrieveBatchRequest:
-      description: Request model for retrieving a batch.
-      properties:
-        batch_id:
-          description: The ID of the batch to retrieve.
-          title: Batch Id
-          type: string
-      required:
-      - batch_id
-      title: RetrieveBatchRequest
-      type: object
-    CancelBatchRequest:
-      description: Request model for canceling a batch.
-      properties:
-        batch_id:
-          description: The ID of the batch to cancel.
-          title: Batch Id
-          type: string
-      required:
-      - batch_id
-      title: CancelBatchRequest
-      type: object
-    DialogType:
-      description: Parameter type for dialog data with semantic output labels.
-      properties:
-        type:
-          const: dialog
-          default: dialog
-          title: Type
-          type: string
-      title: DialogType
-      type: object
-    ConversationMessage:
-      description: OpenAI-compatible message item for conversations.
-      properties:
-        id:
-          description: unique identifier for this message
-          title: Id
-          type: string
-        content:
-          description: message content
-          items:
-            additionalProperties: true
-            type: object
-          title: Content
-          type: array
-        role:
-          description: message role
-          title: Role
-          type: string
-        status:
-          description: message status
-          title: Status
-          type: string
-        type:
-          const: message
-          default: message
-          title: Type
-          type: string
-        object:
-          const: message
-          default: message
-          title: Object
-          type: string
-      required:
-      - id
-      - content
-      - role
-      - status
-      title: ConversationMessage
-      type: object
-    ConversationItemCreateRequest:
-      description: Request body for creating conversation items.
-      properties:
-        items:
-          description: Items to include in the conversation context. You may add up to 20 items at a time.
-          items:
-            discriminator:
-              mapping:
-                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                message: '#/components/schemas/OpenAIResponseMessage'
-                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/OpenAIResponseMessage'
-              title: OpenAIResponseMessage
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
-            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
-            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
-            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
-            title: OpenAIResponseMessage | ... (9 variants)
-          maxItems: 20
-          title: Items
-          type: array
-      required:
-      - items
-      title: ConversationItemCreateRequest
       type: object
     ToolGroupInput:
       description: Input data for registering a tool group.
@@ -9744,9 +10165,12 @@ components:
       - benchmarks
       - tool_groups
       - files
+      - file_processors
       - prompts
       - conversations
+      - connectors
       - inspect
+      - admin
       title: Api
       type: string
     ProviderSpec:
@@ -10001,6 +10425,861 @@ components:
       - adapter_type
       title: RemoteProviderSpec
       type: object
+    ListRoutesRequest:
+      description: Request to list API routes.
+      properties:
+        api_filter:
+          anyOf:
+          - enum:
+            - v1
+            - v1alpha
+            - v1beta
+            - deprecated
+            type: string
+          - type: 'null'
+          description: Filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
+          nullable: true
+      title: ListRoutesRequest
+      type: object
+    InspectProviderRequest:
+      description: Request to inspect a specific provider.
+      properties:
+        provider_id:
+          description: The ID of the provider to inspect.
+          title: Provider Id
+          type: string
+      required:
+      - provider_id
+      title: InspectProviderRequest
+      type: object
+    MetricInResponse:
+      description: A metric value included in API responses.
+      properties:
+        metric:
+          title: Metric
+          type: string
+        value:
+          anyOf:
+          - type: integer
+          - type: number
+          title: integer | number
+        unit:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+      required:
+      - metric
+      - value
+      title: MetricInResponse
+      type: object
+    Fp8QuantizationConfig:
+      description: Configuration for 8-bit floating point quantization.
+      properties:
+        type:
+          const: fp8_mixed
+          default: fp8_mixed
+          title: Type
+          type: string
+      title: Fp8QuantizationConfig
+      type: object
+    Bf16QuantizationConfig:
+      description: Configuration for BFloat16 precision (typically no quantization).
+      properties:
+        type:
+          const: bf16
+          default: bf16
+          title: Type
+          type: string
+      title: Bf16QuantizationConfig
+      type: object
+    Int4QuantizationConfig:
+      description: Configuration for 4-bit integer quantization.
+      properties:
+        type:
+          const: int4_mixed
+          default: int4_mixed
+          title: Type
+          type: string
+        scheme:
+          anyOf:
+          - type: string
+          - type: 'null'
+          default: int4_weight_int8_dynamic_activation
+      title: Int4QuantizationConfig
+      type: object
+    UserMessage:
+      description: A message from the user in a chat conversation.
+      properties:
+        role:
+          const: user
+          default: user
+          title: Role
+          type: string
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+        context:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          - type: 'null'
+          title: string | list[ImageContentItem | TextContentItem]
+          nullable: true
+      required:
+      - content
+      title: UserMessage
+      type: object
+    ToolResponseMessage:
+      description: A message representing the result of a tool invocation.
+      properties:
+        role:
+          const: tool
+          default: tool
+          title: Role
+          type: string
+        call_id:
+          title: Call Id
+          type: string
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+      required:
+      - call_id
+      - content
+      title: ToolResponseMessage
+      type: object
+    TokenLogProbs:
+      description: Log probabilities for generated tokens.
+      properties:
+        logprobs_by_token:
+          additionalProperties:
+            type: number
+          title: Logprobs By Token
+          type: object
+      required:
+      - logprobs_by_token
+      title: TokenLogProbs
+      type: object
+    EmbeddingsResponse:
+      description: Response containing generated embeddings.
+      properties:
+        embeddings:
+          items:
+            items:
+              type: number
+            type: array
+          title: Embeddings
+          type: array
+      required:
+      - embeddings
+      title: EmbeddingsResponse
+      type: object
+    OpenAICompletionLogprobs:
+      description: |-
+        The log probabilities for the tokens in the message from an OpenAI-compatible completion response.
+
+        :text_offset: (Optional) The offset of the token in the text
+        :token_logprobs: (Optional) The log probabilities for the tokens
+        :tokens: (Optional) The tokens
+        :top_logprobs: (Optional) The top log probabilities for the tokens
+      properties:
+        text_offset:
+          anyOf:
+          - items:
+              type: integer
+            type: array
+          - type: 'null'
+          nullable: true
+        token_logprobs:
+          anyOf:
+          - items:
+              type: number
+            type: array
+          - type: 'null'
+          nullable: true
+        tokens:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          nullable: true
+        top_logprobs:
+          anyOf:
+          - items:
+              additionalProperties:
+                type: number
+              type: object
+            type: array
+          - type: 'null'
+          nullable: true
+      title: OpenAICompletionLogprobs
+      type: object
+    EmbeddedChunk:
+      description: |-
+        A chunk of content with its embedding vector for vector database operations.
+        Inherits all fields from Chunk and adds embedding-related fields.
+      properties:
+        content:
+          anyOf:
+          - type: string
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
+            - $ref: '#/components/schemas/TextContentItem'
+              title: TextContentItem
+            title: ImageContentItem | TextContentItem
+          - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
+              oneOf:
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
+              - $ref: '#/components/schemas/TextContentItem'
+                title: TextContentItem
+              title: ImageContentItem | TextContentItem
+            type: array
+            title: list[ImageContentItem | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+        chunk_id:
+          title: Chunk Id
+          type: string
+        metadata:
+          additionalProperties: true
+          title: Metadata
+          type: object
+        chunk_metadata:
+          $ref: '#/components/schemas/ChunkMetadata'
+        embedding:
+          items:
+            type: number
+          title: Embedding
+          type: array
+        embedding_model:
+          title: Embedding Model
+          type: string
+        embedding_dimension:
+          title: Embedding Dimension
+          type: integer
+      required:
+      - content
+      - chunk_id
+      - chunk_metadata
+      - embedding
+      - embedding_model
+      - embedding_dimension
+      title: EmbeddedChunk
+      type: object
+    VectorStoreCreateRequest:
+      description: Request to create a vector store.
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        file_ids:
+          items:
+            type: string
+          title: File Ids
+          type: array
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        chunking_strategy:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        metadata:
+          additionalProperties: true
+          title: Metadata
+          type: object
+      title: VectorStoreCreateRequest
+      type: object
+    VectorStoreModifyRequest:
+      description: Request to modify a vector store.
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+      title: VectorStoreModifyRequest
+      type: object
+    VectorStoreSearchRequest:
+      description: Request to search a vector store.
+      properties:
+        query:
+          anyOf:
+          - type: string
+          - items:
+              type: string
+            type: array
+            title: list[string]
+          title: string | list[string]
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        max_num_results:
+          default: 10
+          title: Max Num Results
+          type: integer
+        ranking_options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          nullable: true
+        rewrite_query:
+          default: false
+          title: Rewrite Query
+          type: boolean
+      required:
+      - query
+      title: VectorStoreSearchRequest
+      type: object
+    ListBatchesRequest:
+      description: Request model for listing batches.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional cursor for pagination. Returns batches after this ID.
+          nullable: true
+        limit:
+          default: 20
+          description: Maximum number of batches to return. Defaults to 20.
+          title: Limit
+          type: integer
+      title: ListBatchesRequest
+      type: object
+    RetrieveBatchRequest:
+      description: Request model for retrieving a batch.
+      properties:
+        batch_id:
+          description: The ID of the batch to retrieve.
+          title: Batch Id
+          type: string
+      required:
+      - batch_id
+      title: RetrieveBatchRequest
+      type: object
+    CancelBatchRequest:
+      description: Request model for canceling a batch.
+      properties:
+        batch_id:
+          description: The ID of the batch to cancel.
+          title: Batch Id
+          type: string
+      required:
+      - batch_id
+      title: CancelBatchRequest
+      type: object
+    ConnectorInput:
+      description: Input for creating a connector
+      properties:
+        connector_type:
+          $ref: '#/components/schemas/ConnectorType'
+          default: mcp
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+        url:
+          description: URL of the connector
+          title: Url
+          type: string
+        server_label:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Label of the server
+          nullable: true
+      required:
+      - connector_id
+      - url
+      title: ConnectorInput
+      type: object
+    ConversationMessage:
+      description: OpenAI-compatible message item for conversations.
+      properties:
+        id:
+          description: unique identifier for this message
+          title: Id
+          type: string
+        content:
+          description: message content
+          items:
+            additionalProperties: true
+            type: object
+          title: Content
+          type: array
+        role:
+          description: message role
+          title: Role
+          type: string
+        status:
+          description: message status
+          title: Status
+          type: string
+        type:
+          const: message
+          default: message
+          title: Type
+          type: string
+        object:
+          const: message
+          default: message
+          title: Object
+          type: string
+      required:
+      - id
+      - content
+      - role
+      - status
+      title: ConversationMessage
+      type: object
+    ConversationItemCreateRequest:
+      description: Request body for creating conversation items.
+      properties:
+        items:
+          description: Items to include in the conversation context. You may add up to 20 items at a time.
+          items:
+            discriminator:
+              mapping:
+                file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                message: '#/components/schemas/OpenAIResponseMessage'
+                web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseMessage'
+              title: OpenAIResponseMessage
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+              title: OpenAIResponseOutputMessageWebSearchToolCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+              title: OpenAIResponseOutputMessageFileSearchToolCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+              title: OpenAIResponseOutputMessageFunctionToolCall
+            - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+              title: OpenAIResponseInputFunctionToolCallOutput
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+              title: OpenAIResponseMCPApprovalRequest
+            - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+              title: OpenAIResponseMCPApprovalResponse
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+              title: OpenAIResponseOutputMessageMCPCall
+            - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+              title: OpenAIResponseOutputMessageMCPListTools
+            title: OpenAIResponseMessage | ... (9 variants)
+          maxItems: 20
+          title: Items
+          type: array
+      required:
+      - items
+      title: ConversationItemCreateRequest
+      type: object
+    GetConversationRequest:
+      description: Request model for getting a conversation by ID.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+      required:
+      - conversation_id
+      title: GetConversationRequest
+      type: object
+    DeleteConversationRequest:
+      description: Request model for deleting a conversation.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+      required:
+      - conversation_id
+      title: DeleteConversationRequest
+      type: object
+    RetrieveItemRequest:
+      description: Request model for retrieving a conversation item.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+        item_id:
+          description: The item identifier.
+          title: Item Id
+          type: string
+      required:
+      - conversation_id
+      - item_id
+      title: RetrieveItemRequest
+      type: object
+    ListItemsRequest:
+      description: Request model for listing items in a conversation.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: An item ID to list items after, used in pagination.
+          nullable: true
+        include:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ConversationItemInclude'
+            type: array
+          - type: 'null'
+          description: Specify additional output data to include in the response.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: A limit on the number of objects to be returned (1-100, default 20).
+          nullable: true
+        order:
+          anyOf:
+          - enum:
+            - asc
+            - desc
+            type: string
+          - type: 'null'
+          description: The order to return items in (asc or desc, default desc).
+          nullable: true
+      required:
+      - conversation_id
+      title: ListItemsRequest
+      type: object
+    DeleteItemRequest:
+      description: Request model for deleting a conversation item.
+      properties:
+        conversation_id:
+          description: The conversation identifier.
+          title: Conversation Id
+          type: string
+        item_id:
+          description: The item identifier.
+          title: Item Id
+          type: string
+      required:
+      - conversation_id
+      - item_id
+      title: DeleteItemRequest
+      type: object
+    IterRowsRequest:
+      description: Request model for iterating over rows in a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get the rows from.
+          title: Dataset Id
+          type: string
+        start_index:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Index into dataset for the first row to get. Get all rows if None.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The number of rows to get.
+          nullable: true
+      required:
+      - dataset_id
+      title: IterRowsRequest
+      type: object
+    BenchmarkIdRequest:
+      description: Request model containing benchmark_id path parameter.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark
+          minLength: 1
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: BenchmarkIdRequest
+      type: object
+    JobStatusRequest:
+      description: Request model for getting the status of a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to get the status of
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobStatusRequest
+      type: object
+    JobCancelRequest:
+      description: Request model for canceling a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to cancel
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobCancelRequest
+      type: object
+    JobResultRequest:
+      description: Request model for getting the result of a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to get the result of
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobResultRequest
+      type: object
+    ProcessFileResponse:
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
+      properties:
+        chunks:
+          description: Processed chunks from the file. Always returns at least one chunk.
+          items:
+            $ref: '#/components/schemas/Chunk'
+          title: Chunks
+          type: array
+        metadata:
+          additionalProperties: true
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+          title: Metadata
+          type: object
+      required:
+      - chunks
+      - metadata
+      title: ProcessFileResponse
+      type: object
+    ListFilesRequest:
+      description: Request model for listing files.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: A cursor for pagination. Returns files after this ID.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          default: 10000
+          description: Maximum number of files to return (1-10,000).
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: Sort order by created_at timestamp ('asc' or 'desc').
+          title: Order
+        purpose:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIFilePurpose'
+            title: OpenAIFilePurpose
+          - type: 'null'
+          description: Filter files by purpose.
+          nullable: true
+          title: OpenAIFilePurpose
+      title: ListFilesRequest
+      type: object
+    RetrieveFileRequest:
+      description: Request model for retrieving a file.
+      properties:
+        file_id:
+          description: The ID of the file to retrieve.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: RetrieveFileRequest
+      type: object
+    DeleteFileRequest:
+      description: Request model for deleting a file.
+      properties:
+        file_id:
+          description: The ID of the file to delete.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: DeleteFileRequest
+      type: object
+    RetrieveFileContentRequest:
+      description: Request model for retrieving file content.
+      properties:
+        file_id:
+          description: The ID of the file to retrieve content from.
+          title: File Id
+          type: string
+      required:
+      - file_id
+      title: RetrieveFileContentRequest
+      type: object
+    UploadFileRequest:
+      description: Request model for uploading a file.
+      properties:
+        purpose:
+          $ref: '#/components/schemas/OpenAIFilePurpose'
+          description: The intended purpose of the uploaded file.
+        expires_after:
+          anyOf:
+          - $ref: '#/components/schemas/ExpiresAfter'
+            title: ExpiresAfter
+          - type: 'null'
+          description: Optional expiration settings for the file.
+          nullable: true
+          title: ExpiresAfter
+      required:
+      - purpose
+      title: UploadFileRequest
+      type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.
       properties:
@@ -10065,6 +11344,67 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
+      type: object
+    GetTrainingJobStatusRequest:
+      description: Request to get the status of a training job.
+      properties:
+        job_uuid:
+          description: The UUID of the job to get the status of.
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: GetTrainingJobStatusRequest
+      type: object
+    GetTrainingJobArtifactsRequest:
+      description: Request to get the artifacts of a training job.
+      properties:
+        job_uuid:
+          description: The UUID of the job to get the artifacts of.
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: GetTrainingJobArtifactsRequest
+      type: object
+    ListPromptVersionsRequest:
+      description: Request model for listing all versions of a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to list versions for.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: ListPromptVersionsRequest
+      type: object
+    GetPromptRequest:
+      description: Request model for getting a prompt by ID and optional version.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to get.
+          title: Prompt Id
+          type: string
+        version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The version of the prompt to get (defaults to latest).
+          nullable: true
+      required:
+      - prompt_id
+      title: GetPromptRequest
+      type: object
+    DeletePromptRequest:
+      description: Request model for deleting a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to delete.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: DeletePromptRequest
       type: object
   responses:
     BadRequest400:

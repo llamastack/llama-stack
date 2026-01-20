@@ -53,6 +53,7 @@ from llama_stack_api import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
     ResponseGuardrailSpec,
+    RunModerationRequest,
     Safety,
 )
 
@@ -115,10 +116,17 @@ async def convert_chat_choice_to_response_message(
         )
 
     annotations, clean_text = _extract_citations_from_text(output_content, citation_files or {})
+    logprobs = choice.logprobs.content if choice.logprobs and choice.logprobs.content else None
 
     return OpenAIResponseMessage(
         id=message_id or f"msg_{uuid.uuid4()}",
-        content=[OpenAIResponseOutputMessageContentOutputText(text=clean_text, annotations=list(annotations))],
+        content=[
+            OpenAIResponseOutputMessageContentOutputText(
+                text=clean_text,
+                annotations=list(annotations),
+                logprobs=logprobs,
+            )
+        ],
         status="completed",
         role="assistant",
     )
@@ -461,7 +469,9 @@ async def run_guardrails(safety_api: Safety | None, messages: str, guardrail_ids
         else:
             raise ValueError(f"No shield found with identifier '{guardrail_id}'")
 
-    guardrail_tasks = [safety_api.run_moderation(messages, model=model_id) for model_id in model_ids]
+    guardrail_tasks = [
+        safety_api.run_moderation(RunModerationRequest(input=messages, model=model_id)) for model_id in model_ids
+    ]
     responses = await asyncio.gather(*guardrail_tasks)
 
     for response in responses:
@@ -499,3 +509,28 @@ def extract_guardrail_ids(guardrails: list | None) -> list[str]:
             raise ValueError(f"Unknown guardrail format: {guardrail}, expected str or ResponseGuardrailSpec")
 
     return guardrail_ids
+
+
+def convert_mcp_tool_choice(
+    chat_tool_names: list[str],
+    server_label: str | None = None,
+    server_label_to_tools: dict[str, list[str]] | None = None,
+    tool_name: str | None = None,
+) -> dict[str, str] | list[dict[str, str]]:
+    """Convert a responses tool choice of type mcp to a chat completions compatible function tool choice."""
+
+    if tool_name:
+        if tool_name not in chat_tool_names:
+            return None
+        return {"type": "function", "function": {"name": tool_name}}
+
+    elif server_label and server_label_to_tools:
+        # no tool name specified, so we need to enforce an allowed_tools with the function tools derived only from the given server label
+        # Use reverse mapping for lookup by server_label
+        # This already accounts for allowed_tools restrictions applied during _process_mcp_tool
+        tool_names = server_label_to_tools.get(server_label, [])
+        if not tool_names:
+            return None
+        matching_tools = [{"type": "function", "function": {"name": tool_name}} for tool_name in tool_names]
+        return matching_tools
+    return []

@@ -13,9 +13,13 @@ from llama_stack.log import get_logger
 
 # Removed VectorStores import to avoid exposing public API
 from llama_stack_api import (
+    EmbeddedChunk,
+    InterleavedContent,
     ModelNotFoundError,
     ModelType,
     ModelTypeError,
+    OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
+    QueryChunksResponse,
     ResourceType,
     SearchRankingOptions,
     VectorStoreChunkingStrategy,
@@ -40,7 +44,20 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
     Only provides internal routing functionality for VectorIORouter.
     """
 
+    def __init__(
+        self,
+        impls_by_provider_id: dict[str, Any],
+        dist_registry: Any,
+        policy: list[Any],
+    ) -> None:
+        super().__init__(impls_by_provider_id, dist_registry, policy)
+        self.vector_io_router = None  # Will be set post-instantiation
+
     # Internal methods only - no public API exposure
+
+    async def list_vector_stores(self) -> list[VectorStoreWithOwner]:
+        """List all registered vector stores."""
+        return await self.get_all_with_type(ResourceType.vector_store.value)
 
     async def register_vector_store(
         self,
@@ -77,6 +94,26 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         )
         await self.register_object(vector_store)
         return vector_store
+
+    async def insert_chunks(
+        self,
+        vector_store_id: str,
+        chunks: list[EmbeddedChunk],
+        ttl_seconds: int | None = None,
+    ) -> None:
+        await self.assert_action_allowed("update", "vector_store", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.insert_chunks(vector_store_id, chunks, ttl_seconds)
+
+    async def query_chunks(
+        self,
+        vector_store_id: str,
+        query: InterleavedContent,
+        params: dict[str, Any] | None = None,
+    ) -> QueryChunksResponse:
+        await self.assert_action_allowed("read", "vector_store", vector_store_id)
+        provider = await self.get_provider_impl(vector_store_id)
+        return await provider.query_chunks(vector_store_id, query, params)
 
     async def openai_retrieve_vector_store(
         self,
@@ -238,17 +275,13 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
     async def openai_create_vector_store_file_batch(
         self,
         vector_store_id: str,
-        file_ids: list[str],
-        attributes: dict[str, Any] | None = None,
-        chunking_strategy: Any | None = None,
+        params: OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     ):
         await self.assert_action_allowed("update", "vector_store", vector_store_id)
         provider = await self.get_provider_impl(vector_store_id)
         return await provider.openai_create_vector_store_file_batch(
             vector_store_id=vector_store_id,
-            file_ids=file_ids,
-            attributes=attributes,
-            chunking_strategy=chunking_strategy,
+            params=params,
         )
 
     async def openai_retrieve_vector_store_file_batch(

@@ -44,12 +44,14 @@ CATEGORIES = [
     "providers",
     "models",
     "files",
+    "file_processors",
     "vector_io",
     "tool_runtime",
     "cli",
     "post_training",
     "scoring",
     "tests",
+    "connectors",
 ]
 UNCATEGORIZED = "uncategorized"
 
@@ -91,10 +93,10 @@ def config_to_category_levels(category: str, level: str):
 
 def parse_yaml_config(yaml_config: LoggingConfig) -> dict[str, int]:
     """
-    Helper function to parse a yaml logging configuration found in the run.yaml
+    Helper function to parse a yaml logging configuration found in the config.yaml
 
     Parameters:
-        yaml_config (Logging): the logger config object found in the run.yaml
+        yaml_config (Logging): the logger config object found in the config.yaml
 
     Returns:
         Dict[str, int]: A dictionary mapping categories to their log levels.

@@ -6,15 +6,19 @@
 
 import asyncio
 import importlib.resources
+import inspect
 import os
 import re
 import tempfile
-from typing import Any
+from typing import Any, get_type_hints
 
 import yaml
+from pydantic import BaseModel
 
+from llama_stack.core.admin import AdminImpl, AdminImplConfig
+from llama_stack.core.connectors.connectors import ConnectorServiceConfig, ConnectorServiceImpl
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, SafetyConfig, StackRunConfig, VectorStoresConfig
+from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -39,6 +43,7 @@ from llama_stack_api import (
     Api,
     Batches,
     Benchmarks,
+    Connectors,
     Conversations,
     DatasetIO,
     Datasets,
@@ -50,6 +55,9 @@ from llama_stack_api import (
     PostTraining,
     Prompts,
     Providers,
+    RegisterBenchmarkRequest,
+    RegisterModelRequest,
+    RegisterShieldRequest,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -58,6 +66,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
+from llama_stack_api.datasets import RegisterDatasetRequest
 
 logger = get_logger(name=__name__, category="core")
 
@@ -84,22 +93,27 @@ class LlamaStack(
     Files,
     Prompts,
     Conversations,
+    Connectors,
 ):
     pass
 
 
+# Resources to register based on configuration.
+# If a request class is specified, the configuration object will be converted to this class before invoking the registration method.
 RESOURCES = [
-    ("models", Api.models, "register_model", "list_models"),
-    ("shields", Api.shields, "register_shield", "list_shields"),
-    ("datasets", Api.datasets, "register_dataset", "list_datasets"),
+    ("models", Api.models, "register_model", "list_models", RegisterModelRequest),
+    ("shields", Api.shields, "register_shield", "list_shields", RegisterShieldRequest),
+    ("datasets", Api.datasets, "register_dataset", "list_datasets", RegisterDatasetRequest),
     (
         "scoring_fns",
         Api.scoring_functions,
         "register_scoring_function",
         "list_scoring_functions",
+        None,
     ),
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
+    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
+    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
+    ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
 
@@ -107,9 +121,96 @@ REGISTRY_REFRESH_INTERVAL_SECONDS = 300
 REGISTRY_REFRESH_TASK = None
 TEST_RECORDING_CONTEXT = None
 
+# ID fields for registered resources that should trigger skipping
+# when they resolve to empty/None (from conditional env vars like :+)
+RESOURCE_ID_FIELDS = [
+    "vector_store_id",
+    "model_id",
+    "shield_id",
+    "dataset_id",
+    "scoring_fn_id",
+    "benchmark_id",
+    "toolgroup_id",
+]
 
-async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
-    for rsrc, api, register_method, list_method in RESOURCES:
+
+def is_request_model(t: Any) -> bool:
+    """Check if a type is a request model (Pydantic BaseModel).
+
+    Args:
+        t: The type to check
+
+    Returns:
+        True if the type is a Pydantic BaseModel subclass, False otherwise
+    """
+
+    return inspect.isclass(t) and issubclass(t, BaseModel)
+
+
+async def invoke_with_optional_request(method: Any) -> Any:
+    """Invoke a method, automatically creating a request instance if needed.
+
+    For APIs that use request models, this will create an empty request object.
+    For backward compatibility, falls back to calling without arguments.
+
+    Uses get_type_hints() to resolve forward references (e.g., "ListBenchmarksRequest" -> actual class).
+
+    Handles methods with:
+    - No parameters: calls without arguments
+    - One or more request model parameters: creates empty instances for each
+    - Mixed parameters: creates request models, uses defaults for others
+    - Required non-request-model parameters without defaults: falls back to calling without arguments
+
+    Args:
+        method: The method to invoke
+
+    Returns:
+        The result of calling the method
+    """
+    try:
+        hints = get_type_hints(method)
+    except Exception:
+        # Forward references can't be resolved, fall back to calling without request
+        return await method()
+
+    params = list(inspect.signature(method).parameters.values())
+    params = [p for p in params if p.name != "self"]
+
+    if not params:
+        return await method()
+
+    # Build arguments for the method call
+    args: dict[str, Any] = {}
+    can_call = True
+
+    for param in params:
+        param_type = hints.get(param.name)
+
+        # If it's a request model, try to create an empty instance
+        if param_type and is_request_model(param_type):
+            try:
+                args[param.name] = param_type()
+            except Exception:
+                # Request model requires arguments, can't create empty instance
+                can_call = False
+                break
+        # If it has a default value, we can skip it (will use default)
+        elif param.default != inspect.Parameter.empty:
+            continue
+        # Required parameter that's not a request model - can't provide it
+        else:
+            can_call = False
+            break
+
+    if can_call and args:
+        return await method(**args)
+
+    # Fall back to calling without arguments for backward compatibility
+    return await method()
+
+
+async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
+    for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
             continue
@@ -123,13 +224,20 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
                     continue
                 logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
 
-            # we want to maintain the type information in arguments to method.
-            # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
-            # we use model_dump() to find all the attrs and then getattr to get the still typed value.
-            await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+            # TODO: Once all register methods are migrated to accept request objects,
+            # remove this conditional and always use the request_class pattern.
+            if request_class is not None:
+                request = request_class(**obj.model_dump())
+                await method(request)
+            else:
+                # we want to maintain the type information in arguments to method.
+                # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
+                # we use model_dump() to find all the attrs and then getattr to get the still typed
+                # value.
+                await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
 
         method = getattr(impls[api], list_method)
-        response = await method()
+        response = await invoke_with_optional_request(method)
 
         objects_to_process = response.data if hasattr(response, "data") else response
 
@@ -139,40 +247,92 @@ async def register_resources(run_config: StackRunConfig, impls: dict[Api, Any]):
             )
 
 
+async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
+    """Register connectors from config"""
+    if Api.connectors not in impls:
+        return
+
+    connectors_impl = impls[Api.connectors]
+
+    # Register/Update config connectors
+    for connector in run_config.connectors:
+        logger.debug(f"Registering connector: {connector.connector_id}")
+        await connectors_impl.register_connector(
+            connector_id=connector.connector_id,
+            connector_type=connector.connector_type,
+            url=connector.url,
+            server_label=connector.server_label,
+        )
+
+
 async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
     """Validate vector stores configuration."""
     if vector_stores_config is None:
         return
 
-    default_embedding_model = vector_stores_config.default_embedding_model
-    if default_embedding_model is None:
-        return
+    # Validate default embedding model
+    if vector_stores_config.default_embedding_model is not None:
+        await _validate_embedding_model(vector_stores_config.default_embedding_model, impls)
 
-    provider_id = default_embedding_model.provider_id
-    model_id = default_embedding_model.model_id
-    default_model_id = f"{provider_id}/{model_id}"
+    # Validate rewrite query params
+    if vector_stores_config.rewrite_query_params:
+        if vector_stores_config.rewrite_query_params.model:
+            await _validate_rewrite_query_model(vector_stores_config.rewrite_query_params.model, impls)
+
+
+async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict[Api, Any]) -> None:
+    """Validate that an embedding model exists and has required metadata."""
+    provider_id = embedding_model.provider_id
+    model_id = embedding_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
 
     if Api.models not in impls:
-        raise ValueError(f"Models API is not available but vector_stores config requires model '{default_model_id}'")
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{model_identifier}'")
 
     models_impl = impls[Api.models]
     response = await models_impl.list_models()
     models_list = {m.identifier: m for m in response.data if m.model_type == "embedding"}
 
-    default_model = models_list.get(default_model_id)
-    if default_model is None:
-        raise ValueError(f"Embedding model '{default_model_id}' not found. Available embedding models: {models_list}")
+    model = models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Embedding model '{model_identifier}' not found. Available embedding models: {list(models_list.keys())}"
+        )
 
-    embedding_dimension = default_model.metadata.get("embedding_dimension")
+    embedding_dimension = model.metadata.get("embedding_dimension")
     if embedding_dimension is None:
-        raise ValueError(f"Embedding model '{default_model_id}' is missing 'embedding_dimension' in metadata")
+        raise ValueError(f"Embedding model '{model_identifier}' is missing 'embedding_dimension' in metadata")
 
     try:
         int(embedding_dimension)
     except ValueError as err:
         raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
-    logger.debug(f"Validated default embedding model: {default_model_id} (dimension: {embedding_dimension})")
+    logger.debug(f"Validated embedding model: {model_identifier} (dimension: {embedding_dimension})")
+
+
+async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, impls: dict[Api, Any]) -> None:
+    """Validate that a rewrite query model exists and is accessible."""
+    provider_id = rewrite_query_model.provider_id
+    model_id = rewrite_query_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
+
+    if Api.models not in impls:
+        raise ValueError(
+            f"Models API is not available but vector_stores config requires rewrite query model '{model_identifier}'"
+        )
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    llm_models_list = {m.identifier: m for m in response.data if m.model_type == "llm"}
+
+    model = llm_models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Rewrite query model '{model_identifier}' not found. Available LLM models: {list(llm_models_list.keys())}"
+        )
+
+    logger.debug(f"Validated rewrite query model: {model_identifier}")
 
 
 async def validate_safety_config(safety_config: SafetyConfig | None, impls: dict[Api, Any]):
@@ -234,15 +394,33 @@ def replace_env_vars(config: Any, path: str = "") -> Any:
                             logger.debug(
                                 f"Skipping config env variable expansion for disabled provider: {v.get('provider_id', '')}"
                             )
-                            # Create a copy with resolved provider_id but original config
-                            disabled_provider = v.copy()
-                            disabled_provider["provider_id"] = resolved_provider_id
                             continue
                     except EnvVarError:
                         # If we can't resolve the provider_id, continue with normal processing
                         pass
 
-                # Normal processing for non-disabled providers
+                # Special handling for registered resources: check if ID field resolves to empty/None
+                # from conditional env vars (e.g., ${env.VAR:+value}) and skip the entry if so
+                if isinstance(v, dict):
+                    should_skip = False
+                    for id_field in RESOURCE_ID_FIELDS:
+                        if id_field in v:
+                            try:
+                                resolved_id = replace_env_vars(v[id_field], f"{path}[{i}].{id_field}")
+                                if resolved_id is None or resolved_id == "":
+                                    logger.debug(
+                                        f"Skipping {path}[{i}] with empty {id_field} (conditional env var not set)"
+                                    )
+                                    should_skip = True
+                                    break
+                            except EnvVarError as e:
+                                logger.warning(
+                                    f"Could not resolve {id_field} in {path}[{i}], env var '{e.var_name}': {e}"
+                                )
+                    if should_skip:
+                        continue
+
+                # Normal processing
                 result.append(replace_env_vars(v, f"{path}[{i}]"))
             except EnvVarError as e:
                 raise EnvVarError(e.var_name, e.path) from None
@@ -334,46 +512,56 @@ def _convert_string_to_proper_type(value: str) -> Any:
     return value
 
 
-def cast_image_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
-    """Ensure that any value for a key 'image_name' in a config_dict is a string"""
-    if "image_name" in config_dict and config_dict["image_name"] is not None:
-        config_dict["image_name"] = str(config_dict["image_name"])
+def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
+    """Ensure that any value for a key 'distro_name' in a config_dict is a string"""
+    if "distro_name" in config_dict and config_dict["distro_name"] is not None:
+        config_dict["distro_name"] = str(config_dict["distro_name"])
     return config_dict
 
 
-def add_internal_implementations(impls: dict[Api, Any], run_config: StackRunConfig) -> None:
-    """Add internal implementations (inspect and providers) to the implementations dictionary.
-
+def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> None:
+    """Add internal implementations (inspect, providers, and admin) to the implementations dictionary.
     Args:
         impls: Dictionary of API implementations
         run_config: Stack run configuration
     """
     inspect_impl = DistributionInspectImpl(
-        DistributionInspectConfig(run_config=run_config),
+        DistributionInspectConfig(config=config),
         deps=impls,
     )
     impls[Api.inspect] = inspect_impl
 
     providers_impl = ProviderImpl(
-        ProviderImplConfig(run_config=run_config),
+        ProviderImplConfig(config=config),
         deps=impls,
     )
     impls[Api.providers] = providers_impl
 
+    admin_impl = AdminImpl(
+        AdminImplConfig(config=config),
+        deps=impls,
+    )
+    impls[Api.admin] = admin_impl
+
     prompts_impl = PromptServiceImpl(
-        PromptServiceConfig(run_config=run_config),
+        PromptServiceConfig(config=config),
         deps=impls,
     )
     impls[Api.prompts] = prompts_impl
 
     conversations_impl = ConversationServiceImpl(
-        ConversationServiceConfig(run_config=run_config),
+        ConversationServiceConfig(config=config),
         deps=impls,
     )
     impls[Api.conversations] = conversations_impl
 
+    connectors_impl = ConnectorServiceImpl(
+        ConnectorServiceConfig(config=config),
+    )
+    impls[Api.connectors] = connectors_impl
 
-def _initialize_storage(run_config: StackRunConfig):
+
+def _initialize_storage(run_config: StackConfig):
     kv_backends: dict[str, StorageBackendConfig] = {}
     sql_backends: dict[str, StorageBackendConfig] = {}
     for backend_name, backend_config in run_config.storage.backends.items():
@@ -393,7 +581,7 @@ def _initialize_storage(run_config: StackRunConfig):
 
 
 class Stack:
-    def __init__(self, run_config: StackRunConfig, provider_registry: ProviderRegistry | None = None):
+    def __init__(self, run_config: StackConfig, provider_registry: ProviderRegistry | None = None):
         self.run_config = run_config
         self.provider_registry = provider_registry
         self.impls = None
@@ -414,7 +602,7 @@ class Stack:
         stores = self.run_config.storage.stores
         if not stores.metadata:
             raise ValueError("storage.stores.metadata must be configured with a kv_* backend")
-        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.image_name)
+        dist_registry, _ = await create_dist_registry(stores.metadata, self.run_config.distro_name)
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
 
         internal_impls = {}
@@ -432,8 +620,11 @@ class Stack:
             await impls[Api.prompts].initialize()
         if Api.conversations in impls:
             await impls[Api.conversations].initialize()
+        if Api.connectors in impls:
+            await impls[Api.connectors].initialize()
 
         await register_resources(self.run_config, impls)
+        await register_connectors(self.run_config, impls)
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
         await validate_safety_config(self.run_config.safety, impls)
@@ -499,20 +690,20 @@ async def refresh_registry_task(impls: dict[Api, Any]):
         await asyncio.sleep(REGISTRY_REFRESH_INTERVAL_SECONDS)
 
 
-def get_stack_run_config_from_distro(distro: str) -> StackRunConfig:
-    distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/run.yaml"
+def get_stack_run_config_from_distro(distro: str) -> StackConfig:
+    distro_path = importlib.resources.files("llama_stack") / f"distributions/{distro}/config.yaml"
 
     with importlib.resources.as_file(distro_path) as path:
         if not path.exists():
             raise ValueError(f"Distribution '{distro}' not found at {distro_path}")
         run_config = yaml.safe_load(path.open())
 
-    return StackRunConfig(**replace_env_vars(run_config))
+    return StackConfig(**replace_env_vars(run_config))
 
 
 def run_config_from_adhoc_config_spec(
     adhoc_config_spec: str, provider_registry: ProviderRegistry | None = None
-) -> StackRunConfig:
+) -> StackConfig:
     """
     Create an adhoc distribution from a list of API providers.
 
@@ -552,8 +743,8 @@ def run_config_from_adhoc_config_spec(
                 config=provider_config,
             )
         ]
-    config = StackRunConfig(
-        image_name="distro-test",
+    config = StackConfig(
+        distro_name="distro-test",
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
         storage=StorageConfig(
@@ -566,6 +757,7 @@ def run_config_from_adhoc_config_spec(
                 inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
                 conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
                 prompts=KVStoreReference(backend="kv_default", namespace="prompts"),
+                connectors=KVStoreReference(backend="kv_default", namespace="connectors"),
             ),
         ),
     )

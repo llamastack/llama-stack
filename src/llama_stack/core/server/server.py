@@ -34,7 +34,7 @@ from pydantic import BaseModel, ValidationError
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import (
     AuthenticationRequiredError,
-    StackRunConfig,
+    StackConfig,
     process_cors_config,
 )
 from llama_stack.core.distribution import builtin_automatically_routed_apis
@@ -48,11 +48,11 @@ from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
-    cast_image_name_to_string,
+    cast_distro_name_to_string,
     replace_env_vars,
 )
 from llama_stack.core.utils.config import redact_sensitive_fields
-from llama_stack.core.utils.config_resolution import Mode, resolve_config_or_distro
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
@@ -147,7 +147,7 @@ class StackApp(FastAPI):
     start background tasks (e.g. refresh model registry periodically) from the lifespan context manager.
     """
 
-    def __init__(self, config: StackRunConfig, *args, **kwargs):
+    def __init__(self, config: StackConfig, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.stack: Stack = Stack(config)
 
@@ -235,56 +235,36 @@ async def log_request_pre_validation(request: Request):
 def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
     @functools.wraps(func)
     async def route_handler(request: Request, **kwargs):
-        # Get auth attributes from the request scope
-        user = user_from_scope(request.scope)
-
         await log_request_pre_validation(request)
 
-        test_context_token = None
-        test_context_var = None
-        reset_test_context_fn = None
+        is_streaming = is_streaming_request(func.__name__, request, **kwargs)
 
-        # Use context manager with both provider data and auth attributes
-        with request_provider_data_context(request.headers, user):
-            if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
-                from llama_stack.core.testing_context import (
-                    TEST_CONTEXT,
-                    reset_test_context,
-                    sync_test_context_from_provider_data,
-                )
+        try:
+            if is_streaming:
+                # Preserve context vars across async generator boundaries
+                context_vars = [PROVIDER_DATA_VAR]
+                if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
+                    from llama_stack.core.testing_context import TEST_CONTEXT
 
-                test_context_token = sync_test_context_from_provider_data()
-                test_context_var = TEST_CONTEXT
-                reset_test_context_fn = reset_test_context
+                    context_vars.append(TEST_CONTEXT)
+                gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
+                return StreamingResponse(gen, media_type="text/event-stream")
+            else:
+                value = func(**kwargs)
+                result = await maybe_await(value)
+                if isinstance(result, PaginatedResponse) and result.url is None:
+                    result.url = route
 
-            is_streaming = is_streaming_request(func.__name__, request, **kwargs)
+                if method.upper() == "DELETE" and result is None:
+                    return Response(status_code=httpx.codes.NO_CONTENT)
 
-            try:
-                if is_streaming:
-                    context_vars = [PROVIDER_DATA_VAR]
-                    if test_context_var is not None:
-                        context_vars.append(test_context_var)
-                    gen = preserve_contexts_async_generator(sse_generator(func(**kwargs)), context_vars)
-                    return StreamingResponse(gen, media_type="text/event-stream")
-                else:
-                    value = func(**kwargs)
-                    result = await maybe_await(value)
-                    if isinstance(result, PaginatedResponse) and result.url is None:
-                        result.url = route
-
-                    if method.upper() == "DELETE" and result is None:
-                        return Response(status_code=httpx.codes.NO_CONTENT)
-
-                    return result
-            except Exception as e:
-                if logger.isEnabledFor(logging.INFO):
-                    logger.exception(f"Error executing endpoint {route=} {method=}")
-                else:
-                    logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
-                raise translate_exception(e) from e
-            finally:
-                if test_context_token is not None and reset_test_context_fn is not None:
-                    reset_test_context_fn(test_context_token)
+                return result
+        except Exception as e:
+            if logger.isEnabledFor(logging.INFO):
+                logger.exception(f"Error executing endpoint {route=} {method=}")
+            else:
+                logger.error(f"Error executing endpoint {route=} {method=}: {str(e)}")
+            raise translate_exception(e) from e
 
     sig = inspect.signature(func)
 
@@ -356,6 +336,42 @@ class ClientVersionMiddleware:
         return await self.app(scope, receive, send)
 
 
+class ProviderDataMiddleware:
+    """Middleware to set up request context for all routes.
+
+    Sets up provider data context from X-LlamaStack-Provider-Data header
+    and auth attributes. Also handles test context propagation when
+    running in test mode for deterministic ID generation.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            headers = {k.decode(): v.decode() for k, v in scope.get("headers", [])}
+            user = user_from_scope(scope)
+
+            with request_provider_data_context(headers, user):
+                test_context_token = None
+                reset_fn = None
+                if os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE"):
+                    from llama_stack.core.testing_context import (
+                        reset_test_context,
+                        sync_test_context_from_provider_data,
+                    )
+
+                    test_context_token = sync_test_context_from_provider_data()
+                    reset_fn = reset_test_context
+                try:
+                    return await self.app(scope, receive, send)
+                finally:
+                    if test_context_token and reset_fn:
+                        reset_fn(test_context_token)
+
+        return await self.app(scope, receive, send)
+
+
 def create_app() -> StackApp:
     """Create and configure the FastAPI application.
 
@@ -369,7 +385,7 @@ def create_app() -> StackApp:
     if config_file is None:
         raise ValueError("LLAMA_STACK_CONFIG environment variable is required")
 
-    config_file = resolve_config_or_distro(config_file, Mode.RUN)
+    config_file = resolve_config_or_distro(config_file)
 
     # Load and process configuration
     logger_config = None
@@ -380,7 +396,7 @@ def create_app() -> StackApp:
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
-        config = StackRunConfig(**cast_image_name_to_string(config))
+        config = StackConfig(**cast_distro_name_to_string(config))
 
     _log_run_config(run_config=config)
 
@@ -394,6 +410,8 @@ def create_app() -> StackApp:
 
     if not os.environ.get("LLAMA_STACK_DISABLE_VERSION_CHECK"):
         app.add_middleware(ClientVersionMiddleware)
+
+    app.add_middleware(ProviderDataMiddleware)
 
     impls = app.stack.impls
 
@@ -451,10 +469,12 @@ def create_app() -> StackApp:
             continue
         apis_to_serve.add(inf.routing_table_api.value)
 
+    apis_to_serve.add("admin")
     apis_to_serve.add("inspect")
     apis_to_serve.add("providers")
     apis_to_serve.add("prompts")
     apis_to_serve.add("conversations")
+    apis_to_serve.add("connectors")
 
     for api_str in apis_to_serve:
         api = Api(api_str)
@@ -510,9 +530,9 @@ def create_app() -> StackApp:
     return app
 
 
-def _log_run_config(run_config: StackRunConfig):
+def _log_run_config(run_config: StackConfig):
     """Logs the run config with redacted fields and disabled providers removed."""
-    logger.info("Run configuration:")
+    logger.info("Stack Configuration:")
     safe_config = redact_sensitive_fields(run_config.model_dump(mode="json"))
     clean_config = remove_disabled_providers(safe_config)
     logger.info(yaml.dump(clean_config, indent=2))

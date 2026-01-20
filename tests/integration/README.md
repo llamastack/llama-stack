@@ -25,7 +25,7 @@ Here are the most important options:
   - **`server:<config>`** - automatically start a server with the given config (e.g., `server:starter`). This provides one-step testing by auto-starting the server if the port is available, or reusing an existing server if already running.
   - **`server:<config>:<port>`** - same as above but with a custom port (e.g., `server:starter:8322`)
   - a URL which points to a Llama Stack distribution server
-  - a distribution name (e.g., `starter`) or a path to a `run.yaml` file
+  - a distribution name (e.g., `starter`) or a path to a `config.yaml` file
   - a comma-separated list of api=provider pairs, e.g. `inference=ollama,safety=llama-guard,agents=meta-reference`. This is most useful for testing a single API surface.
 - `--env`: set environment variables, e.g. --env KEY=value. this is a utility option to set environment variables required by various providers.
 
@@ -57,6 +57,9 @@ if no model is specified.
 Examples
 
 ```bash
+# Run conversations tests with GPT for high-quality responses
+pytest -s -v tests/integration/conversations --stack-config=server:starter --setup=gpt
+
 # Fast responses run with a strong tool-calling model
 pytest -s -v tests/integration --stack-config=server:starter --suite=responses --setup=gpt
 
@@ -75,11 +78,11 @@ pytest -s -v tests/integration --stack-config=server:starter \
 
 ### Testing against a Server
 
-Run all text inference tests by auto-starting a server with the `starter` config:
+Run all inference tests by auto-starting a server with the `starter` config:
 
 ```bash
 OLLAMA_URL=http://localhost:11434 \
-  pytest -s -v tests/integration/inference/test_text_inference.py \
+  pytest -s -v tests/integration/inference \
    --stack-config=server:starter \
    --text-model=ollama/llama3.2:3b-instruct-fp16 \
    --embedding-model=nomic-embed-text-v1.5

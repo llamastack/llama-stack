@@ -43,7 +43,10 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIMessageParam,
+    OpenAITokenLogProb,
+    OpenAITopLogProb,
     Order,
+    RegisterModelRequest,
     RerankResponse,
     RoutingTable,
 )
@@ -85,7 +88,14 @@ class InferenceRouter(Inference):
         logger.debug(
             f"InferenceRouter.register_model: {model_id=} {provider_model_id=} {provider_id=} {metadata=} {model_type=}",
         )
-        await self.routing_table.register_model(model_id, provider_model_id, provider_id, metadata, model_type)
+        request = RegisterModelRequest(
+            model_id=model_id,
+            provider_model_id=provider_model_id,
+            provider_id=provider_id,
+            metadata=metadata,
+            model_type=model_type,
+        )
+        await self.routing_table.register_model(request)
 
     async def _get_model_provider(self, model_id: str, expected_model_type: str) -> tuple[Inference, str]:
         model = await self.routing_table.get_object_by_identifier("model", model_id)
@@ -342,8 +352,34 @@ class InferenceRouter(Inference):
                                             )
                         if choice_delta.finish_reason:
                             current_choice_data["finish_reason"] = choice_delta.finish_reason
+
+                        # Convert logprobs from chat completion format to responses format
+                        # Chat completion returns list of ChatCompletionTokenLogprob, but
+                        # expecting list of OpenAITokenLogProb in OpenAIChoice
                         if choice_delta.logprobs and choice_delta.logprobs.content:
-                            current_choice_data["logprobs_content_parts"].extend(choice_delta.logprobs.content)
+                            converted_logprobs = []
+                            for token_logprob in choice_delta.logprobs.content:
+                                top_logprobs = None
+                                if token_logprob.top_logprobs:
+                                    top_logprobs = [
+                                        OpenAITopLogProb(
+                                            token=tlp.token,
+                                            bytes=tlp.bytes,
+                                            logprob=tlp.logprob,
+                                        )
+                                        for tlp in token_logprob.top_logprobs
+                                    ]
+                                converted_logprobs.append(
+                                    OpenAITokenLogProb(
+                                        token=token_logprob.token,
+                                        bytes=token_logprob.bytes,
+                                        logprob=token_logprob.logprob,
+                                        top_logprobs=top_logprobs,
+                                    )
+                                )
+                            # Update choice delta with the newly formatted logprobs object
+                            choice_delta.logprobs.content = converted_logprobs
+                            current_choice_data["logprobs_content_parts"].extend(converted_logprobs)
 
                 # Compute metrics on final chunk
                 if chunk.choices and chunk.choices[0].finish_reason:

@@ -36,12 +36,16 @@ jobs:
       distros: ${{ steps.set-matrix.outputs.distros }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Generate Distribution List
         id: set-matrix
         run: |
-          distros=$(ls src/llama_stack/distributions/*/*build.yaml | awk -F'/' '{print $(NF-1)}' | jq -R -s -c 'split("\n")[:-1]')
+          distros=$(ls -d src/llama_stack/distributions/*/ 2>/dev/null | \
+            awk -F'/' '{print $(NF-1)}' | \
+            grep -v '^__pycache__$' | \
+            grep -v '^ci-tests$' | \
+            jq -R -s -c 'split("\n") | map(select(length > 0))')
           echo "distros=$distros" >> "$GITHUB_OUTPUT"
 
   list-deps:
@@ -55,7 +59,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -79,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -92,7 +96,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -102,4 +106,4 @@ jobs:
           USE_COPY_NOT_MOUNT: "true"
           LLAMA_STACK_DIR: "."
         run: |
-          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/build.yaml
+          uv run llama stack list-deps src/llama_stack/distributions/ci-tests/config.yaml

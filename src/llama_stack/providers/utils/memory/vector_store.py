@@ -17,6 +17,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.inference.prompt_adapter import (
@@ -28,6 +29,7 @@ from llama_stack_api import (
     Api,
     Chunk,
     ChunkMetadata,
+    EmbeddedChunk,
     InterleavedContent,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksResponse,
@@ -133,15 +135,20 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
 
 async def content_from_doc(doc: RAGDocument) -> str:
     if isinstance(doc.content, URL):
-        if doc.content.uri.startswith("data:"):
-            return content_from_data(doc.content.uri)
+        uri = doc.content.uri
+        if uri.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        if uri.startswith("data:"):
+            return content_from_data(uri)
         async with httpx.AsyncClient() as client:
-            r = await client.get(doc.content.uri)
+            r = await client.get(uri)
         if doc.mime_type == "application/pdf":
             return parse_pdf(r.content)
         return r.text
     elif isinstance(doc.content, str):
-        pattern = re.compile("^(https?://|file://|data:)")
+        if doc.content.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        pattern = re.compile("^(https?://|data:)")
         if pattern.match(doc.content):
             if doc.content.startswith("data:"):
                 return content_from_data(doc.content)
@@ -157,7 +164,11 @@ async def content_from_doc(doc: RAGDocument) -> str:
 
 
 def make_overlapped_chunks(
-    document_id: str, text: str, window_len: int, overlap_len: int, metadata: dict[str, Any]
+    document_id: str,
+    text: str,
+    window_len: int,
+    overlap_len: int,
+    metadata: dict[str, Any],
 ) -> list[Chunk]:
     default_tokenizer = "DEFAULT_TIKTOKEN_TOKENIZER"
     tokenizer = Tokenizer.get_instance()
@@ -189,7 +200,6 @@ def make_overlapped_chunks(
             updated_timestamp=int(time.time()),
             chunk_window=chunk_window,
             chunk_tokenizer=default_tokenizer,
-            chunk_embedding_model=None,  # This will be set in `VectorStoreWithIndex.insert_chunks`
             content_token_count=len(toks),
             metadata_token_count=len(metadata_tokens),
         )
@@ -225,7 +235,7 @@ def _validate_embedding(embedding: NDArray, index: int, expected_dimension: int)
 
 class EmbeddingIndex(ABC):
     @abstractmethod
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
+    async def add_chunks(self, embedded_chunks: list[EmbeddedChunk]):
         raise NotImplementedError()
 
     @abstractmethod
@@ -262,38 +272,25 @@ class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Api.inference
+    vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(
         self,
-        chunks: list[Chunk],
+        chunks: list[EmbeddedChunk],
     ) -> None:
-        chunks_to_embed = []
-        for i, c in enumerate(chunks):
-            if c.embedding is None:
-                chunks_to_embed.append(c)
-                if c.chunk_metadata:
-                    c.chunk_metadata.chunk_embedding_model = self.vector_store.embedding_model
-                    c.chunk_metadata.chunk_embedding_dimension = self.vector_store.embedding_dimension
-            else:
-                _validate_embedding(c.embedding, i, self.vector_store.embedding_dimension)
+        # Validate embedding dimensions match the vector store
+        for i, embedded_chunk in enumerate(chunks):
+            _validate_embedding(embedded_chunk.embedding, i, self.vector_store.embedding_dimension)
 
-        if chunks_to_embed:
-            params = OpenAIEmbeddingsRequestWithExtraBody(
-                model=self.vector_store.embedding_model,
-                input=[c.content for c in chunks_to_embed],
-            )
-            resp = await self.inference_api.openai_embeddings(params)
-            for c, data in zip(chunks_to_embed, resp.data, strict=False):
-                c.embedding = data.embedding
-
-        embeddings = np.array([c.embedding for c in chunks], dtype=np.float32)
-        await self.index.add_chunks(chunks, embeddings)
+        await self.index.add_chunks(chunks)
 
     async def query_chunks(
         self,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
     ) -> QueryChunksResponse:
+        config = self.vector_stores_config or VectorStoresConfig()
+
         if params is None:
             params = {}
         k = params.get("max_chunks", 3)
@@ -302,19 +299,25 @@ class VectorStoreWithIndex:
 
         ranker = params.get("ranker")
         if ranker is None:
-            reranker_type = RERANKER_TYPE_RRF
-            reranker_params = {"impact_factor": 60.0}
+            reranker_type = (
+                RERANKER_TYPE_RRF
+                if config.chunk_retrieval_params.default_reranker_strategy == "rrf"
+                else config.chunk_retrieval_params.default_reranker_strategy
+            )
+            reranker_params = {"impact_factor": config.chunk_retrieval_params.rrf_impact_factor}
         else:
-            strategy = ranker.get("strategy", "rrf")
+            strategy = ranker.get("strategy", config.chunk_retrieval_params.default_reranker_strategy)
             if strategy == "weighted":
                 weights = ranker.get("params", {}).get("weights", [0.5, 0.5])
                 reranker_type = RERANKER_TYPE_WEIGHTED
-                reranker_params = {"alpha": weights[0] if len(weights) > 0 else 0.5}
+                reranker_params = {
+                    "alpha": weights[0] if len(weights) > 0 else config.chunk_retrieval_params.weighted_search_alpha
+                }
             elif strategy == "normalized":
                 reranker_type = RERANKER_TYPE_NORMALIZED
             else:
                 reranker_type = RERANKER_TYPE_RRF
-                k_value = ranker.get("params", {}).get("k", 60.0)
+                k_value = ranker.get("params", {}).get("k", config.chunk_retrieval_params.rrf_impact_factor)
                 reranker_params = {"impact_factor": k_value}
 
         query_string = interleaved_content_as_str(query)

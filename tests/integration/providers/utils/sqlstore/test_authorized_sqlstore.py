@@ -184,6 +184,16 @@ async def test_authorized_store_attributes(mock_get_authenticated_user, authoriz
             f"Category missing logic failed: expected 4,5 but got {category_test_ids}"
         )
 
+        # Test a user that has all roles and teams (should generate SQL)
+        # owner_principal = ''
+        # owner_principal = 'super-user'
+        # ((JSON_EXTRACT(access_attributes, '$.roles') LIKE '%"admin"%') OR (JSON_EXTRACT(access_attributes, '$.roles') LIKE '%"user"%'))
+        # ((JSON_EXTRACT(access_attributes, '$.teams') LIKE '%"dev"%') OR (JSON_EXTRACT(access_attributes, '$.teams') LIKE '%"qa"%'))
+        super_user = User("super-user", {"roles": ["admin", "user"], "teams": ["dev", "qa"]})
+        mock_get_authenticated_user.return_value = super_user
+        result = await authorized_store.fetch_all(table_name)
+        assert len(result.data) == 6
+
     finally:
         # Clean up records
         await cleanup_records(authorized_store.sql_store, table_name, ["1", "2", "3", "4", "5", "6"])

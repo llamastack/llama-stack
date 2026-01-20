@@ -32,6 +32,7 @@ def mock_apis():
         "safety_api": AsyncMock(),
         "prompts_api": AsyncMock(),
         "files_api": AsyncMock(),
+        "connectors_api": AsyncMock(),
     }
 
 
@@ -116,10 +117,12 @@ async def test_run_guardrails_no_violation(mock_safety_api):
     result = await run_guardrails(mock_safety_api, text, guardrail_ids)
 
     assert result is None
-    # Verify run_moderation was called with the correct model
+    # Verify run_moderation was called with the correct request object
     mock_safety_api.run_moderation.assert_called_once()
     call_args = mock_safety_api.run_moderation.call_args
-    assert call_args[1]["model"] == "llama-guard-model"
+    request = call_args[0][0]  # First positional argument is the RunModerationRequest
+    assert request.model == "llama-guard-model"
+    assert request.input == text
 
 
 async def test_run_guardrails_with_violation(mock_safety_api):

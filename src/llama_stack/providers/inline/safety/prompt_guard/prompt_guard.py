@@ -4,8 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Any
-
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
@@ -13,8 +11,11 @@ from llama_stack.core.utils.model_utils import model_local_dir
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack_api import (
+    GetShieldRequest,
     ModerationObject,
     OpenAIMessageParam,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
@@ -51,19 +52,14 @@ class PromptGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
     async def unregister_shield(self, identifier: str) -> None:
         pass
 
-    async def run_shield(
-        self,
-        shield_id: str,
-        messages: list[OpenAIMessageParam],
-        params: dict[str, Any],
-    ) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(shield_id)
+    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
         if not shield:
-            raise ValueError(f"Unknown shield {shield_id}")
+            raise ValueError(f"Unknown shield {request.shield_id}")
 
-        return await self.shield.run(messages)
+        return await self.shield.run(request.messages)
 
-    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
+    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
         raise NotImplementedError("run_moderation is not implemented for Prompt Guard")
 
 

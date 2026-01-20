@@ -27,7 +27,7 @@ jobs:
         # container and point 'uv pip install' to the correct path...
     steps:
       - name: Checkout repository
-        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
@@ -44,14 +44,14 @@ jobs:
 
       - name: Print distro dependencies
         run: |
-          uv run --no-sync llama stack list-deps tests/external/build.yaml
+          uv run --no-sync llama stack list-deps tests/external/config.yaml
 
       - name: Build distro from config file
         run: |
           uv venv ci-test
           source ci-test/bin/activate
           uv pip install -e .
-          LLAMA_STACK_LOGGING=all=CRITICAL llama stack list-deps tests/external/build.yaml | xargs -L1 uv pip install
+          LLAMA_STACK_LOGGING=all=CRITICAL llama stack list-deps tests/external/config.yaml | xargs -L1 uv pip install
 
       - name: Start Llama Stack server in background
         if: ${{ matrix.image-type }} == 'venv'
@@ -62,7 +62,7 @@ jobs:
           # Use the virtual environment created by the build step (name comes from build config)
           source ci-test/bin/activate
           uv pip list
-          nohup llama stack run tests/external/run-byoa.yaml > server.log 2>&1 &
+          nohup llama stack run tests/external/config.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |
@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: logs-${{ github.run_id }}-${{ github.run_attempt }}-external-test
           path: |

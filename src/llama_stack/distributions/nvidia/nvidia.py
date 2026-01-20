@@ -81,7 +81,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         template_path=Path(__file__).parent / "doc_template.md",
         providers=providers,
         run_configs={
-            "run.yaml": RunConfigSettings(
+            "config.yaml": RunConfigSettings(
                 provider_overrides={
                     "inference": [inference_provider],
                     "datasetio": [datasetio_provider],

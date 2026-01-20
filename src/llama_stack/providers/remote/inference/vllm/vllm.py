@@ -30,6 +30,9 @@ class VLLMInferenceAdapter(OpenAIMixin):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    # vLLM does not support the stream_options parameter
+    supports_stream_options: bool = False
+
     provider_data_api_key_field: str = "vllm_api_token"
 
     def get_api_key(self) -> str | None:
@@ -46,7 +49,7 @@ class VLLMInferenceAdapter(OpenAIMixin):
     async def initialize(self) -> None:
         if not self.config.base_url:
             raise ValueError(
-                "You must provide a URL in run.yaml (or via the VLLM_URL environment variable) to use vLLM."
+                "You must provide a URL in config.yaml (or via the VLLM_URL environment variable) to use vLLM."
             )
 
     async def health(self) -> HealthResponse:
