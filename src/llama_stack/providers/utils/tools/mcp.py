@@ -469,22 +469,6 @@ async def invoke_mcp_tool(
     # Fallback to original behavior: create a new session for each call
     async with client_wrapper(endpoint, final_headers) as session:
         result = await session.call_tool(tool_name, kwargs)
-<<<<<<< HEAD
-
-        content: list[InterleavedContentItem] = []
-        for item in result.content:
-            if isinstance(item, mcp_types.TextContent):
-                content.append(TextContentItem(text=item.text))
-            elif isinstance(item, mcp_types.ImageContent):
-                content.append(ImageContentItem(image=_URLOrData(data=item.data)))
-            elif isinstance(item, mcp_types.EmbeddedResource):
-                logger.warning(f"EmbeddedResource is not supported: {item}")
-            else:
-                raise ValueError(f"Unknown content type: {type(item)}")
-        return ToolInvocationResult(
-            content=content,
-            error_code=1 if result.isError else 0,
-=======
         return _parse_mcp_result(result)
 
 
@@ -521,5 +505,4 @@ async def get_mcp_server_info(
             version=init_result.serverInfo.version,
             title=init_result.serverInfo.title,
             description=init_result.instructions,
->>>>>>> 41cdb26f (fix: Fix redundant MCP tools/list calls (#4634))
         )
