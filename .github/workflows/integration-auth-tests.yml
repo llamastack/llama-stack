@@ -42,7 +42,7 @@ jobs:
 
       - name: Install minikube
         if: ${{ matrix.auth-provider == 'kubernetes' }}
-        uses: medyagh/setup-minikube@e3c7f79eb1e997eabccc536a6cf318a2b0fe19d9 # v0.0.20
+        uses: medyagh/setup-minikube@e9e035a86bbc3caea26a450bd4dbf9d0c453682e # v0.0.21
 
       - name: Start minikube
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
@@ -74,7 +74,7 @@ jobs:
           run_dir=$(mktemp -d)
           cat <<EOF > $run_dir/config.yaml
           version: '2'
-          image_name: kube
+          distro_name: kube
           apis: []
           providers: {}
           storage:

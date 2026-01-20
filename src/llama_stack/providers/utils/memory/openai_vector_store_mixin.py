@@ -18,6 +18,9 @@ from pydantic import TypeAdapter
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.id_generation import generate_object_id
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.prompt_adapter import (
+    interleaved_content_as_str,
+)
 from llama_stack.providers.utils.memory.vector_store import (
     ChunkForDeletion,
     content_from_data_and_mime_type,
@@ -25,9 +28,12 @@ from llama_stack.providers.utils.memory.vector_store import (
 )
 from llama_stack_api import (
     Chunk,
+    EmbeddedChunk,
     Files,
+    Inference,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIFileObject,
     QueryChunksResponse,
     SearchRankingOptions,
@@ -52,6 +58,10 @@ from llama_stack_api import (
     VectorStoreObject,
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
+)
+from llama_stack_api.files.models import (
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
 )
 from llama_stack_api.internal.kvstore import KVStore
 
@@ -80,10 +90,15 @@ class OpenAIVectorStoreMixin(ABC):
     # to properly initialize the mixin attributes.
     def __init__(
         self,
+        inference_api: Inference,
         files_api: Files | None = None,
         kvstore: KVStore | None = None,
         vector_stores_config: VectorStoresConfig | None = None,
     ):
+        if not inference_api:
+            raise RuntimeError("Inference API is required for vector store operations")
+
+        self.inference_api = inference_api
         self.openai_vector_stores: dict[str, dict[str, Any]] = {}
         self.openai_file_batches: dict[str, dict[str, Any]] = {}
         self.files_api = files_api
@@ -106,6 +121,39 @@ class OpenAIVectorStoreMixin(ABC):
         await self.kvstore.set(key=key, value=json.dumps(store_info))
         # update in-memory cache
         self.openai_vector_stores[store_id] = store_info
+
+    async def _ensure_openai_metadata_exists(self, vector_store: VectorStore, name: str | None = None) -> None:
+        """
+        Ensure OpenAI-compatible metadata exists for a vector store.
+        """
+        if vector_store.identifier not in self.openai_vector_stores:
+            store_info = {
+                "id": vector_store.identifier,
+                "object": "vector_store",
+                "created_at": int(time.time()),
+                "name": name or vector_store.vector_store_name or vector_store.identifier,
+                "usage_bytes": 0,
+                "file_counts": VectorStoreFileCounts(
+                    cancelled=0,
+                    completed=0,
+                    failed=0,
+                    in_progress=0,
+                    total=0,
+                ).model_dump(),
+                "status": "completed",
+                "expires_after": None,
+                "expires_at": None,
+                "last_active_at": int(time.time()),
+                "file_ids": [],
+                "chunking_strategy": None,
+                "metadata": {
+                    "provider_id": vector_store.provider_id,
+                    "provider_vector_store_id": vector_store.provider_resource_id,
+                    "embedding_model": vector_store.embedding_model,
+                    "embedding_dimension": str(vector_store.embedding_dimension),
+                },
+            }
+            await self._save_openai_vector_store(vector_store.identifier, store_info)
 
     async def _load_openai_vector_stores(self) -> dict[str, dict[str, Any]]:
         """Load all vector store metadata from persistent storage."""
@@ -342,7 +390,7 @@ class OpenAIVectorStoreMixin(ABC):
     async def insert_chunks(
         self,
         vector_store_id: str,
-        chunks: list[Chunk],
+        chunks: list[EmbeddedChunk],
         ttl_seconds: int | None = None,
     ) -> None:
         """Insert chunks into a vector database (provider-specific implementation)."""
@@ -446,6 +494,11 @@ class OpenAIVectorStoreMixin(ABC):
             metadata["provider_id"] = provider_id
         if provider_vector_store_id:
             metadata["provider_vector_store_id"] = provider_vector_store_id
+
+        # Add embedding configuration to metadata for file processing
+        metadata["embedding_model"] = embedding_model
+        metadata["embedding_dimension"] = str(embedding_dimension)
+
         store_info["metadata"] = metadata
 
         # Save to persistent storage (provider-specific)
@@ -457,7 +510,13 @@ class OpenAIVectorStoreMixin(ABC):
         # Now that our vector store is created, attach any files that were provided
         file_ids = params.file_ids or []
         tasks = [self.openai_attach_file_to_vector_store(vector_store_id, file_id) for file_id in file_ids]
-        await asyncio.gather(*tasks)
+        # Use return_exceptions=True to handle individual file attachment failures gracefully
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Log any exceptions but don't fail the vector store creation
+        for i, result in enumerate(results):
+            if isinstance(result, Exception):
+                logger.warning(f"Failed to attach file {file_ids[i]} to vector store {vector_store_id}: {result}")
 
         # Get the updated store info and return it
         store_info = self.openai_vector_stores[vector_store_id]
@@ -632,7 +691,10 @@ class OpenAIVectorStoreMixin(ABC):
 
             # Convert response to OpenAI format
             data = []
-            for chunk, score in zip(response.chunks, response.scores, strict=False):
+            for embedded_chunk, score in zip(response.chunks, response.scores, strict=False):
+                # EmbeddedChunk inherits from Chunk, so use it directly
+                chunk = embedded_chunk
+
                 # Apply filters if provided
                 if filters:
                     # Simple metadata filtering
@@ -716,14 +778,14 @@ class OpenAIVectorStoreMixin(ABC):
             raise ValueError(f"Unsupported filter type: {filter_type}")
 
     def _chunk_to_vector_store_content(
-        self, chunk: Chunk, include_embeddings: bool = False, include_metadata: bool = False
+        self, chunk: EmbeddedChunk, include_embeddings: bool = False, include_metadata: bool = False
     ) -> list[VectorStoreContent]:
         def extract_fields() -> dict:
-            """Extract embedding and metadata fields from chunk based on include flags."""
+            """Extract metadata fields from chunk based on include flags."""
             return {
-                "embedding": chunk.embedding if include_embeddings else None,
                 "chunk_metadata": chunk.chunk_metadata if include_metadata else None,
                 "metadata": chunk.metadata if include_metadata else None,
+                "embedding": chunk.embedding if include_embeddings else None,
             }
 
         fields = extract_fields()
@@ -768,6 +830,7 @@ class OpenAIVectorStoreMixin(ABC):
         chunking_strategy = chunking_strategy or VectorStoreChunkingStrategyAuto()
         created_at = int(time.time())
         chunks: list[Chunk] = []
+        embedded_chunks: list[EmbeddedChunk] = []
         file_response: OpenAIFileObject | None = None
 
         vector_store_file_object = VectorStoreFileObject(
@@ -796,14 +859,21 @@ class OpenAIVectorStoreMixin(ABC):
             chunk_overlap_tokens = 400
 
         try:
-            file_response = await self.files_api.openai_retrieve_file(file_id)
+            file_response = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
             mime_type, _ = mimetypes.guess_type(file_response.filename)
-            content_response = await self.files_api.openai_retrieve_file_content(file_id)
+            content_response = await self.files_api.openai_retrieve_file_content(
+                RetrieveFileContentRequest(file_id=file_id)
+            )
 
             content = content_from_data_and_mime_type(content_response.body, mime_type)
 
             chunk_attributes = attributes.copy()
             chunk_attributes["filename"] = file_response.filename
+
+            # Get embedding model info from vector store metadata
+            store_info = self.openai_vector_stores[vector_store_id]
+            embedding_model = store_info["metadata"].get("embedding_model")
+            embedding_dimension = store_info["metadata"].get("embedding_dimension")
 
             chunks = make_overlapped_chunks(
                 file_id,
@@ -819,9 +889,42 @@ class OpenAIVectorStoreMixin(ABC):
                     message="No chunks were generated from the file",
                 )
             else:
+                # Validate embedding model and dimension are available
+                if not embedding_model:
+                    raise RuntimeError(f"Vector store {vector_store_id} is not properly configured for file processing")
+                if not embedding_dimension:
+                    raise RuntimeError(f"Vector store {vector_store_id} is not properly configured for file processing")
+
+                # Generate embeddings for all chunks before insertion
+
+                # Prepare embedding request for all chunks
+                params = OpenAIEmbeddingsRequestWithExtraBody(
+                    model=embedding_model,
+                    input=[interleaved_content_as_str(c.content) for c in chunks],
+                )
+                resp = await self.inference_api.openai_embeddings(params)
+
+                # Create EmbeddedChunk instances from chunks and their embeddings
+                for chunk, data in zip(chunks, resp.data, strict=False):
+                    # Ensure embedding is a list of floats
+                    embedding = data.embedding
+                    if isinstance(embedding, str):
+                        # Handle case where embedding might be returned as a string (shouldn't normally happen)
+                        raise ValueError(f"Received string embedding instead of list: {embedding}")
+                    embedded_chunk = EmbeddedChunk(
+                        content=chunk.content,
+                        chunk_id=chunk.chunk_id,
+                        metadata=chunk.metadata,
+                        chunk_metadata=chunk.chunk_metadata,
+                        embedding=embedding,
+                        embedding_model=embedding_model,
+                        embedding_dimension=len(embedding),
+                    )
+                    embedded_chunks.append(embedded_chunk)
+
                 await self.insert_chunks(
                     vector_store_id=vector_store_id,
-                    chunks=chunks,
+                    chunks=embedded_chunks,
                 )
                 vector_store_file_object.status = "completed"
         except Exception as e:
@@ -837,7 +940,7 @@ class OpenAIVectorStoreMixin(ABC):
         file_info = vector_store_file_object.model_dump(exclude={"last_error"})
         file_info["filename"] = file_response.filename if file_response else ""
 
-        dict_chunks = [c.model_dump() for c in chunks]
+        dict_chunks = [c.model_dump() for c in embedded_chunks]
         await self._save_openai_vector_store_file(vector_store_id, file_id, file_info, dict_chunks)
 
         # Update file_ids and file_counts in vector store metadata
@@ -945,7 +1048,7 @@ class OpenAIVectorStoreMixin(ABC):
         # include_embeddings and include_metadata are now function parameters
 
         dict_chunks = await self._load_openai_vector_store_file_contents(vector_store_id, file_id)
-        chunks = [Chunk.model_validate(c) for c in dict_chunks]
+        chunks = [EmbeddedChunk.model_validate(c) for c in dict_chunks]
         content = []
         for chunk in chunks:
             content.extend(

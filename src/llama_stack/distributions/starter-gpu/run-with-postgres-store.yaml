@@ -1,5 +1,5 @@
 version: 2
-image_name: starter-gpu
+distro_name: starter-gpu
 apis:
 - agents
 - batches
@@ -145,6 +145,14 @@ providers:
       persistence:
         namespace: vector_io::weaviate
         backend: kv_default
+  - provider_id: ${env.ELASTICSEARCH_URL:+elasticsearch}
+    provider_type: remote::elasticsearch
+    config:
+      elasticsearch_url: ${env.ELASTICSEARCH_URL:=localhost:9200}
+      elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
+      persistence:
+        namespace: vector_io::elasticsearch
+        backend: kv_default
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs
@@ -264,6 +272,9 @@ storage:
     prompts:
       namespace: prompts
       backend: kv_default
+    connectors:
+      namespace: connectors
+      backend: kv_default
 registered_resources:
   models: []
   shields:
@@ -337,3 +348,4 @@ vector_stores:
     cleanup_interval_seconds: 86400
 safety:
   default_shield_id: llama-guard
+connectors: []

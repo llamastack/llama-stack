@@ -1,5 +1,5 @@
 version: 2
-image_name: oci
+distro_name: oci
 apis:
 - agents
 - datasetio
@@ -119,6 +119,9 @@ storage:
       backend: sql_default
     prompts:
       namespace: prompts
+      backend: kv_default
+    connectors:
+      namespace: connectors
       backend: kv_default
 registered_resources:
   models: []

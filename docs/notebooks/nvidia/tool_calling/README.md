@@ -67,7 +67,7 @@ curl --location "$NEMO_URL/v1/deployment/model-deployments" \
       "config": {
          "model": "meta/llama-3.2-1b-instruct",
          "nim_deployment": {
-            "image_name": "nvcr.io/nim/meta/llama-3.2-1b-instruct",
+            "distro_name": "nvcr.io/nim/meta/llama-3.2-1b-instruct",
             "image_tag": "1.8.1",
             "pvc_size":   "25Gi",
             "gpu":       1,

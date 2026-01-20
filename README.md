@@ -107,6 +107,7 @@ Please checkout our [Documentation](https://llamastack.github.io/docs) page for 
     * A [Zero-to-Hero Guide](https://github.com/meta-llama/llama-stack/tree/main/docs/zero_to_hero_guide) that guide you through all the key components of llama stack with code samples.
 * [Contributing](CONTRIBUTING.md)
     * [Adding a new API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) to walk-through how to add a new API provider.
+    * [Release Process](RELEASE_PROCESS.md) for information about release schedules and versioning.
 
 ### Llama Stack Client SDKs
 
@@ -120,6 +121,13 @@ Check out our client SDKs for connecting to a Llama Stack server in your preferr
 | Kotlin | [llama-stack-client-kotlin](https://github.com/meta-llama/llama-stack-client-kotlin) | [![Maven version](https://img.shields.io/maven-central/v/com.llama.llamastack/llama-stack-client-kotlin)](https://central.sonatype.com/artifact/com.llama.llamastack/llama-stack-client-kotlin)
 
 You can find more example scripts with client SDKs to talk with the Llama Stack server in our [llama-stack-apps](https://github.com/meta-llama/llama-stack-apps/tree/main/examples) repo.
+
+## Community
+
+We hold regular community calls to discuss the latest developments and get feedback from the community.
+
+- Date: every Thursday
+- Time: 09:00 AM PST (check the [Community Event on Discord](https://discord.com/events/1257833999603335178/1413266296748900513) for the latest details)
 
 ## 🌟 GitHub Star History
 ## Star History

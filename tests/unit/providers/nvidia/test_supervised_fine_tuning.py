@@ -10,7 +10,6 @@ from unittest.mock import patch
 
 import pytest
 
-from llama_stack.core.library_client import convert_pydantic_to_json_value
 from llama_stack.providers.remote.post_training.nvidia.post_training import (
     ListNvidiaPostTrainingJobs,
     NvidiaPostTrainingAdapter,
@@ -26,6 +25,11 @@ from llama_stack_api import (
     OptimizerType,
     QATFinetuningConfig,
     TrainingConfig,
+)
+from llama_stack_api.post_training import (
+    CancelTrainingJobRequest,
+    GetTrainingJobStatusRequest,
+    SupervisedFineTuneRequest,
 )
 
 
@@ -138,15 +142,16 @@ async def test_supervised_fine_tune(nvidia_post_training_adapter):
 
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("always")
-        training_job = await adapter.supervised_fine_tune(
+        request = SupervisedFineTuneRequest(
             job_uuid="1234",
             model="meta/llama-3.2-1b-instruct@v1.0.0+L40",
             checkpoint_dir="",
             algorithm_config=algorithm_config,
-            training_config=convert_pydantic_to_json_value(training_config),
+            training_config=training_config,
             logger_config={},
             hyperparam_search_config={},
         )
+        training_job = await adapter.supervised_fine_tune(request)
 
     # check the output is a PostTrainingJob
     assert isinstance(training_job, NvidiaPostTrainingJob)
@@ -195,15 +200,16 @@ async def test_supervised_fine_tune_with_qat(nvidia_post_training_adapter):
 
     # This will raise NotImplementedError since QAT is not supported
     with pytest.raises(NotImplementedError):
-        await adapter.supervised_fine_tune(
+        request = SupervisedFineTuneRequest(
             job_uuid="1234",
             model="meta/llama-3.2-1b-instruct@v1.0.0+L40",
             checkpoint_dir="",
             algorithm_config=algorithm_config,
-            training_config=convert_pydantic_to_json_value(training_config),
+            training_config=training_config,
             logger_config={},
             hyperparam_search_config={},
         )
+        await adapter.supervised_fine_tune(request)
 
 
 async def test_get_training_job_status(nvidia_post_training_adapter):
@@ -234,7 +240,8 @@ async def test_get_training_job_status(nvidia_post_training_adapter):
 
         job_id = "cust-JGTaMbJMdqjJU8WbQdN9Q2"
 
-        status = await adapter.get_training_job_status(job_uuid=job_id)
+        request = GetTrainingJobStatusRequest(job_uuid=job_id)
+        status = await adapter.get_training_job_status(request)
 
         assert isinstance(status, NvidiaPostTrainingJobStatusResponse)
         assert status.status.value == expected_status
@@ -312,7 +319,8 @@ async def test_cancel_training_job(nvidia_post_training_adapter):
     mock_make_request.return_value = {}  # Empty response for successful cancellation
     job_id = "cust-JGTaMbJMdqjJU8WbQdN9Q2"
 
-    result = await adapter.cancel_training_job(job_uuid=job_id)
+    request = CancelTrainingJobRequest(job_uuid=job_id)
+    result = await adapter.cancel_training_job(request)
 
     assert result is None
 

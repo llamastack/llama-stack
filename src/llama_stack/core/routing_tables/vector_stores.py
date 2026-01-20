@@ -13,7 +13,7 @@ from llama_stack.log import get_logger
 
 # Removed VectorStores import to avoid exposing public API
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     InterleavedContent,
     ModelNotFoundError,
     ModelType,
@@ -55,6 +55,10 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
 
     # Internal methods only - no public API exposure
 
+    async def list_vector_stores(self) -> list[VectorStoreWithOwner]:
+        """List all registered vector stores."""
+        return await self.get_all_with_type(ResourceType.vector_store.value)
+
     async def register_vector_store(
         self,
         vector_store_id: str,
@@ -94,7 +98,7 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
     async def insert_chunks(
         self,
         vector_store_id: str,
-        chunks: list[Chunk],
+        chunks: list[EmbeddedChunk],
         ttl_seconds: int | None = None,
     ) -> None:
         await self.assert_action_allowed("update", "vector_store", vector_store_id)

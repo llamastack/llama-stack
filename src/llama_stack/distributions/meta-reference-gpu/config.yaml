@@ -1,5 +1,5 @@
 version: 2
-image_name: meta-reference-gpu
+distro_name: meta-reference-gpu
 apis:
 - agents
 - datasetio
@@ -114,6 +114,9 @@ storage:
       backend: sql_default
     prompts:
       namespace: prompts
+      backend: kv_default
+    connectors:
+      namespace: connectors
       backend: kv_default
 registered_resources:
   models:

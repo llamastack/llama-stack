@@ -19,14 +19,21 @@ from llama_stack.core.datatypes import (
 )
 from llama_stack.core.stack import validate_safety_config, validate_vector_stores_config
 from llama_stack.core.storage.datatypes import ServerStoresConfig, StorageConfig
-from llama_stack_api import Api, ListModelsResponse, ListShieldsResponse, Model, ModelType, Shield
+from llama_stack_api import (
+    Api,
+    ListModelsResponse,
+    ListShieldsResponse,
+    Model,
+    ModelType,
+    Shield,
+)
 
 
 class TestVectorStoresValidation:
     async def test_validate_missing_model(self):
         """Test validation fails when model not found."""
         run_config = StackConfig(
-            image_name="test",
+            distro_name="test",
             providers={},
             storage=StorageConfig(
                 backends={},
@@ -54,7 +61,7 @@ class TestVectorStoresValidation:
     async def test_validate_success(self):
         """Test validation passes with valid model."""
         run_config = StackConfig(
-            image_name="test",
+            distro_name="test",
             providers={},
             storage=StorageConfig(
                 backends={},

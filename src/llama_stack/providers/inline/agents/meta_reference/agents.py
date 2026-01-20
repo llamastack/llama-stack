@@ -11,6 +11,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack_api import (
     Agents,
+    Connectors,
     Conversations,
     Files,
     Inference,
@@ -50,6 +51,7 @@ class MetaReferenceAgentsImpl(Agents):
         conversations_api: Conversations,
         prompts_api: Prompts,
         files_api: Files,
+        connectors_api: Connectors,
         policy: list[AccessRule],
     ):
         self.config = config
@@ -64,6 +66,7 @@ class MetaReferenceAgentsImpl(Agents):
         self.in_memory_store = InmemoryKVStoreImpl()
         self.openai_responses_impl: OpenAIResponsesImpl | None = None
         self.policy = policy
+        self.connectors_api = connectors_api
 
     async def initialize(self) -> None:
         self.persistence_store = await kvstore_impl(self.config.persistence.agent_state)
@@ -80,6 +83,7 @@ class MetaReferenceAgentsImpl(Agents):
             prompts_api=self.prompts_api,
             files_api=self.files_api,
             vector_stores_config=self.config.vector_stores_config,
+            connectors_api=self.connectors_api,
         )
 
     async def shutdown(self) -> None:

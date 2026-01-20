@@ -22,9 +22,10 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
+from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     Files,
     Inference,
     InterleavedContent,
@@ -57,20 +58,19 @@ class WeaviateIndex(EmbeddingIndex):
     async def initialize(self):
         pass
 
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
 
         data_objects = []
-        for chunk, embedding in zip(chunks, embeddings, strict=False):
+        for chunk in chunks:
             data_objects.append(
                 wvc.data.DataObject(
                     properties={
                         "chunk_id": chunk.chunk_id,
                         "chunk_content": chunk.model_dump_json(),
                     },
-                    vector=embedding.tolist(),
+                    vector=chunk.embedding,  # Already a list[float]
                 )
             )
 
@@ -116,7 +116,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunk_json = doc.properties["chunk_content"]
             try:
                 chunk_dict = json.loads(chunk_json)
-                chunk = Chunk(**chunk_dict)
+                chunk = load_embedded_chunk_with_backward_compat(chunk_dict)
             except Exception:
                 log.exception(f"Failed to parse document: {chunk_json}")
                 continue
@@ -176,7 +176,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunk_json = doc.properties["chunk_content"]
             try:
                 chunk_dict = json.loads(chunk_json)
-                chunk = Chunk(**chunk_dict)
+                chunk = load_embedded_chunk_with_backward_compat(chunk_dict)
             except Exception:
                 log.exception(f"Failed to parse document: {chunk_json}")
                 continue
@@ -245,7 +245,7 @@ class WeaviateIndex(EmbeddingIndex):
             chunk_json = doc.properties["chunk_content"]
             try:
                 chunk_dict = json.loads(chunk_json)
-                chunk = Chunk(**chunk_dict)
+                chunk = load_embedded_chunk_with_backward_compat(chunk_dict)
             except Exception:
                 log.exception(f"Failed to parse document: {chunk_json}")
                 continue
@@ -263,9 +263,8 @@ class WeaviateIndex(EmbeddingIndex):
 
 class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProviderData, VectorStoresProtocolPrivate):
     def __init__(self, config: WeaviateVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config
-        self.inference_api = inference_api
         self.client_cache = {}
         self.cache = {}
         self.vector_store_table = None
@@ -373,7 +372,9 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
         self.cache[vector_store_id] = index
         return index
 
-    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)

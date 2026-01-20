@@ -17,9 +17,10 @@ from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.chroma import ChromaVectorIOConfig as InlineChromaVectorIOConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 from llama_stack_api import (
-    Chunk,
+    EmbeddedChunk,
     Files,
     Inference,
     InterleavedContent,
@@ -60,10 +61,12 @@ class ChromaIndex(EmbeddingIndex):
     async def initialize(self):
         pass
 
-    async def add_chunks(self, chunks: list[Chunk], embeddings: NDArray):
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
+
+        # Extract embeddings directly from chunks (already list[float])
+        embeddings = [chunk.embedding for chunk in chunks]
 
         ids = [f"{c.metadata.get('document_id', '')}:{c.chunk_id}" for c in chunks]
         await maybe_await(
@@ -84,7 +87,7 @@ class ChromaIndex(EmbeddingIndex):
         for dist, doc in zip(distances, documents, strict=False):
             try:
                 doc = json.loads(doc)
-                chunk = Chunk(**doc)
+                chunk = load_embedded_chunk_with_backward_compat(doc)
             except Exception:
                 log.exception(f"Failed to parse document: {doc}")
                 continue
@@ -139,7 +142,7 @@ class ChromaIndex(EmbeddingIndex):
 
         for dist, doc in zip(distances, documents, strict=False):
             doc_data = json.loads(doc)
-            chunk = Chunk(**doc_data)
+            chunk = load_embedded_chunk_with_backward_compat(doc_data)
 
             score = 1.0 / (1.0 + float(dist)) if dist is not None else 1.0
 
@@ -225,10 +228,9 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         inference_api: Inference,
         files_api: Files | None,
     ) -> None:
-        super().__init__(files_api=files_api, kvstore=None)
+        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         log.info(f"Initializing ChromaVectorIOAdapter with url: {config}")
         self.config = config
-        self.inference_api = inference_api
         self.client = None
         self.cache = {}
         self.vector_store_table = None
@@ -272,7 +274,9 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         await self.cache[vector_store_id].index.delete()
         del self.cache[vector_store_id]
 
-    async def insert_chunks(self, vector_store_id: str, chunks: list[Chunk], ttl_seconds: int | None = None) -> None:
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if index is None:
             raise ValueError(f"Vector DB {vector_store_id} not found in Chroma")
