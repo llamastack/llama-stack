@@ -139,13 +139,6 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
                         else:
                             # Safe to execute - doesn't access environment
                             default_value = field.default_factory()
-                            # HACK ALERT:
-                            # If the default value contains a path that looks like it came from RUNTIME_BASE_DIR,
-                            # replace it with a generic ~/.llama/ path for documentation
-                            if isinstance(default_value, str) and "/.llama/" in default_value:
-                                if ".llama/" in default_value:
-                                    path_part = default_value.split(".llama/")[-1]
-                                    default_value = f"~/.llama/{path_part}"
                     except (OSError, TypeError, AttributeError):
                         # OSError/TypeError: Can't inspect source (built-in, C extension)
                         # AttributeError: Unexpected structure in factory
