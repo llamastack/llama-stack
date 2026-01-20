@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import re
 import time
 import uuid
@@ -573,7 +574,8 @@ class OpenAIResponsesImpl:
                 yield stream_chunk
         finally:
             # Clean up MCP sessions at the end of the request (fix for #4452)
-            await mcp_session_manager.close_all()
+            # Use shield() to prevent cancellation from interrupting cleanup and leaking resources
+            await asyncio.shield(mcp_session_manager.close_all())
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)

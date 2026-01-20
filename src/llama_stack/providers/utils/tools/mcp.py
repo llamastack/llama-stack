@@ -248,6 +248,7 @@ class MCPSessionManager:
         Should be called at the end of a request to clean up resources.
         """
         errors = []
+        session_count = len(self._sessions)
         for key, (session, client_ctx, _) in list(self._sessions.items()):
             try:
                 await session.__aexit__(None, None, None)
@@ -262,7 +263,7 @@ class MCPSessionManager:
 
         self._sessions.clear()
         self._locks.clear()
-        logger.debug(f"Closed {len(self._sessions)} MCP sessions")
+        logger.debug(f"Closed {session_count} MCP sessions")
 
         if errors:
             logger.warning(f"Encountered {len(errors)} errors while closing MCP sessions")
