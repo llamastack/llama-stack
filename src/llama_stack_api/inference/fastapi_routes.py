@@ -14,7 +14,7 @@ all API-related code together.
 import inspect
 import json
 from collections.abc import AsyncIterator
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Body, Depends
 from fastapi.responses import StreamingResponse
@@ -106,7 +106,8 @@ def create_router(impl: Inference) -> APIRouter:
         result = impl.openai_chat_completion(params)
         if params.stream:
             return StreamingResponse(_sse_generator(result), media_type="text/event-stream")
-        return await result
+        # When not streaming, result is a coroutine that returns OpenAIChatCompletion
+        return cast(OpenAIChatCompletion, await result)
 
     @router.get(
         "/chat/completions",
@@ -157,7 +158,8 @@ def create_router(impl: Inference) -> APIRouter:
         result = impl.openai_completion(params)
         if params.stream:
             return StreamingResponse(_sse_generator(result), media_type="text/event-stream")
-        return await result
+        # When not streaming, result is a coroutine that returns OpenAICompletion
+        return cast(OpenAICompletion, await result)
 
     @router.post(
         "/embeddings",
