@@ -5,6 +5,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import inspect
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -120,15 +122,34 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
                 default_value = field.default
                 if field.default_factory is not None:
                     try:
-                        default_value = field.default_factory()
-                        # HACK ALERT:
-                        # If the default value contains a path that looks like it came from RUNTIME_BASE_DIR,
-                        # replace it with a generic ~/.llama/ path for documentation
-                        if isinstance(default_value, str) and "/.llama/" in default_value:
-                            if ".llama/" in default_value:
-                                path_part = default_value.split(".llama/")[-1]
-                                default_value = f"~/.llama/{path_part}"
-                    except Exception:
+                        # Security hack: Don't execute default_factory functions that read from environment variables
+                        # to prevent leaking secrets into generated documentation
+                        source = inspect.getsource(field.default_factory)
+                        # Check if the factory reads from environment variables
+                        if re.search(r"os\.getenv|getenv|environ\[|environ\.get", source):
+                            # Check if there's a fallback default value (2nd arg to getenv)
+                            # Pattern: getenv("VAR_NAME", "fallback_value")
+                            fallback_match = re.search(r'getenv\(["\'][^"\']+["\']\s*,\s*["\']([^"\']+)["\']\)', source)
+                            if fallback_match:
+                                # Has a constant fallback - that's the actual default
+                                default_value = fallback_match.group(1)
+                            else:
+                                # No fallback - environment variable is required, not a default
+                                default_value = ""
+                        else:
+                            # Safe to execute - doesn't access environment
+                            default_value = field.default_factory()
+                            # HACK ALERT:
+                            # If the default value contains a path that looks like it came from RUNTIME_BASE_DIR,
+                            # replace it with a generic ~/.llama/ path for documentation
+                            if isinstance(default_value, str) and "/.llama/" in default_value:
+                                if ".llama/" in default_value:
+                                    path_part = default_value.split(".llama/")[-1]
+                                    default_value = f"~/.llama/{path_part}"
+                    except (OSError, TypeError, AttributeError):
+                        # OSError/TypeError: Can't inspect source (built-in, C extension)
+                        # AttributeError: Unexpected structure in factory
+                        # Play it safe - leave blank since we can't verify it's secure
                         default_value = ""
                 elif field.default is None or field.default is PydanticUndefined:
                     default_value = ""
@@ -147,8 +168,6 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
         if accepts_extra_config:
             config_description = "Additional configuration options that will be forwarded to the underlying provider"
             try:
-                import inspect
-
                 source = inspect.getsource(config_class)
                 lines = source.split("\n")
 
@@ -314,11 +333,9 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
         md_lines.append("")
         md_lines.append("```yaml")
         try:
-            sample_config_func = config_info["sample_config"]
-            import inspect
-
             import yaml
 
+            sample_config_func = config_info["sample_config"]
             if sample_config_func is not None:
                 sig = inspect.signature(sample_config_func)
                 if "__distro_dir__" in sig.parameters:
