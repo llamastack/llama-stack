@@ -42,7 +42,7 @@ class SentenceTransformerEmbeddingMixin:
         params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         # Validate that input contains only text, not token arrays
-        validate_embedding_input_is_text(params.input, "sentence-transformers")
+        validate_embedding_input_is_text(params)
 
         # Convert input to list format if it's a single string
         input_list = [params.input] if isinstance(params.input, str) else params.input

@@ -6,7 +6,7 @@
 
 import pytest
 
-from llama_stack_api import validate_embedding_input_is_text
+from llama_stack_api import OpenAIEmbeddingsRequestWithExtraBody, validate_embedding_input_is_text
 
 
 class TestEmbeddingValidation:
@@ -14,39 +14,44 @@ class TestEmbeddingValidation:
 
     def test_valid_string_input(self):
         """Test that string input is accepted."""
+        params = OpenAIEmbeddingsRequestWithExtraBody(input="hello world", model="test-model")
         # Should not raise
-        validate_embedding_input_is_text("hello world", "test-provider")
+        validate_embedding_input_is_text(params)
 
     def test_valid_list_of_strings_input(self):
         """Test that list of strings is accepted."""
+        params = OpenAIEmbeddingsRequestWithExtraBody(input=["hello", "world"], model="test-model")
         # Should not raise
-        validate_embedding_input_is_text(["hello", "world"], "test-provider")
+        validate_embedding_input_is_text(params)
 
     def test_invalid_list_of_ints_input(self):
         """Test that list of ints (token array) is rejected."""
+        params = OpenAIEmbeddingsRequestWithExtraBody(input=[1, 2, 3], model="test-model")
         with pytest.raises(ValueError) as exc_info:
-            validate_embedding_input_is_text([1, 2, 3], "test-provider")
+            validate_embedding_input_is_text(params)
 
         error_msg = str(exc_info.value)
-        assert "test-provider" in error_msg
+        assert "test-model" in error_msg
         assert "does not support token arrays" in error_msg
 
     def test_invalid_list_of_list_of_ints_input(self):
         """Test that list of list of ints (batch token array) is rejected."""
+        params = OpenAIEmbeddingsRequestWithExtraBody(input=[[1, 2, 3], [4, 5, 6]], model="test-model")
         with pytest.raises(ValueError) as exc_info:
-            validate_embedding_input_is_text([[1, 2, 3], [4, 5, 6]], "test-provider")
+            validate_embedding_input_is_text(params)
 
         error_msg = str(exc_info.value)
-        assert "test-provider" in error_msg
+        assert "test-model" in error_msg
         assert "does not support token arrays" in error_msg
 
-    def test_error_message_includes_provider_name(self):
-        """Test that error message includes the provider name."""
-        provider_names = ["litellm", "sentence-transformers", "together", "gemini", "watsonx"]
+    def test_error_message_includes_model_name(self):
+        """Test that error message includes the model name."""
+        model_names = ["meta-llama/Llama-3.1-8B", "nomic-ai/nomic-embed-text-v1.5", "text-embedding-3-small"]
 
-        for provider in provider_names:
+        for model in model_names:
+            params = OpenAIEmbeddingsRequestWithExtraBody(input=[1, 2, 3], model=model)
             with pytest.raises(ValueError) as exc_info:
-                validate_embedding_input_is_text([1, 2, 3], provider)
+                validate_embedding_input_is_text(params)
 
             error_msg = str(exc_info.value)
-            assert provider in error_msg
+            assert model in error_msg

@@ -148,7 +148,7 @@ class LiteLLMOpenAIMixin(
         params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         # Validate that input contains only text, not token arrays
-        validate_embedding_input_is_text(params.input, "litellm")
+        validate_embedding_input_is_text(params)
 
         if not self.model_store:
             raise ValueError("Model store is not initialized")

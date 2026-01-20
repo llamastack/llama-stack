@@ -149,7 +149,7 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         Override parent method to add watsonx-specific parameters.
         """
         # Validate that input contains only text, not token arrays
-        validate_embedding_input_is_text(params.input, "watsonx")
+        validate_embedding_input_is_text(params)
 
         model_obj = await self.model_store.get_model(params.model)
 

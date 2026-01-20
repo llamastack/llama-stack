@@ -76,7 +76,7 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
          - does not support dimensions param, returns 400 Unrecognized request arguments supplied: dimensions
         """
         # Validate that input contains only text, not token arrays
-        validate_embedding_input_is_text(params.input, "together")
+        validate_embedding_input_is_text(params)
 
         # Together support ticket #13332 -> will not fix
         if params.user is not None:
