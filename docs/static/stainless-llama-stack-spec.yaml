@@ -1131,7 +1131,7 @@ paths:
     post:
       responses:
         '200':
-          description: A moderation object.
+          description: The moderation results for the input.
           content:
             application/json:
               schema:
@@ -1150,11 +1150,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Safety
-      summary: Run Moderation
-      description: |-
-        Create moderation.
-
-        Classifies if text and/or image inputs are potentially harmful.
+      summary: Create Moderation
+      description: Classifies if text inputs are potentially harmful. OpenAI-compatible endpoint.
       operationId: run_moderation_v1_moderations_post
       requestBody:
         content:
@@ -1742,7 +1739,7 @@ paths:
     post:
       responses:
         '200':
-          description: A RunShieldResponse.
+          description: The shield response indicating any violations detected.
           content:
             application/json:
               schema:
@@ -1762,10 +1759,7 @@ paths:
       tags:
       - Safety
       summary: Run Shield
-      description: |-
-        Run shield.
-
-        Run a shield.
+      description: Run a safety shield on messages to check for policy violations.
       operationId: run_shield_v1_safety_run_shield_post
       requestBody:
         content:
@@ -1912,7 +1906,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Scoring
-      summary: Score
+      summary: Score a list of rows.
       description: Score a list of rows.
       operationId: score_v1_scoring_score_post
       requestBody:
@@ -1944,7 +1938,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Scoring
-      summary: Score Batch
+      summary: Score a batch of rows.
       description: Score a batch of rows.
       operationId: score_batch_v1_scoring_score_batch_post
       requestBody:
@@ -6711,45 +6705,53 @@ components:
             type: array
             title: list[string]
           title: string | list[string]
+          description: Input (or inputs) to classify. Can be a single string or an array of strings.
         model:
           anyOf:
           - type: string
           - type: 'null'
+          description: The content moderation model to use. If not specified, the default shield will be used.
       type: object
       required:
       - input
       title: RunModerationRequest
+      description: Request model for running content moderation.
     ModerationObject:
       properties:
         id:
           type: string
           title: Id
+          description: The unique identifier for the moderation request
         model:
           type: string
           title: Model
+          description: The model used to generate the moderation results
         results:
           items:
             $ref: '#/components/schemas/ModerationObjectResults'
           type: array
           title: Results
+          description: A list of moderation result objects
       type: object
       required:
       - id
       - model
       - results
       title: ModerationObject
-      description: A moderation object.
+      description: A moderation object containing the results of content classification.
     ModerationObjectResults:
       properties:
         flagged:
           type: boolean
           title: Flagged
+          description: Whether any of the below categories are flagged
         categories:
           anyOf:
           - additionalProperties:
               type: boolean
             type: object
           - type: 'null'
+          description: A dictionary of the categories, and whether they are flagged or not
         category_applied_input_types:
           anyOf:
           - additionalProperties:
@@ -6758,25 +6760,29 @@ components:
               type: array
             type: object
           - type: 'null'
+          description: A dictionary of the categories along with the input type(s) that the score applies to
         category_scores:
           anyOf:
           - additionalProperties:
               type: number
             type: object
           - type: 'null'
+          description: A dictionary of the categories along with their scores as predicted by model
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          description: A message to convey to the user about the moderation result
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata about the moderation
       type: object
       required:
       - flagged
       title: ModerationObjectResults
-      description: A moderation object.
+      description: A moderation result object containing flagged status and category information.
     Prompt:
       properties:
         prompt:
@@ -7477,9 +7483,14 @@ components:
         server_label:
           type: string
           title: Server Label
+        connector_id:
+          anyOf:
+          - type: string
+          - type: 'null'
         server_url:
-          type: string
-          title: Server Url
+          anyOf:
+          - type: string
+          - type: 'null'
         headers:
           anyOf:
           - additionalProperties: true
@@ -7512,7 +7523,6 @@ components:
       type: object
       required:
       - server_label
-      - server_url
       title: OpenAIResponseInputToolMCP
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     CreateOpenaiResponseRequest:
@@ -9101,7 +9111,9 @@ components:
       properties:
         shield_id:
           type: string
+          minLength: 1
           title: Shield Id
+          description: The identifier of the shield to run
         messages:
           items:
             oneOf:
@@ -9126,16 +9138,13 @@ components:
             title: OpenAIUserMessageParam-Input | ... (5 variants)
           type: array
           title: Messages
-        params:
-          additionalProperties: true
-          type: object
-          title: Params
+          description: The messages to run the shield on
       type: object
       required:
       - shield_id
       - messages
-      - params
       title: RunShieldRequest
+      description: Request model for running a safety shield.
     RunShieldResponse:
       properties:
         violation:
@@ -9143,6 +9152,7 @@ components:
           - $ref: '#/components/schemas/SafetyViolation'
             title: SafetyViolation
           - type: 'null'
+          description: Safety violation detected by the shield, if any
           title: SafetyViolation
       type: object
       title: RunShieldResponse
@@ -9151,14 +9161,17 @@ components:
       properties:
         violation_level:
           $ref: '#/components/schemas/ViolationLevel'
+          description: Severity level of the violation
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          description: Message to convey to the user about the violation
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata including specific violation codes
       type: object
       required:
       - violation_level
@@ -9472,6 +9485,7 @@ components:
             type: object
           type: array
           title: Input Rows
+          description: The rows to score.
         scoring_functions:
           additionalProperties:
             anyOf:
@@ -9493,11 +9507,13 @@ components:
             title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
+          description: The scoring functions to use for the scoring.
       type: object
       required:
       - input_rows
       - scoring_functions
       title: ScoreRequest
+      description: Request model for scoring a list of rows.
     ScoreResponse:
       properties:
         results:
@@ -9505,6 +9521,7 @@ components:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Results
+          description: A map of scoring function name to ScoringResult.
       type: object
       required:
       - results
@@ -9518,10 +9535,12 @@ components:
             type: object
           type: array
           title: Score Rows
+          description: The scoring result for each row. Each row is a map of column name to value.
         aggregated_results:
           additionalProperties: true
           type: object
           title: Aggregated Results
+          description: Map of metric name to aggregated value
       type: object
       required:
       - score_rows
@@ -9533,6 +9552,7 @@ components:
         dataset_id:
           type: string
           title: Dataset Id
+          description: The ID of the dataset to score.
         scoring_functions:
           additionalProperties:
             anyOf:
@@ -9554,26 +9574,31 @@ components:
             title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
+          description: The scoring functions to use for the scoring.
         save_results_dataset:
           type: boolean
           title: Save Results Dataset
+          description: Whether to save the results to a dataset.
           default: false
       type: object
       required:
       - dataset_id
       - scoring_functions
       title: ScoreBatchRequest
+      description: Request model for scoring a batch of rows from a dataset.
     ScoreBatchResponse:
       properties:
         dataset_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: (Optional) The identifier of the dataset that was scored
         results:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Results
+          description: A map of scoring function name to ScoringResult
       type: object
       required:
       - results
@@ -12090,24 +12115,6 @@ components:
       title: Body_upload_file_v1_files_post
     Connector:
       properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Unique identifier for this resource in llama stack
-        provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for this resource in the provider
-        provider_id:
-          type: string
-          title: Provider Id
-          description: ID of the provider that owns this resource
-        type:
-          type: string
-          const: connector
-          title: Type
-          default: connector
         connector_type:
           $ref: '#/components/schemas/ConnectorType'
           default: mcp
@@ -12134,14 +12141,17 @@ components:
           - type: string
           - type: 'null'
           description: Description of the server
+        server_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Version of the server
       type: object
       required:
-      - identifier
-      - provider_id
       - connector_id
       - url
       title: Connector
-      description: A connector resource representing a connector registered in Llama Stack.
+      description: A connector registered in Llama Stack.
     ConnectorType:
       type: string
       enum:
@@ -14179,11 +14189,6 @@ components:
           - type: 'null'
           description: Label of the server
           nullable: true
-        type:
-          const: connector
-          default: connector
-          title: Type
-          type: string
       required:
       - connector_id
       - url
