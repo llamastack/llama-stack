@@ -16,11 +16,13 @@ from openai.types.chat.chat_completion_chunk import (
 )
 
 from llama_stack.core.access_control.access_control import default_policy
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
+from llama_stack.providers.inline.agents.meta_reference.responses.tool_executor import ToolExecutor
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
@@ -48,6 +50,7 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
+    OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolFunction,
     OpenAIResponseInputToolMCP,
     OpenAIResponseInputToolWebSearch,
@@ -62,6 +65,11 @@ from llama_stack_api.openai_responses import (
     WebSearchToolTypes,
 )
 from llama_stack_api.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
+from llama_stack_api.vector_io import (
+    VectorStoreContent,
+    VectorStoreSearchResponse,
+    VectorStoreSearchResponsePage,
+)
 from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
 
 
@@ -1810,3 +1818,88 @@ async def test_mcp_tool_connector_id_resolved_to_server_url(
     assert listings[0].server_label == "my-label"
     assert len(listings[0].tools) == 1
     assert listings[0].tools[0].name == "resolved_tool"
+
+
+async def test_file_search_results_include_chunk_metadata_attributes(mock_vector_io_api):
+    """Test that file_search tool executor preserves chunk metadata attributes."""
+    query = "What is machine learning?"
+    vector_store_id = "test_vector_store"
+
+    # Mock vector_io to return search results with custom attributes
+    mock_vector_io_api.openai_search_vector_store.return_value = VectorStoreSearchResponsePage(
+        search_query=[query],
+        data=[
+            VectorStoreSearchResponse(
+                file_id="doc-123",
+                filename="ml-intro.md",
+                content=[VectorStoreContent(type="text", text="Machine learning is a subset of AI")],
+                score=0.95,
+                attributes={
+                    "document_id": "ml-intro",
+                    "source_url": "https://example.com/ml-guide",
+                    "title": "Introduction to ML",
+                    "author": "John Doe",
+                    "year": "2024",
+                },
+            ),
+            VectorStoreSearchResponse(
+                file_id="doc-456",
+                filename="dl-basics.md",
+                content=[VectorStoreContent(type="text", text="Deep learning uses neural networks")],
+                score=0.85,
+                attributes={
+                    "document_id": "dl-basics",
+                    "source_url": "https://example.com/dl-guide",
+                    "title": "Deep Learning Basics",
+                    "category": "tutorial",
+                },
+            ),
+        ],
+    )
+
+    # Create tool executor with mock vector_io
+    tool_executor = ToolExecutor(
+        tool_groups_api=None,  # type: ignore
+        tool_runtime_api=None,  # type: ignore
+        vector_io_api=mock_vector_io_api,
+        vector_stores_config=VectorStoresConfig(),
+        mcp_session_manager=None,
+    )
+
+    # Execute the file search
+    file_search_tool = OpenAIResponseInputToolFileSearch(vector_store_ids=[vector_store_id])
+    result = await tool_executor._execute_knowledge_search_via_vector_store(
+        query=query,
+        response_file_search_tool=file_search_tool,
+    )
+
+    mock_vector_io_api.openai_search_vector_store.assert_called_once()
+
+    # Verify the result metadata includes chunk attributes
+    assert result.metadata is not None
+    assert "attributes" in result.metadata
+    attributes = result.metadata["attributes"]
+    assert len(attributes) == 2
+
+    # Verify first result has all expected attributes
+    attrs1 = attributes[0]
+    assert attrs1["document_id"] == "ml-intro"
+    assert attrs1["source_url"] == "https://example.com/ml-guide"
+    assert attrs1["title"] == "Introduction to ML"
+    assert attrs1["author"] == "John Doe"
+    assert attrs1["year"] == "2024"
+
+    # Verify second result has its attributes
+    attrs2 = attributes[1]
+    assert attrs2["document_id"] == "dl-basics"
+    assert attrs2["source_url"] == "https://example.com/dl-guide"
+    assert attrs2["title"] == "Deep Learning Basics"
+    assert attrs2["category"] == "tutorial"
+
+    # Verify scores and document_ids are also present
+    assert result.metadata["scores"] == [0.95, 0.85]
+    assert result.metadata["document_ids"] == ["doc-123", "doc-456"]
+    assert result.metadata["chunks"] == [
+        "Machine learning is a subset of AI",
+        "Deep learning uses neural networks",
+    ]
