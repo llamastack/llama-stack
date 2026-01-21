@@ -19,6 +19,7 @@ from llama_stack.models.llama.datatypes import (
     ToolCall,
     ToolDefinition,
 )
+from llama_stack_api import OpenAIFinishReason
 
 logger = get_logger(name=__name__, category="providers::utils")
 
@@ -38,7 +39,7 @@ class OpenAICompatLogprobs(BaseModel):
 
 
 class OpenAICompatCompletionChoice(BaseModel):
-    finish_reason: str | None = None
+    finish_reason: OpenAIFinishReason | None = None
     text: str | None = None
     delta: OpenAICompatCompletionChoiceDelta | None = None
     logprobs: OpenAICompatLogprobs | None = None

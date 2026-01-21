@@ -206,3 +206,50 @@ def webmethod(
         return func
 
     return wrap
+
+
+def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
+    """Remove null type from anyOf and optionally add nullable flag.
+
+    Converts Pydantic's default OpenAPI 3.1 style:
+        anyOf: [{type: X, enum: [...]}, {type: null}]
+
+    To flattened format:
+        type: X
+        enum: [...]
+        nullable: true  # only if add_nullable=True
+
+    Args:
+        schema: The JSON schema dict to modify in-place
+        add_nullable: If True, adds 'nullable: true' when null was present.
+                      Use True for OpenAPI 3.0 compatibility with OpenAI's spec.
+    """
+    # Handle anyOf format: anyOf: [{type: string, enum: [...]}, {type: null}]
+    if "anyOf" in schema:
+        non_null = [s for s in schema["anyOf"] if s.get("type") != "null"]
+        has_null = len(non_null) < len(schema["anyOf"])
+
+        if len(non_null) == 1:
+            # Flatten to single type
+            only_schema = non_null[0]
+            schema.pop("anyOf")
+            schema.update(only_schema)
+            if has_null and add_nullable:
+                schema["nullable"] = True
+
+    # Handle OpenAPI 3.1 format: type: ['string', 'null']
+    elif isinstance(schema.get("type"), list) and "null" in schema["type"]:
+        has_null = "null" in schema["type"]
+        schema["type"].remove("null")
+        if len(schema["type"]) == 1:
+            schema["type"] = schema["type"][0]
+        if has_null and add_nullable:
+            schema["nullable"] = True
+
+
+def nullable_openai_style(schema: dict) -> None:
+    """Shorthand for remove_null_from_anyof with add_nullable=True.
+
+    Use this for fields that need OpenAPI 3.0 nullable style to match OpenAI's spec.
+    """
+    remove_null_from_anyof(schema, add_nullable=True)

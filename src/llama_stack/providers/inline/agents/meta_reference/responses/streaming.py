@@ -32,6 +32,7 @@ from llama_stack_api import (
     OpenAIChatCompletionToolChoiceFunctionTool,
     OpenAIChoice,
     OpenAIChoiceLogprobs,
+    OpenAIFinishReason,
     OpenAIMessageParam,
     OpenAIResponseContentPartOutputText,
     OpenAIResponseContentPartReasoningText,
@@ -666,7 +667,7 @@ class StreamingResponseOrchestrator:
         chat_response_tool_calls: dict[int, OpenAIChatCompletionToolCall] = {}
         chunk_created = 0
         chunk_model = ""
-        chunk_finish_reason = ""
+        chunk_finish_reason: OpenAIFinishReason = "stop"
         chat_response_logprobs = []
 
         # Create a placeholder message item for delta events
