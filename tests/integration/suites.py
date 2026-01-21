@@ -204,4 +204,9 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         roots=["tests/integration/inference/test_vision_inference.py"],
         default_setup="ollama-vision",
     ),
+    "reasoning": Suite(
+        name="reasoning",
+        roots=["tests/integration/responses/test_reasoning.py"],
+        default_setup="vllm",
+    ),
 }
