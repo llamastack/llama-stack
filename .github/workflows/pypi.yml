@@ -118,6 +118,11 @@ jobs:
                 source .venv/bin/activate
                 uv pip install dist-api/*.whl dist-stack/*.whl
 
+            - name: List Wheel Contents
+              run: |
+                source .venv/bin/activate
+                python -m zipfile -l dist-api/*.whl
+
             - name: Verify Llama Stack package
               run: |
                 source .venv/bin/activate
