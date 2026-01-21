@@ -17,7 +17,6 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | Test Llama Stack Build | [providers-build.yml](providers-build.yml) | Test llama stack build |
 | Test llama stack list-deps | [providers-list-deps.yml](providers-list-deps.yml) | Test llama stack list-deps |
 | Build, test, and upload PyPI package | [pypi.yml](pypi.yml) | Build, test, and upload PyPI package |
-| Python Package Build Test | [python-build-test.yml](python-build-test.yml) | Test building the llama-stack PyPI project |
 | Integration Tests (Record) | [record-integration-tests.yml](record-integration-tests.yml) | Run the integration test suite from tests/integration |
 | Check semantic PR titles | [semantic-pr.yml](semantic-pr.yml) | Ensure that PR titles follow the conventional commit spec |
 | Stainless SDK Builds | [stainless-builds.yml](stainless-builds.yml) | Build Stainless SDK from OpenAPI spec changes |
