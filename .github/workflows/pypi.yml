@@ -14,6 +14,9 @@ on:
     release:
         types:
             - published
+    schedule:
+        # Nightly at midnight UTC - for test.pypi.org publishing
+        - cron: '0 0 * * *'
 
 env:
     LC_ALL: en_US.UTF-8
@@ -133,7 +136,7 @@ jobs:
 
     # push to Test PyPI on
     # - a new GitHub release is published
-    # - a PR is merged into main branch
+    # - nightly schedule (to be friendly to test.pypi.org infra)
     # Note: llama-stack-api must be published first since llama-stack depends on it
     publish-test-pypi:
         name: Publish ${{ matrix.package }} to test.pypi.org
@@ -141,7 +144,7 @@ jobs:
         if: |
             github.repository_owner == 'llamastack' && (
                 github.event.action == 'published' ||
-                (github.event_name == 'push' && github.ref == 'refs/heads/main')
+                github.event_name == 'schedule'
             )
         permissions:
             contents: read
