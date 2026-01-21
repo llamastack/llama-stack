@@ -153,7 +153,8 @@ If your pull request modifies or extends the Llama Stack API, you must include a
 
 Your Test Plan should include:
 
-1. **A testing script**: Provide a script (Python, curl commands, or similar) that demonstrates your API changes in action. The script should be self-contained and easy to run.
+1. **A testing script**: Provide a script (Python, curl commands, or similar attached or pasted into the PR description) that demonstrates your API changes in action. The script should be self-contained and
+   easy to run. Do not commit the script to the repository.
 
 2. **Execution output**: Include the actual output from running your test script. This proves your implementation works and gives reviewers a clear picture of the expected behavior.
 
