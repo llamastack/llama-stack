@@ -452,51 +452,81 @@ in a vector database.
 Create a file `rag_agent.py` and add the following code:
 
 ```python
+import uuid, requests
+from io import BytesIO
+
 from llama_stack_client import LlamaStackClient
 from llama_stack_client import Agent, AgentEventLogger
-from llama_stack_client.types import Document
-import uuid
 
 client = LlamaStackClient(base_url="http://localhost:8321")
 
-# Create a vector database instance
+# Get model to generate embeddings from text
 embed_lm = next(
     m for m in client.models.list()
     if m.custom_metadata and m.custom_metadata.get("model_type") == "embedding"
 )
-embedding_model = embed_lm.id
-vector_db_id = f"v{uuid.uuid4().hex}"
-# The VectorDB API is deprecated; the server now returns its own authoritative ID.
-# We capture the correct ID from the response's .identifier attribute.
-vector_db_id = client.vector_dbs.register(
-    vector_db_id=vector_db_id,
-    embedding_model=embedding_model,
-).identifier
 
-# Create Documents
+# Create vector store using documentations below
 urls = [
-    "memory_optimizations.rst",
-    "chat.rst",
-    "llama3.rst",
-    "qat_finetune.rst",
-    "lora_finetune.rst",
-]
-documents = [
-    Document(
-        document_id=f"num-{i}",
-        content=f"https://raw.githubusercontent.com/pytorch/torchtune/main/docs/source/tutorials/{url}",
-        mime_type="text/plain",
-        metadata={},
-    )
-    for i, url in enumerate(urls)
+"memory_optimizations.rst",
+"chat.rst",
+"llama3.rst",
+"qat_finetune.rst",
+"lora_finetune.rst",
 ]
 
-# Insert documents
-client.tool_runtime.rag_tool.insert(
-    documents=documents,
-    vector_db_id=vector_db_id,
-    chunk_size_in_tokens=512,
+docs = []
+for url in urls:
+    source = f"https://raw.githubusercontent.com/pytorch/torchtune/main/docs/source/tutorials/{url}"
+    r = requests.get(source)
+    docs.append(
+        (
+            r.text,
+            {"title": source}
+        )
+    )
+
+file_ids = []
+for content, metadata in docs:
+  with BytesIO(content.encode()) as file_buffer:
+      file_buffer.name = metadata['title']
+      create_file_response = client.files.create(file=file_buffer, purpose="assistants")
+      print(create_file_response)
+      file_ids.append(create_file_response.id)
+
+
+# Create vector store with those files
+vector_store = client.vector_stores.create(
+  name="torchtune_docs",
+  # file_ids=file_ids,
+  file_ids=file_ids,
+  extra_body={
+    "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+    "embedding_dimension": 768,
+    "provider_id": "faiss"
+  },
+  # Not yet implemented... defaults to using `auto`
+  chunking_strategy={
+      "type": "static",
+      "static": {
+          "chunk_overlap_tokens": 50,
+          "max_chunk_size_tokens": 200
+      }
+  }
 )
+
+# Let's test a semantic search to find some relavant docs to some query
+search_response = client.vector_stores.search(
+  vector_store_id=vector_store.id,
+  query="What does checkpointing activation mean ?",
+  max_num_results=2
+)
+
+for result in search_response.data:
+  content = result.content[0].text
+  print("## ", "-"*100, " ##")
+  print(content)
+
 
 # Get the model being served
 llm = next(
@@ -505,8 +535,11 @@ llm = next(
     if m.custom_metadata
     and m.custom_metadata.get("model_type") == "llm"
     and m.custom_metadata.get("provider_id") == "ollama"
+    and "llama3.1" in m.id
 )
-model = llm.id
+model = llm.id # used llama3.1:8b
+
+print(model)
 
 # Create the RAG agent
 rag_agent = Agent(
@@ -515,8 +548,8 @@ rag_agent = Agent(
     instructions="You are a helpful assistant. Use the RAG tool to answer questions as needed.",
     tools=[
         {
-            "name": "builtin::rag/knowledge_search",
-            "args": {"vector_db_ids": [vector_db_id]},
+            "type": "file_search",
+            "vector_store_ids": [vector_store.id],  # Use the actual ID, not the name
         }
     ],
 )
@@ -528,10 +561,11 @@ turns = ["what is torchtune", "tell me about dora"]
 for t in turns:
     print("user>", t)
     stream = rag_agent.create_turn(
-        messages=[{"role": "user", "content": t}], session_id=session_id, stream=True
+        messages=[{"role": "user", "content": t}],
+        session_id=session_id, stream=True
     )
-    for event in AgentEventLogger().log(stream):
-        event.print()
+    for log in AgentEventLogger().log(stream):
+        print(log, end="")
 ```
 #### ii. Run the Script
 Let's run the script using `uv`
