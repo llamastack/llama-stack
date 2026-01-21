@@ -59,24 +59,24 @@ jobs:
             - name: Install uv
               uses: astral-sh/setup-uv@6b9c6063abd6010835644d4c2e1bef4cf5cd0fca # v6.0.1
 
+            - name: Install build dependencies
+              run: uv pip install --system setuptools wheel
+
             - name: Build package
-              run: uv build --out-dir dist
+              run: uv build --out-dir dist --no-build-isolation
               working-directory: ${{ matrix.path }}
 
             - name: Install validation tools
               run: uv pip install --system twine check-wheel-contents
 
             - name: Check wheel contents
-              run: check-wheel-contents dist/*.whl
-              working-directory: ${{ matrix.path }}
+              run: check-wheel-contents ${{ matrix.path }}/dist/*.whl
 
             - name: Validate package with twine
-              run: twine check dist/*
-              working-directory: ${{ matrix.path }}
+              run: twine check ${{ matrix.path }}/dist/*
 
             - name: List dist contents
-              run: ls -la dist/
-              working-directory: ${{ matrix.path }}
+              run: ls -la ${{ matrix.path }}/dist/
 
             - name: Upload artifacts
               uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
