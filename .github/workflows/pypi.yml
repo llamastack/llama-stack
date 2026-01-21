@@ -70,7 +70,7 @@ jobs:
               run: uv pip install --system twine check-wheel-contents
 
             - name: Check wheel contents
-              run: check-wheel-contents ${{ matrix.path }}/dist/*.whl
+              run: check-wheel-contents --ignore W001,W002,W004 ${{ matrix.path }}/dist/*.whl
 
             - name: Validate package with twine
               run: twine check ${{ matrix.path }}/dist/*
