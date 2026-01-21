@@ -16,8 +16,8 @@ AWS S3-based file storage provider for scalable cloud file management with metad
 |-------|------|----------|---------|-------------|
 | `bucket_name` | `str` | No |  | S3 bucket name to store files |
 | `region` | `str` | No | us-east-1 | AWS region where the bucket is located |
-| `aws_access_key_id` | `str \| None` | No |  | AWS access key ID (optional if using IAM roles) |
-| `aws_secret_access_key` | `str \| None` | No |  | AWS secret access key (optional if using IAM roles) |
+| `aws_access_key_id` | `SecretStr \| None` | No |  | AWS access key ID (optional if using IAM roles) |
+| `aws_secret_access_key` | `SecretStr \| None` | No |  | AWS secret access key (optional if using IAM roles) |
 | `endpoint_url` | `str \| None` | No |  | Custom S3 endpoint URL (for MinIO, LocalStack, etc.) |
 | `auto_create_bucket` | `bool` | No | False | Automatically create the S3 bucket if it doesn't exist |
 | `metadata_store` | `SqlStoreReference` | No |  | SQL store configuration for file metadata |
