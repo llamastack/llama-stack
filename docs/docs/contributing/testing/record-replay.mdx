@@ -241,3 +241,69 @@ Loose hashing (normalizing whitespace, rounding floats) seems convenient but hid
 - **Hybrid** - Best of both worlds for different use cases
 
 This system provides reliable, fast testing against real AI APIs while maintaining the ability to debug issues when they arise.
+
+## Provider-Specific: AWS Bedrock
+
+Bedrock integration tests use the record/replay mechanism. Tests run against pre-recorded API responses in CI (replay mode), eliminating the need for AWS credentials.
+
+### Prerequisites
+
+1. **AWS Account** with access to Amazon Bedrock
+2. **Model Access**: Request access to `openai.gpt-oss-20b-1:0` in us-west-2 region via AWS Console
+3. **AWS CLI** configured with valid credentials
+
+### Generate Bearer Token
+
+Bedrock provides short-term API keys via the AWS Console (expires in 12 hours):
+
+1. Go to [Amazon Bedrock Console](https://console.aws.amazon.com/bedrock/) (ensure you're in **us-west-2** region)
+2. In the left sidebar under **Discover**, click **API keys**
+3. Click **Generate short-term API keys**
+4. Copy the generated API key
+
+```bash
+export AWS_BEARER_TOKEN_BEDROCK=bedrock-api-key-YmVkcm9jay5hbWF6b25hd3MuY29...
+export AWS_DEFAULT_REGION=us-west-2
+```
+
+### Stack Configuration
+
+Use `ci-tests::config.yaml` for Bedrock tests. This config pre-registers the Bedrock model and provider, enabling replay mode without additional setup.
+
+### Recording Bedrock Tests
+
+Record the three test functions (which generate 6 parametrized tests):
+
+```bash
+uv run pytest -v -s \
+  tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming \
+  tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming \
+  tests/integration/inference/test_openai_completion.py::test_inference_store \
+  --setup=bedrock \
+  --stack-config=ci-tests::config.yaml \
+  --inference-mode=record \
+  -k "client_with_models"
+```
+
+### Verifying Replay
+
+```bash
+# Test without credentials (replay mode)
+unset AWS_BEARER_TOKEN_BEDROCK
+
+uv run pytest -v -s \
+  tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming \
+  --setup=bedrock \
+  --stack-config=ci-tests::config.yaml \
+  --inference-mode=replay \
+  -k "client_with_models"
+```
+
+### Bedrock API Limitations
+
+| Feature | Supported | Notes |
+|---------|-----------|-------|
+| `/v1/chat/completions` | Yes | Both streaming and non-streaming |
+| `/v1/completions` | No | Not supported by Bedrock OpenAI API |
+| `/v1/embeddings` | No | Use a different embedding provider |
+| Tool calling | No | Bedrock's endpoint doesn't support `tools` parameter |

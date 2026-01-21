@@ -28,6 +28,7 @@ from openai import OpenAI
 from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.core.stack import run_config_from_adhoc_config_spec
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.env import get_env_or_fail
 
 DEFAULT_PORT = 8321
@@ -317,6 +318,9 @@ def instantiate_llama_stack_client(session):
         with open(run_config_file.name, "w") as f:
             yaml.dump(run_config.model_dump(mode="json"), f)
         config = run_config_file.name
+    elif "::" in config:
+        # Handle distro::config.yaml format (e.g., ci-tests::run.yaml)
+        config = str(resolve_config_or_distro(config))
 
     client = LlamaStackAsLibraryClient(
         config,

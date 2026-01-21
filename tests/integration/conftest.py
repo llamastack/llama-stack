@@ -369,7 +369,9 @@ def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
         return False
 
     for r in roots:
-        rp = (Path(str(config.rootpath)) / r).resolve()
+        # Handle pytest node IDs like "path/to/file.py::test_function"
+        file_path = r.split("::")[0] if "::" in r else r
+        rp = (Path(str(config.rootpath)) / file_path).resolve()
         if rp.is_file():
             # Allow the exact file and any ancestor directories so pytest can walk into it.
             if p == rp:
@@ -381,6 +383,57 @@ def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
             if p.is_relative_to(rp):
                 return False
     return True
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Filter collected tests to only those matching suite roots with ::test_function specifiers."""
+    suite = config.getoption("--suite")
+    if not suite:
+        return
+
+    sobj = SUITE_DEFINITIONS.get(suite)
+    roots: list[str] = sobj.get("roots", []) if isinstance(sobj, dict) else getattr(sobj, "roots", [])
+    if not roots:
+        return
+
+    # Check if any roots have ::test_function specifiers
+    test_specifiers = [r for r in roots if "::" in r]
+    if not test_specifiers:
+        return  # No filtering needed for directory/file-only roots
+
+    # Build set of allowed (file, test_function) tuples
+    allowed_tests: set[tuple[str, str]] = set()
+    for r in test_specifiers:
+        file_path, test_name = r.split("::", 1)
+        allowed_tests.add((file_path, test_name))
+
+    allowed_roots: list[Path] = []
+    for r in roots:
+        if "::" not in r:
+            allowed_roots.append((config.rootpath / r).resolve())
+
+    # Filter items to only those matching the allowed tests
+    selected = []
+    for item in items:
+        # Get the file path relative to rootdir
+        rel_path = str(Path(item.fspath).relative_to(config.rootpath))
+        # Get the test function name (without parametrization)
+        test_name = item.originalname if hasattr(item, "originalname") else item.name.split("[")[0]
+
+        if (rel_path, test_name) in allowed_tests:
+            selected.append(item)
+            continue
+
+        item_path = Path(item.fspath).resolve()
+        for root in allowed_roots:
+            if root.is_file() and item_path == root:
+                selected.append(item)
+                break
+            elif root.is_dir() and item_path.is_relative_to(root):
+                selected.append(item)
+                break
+
+    items[:] = selected
 
 
 def get_vector_io_provider_ids(client):

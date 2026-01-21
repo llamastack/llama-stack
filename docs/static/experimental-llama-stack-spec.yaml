@@ -6042,10 +6042,12 @@ components:
             $ref: '#/components/schemas/ScoringFn'
           type: array
           title: Data
+          description: List of scoring function objects.
       type: object
       required:
       - data
       title: ListScoringFunctionsResponse
+      description: Response containing a list of scoring function objects.
     ScoreRequest:
       properties:
         input_rows:
@@ -8193,6 +8195,86 @@ components:
       - $ref: '#/components/schemas/CompletionInputType'
         title: CompletionInputType
       title: StringType | ... (9 variants)
+    RegisterScoringFunctionRequest:
+      properties:
+        scoring_fn_id:
+          type: string
+          title: Scoring Fn Id
+          description: The ID of the scoring function to register.
+        description:
+          type: string
+          title: Description
+          description: The description of the scoring function.
+        return_type:
+          oneOf:
+          - $ref: '#/components/schemas/StringType'
+            title: StringType
+          - $ref: '#/components/schemas/NumberType'
+            title: NumberType
+          - $ref: '#/components/schemas/BooleanType'
+            title: BooleanType
+          - $ref: '#/components/schemas/ArrayType'
+            title: ArrayType
+          - $ref: '#/components/schemas/ObjectType'
+            title: ObjectType
+          - $ref: '#/components/schemas/JsonType'
+            title: JsonType
+          - $ref: '#/components/schemas/UnionType'
+            title: UnionType
+          - $ref: '#/components/schemas/ChatCompletionInputType'
+            title: ChatCompletionInputType
+          - $ref: '#/components/schemas/CompletionInputType'
+            title: CompletionInputType
+          title: StringType | ... (9 variants)
+          description: The return type of the scoring function.
+          discriminator:
+            propertyName: type
+            mapping:
+              array: '#/components/schemas/ArrayType'
+              boolean: '#/components/schemas/BooleanType'
+              chat_completion_input: '#/components/schemas/ChatCompletionInputType'
+              completion_input: '#/components/schemas/CompletionInputType'
+              json: '#/components/schemas/JsonType'
+              number: '#/components/schemas/NumberType'
+              object: '#/components/schemas/ObjectType'
+              string: '#/components/schemas/StringType'
+              union: '#/components/schemas/UnionType'
+        provider_scoring_fn_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the provider scoring function to use for the scoring function.
+        provider_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the provider to use for the scoring function.
+        params:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
+              title: LLMAsJudgeScoringFnParams
+            - $ref: '#/components/schemas/RegexParserScoringFnParams'
+              title: RegexParserScoringFnParams
+            - $ref: '#/components/schemas/BasicScoringFnParams'
+              title: BasicScoringFnParams
+            discriminator:
+              propertyName: type
+              mapping:
+                basic: '#/components/schemas/BasicScoringFnParams'
+                llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
+                regex_parser: '#/components/schemas/RegexParserScoringFnParams'
+            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
+          - type: 'null'
+          title: Params
+          description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval.
+      type: object
+      required:
+      - scoring_fn_id
+      - description
+      - return_type
+      title: RegisterScoringFunctionRequest
+      description: Request model for registering a scoring function.
     RegisterShieldRequest:
       properties:
         shield_id:
@@ -9598,6 +9680,33 @@ components:
           title: Type
           type: string
       title: DialogType
+      type: object
+    ListScoringFunctionsRequest:
+      description: Request model for listing scoring functions.
+      properties: {}
+      title: ListScoringFunctionsRequest
+      type: object
+    GetScoringFunctionRequest:
+      description: Request model for getting a scoring function.
+      properties:
+        scoring_fn_id:
+          description: The ID of the scoring function to get.
+          title: Scoring Fn Id
+          type: string
+      required:
+      - scoring_fn_id
+      title: GetScoringFunctionRequest
+      type: object
+    UnregisterScoringFunctionRequest:
+      description: Request model for unregistering a scoring function.
+      properties:
+        scoring_fn_id:
+          description: The ID of the scoring function to unregister.
+          title: Scoring Fn Id
+          type: string
+      required:
+      - scoring_fn_id
+      title: UnregisterScoringFunctionRequest
       type: object
     GetShieldRequest:
       description: Request model for getting a shield by identifier.
