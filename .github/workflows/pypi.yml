@@ -70,7 +70,10 @@ jobs:
               run: uv pip install --system twine check-wheel-contents
 
             - name: Check wheel contents
-              run: check-wheel-contents --ignore W001,W002,W004 ${{ matrix.path }}/dist/*.whl
+              # Ignore pre-existing warnings:
+              # W002: Duplicate files - many __init__.py files have identical content
+              # W004: Non-importable paths - distribution dirs use hyphens (e.g., meta-reference-gpu, starter-gpu)
+              run: check-wheel-contents --ignore W002,W004 ${{ matrix.path }}/dist/*.whl
 
             - name: Validate package with twine
               run: twine check ${{ matrix.path }}/dist/*
