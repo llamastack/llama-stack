@@ -117,6 +117,7 @@ class MetaReferenceAgentsImpl(Agents):
         guardrails: list[ResponseGuardrail] | None = None,
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
+        top_logprobs: int | None = None,
     ) -> OpenAIResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         result = await self.openai_responses_impl.create_openai_response(
@@ -124,6 +125,7 @@ class MetaReferenceAgentsImpl(Agents):
             model,
             prompt,
             instructions,
+            parallel_tool_calls,
             previous_response_id,
             conversation,
             store,
@@ -135,9 +137,9 @@ class MetaReferenceAgentsImpl(Agents):
             include,
             max_infer_iters,
             guardrails,
-            parallel_tool_calls,
             max_tool_calls,
             metadata,
+            top_logprobs,
         )
         return result  # type: ignore[no-any-return]
 

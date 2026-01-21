@@ -140,6 +140,7 @@ class StreamingResponseOrchestrator:
         max_tool_calls: int | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        top_logprobs: int | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -160,6 +161,7 @@ class StreamingResponseOrchestrator:
         self.max_tool_calls = max_tool_calls
         self.metadata = metadata
         self.include = include
+        self.top_logprobs = top_logprobs
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -314,6 +316,8 @@ class StreamingResponseOrchestrator:
                     True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
                 )
 
+                top_logprobs_param = self.top_logprobs if logprobs is True else None
+
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
@@ -327,6 +331,7 @@ class StreamingResponseOrchestrator:
                         "include_usage": True,
                     },
                     logprobs=logprobs,
+                    top_logprobs=top_logprobs_param,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

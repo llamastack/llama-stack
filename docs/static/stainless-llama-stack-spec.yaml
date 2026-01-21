@@ -7711,6 +7711,10 @@ components:
               type: string
             type: object
           - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
+          - type: 'null'
       type: object
       required:
       - input
