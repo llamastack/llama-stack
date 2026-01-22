@@ -324,7 +324,10 @@ def test_include_logprobs_with_web_search(client_with_models, text_model_id):
     # Verify we got one built-in tool call and output message has logprobs
     assert len(response.output) >= 2
     assert response.output[0].type == "web_search_call"
-    assert response.output[0].status == "completed"
+    assert response.output[0].status in [
+        "completed",
+        "failed",
+    ]  # avoid requiring the tool to succeed, just that it was called
     message_outputs = [output for output in response.output if output.type == "message"]
     assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
     assert message_outputs[0].content[0].logprobs is not None, (
