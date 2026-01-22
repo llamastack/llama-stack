@@ -3610,6 +3610,7 @@ components:
             - high
             - xhigh
           - type: 'null'
+          title: Reasoning Effort
       additionalProperties: true
       type: object
       required:
@@ -5683,9 +5684,7 @@ components:
         reasoning:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseReasoning'
-            title: OpenAIResponseReasoning
           - type: 'null'
-          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -6077,9 +6076,7 @@ components:
         reasoning:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseReasoning'
-            title: OpenAIResponseReasoning
           - type: 'null'
-          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -6234,9 +6231,7 @@ components:
         reasoning:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseReasoning'
-            title: OpenAIResponseReasoning
           - type: 'null'
-          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -11060,6 +11055,7 @@ components:
             - high
             - xhigh
           - type: 'null'
+          title: Effort
       type: object
       title: OpenAIResponseReasoning
       description: |-
