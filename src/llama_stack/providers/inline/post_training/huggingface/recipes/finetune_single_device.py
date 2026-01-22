@@ -237,7 +237,8 @@ class HFFinetuningSingleDevice:
         # Initialize tokenizer
         logger.info(f"Initializing tokenizer for model: {model}")
         try:
-            tokenizer = AutoTokenizer.from_pretrained(model, **provider_config.model_specific_config)
+            model_specific_config = provider_config.get_model_specific_config(model)
+            tokenizer = AutoTokenizer.from_pretrained(model, **model_specific_config)
 
             # Set pad token to eos token if not present
             # This is common for models that don't have a dedicated pad token

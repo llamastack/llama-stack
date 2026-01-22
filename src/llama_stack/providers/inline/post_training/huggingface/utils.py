@@ -162,13 +162,14 @@ def load_model(
 
     logger.info("Loading the base model")
     try:
-        model_config = AutoConfig.from_pretrained(model, **provider_config.model_specific_config)
+        model_specific_config = provider_config.get_model_specific_config(model)
+        model_config = AutoConfig.from_pretrained(model, **model_specific_config)
         model_obj = AutoModelForCausalLM.from_pretrained(
             model,
             torch_dtype="auto" if device.type != "cpu" else "float32",
             quantization_config=None,
             config=model_config,
-            **provider_config.model_specific_config,
+            **model_specific_config,
         )
         # Always move model to specified device
         model_obj = model_obj.to(device)  # type: ignore[arg-type]
