@@ -11,14 +11,9 @@ FastAPI route decorators. The router is defined in the API package to keep
 all API-related code together.
 """
 
-import inspect
-import json
-from collections.abc import AsyncIterator
-from typing import Annotated, Any, cast
+from typing import Annotated
 
 from fastapi import APIRouter, Body, Depends
-from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
 
 from llama_stack_api.router_utils import create_path_dependency, create_query_dependency, standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
@@ -28,9 +23,7 @@ from .models import (
     GetChatCompletionRequest,
     ListChatCompletionsRequest,
     ListOpenAIChatCompletionResponse,
-    OpenAIChatCompletion,
     OpenAIChatCompletionRequestWithExtraBody,
-    OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
     OpenAICompletionWithInputMessages,
     OpenAIEmbeddingsRequestWithExtraBody,
@@ -43,31 +36,6 @@ from .models import (
 # This ensures the models are the single source of truth for descriptions
 get_list_chat_completions_request = create_query_dependency(ListChatCompletionsRequest)
 get_chat_completion_request = create_path_dependency(GetChatCompletionRequest)
-
-
-def _create_sse_event(data: Any) -> str:
-    """Create a Server-Sent Event formatted string from data."""
-    if isinstance(data, BaseModel):
-        data = data.model_dump_json()
-    else:
-        data = json.dumps(data)
-    return f"data: {data}\n\n"
-
-
-async def _sse_generator(event_gen_or_coroutine: Any) -> AsyncIterator[str]:
-    """Convert an async generator (or coroutine returning one) to SSE format.
-
-    This handles both direct async generators and coroutines that return async generators.
-    """
-    # If it's a coroutine, await it to get the async generator
-    if inspect.iscoroutine(event_gen_or_coroutine):
-        event_gen = await event_gen_or_coroutine
-    else:
-        event_gen = event_gen_or_coroutine
-
-    # Now iterate the async generator and yield SSE events
-    async for item in event_gen:
-        yield _create_sse_event(item)
 
 
 def create_router(impl: Inference) -> APIRouter:
@@ -102,12 +70,10 @@ def create_router(impl: Inference) -> APIRouter:
     )
     async def openai_chat_completion(
         params: Annotated[OpenAIChatCompletionRequestWithExtraBody, Body(...)],
-    ) -> OpenAIChatCompletion | StreamingResponse:
-        result = impl.openai_chat_completion(params)
-        if params.stream:
-            return StreamingResponse(_sse_generator(result), media_type="text/event-stream")
-        # When not streaming, result is a coroutine that returns OpenAIChatCompletion
-        return cast(OpenAIChatCompletion, await result)
+    ):
+        # Return the result directly - implementation returns either OpenAIChatCompletion
+        # or AsyncIterator[OpenAIChatCompletionChunk]
+        return await impl.openai_chat_completion(params)
 
     @router.get(
         "/chat/completions",
@@ -154,12 +120,10 @@ def create_router(impl: Inference) -> APIRouter:
     )
     async def openai_completion(
         params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
-    ) -> OpenAICompletion | StreamingResponse:
-        result = impl.openai_completion(params)
-        if params.stream:
-            return StreamingResponse(_sse_generator(result), media_type="text/event-stream")
-        # When not streaming, result is a coroutine that returns OpenAICompletion
-        return cast(OpenAICompletion, await result)
+    ):
+        # Return the result directly - implementation returns either OpenAICompletion
+        # or AsyncIterator[OpenAICompletion]
+        return await impl.openai_completion(params)
 
     @router.post(
         "/embeddings",
