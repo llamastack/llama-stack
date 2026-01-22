@@ -198,6 +198,7 @@ class StreamingResponseOrchestrator:
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             metadata=self.metadata,
+            temperature=self.ctx.temperature,
         )
 
         return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
@@ -228,6 +229,7 @@ class StreamingResponseOrchestrator:
             text=self.text,
             tools=self.ctx.available_tools(),
             tool_choice=self.ctx.tool_choice,
+            temperature=self.ctx.temperature,
             error=error,
             usage=self.accumulated_usage,
             instructions=self.instructions,

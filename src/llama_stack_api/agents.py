@@ -94,7 +94,7 @@ class Agents(Protocol):
         conversation: str | None = None,
         store: bool | None = True,
         stream: bool | None = False,
-        temperature: float | None = None,
+        temperature: float | None = 1.0,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,

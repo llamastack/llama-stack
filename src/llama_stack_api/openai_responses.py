@@ -712,7 +712,7 @@ class OpenAIResponseObject(BaseModel):
     :param previous_response_id: (Optional) ID of the previous response in a conversation
     :param prompt: (Optional) Reference to a prompt template and its variables.
     :param status: Current status of the response generation
-    :param temperature: (Optional) Sampling temperature used for generation
+    :param temperature: Sampling temperature used for generation
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
     :param tools: (Optional) An array of tools the model may call while generating a response.
@@ -734,7 +734,7 @@ class OpenAIResponseObject(BaseModel):
     previous_response_id: str | None = None
     prompt: OpenAIResponsePrompt | None = None
     status: str
-    temperature: float | None = None
+    temperature: float
     # Default to text format to avoid breaking the loading of old responses
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))

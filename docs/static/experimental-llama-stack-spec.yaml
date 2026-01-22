@@ -3906,9 +3906,8 @@ components:
           type: string
           title: Status
         temperature:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Temperature
         text:
           $ref: '#/components/schemas/OpenAIResponseText'
           default:
@@ -4050,6 +4049,7 @@ components:
       - model
       - output
       - status
+      - temperature
       - input
       title: OpenAIResponseObjectWithInput
       description: OpenAI response object extended with input context information.
@@ -4354,9 +4354,8 @@ components:
           type: string
           title: Status
         temperature:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          title: Temperature
         text:
           $ref: '#/components/schemas/OpenAIResponseText'
           default:
@@ -4460,6 +4459,7 @@ components:
       - model
       - output
       - status
+      - temperature
       title: OpenAIResponseObject
       description: Complete OpenAI response object containing generation results and metadata.
     OpenAIResponseContentPartOutputText:
