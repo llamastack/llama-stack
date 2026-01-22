@@ -18,11 +18,11 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 32.1% |
-| **Endpoints Implemented** | 30/117 |
-| **Schema/Type Issues** | 252 |
-| **Missing Properties** | 171 |
-| **Total Issues to Fix** | 423 |
+| **Overall Conformance Score** | 30.5% |
+| **Endpoints Implemented** | 28/114 |
+| **Schema/Type Issues** | 272 |
+| **Missing Properties** | 184 |
+| **Total Issues to Fix** | 456 |
 
 ## Category Scores
 
@@ -34,10 +34,10 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Batch | 15.7% | 66 | 41 |
 | Chat | 21.7% | 22 | 50 |
 | Moderations | 31.2% | 5 | 39 |
+| Responses | 31.7% | 22 | 21 |
 | Conversations | 48.0% | 22 | 4 |
 | Completions | 56.0% | 20 | 2 |
 | Files | 62.0% | 11 | 8 |
-| Responses | 80.0% | 2 | 8 |
 | Embeddings | 84.0% | 8 | 0 |
 | Models | 86.0% | 2 | 5 |
 
@@ -138,7 +138,6 @@ The following OpenAI API endpoints are not yet implemented in Llama Stack:
 ### /responses
 
 - `/responses/input_tokens`
-- `/responses/{response_id}/cancel`
 
 ### /threads
 
@@ -837,6 +836,69 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 </details>
 
+### Responses
+
+**Score:** 31.7% · **Issues:** 22 · **Missing:** 21
+
+#### `/responses`
+
+**POST**
+
+<details><summary>Missing Properties (21)</summary>
+
+- `requestBody.content.application/json.properties.background`
+- `requestBody.content.application/json.properties.frequency_penalty`
+- `requestBody.content.application/json.properties.max_output_tokens`
+- `requestBody.content.application/json.properties.presence_penalty`
+- `requestBody.content.application/json.properties.prompt_cache_key`
+- `requestBody.content.application/json.properties.safety_identifier`
+- `requestBody.content.application/json.properties.service_tier`
+- `requestBody.content.application/json.properties.stream_options`
+- `requestBody.content.application/json.properties.top_logprobs`
+- `requestBody.content.application/json.properties.top_p`
+- `requestBody.content.application/json.properties.truncation`
+- `requestBody.content.application/x-www-form-urlencoded`
+- `responses.200.content.application/json.properties.background`
+- `responses.200.content.application/json.properties.frequency_penalty`
+- `responses.200.content.application/json.properties.incomplete_details`
+- `responses.200.content.application/json.properties.max_output_tokens`
+- `responses.200.content.application/json.properties.presence_penalty`
+- `responses.200.content.application/json.properties.prompt_cache_key`
+- `responses.200.content.application/json.properties.safety_identifier`
+- `responses.200.content.application/json.properties.service_tier`
+- `responses.200.content.application/json.properties.top_logprobs`
+
+</details>
+
+<details><summary>Schema Issues (22)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `requestBody.content.application/json.properties.include` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `requestBody.content.application/json.properties.input` | Union variants added: 2; Union variants removed: 2 |
+| `requestBody.content.application/json.properties.model` | Type added: ['string']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
+| `requestBody.content.application/json.properties.parallel_tool_calls` | Default changed: None -> True |
+| `requestBody.content.application/json.properties.reasoning` | Union variants added: 1; Union variants removed: 1 |
+| `requestBody.content.application/json.properties.store` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> True |
+| `requestBody.content.application/json.properties.stream` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> False |
+| `requestBody.content.application/json.properties.text` | Union variants added: 1; Union variants removed: 1 |
+| `requestBody.content.application/json.properties.tool_choice` | Union variants added: 2; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.error` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 |
+| `responses.200.content.application/json.properties.object` | Enum removed: ['response'] |
+| `responses.200.content.application/json.properties.output.items` | Union variants added: 7; Union variants removed: 4 |
+| `responses.200.content.application/json.properties.parallel_tool_calls` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> True |
+| `responses.200.content.application/json.properties.reasoning` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.temperature` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.text` | Type added: ['object'] |
+| `responses.200.content.application/json.properties.tool_choice` | Union variants added: 3 |
+| `responses.200.content.application/json.properties.tools` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.top_p` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.truncation` | Union variants added: 2 |
+| `responses.200.content.application/json.properties.usage` | Union variants added: 1; Union variants removed: 1 |
+
+</details>
+
 ### Conversations
 
 **Score:** 48.0% · **Issues:** 22 · **Missing:** 4
@@ -1072,52 +1134,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 |----------|--------|
 | `responses.200.content.application/json.properties.object` | Enum removed: ['file']; Default changed: None -> file |
 | `responses.200.content.application/json.properties.purpose` | Enum values removed: ['assistants_output', 'batch_output', 'fine-tune', 'fine-tune-results', 'vision', 'user_data'] |
-
-</details>
-
-### Responses
-
-**Score:** 80.0% · **Issues:** 2 · **Missing:** 8
-
-#### `/responses/{response_id}`
-
-**DELETE**
-
-<details><summary>Missing Properties (1)</summary>
-
-- `responses.404`
-
-</details>
-
-**GET**
-
-<details><summary>Missing Properties (4)</summary>
-
-- `parameters.query.include`
-- `parameters.query.include_obfuscation`
-- `parameters.query.starting_after`
-- `parameters.query.stream`
-
-</details>
-
-#### `/responses/{response_id}/input_items`
-
-**GET**
-
-<details><summary>Missing Properties (3)</summary>
-
-- `responses.200.content.application/json.properties.first_id`
-- `responses.200.content.application/json.properties.has_more`
-- `responses.200.content.application/json.properties.last_id`
-
-</details>
-
-<details><summary>Schema Issues (2)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.data.items` | Union variants added: 4; Union variants removed: 20 |
-| `responses.200.content.application/json.properties.object` | Type added: ['string']; Default changed: None -> list |
 
 </details>
 

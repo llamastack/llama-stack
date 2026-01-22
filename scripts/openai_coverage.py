@@ -208,12 +208,61 @@ def _extract_issues(obj: Any, path: str = "") -> dict[str, Any]:
     return result
 
 
-def calculate_coverage(openai_spec: Path, llama_spec: Path) -> dict[str, Any]:
+def _merge_diffs(base_diff: dict[str, Any], overlay_diff: dict[str, Any], overlay_paths: set[str]) -> dict[str, Any]:
+    """Merge two oasdiff outputs, replacing paths from overlay_paths with overlay_diff data."""
+    result = json.loads(json.dumps(base_diff))  # Deep copy
+
+    base_paths = result.get("paths", {})
+    overlay_paths_data = overlay_diff.get("paths", {})
+
+    # Remove overlay paths from base deleted list
+    if "deleted" in base_paths:
+        base_paths["deleted"] = [p for p in base_paths["deleted"] if p not in overlay_paths]
+
+    # Add overlay deleted paths
+    if "deleted" in overlay_paths_data:
+        if "deleted" not in base_paths:
+            base_paths["deleted"] = []
+        base_paths["deleted"].extend(overlay_paths_data["deleted"])
+
+    # Remove overlay paths from base modified
+    if "modified" in base_paths:
+        for path in list(base_paths["modified"].keys()):
+            if path in overlay_paths:
+                del base_paths["modified"][path]
+
+    # Add overlay modified paths
+    if "modified" in overlay_paths_data:
+        if "modified" not in base_paths:
+            base_paths["modified"] = {}
+        base_paths["modified"].update(overlay_paths_data["modified"])
+
+    result["paths"] = base_paths
+    return result
+
+
+def calculate_coverage(
+    openai_spec: Path,
+    llama_spec: Path,
+    openresponses_spec: Path | None = None,
+) -> dict[str, Any]:
     """Calculate coverage metrics."""
     # Load categories from OpenAI spec
     endpoint_categories = _load_endpoint_categories(openai_spec)
 
+    # Run main diff
     diff = _run_oasdiff(openai_spec, llama_spec)
+
+    # If openresponses spec is provided, use it for Responses category
+    if openresponses_spec and openresponses_spec.exists():
+        responses_diff = _run_oasdiff(openresponses_spec, llama_spec)
+        # Get all paths that start with /responses
+        responses_paths = set(endpoint_categories.get("Responses", []))
+        # Also include any /responses paths from the openresponses spec
+        responses_spec_data = json.loads(openresponses_spec.read_text())
+        for path in responses_spec_data.get("paths", {}).keys():
+            responses_paths.add(path)
+        diff = _merge_diffs(diff, responses_diff, responses_paths)
 
     paths_diff = diff.get("paths", {})
     deleted_paths = paths_diff.get("deleted", [])
@@ -283,8 +332,9 @@ def calculate_coverage(openai_spec: Path, llama_spec: Path) -> dict[str, Any]:
     overall_score = round((1 - total_problems / estimated_total) * 100, 1)
 
     # Build report
-    report = {
+    report: dict[str, Any] = {
         "openai_spec": str(openai_spec),
+        "openresponses_spec": str(openresponses_spec) if openresponses_spec else None,
         "llama_spec": str(llama_spec),
         "summary": {
             "endpoints": {
@@ -376,6 +426,12 @@ def main():
         help="Path to OpenAI spec",
     )
     parser.add_argument(
+        "--openresponses-spec",
+        type=Path,
+        default=Path("docs/static/openresponses-spec.json"),
+        help="Path to OpenResponses spec (used for Responses API)",
+    )
+    parser.add_argument(
         "--llama-spec",
         type=Path,
         default=Path("docs/static/llama-stack-spec.yaml"),
@@ -406,7 +462,7 @@ def main():
     args = parser.parse_args()
 
     try:
-        report = calculate_coverage(args.openai_spec, args.llama_spec)
+        report = calculate_coverage(args.openai_spec, args.llama_spec, args.openresponses_spec)
     except FileNotFoundError:
         print("Error: oasdiff not found. Install with: go install github.com/tufin/oasdiff@latest")
         sys.exit(1)

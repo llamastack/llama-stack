@@ -1,10 +1,11 @@
 {
   "openai_spec": "docs/static/openai-spec-2.3.0.yml",
+  "openresponses_spec": "docs/static/openresponses-spec.json",
   "llama_spec": "docs/static/llama-stack-spec.yaml",
   "summary": {
     "endpoints": {
-      "implemented": 30,
-      "total": 117,
+      "implemented": 28,
+      "total": 114,
       "missing": [
         "/assistants",
         "/assistants/{assistant_id}",
@@ -73,7 +74,6 @@
         "/realtime/sessions",
         "/realtime/transcription_sessions",
         "/responses/input_tokens",
-        "/responses/{response_id}/cancel",
         "/threads",
         "/threads/runs",
         "/threads/{thread_id}",
@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 32.1,
-      "issues": 252,
-      "missing_properties": 171,
-      "total_problems": 423
+      "score": 30.5,
+      "issues": 272,
+      "missing_properties": 184,
+      "total_problems": 456
     }
   },
   "categories": {
@@ -1748,76 +1748,201 @@
       ]
     },
     "Responses": {
-      "score": 80.0,
-      "issues": 2,
-      "missing_properties": 8,
+      "score": 31.7,
+      "issues": 22,
+      "missing_properties": 21,
       "endpoints": [
         {
           "path": "/responses",
           "operations": [
             {
               "method": "POST",
-              "missing_properties": [],
-              "conformance_issues": [],
-              "missing_count": 0,
-              "issues_count": 0
-            }
-          ]
-        },
-        {
-          "path": "/responses/{response_id}",
-          "operations": [
-            {
-              "method": "DELETE",
               "missing_properties": [
-                "DELETE.responses.404"
-              ],
-              "conformance_issues": [],
-              "missing_count": 1,
-              "issues_count": 0
-            },
-            {
-              "method": "GET",
-              "missing_properties": [
-                "GET.parameters.query.include",
-                "GET.parameters.query.include_obfuscation",
-                "GET.parameters.query.starting_after",
-                "GET.parameters.query.stream"
-              ],
-              "conformance_issues": [],
-              "missing_count": 4,
-              "issues_count": 0
-            }
-          ]
-        },
-        {
-          "path": "/responses/{response_id}/input_items",
-          "operations": [
-            {
-              "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.first_id",
-                "GET.responses.200.content.application/json.properties.has_more",
-                "GET.responses.200.content.application/json.properties.last_id"
+                "POST.requestBody.content.application/json.properties.background",
+                "POST.requestBody.content.application/json.properties.frequency_penalty",
+                "POST.requestBody.content.application/json.properties.max_output_tokens",
+                "POST.requestBody.content.application/json.properties.presence_penalty",
+                "POST.requestBody.content.application/json.properties.prompt_cache_key",
+                "POST.requestBody.content.application/json.properties.safety_identifier",
+                "POST.requestBody.content.application/json.properties.service_tier",
+                "POST.requestBody.content.application/json.properties.stream_options",
+                "POST.requestBody.content.application/json.properties.top_logprobs",
+                "POST.requestBody.content.application/json.properties.top_p",
+                "POST.requestBody.content.application/json.properties.truncation",
+                "POST.requestBody.content.application/x-www-form-urlencoded",
+                "POST.responses.200.content.application/json.properties.background",
+                "POST.responses.200.content.application/json.properties.frequency_penalty",
+                "POST.responses.200.content.application/json.properties.incomplete_details",
+                "POST.responses.200.content.application/json.properties.max_output_tokens",
+                "POST.responses.200.content.application/json.properties.presence_penalty",
+                "POST.responses.200.content.application/json.properties.prompt_cache_key",
+                "POST.responses.200.content.application/json.properties.safety_identifier",
+                "POST.responses.200.content.application/json.properties.service_tier",
+                "POST.responses.200.content.application/json.properties.top_logprobs"
               ],
               "conformance_issues": [
                 {
-                  "property": "GET.responses.200.content.application/json.properties.data.items",
+                  "property": "POST.requestBody.content.application/json.properties.include",
                   "details": [
-                    "Union variants added: 4",
-                    "Union variants removed: 20"
+                    "Type removed: ['array']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
                   ]
                 },
                 {
-                  "property": "GET.responses.200.content.application/json.properties.object",
+                  "property": "POST.requestBody.content.application/json.properties.input",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.model",
                   "details": [
                     "Type added: ['string']",
-                    "Default changed: None -> list"
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.parallel_tool_calls",
+                  "details": [
+                    "Default changed: None -> True"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.reasoning",
+                  "details": [
+                    "Union variants added: 1",
+                    "Union variants removed: 1"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.store",
+                  "details": [
+                    "Type removed: ['boolean']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2",
+                    "Default changed: None -> True"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.stream",
+                  "details": [
+                    "Type removed: ['boolean']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2",
+                    "Default changed: None -> False"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.text",
+                  "details": [
+                    "Union variants added: 1",
+                    "Union variants removed: 1"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.tool_choice",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 1"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.error",
+                  "details": [
+                    "Union variants added: 1",
+                    "Union variants removed: 1"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.metadata",
+                  "details": [
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum removed: ['response']"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.output.items",
+                  "details": [
+                    "Union variants added: 7",
+                    "Union variants removed: 4"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.parallel_tool_calls",
+                  "details": [
+                    "Type removed: ['boolean']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2",
+                    "Default changed: None -> True"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.reasoning",
+                  "details": [
+                    "Union variants added: 1",
+                    "Union variants removed: 1"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.temperature",
+                  "details": [
+                    "Type removed: ['number']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.text",
+                  "details": [
+                    "Type added: ['object']"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.tool_choice",
+                  "details": [
+                    "Union variants added: 3"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.tools",
+                  "details": [
+                    "Type removed: ['array']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.top_p",
+                  "details": [
+                    "Type removed: ['number']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.truncation",
+                  "details": [
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.usage",
+                  "details": [
+                    "Union variants added: 1",
+                    "Union variants removed: 1"
                   ]
                 }
               ],
-              "missing_count": 3,
-              "issues_count": 2
+              "missing_count": 21,
+              "issues_count": 22
             }
           ]
         }
