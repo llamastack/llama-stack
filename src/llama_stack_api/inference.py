@@ -1015,6 +1015,7 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     :param top_logprobs: (Optional) The top log probabilities to use.
     :param top_p: (Optional) The top p to use.
     :param user: (Optional) The user to use.
+    :param reasoning_effort: (Optional) The effort level for reasoning models. Supports "low", "medium", or "high".
     """
 
     # Standard OpenAI chat completion parameters
@@ -1041,6 +1042,7 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     top_logprobs: int | None = None
     top_p: float | None = None
     user: str | None = None
+    reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
 
 
 # extra_body can be accessed via .model_extra

@@ -57,8 +57,8 @@ def _create_s3_client(config: S3FilesImplConfig) -> "S3Client":
         if config.aws_access_key_id and config.aws_secret_access_key:
             s3_config.update(
                 {
-                    "aws_access_key_id": config.aws_access_key_id,
-                    "aws_secret_access_key": config.aws_secret_access_key,
+                    "aws_access_key_id": config.aws_access_key_id.get_secret_value(),
+                    "aws_secret_access_key": config.aws_secret_access_key.get_secret_value(),
                 }
             )
 

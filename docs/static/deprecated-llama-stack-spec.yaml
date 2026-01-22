@@ -160,7 +160,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Scoring Functions
-      summary: List Scoring Functions
+      summary: List all scoring functions.
       description: List all scoring functions.
       operationId: list_scoring_functions_v1_scoring_functions_get
     post:
@@ -178,10 +178,10 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
         '204':
-          description: Successful Response
+          description: The scoring function was successfully registered.
       tags:
       - Scoring Functions
-      summary: Register Scoring Function
+      summary: Register a scoring function.
       description: Register a scoring function.
       operationId: register_scoring_function_v1_scoring_functions_post
       requestBody:
@@ -201,20 +201,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScoringFn'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Scoring Functions
-      summary: Get Scoring Function
+      summary: Get a scoring function by its ID.
       description: Get a scoring function by its ID.
       operationId: get_scoring_function_v1_scoring_functions__scoring_fn_id__get
       parameters:
@@ -223,26 +223,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: scoring_fn_id'
+          description: The ID of the scoring function to get.
+          title: Scoring Fn Id
+        description: The ID of the scoring function to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The scoring function was successfully unregistered.
       tags:
       - Scoring Functions
-      summary: Unregister Scoring Function
+      summary: Unregister a scoring function.
       description: Unregister a scoring function.
       operationId: unregister_scoring_function_v1_scoring_functions__scoring_fn_id__delete
       parameters:
@@ -251,7 +253,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: scoring_fn_id'
+          description: The ID of the scoring function to unregister.
+          title: Scoring Fn Id
+        description: The ID of the scoring function to unregister.
       deprecated: true
   /v1/shields:
     get:
@@ -1784,6 +1788,17 @@ components:
         user:
           anyOf:
           - type: string
+          - type: 'null'
+        reasoning_effort:
+          anyOf:
+          - type: string
+            enum:
+            - none
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
           - type: 'null'
       additionalProperties: true
       type: object
@@ -3485,48 +3500,69 @@ components:
         prompt:
           type: string
           title: Prompt
+          description: The prompt text content with variable placeholders.
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: List of variable names that can be used in the prompt template.
       type: object
       required:
       - prompt
       title: CreatePromptRequest
+      description: Request model for creating a new prompt.
     UpdatePromptRequest:
+      description: Request model for updating a prompt (combines path and body parameters).
       properties:
-        prompt:
+        prompt_id:
+          description: The identifier of the prompt to update.
+          title: Prompt Id
           type: string
+        prompt:
+          description: The updated prompt text content.
           title: Prompt
+          type: string
         version:
-          type: integer
+          description: The current version of the prompt being updated.
           title: Version
+          type: integer
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+          nullable: true
         set_as_default:
-          type: boolean
-          title: Set As Default
           default: true
-      type: object
+          description: Set the new version as the default (default=True).
+          title: Set As Default
+          type: boolean
       required:
+      - prompt_id
       - prompt
       - version
       title: UpdatePromptRequest
-    SetDefaultVersionRequest:
-      properties:
-        version:
-          type: integer
-          title: Version
       type: object
+    SetDefaultVersionRequest:
+      description: Request model for setting the default version of a prompt (combines path and body parameters).
+      properties:
+        prompt_id:
+          description: The identifier of the prompt.
+          title: Prompt Id
+          type: string
+        version:
+          description: The version to set as default.
+          title: Version
+          type: integer
       required:
+      - prompt_id
       - version
       title: SetDefaultVersionRequest
+      type: object
     ProviderInfo:
       properties:
         api:
@@ -3740,6 +3776,10 @@ components:
         created_at:
           type: integer
           title: Created At
+        completed_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
@@ -3893,12 +3933,21 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+        store:
+          type: boolean
+          title: Store
         input:
           items:
             anyOf:
@@ -3944,6 +3993,7 @@ components:
       - model
       - output
       - status
+      - store
       - input
       title: OpenAIResponseObjectWithInput
       description: OpenAI response object extended with input context information.
@@ -4076,22 +4126,16 @@ components:
           type: integer
           title: Total Tokens
         input_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
-            title: OpenAIResponseUsageInputTokensDetails
-          - type: 'null'
-          title: OpenAIResponseUsageInputTokensDetails
+          $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
         output_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
-            title: OpenAIResponseUsageOutputTokensDetails
-          - type: 'null'
-          title: OpenAIResponseUsageOutputTokensDetails
+          $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
       type: object
       required:
       - input_tokens
       - output_tokens
       - total_tokens
+      - input_tokens_details
+      - output_tokens_details
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
     ResponseGuardrailSpec:
@@ -4338,6 +4382,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -4354,6 +4404,10 @@ components:
         created_at:
           type: integer
           title: Created At
+        completed_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
@@ -4507,12 +4561,21 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+        store:
+          type: boolean
+          title: Store
       type: object
       required:
       - created_at
@@ -4520,6 +4583,7 @@ components:
       - model
       - output
       - status
+      - store
       title: OpenAIResponseObject
       description: Complete OpenAI response object containing generation results and metadata.
     OpenAIResponseContentPartOutputText:
@@ -6125,10 +6189,12 @@ components:
             $ref: '#/components/schemas/ScoringFn'
           type: array
           title: Data
+          description: List of scoring function objects.
       type: object
       required:
       - data
       title: ListScoringFunctionsResponse
+      description: Response containing a list of scoring function objects.
     ScoreRequest:
       properties:
         input_rows:
@@ -8459,11 +8525,13 @@ components:
         scoring_fn_id:
           type: string
           title: Scoring Fn Id
+          description: The ID of the scoring function to register.
         description:
           type: string
           title: Description
+          description: The description of the scoring function.
         return_type:
-          anyOf:
+          oneOf:
           - $ref: '#/components/schemas/StringType'
             title: StringType
           - $ref: '#/components/schemas/NumberType'
@@ -8483,14 +8551,29 @@ components:
           - $ref: '#/components/schemas/CompletionInputType'
             title: CompletionInputType
           title: StringType | ... (9 variants)
+          description: The return type of the scoring function.
+          discriminator:
+            propertyName: type
+            mapping:
+              array: '#/components/schemas/ArrayType'
+              boolean: '#/components/schemas/BooleanType'
+              chat_completion_input: '#/components/schemas/ChatCompletionInputType'
+              completion_input: '#/components/schemas/CompletionInputType'
+              json: '#/components/schemas/JsonType'
+              number: '#/components/schemas/NumberType'
+              object: '#/components/schemas/ObjectType'
+              string: '#/components/schemas/StringType'
+              union: '#/components/schemas/UnionType'
         provider_scoring_fn_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the provider scoring function to use for the scoring function.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the provider to use for the scoring function.
         params:
           anyOf:
           - oneOf:
@@ -8509,12 +8592,14 @@ components:
             title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
           - type: 'null'
           title: Params
+          description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval.
       type: object
       required:
       - scoring_fn_id
       - description
       - return_type
       title: RegisterScoringFunctionRequest
+      description: Request model for registering a scoring function.
     RegisterShieldRequest:
       properties:
         shield_id:
@@ -9525,6 +9610,25 @@ components:
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
       description: Search results returned by the file search operation.
+    OpenAIResponseReasoning:
+      properties:
+        effort:
+          anyOf:
+          - type: string
+            enum:
+            - none
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
+          - type: 'null'
+      type: object
+      title: OpenAIResponseReasoning
+      description: |-
+        Configuration for reasoning effort in OpenAI responses.
+
+        Controls how much reasoning the model performs before generating a response.
     OpenAIResponseTextFormat:
       properties:
         type:
@@ -9558,19 +9662,21 @@ components:
     OpenAIResponseUsageInputTokensDetails:
       properties:
         cached_tokens:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          title: Cached Tokens
       type: object
+      required:
+      - cached_tokens
       title: OpenAIResponseUsageInputTokensDetails
       description: Token details for input tokens in OpenAI response usage.
     OpenAIResponseUsageOutputTokensDetails:
       properties:
         reasoning_tokens:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          title: Reasoning Tokens
       type: object
+      required:
+      - reasoning_tokens
       title: OpenAIResponseUsageOutputTokensDetails
       description: Token details for output tokens in OpenAI response usage.
     OpenAIUserMessageParam-Input:
@@ -9693,6 +9799,45 @@ components:
       type: object
       title: SearchRankingOptions
       description: Options for ranking and filtering search results.
+    SetDefaultVersionBodyRequest:
+      properties:
+        version:
+          type: integer
+          title: Version
+          description: The version to set as default.
+      type: object
+      required:
+      - version
+      title: SetDefaultVersionBodyRequest
+      description: Request body model for setting the default version of a prompt.
+    UpdatePromptBodyRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+          description: The updated prompt text content.
+        version:
+          type: integer
+          title: Version
+          description: The current version of the prompt being updated.
+        variables:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+        set_as_default:
+          type: boolean
+          title: Set As Default
+          description: Set the new version as the default (default=True).
+          default: true
+      type: object
+      required:
+      - prompt
+      - version
+      title: UpdatePromptBodyRequest
+      description: Request body model for updating a prompt.
     _URLOrData:
       properties:
         url:
@@ -10002,6 +10147,33 @@ components:
           title: Type
           type: string
       title: DialogType
+      type: object
+    ListScoringFunctionsRequest:
+      description: Request model for listing scoring functions.
+      properties: {}
+      title: ListScoringFunctionsRequest
+      type: object
+    GetScoringFunctionRequest:
+      description: Request model for getting a scoring function.
+      properties:
+        scoring_fn_id:
+          description: The ID of the scoring function to get.
+          title: Scoring Fn Id
+          type: string
+      required:
+      - scoring_fn_id
+      title: GetScoringFunctionRequest
+      type: object
+    UnregisterScoringFunctionRequest:
+      description: Request model for unregistering a scoring function.
+      properties:
+        scoring_fn_id:
+          description: The ID of the scoring function to unregister.
+          title: Scoring Fn Id
+          type: string
+      required:
+      - scoring_fn_id
+      title: UnregisterScoringFunctionRequest
       type: object
     GetShieldRequest:
       description: Request model for getting a shield by identifier.
@@ -11306,6 +11478,45 @@ components:
       required:
       - job_uuid
       title: GetTrainingJobArtifactsRequest
+      type: object
+    ListPromptVersionsRequest:
+      description: Request model for listing all versions of a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to list versions for.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: ListPromptVersionsRequest
+      type: object
+    GetPromptRequest:
+      description: Request model for getting a prompt by ID and optional version.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to get.
+          title: Prompt Id
+          type: string
+        version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The version of the prompt to get (defaults to latest).
+          nullable: true
+      required:
+      - prompt_id
+      title: GetPromptRequest
+      type: object
+    DeletePromptRequest:
+      description: Request model for deleting a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to delete.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: DeletePromptRequest
       type: object
   responses:
     BadRequest400:
