@@ -35,7 +35,9 @@ class TestToolContext:
     def test_no_tools(self):
         tools = []
         context = ToolContext(tools)
-        previous_response = OpenAIResponseObject(created_at=1234, id="test", model="mymodel", output=[], status="")
+        previous_response = OpenAIResponseObject(
+            created_at=1234, id="test", model="mymodel", output=[], status="", store=True
+        )
         context.recover_tools_from_previous_response(previous_response)
 
         assert len(context.tools_to_process) == 0
@@ -48,7 +50,9 @@ class TestToolContext:
             OpenAIResponseInputToolMCP(server_label="label", server_url="url"),
         ]
         context = ToolContext(tools)
-        previous_response = OpenAIResponseObject(created_at=1234, id="test", model="mymodel", output=[], status="")
+        previous_response = OpenAIResponseObject(
+            created_at=1234, id="test", model="mymodel", output=[], status="", store=True
+        )
         context.recover_tools_from_previous_response(previous_response)
 
         assert len(context.tools_to_process) == 2
@@ -66,7 +70,9 @@ class TestToolContext:
                 id="test", server_label="alabel", tools=[MCPListToolsTool(name="test_tool", input_schema={})]
             )
         ]
-        previous_response = OpenAIResponseObject(created_at=1234, id="test", model="fake", output=output, status="")
+        previous_response = OpenAIResponseObject(
+            created_at=1234, id="test", model="fake", output=output, status="", store=True
+        )
         previous_response.tools = [
             OpenAIResponseInputToolFileSearch(vector_store_ids=["fake"]),
             OpenAIResponseToolMCP(server_label="alabel"),
@@ -100,7 +106,9 @@ class TestToolContext:
                 tools=[MCPListToolsTool(name="some_other_tool", input_schema={})],
             ),
         ]
-        previous_response = OpenAIResponseObject(created_at=1234, id="test", model="fake", output=output, status="")
+        previous_response = OpenAIResponseObject(
+            created_at=1234, id="test", model="fake", output=output, status="", store=True
+        )
         previous_response.tools = [
             OpenAIResponseInputToolFunction(name="fake", parameters=None),
             OpenAIResponseToolMCP(server_label="anotherlabel", server_url="anotherurl"),
@@ -138,7 +146,9 @@ class TestToolContext:
                 tools=[MCPListToolsTool(name="some_other_tool", input_schema={})],
             )
         ]
-        previous_response = OpenAIResponseObject(created_at=1234, id="test", model="fake", output=output, status="")
+        previous_response = OpenAIResponseObject(
+            created_at=1234, id="test", model="fake", output=output, status="", store=True
+        )
         previous_response.tools = [
             OpenAIResponseInputToolFunction(name="fake", parameters=None),
             OpenAIResponseToolMCP(server_label="anotherlabel", server_url="anotherurl"),
@@ -175,7 +185,9 @@ class TestToolContext:
                 tools=[MCPListToolsTool(name="some_other_tool", input_schema={})],
             ),
         ]
-        previous_response = OpenAIResponseObject(created_at=1234, id="test", model="fake", output=output, status="")
+        previous_response = OpenAIResponseObject(
+            created_at=1234, id="test", model="fake", output=output, status="", store=True
+        )
         previous_response.tools = [
             OpenAIResponseInputToolFunction(name="fake", parameters=None),
             OpenAIResponseToolMCP(server_label="anotherlabel", server_url="anotherurl"),

@@ -57,6 +57,7 @@ from llama_stack_api import (
     Providers,
     RegisterBenchmarkRequest,
     RegisterModelRequest,
+    RegisterScoringFunctionRequest,
     RegisterShieldRequest,
     Safety,
     Scoring,
@@ -109,7 +110,7 @@ RESOURCES = [
         Api.scoring_functions,
         "register_scoring_function",
         "list_scoring_functions",
-        None,
+        RegisterScoringFunctionRequest,
     ),
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
     ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
@@ -299,7 +300,8 @@ async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict
             f"Embedding model '{model_identifier}' not found. Available embedding models: {list(models_list.keys())}"
         )
 
-    embedding_dimension = model.metadata.get("embedding_dimension")
+    # if not in metadata, fetch from config default
+    embedding_dimension = model.metadata.get("embedding_dimension", embedding_model.embedding_dimensions)
     if embedding_dimension is None:
         raise ValueError(f"Embedding model '{model_identifier}' is missing 'embedding_dimension' in metadata")
 

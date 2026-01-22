@@ -9,7 +9,7 @@ description: |
 
   Configuration:
   - Set VERTEX_AI_PROJECT environment variable (required)
-  - Set VERTEX_AI_LOCATION environment variable (optional, defaults to us-central1)
+  - Set VERTEX_AI_LOCATION environment variable (optional, defaults to global)
   - Use Google Cloud Application Default Credentials or service account key
 
   Authentication Setup:
@@ -37,7 +37,7 @@ Google Vertex AI inference provider enables you to use Google's Gemini models th
 
 Configuration:
 - Set VERTEX_AI_PROJECT environment variable (required)
-- Set VERTEX_AI_LOCATION environment variable (optional, defaults to us-central1)
+- Set VERTEX_AI_LOCATION environment variable (optional, defaults to global)
 - Use Google Cloud Application Default Credentials or service account key
 
 Authentication Setup:
@@ -56,11 +56,11 @@ Available Models:
 | `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
 | `project` | `str` | No |  | Google Cloud project ID for Vertex AI |
-| `location` | `str` | No | us-central1 | Google Cloud location for Vertex AI |
+| `location` | `str` | No | global | Google Cloud location for Vertex AI |
 
 ## Sample Configuration
 
 ```yaml
 project: ${env.VERTEX_AI_PROJECT:=}
-location: ${env.VERTEX_AI_LOCATION:=us-central1}
+location: ${env.VERTEX_AI_LOCATION:=global}
 ```

@@ -236,6 +236,7 @@ class ToolExecutor:
                 "document_ids": [r.file_id for r in search_results],
                 "chunks": [r.content[0].text if r.content else "" for r in search_results],
                 "scores": [r.score for r in search_results],
+                "attributes": [r.attributes or {} for r in search_results],
                 "citation_files": citation_files,
             },
         )
@@ -469,16 +470,18 @@ class ToolExecutor:
                 )
                 if result and (metadata := getattr(result, "metadata", None)) and "document_ids" in metadata:
                     message.results = []
+                    attributes_list = metadata.get("attributes", [])
                     for i, doc_id in enumerate(metadata["document_ids"]):
                         text = metadata["chunks"][i] if "chunks" in metadata else None
                         score = metadata["scores"][i] if "scores" in metadata else None
+                        attrs = attributes_list[i] if i < len(attributes_list) else {}
                         message.results.append(
                             OpenAIResponseOutputMessageFileSearchToolCallResults(
                                 file_id=doc_id,
                                 filename=doc_id,
                                 text=text if text is not None else "",
                                 score=score if score is not None else 0.0,
-                                attributes={},
+                                attributes=attrs,
                             )
                         )
                 if has_error:

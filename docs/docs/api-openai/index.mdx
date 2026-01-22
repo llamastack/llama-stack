@@ -5,100 +5,41 @@ sidebar_label: OpenAI Compatibility
 sidebar_position: 1
 ---
 
+import Link from '@docusaurus/Link';
+
 # OpenAI API Compatibility
 
-Llama Stack provides comprehensive OpenAI API compatibility, allowing you to use existing OpenAI API clients and tools with Llama Stack providers. This compatibility layer ensures seamless migration and interoperability.
+Llama Stack provides OpenAI API compatibility, allowing you to use existing OpenAI API clients and tools with Llama Stack providers. This compatibility layer enables migration from OpenAI to open-source models.
+
+:::tip Conformance Status
+For detailed conformance metrics, missing properties, and schema issues, see the **[API Conformance Report](./conformance.mdx)**.
+:::
 
 ## Overview
 
 OpenAI API compatibility in Llama Stack includes:
 
-- **OpenAI-compatible endpoints** for all major APIs
+- **OpenAI-compatible endpoints** for major APIs
 - **Request/response format compatibility** with OpenAI standards
-- **Authentication and authorization** using OpenAI-style API keys
-- **Error handling** with OpenAI-compatible error codes and messages
-- **Rate limiting** and usage tracking compatible with OpenAI patterns
+- **Authentication** using OpenAI-style API keys
+- **Error handling** with OpenAI-compatible error codes
 
-## Supported OpenAI APIs
+## Implemented APIs
 
-### Chat Completions API
-OpenAI-compatible chat completions for conversational AI applications.
+| API | Endpoint | Status |
+|-----|----------|--------|
+| Chat Completions | `/v1/chat/completions` | ✅ Implemented |
+| Completions | `/v1/completions` | ✅ Implemented |
+| Embeddings | `/v1/embeddings` | ✅ Implemented |
+| Models | `/v1/models` | ✅ Implemented |
+| Files | `/v1/files` | ✅ Implemented |
+| Vector Stores | `/v1/vector_stores` | ✅ Implemented |
+| Batches | `/v1/batches` | ✅ Implemented |
+| Moderations | `/v1/moderations` | ✅ Implemented |
+| Responses | `/v1/responses` | ✅ Implemented |
+| Conversations | `/v1/conversations` | ✅ Implemented |
 
-**Endpoint:** `/v1/chat/completions`
-**Compatibility:** Full OpenAI API compatibility
-**Providers:** All inference providers
-
-**Features:**
-- Message-based conversations
-- System prompts and user messages
-- Function calling support
-- Streaming responses
-- Temperature and other parameter controls
-
-### Completions API
-OpenAI-compatible text completions for general text generation.
-
-**Endpoint:** `/v1/completions`
-**Compatibility:** Full OpenAI API compatibility
-**Providers:** All inference providers
-
-**Features:**
-- Text completion generation
-- Prompt engineering support
-- Customizable parameters
-- Batch processing capabilities
-
-### Embeddings API
-OpenAI-compatible embeddings for vector operations.
-
-**Endpoint:** `/v1/embeddings`
-**Compatibility:** Full OpenAI API compatibility
-**Providers:** All embedding providers
-
-**Features:**
-- Text embedding generation
-- Multiple embedding models
-- Batch embedding processing
-- Vector similarity operations
-
-### Files API
-OpenAI-compatible file management for document processing.
-
-**Endpoint:** `/v1/files`
-**Compatibility:** Full OpenAI API compatibility
-**Providers:** Local Filesystem, S3
-
-**Features:**
-- File upload and management
-- Document processing
-- File metadata tracking
-- Secure file access
-
-### Vector Store Files API
-OpenAI-compatible vector store file operations for RAG applications.
-
-**Endpoint:** `/v1/vector_stores/{vector_store_id}/files`
-**Compatibility:** Full OpenAI API compatibility
-**Providers:** FAISS, SQLite-vec, Milvus, ChromaDB, Qdrant, Weaviate, Postgres (PGVector)
-
-**Features:**
-- Automatic document processing
-- Vector store integration
-- File chunking and indexing
-- Search and retrieval operations
-
-### Batches API
-OpenAI-compatible batch processing for large-scale operations.
-
-**Endpoint:** `/v1/batches`
-**Compatibility:** OpenAI API compatibility (experimental)
-**Providers:** Limited support
-
-**Features:**
-- Batch job creation and management
-- Progress tracking
-- Result retrieval
-- Error handling
+For a complete list of implemented vs missing endpoints and property-level conformance details, see the [Conformance Report](./conformance.mdx).
 
 ## Migration from OpenAI
 
@@ -243,6 +184,8 @@ Follow security best practices:
 For detailed code examples and implementation guides, see our [OpenAI Implementation Guide](../providers/openai.mdx).
 
 ## Known Limitations
+
+For a detailed breakdown of schema differences, missing properties, and conformance issues by endpoint, see the [API Conformance Report](./conformance.mdx).
 
 ### Responses API Limitations
 The Responses API is still in active development. For detailed information about current limitations and implementation status, see our [OpenAI Responses API Limitations](../providers/openai_responses_limitations.mdx).
