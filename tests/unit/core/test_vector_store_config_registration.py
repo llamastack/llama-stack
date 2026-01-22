@@ -7,7 +7,6 @@
 """Tests for config-based vector store registration."""
 
 import json
-from unittest.mock import AsyncMock
 
 from llama_stack.apis.models import Model, ModelType
 from llama_stack.apis.vector_stores import VectorStore, VectorStoreInput
@@ -274,9 +273,7 @@ class TestOpenAIMetadataCreation:
             __provider_spec__ = type("ProviderSpec", (), {"api": Api.vector_io})
 
             def __init__(self, kvstore):
-                mock_inference_api = AsyncMock()
                 super().__init__(
-                    inference_api=mock_inference_api,
                     kvstore=kvstore,
                 )
 
