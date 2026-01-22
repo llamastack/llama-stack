@@ -73,7 +73,9 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
 
     for cat_name, cat_data in sorted_categories:
         total_props = cat_data.get("total_properties", "N/A")
-        lines.append(f"| {cat_name} | {cat_data['score']}% | {total_props} | {cat_data['issues']} | {cat_data['missing_properties']} |")
+        lines.append(
+            f"| {cat_name} | {cat_data['score']}% | {total_props} | {cat_data['issues']} | {cat_data['missing_properties']} |"
+        )
 
     lines.extend(
         [
