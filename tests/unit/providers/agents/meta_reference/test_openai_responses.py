@@ -1764,6 +1764,7 @@ async def test_prepend_prompt_image_variable_missing_required_fields(openai_resp
     with pytest.raises(ValueError, match="Image content must have either 'image_url' or 'file_id'"):
         await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
 
+
 async def test_file_search_results_include_chunk_metadata_attributes(mock_vector_io_api):
     """Test that file_search tool executor preserves chunk metadata attributes."""
     query = "What is machine learning?"
