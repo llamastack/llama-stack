@@ -5,7 +5,7 @@ authors:
   - name: Llama Stack Team
     title: Core Team
     url: https://github.com/llamastack
-    image_url: https://github.com/llama-stack.png
+    image_url: https://llamastack.github.io/img/llama-stack-logo.png
 tags: [announcement, introduction, getting-started]
 date: 2026-01-13
 ---
