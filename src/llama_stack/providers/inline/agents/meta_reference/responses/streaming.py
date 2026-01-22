@@ -78,6 +78,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
+    OpenAIResponseReasoning,
     OpenAIResponseText,
     OpenAIResponseUsage,
     OpenAIResponseUsageInputTokensDetails,
@@ -138,6 +139,7 @@ class StreamingResponseOrchestrator:
         prompt: OpenAIResponsePrompt | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
+        reasoning: OpenAIResponseReasoning | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
     ):
@@ -158,6 +160,7 @@ class StreamingResponseOrchestrator:
         self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
+        self.reasoning = reasoning
         self.metadata = metadata
         self.include = include
         self.sequence_number = 0
@@ -231,6 +234,7 @@ class StreamingResponseOrchestrator:
             prompt=self.prompt,
             parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
+            reasoning=self.reasoning,
             metadata=self.metadata,
         )
 
@@ -327,6 +331,7 @@ class StreamingResponseOrchestrator:
                         "include_usage": True,
                     },
                     logprobs=logprobs,
+                    reasoning_effort=self.reasoning.effort if self.reasoning else None,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

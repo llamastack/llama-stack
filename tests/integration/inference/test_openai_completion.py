@@ -124,7 +124,6 @@ def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, mode
         "inline::meta-reference",
         "inline::sentence-transformers",
         "remote::vllm",
-        "remote::bedrock",
         "remote::databricks",
         "remote::cerebras",
         "remote::runpod",
@@ -144,6 +143,15 @@ def skip_if_provider_isnt_openai(client_with_models, model_id):
         pytest.skip(
             f"Model {model_id} hosted by {provider.provider_type} doesn't support chat completion calls with base64 encoded files."
         )
+
+
+def skip_if_provider_doesnt_support_tool_calling(client_with_models, model_id):
+    """Skip tests for providers that don't support tool calling in their OpenAI-compatible API."""
+    provider = provider_from_model(client_with_models, model_id)
+    if provider.provider_type in (
+        "remote::bedrock",  # Bedrock's OpenAI endpoint doesn't support tool calling
+    ):
+        pytest.skip(f"Model {model_id} hosted by {provider.provider_type} doesn't support tool calling.")
 
 
 @pytest.mark.parametrize(
@@ -399,6 +407,7 @@ def test_inference_store(compat_client, client_with_models, text_model_id, strea
 )
 def test_inference_store_tool_calls(compat_client, client_with_models, text_model_id, stream):
     skip_if_model_doesnt_support_openai_chat_completion(client_with_models, text_model_id)
+    skip_if_provider_doesnt_support_tool_calling(client_with_models, text_model_id)
     client = compat_client
     # make a chat completion
     message = "What's the weather in Tokyo? Use the get_weather function to get the weather."
