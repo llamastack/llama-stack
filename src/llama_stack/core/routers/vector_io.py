@@ -148,11 +148,12 @@ class VectorIORouter(VectorIO):
         self,
         params: Annotated[OpenAICreateVectorStoreRequestWithExtraBody, Body(...)],
     ) -> VectorStoreObject:
-        # Extract llama-stack-specific parameters from extra_body
+        # Extract llama-stack-specific parameters from extra_body or metadata
         extra = params.model_extra or {}
-        embedding_model = extra.get("embedding_model")
-        embedding_dimension = extra.get("embedding_dimension")
-        provider_id = extra.get("provider_id")
+        metadata = params.metadata or {}
+        embedding_model = extra.get("embedding_model", metadata.get("embedding_model"))
+        embedding_dimension = extra.get("embedding_dimension", metadata.get("embedding_dimension"))
+        provider_id = extra.get("provider_id", metadata.get("provider_id"))
 
         # Use default embedding model if not specified
         if (
@@ -166,8 +167,14 @@ class VectorIORouter(VectorIO):
             embedding_model = f"{embedding_provider_id}/{model_id}"
 
         if embedding_model is not None and embedding_dimension is None:
-            embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
-
+            if (
+                self.vector_stores_config
+                and self.vector_stores_config.default_embedding_model is not None
+                and self.vector_stores_config.default_embedding_model.embedding_dimensions
+            ):
+                embedding_dimension = self.vector_stores_config.default_embedding_model.embedding_dimensions
+            else:
+                embedding_dimension = await self._get_embedding_model_dimension(embedding_model)
         # Validate that embedding model exists and is of the correct type
         if embedding_model is not None:
             model = await self.routing_table.get_object_by_identifier("model", embedding_model)
