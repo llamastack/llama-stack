@@ -6347,14 +6347,8 @@ components:
     OpenAIEmbeddingsRequestWithExtraBody:
       properties:
         model:
-          anyOf:
-          - type: string
-          - type: string
-            enum:
-            - text-embedding-ada-002
-            - text-embedding-3-small
-            - text-embedding-3-large
-          title: string
+          type: string
+          title: Model
         input:
           anyOf:
           - type: string

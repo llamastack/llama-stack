@@ -1074,14 +1074,14 @@ def _remove_null_from_anyof(schema: dict) -> None:
 class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
     """Request parameters for OpenAI-compatible embeddings endpoint.
 
-    :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint. Accepts any string. The type signature includes OpenAI-standard model names ("text-embedding-ada-002", "text-embedding-3-small", "text-embedding-3-large") for OpenAPI conformance, but any registered embedding model identifier is valid.
+    :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint. Accepts any string model identifier.
     :param input: Input text to embed, encoded as a string or array of tokens. To embed multiple inputs in a single request, pass an array of strings or array of token arrays. The input must not exceed the max input tokens for the model (8192 tokens for all embedding models), cannot be an empty string, and any array must be 2048 dimensions or less.
     :param encoding_format: (Optional) The format to return the embeddings in. Must be either "float" or "base64". Defaults to "float".
     :param dimensions: (Optional, non-nullable) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models. Must be >= 1 if provided. Field can be omitted but cannot be explicitly null.
     :param user: (Optional, non-nullable) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. Field can be omitted but cannot be explicitly null.
     """
 
-    model: str | Literal["text-embedding-ada-002", "text-embedding-3-small", "text-embedding-3-large"]
+    model: str
     input: (
         Annotated[str, Field(title="string")]
         | Annotated[list[str], Field(title="Array of strings", min_length=1, max_length=2048)]
