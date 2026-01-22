@@ -494,17 +494,16 @@ class StreamingResponseOrchestrator:
                 input_tokens=chunk.usage.prompt_tokens,
                 output_tokens=chunk.usage.completion_tokens,
                 total_tokens=chunk.usage.total_tokens,
-                input_tokens_details=(
-                    OpenAIResponseUsageInputTokensDetails(cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens)
-                    if chunk.usage.prompt_tokens_details
-                    else None
+                input_tokens_details=OpenAIResponseUsageInputTokensDetails(
+                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens
+                    if chunk.usage.prompt_tokens_details and chunk.usage.prompt_tokens_details.cached_tokens is not None
+                    else 0
                 ),
-                output_tokens_details=(
-                    OpenAIResponseUsageOutputTokensDetails(
-                        reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
-                    )
+                output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
+                    reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
                     if chunk.usage.completion_tokens_details
-                    else None
+                    and chunk.usage.completion_tokens_details.reasoning_tokens is not None
+                    else 0
                 ),
             )
         else:
@@ -514,17 +513,16 @@ class StreamingResponseOrchestrator:
                 output_tokens=self.accumulated_usage.output_tokens + chunk.usage.completion_tokens,
                 total_tokens=self.accumulated_usage.total_tokens + chunk.usage.total_tokens,
                 # Use latest non-null details
-                input_tokens_details=(
-                    OpenAIResponseUsageInputTokensDetails(cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens)
-                    if chunk.usage.prompt_tokens_details
-                    else self.accumulated_usage.input_tokens_details
+                input_tokens_details=OpenAIResponseUsageInputTokensDetails(
+                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens
+                    if chunk.usage.prompt_tokens_details and chunk.usage.prompt_tokens_details.cached_tokens is not None
+                    else self.accumulated_usage.input_tokens_details.cached_tokens
                 ),
-                output_tokens_details=(
-                    OpenAIResponseUsageOutputTokensDetails(
-                        reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
-                    )
+                output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
+                    reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
                     if chunk.usage.completion_tokens_details
-                    else self.accumulated_usage.output_tokens_details
+                    and chunk.usage.completion_tokens_details.reasoning_tokens is not None
+                    else self.accumulated_usage.output_tokens_details.reasoning_tokens
                 ),
             )
 
