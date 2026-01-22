@@ -41,6 +41,7 @@ Homepage = "https://github.com/llamastack/llama-stack"
 package-dir = {"llama_stack_api" = "."}
 
 # 2. List ONLY the directories as sub-packages.
+# WARNING: Update this list when adding/removing API directories (e.g., new FastAPI routers)
 packages = [
     "llama_stack_api.admin",
     "llama_stack_api.batches",
@@ -66,6 +67,7 @@ packages = [
 
 # 3. List every root-level .py file as a module.
 # Because of package-dir above, these will be placed INSIDE the llama_stack_api folder.
+# WARNING: Update this list when adding/removing root-level .py files
 py-modules = [
     "llama_stack_api.agents",
     "llama_stack_api.connectors",

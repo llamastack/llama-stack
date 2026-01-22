@@ -62,6 +62,19 @@ jobs:
             - name: Install build dependencies
               run: uv pip install --system setuptools wheel
 
+            - name: Check for missing package entries (llama-stack-api)
+              if: matrix.package == 'llama-stack-api'
+              working-directory: src/llama_stack_api
+              run: |
+                for f in *.py; do
+                  [[ "$f" == "__init__.py" ]] && continue
+                  grep -q "llama_stack_api.${f%.py}" pyproject.toml || echo "::warning::Missing from py-modules: ${f%.py}"
+                done
+                for d in */; do
+                  [[ "$d" =~ ^(__pycache__|dist|build|.*egg-info|\..*)/$ ]] && continue
+                  grep -q "llama_stack_api.${d%/}" pyproject.toml || echo "::warning::Missing from packages: ${d%/}"
+                done
+
             - name: Build package
               run: uv build --out-dir dist --no-build-isolation
               working-directory: ${{ matrix.path }}
@@ -220,7 +233,7 @@ jobs:
             - name: Upload artifacts and signatures to GitHub release
               env:
                   GITHUB_TOKEN: ${{ github.token }}
-              run: >-
+              run: |
                   gh release upload '${{ github.ref_name }}' dist/* --repo '${{ github.repository }}'
 
             # PyPI does not accept .sigstore artifacts and
