@@ -533,6 +533,7 @@ class OpenAIResponsesImpl:
             reasoning=reasoning,
             metadata=metadata,
             include=include,
+            store=store,
         )
 
         # Stream the response

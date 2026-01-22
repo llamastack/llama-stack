@@ -142,6 +142,7 @@ class StreamingResponseOrchestrator:
         reasoning: OpenAIResponseReasoning | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        store: bool | None = True,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -163,6 +164,7 @@ class StreamingResponseOrchestrator:
         self.reasoning = reasoning
         self.metadata = metadata
         self.include = include
+        self.store = bool(store) if store is not None else True
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -198,6 +200,7 @@ class StreamingResponseOrchestrator:
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             metadata=self.metadata,
+            store=self.store,
         )
 
         return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
@@ -236,6 +239,7 @@ class StreamingResponseOrchestrator:
             max_tool_calls=self.max_tool_calls,
             reasoning=self.reasoning,
             metadata=self.metadata,
+            store=self.store,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:

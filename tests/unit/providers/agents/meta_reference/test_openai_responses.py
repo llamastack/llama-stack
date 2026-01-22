@@ -612,6 +612,7 @@ async def test_prepend_previous_response_basic(openai_responses_impl, mock_respo
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="fake_previous_input")],
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = previous_response
 
@@ -655,6 +656,7 @@ async def test_prepend_previous_response_web_search(openai_responses_impl, mock_
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="test input")],
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -703,6 +705,7 @@ async def test_prepend_previous_response_mcp_tool_call(openai_responses_impl, mo
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="test input")],
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -825,6 +828,7 @@ async def test_create_openai_response_with_instructions_and_previous_response(
             OpenAIUserMessageParam(content="Name some towns in Ireland"),
             OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
         ],
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -887,6 +891,7 @@ async def test_create_openai_response_with_previous_response_instructions(
             OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
         ],
         instructions="You are a helpful assistant.",
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -986,6 +991,7 @@ async def test_responses_store_list_input_items_logic():
         text=OpenAIResponseText(format=(OpenAIResponseTextFormat(type="text"))),
         input=input_items,
         messages=[OpenAIUserMessageParam(content="First message")],
+        store=True,
     )
 
     # Mock the get_response_object method to return our test data
@@ -1069,6 +1075,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
             OpenAIUserMessageParam(content="What is 2+2?"),
             OpenAIAssistantMessageParam(content="2+2 equals 4."),
         ],
+        store=True,
     )
 
     mock_responses_store.get_response_object.return_value = previous_response
@@ -1281,6 +1288,7 @@ async def test_create_openai_response_with_output_types_as_input(
         output=stored_response.output,
         input=input_with_output_types,  # This will trigger Pydantic validation
         messages=None,
+        store=True,
     )
 
     assert stored_with_outputs.input == input_with_output_types

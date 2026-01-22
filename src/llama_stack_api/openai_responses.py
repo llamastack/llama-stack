@@ -747,6 +747,7 @@ class OpenAIResponseObject(BaseModel):
     max_tool_calls: int | None = None
     reasoning: OpenAIResponseReasoning | None = None
     metadata: dict[str, str] | None = None
+    store: bool
 
 
 @json_schema_type

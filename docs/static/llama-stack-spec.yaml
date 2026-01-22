@@ -5749,6 +5749,9 @@ components:
               type: string
             type: object
           - type: 'null'
+        store:
+          type: boolean
+          title: Store
         input:
           items:
             anyOf:
@@ -5794,6 +5797,7 @@ components:
       - model
       - output
       - status
+      - store
       - input
       title: OpenAIResponseObjectWithInput
       description: OpenAI response object extended with input context information.
@@ -6375,6 +6379,9 @@ components:
               type: string
             type: object
           - type: 'null'
+        store:
+          type: boolean
+          title: Store
       type: object
       required:
       - created_at
@@ -6382,6 +6389,7 @@ components:
       - model
       - output
       - status
+      - store
       title: OpenAIResponseObject
       description: Complete OpenAI response object containing generation results and metadata.
     OpenAIResponseContentPartOutputText:
