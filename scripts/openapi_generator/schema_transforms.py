@@ -283,79 +283,19 @@ def _get_schema_title(item: dict[str, Any]) -> str | None:
 
 
 def _add_titles_to_unions(obj: Any, parent_key: str | None = None) -> None:
-    """Recursively add titles to union schemas (anyOf/oneOf) to help code generators infer names."""
-    if isinstance(obj, dict):
-        # Check if this is a union schema (anyOf or oneOf)
-        if "anyOf" in obj or "oneOf" in obj:
-            union_type = "anyOf" if "anyOf" in obj else "oneOf"
-            union_items = obj[union_type]
+    """No-op: Previously added titles to union schemas.
 
-            if isinstance(union_items, list) and len(union_items) > 0:
-                # Skip simple nullable unions (type | null) - these don't need titles
-                is_simple_nullable = (
-                    len(union_items) == 2
-                    and any(isinstance(item, dict) and item.get("type") == "null" for item in union_items)
-                    and any(
-                        isinstance(item, dict) and "type" in item and item.get("type") != "null" for item in union_items
-                    )
-                    and not any(
-                        isinstance(item, dict) and ("$ref" in item or "anyOf" in item or "oneOf" in item)
-                        for item in union_items
-                    )
-                )
+    This function previously generated Python-like titles (e.g., 'list[string]',
+    'string | list[string]') for union types. These titles duplicated type information
+    already present in the schema structure and looked like code rather than
+    human-readable labels.
 
-                if is_simple_nullable:
-                    # Remove title from simple nullable unions if it exists
-                    if "title" in obj:
-                        del obj["title"]
-                else:
-                    # Add titles to individual union variants that need them
-                    for item in union_items:
-                        if isinstance(item, dict):
-                            # Skip null types
-                            if item.get("type") == "null":
-                                continue
-                            # Add title to complex variants (arrays with unions, nested unions, etc.)
-                            # Also add to simple types if they're part of a complex union
-                            needs_title = (
-                                "items" in item
-                                or "anyOf" in item
-                                or "oneOf" in item
-                                or ("$ref" in item and "title" not in item)
-                            )
-                            if needs_title and "title" not in item:
-                                variant_title = _get_schema_title(item)
-                                if variant_title:
-                                    item["title"] = variant_title
+    Named schemas already have proper titles via @json_schema_type or register_schema().
+    Inline unions don't need titles - the type structure is self-describing.
 
-                    # Try to infer a meaningful title from the union items for the parent
-                    titles = []
-                    for item in union_items:
-                        if isinstance(item, dict):
-                            title = _get_schema_title(item)
-                            if title:
-                                titles.append(title)
-
-                    if titles:
-                        # Create a title from the union items
-                        unique_titles = list(dict.fromkeys(titles))  # Preserve order, remove duplicates
-                        if len(unique_titles) <= 3:
-                            title = " | ".join(unique_titles)
-                        else:
-                            title = f"{unique_titles[0]} | ... ({len(unique_titles)} variants)"
-                        # Always set the title for unions to help code generators
-                        # This will replace generic property titles with union-specific ones
-                        obj["title"] = title
-                    elif "title" not in obj and parent_key:
-                        # Use parent key as fallback only if no title exists
-                        obj["title"] = f"{parent_key.title()}Union"
-
-        # Recursively process all values
-        for key, value in obj.items():
-            _add_titles_to_unions(value, key)
-    elif isinstance(obj, list):
-        for item in obj:
-            _add_titles_to_unions(item, parent_key)
+    See issue #4670 for details.
+    """
+    pass
 
 
 def _convert_anyof_const_to_enum(obj: Any) -> None:

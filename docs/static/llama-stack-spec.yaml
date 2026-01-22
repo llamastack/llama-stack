@@ -2724,6 +2724,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Instance
           nullable: true
       required:
       - status
@@ -2748,11 +2749,13 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: First Id
           description: ID of the first batch in the list
         last_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Last Id
           description: ID of the last batch in the list
         has_more:
           type: boolean
@@ -2785,11 +2788,13 @@ components:
               type: string
             type: object
           - type: 'null'
+          title: Metadata
           description: Optional metadata for the batch.
         idempotency_key:
           anyOf:
           - type: string
           - type: 'null'
+          title: Idempotency Key
           description: Optional idempotency key. When provided, enables idempotent behavior.
       type: object
       required:
@@ -2835,70 +2840,76 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Cancelled At
         cancelling_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Cancelling At
         completed_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Completed At
         error_file_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Error File Id
         errors:
           anyOf:
           - $ref: '#/components/schemas/Errors'
-            title: Errors
           - type: 'null'
-          title: Errors
         expired_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Expired At
         expires_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Expires At
         failed_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Failed At
         finalizing_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Finalizing At
         in_progress_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: In Progress At
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+          title: Metadata
         model:
           anyOf:
           - type: string
           - type: 'null'
+          title: Model
         output_file_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Output File Id
         request_counts:
           anyOf:
           - $ref: '#/components/schemas/BatchRequestCounts'
-            title: BatchRequestCounts
           - type: 'null'
-          title: BatchRequestCounts
         usage:
           anyOf:
           - $ref: '#/components/schemas/BatchUsage'
-            title: BatchUsage
           - type: 'null'
-          title: BatchUsage
       additionalProperties: true
       type: object
       required:
@@ -2960,14 +2971,14 @@ components:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam]
           - type: 'null'
-          title: string | list[OpenAIChatCompletionContentPartTextParam]
+          title: Content
           nullable: true
         name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
           nullable: true
         tool_calls:
           anyOf:
@@ -2975,6 +2986,7 @@ components:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+          title: Tool Calls
           nullable: true
       title: OpenAIAssistantMessageParam
       type: object
@@ -3001,12 +3013,8 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
-        title: OpenAIChatCompletionContentPartTextParam
       - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
-        title: OpenAIChatCompletionContentPartImageParam
       - $ref: '#/components/schemas/OpenAIFile'
-        title: OpenAIFile
-      title: OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile
     OpenAIChatCompletionContentPartTextParam:
       properties:
         type:
@@ -3028,10 +3036,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Index
         id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Id
         type:
           type: string
           const: function
@@ -3040,9 +3050,7 @@ components:
         function:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
-            title: OpenAIChatCompletionToolCallFunction
           - type: 'null'
-          title: OpenAIChatCompletionToolCallFunction
       type: object
       title: OpenAIChatCompletionToolCall
       description: Tool call specification for OpenAI-compatible chat completion responses.
@@ -3052,10 +3060,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
         arguments:
           anyOf:
           - type: string
           - type: 'null'
+          title: Arguments
       type: object
       title: OpenAIChatCompletionToolCallFunction
       description: Function call details for OpenAI-compatible tool calls.
@@ -3073,15 +3083,11 @@ components:
         prompt_tokens_details:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
-            title: OpenAIChatCompletionUsagePromptTokensDetails
           - type: 'null'
-          title: OpenAIChatCompletionUsagePromptTokensDetails
         completion_tokens_details:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
-            title: OpenAIChatCompletionUsageCompletionTokensDetails
           - type: 'null'
-          title: OpenAIChatCompletionUsageCompletionTokensDetails
       type: object
       required:
       - prompt_tokens
@@ -3094,16 +3100,11 @@ components:
         message:
           oneOf:
           - $ref: '#/components/schemas/OpenAIUserMessageParam-Output'
-            title: OpenAIUserMessageParam-Output
           - $ref: '#/components/schemas/OpenAISystemMessageParam'
-            title: OpenAISystemMessageParam
           - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Output'
-            title: OpenAIAssistantMessageParam-Output
           - $ref: '#/components/schemas/OpenAIToolMessageParam'
-            title: OpenAIToolMessageParam
           - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-            title: OpenAIDeveloperMessageParam
-          title: OpenAIUserMessageParam-Output | ... (5 variants)
+          title: Message
           discriminator:
             propertyName: role
             mapping:
@@ -3121,9 +3122,7 @@ components:
         logprobs:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
-            title: OpenAIChoiceLogprobs
           - type: 'null'
-          title: OpenAIChoiceLogprobs
       type: object
       required:
       - message
@@ -3139,12 +3138,14 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          title: Content
         refusal:
           anyOf:
           - items:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          title: Refusal
       type: object
       title: OpenAIChoiceLogprobs
       description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
@@ -3161,12 +3162,12 @@ components:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam]
-          title: string | list[OpenAIChatCompletionContentPartTextParam]
+          title: Content
         name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
       type: object
       required:
       - content
@@ -3191,14 +3192,17 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: File Data
         file_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: File Id
         filename:
           anyOf:
           - type: string
           - type: 'null'
+          title: Filename
       type: object
       title: OpenAIFileFile
     OpenAIImageURL:
@@ -3210,6 +3214,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Detail
       type: object
       required:
       - url
@@ -3226,16 +3231,10 @@ components:
         propertyName: role
       oneOf:
       - $ref: '#/components/schemas/OpenAIUserMessageParam'
-        title: OpenAIUserMessageParam
       - $ref: '#/components/schemas/OpenAISystemMessageParam'
-        title: OpenAISystemMessageParam
       - $ref: '#/components/schemas/OpenAIAssistantMessageParam'
-        title: OpenAIAssistantMessageParam
       - $ref: '#/components/schemas/OpenAIToolMessageParam'
-        title: OpenAIToolMessageParam
       - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-        title: OpenAIDeveloperMessageParam
-      title: OpenAIUserMessageParam | ... (5 variants)
     OpenAISystemMessageParam:
       properties:
         role:
@@ -3249,12 +3248,12 @@ components:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam]
-          title: string | list[OpenAIChatCompletionContentPartTextParam]
+          title: Content
         name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
       type: object
       required:
       - content
@@ -3271,6 +3270,7 @@ components:
               type: integer
             type: array
           - type: 'null'
+          title: Bytes
         logprob:
           type: number
           title: Logprob
@@ -3280,6 +3280,7 @@ components:
               $ref: '#/components/schemas/OpenAITopLogProb'
             type: array
           - type: 'null'
+          title: Top Logprobs
       type: object
       required:
       - token
@@ -3308,8 +3309,7 @@ components:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam]
-          title: string | list[OpenAIChatCompletionContentPartTextParam]
+          title: Content
       type: object
       required:
       - tool_call_id
@@ -3327,6 +3327,7 @@ components:
               type: integer
             type: array
           - type: 'null'
+          title: Bytes
         logprob:
           type: number
           title: Logprob
@@ -3361,19 +3362,15 @@ components:
                 propertyName: type
               oneOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
-                title: OpenAIChatCompletionContentPartTextParam
               - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
-                title: OpenAIChatCompletionContentPartImageParam
               - $ref: '#/components/schemas/OpenAIFile'
-                title: OpenAIFile
-              title: OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
-          title: string | list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
+          title: Content
         name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
           nullable: true
       required:
       - content
@@ -3388,15 +3385,18 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Description
         strict:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Strict
         schema:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Schema
       type: object
       title: OpenAIJSONSchema
       description: JSON schema specification for OpenAI-compatible structured response format.
@@ -3433,12 +3433,8 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseFormatText'
-        title: OpenAIResponseFormatText
       - $ref: '#/components/schemas/OpenAIResponseFormatJSONSchema'
-        title: OpenAIResponseFormatJSONSchema
       - $ref: '#/components/schemas/OpenAIResponseFormatJSONObject'
-        title: OpenAIResponseFormatJSONObject
-      title: OpenAIResponseFormatText | OpenAIResponseFormatJSONSchema | OpenAIResponseFormatJSONObject
     OpenAIResponseFormatText:
       properties:
         type:
@@ -3458,15 +3454,10 @@ components:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIUserMessageParam-Input'
-              title: OpenAIUserMessageParam-Input
             - $ref: '#/components/schemas/OpenAISystemMessageParam'
-              title: OpenAISystemMessageParam
             - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Input'
-              title: OpenAIAssistantMessageParam-Input
             - $ref: '#/components/schemas/OpenAIToolMessageParam'
-              title: OpenAIToolMessageParam
             - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-              title: OpenAIDeveloperMessageParam
             discriminator:
               propertyName: role
               mapping:
@@ -3475,7 +3466,6 @@ components:
                 system: '#/components/schemas/OpenAISystemMessageParam'
                 tool: '#/components/schemas/OpenAIToolMessageParam'
                 user: '#/components/schemas/OpenAIUserMessageParam-Input'
-            title: OpenAIUserMessageParam-Input | ... (5 variants)
           type: array
           minItems: 1
           title: Messages
@@ -3483,13 +3473,14 @@ components:
           anyOf:
           - type: number
           - type: 'null'
+          title: Frequency Penalty
         function_call:
           anyOf:
           - type: string
           - additionalProperties: true
             type: object
           - type: 'null'
-          title: string | object
+          title: Function Call
         functions:
           anyOf:
           - items:
@@ -3497,87 +3488,94 @@ components:
               type: object
             type: array
           - type: 'null'
+          title: Functions
         logit_bias:
           anyOf:
           - additionalProperties:
               type: number
             type: object
           - type: 'null'
+          title: Logit Bias
         logprobs:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Logprobs
         max_completion_tokens:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Completion Tokens
         max_tokens:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Tokens
         n:
           anyOf:
           - type: integer
           - type: 'null'
+          title: N
         parallel_tool_calls:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Parallel Tool Calls
         presence_penalty:
           anyOf:
           - type: number
           - type: 'null'
+          title: Presence Penalty
         response_format:
           anyOf:
           - oneOf:
             - $ref: '#/components/schemas/OpenAIResponseFormatText'
-              title: OpenAIResponseFormatText
             - $ref: '#/components/schemas/OpenAIResponseFormatJSONSchema'
-              title: OpenAIResponseFormatJSONSchema
             - $ref: '#/components/schemas/OpenAIResponseFormatJSONObject'
-              title: OpenAIResponseFormatJSONObject
             discriminator:
               propertyName: type
               mapping:
                 json_object: '#/components/schemas/OpenAIResponseFormatJSONObject'
                 json_schema: '#/components/schemas/OpenAIResponseFormatJSONSchema'
                 text: '#/components/schemas/OpenAIResponseFormatText'
-            title: OpenAIResponseFormatText | OpenAIResponseFormatJSONSchema | OpenAIResponseFormatJSONObject
           - type: 'null'
           title: Response Format
         seed:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Seed
         stop:
           anyOf:
           - type: string
           - items:
               type: string
             type: array
-            title: list[string]
           - type: 'null'
-          title: string | list[string]
+          title: Stop
         stream:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Stream
         stream_options:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Stream Options
         temperature:
           anyOf:
           - type: number
           - type: 'null'
+          title: Temperature
         tool_choice:
           anyOf:
           - type: string
           - additionalProperties: true
             type: object
           - type: 'null'
-          title: string | object
+          title: Tool Choice
         tools:
           anyOf:
           - items:
@@ -3585,18 +3583,22 @@ components:
               type: object
             type: array
           - type: 'null'
+          title: Tools
         top_logprobs:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Top Logprobs
         top_p:
           anyOf:
           - type: number
           - type: 'null'
+          title: Top P
         user:
           anyOf:
           - type: string
           - type: 'null'
+          title: User
       additionalProperties: true
       type: object
       required:
@@ -3628,9 +3630,7 @@ components:
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
           - type: 'null'
-          title: OpenAIChatCompletionUsage
       type: object
       required:
       - id
@@ -3664,10 +3664,8 @@ components:
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
           - type: 'null'
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -3682,16 +3680,19 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Content
           nullable: true
         refusal:
           anyOf:
           - type: string
           - type: 'null'
+          title: Refusal
           nullable: true
         role:
           anyOf:
           - type: string
           - type: 'null'
+          title: Role
           nullable: true
         tool_calls:
           anyOf:
@@ -3699,11 +3700,13 @@ components:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+          title: Tool Calls
           nullable: true
         reasoning_content:
           anyOf:
           - type: string
           - type: 'null'
+          title: Reasoning Content
           nullable: true
       title: OpenAIChoiceDelta
       type: object
@@ -3721,10 +3724,8 @@ components:
         logprobs:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
-            title: OpenAIChoiceLogprobs
           - type: 'null'
           nullable: true
-          title: OpenAIChoiceLogprobs
       required:
       - delta
       - finish_reason
@@ -3755,22 +3756,15 @@ components:
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
           - type: 'null'
-          title: OpenAIChatCompletionUsage
         input_messages:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIUserMessageParam-Output'
-              title: OpenAIUserMessageParam-Output
             - $ref: '#/components/schemas/OpenAISystemMessageParam'
-              title: OpenAISystemMessageParam
             - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Output'
-              title: OpenAIAssistantMessageParam-Output
             - $ref: '#/components/schemas/OpenAIToolMessageParam'
-              title: OpenAIToolMessageParam
             - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-              title: OpenAIDeveloperMessageParam
             discriminator:
               propertyName: role
               mapping:
@@ -3779,7 +3773,6 @@ components:
                 system: '#/components/schemas/OpenAISystemMessageParam'
                 tool: '#/components/schemas/OpenAIToolMessageParam'
                 user: '#/components/schemas/OpenAIUserMessageParam-Output'
-            title: OpenAIUserMessageParam-Output | ... (5 variants)
           type: array
           title: Input Messages
       type: object
@@ -3801,90 +3794,101 @@ components:
           - items:
               type: string
             type: array
-            title: list[string]
           - items:
               type: integer
             type: array
-            title: list[integer]
           - items:
               items:
                 type: integer
               type: array
             type: array
-            title: list[array]
-          title: string | ... (4 variants)
+          title: Prompt
         best_of:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Best Of
         echo:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Echo
         frequency_penalty:
           anyOf:
           - type: number
           - type: 'null'
+          title: Frequency Penalty
         logit_bias:
           anyOf:
           - additionalProperties:
               type: number
             type: object
           - type: 'null'
+          title: Logit Bias
         logprobs:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Logprobs
         max_tokens:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Tokens
         n:
           anyOf:
           - type: integer
           - type: 'null'
+          title: N
         presence_penalty:
           anyOf:
           - type: number
           - type: 'null'
+          title: Presence Penalty
         seed:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Seed
         stop:
           anyOf:
           - type: string
           - items:
               type: string
             type: array
-            title: list[string]
           - type: 'null'
-          title: string | list[string]
+          title: Stop
         stream:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Stream
         stream_options:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Stream Options
         temperature:
           anyOf:
           - type: number
           - type: 'null'
+          title: Temperature
         top_p:
           anyOf:
           - type: number
           - type: 'null'
+          title: Top P
         user:
           anyOf:
           - type: string
           - type: 'null'
+          title: User
         suffix:
           anyOf:
           - type: string
           - type: 'null'
+          title: Suffix
       additionalProperties: true
       type: object
       required:
@@ -3942,9 +3946,7 @@ components:
         logprobs:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
-            title: OpenAIChoiceLogprobs
           - type: 'null'
-          title: OpenAIChoiceLogprobs
       type: object
       required:
       - finish_reason
@@ -3973,24 +3975,14 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseMessage'
-        title: OpenAIResponseMessage
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-        title: OpenAIResponseOutputMessageWebSearchToolCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-        title: OpenAIResponseOutputMessageFileSearchToolCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-        title: OpenAIResponseOutputMessageFunctionToolCall
       - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-        title: OpenAIResponseInputFunctionToolCallOutput
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-        title: OpenAIResponseMCPApprovalRequest
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-        title: OpenAIResponseMCPApprovalResponse
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-        title: OpenAIResponseOutputMessageMCPCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-        title: OpenAIResponseOutputMessageMCPListTools
-      title: OpenAIResponseMessage | ... (9 variants)
     OpenAIResponseAnnotationCitation:
       properties:
         type:
@@ -4099,14 +4091,9 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-        title: OpenAIResponseAnnotationFileCitation
       - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
-        title: OpenAIResponseAnnotationCitation
       - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-        title: OpenAIResponseAnnotationContainerFileCitation
       - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-        title: OpenAIResponseAnnotationFilePath
-      title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
     OpenAIResponseContentPartRefusal:
       properties:
         type:
@@ -4139,10 +4126,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Id
         status:
           anyOf:
           - type: string
           - type: 'null'
+          title: Status
       type: object
       required:
       - call_id
@@ -4158,12 +4147,8 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
-        title: OpenAIResponseInputMessageContentText
       - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
-        title: OpenAIResponseInputMessageContentImage
       - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
-        title: OpenAIResponseInputMessageContentFile
-      title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
     OpenAIResponseInputMessageContentFile:
       properties:
         type:
@@ -4175,18 +4160,22 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: File Data
         file_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: File Id
         file_url:
           anyOf:
           - type: string
           - type: 'null'
+          title: File Url
         filename:
           anyOf:
           - type: string
           - type: 'null'
+          title: Filename
       type: object
       title: OpenAIResponseInputMessageContentFile
       description: File content for input messages in OpenAI response format.
@@ -4209,10 +4198,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: File Id
         image_url:
           anyOf:
           - type: string
           - type: 'null'
+          title: Image Url
       type: object
       title: OpenAIResponseInputMessageContentImage
       description: Image content for input messages in OpenAI response format.
@@ -4275,10 +4266,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Id
         reason:
           anyOf:
           - type: string
           - type: 'null'
+          title: Reason
       type: object
       required:
       - approval_request_id
@@ -4304,14 +4297,9 @@ components:
                 propertyName: type
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
-                title: OpenAIResponseInputMessageContentText
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
-                title: OpenAIResponseInputMessageContentImage
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
-                title: OpenAIResponseInputMessageContentFile
-              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
             type: array
-            title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
           - items:
               discriminator:
                 mapping:
@@ -4320,13 +4308,9 @@ components:
                 propertyName: type
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
-                title: OpenAIResponseOutputMessageContentOutputText
               - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
-                title: OpenAIResponseContentPartRefusal
-              title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
             type: array
-            title: list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
-          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal]
+          title: Content
         role:
           title: Role
           type: string
@@ -4345,11 +4329,13 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Id
           nullable: true
         status:
           anyOf:
           - type: string
           - type: 'null'
+          title: Status
           nullable: true
       required:
       - content
@@ -4364,10 +4350,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText'
-        title: OpenAIResponseOutputMessageContentOutputText
       - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
-        title: OpenAIResponseContentPartRefusal
-      title: OpenAIResponseOutputMessageContentOutputText | OpenAIResponseContentPartRefusal
     OpenAIResponseOutputMessageContentOutputText:
       properties:
         text:
@@ -4389,14 +4372,9 @@ components:
               propertyName: type
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-              title: OpenAIResponseAnnotationFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
-              title: OpenAIResponseAnnotationCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-              title: OpenAIResponseAnnotationContainerFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-              title: OpenAIResponseAnnotationFilePath
-            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
           title: Annotations
           type: array
         logprobs:
@@ -4405,6 +4383,7 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          title: Logprobs
           nullable: true
       required:
       - text
@@ -4434,6 +4413,7 @@ components:
               $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
             type: array
           - type: 'null'
+          title: Results
       type: object
       required:
       - id
@@ -4461,10 +4441,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Id
         status:
           anyOf:
           - type: string
           - type: 'null'
+          title: Status
       type: object
       required:
       - call_id
@@ -4495,10 +4477,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Error
         output:
           anyOf:
           - type: string
           - type: 'null'
+          title: Output
       type: object
       required:
       - id
@@ -4558,23 +4542,14 @@ components:
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseOutputMessageWebSearchToolCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                title: OpenAIResponseOutputMessageFileSearchToolCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                title: OpenAIResponseOutputMessageFunctionToolCall
               - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                title: OpenAIResponseInputFunctionToolCallOutput
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                title: OpenAIResponseMCPApprovalRequest
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                title: OpenAIResponseMCPApprovalResponse
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                title: OpenAIResponseOutputMessageMCPCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                title: OpenAIResponseOutputMessageMCPListTools
               discriminator:
                 propertyName: type
                 mapping:
@@ -4587,9 +4562,9 @@ components:
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Input'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Input | ... (9 variants)
             type: array
           - type: 'null'
+          title: Items
           description: Initial items to include in the conversation context.
         metadata:
           anyOf:
@@ -4597,6 +4572,7 @@ components:
               type: string
             type: object
           - type: 'null'
+          title: Metadata
           description: Set of key-value pairs that can be attached to an object.
       type: object
       title: CreateConversationRequest
@@ -4623,6 +4599,7 @@ components:
               type: string
             type: object
           - type: 'null'
+          title: Metadata
           description: Set of 16 key-value pairs that can be attached to an object. This can be useful for storing additional information about the object in a structured format, and querying for objects via API or the dashboard.
         items:
           anyOf:
@@ -4631,6 +4608,7 @@ components:
               type: object
             type: array
           - type: 'null'
+          title: Items
           description: Initial items to include in the conversation context. You may add up to 20 items at a time.
       type: object
       required:
@@ -4683,23 +4661,14 @@ components:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
             discriminator:
               propertyName: type
               mapping:
@@ -4712,7 +4681,6 @@ components:
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (9 variants)
           type: array
           title: Data
           description: List of conversation items
@@ -4720,11 +4688,13 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: First Id
           description: The ID of the first item in the list
         last_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Last Id
           description: The ID of the last item in the list
         has_more:
           type: boolean
@@ -4742,23 +4712,14 @@ components:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-              title: OpenAIResponseMessage-Input
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
             discriminator:
               propertyName: type
               mapping:
@@ -4771,7 +4732,6 @@ components:
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Input'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Input | ... (9 variants)
           type: array
           maxItems: 20
           title: Items
@@ -4813,21 +4773,23 @@ components:
           - items:
               type: string
             type: array
-            title: list[string]
-          title: string | list[string]
+          title: Input
         encoding_format:
           anyOf:
           - type: string
           - type: 'null'
+          title: Encoding Format
           default: float
         dimensions:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Dimensions
         user:
           anyOf:
           - type: string
           - type: 'null'
+          title: User
       additionalProperties: true
       type: object
       required:
@@ -4847,9 +4809,8 @@ components:
           - items:
               type: number
             type: array
-            title: list[number]
           - type: string
-          title: list[number] | string
+          title: Embedding
         index:
           type: integer
           title: Index
@@ -5090,6 +5051,7 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Custom Metadata
       type: object
       required:
       - id
@@ -5127,6 +5089,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Resource Id
           description: Unique identifier for this resource in the provider
         provider_id:
           type: string
@@ -5167,13 +5130,13 @@ components:
           - items:
               type: string
             type: array
-            title: list[string]
-          title: string | list[string]
+          title: Input
           description: Input (or inputs) to classify. Can be a single string or an array of strings.
         model:
           anyOf:
           - type: string
           - type: 'null'
+          title: Model
           description: The content moderation model to use. If not specified, the default shield will be used.
       type: object
       required:
@@ -5215,6 +5178,7 @@ components:
               type: boolean
             type: object
           - type: 'null'
+          title: Categories
           description: A dictionary of the categories, and whether they are flagged or not
         category_applied_input_types:
           anyOf:
@@ -5224,6 +5188,7 @@ components:
               type: array
             type: object
           - type: 'null'
+          title: Category Applied Input Types
           description: A dictionary of the categories along with the input type(s) that the score applies to
         category_scores:
           anyOf:
@@ -5231,11 +5196,13 @@ components:
               type: number
             type: object
           - type: 'null'
+          title: Category Scores
           description: A dictionary of the categories along with their scores as predicted by model
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          title: User Message
           description: A message to convey to the user about the moderation result
         metadata:
           additionalProperties: true
@@ -5253,6 +5220,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Prompt
           description: The system prompt with variable placeholders
         version:
           type: integer
@@ -5304,6 +5272,7 @@ components:
               type: string
             type: array
           - type: 'null'
+          title: Variables
           description: List of variable names that can be used in the prompt template.
       type: object
       required:
@@ -5332,6 +5301,7 @@ components:
             type: array
           - type: 'null'
           description: Updated list of variable names that can be used in the prompt template.
+          title: Variables
           nullable: true
         set_as_default:
           default: true
@@ -5463,27 +5433,15 @@ components:
           propertyName: type
         oneOf:
         - $ref: '#/components/schemas/OpenAIResponseMessage'
-          title: OpenAIResponseMessage
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-          title: OpenAIResponseOutputMessageWebSearchToolCall
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-          title: OpenAIResponseOutputMessageFileSearchToolCall
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-          title: OpenAIResponseOutputMessageFunctionToolCall
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-          title: OpenAIResponseOutputMessageMCPCall
         - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-          title: OpenAIResponseOutputMessageMCPListTools
         - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-          title: OpenAIResponseMCPApprovalRequest
-        title: OpenAIResponseMessage | ... (7 variants)
       - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-        title: OpenAIResponseInputFunctionToolCallOutput
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-        title: OpenAIResponseMCPApprovalResponse
       - $ref: '#/components/schemas/OpenAIResponseMessage'
-        title: OpenAIResponseMessage
-      title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage
     OpenAIResponseInputToolFileSearch:
       properties:
         type:
@@ -5501,19 +5459,19 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Filters
         max_num_results:
           anyOf:
           - type: integer
             maximum: 50.0
             minimum: 1.0
           - type: 'null'
+          title: Max Num Results
           default: 10
         ranking_options:
           anyOf:
           - $ref: '#/components/schemas/SearchRankingOptions'
-            title: SearchRankingOptions
           - type: 'null'
-          title: SearchRankingOptions
       type: object
       required:
       - vector_store_ids
@@ -5533,15 +5491,18 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Description
         parameters:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Parameters
         strict:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Strict
       type: object
       required:
       - name
@@ -5564,6 +5525,7 @@ components:
           - type: string
             pattern: ^low|medium|high$
           - type: 'null'
+          title: Search Context Size
           default: medium
       type: object
       title: OpenAIResponseInputToolWebSearch
@@ -5576,9 +5538,7 @@ components:
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
-            title: OpenAIResponseError
           - type: 'null'
-          title: OpenAIResponseError
         id:
           type: string
           title: Id
@@ -5594,19 +5554,12 @@ components:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
             discriminator:
               propertyName: type
               mapping:
@@ -5617,24 +5570,23 @@ components:
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (7 variants)
           type: array
           title: Output
         parallel_tool_calls:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Parallel Tool Calls
           default: true
         previous_response_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Previous Response Id
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
-            title: OpenAIResponsePrompt
           - type: 'null'
-          title: OpenAIResponsePrompt
         status:
           type: string
           title: Status
@@ -5642,6 +5594,7 @@ components:
           anyOf:
           - type: number
           - type: 'null'
+          title: Temperature
         text:
           $ref: '#/components/schemas/OpenAIResponseText'
           default:
@@ -5651,18 +5604,15 @@ components:
           anyOf:
           - type: number
           - type: 'null'
+          title: Top P
         tools:
           anyOf:
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                title: OpenAIResponseInputToolWebSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                title: OpenAIResponseInputToolFileSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-                title: OpenAIResponseInputToolFunction
               - $ref: '#/components/schemas/OpenAIResponseToolMCP'
-                title: OpenAIResponseToolMCP
               discriminator:
                 propertyName: type
                 mapping:
@@ -5673,26 +5623,19 @@ components:
                   web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                   web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                   web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+          title: Tools
         tool_choice:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
-            title: OpenAIResponseInputToolChoiceMode
           - oneOf:
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
-              title: OpenAIResponseInputToolChoiceAllowedTools
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
-              title: OpenAIResponseInputToolChoiceFileSearch
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-              title: OpenAIResponseInputToolChoiceWebSearch
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
-              title: OpenAIResponseInputToolChoiceFunctionTool
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
-              title: OpenAIResponseInputToolChoiceMCPTool
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
-              title: OpenAIResponseInputToolChoiceCustomTool
             discriminator:
               propertyName: type
               mapping:
@@ -5705,51 +5648,45 @@ components:
                 web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
                 web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
                 web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
           - type: 'null'
-          title: OpenAIResponseInputToolChoiceMode
+          title: Tool Choice
         truncation:
           anyOf:
           - type: string
           - type: 'null'
+          title: Truncation
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseUsage'
-            title: OpenAIResponseUsage
           - type: 'null'
-          title: OpenAIResponseUsage
         instructions:
           anyOf:
           - type: string
           - type: 'null'
+          title: Instructions
         max_tool_calls:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Tool Calls
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+          title: Metadata
         input:
           items:
             anyOf:
             - oneOf:
               - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-                title: OpenAIResponseMessage-Output
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseOutputMessageWebSearchToolCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                title: OpenAIResponseOutputMessageFileSearchToolCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                title: OpenAIResponseOutputMessageFunctionToolCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                title: OpenAIResponseOutputMessageMCPCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                title: OpenAIResponseOutputMessageMCPListTools
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                title: OpenAIResponseMCPApprovalRequest
               discriminator:
                 propertyName: type
                 mapping:
@@ -5760,14 +5697,9 @@ components:
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Output'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (7 variants)
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
           type: array
           title: Input
       type: object
@@ -5793,20 +5725,12 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseMessage'
-        title: OpenAIResponseMessage
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-        title: OpenAIResponseOutputMessageWebSearchToolCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-        title: OpenAIResponseOutputMessageFileSearchToolCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-        title: OpenAIResponseOutputMessageFunctionToolCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-        title: OpenAIResponseOutputMessageMCPCall
       - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-        title: OpenAIResponseOutputMessageMCPListTools
       - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-        title: OpenAIResponseMCPApprovalRequest
-      title: OpenAIResponseMessage | ... (7 variants)
     OpenAIResponsePrompt:
       properties:
         id:
@@ -5817,24 +5741,22 @@ components:
           - additionalProperties:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
-                title: OpenAIResponseInputMessageContentText
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
-                title: OpenAIResponseInputMessageContentImage
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
-                title: OpenAIResponseInputMessageContentFile
               discriminator:
                 propertyName: type
                 mapping:
                   input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                   input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
                   input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
-              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
             type: object
           - type: 'null'
+          title: Variables
         version:
           anyOf:
           - type: string
           - type: 'null'
+          title: Version
       type: object
       required:
       - id
@@ -5845,9 +5767,7 @@ components:
         format:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseTextFormat'
-            title: OpenAIResponseTextFormat
           - type: 'null'
-          title: OpenAIResponseTextFormat
       type: object
       title: OpenAIResponseText
       description: Text response configuration for OpenAI responses.
@@ -5864,14 +5784,9 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-        title: OpenAIResponseInputToolWebSearch
       - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-        title: OpenAIResponseInputToolFileSearch
       - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-        title: OpenAIResponseInputToolFunction
       - $ref: '#/components/schemas/OpenAIResponseToolMCP'
-        title: OpenAIResponseToolMCP
-      title: OpenAIResponseInputToolWebSearch | ... (4 variants)
     OpenAIResponseToolMCP:
       properties:
         type:
@@ -5887,11 +5802,9 @@ components:
           - items:
               type: string
             type: array
-            title: list[string]
           - $ref: '#/components/schemas/AllowedToolsFilter'
-            title: AllowedToolsFilter
           - type: 'null'
-          title: list[string] | AllowedToolsFilter
+          title: Allowed Tools
       type: object
       required:
       - server_label
@@ -5911,15 +5824,11 @@ components:
         input_tokens_details:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
-            title: OpenAIResponseUsageInputTokensDetails
           - type: 'null'
-          title: OpenAIResponseUsageInputTokensDetails
         output_tokens_details:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
-            title: OpenAIResponseUsageOutputTokensDetails
           - type: 'null'
-          title: OpenAIResponseUsageOutputTokensDetails
       type: object
       required:
       - input_tokens
@@ -5950,14 +5859,9 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-        title: OpenAIResponseInputToolWebSearch
       - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-        title: OpenAIResponseInputToolFileSearch
       - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-        title: OpenAIResponseInputToolFunction
       - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
-        title: OpenAIResponseInputToolMCP
-      title: OpenAIResponseInputToolWebSearch | ... (4 variants)
     OpenAIResponseInputToolMCP:
       properties:
         type:
@@ -5972,19 +5876,23 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Connector Id
         server_url:
           anyOf:
           - type: string
           - type: 'null'
+          title: Server Url
         headers:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Headers
         authorization:
           anyOf:
           - type: string
           - type: 'null'
+          title: Authorization
         require_approval:
           anyOf:
           - type: string
@@ -5992,19 +5900,16 @@ components:
           - type: string
             const: never
           - $ref: '#/components/schemas/ApprovalFilter'
-            title: ApprovalFilter
-          title: string | ApprovalFilter
+          title: Require Approval
           default: never
         allowed_tools:
           anyOf:
           - items:
               type: string
             type: array
-            title: list[string]
           - $ref: '#/components/schemas/AllowedToolsFilter'
-            title: AllowedToolsFilter
           - type: 'null'
-          title: list[string] | AllowedToolsFilter
+          title: Allowed Tools
       type: object
       required:
       - server_label
@@ -6019,19 +5924,12 @@ components:
               anyOf:
               - oneOf:
                 - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                  title: OpenAIResponseMessage-Input
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                  title: OpenAIResponseOutputMessageWebSearchToolCall
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                  title: OpenAIResponseOutputMessageFileSearchToolCall
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                  title: OpenAIResponseOutputMessageFunctionToolCall
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                  title: OpenAIResponseOutputMessageMCPCall
                 - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                  title: OpenAIResponseOutputMessageMCPListTools
                 - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                  title: OpenAIResponseMCPApprovalRequest
                 discriminator:
                   propertyName: type
                   mapping:
@@ -6042,80 +5940,70 @@ components:
                     mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                     message: '#/components/schemas/OpenAIResponseMessage-Input'
                     web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseMessage-Input | ... (7 variants)
               - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                title: OpenAIResponseInputFunctionToolCallOutput
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                title: OpenAIResponseMCPApprovalResponse
               - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
             type: array
-            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
-          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          title: Input
         model:
           type: string
           title: Model
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
-            title: OpenAIResponsePrompt
           - type: 'null'
-          title: OpenAIResponsePrompt
         instructions:
           anyOf:
           - type: string
           - type: 'null'
+          title: Instructions
         parallel_tool_calls:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Parallel Tool Calls
           default: true
         previous_response_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Previous Response Id
         conversation:
           anyOf:
           - type: string
           - type: 'null'
+          title: Conversation
         store:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Store
           default: true
         stream:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Stream
           default: false
         temperature:
           anyOf:
           - type: number
           - type: 'null'
+          title: Temperature
         text:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseText'
-            title: OpenAIResponseText
           - type: 'null'
-          title: OpenAIResponseText
         tool_choice:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
-            title: OpenAIResponseInputToolChoiceMode
           - oneOf:
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
-              title: OpenAIResponseInputToolChoiceAllowedTools
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
-              title: OpenAIResponseInputToolChoiceFileSearch
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-              title: OpenAIResponseInputToolChoiceWebSearch
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
-              title: OpenAIResponseInputToolChoiceFunctionTool
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
-              title: OpenAIResponseInputToolChoiceMCPTool
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
-              title: OpenAIResponseInputToolChoiceCustomTool
             discriminator:
               propertyName: type
               mapping:
@@ -6128,21 +6016,16 @@ components:
                 web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
                 web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
                 web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
           - type: 'null'
-          title: OpenAIResponseInputToolChoiceMode
+          title: Tool Choice
         tools:
           anyOf:
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                title: OpenAIResponseInputToolWebSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                title: OpenAIResponseInputToolFileSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-                title: OpenAIResponseInputToolFunction
               - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
-                title: OpenAIResponseInputToolMCP
               discriminator:
                 propertyName: type
                 mapping:
@@ -6153,30 +6036,34 @@ components:
                   web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                   web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                   web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+          title: Tools
         include:
           anyOf:
           - items:
               $ref: '#/components/schemas/ResponseItemInclude'
             type: array
           - type: 'null'
+          title: Include
         max_infer_iters:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Infer Iters
           default: 10
         max_tool_calls:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Tool Calls
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+          title: Metadata
       type: object
       required:
       - input
@@ -6190,9 +6077,7 @@ components:
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
-            title: OpenAIResponseError
           - type: 'null'
-          title: OpenAIResponseError
         id:
           type: string
           title: Id
@@ -6208,19 +6093,12 @@ components:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
             discriminator:
               propertyName: type
               mapping:
@@ -6231,24 +6109,23 @@ components:
                 mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                 message: '#/components/schemas/OpenAIResponseMessage-Output'
                 web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseMessage-Output | ... (7 variants)
           type: array
           title: Output
         parallel_tool_calls:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Parallel Tool Calls
           default: true
         previous_response_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Previous Response Id
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
-            title: OpenAIResponsePrompt
           - type: 'null'
-          title: OpenAIResponsePrompt
         status:
           type: string
           title: Status
@@ -6256,6 +6133,7 @@ components:
           anyOf:
           - type: number
           - type: 'null'
+          title: Temperature
         text:
           $ref: '#/components/schemas/OpenAIResponseText'
           default:
@@ -6265,18 +6143,15 @@ components:
           anyOf:
           - type: number
           - type: 'null'
+          title: Top P
         tools:
           anyOf:
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                title: OpenAIResponseInputToolWebSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                title: OpenAIResponseInputToolFileSearch
               - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-                title: OpenAIResponseInputToolFunction
               - $ref: '#/components/schemas/OpenAIResponseToolMCP'
-                title: OpenAIResponseToolMCP
               discriminator:
                 propertyName: type
                 mapping:
@@ -6287,26 +6162,19 @@ components:
                   web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                   web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
                   web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
             type: array
           - type: 'null'
+          title: Tools
         tool_choice:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
-            title: OpenAIResponseInputToolChoiceMode
           - oneOf:
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
-              title: OpenAIResponseInputToolChoiceAllowedTools
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
-              title: OpenAIResponseInputToolChoiceFileSearch
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-              title: OpenAIResponseInputToolChoiceWebSearch
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
-              title: OpenAIResponseInputToolChoiceFunctionTool
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
-              title: OpenAIResponseInputToolChoiceMCPTool
             - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
-              title: OpenAIResponseInputToolChoiceCustomTool
             discriminator:
               propertyName: type
               mapping:
@@ -6319,33 +6187,34 @@ components:
                 web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
                 web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
                 web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
           - type: 'null'
-          title: OpenAIResponseInputToolChoiceMode
+          title: Tool Choice
         truncation:
           anyOf:
           - type: string
           - type: 'null'
+          title: Truncation
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseUsage'
-            title: OpenAIResponseUsage
           - type: 'null'
-          title: OpenAIResponseUsage
         instructions:
           anyOf:
           - type: string
           - type: 'null'
+          title: Instructions
         max_tool_calls:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Tool Calls
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+          title: Metadata
       type: object
       required:
       - created_at
@@ -6377,14 +6246,9 @@ components:
               propertyName: type
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-              title: OpenAIResponseAnnotationFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
-              title: OpenAIResponseAnnotationCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-              title: OpenAIResponseAnnotationContainerFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-              title: OpenAIResponseAnnotationFilePath
-            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
           title: Annotations
           type: array
         logprobs:
@@ -6393,6 +6257,7 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          title: Logprobs
           nullable: true
       required:
       - text
@@ -6470,78 +6335,41 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCreated'
-        title: OpenAIResponseObjectStreamResponseCreated
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseInProgress'
-        title: OpenAIResponseObjectStreamResponseInProgress
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemAdded'
-        title: OpenAIResponseObjectStreamResponseOutputItemAdded
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputItemDone'
-        title: OpenAIResponseObjectStreamResponseOutputItemDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDelta'
-        title: OpenAIResponseObjectStreamResponseOutputTextDelta
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextDone'
-        title: OpenAIResponseObjectStreamResponseOutputTextDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta'
-        title: OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone'
-        title: OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallInProgress'
-        title: OpenAIResponseObjectStreamResponseWebSearchCallInProgress
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallSearching'
-        title: OpenAIResponseObjectStreamResponseWebSearchCallSearching
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseWebSearchCallCompleted'
-        title: OpenAIResponseObjectStreamResponseWebSearchCallCompleted
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsInProgress'
-        title: OpenAIResponseObjectStreamResponseMcpListToolsInProgress
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsFailed'
-        title: OpenAIResponseObjectStreamResponseMcpListToolsFailed
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpListToolsCompleted'
-        title: OpenAIResponseObjectStreamResponseMcpListToolsCompleted
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta'
-        title: OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallArgumentsDone'
-        title: OpenAIResponseObjectStreamResponseMcpCallArgumentsDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallInProgress'
-        title: OpenAIResponseObjectStreamResponseMcpCallInProgress
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallFailed'
-        title: OpenAIResponseObjectStreamResponseMcpCallFailed
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseMcpCallCompleted'
-        title: OpenAIResponseObjectStreamResponseMcpCallCompleted
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartAdded'
-        title: OpenAIResponseObjectStreamResponseContentPartAdded
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseContentPartDone'
-        title: OpenAIResponseObjectStreamResponseContentPartDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDelta'
-        title: OpenAIResponseObjectStreamResponseReasoningTextDelta
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningTextDone'
-        title: OpenAIResponseObjectStreamResponseReasoningTextDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded'
-        title: OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryPartDone'
-        title: OpenAIResponseObjectStreamResponseReasoningSummaryPartDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta'
-        title: OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseReasoningSummaryTextDone'
-        title: OpenAIResponseObjectStreamResponseReasoningSummaryTextDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDelta'
-        title: OpenAIResponseObjectStreamResponseRefusalDelta
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseRefusalDone'
-        title: OpenAIResponseObjectStreamResponseRefusalDone
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded'
-        title: OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallInProgress'
-        title: OpenAIResponseObjectStreamResponseFileSearchCallInProgress
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallSearching'
-        title: OpenAIResponseObjectStreamResponseFileSearchCallSearching
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFileSearchCallCompleted'
-        title: OpenAIResponseObjectStreamResponseFileSearchCallCompleted
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseIncomplete'
-        title: OpenAIResponseObjectStreamResponseIncomplete
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseFailed'
-        title: OpenAIResponseObjectStreamResponseFailed
       - $ref: '#/components/schemas/OpenAIResponseObjectStreamResponseCompleted'
-        title: OpenAIResponseObjectStreamResponseCompleted
-      title: OpenAIResponseObjectStreamResponseCreated | ... (36 variants)
     OpenAIResponseObjectStreamResponseCompleted:
       description: Streaming event indicating a response has been completed.
       properties:
@@ -6580,12 +6408,9 @@ components:
             propertyName: type
           oneOf:
           - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
-            title: OpenAIResponseContentPartOutputText
           - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
-            title: OpenAIResponseContentPartRefusal
           - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
-            title: OpenAIResponseContentPartReasoningText
-          title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
+          title: Part
         sequence_number:
           title: Sequence Number
           type: integer
@@ -6627,12 +6452,9 @@ components:
             propertyName: type
           oneOf:
           - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
-            title: OpenAIResponseContentPartOutputText
           - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
-            title: OpenAIResponseContentPartRefusal
           - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
-            title: OpenAIResponseContentPartReasoningText
-          title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
+          title: Part
         sequence_number:
           title: Sequence Number
           type: integer
@@ -7007,20 +6829,13 @@ components:
             propertyName: type
           oneOf:
           - $ref: '#/components/schemas/OpenAIResponseMessage'
-            title: OpenAIResponseMessage
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseOutputMessageWebSearchToolCall
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-            title: OpenAIResponseOutputMessageFileSearchToolCall
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-            title: OpenAIResponseOutputMessageFunctionToolCall
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-            title: OpenAIResponseOutputMessageMCPCall
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-            title: OpenAIResponseOutputMessageMCPListTools
           - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-            title: OpenAIResponseMCPApprovalRequest
-          title: OpenAIResponseMessage | ... (7 variants)
+          title: Item
         output_index:
           title: Output Index
           type: integer
@@ -7058,20 +6873,13 @@ components:
             propertyName: type
           oneOf:
           - $ref: '#/components/schemas/OpenAIResponseMessage'
-            title: OpenAIResponseMessage
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-            title: OpenAIResponseOutputMessageWebSearchToolCall
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-            title: OpenAIResponseOutputMessageFileSearchToolCall
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-            title: OpenAIResponseOutputMessageFunctionToolCall
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-            title: OpenAIResponseOutputMessageMCPCall
           - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-            title: OpenAIResponseOutputMessageMCPListTools
           - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-            title: OpenAIResponseMCPApprovalRequest
-          title: OpenAIResponseMessage | ... (7 variants)
+          title: Item
         output_index:
           title: Output Index
           type: integer
@@ -7115,14 +6923,10 @@ components:
             propertyName: type
           oneOf:
           - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-            title: OpenAIResponseAnnotationFileCitation
           - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
-            title: OpenAIResponseAnnotationCitation
           - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-            title: OpenAIResponseAnnotationContainerFileCitation
           - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-            title: OpenAIResponseAnnotationFilePath
-          title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
+          title: Annotation
         sequence_number:
           title: Sequence Number
           type: integer
@@ -7158,6 +6962,7 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          title: Logprobs
           nullable: true
         output_index:
           title: Output Index
@@ -7549,19 +7354,12 @@ components:
             anyOf:
             - oneOf:
               - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-                title: OpenAIResponseMessage-Output
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseOutputMessageWebSearchToolCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                title: OpenAIResponseOutputMessageFileSearchToolCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                title: OpenAIResponseOutputMessageFunctionToolCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                title: OpenAIResponseOutputMessageMCPCall
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                title: OpenAIResponseOutputMessageMCPListTools
               - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                title: OpenAIResponseMCPApprovalRequest
               discriminator:
                 propertyName: type
                 mapping:
@@ -7572,14 +7370,9 @@ components:
                   mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
                   message: '#/components/schemas/OpenAIResponseMessage-Output'
                   web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseMessage-Output | ... (7 variants)
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseMessage-Output'
-              title: OpenAIResponseMessage-Output
-            title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
           type: array
           title: Data
         object:
@@ -7603,15 +7396,10 @@ components:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIUserMessageParam-Input'
-              title: OpenAIUserMessageParam-Input
             - $ref: '#/components/schemas/OpenAISystemMessageParam'
-              title: OpenAISystemMessageParam
             - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Input'
-              title: OpenAIAssistantMessageParam-Input
             - $ref: '#/components/schemas/OpenAIToolMessageParam'
-              title: OpenAIToolMessageParam
             - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-              title: OpenAIDeveloperMessageParam
             discriminator:
               propertyName: role
               mapping:
@@ -7620,7 +7408,6 @@ components:
                 system: '#/components/schemas/OpenAISystemMessageParam'
                 tool: '#/components/schemas/OpenAIToolMessageParam'
                 user: '#/components/schemas/OpenAIUserMessageParam-Input'
-            title: OpenAIUserMessageParam-Input | ... (5 variants)
           type: array
           title: Messages
           description: The messages to run the shield on
@@ -7635,10 +7422,8 @@ components:
         violation:
           anyOf:
           - $ref: '#/components/schemas/SafetyViolation'
-            title: SafetyViolation
           - type: 'null'
           description: Safety violation detected by the shield, if any
-          title: SafetyViolation
       type: object
       title: RunShieldResponse
       description: Response from running a safety shield.
@@ -7651,6 +7436,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: User Message
           description: Message to convey to the user about the violation
         metadata:
           additionalProperties: true
@@ -7760,6 +7546,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Prompt Template
         judge_score_regexes:
           items:
             type: string
@@ -7829,6 +7616,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Resource Id
           description: Unique identifier for this resource in the provider
         provider_id:
           type: string
@@ -7843,6 +7631,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Description
         metadata:
           additionalProperties: true
           type: object
@@ -7851,24 +7640,15 @@ components:
         return_type:
           oneOf:
           - $ref: '#/components/schemas/StringType'
-            title: StringType
           - $ref: '#/components/schemas/NumberType'
-            title: NumberType
           - $ref: '#/components/schemas/BooleanType'
-            title: BooleanType
           - $ref: '#/components/schemas/ArrayType'
-            title: ArrayType
           - $ref: '#/components/schemas/ObjectType'
-            title: ObjectType
           - $ref: '#/components/schemas/JsonType'
-            title: JsonType
           - $ref: '#/components/schemas/UnionType'
-            title: UnionType
           - $ref: '#/components/schemas/ChatCompletionInputType'
-            title: ChatCompletionInputType
           - $ref: '#/components/schemas/CompletionInputType'
-            title: CompletionInputType
-          title: StringType | ... (9 variants)
+          title: Return Type
           description: The return type of the deterministic function
           discriminator:
             propertyName: type
@@ -7886,18 +7666,14 @@ components:
           anyOf:
           - oneOf:
             - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-              title: LLMAsJudgeScoringFnParams
             - $ref: '#/components/schemas/RegexParserScoringFnParams'
-              title: RegexParserScoringFnParams
             - $ref: '#/components/schemas/BasicScoringFnParams'
-              title: BasicScoringFnParams
             discriminator:
               propertyName: type
               mapping:
                 basic: '#/components/schemas/BasicScoringFnParams'
                 llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
                 regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
           - type: 'null'
           title: Params
           description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval
@@ -7917,12 +7693,8 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-        title: LLMAsJudgeScoringFnParams
       - $ref: '#/components/schemas/RegexParserScoringFnParams'
-        title: RegexParserScoringFnParams
       - $ref: '#/components/schemas/BasicScoringFnParams'
-        title: BasicScoringFnParams
-      title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
     ScoringFnParamsType:
       description: Types of scoring function parameter configurations.
       enum:
@@ -7978,20 +7750,15 @@ components:
             anyOf:
             - oneOf:
               - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                title: LLMAsJudgeScoringFnParams
               - $ref: '#/components/schemas/RegexParserScoringFnParams'
-                title: RegexParserScoringFnParams
               - $ref: '#/components/schemas/BasicScoringFnParams'
-                title: BasicScoringFnParams
               discriminator:
                 propertyName: type
                 mapping:
                   basic: '#/components/schemas/BasicScoringFnParams'
                   llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
                   regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-              title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
             - type: 'null'
-            title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
           description: The scoring functions to use for the scoring.
@@ -8045,20 +7812,15 @@ components:
             anyOf:
             - oneOf:
               - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-                title: LLMAsJudgeScoringFnParams
               - $ref: '#/components/schemas/RegexParserScoringFnParams'
-                title: RegexParserScoringFnParams
               - $ref: '#/components/schemas/BasicScoringFnParams'
-                title: BasicScoringFnParams
               discriminator:
                 propertyName: type
                 mapping:
                   basic: '#/components/schemas/BasicScoringFnParams'
                   llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
                   regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-              title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
             - type: 'null'
-            title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
           description: The scoring functions to use for the scoring.
@@ -8079,6 +7841,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Dataset Id
           description: (Optional) The identifier of the dataset that was scored
         results:
           additionalProperties:
@@ -8101,6 +7864,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Resource Id
           description: Unique identifier for this resource in the provider
         provider_id:
           type: string
@@ -8116,6 +7880,7 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Params
       type: object
       required:
       - identifier
@@ -8159,10 +7924,7 @@ components:
           propertyName: type
         oneOf:
         - $ref: '#/components/schemas/ImageContentItem'
-          title: ImageContentItem
         - $ref: '#/components/schemas/TextContentItem'
-          title: TextContentItem
-        title: ImageContentItem | TextContentItem
       - items:
           discriminator:
             mapping:
@@ -8171,13 +7933,8 @@ components:
             propertyName: type
           oneOf:
           - $ref: '#/components/schemas/ImageContentItem'
-            title: ImageContentItem
           - $ref: '#/components/schemas/TextContentItem'
-            title: TextContentItem
-          title: ImageContentItem | TextContentItem
         type: array
-        title: list[ImageContentItem | TextContentItem]
-      title: string | list[ImageContentItem | TextContentItem]
     InterleavedContentItem:
       discriminator:
         mapping:
@@ -8186,10 +7943,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/ImageContentItem'
-        title: ImageContentItem
       - $ref: '#/components/schemas/TextContentItem'
-        title: TextContentItem
-      title: ImageContentItem | TextContentItem
     TextContentItem:
       properties:
         type:
@@ -8212,44 +7966,40 @@ components:
           - type: string
           - oneOf:
             - $ref: '#/components/schemas/ImageContentItem-Output'
-              title: ImageContentItem-Output
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
             discriminator:
               propertyName: type
               mapping:
                 image: '#/components/schemas/ImageContentItem-Output'
                 text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Output | TextContentItem
           - items:
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem-Output'
-                title: ImageContentItem-Output
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
               discriminator:
                 propertyName: type
                 mapping:
                   image: '#/components/schemas/ImageContentItem-Output'
                   text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Output | TextContentItem
             type: array
-            title: list[ImageContentItem-Output | TextContentItem]
           - type: 'null'
-          title: string | list[ImageContentItem-Output | TextContentItem]
+          title: Content
         error_message:
           anyOf:
           - type: string
           - type: 'null'
+          title: Error Message
         error_code:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Error Code
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
       type: object
       title: ToolInvocationResult
       description: Result of a tool invocation.
@@ -8269,6 +8019,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Toolgroup Id
         name:
           type: string
           title: Name
@@ -8276,21 +8027,25 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Description
         input_schema:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Input Schema
         output_schema:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Output Schema
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
       type: object
       required:
       - name
@@ -8318,6 +8073,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Resource Id
           description: Unique identifier for this resource in the provider
         provider_id:
           type: string
@@ -8331,14 +8087,13 @@ components:
         mcp_endpoint:
           anyOf:
           - $ref: '#/components/schemas/URL'
-            title: URL
           - type: 'null'
-          title: URL
         args:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Args
       type: object
       required:
       - identifier
@@ -8370,10 +8125,7 @@ components:
               propertyName: type
             oneOf:
             - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
           - items:
               discriminator:
                 mapping:
@@ -8382,13 +8134,9 @@ components:
                 propertyName: type
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+          title: Content
         chunk_id:
           title: Chunk Id
           type: string
@@ -8410,38 +8158,47 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Chunk Id
         document_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Document Id
         source:
           anyOf:
           - type: string
           - type: 'null'
+          title: Source
         created_timestamp:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Created Timestamp
         updated_timestamp:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Updated Timestamp
         chunk_window:
           anyOf:
           - type: string
           - type: 'null'
+          title: Chunk Window
         chunk_tokenizer:
           anyOf:
           - type: string
           - type: 'null'
+          title: Chunk Tokenizer
         content_token_count:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Content Token Count
         metadata_token_count:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Metadata Token Count
       type: object
       title: ChunkMetadata
       description: |-
@@ -8463,6 +8220,7 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Ttl Seconds
       type: object
       required:
       - vector_store_id
@@ -8478,35 +8236,29 @@ components:
           - type: string
           - oneOf:
             - $ref: '#/components/schemas/ImageContentItem-Input'
-              title: ImageContentItem-Input
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
             discriminator:
               propertyName: type
               mapping:
                 image: '#/components/schemas/ImageContentItem-Input'
                 text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Input | TextContentItem
           - items:
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem-Input'
-                title: ImageContentItem-Input
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
               discriminator:
                 propertyName: type
                 mapping:
                   image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Input | TextContentItem
             type: array
-            title: list[ImageContentItem-Input | TextContentItem]
-          title: string | list[ImageContentItem-Input | TextContentItem]
+          title: Query
         params:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Params
       type: object
       required:
       - vector_store_id
@@ -8571,10 +8323,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: First Id
         last_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Last Id
         has_more:
           type: boolean
           title: Has More
@@ -8600,6 +8354,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
         usage_bytes:
           type: integer
           title: Usage Bytes
@@ -8615,14 +8370,17 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Expires After
         expires_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Expires At
         last_active_at:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Last Active At
         metadata:
           additionalProperties: true
           type: object
@@ -8642,10 +8400,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-        title: VectorStoreChunkingStrategyAuto
       - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-        title: VectorStoreChunkingStrategyStatic
-      title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
     VectorStoreChunkingStrategyAuto:
       properties:
         type:
@@ -8691,30 +8446,30 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
         file_ids:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          title: File Ids
         expires_after:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Expires After
         chunking_strategy:
           anyOf:
           - oneOf:
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-              title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-              title: VectorStoreChunkingStrategyStatic
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
           - type: 'null'
           title: Chunking Strategy
         metadata:
@@ -8722,6 +8477,7 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
       additionalProperties: true
       type: object
       title: OpenAICreateVectorStoreRequestWithExtraBody
@@ -8732,16 +8488,19 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
         expires_after:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Expires After
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
       type: object
       title: OpenaiUpdateVectorStoreRequest
     VectorStoreDeleteResponse:
@@ -8774,19 +8533,17 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Attributes
         chunking_strategy:
           anyOf:
           - oneOf:
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-              title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-              title: VectorStoreChunkingStrategyStatic
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
           - type: 'null'
           title: Chunking Strategy
       additionalProperties: true
@@ -8872,7 +8629,6 @@ components:
               maxLength: 512
             - type: number
             - type: boolean
-            title: string | number | boolean
           propertyNames:
             type: string
             maxLength: 64
@@ -8884,10 +8640,8 @@ components:
         chunking_strategy:
           oneOf:
           - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-            title: VectorStoreChunkingStrategyAuto
           - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyStatic
-          title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          title: Chunking Strategy
           discriminator:
             propertyName: type
             mapping:
@@ -8899,9 +8653,7 @@ components:
         last_error:
           anyOf:
           - $ref: '#/components/schemas/VectorStoreFileLastError'
-            title: VectorStoreFileLastError
           - type: 'null'
-          title: VectorStoreFileLastError
         status:
           title: Status
           type: string
@@ -8942,10 +8694,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: First Id
         last_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Last Id
         has_more:
           type: boolean
           title: Has More
@@ -8970,10 +8724,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: First Id
         last_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Last Id
         has_more:
           type: boolean
           title: Has More
@@ -8993,19 +8749,17 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Attributes
         chunking_strategy:
           anyOf:
           - oneOf:
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-              title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-              title: VectorStoreChunkingStrategyStatic
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
           - type: 'null'
           title: Chunking Strategy
       type: object
@@ -9055,17 +8809,17 @@ components:
               type: number
             type: array
           - type: 'null'
+          title: Embedding
         chunk_metadata:
           anyOf:
           - $ref: '#/components/schemas/ChunkMetadata'
-            title: ChunkMetadata
           - type: 'null'
-          title: ChunkMetadata
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
       type: object
       required:
       - type
@@ -9092,6 +8846,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Next Page
       type: object
       required:
       - data
@@ -9105,33 +8860,34 @@ components:
           - items:
               type: string
             type: array
-            title: list[string]
-          title: string | list[string]
+          title: Query
         filters:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Filters
         max_num_results:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Num Results
           default: 10
         ranking_options:
           anyOf:
           - $ref: '#/components/schemas/SearchRankingOptions'
-            title: SearchRankingOptions
           - type: 'null'
-          title: SearchRankingOptions
         rewrite_query:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Rewrite Query
           default: false
         search_mode:
           anyOf:
           - type: string
           - type: 'null'
+          title: Search Mode
           default: vector
       type: object
       required:
@@ -9155,9 +8911,9 @@ components:
               - type: string
               - type: number
               - type: boolean
-              title: string | number | boolean
             type: object
           - type: 'null'
+          title: Attributes
         content:
           items:
             $ref: '#/components/schemas/VectorStoreContent'
@@ -9195,6 +8951,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Next Page
       type: object
       required:
       - search_query
@@ -9246,6 +9003,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Url
       type: object
       required:
       - data
@@ -9262,6 +9020,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Resource Id
           description: Unique identifier for this resource in the provider
         provider_id:
           type: string
@@ -9279,10 +9038,8 @@ components:
         source:
           oneOf:
           - $ref: '#/components/schemas/URIDataSource'
-            title: URIDataSource
           - $ref: '#/components/schemas/RowsDataSource'
-            title: RowsDataSource
-          title: URIDataSource | RowsDataSource
+          title: Source
           description: Data source configuration for the dataset
           discriminator:
             propertyName: type
@@ -9362,6 +9119,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Resource Id
           description: Unique identifier for this resource in the provider
         provider_id:
           type: string
@@ -9418,18 +9176,14 @@ components:
           additionalProperties:
             oneOf:
             - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-              title: LLMAsJudgeScoringFnParams
             - $ref: '#/components/schemas/RegexParserScoringFnParams'
-              title: RegexParserScoringFnParams
             - $ref: '#/components/schemas/BasicScoringFnParams'
-              title: BasicScoringFnParams
             discriminator:
               propertyName: type
               mapping:
                 basic: '#/components/schemas/BasicScoringFnParams'
                 llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
                 regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
           type: object
           title: Scoring Params
           description: Map between scoring function id and parameters for each scoring function you want to run
@@ -9438,6 +9192,7 @@ components:
           - type: integer
             minimum: 1.0
           - type: 'null'
+          title: Num Examples
           description: Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated
       type: object
       required:
@@ -9472,10 +9227,8 @@ components:
         system_message:
           anyOf:
           - $ref: '#/components/schemas/SystemMessage'
-            title: SystemMessage
           - type: 'null'
           description: The system message providing instructions or context to the model
-          title: SystemMessage
       type: object
       required:
       - model
@@ -9487,12 +9240,9 @@ components:
         strategy:
           oneOf:
           - $ref: '#/components/schemas/GreedySamplingStrategy'
-            title: GreedySamplingStrategy
           - $ref: '#/components/schemas/TopPSamplingStrategy'
-            title: TopPSamplingStrategy
           - $ref: '#/components/schemas/TopKSamplingStrategy'
-            title: TopKSamplingStrategy
-          title: GreedySamplingStrategy | TopPSamplingStrategy | TopKSamplingStrategy
+          title: Strategy
           discriminator:
             propertyName: type
             mapping:
@@ -9503,10 +9253,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Tokens
         repetition_penalty:
           anyOf:
           - type: number
           - type: 'null'
+          title: Repetition Penalty
           default: 1.0
         stop:
           anyOf:
@@ -9514,6 +9266,7 @@ components:
               type: string
             type: array
           - type: 'null'
+          title: Stop
       type: object
       title: SamplingParams
       description: Sampling parameters.
@@ -9529,30 +9282,23 @@ components:
           - type: string
           - oneOf:
             - $ref: '#/components/schemas/ImageContentItem-Input'
-              title: ImageContentItem-Input
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
             discriminator:
               propertyName: type
               mapping:
                 image: '#/components/schemas/ImageContentItem-Input'
                 text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Input | TextContentItem
           - items:
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem-Input'
-                title: ImageContentItem-Input
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
               discriminator:
                 propertyName: type
                 mapping:
                   image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Input | TextContentItem
             type: array
-            title: list[ImageContentItem-Input | TextContentItem]
-          title: string | list[ImageContentItem-Input | TextContentItem]
+          title: Content
       type: object
       required:
       - content
@@ -9586,10 +9332,12 @@ components:
           - type: number
             minimum: 0.0
           - type: 'null'
+          title: Temperature
         top_p:
           anyOf:
           - type: number
           - type: 'null'
+          title: Top P
           default: 0.95
       type: object
       required:
@@ -9726,9 +9474,7 @@ components:
         training_metrics:
           anyOf:
           - $ref: '#/components/schemas/PostTrainingMetric'
-            title: PostTrainingMetric
           - type: 'null'
-          title: PostTrainingMetric
       type: object
       required:
       - identifier
@@ -9798,21 +9544,25 @@ components:
           - type: string
             format: date-time
           - type: 'null'
+          title: Scheduled At
         started_at:
           anyOf:
           - type: string
             format: date-time
           - type: 'null'
+          title: Started At
         completed_at:
           anyOf:
           - type: string
             format: date-time
           - type: 'null'
+          title: Completed At
         resources_allocated:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Resources Allocated
         checkpoints:
           items:
             $ref: '#/components/schemas/Checkpoint'
@@ -9873,15 +9623,18 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Validation Dataset Id
         packed:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Packed
           default: false
         train_on_input:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Train On Input
           default: false
       type: object
       required:
@@ -9904,21 +9657,25 @@ components:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Enable Activation Checkpointing
           default: false
         enable_activation_offloading:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Enable Activation Offloading
           default: false
         memory_efficient_fsdp_wrap:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Memory Efficient Fsdp Wrap
           default: false
         fsdp_cpu_offload:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Fsdp Cpu Offload
           default: false
       type: object
       title: EfficiencyConfig
@@ -9969,29 +9726,25 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Max Validation Steps
           default: 1
         data_config:
           anyOf:
           - $ref: '#/components/schemas/DataConfig'
-            title: DataConfig
           - type: 'null'
-          title: DataConfig
         optimizer_config:
           anyOf:
           - $ref: '#/components/schemas/OptimizerConfig'
-            title: OptimizerConfig
           - type: 'null'
-          title: OptimizerConfig
         efficiency_config:
           anyOf:
           - $ref: '#/components/schemas/EfficiencyConfig'
-            title: EfficiencyConfig
           - type: 'null'
-          title: EfficiencyConfig
         dtype:
           anyOf:
           - type: string
           - type: 'null'
+          title: Dtype
           default: bf16
       type: object
       required:
@@ -10051,10 +9804,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/LoraFinetuningConfig'
-        title: LoraFinetuningConfig
       - $ref: '#/components/schemas/QATFinetuningConfig'
-        title: QATFinetuningConfig
-      title: LoraFinetuningConfig | QATFinetuningConfig
     LoraFinetuningConfig:
       properties:
         type:
@@ -10083,11 +9833,13 @@ components:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Use Dora
           default: false
         quantize_base:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Quantize Base
           default: false
       type: object
       required:
@@ -10140,25 +9892,24 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Model
           description: Model descriptor for training if not in provider config
         checkpoint_dir:
           anyOf:
           - type: string
           - type: 'null'
+          title: Checkpoint Dir
           description: The directory to save checkpoint(s) to.
         algorithm_config:
           anyOf:
           - oneOf:
             - $ref: '#/components/schemas/LoraFinetuningConfig'
-              title: LoraFinetuningConfig
             - $ref: '#/components/schemas/QATFinetuningConfig'
-              title: QATFinetuningConfig
             discriminator:
               propertyName: type
               mapping:
                 LoRA: '#/components/schemas/LoraFinetuningConfig'
                 QAT: '#/components/schemas/QATFinetuningConfig'
-            title: LoraFinetuningConfig | QATFinetuningConfig
           - type: 'null'
           title: Algorithm Config
           description: The algorithm configuration.
@@ -10180,25 +9931,26 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Model Id
           description: The identifier of the model in the provider.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Id
           description: The identifier of the provider.
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
           description: Any additional metadata for this model.
         model_type:
           anyOf:
           - $ref: '#/components/schemas/ModelType'
-            title: ModelType
           - type: 'null'
           description: The type of model to register.
-          title: ModelType
       type: object
       required:
       - model_id
@@ -10219,24 +9971,14 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/StringType'
-        title: StringType
       - $ref: '#/components/schemas/NumberType'
-        title: NumberType
       - $ref: '#/components/schemas/BooleanType'
-        title: BooleanType
       - $ref: '#/components/schemas/ArrayType'
-        title: ArrayType
       - $ref: '#/components/schemas/ObjectType'
-        title: ObjectType
       - $ref: '#/components/schemas/JsonType'
-        title: JsonType
       - $ref: '#/components/schemas/UnionType'
-        title: UnionType
       - $ref: '#/components/schemas/ChatCompletionInputType'
-        title: ChatCompletionInputType
       - $ref: '#/components/schemas/CompletionInputType'
-        title: CompletionInputType
-      title: StringType | ... (9 variants)
     RegisterScoringFunctionRequest:
       properties:
         scoring_fn_id:
@@ -10250,24 +9992,15 @@ components:
         return_type:
           oneOf:
           - $ref: '#/components/schemas/StringType'
-            title: StringType
           - $ref: '#/components/schemas/NumberType'
-            title: NumberType
           - $ref: '#/components/schemas/BooleanType'
-            title: BooleanType
           - $ref: '#/components/schemas/ArrayType'
-            title: ArrayType
           - $ref: '#/components/schemas/ObjectType'
-            title: ObjectType
           - $ref: '#/components/schemas/JsonType'
-            title: JsonType
           - $ref: '#/components/schemas/UnionType'
-            title: UnionType
           - $ref: '#/components/schemas/ChatCompletionInputType'
-            title: ChatCompletionInputType
           - $ref: '#/components/schemas/CompletionInputType'
-            title: CompletionInputType
-          title: StringType | ... (9 variants)
+          title: Return Type
           description: The return type of the scoring function.
           discriminator:
             propertyName: type
@@ -10285,28 +10018,26 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Scoring Fn Id
           description: The ID of the provider scoring function to use for the scoring function.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Id
           description: The ID of the provider to use for the scoring function.
         params:
           anyOf:
           - oneOf:
             - $ref: '#/components/schemas/LLMAsJudgeScoringFnParams'
-              title: LLMAsJudgeScoringFnParams
             - $ref: '#/components/schemas/RegexParserScoringFnParams'
-              title: RegexParserScoringFnParams
             - $ref: '#/components/schemas/BasicScoringFnParams'
-              title: BasicScoringFnParams
             discriminator:
               propertyName: type
               mapping:
                 basic: '#/components/schemas/BasicScoringFnParams'
                 llm_as_judge: '#/components/schemas/LLMAsJudgeScoringFnParams'
                 regex_parser: '#/components/schemas/RegexParserScoringFnParams'
-            title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
           - type: 'null'
           title: Params
           description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval.
@@ -10327,17 +10058,20 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Shield Id
           description: The identifier of the shield in the provider.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Id
           description: The identifier of the provider.
         params:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Params
           description: The parameters of the shield.
       type: object
       required:
@@ -10352,10 +10086,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/URIDataSource'
-        title: URIDataSource
       - $ref: '#/components/schemas/RowsDataSource'
-        title: RowsDataSource
-      title: URIDataSource | RowsDataSource
     RegisterDatasetRequest:
       properties:
         purpose:
@@ -10364,10 +10095,8 @@ components:
         source:
           oneOf:
           - $ref: '#/components/schemas/URIDataSource'
-            title: URIDataSource
           - $ref: '#/components/schemas/RowsDataSource'
-            title: RowsDataSource
-          title: URIDataSource | RowsDataSource
+          title: Source
           description: The data source of the dataset.
           discriminator:
             propertyName: type
@@ -10379,11 +10108,13 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
           description: The metadata for the dataset.
         dataset_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Dataset Id
           description: The ID of the dataset. If not provided, an ID will be generated.
       type: object
       required:
@@ -10411,17 +10142,20 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Benchmark Id
           description: The ID of the provider benchmark to use for the benchmark.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Id
           description: The ID of the provider to use for the benchmark.
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
           description: The metadata to use for the benchmark.
       type: object
       required:
@@ -10438,6 +10172,7 @@ components:
               type: string
             type: array
           - type: 'null'
+          title: Tool Names
       type: object
       title: AllowedToolsFilter
       description: Filter configuration for restricting which MCP tools can be used.
@@ -10449,12 +10184,14 @@ components:
               type: string
             type: array
           - type: 'null'
+          title: Always
         never:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          title: Never
       type: object
       title: ApprovalFilter
       description: Filter configuration for MCP tool approval requirements.
@@ -10464,18 +10201,22 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Code
         line:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Line
         message:
           anyOf:
           - type: string
           - type: 'null'
+          title: Message
         param:
           anyOf:
           - type: string
           - type: 'null'
+          title: Param
       additionalProperties: true
       type: object
       title: BatchError
@@ -10534,10 +10275,8 @@ components:
         expires_after:
           anyOf:
           - $ref: '#/components/schemas/ExpiresAfter'
-            title: ExpiresAfter
           - type: 'null'
           description: Optional expiration settings.
-          title: ExpiresAfter
       type: object
       required:
       - file
@@ -10560,21 +10299,25 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Server Label
           description: Label of the server
         server_name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Server Name
           description: Name of the server
         server_description:
           anyOf:
           - type: string
           - type: 'null'
+          title: Server Description
           description: Description of the server
         server_version:
           anyOf:
           - type: string
           - type: 'null'
+          title: Server Version
           description: Version of the server
       type: object
       required:
@@ -10615,30 +10358,23 @@ components:
           - type: string
           - oneOf:
             - $ref: '#/components/schemas/ImageContentItem-Input'
-              title: ImageContentItem-Input
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
             discriminator:
               propertyName: type
               mapping:
                 image: '#/components/schemas/ImageContentItem-Input'
                 text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Input | TextContentItem
           - items:
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem-Input'
-                title: ImageContentItem-Input
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
               discriminator:
                 propertyName: type
                 mapping:
                   image: '#/components/schemas/ImageContentItem-Input'
                   text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Input | TextContentItem
             type: array
-            title: list[ImageContentItem-Input | TextContentItem]
-          title: string | list[ImageContentItem-Input | TextContentItem]
+          title: Content
         chunk_id:
           type: string
           title: Chunk Id
@@ -10678,30 +10414,23 @@ components:
           - type: string
           - oneOf:
             - $ref: '#/components/schemas/ImageContentItem-Output'
-              title: ImageContentItem-Output
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
             discriminator:
               propertyName: type
               mapping:
                 image: '#/components/schemas/ImageContentItem-Output'
                 text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Output | TextContentItem
           - items:
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem-Output'
-                title: ImageContentItem-Output
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
               discriminator:
                 propertyName: type
                 mapping:
                   image: '#/components/schemas/ImageContentItem-Output'
                   text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Output | TextContentItem
             type: array
-            title: list[ImageContentItem-Output | TextContentItem]
-          title: string | list[ImageContentItem-Output | TextContentItem]
+          title: Content
         chunk_id:
           type: string
           title: Chunk Id
@@ -10742,10 +10471,12 @@ components:
               $ref: '#/components/schemas/BatchError'
             type: array
           - type: 'null'
+          title: Data
         object:
           anyOf:
           - type: string
           - type: 'null'
+          title: Object
       additionalProperties: true
       type: object
       title: Errors
@@ -10868,6 +10599,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Description
       type: object
       required:
       - input_schema
@@ -10887,19 +10619,20 @@ components:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam]
           - type: 'null'
-          title: string | list[OpenAIChatCompletionContentPartTextParam]
+          title: Content
         name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
         tool_calls:
           anyOf:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+          title: Tool Calls
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -10916,19 +10649,20 @@ components:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam]
           - type: 'null'
-          title: string | list[OpenAIChatCompletionContentPartTextParam]
+          title: Content
         name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
         tool_calls:
           anyOf:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+          title: Tool Calls
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -10938,6 +10672,7 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Reasoning Tokens
       type: object
       title: OpenAIChatCompletionUsageCompletionTokensDetails
       description: Token details for output tokens in OpenAI chat completion usage.
@@ -10947,6 +10682,7 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Cached Tokens
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
@@ -11030,6 +10766,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
       type: object
       required:
       - server_label
@@ -11064,35 +10801,26 @@ components:
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
-                title: OpenAIResponseInputMessageContentText
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
-                title: OpenAIResponseInputMessageContentImage
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
-                title: OpenAIResponseInputMessageContentFile
               discriminator:
                 propertyName: type
                 mapping:
                   input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                   input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
                   input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
-              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
             type: array
-            title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input'
-                title: OpenAIResponseOutputMessageContentOutputText-Input
               - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
-                title: OpenAIResponseContentPartRefusal
               discriminator:
                 propertyName: type
                 mapping:
                   output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input'
                   refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
-              title: OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal
             type: array
-            title: list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
-          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Input | OpenAIResponseContentPartRefusal]
+          title: Content
         role:
           title: Role
           type: string
@@ -11111,10 +10839,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Id
         status:
           anyOf:
           - type: string
           - type: 'null'
+          title: Status
       type: object
       required:
       - content
@@ -11133,35 +10863,26 @@ components:
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
-                title: OpenAIResponseInputMessageContentText
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
-                title: OpenAIResponseInputMessageContentImage
               - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
-                title: OpenAIResponseInputMessageContentFile
               discriminator:
                 propertyName: type
                 mapping:
                   input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
                   input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
                   input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
-              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
             type: array
-            title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output'
-                title: OpenAIResponseOutputMessageContentOutputText-Output
               - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
-                title: OpenAIResponseContentPartRefusal
               discriminator:
                 propertyName: type
                 mapping:
                   output_text: '#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output'
                   refusal: '#/components/schemas/OpenAIResponseContentPartRefusal'
-              title: OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal
             type: array
-            title: list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
-          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile] | list[OpenAIResponseOutputMessageContentOutputText-Output | OpenAIResponseContentPartRefusal]
+          title: Content
         role:
           title: Role
           type: string
@@ -11180,10 +10901,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Id
         status:
           anyOf:
           - type: string
           - type: 'null'
+          title: Status
       type: object
       required:
       - content
@@ -11208,13 +10931,9 @@ components:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-              title: OpenAIResponseAnnotationFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
-              title: OpenAIResponseAnnotationCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-              title: OpenAIResponseAnnotationContainerFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-              title: OpenAIResponseAnnotationFilePath
             discriminator:
               propertyName: type
               mapping:
@@ -11222,7 +10941,6 @@ components:
                 file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
                 file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
                 url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
-            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
           type: array
           title: Annotations
         logprobs:
@@ -11231,6 +10949,7 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          title: Logprobs
       type: object
       required:
       - text
@@ -11249,13 +10968,9 @@ components:
           items:
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
-              title: OpenAIResponseAnnotationFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationCitation'
-              title: OpenAIResponseAnnotationCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationContainerFileCitation'
-              title: OpenAIResponseAnnotationContainerFileCitation
             - $ref: '#/components/schemas/OpenAIResponseAnnotationFilePath'
-              title: OpenAIResponseAnnotationFilePath
             discriminator:
               propertyName: type
               mapping:
@@ -11263,7 +10978,6 @@ components:
                 file_citation: '#/components/schemas/OpenAIResponseAnnotationFileCitation'
                 file_path: '#/components/schemas/OpenAIResponseAnnotationFilePath'
                 url_citation: '#/components/schemas/OpenAIResponseAnnotationCitation'
-            title: OpenAIResponseAnnotationFileCitation | ... (4 variants)
           type: array
           title: Annotations
         logprobs:
@@ -11272,6 +10986,7 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          title: Logprobs
       type: object
       required:
       - text
@@ -11317,19 +11032,23 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
         schema:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Schema
         description:
           anyOf:
           - type: string
           - type: 'null'
+          title: Description
         strict:
           anyOf:
           - type: boolean
           - type: 'null'
+          title: Strict
       type: object
       title: OpenAIResponseTextFormat
       description: Configuration for Responses API text format.
@@ -11339,6 +11058,7 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Cached Tokens
       type: object
       title: OpenAIResponseUsageInputTokensDetails
       description: Token details for input tokens in OpenAI response usage.
@@ -11348,6 +11068,7 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+          title: Reasoning Tokens
       type: object
       title: OpenAIResponseUsageOutputTokensDetails
       description: Token details for output tokens in OpenAI response usage.
@@ -11364,25 +11085,21 @@ components:
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
-                title: OpenAIChatCompletionContentPartTextParam
               - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
-                title: OpenAIChatCompletionContentPartImageParam
               - $ref: '#/components/schemas/OpenAIFile'
-                title: OpenAIFile
               discriminator:
                 propertyName: type
                 mapping:
                   file: '#/components/schemas/OpenAIFile'
                   image_url: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
                   text: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
-              title: OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
-          title: string | list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
+          title: Content
         name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
       type: object
       required:
       - content
@@ -11401,25 +11118,21 @@ components:
           - items:
               oneOf:
               - $ref: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
-                title: OpenAIChatCompletionContentPartTextParam
               - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
-                title: OpenAIChatCompletionContentPartImageParam
               - $ref: '#/components/schemas/OpenAIFile'
-                title: OpenAIFile
               discriminator:
                 propertyName: type
                 mapping:
                   file: '#/components/schemas/OpenAIFile'
                   image_url: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
                   text: '#/components/schemas/OpenAIChatCompletionContentPartTextParam'
-              title: OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile
             type: array
-            title: list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
-          title: string | list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
+          title: Content
         name:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
       type: object
       required:
       - content
@@ -11463,10 +11176,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Ranker
         score_threshold:
           anyOf:
           - type: number
           - type: 'null'
+          title: Score Threshold
           default: 0.0
       type: object
       title: SearchRankingOptions
@@ -11498,6 +11213,7 @@ components:
               type: string
             type: array
           - type: 'null'
+          title: Variables
           description: Updated list of variable names that can be used in the prompt template.
         set_as_default:
           type: boolean
@@ -11515,14 +11231,13 @@ components:
         url:
           anyOf:
           - $ref: '#/components/schemas/URL'
-            title: URL
           - type: 'null'
-          title: URL
         data:
           anyOf:
           - type: string
           - type: 'null'
           contentEncoding: base64
+          title: Data
       type: object
       title: _URLOrData
       description: A URL or a base64 encoded string
@@ -11535,12 +11250,8 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/GreedySamplingStrategy'
-        title: GreedySamplingStrategy
       - $ref: '#/components/schemas/TopPSamplingStrategy'
-        title: TopPSamplingStrategy
       - $ref: '#/components/schemas/TopKSamplingStrategy'
-        title: TopKSamplingStrategy
-      title: GreedySamplingStrategy | TopPSamplingStrategy | TopKSamplingStrategy
     GrammarResponseFormat:
       description: Configuration for grammar-guided response generation.
       properties:
@@ -11581,10 +11292,7 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/JsonSchemaResponseFormat'
-        title: JsonSchemaResponseFormat
       - $ref: '#/components/schemas/GrammarResponseFormat'
-        title: GrammarResponseFormat
-      title: JsonSchemaResponseFormat | GrammarResponseFormat
     AllowedToolsConfig:
       properties:
         tools:
@@ -11674,16 +11382,11 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceAllowedTools'
-        title: OpenAIChatCompletionToolChoiceAllowedTools
       - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceFunctionTool'
-        title: OpenAIChatCompletionToolChoiceFunctionTool
       - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
-        title: OpenAIChatCompletionToolChoiceCustomTool
-      title: OpenAIChatCompletionToolChoiceAllowedTools | OpenAIChatCompletionToolChoiceFunctionTool | OpenAIChatCompletionToolChoiceCustomTool
     OpenAIResponseInputToolChoice:
       anyOf:
       - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
-        title: OpenAIResponseInputToolChoiceMode
       - discriminator:
           mapping:
             allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
@@ -11698,19 +11401,11 @@ components:
           propertyName: type
         oneOf:
         - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
-          title: OpenAIResponseInputToolChoiceAllowedTools
         - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
-          title: OpenAIResponseInputToolChoiceFileSearch
         - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-          title: OpenAIResponseInputToolChoiceWebSearch
         - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
-          title: OpenAIResponseInputToolChoiceFunctionTool
         - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
-          title: OpenAIResponseInputToolChoiceMCPTool
         - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
-          title: OpenAIResponseInputToolChoiceCustomTool
-        title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
-      title: OpenAIResponseInputToolChoiceMode
     OpenAIResponseContentPart:
       discriminator:
         mapping:
@@ -11720,12 +11415,8 @@ components:
         propertyName: type
       oneOf:
       - $ref: '#/components/schemas/OpenAIResponseContentPartOutputText'
-        title: OpenAIResponseContentPartOutputText
       - $ref: '#/components/schemas/OpenAIResponseContentPartRefusal'
-        title: OpenAIResponseContentPartRefusal
       - $ref: '#/components/schemas/OpenAIResponseContentPartReasoningText'
-        title: OpenAIResponseContentPartReasoningText
-      title: OpenAIResponseContentPartOutputText | OpenAIResponseContentPartRefusal | OpenAIResponseContentPartReasoningText
     ListBenchmarksRequest:
       description: Request model for listing benchmarks.
       properties: {}
@@ -11914,14 +11605,13 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Args
           nullable: true
         mcp_endpoint:
           anyOf:
           - $ref: '#/components/schemas/URL'
-            title: URL
           - type: 'null'
           nullable: true
-          title: URL
       required:
       - toolgroup_id
       - provider_id
@@ -11984,12 +11674,14 @@ components:
           - type: string
           - type: 'null'
           description: If this provider is deprecated, specify the warning message here
+          title: Deprecation Warning
           nullable: true
         deprecation_error:
           anyOf:
           - type: string
           - type: 'null'
           description: If this provider is deprecated and does NOT work, specify the error message here
+          title: Deprecation Error
           nullable: true
         module:
           anyOf:
@@ -12002,6 +11694,7 @@ components:
               - `get_adapter_impl(config, deps)`: returns the adapter implementation
 
               Example: `module: ramalama_stack`
+          title: Module
           nullable: true
         pip_packages:
           description: The pip dependencies needed for this implementation
@@ -12013,6 +11706,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Data Validator
           nullable: true
         is_external:
           default: false
@@ -12057,12 +11751,14 @@ components:
           - type: string
           - type: 'null'
           description: If this provider is deprecated, specify the warning message here
+          title: Deprecation Warning
           nullable: true
         deprecation_error:
           anyOf:
           - type: string
           - type: 'null'
           description: If this provider is deprecated and does NOT work, specify the error message here
+          title: Deprecation Error
           nullable: true
         module:
           anyOf:
@@ -12075,6 +11771,7 @@ components:
               - `get_adapter_impl(config, deps)`: returns the adapter implementation
 
               Example: `module: ramalama_stack`
+          title: Module
           nullable: true
         pip_packages:
           description: The pip dependencies needed for this implementation
@@ -12086,6 +11783,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Data Validator
           nullable: true
         is_external:
           default: false
@@ -12105,6 +11803,7 @@ components:
 
             The container image to use for this implementation. If one is provided, pip_packages will be ignored.
             If a provider depends on other providers, the dependencies MUST NOT specify a container image.
+          title: Container Image
           nullable: true
         description:
           anyOf:
@@ -12113,6 +11812,7 @@ components:
           description: |2
 
             A description of the provider. This is used to display in the documentation.
+          title: Description
           nullable: true
       required:
       - api
@@ -12147,12 +11847,14 @@ components:
           - type: string
           - type: 'null'
           description: If this provider is deprecated, specify the warning message here
+          title: Deprecation Warning
           nullable: true
         deprecation_error:
           anyOf:
           - type: string
           - type: 'null'
           description: If this provider is deprecated and does NOT work, specify the error message here
+          title: Deprecation Error
           nullable: true
         module:
           anyOf:
@@ -12165,6 +11867,7 @@ components:
               - `get_adapter_impl(config, deps)`: returns the adapter implementation
 
               Example: `module: ramalama_stack`
+          title: Module
           nullable: true
         pip_packages:
           description: The pip dependencies needed for this implementation
@@ -12176,6 +11879,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Provider Data Validator
           nullable: true
         is_external:
           default: false
@@ -12198,6 +11902,7 @@ components:
           description: |2
 
             A description of the provider. This is used to display in the documentation.
+          title: Description
           nullable: true
       required:
       - api
@@ -12219,6 +11924,7 @@ components:
             type: string
           - type: 'null'
           description: Filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
+          title: Api Filter
           nullable: true
       title: ListRoutesRequest
       type: object
@@ -12243,11 +11949,12 @@ components:
           anyOf:
           - type: integer
           - type: number
-          title: integer | number
+          title: Value
         unit:
           anyOf:
           - type: string
           - type: 'null'
+          title: Unit
           nullable: true
       required:
       - metric
@@ -12287,6 +11994,7 @@ components:
           - type: string
           - type: 'null'
           default: int4_weight_int8_dynamic_activation
+          title: Scheme
       title: Int4QuantizationConfig
       type: object
     UserMessage:
@@ -12307,10 +12015,7 @@ components:
               propertyName: type
             oneOf:
             - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
           - items:
               discriminator:
                 mapping:
@@ -12319,13 +12024,9 @@ components:
                 propertyName: type
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+          title: Content
         context:
           anyOf:
           - type: string
@@ -12336,10 +12037,7 @@ components:
               propertyName: type
             oneOf:
             - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
           - items:
               discriminator:
                 mapping:
@@ -12348,14 +12046,10 @@ components:
                 propertyName: type
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
           - type: 'null'
-          title: string | list[ImageContentItem | TextContentItem]
+          title: Context
           nullable: true
       required:
       - content
@@ -12382,10 +12076,7 @@ components:
               propertyName: type
             oneOf:
             - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
           - items:
               discriminator:
                 mapping:
@@ -12394,13 +12085,9 @@ components:
                 propertyName: type
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+          title: Content
       required:
       - call_id
       - content
@@ -12447,6 +12134,7 @@ components:
               type: integer
             type: array
           - type: 'null'
+          title: Text Offset
           nullable: true
         token_logprobs:
           anyOf:
@@ -12454,6 +12142,7 @@ components:
               type: number
             type: array
           - type: 'null'
+          title: Token Logprobs
           nullable: true
         tokens:
           anyOf:
@@ -12461,6 +12150,7 @@ components:
               type: string
             type: array
           - type: 'null'
+          title: Tokens
           nullable: true
         top_logprobs:
           anyOf:
@@ -12470,6 +12160,7 @@ components:
               type: object
             type: array
           - type: 'null'
+          title: Top Logprobs
           nullable: true
       title: OpenAICompletionLogprobs
       type: object
@@ -12488,10 +12179,7 @@ components:
               propertyName: type
             oneOf:
             - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
             - $ref: '#/components/schemas/TextContentItem'
-              title: TextContentItem
-            title: ImageContentItem | TextContentItem
           - items:
               discriminator:
                 mapping:
@@ -12500,13 +12188,9 @@ components:
                 propertyName: type
               oneOf:
               - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
               - $ref: '#/components/schemas/TextContentItem'
-                title: TextContentItem
-              title: ImageContentItem | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+          title: Content
         chunk_id:
           title: Chunk Id
           type: string
@@ -12543,6 +12227,7 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
           nullable: true
         file_ids:
           items:
@@ -12554,12 +12239,14 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Expires After
           nullable: true
         chunking_strategy:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Chunking Strategy
           nullable: true
         metadata:
           additionalProperties: true
@@ -12574,18 +12261,21 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          title: Name
           nullable: true
         expires_after:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Expires After
           nullable: true
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Metadata
           nullable: true
       title: VectorStoreModifyRequest
       type: object
@@ -12598,13 +12288,13 @@ components:
           - items:
               type: string
             type: array
-            title: list[string]
-          title: string | list[string]
+          title: Query
         filters:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Filters
           nullable: true
         max_num_results:
           default: 10
@@ -12615,6 +12305,7 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+          title: Ranking Options
           nullable: true
         rewrite_query:
           default: false
@@ -12632,6 +12323,7 @@ components:
           - type: string
           - type: 'null'
           description: Optional cursor for pagination. Returns batches after this ID.
+          title: After
           nullable: true
         limit:
           default: 20
@@ -12681,6 +12373,7 @@ components:
           - type: string
           - type: 'null'
           description: Label of the server
+          title: Server Label
           nullable: true
       required:
       - connector_id
@@ -12746,24 +12439,14 @@ components:
               propertyName: type
             oneOf:
             - $ref: '#/components/schemas/OpenAIResponseMessage'
-              title: OpenAIResponseMessage
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-              title: OpenAIResponseOutputMessageWebSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-              title: OpenAIResponseOutputMessageFileSearchToolCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-              title: OpenAIResponseOutputMessageFunctionToolCall
             - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-              title: OpenAIResponseInputFunctionToolCallOutput
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-              title: OpenAIResponseMCPApprovalRequest
             - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-              title: OpenAIResponseMCPApprovalResponse
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-              title: OpenAIResponseOutputMessageMCPCall
             - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-              title: OpenAIResponseOutputMessageMCPListTools
-            title: OpenAIResponseMessage | ... (9 variants)
           maxItems: 20
           title: Items
           type: array
@@ -12821,6 +12504,7 @@ components:
           - type: string
           - type: 'null'
           description: An item ID to list items after, used in pagination.
+          title: After
           nullable: true
         include:
           anyOf:
@@ -12829,12 +12513,14 @@ components:
             type: array
           - type: 'null'
           description: Specify additional output data to include in the response.
+          title: Include
           nullable: true
         limit:
           anyOf:
           - type: integer
           - type: 'null'
           description: A limit on the number of objects to be returned (1-100, default 20).
+          title: Limit
           nullable: true
         order:
           anyOf:
@@ -12844,6 +12530,7 @@ components:
             type: string
           - type: 'null'
           description: The order to return items in (asc or desc, default desc).
+          title: Order
           nullable: true
       required:
       - conversation_id
@@ -12877,12 +12564,14 @@ components:
           - type: integer
           - type: 'null'
           description: Index into dataset for the first row to get. Get all rows if None.
+          title: Start Index
           nullable: true
         limit:
           anyOf:
           - type: integer
           - type: 'null'
           description: The number of rows to get.
+          title: Limit
           nullable: true
       required:
       - dataset_id
@@ -12985,6 +12674,7 @@ components:
           - type: string
           - type: 'null'
           description: A cursor for pagination. Returns files after this ID.
+          title: After
           nullable: true
         limit:
           anyOf:
@@ -12992,22 +12682,19 @@ components:
           - type: 'null'
           default: 10000
           description: Maximum number of files to return (1-10,000).
+          title: Limit
         order:
           anyOf:
           - $ref: '#/components/schemas/Order'
-            title: Order
           - type: 'null'
           default: desc
           description: Sort order by created_at timestamp ('asc' or 'desc').
-          title: Order
         purpose:
           anyOf:
           - $ref: '#/components/schemas/OpenAIFilePurpose'
-            title: OpenAIFilePurpose
           - type: 'null'
           description: Filter files by purpose.
           nullable: true
-          title: OpenAIFilePurpose
       title: ListFilesRequest
       type: object
     RetrieveFileRequest:
@@ -13052,11 +12739,9 @@ components:
         expires_after:
           anyOf:
           - $ref: '#/components/schemas/ExpiresAfter'
-            title: ExpiresAfter
           - type: 'null'
           description: Optional expiration settings for the file.
           nullable: true
-          title: ExpiresAfter
       required:
       - purpose
       title: UploadFileRequest
@@ -13171,6 +12856,7 @@ components:
           - type: integer
           - type: 'null'
           description: The version of the prompt to get (defaults to latest).
+          title: Version
           nullable: true
       required:
       - prompt_id
