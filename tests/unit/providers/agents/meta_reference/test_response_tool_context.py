@@ -36,7 +36,7 @@ class TestToolContext:
         tools = []
         context = ToolContext(tools)
         previous_response = OpenAIResponseObject(
-            created_at=1234, id="test", model="mymodel", output=[], status="", temperature=1.0
+            created_at=1234, id="test", model="mymodel", output=[], status="", store=True, temperature=1.0
         )
         context.recover_tools_from_previous_response(previous_response)
 
@@ -51,7 +51,7 @@ class TestToolContext:
         ]
         context = ToolContext(tools)
         previous_response = OpenAIResponseObject(
-            created_at=1234, id="test", model="mymodel", output=[], status="", temperature=1.0
+            created_at=1234, id="test", model="mymodel", output=[], status="", store=True, temperature=1.0
         )
         context.recover_tools_from_previous_response(previous_response)
 
@@ -71,7 +71,7 @@ class TestToolContext:
             )
         ]
         previous_response = OpenAIResponseObject(
-            created_at=1234, id="test", model="fake", output=output, status="", temperature=1.0
+            created_at=1234, id="test", model="fake", output=output, status="", store=True, temperature=1.0
         )
         previous_response.tools = [
             OpenAIResponseInputToolFileSearch(vector_store_ids=["fake"]),
@@ -107,7 +107,7 @@ class TestToolContext:
             ),
         ]
         previous_response = OpenAIResponseObject(
-            created_at=1234, id="test", model="fake", output=output, status="", temperature=1.0
+            created_at=1234, id="test", model="fake", output=output, status="", store=True, temperature=1.0
         )
         previous_response.tools = [
             OpenAIResponseInputToolFunction(name="fake", parameters=None),
@@ -147,7 +147,7 @@ class TestToolContext:
             )
         ]
         previous_response = OpenAIResponseObject(
-            created_at=1234, id="test", model="fake", output=output, status="", temperature=1.0
+            created_at=1234, id="test", model="fake", output=output, status="", store=True, temperature=1.0
         )
         previous_response.tools = [
             OpenAIResponseInputToolFunction(name="fake", parameters=None),
@@ -186,7 +186,7 @@ class TestToolContext:
             ),
         ]
         previous_response = OpenAIResponseObject(
-            created_at=1234, id="test", model="fake", output=output, status="", temperature=1.0
+            created_at=1234, id="test", model="fake", output=output, status="", store=True, temperature=1.0
         )
         previous_response.tools = [
             OpenAIResponseInputToolFunction(name="fake", parameters=None),

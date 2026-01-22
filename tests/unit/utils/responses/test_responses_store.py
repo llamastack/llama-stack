@@ -37,6 +37,7 @@ def create_test_response_object(
         output=[],  # Required field
         status="completed",  # Required field
         temperature=1.0,
+        store=True,
     )
 
 

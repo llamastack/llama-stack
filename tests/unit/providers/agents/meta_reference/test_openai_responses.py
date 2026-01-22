@@ -613,6 +613,7 @@ async def test_prepend_previous_response_basic(openai_responses_impl, mock_respo
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="fake_previous_input")],
         temperature=0.7,
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = previous_response
 
@@ -657,6 +658,7 @@ async def test_prepend_previous_response_web_search(openai_responses_impl, mock_
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="test input")],
         temperature=0.7,
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -706,6 +708,7 @@ async def test_prepend_previous_response_mcp_tool_call(openai_responses_impl, mo
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="test input")],
         temperature=0.7,
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -829,6 +832,7 @@ async def test_create_openai_response_with_instructions_and_previous_response(
             OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
         ],
         temperature=0.7,
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -892,6 +896,7 @@ async def test_create_openai_response_with_previous_response_instructions(
         ],
         instructions="You are a helpful assistant.",
         temperature=0.7,
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -992,6 +997,7 @@ async def test_responses_store_list_input_items_logic():
         input=input_items,
         messages=[OpenAIUserMessageParam(content="First message")],
         temperature=0.7,
+        store=True,
     )
 
     # Mock the get_response_object method to return our test data
@@ -1076,6 +1082,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
             OpenAIAssistantMessageParam(content="2+2 equals 4."),
         ],
         temperature=0.7,
+        store=True,
     )
 
     mock_responses_store.get_response_object.return_value = previous_response
@@ -1289,6 +1296,7 @@ async def test_create_openai_response_with_output_types_as_input(
         input=input_with_output_types,  # This will trigger Pydantic validation
         messages=None,
         temperature=0.7,
+        store=True,
     )
 
     assert stored_with_outputs.input == input_with_output_types

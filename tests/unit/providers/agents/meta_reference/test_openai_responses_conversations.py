@@ -203,6 +203,7 @@ class TestIntegrationWorkflow:
                 output=[message_item],
                 status="completed",
                 temperature=1.0,
+                store=True,
             )
 
             yield OpenAIResponseObjectStreamResponseCompleted(response=mock_response, type="response.completed")
