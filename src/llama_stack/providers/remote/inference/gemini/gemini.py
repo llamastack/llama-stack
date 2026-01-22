@@ -12,7 +12,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
-    validate_embedding_input_is_text,
+    validate_embeddings_input_is_text,
 )
 
 from .config import GeminiConfig
@@ -39,7 +39,7 @@ class GeminiInferenceAdapter(OpenAIMixin):
         Gemini's embedding API doesn't return usage information, so we provide default values.
         """
         # Validate that input contains only text, not token arrays
-        validate_embedding_input_is_text(params)
+        validate_embeddings_input_is_text(params)
 
         # Build request params conditionally to avoid NotGiven/Omit type mismatch
         request_params: dict[str, Any] = {

@@ -30,7 +30,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
-    validate_embedding_input_is_text,
+    validate_embeddings_input_is_text,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
@@ -148,7 +148,7 @@ class LiteLLMOpenAIMixin(
         params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         # Validate that input contains only text, not token arrays
-        validate_embedding_input_is_text(params)
+        validate_embeddings_input_is_text(params)
 
         if not self.model_store:
             raise ValueError("Model store is not initialized")

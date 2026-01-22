@@ -13,11 +13,11 @@ request parameters that cannot be easily validated using Pydantic alone.
 from llama_stack_api.inference import OpenAIEmbeddingsRequestWithExtraBody
 
 
-def validate_embedding_input_is_text(
+def validate_embeddings_input_is_text(
     params: OpenAIEmbeddingsRequestWithExtraBody,
 ) -> None:
     """
-    Validate that embedding input contains only text strings, not token arrays.
+    Validate that embeddings input contains only text strings, not token arrays.
 
     Token arrays (list[int] and list[list[int]]) are a newer OpenAI feature
     that is not universally supported across all embedding providers. This
@@ -42,5 +42,5 @@ def validate_embedding_input_is_text(
 
 
 __all__ = [
-    "validate_embedding_input_is_text",
+    "validate_embeddings_input_is_text",
 ]

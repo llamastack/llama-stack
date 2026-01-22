@@ -487,7 +487,7 @@ from .tools import (
     ToolRuntime,
     ToolStore,
 )
-from .validators import validate_embedding_input_is_text
+from .validators import validate_embeddings_input_is_text
 from .vector_io import (
     Chunk,
     ChunkMetadata,
@@ -1011,5 +1011,5 @@ __all__ = [
     "WebSearchToolTypes",
     "WeightedRanker",
     # Validators
-    "validate_embedding_input_is_text",
+    "validate_embeddings_input_is_text",
 ]

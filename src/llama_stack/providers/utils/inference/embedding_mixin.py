@@ -23,7 +23,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
-    validate_embedding_input_is_text,
+    validate_embeddings_input_is_text,
 )
 
 EMBEDDING_MODELS = {}
@@ -42,7 +42,7 @@ class SentenceTransformerEmbeddingMixin:
         params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
         # Validate that input contains only text, not token arrays
-        validate_embedding_input_is_text(params)
+        validate_embeddings_input_is_text(params)
 
         # Convert input to list format if it's a single string
         input_list = [params.input] if isinstance(params.input, str) else params.input
