@@ -405,6 +405,19 @@ class OpenAIResponseText(BaseModel):
     format: OpenAIResponseTextFormat | None = None
 
 
+@json_schema_type
+class OpenAIResponseReasoning(BaseModel):
+    """Configuration for reasoning effort in OpenAI responses.
+
+    Controls how much reasoning the model performs before generating a response.
+
+    :param effort: The effort level for reasoning. "low" favors speed and economical token usage,
+                   "high" favors more complete reasoning, "medium" is a balance between the two.
+    """
+
+    effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
+
+
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
 WebSearchToolTypes = ["web_search", "web_search_preview", "web_search_preview_2025_03_11", "web_search_2025_08_26"]
 
@@ -655,7 +668,7 @@ class OpenAIResponseUsageOutputTokensDetails(BaseModel):
     :param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)
     """
 
-    reasoning_tokens: int | None = None
+    reasoning_tokens: int
 
 
 class OpenAIResponseUsageInputTokensDetails(BaseModel):
@@ -664,7 +677,7 @@ class OpenAIResponseUsageInputTokensDetails(BaseModel):
     :param cached_tokens: Number of tokens retrieved from cache
     """
 
-    cached_tokens: int | None = None
+    cached_tokens: int
 
 
 @json_schema_type
@@ -681,8 +694,8 @@ class OpenAIResponseUsage(BaseModel):
     input_tokens: int
     output_tokens: int
     total_tokens: int
-    input_tokens_details: OpenAIResponseUsageInputTokensDetails | None = None
-    output_tokens_details: OpenAIResponseUsageOutputTokensDetails | None = None
+    input_tokens_details: OpenAIResponseUsageInputTokensDetails
+    output_tokens_details: OpenAIResponseUsageOutputTokensDetails
 
 
 @json_schema_type
@@ -712,6 +725,7 @@ class OpenAIResponseObject(BaseModel):
     """
 
     created_at: int
+    completed_at: int | None = None
     error: OpenAIResponseError | None = None
     id: str
     model: str
@@ -732,7 +746,9 @@ class OpenAIResponseObject(BaseModel):
     usage: OpenAIResponseUsage | None = None
     instructions: str | None = None
     max_tool_calls: int | None = None
+    reasoning: OpenAIResponseReasoning | None = None
     metadata: dict[str, str] | None = None
+    store: bool
 
 
 @json_schema_type
