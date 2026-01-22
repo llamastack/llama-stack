@@ -1789,6 +1789,17 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        reasoning_effort:
+          anyOf:
+          - type: string
+            enum:
+            - none
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
+          - type: 'null'
       additionalProperties: true
       type: object
       required:
@@ -3765,6 +3776,10 @@ components:
         created_at:
           type: integer
           title: Created At
+        completed_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
@@ -3918,12 +3933,21 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+        store:
+          type: boolean
+          title: Store
         input:
           items:
             anyOf:
@@ -3969,6 +3993,7 @@ components:
       - model
       - output
       - status
+      - store
       - input
       title: OpenAIResponseObjectWithInput
       description: OpenAI response object extended with input context information.
@@ -4101,22 +4126,16 @@ components:
           type: integer
           title: Total Tokens
         input_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
-            title: OpenAIResponseUsageInputTokensDetails
-          - type: 'null'
-          title: OpenAIResponseUsageInputTokensDetails
+          $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
         output_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
-            title: OpenAIResponseUsageOutputTokensDetails
-          - type: 'null'
-          title: OpenAIResponseUsageOutputTokensDetails
+          $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
       type: object
       required:
       - input_tokens
       - output_tokens
       - total_tokens
+      - input_tokens_details
+      - output_tokens_details
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
     ResponseGuardrailSpec:
@@ -4363,6 +4382,12 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
@@ -4379,6 +4404,10 @@ components:
         created_at:
           type: integer
           title: Created At
+        completed_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
@@ -4532,12 +4561,21 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+        store:
+          type: boolean
+          title: Store
       type: object
       required:
       - created_at
@@ -4545,6 +4583,7 @@ components:
       - model
       - output
       - status
+      - store
       title: OpenAIResponseObject
       description: Complete OpenAI response object containing generation results and metadata.
     OpenAIResponseContentPartOutputText:
@@ -9571,6 +9610,25 @@ components:
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
       description: Search results returned by the file search operation.
+    OpenAIResponseReasoning:
+      properties:
+        effort:
+          anyOf:
+          - type: string
+            enum:
+            - none
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
+          - type: 'null'
+      type: object
+      title: OpenAIResponseReasoning
+      description: |-
+        Configuration for reasoning effort in OpenAI responses.
+
+        Controls how much reasoning the model performs before generating a response.
     OpenAIResponseTextFormat:
       properties:
         type:
@@ -9604,19 +9662,21 @@ components:
     OpenAIResponseUsageInputTokensDetails:
       properties:
         cached_tokens:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          title: Cached Tokens
       type: object
+      required:
+      - cached_tokens
       title: OpenAIResponseUsageInputTokensDetails
       description: Token details for input tokens in OpenAI response usage.
     OpenAIResponseUsageOutputTokensDetails:
       properties:
         reasoning_tokens:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          title: Reasoning Tokens
       type: object
+      required:
+      - reasoning_tokens
       title: OpenAIResponseUsageOutputTokensDetails
       description: Token details for output tokens in OpenAI response usage.
     OpenAIUserMessageParam-Input:
