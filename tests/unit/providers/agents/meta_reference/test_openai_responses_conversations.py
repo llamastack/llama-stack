@@ -202,6 +202,7 @@ class TestIntegrationWorkflow:
                 object="response",
                 output=[message_item],
                 status="completed",
+                store=True,
             )
 
             yield OpenAIResponseObjectStreamResponseCompleted(response=mock_response, type="response.completed")

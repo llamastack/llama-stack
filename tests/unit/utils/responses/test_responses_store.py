@@ -36,6 +36,7 @@ def create_test_response_object(
         object="response",
         output=[],  # Required field
         status="completed",  # Required field
+        store=True,
     )
 
 
