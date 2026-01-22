@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import time
 import uuid
 from collections.abc import AsyncIterator
 from typing import Any
@@ -218,8 +219,10 @@ class StreamingResponseOrchestrator:
         *,
         error: OpenAIResponseError | None = None,
     ) -> OpenAIResponseObject:
+        completed_at = int(time.time()) if status == "completed" else None
         return OpenAIResponseObject(
             created_at=self.created_at,
+            completed_at=completed_at,
             id=self.response_id,
             model=self.ctx.model,
             object="response",

@@ -725,6 +725,7 @@ class OpenAIResponseObject(BaseModel):
     """
 
     created_at: int
+    completed_at: int | None = None
     error: OpenAIResponseError | None = None
     id: str
     model: str

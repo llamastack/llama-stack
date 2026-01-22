@@ -7118,6 +7118,10 @@ components:
         created_at:
           type: integer
           title: Created At
+        completed_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
@@ -7744,6 +7748,10 @@ components:
         created_at:
           type: integer
           title: Created At
+        completed_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
