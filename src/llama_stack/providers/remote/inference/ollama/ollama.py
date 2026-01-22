@@ -16,10 +16,7 @@ from llama_stack_api import (
     HealthResponse,
     HealthStatus,
     Model,
-    OpenAIEmbeddingsRequestWithExtraBody,
-    OpenAIEmbeddingsResponse,
     UnsupportedModelError,
-    validate_embedding_input_is_text,
 )
 
 logger = get_logger(name=__name__, category="inference::ollama")
@@ -100,20 +97,6 @@ class OllamaInferenceAdapter(OpenAIMixin):
 
     async def shutdown(self) -> None:
         self._clients.clear()
-
-    async def openai_embeddings(
-        self,
-        params: OpenAIEmbeddingsRequestWithExtraBody,
-    ) -> OpenAIEmbeddingsResponse:
-        """
-        Override embeddings method to validate that Ollama doesn't receive token arrays.
-        Ollama's OpenAI-compatible API does not support pre-tokenized input.
-        """
-        # Validate that input contains only text, not token arrays
-        validate_embedding_input_is_text(params)
-
-        # Call parent implementation
-        return await super().openai_embeddings(params)
 
     async def register_model(self, model: Model) -> Model:
         if await self.check_model_availability(model.provider_model_id):
