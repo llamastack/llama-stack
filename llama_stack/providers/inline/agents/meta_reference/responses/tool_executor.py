@@ -404,30 +404,18 @@ class ToolExecutor:
                 )
                 if result and "document_ids" in result.metadata:
                     message.results = []
-<<<<<<< HEAD:llama_stack/providers/inline/agents/meta_reference/responses/tool_executor.py
+                    attributes_list = result.metadata.get("attributes", [])
                     for i, doc_id in enumerate(result.metadata["document_ids"]):
                         text = result.metadata["chunks"][i] if "chunks" in result.metadata else None
                         score = result.metadata["scores"][i] if "scores" in result.metadata else None
-=======
-                    attributes_list = metadata.get("attributes", [])
-                    for i, doc_id in enumerate(metadata["document_ids"]):
-                        text = metadata["chunks"][i] if "chunks" in metadata else None
-                        score = metadata["scores"][i] if "scores" in metadata else None
                         attrs = attributes_list[i] if i < len(attributes_list) else {}
->>>>>>> 28b92bac (fix: file_search_call results missing document attributes/metadata (#4680)):src/llama_stack/providers/inline/agents/meta_reference/responses/tool_executor.py
                         message.results.append(
                             OpenAIResponseOutputMessageFileSearchToolCallResults(
                                 file_id=doc_id,
                                 filename=doc_id,
-<<<<<<< HEAD:llama_stack/providers/inline/agents/meta_reference/responses/tool_executor.py
-                                text=text,
-                                score=score,
-                                attributes={},
-=======
                                 text=text if text is not None else "",
                                 score=score if score is not None else 0.0,
                                 attributes=attrs,
->>>>>>> 28b92bac (fix: file_search_call results missing document attributes/metadata (#4680)):src/llama_stack/providers/inline/agents/meta_reference/responses/tool_executor.py
                             )
                         )
                 if has_error:
