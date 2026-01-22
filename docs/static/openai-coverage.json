@@ -96,17 +96,19 @@
       ]
     },
     "conformance": {
-      "score": 30.5,
+      "score": 82.4,
       "issues": 272,
       "missing_properties": 184,
-      "total_problems": 456
+      "total_problems": 456,
+      "total_properties": 2598
     }
   },
   "categories": {
     "Batch": {
-      "score": 15.7,
+      "score": 36.3,
       "issues": 66,
       "missing_properties": 41,
+      "total_properties": 168,
       "endpoints": [
         {
           "path": "/batches",
@@ -704,9 +706,10 @@
       ]
     },
     "Chat": {
-      "score": 21.7,
+      "score": 82.1,
       "issues": 22,
       "missing_properties": 50,
+      "total_properties": 402,
       "endpoints": [
         {
           "path": "/chat/completions",
@@ -950,9 +953,10 @@
       ]
     },
     "Completions": {
-      "score": 56.0,
+      "score": 52.2,
       "issues": 20,
       "missing_properties": 2,
+      "total_properties": 46,
       "endpoints": [
         {
           "path": "/completions",
@@ -1136,9 +1140,10 @@
       ]
     },
     "Conversations": {
-      "score": 48.0,
+      "score": 98.0,
       "issues": 22,
       "missing_properties": 4,
+      "total_properties": 1323,
       "endpoints": [
         {
           "path": "/conversations",
@@ -1379,9 +1384,10 @@
       ]
     },
     "Embeddings": {
-      "score": 84.0,
+      "score": 42.9,
       "issues": 8,
       "missing_properties": 0,
+      "total_properties": 14,
       "endpoints": [
         {
           "path": "/embeddings",
@@ -1459,9 +1465,10 @@
       ]
     },
     "Files": {
-      "score": 62.0,
+      "score": 54.8,
       "issues": 11,
       "missing_properties": 8,
+      "total_properties": 42,
       "endpoints": [
         {
           "path": "/files",
@@ -1602,9 +1609,10 @@
       ]
     },
     "Models": {
-      "score": 86.0,
+      "score": 53.3,
       "issues": 2,
       "missing_properties": 5,
+      "total_properties": 15,
       "endpoints": [
         {
           "path": "/models",
@@ -1654,9 +1662,10 @@
       ]
     },
     "Moderations": {
-      "score": 31.2,
+      "score": 17.0,
       "issues": 5,
       "missing_properties": 39,
+      "total_properties": 53,
       "endpoints": [
         {
           "path": "/moderations",
@@ -1748,9 +1757,10 @@
       ]
     },
     "Responses": {
-      "score": 31.7,
+      "score": 80.9,
       "issues": 22,
       "missing_properties": 21,
+      "total_properties": 225,
       "endpoints": [
         {
           "path": "/responses",
@@ -1949,9 +1959,10 @@
       ]
     },
     "Vector stores": {
-      "score": 15.6,
+      "score": 65.2,
       "issues": 94,
       "missing_properties": 14,
+      "total_properties": 310,
       "endpoints": [
         {
           "path": "/vector_stores",

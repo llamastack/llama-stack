@@ -32,12 +32,113 @@ from typing import Any
 import yaml
 
 
+def _load_spec(spec_path: Path) -> dict[str, Any]:
+    """Load an OpenAPI spec from YAML or JSON."""
+    content = spec_path.read_text()
+    if spec_path.suffix in (".yml", ".yaml"):
+        return yaml.safe_load(content)
+    return json.loads(content)
+
+
+def _count_schema_properties(schema: dict[str, Any], spec: dict[str, Any], visited: set[str] | None = None) -> int:
+    """Recursively count properties in a schema, resolving $ref references."""
+    if visited is None:
+        visited = set()
+
+    if not isinstance(schema, dict):
+        return 0
+
+    count = 0
+
+    # Handle $ref
+    if "$ref" in schema:
+        ref = schema["$ref"]
+        if ref in visited:
+            return 0
+        visited.add(ref)
+
+        # Resolve the reference (e.g., "#/components/schemas/Foo")
+        if ref.startswith("#/"):
+            parts = ref[2:].split("/")
+            resolved = spec
+            for part in parts:
+                resolved = resolved.get(part, {})
+            count += _count_schema_properties(resolved, spec, visited)
+        return count
+
+    # Count direct properties
+    if "properties" in schema:
+        props = schema["properties"]
+        count += len(props)
+        for prop_schema in props.values():
+            count += _count_schema_properties(prop_schema, spec, visited)
+
+    # Handle allOf, oneOf, anyOf
+    for key in ("allOf", "oneOf", "anyOf"):
+        if key in schema:
+            for sub_schema in schema[key]:
+                count += _count_schema_properties(sub_schema, spec, visited)
+
+    # Handle items (arrays)
+    if "items" in schema:
+        count += _count_schema_properties(schema["items"], spec, visited)
+
+    # Handle additionalProperties
+    if "additionalProperties" in schema and isinstance(schema["additionalProperties"], dict):
+        count += _count_schema_properties(schema["additionalProperties"], spec, visited)
+
+    return count
+
+
+def _count_endpoint_properties(spec: dict[str, Any], paths: list[str]) -> int:
+    """Count total properties for the given endpoint paths in a spec.
+
+    Only counts application/json content types to avoid double-counting
+    when the same schema is used for multiple media types.
+    """
+    total = 0
+
+    for path in paths:
+        path_item = spec.get("paths", {}).get(path, {})
+        if not isinstance(path_item, dict):
+            continue
+
+        for method, operation in path_item.items():
+            if method in ("parameters", "servers", "summary", "description"):
+                continue
+            if not isinstance(operation, dict):
+                continue
+
+            # Count request body properties (application/json only)
+            request_body = operation.get("requestBody", {})
+            if isinstance(request_body, dict):
+                content = request_body.get("content", {})
+                json_content = content.get("application/json", {})
+                if isinstance(json_content, dict) and "schema" in json_content:
+                    total += _count_schema_properties(json_content["schema"], spec)
+
+            # Count response properties (application/json only)
+            responses = operation.get("responses", {})
+            for response in responses.values():
+                if isinstance(response, dict):
+                    content = response.get("content", {})
+                    json_content = content.get("application/json", {})
+                    if isinstance(json_content, dict) and "schema" in json_content:
+                        total += _count_schema_properties(json_content["schema"], spec)
+
+            # Count parameters
+            params = operation.get("parameters", [])
+            total += len(params)
+
+    return total
+
+
 def _load_endpoint_categories(openai_spec: Path) -> dict[str, list[str]]:
     """Extract endpoint categories from OpenAI spec tags.
 
     Returns a mapping of category name to list of path prefixes.
     """
-    spec = yaml.safe_load(openai_spec.read_text())
+    spec = _load_spec(openai_spec)
     categories: dict[str, list[str]] = defaultdict(list)
 
     for path, path_item in (spec.get("paths") or {}).items():
@@ -321,15 +422,50 @@ def calculate_coverage(
     total_missing = sum(c["total_missing"] for c in categories.values())
     total_endpoints = len(implemented_endpoints) + len(missing_endpoints)
 
-    # Calculate scores
-    # Total "checked" = issues + missing (things oasdiff found problems with)
-    # Conformant = things that match (not in diff)
-    # We estimate conformant based on: for every issue, assume there are ~3 conformant properties
-    # This gives a reasonable baseline that increases as issues decrease
+    # ==========================================================================
+    # Scoring methodology
+    # ==========================================================================
+    # We count the actual properties in the OpenAPI spec for implemented endpoints.
+    # The score formula is: score = (1 - problems / total_properties) * 100
+    #
+    # Where:
+    #   - problems = schema issues + missing properties (from oasdiff)
+    #   - total_properties = counted from spec for implemented endpoints
+    #
+    # For the Responses category, we use the openresponses spec if provided.
+    # ==========================================================================
+    openai_spec_data = _load_spec(openai_spec)
+    openresponses_spec_data = (
+        _load_spec(openresponses_spec) if openresponses_spec and openresponses_spec.exists() else None
+    )
+
+    # Count properties per category and overall
+    total_properties = 0
+    category_properties: dict[str, int] = {}
+
+    for cat_name, cat_data in categories.items():
+        cat_paths = [ep["path"] for ep in cat_data["endpoints"]]
+
+        # Use openresponses spec for Responses category if available
+        if cat_name == "Responses" and openresponses_spec_data:
+            cat_props = _count_endpoint_properties(openresponses_spec_data, cat_paths)
+        else:
+            cat_props = _count_endpoint_properties(openai_spec_data, cat_paths)
+
+        # Ensure minimum of problems count (can't have fewer properties than problems)
+        cat_problems = cat_data["total_issues"] + cat_data["total_missing"]
+        category_properties[cat_name] = max(cat_props, cat_problems)
+        total_properties += category_properties[cat_name]
+
+    # Ensure we have at least as many properties as problems
     total_problems = total_issues + total_missing
-    # Use a baseline of ~500 total properties (estimated from OpenAI spec)
-    estimated_total = max(total_problems + 200, 500)
-    overall_score = round((1 - total_problems / estimated_total) * 100, 1)
+    total_properties = max(total_properties, total_problems)
+
+    # Calculate overall score (avoid division by zero)
+    if total_properties > 0:
+        overall_score = round((1 - total_problems / total_properties) * 100, 1)
+    else:
+        overall_score = 100.0 if total_problems == 0 else 0.0
 
     # Build report
     report: dict[str, Any] = {
@@ -347,23 +483,29 @@ def calculate_coverage(
                 "issues": total_issues,
                 "missing_properties": total_missing,
                 "total_problems": total_problems,
+                "total_properties": total_properties,
             },
         },
         "categories": {},
     }
 
-    # Build category details with per-category scores
+    # Build category details with per-category scores using counted properties
     for cat_name in sorted(categories.keys()):
         cat_data = categories[cat_name]
         cat_problems = cat_data["total_issues"] + cat_data["total_missing"]
-        # Estimate category total based on problems + baseline per category
-        cat_estimated_total = max(cat_problems + 20, 50)
-        cat_score = round((1 - cat_problems / cat_estimated_total) * 100, 1)
+        cat_total = category_properties.get(cat_name, cat_problems)
+
+        # Calculate score (avoid division by zero)
+        if cat_total > 0:
+            cat_score = round((1 - cat_problems / cat_total) * 100, 1)
+        else:
+            cat_score = 100.0 if cat_problems == 0 else 0.0
 
         report["categories"][cat_name] = {
             "score": cat_score,
             "issues": cat_data["total_issues"],
             "missing_properties": cat_data["total_missing"],
+            "total_properties": cat_total,
             "endpoints": sorted(cat_data["endpoints"], key=lambda x: x["path"]),
         }
 

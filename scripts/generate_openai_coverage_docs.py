@@ -58,6 +58,7 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
         "|--------|-------|",
         f"| **Overall Conformance Score** | {summary['conformance']['score']}% |",
         f"| **Endpoints Implemented** | {summary['endpoints']['implemented']}/{summary['endpoints']['total']} |",
+        f"| **Total Properties Checked** | {summary['conformance'].get('total_properties', 'N/A')} |",
         f"| **Schema/Type Issues** | {summary['conformance']['issues']} |",
         f"| **Missing Properties** | {summary['conformance']['missing_properties']} |",
         f"| **Total Issues to Fix** | {summary['conformance']['total_problems']} |",
@@ -66,12 +67,13 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
         "",
         "Categories are sorted by conformance score (lowest first, needing most attention).",
         "",
-        "| Category | Score | Issues | Missing Properties |",
-        "|----------|-------|--------|-------------------|",
+        "| Category | Score | Properties | Issues | Missing |",
+        "|----------|-------|------------|--------|---------|",
     ]
 
     for cat_name, cat_data in sorted_categories:
-        lines.append(f"| {cat_name} | {cat_data['score']}% | {cat_data['issues']} | {cat_data['missing_properties']} |")
+        total_props = cat_data.get("total_properties", "N/A")
+        lines.append(f"| {cat_name} | {cat_data['score']}% | {total_props} | {cat_data['issues']} | {cat_data['missing_properties']} |")
 
     lines.extend(
         [
