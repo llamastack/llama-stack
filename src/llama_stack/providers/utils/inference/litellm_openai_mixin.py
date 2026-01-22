@@ -270,6 +270,7 @@ class LiteLLMOpenAIMixin(
             top_logprobs=params.top_logprobs,
             top_p=params.top_p,
             user=params.user,
+            reasoning_effort=params.reasoning_effort,
             api_key=self.get_api_key(),
             api_base=self.api_base,
             **self._litellm_extra_request_params(params),

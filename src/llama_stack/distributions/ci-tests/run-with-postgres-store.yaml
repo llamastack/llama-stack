@@ -273,7 +273,13 @@ storage:
       namespace: connectors
       backend: kv_default
 registered_resources:
-  models: []
+  models:
+  - metadata:
+      description: OpenAI GPT-OSS 20B on Bedrock (us-west-2)
+    model_id: openai.gpt-oss-20b-1:0
+    provider_id: bedrock
+    provider_model_id: openai.gpt-oss-20b-1:0
+    model_type: llm
   shields:
   - shield_id: llama-guard
     provider_id: ${env.SAFETY_MODEL:+llama-guard}
