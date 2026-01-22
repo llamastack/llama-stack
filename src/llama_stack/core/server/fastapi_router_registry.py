@@ -32,13 +32,13 @@ from llama_stack_api import (
     providers,
     safety,
     scoring,
+    scoring_functions,
     shields,
 )
+from llama_stack_api.datatypes import Api
 
 # Router factories for APIs that have FastAPI routers
 # Add new APIs here as they are migrated to the router system
-from llama_stack_api.datatypes import Api
-
 _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "admin": admin.fastapi_routes.create_router,
     "batches": batches.fastapi_routes.create_router,
@@ -55,6 +55,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "providers": providers.fastapi_routes.create_router,
     "safety": safety.fastapi_routes.create_router,
     "scoring": scoring.fastapi_routes.create_router,
+    "scoring_functions": scoring_functions.fastapi_routes.create_router,
     "shields": shields.fastapi_routes.create_router,
 }
 
