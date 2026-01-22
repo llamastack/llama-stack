@@ -7,18 +7,20 @@ authors:
     url: https://github.com/llamastack
     image_url: https://llamastack.github.io/img/llama-stack-logo.png
 tags: [announcement, introduction, getting-started]
-date: 2026-01-13
+date: 2026-01-22
 ---
 
-Welcome to the Llama Stack blog! In this inaugural post, we're excited to introduce you to **Llama Stack** - the open-source platform that simplifies building production-ready generative AI applications.
+Welcome to our blog!
+
+We're excited to introduce you to **Llama Stack** - the open-source platform that simplifies building production-ready generative AI applications.
 
 <!--truncate-->
 
 ## What is Llama Stack?
 
-Llama Stack defines and standardizes the core building blocks needed to bring generative AI applications to market. It provides a **unified set of APIs** with implementations from leading service providers, enabling seamless transitions between development and production environments.
+Llama Stack defines and standardizes the core building blocks needed to bring generative AI applications to market, centered on the [Open Responses specification](https://www.openresponses.org/). By aligning with OpenAI’s open-sourced Responses API, Llama Stack provides a consistent, interoperable foundation for building agentic and generative systems. It offers a growing suite of open-source APIs—including prompts, conversations, files, models, embeddings, fine-tuning, and MCP—enabling seamless transitions from local development to production across providers and environments.
 
-Think of Llama Stack as a universal interface that abstracts away the complexity of working with different AI providers, vector databases, and deployment environments. Whether you're building locally, deploying on-premises, or scaling in the cloud, Llama Stack provides a consistent developer experience.
+Think of Llama Stack as a universal interface that abstracts away the complexity of working with different AI tools and provider (e.g., vector databases, model inference providers, and deployment environments). Whether you're building locally, deploying on-premises, or scaling in the cloud, Llama Stack provides a consistent developer experience.
 
 ## Key Features
 
@@ -27,7 +29,7 @@ Think of Llama Stack as a universal interface that abstracts away the complexity
 Llama Stack provides standardized APIs across six core capabilities:
 
 - **Inference**: Run models locally or in the cloud with a consistent interface
-- **Vector Stores**: Build knowledge retrieval systems
+- **Vector Stores**: Build knowledge and agentic retrieval systems
 - **Agents**: Create intelligent agent flows with responses/conversations
 - **Tools and MCP**: Integrate with external tools and services directly or via MCP
 - **Moderations**: Built-in safety guardrails and content filtering via moderations api
@@ -80,7 +82,7 @@ Llama Stack integrates with distribution partners including:
 
 - **Cloud Providers**: AWS Bedrock, Together, Fireworks, and more
 - **Hardware Vendors**: NVIDIA, Cerebras, SambaNova
-- **Vector Databases**: ChromaDB, Milvus, Qdrant, Weaviate, PostgreSQL
+- **Vector Databases**: ChromaDB, Milvus, Qdrant, Weaviate, PostgreSQL, ElasticSearch
 - **AI Companies**: OpenAI, Anthropic, Google Gemini
 
 For a complete list, check out our [Providers Documentation](/docs/providers).
