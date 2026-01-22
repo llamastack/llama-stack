@@ -22,5 +22,7 @@ class KVStore(Protocol):
 
     async def keys_in_range(self, start_key: str, end_key: str) -> list[str]: ...
 
+    async def shutdown(self) -> None: ...
+
 
 __all__ = ["KVStore"]
