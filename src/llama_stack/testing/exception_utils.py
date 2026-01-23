@@ -42,11 +42,8 @@ class GenericLlamaStackError(LlamaStackError):
 
     def __init__(self, status_code_value: int, message: str = ""):
         super().__init__(message)
-        self._status_code = status_code_value
-
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes(self._status_code)
+        # Override the class variable with an instance attribute
+        self.status_code = httpx.codes(status_code_value)
 
 
 def is_provider_sdk_exception(exc: Exception) -> TypeGuard[ProviderSDKException]:

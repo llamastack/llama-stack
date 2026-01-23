@@ -9,19 +9,16 @@
 #   2. All classes should have a custom error message with the goal of informing the Llama Stack user specifically
 #   3. All classes should propogate the inherited __init__ function otherwise via 'super().__init__(message)'
 
-from abc import ABC, abstractmethod
-
 import httpx
 
 
-class LlamaStackError(Exception, ABC):
-    """A Llama Stack error with an HTTP status code for API responses."""
+class LlamaStackError(Exception):
+    """A base class for all Llama Stack errors with an HTTP status code for API responses."""
 
-    @property
-    @abstractmethod
-    def status_code(self) -> httpx.codes:
-        """The HTTP status code for this exception"""
-        ...
+    status_code: httpx.codes
+
+    def __init__(self, message: str):
+        super().__init__(message)
 
 
 class ClientListCommand:
@@ -63,6 +60,8 @@ class ClientListCommand:
 class ResourceNotFoundError(ValueError, LlamaStackError):
     """generic exception for a missing Llama Stack resource"""
 
+    status_code: httpx.codes = httpx.codes.NOT_FOUND
+
     def __init__(self, resource_name: str, resource_type: str, client_list: ClientListCommand | None = None) -> None:
         message = f"{resource_type} '{resource_name}' not found."
         if client_list:
@@ -70,10 +69,6 @@ class ResourceNotFoundError(ValueError, LlamaStackError):
                 client_list.resource_name_plural = f"{resource_type}s"
             message += f" {client_list}"
         super().__init__(message)
-
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.NOT_FOUND
 
 
 class ModelNotFoundError(ResourceNotFoundError):
@@ -154,17 +149,17 @@ class BatchNotFoundError(ResourceNotFoundError):
 class UnsupportedModelError(ValueError, LlamaStackError):
     """raised when model is not present in the list of supported models"""
 
+    status_code: httpx.codes = httpx.codes.BAD_REQUEST
+
     def __init__(self, model_name: str, supported_models_list: list[str]):
         message = f"'{model_name}' model is not supported. Supported models are: {', '.join(supported_models_list)}"
         super().__init__(message)
 
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.BAD_REQUEST
-
 
 class ModelTypeError(TypeError, LlamaStackError):
     """raised when a model is present but not the correct type"""
+
+    status_code: httpx.codes = httpx.codes.BAD_REQUEST
 
     def __init__(self, model_name: str, model_type: str, expected_model_type: str) -> None:
         message = (
@@ -172,69 +167,55 @@ class ModelTypeError(TypeError, LlamaStackError):
         )
         super().__init__(message)
 
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.BAD_REQUEST
-
 
 class ConflictError(ValueError, LlamaStackError):
     """raised when an operation cannot be performed due to a conflict with the current state"""
 
+    status_code: httpx.codes = httpx.codes.CONFLICT
+
     def __init__(self, message: str) -> None:
         super().__init__(message)
-
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.CONFLICT
 
 
 class TokenValidationError(ValueError, LlamaStackError):
     """raised when token validation fails during authentication"""
 
+    status_code: httpx.codes = httpx.codes.UNAUTHORIZED
+
     def __init__(self, message: str) -> None:
         super().__init__(message)
-
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.UNAUTHORIZED
 
 
 class InvalidConversationIdError(ValueError, LlamaStackError):
     """raised when a conversation ID has an invalid format"""
 
+    status_code: httpx.codes = httpx.codes.BAD_REQUEST
+
     def __init__(self, conversation_id: str) -> None:
         message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
         super().__init__(message)
-
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.BAD_REQUEST
 
 
 class InvalidParameterError(ValueError, LlamaStackError):
     """raised when a request parameter has an invalid value"""
 
+    status_code: httpx.codes = httpx.codes.BAD_REQUEST
+
     def __init__(self, param_name: str, value: object, constraint: str) -> None:
         message = f"Invalid value for '{param_name}': {value}. {constraint}"
         super().__init__(message)
 
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.BAD_REQUEST
-
 
 class ServiceNotEnabledError(LlamaStackError, ValueError):
     """raised when a llama stack service is not enabled"""
+
+    status_code: httpx.codes = httpx.codes.SERVICE_UNAVAILABLE
 
     def __init__(self, service_name: str, *, provider_specific_message: str | None = None) -> None:
         message = f"Service '{service_name}' is not enabled. Please check your configuration and enable the service before trying again."
         if provider_specific_message:
             message += f"\n\n{provider_specific_message}"
         super().__init__(message)
-
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.SERVICE_UNAVAILABLE
 
 
 class InternalServerError(LlamaStackError):
@@ -244,10 +225,8 @@ class InternalServerError(LlamaStackError):
     Instead, sanitized error information should be logged for debugging purposes.
     """
 
+    status_code: httpx.codes = httpx.codes.INTERNAL_SERVER_ERROR
+
     def __init__(self) -> None:
         message = "An internal error occurred while processing your request."
         super().__init__(message)
-
-    @property
-    def status_code(self) -> httpx.codes:
-        return httpx.codes.INTERNAL_SERVER_ERROR
