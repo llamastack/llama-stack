@@ -430,6 +430,38 @@ paths:
         schema:
           type: string
           title: Job Id
+  /v1alpha/inference/rerank:
+    post:
+      responses:
+        '200':
+          description: RerankResponse with indices sorted by relevance score (descending).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RerankResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - Inference
+      summary: Rerank documents based on relevance to a query.
+      description: Rerank a list of documents based on their relevance to a query.
+      operationId: rerank_v1alpha_inference_rerank_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RerankRequest'
+        required: true
   /v1alpha/post-training/job/artifacts:
     get:
       responses:

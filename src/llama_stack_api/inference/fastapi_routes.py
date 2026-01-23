@@ -21,7 +21,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from llama_stack_api.router_utils import create_path_dependency, create_query_dependency, standard_responses
-from llama_stack_api.version import LLAMA_STACK_API_V1
+from llama_stack_api.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 
 from .api import Inference
 from .models import (
@@ -80,13 +80,12 @@ def create_router(impl: Inference) -> APIRouter:
         APIRouter configured for the Inference API
     """
     router = APIRouter(
-        prefix=f"/{LLAMA_STACK_API_V1}",
         tags=["Inference"],
         responses=standard_responses,
     )
 
     @router.post(
-        "/chat/completions",
+        f"/{LLAMA_STACK_API_V1}/chat/completions",
         response_model=None,  # Dynamic response: non-streaming (JSON) or streaming (SSE)
         summary="Create chat completions.",
         description="Generate an OpenAI-compatible chat completion for the given messages using the specified model.",
@@ -110,7 +109,7 @@ def create_router(impl: Inference) -> APIRouter:
         return cast(OpenAIChatCompletion, await result)
 
     @router.get(
-        "/chat/completions",
+        f"/{LLAMA_STACK_API_V1}/chat/completions",
         response_model=ListOpenAIChatCompletionResponse,
         summary="List chat completions.",
         description="List chat completions.",
@@ -124,7 +123,7 @@ def create_router(impl: Inference) -> APIRouter:
         return await impl.list_chat_completions(request)
 
     @router.get(
-        "/chat/completions/{completion_id}",
+        f"/{LLAMA_STACK_API_V1}/chat/completions/{{completion_id}}",
         response_model=OpenAICompletionWithInputMessages,
         summary="Get chat completion.",
         description="Describe a chat completion by its ID.",
@@ -138,7 +137,7 @@ def create_router(impl: Inference) -> APIRouter:
         return await impl.get_chat_completion(request)
 
     @router.post(
-        "/completions",
+        f"/{LLAMA_STACK_API_V1}/completions",
         response_model=None,  # Dynamic response: non-streaming (JSON) or streaming (SSE)
         summary="Create completion.",
         description="Generate an OpenAI-compatible completion for the given prompt using the specified model.",
@@ -162,7 +161,7 @@ def create_router(impl: Inference) -> APIRouter:
         return cast(OpenAICompletion, await result)
 
     @router.post(
-        "/embeddings",
+        f"/{LLAMA_STACK_API_V1}/embeddings",
         response_model=OpenAIEmbeddingsResponse,
         summary="Create embeddings.",
         description="Generate OpenAI-compatible embeddings for the given input using the specified model.",
@@ -175,8 +174,9 @@ def create_router(impl: Inference) -> APIRouter:
     ) -> OpenAIEmbeddingsResponse:
         return await impl.openai_embeddings(params)
 
+    # Add v1alpha endpoints directly to avoid prefix conflicts
     @router.post(
-        "/inference/rerank",
+        f"/{LLAMA_STACK_API_V1ALPHA}/inference/rerank",
         response_model=RerankResponse,
         summary="Rerank documents based on relevance to a query.",
         description="Rerank a list of documents based on their relevance to a query.",
