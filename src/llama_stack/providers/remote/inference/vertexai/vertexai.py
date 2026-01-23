@@ -40,9 +40,12 @@ class VertexAIInferenceAdapter(OpenAIMixin):
         Get the Vertex AI OpenAI-compatible API base URL.
 
         Returns the Vertex AI OpenAI-compatible endpoint URL.
-        Source: https://cloud.google.com/vertex-ai/generative-ai/docs/start/openai
+        Source: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/start/openai
         """
-        return f"https://{self.config.location}-aiplatform.googleapis.com/v1/projects/{self.config.project}/locations/{self.config.location}/endpoints/openapi"
+        if not self.config.location or self.config.location == "global":
+            return f"https://aiplatform.googleapis.com/v1/projects/{self.config.project}/locations/global/endpoints/openapi"
+        else:
+            return f"https://{self.config.location}-aiplatform.googleapis.com/v1/projects/{self.config.project}/locations/{self.config.location}/endpoints/openapi"
 
     async def list_provider_model_ids(self) -> Iterable[str]:
         """
