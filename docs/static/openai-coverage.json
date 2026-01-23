@@ -1846,6 +1846,12 @@
                   ]
                 },
                 {
+                  "property": "POST.requestBody.content.application/json.properties.temperature",
+                  "details": [
+                    "Default changed: None -> 1"
+                  ]
+                },
+                {
                   "property": "POST.requestBody.content.application/json.properties.text",
                   "details": [
                     "Union variants added: 1",
@@ -1899,14 +1905,6 @@
                   "details": [
                     "Union variants added: 1",
                     "Union variants removed: 1"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.temperature",
-                  "details": [
-                    "Type removed: ['number']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
                   ]
                 },
                 {
