@@ -515,6 +515,7 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
                 config_dir=self.config.tnsnames_loc,
                 wallet_location=self.config.ewallet_pem_loc,
                 wallet_password=self.config.ewallet_password,
+                expire_time=1  # minutes
             )
             self.connection.autocommit = True
             logger.info("Oracle connection created successfully")
