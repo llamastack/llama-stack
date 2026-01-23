@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 82.8% |
+| **Overall Conformance Score** | 82.9% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
 | **Schema/Type Issues** | 263 |
-| **Missing Properties** | 184 |
-| **Total Issues to Fix** | 447 |
+| **Missing Properties** | 182 |
+| **Total Issues to Fix** | 445 |
 
 ## Category Scores
 
@@ -38,7 +38,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
-| Responses | 80.9% | 225 | 22 | 21 |
+| Responses | 81.8% | 225 | 22 | 19 |
 | Chat | 83.1% | 402 | 18 | 50 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
@@ -891,17 +891,16 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 80.9% · **Issues:** 22 · **Missing:** 21
+**Score:** 81.8% · **Issues:** 22 · **Missing:** 19
 
 #### `/responses`
 
 **POST**
 
-<details><summary>Missing Properties (21)</summary>
+<details><summary>Missing Properties (19)</summary>
 
 - `requestBody.content.application/json.properties.background`
 - `requestBody.content.application/json.properties.frequency_penalty`
-- `requestBody.content.application/json.properties.max_output_tokens`
 - `requestBody.content.application/json.properties.presence_penalty`
 - `requestBody.content.application/json.properties.prompt_cache_key`
 - `requestBody.content.application/json.properties.safety_identifier`
@@ -914,7 +913,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 - `responses.200.content.application/json.properties.background`
 - `responses.200.content.application/json.properties.frequency_penalty`
 - `responses.200.content.application/json.properties.incomplete_details`
-- `responses.200.content.application/json.properties.max_output_tokens`
 - `responses.200.content.application/json.properties.presence_penalty`
 - `responses.200.content.application/json.properties.prompt_cache_key`
 - `responses.200.content.application/json.properties.safety_identifier`

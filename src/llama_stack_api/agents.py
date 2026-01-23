@@ -108,7 +108,6 @@ class Agents(Protocol):
         ] = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
-
         max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
     ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
