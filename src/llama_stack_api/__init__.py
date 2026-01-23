@@ -21,6 +21,23 @@ and considered a code smell. All exported symbols are explicitly listed in __all
 
 __version__ = "0.3.5"
 
+# Import schema_utils first - it contains decorators used by other modules
+from .schema_utils import (  # noqa: I001
+    CallableT,
+    ExtraBodyField,
+    SchemaInfo,
+    WebMethod,
+    clear_dynamic_schema_types,
+    get_registered_schema_info,
+    iter_dynamic_schema_types,
+    iter_json_schema_types,
+    iter_registered_schema_types,
+    json_schema_type,
+    register_dynamic_schema_type,
+    register_schema,
+    webmethod,
+)
+
 # Import submodules for those who need them
 from . import common  # noqa: F401
 from .admin import (
@@ -447,21 +464,7 @@ from .safety import (
     ShieldStore,
     ViolationLevel,
 )
-from .schema_utils import (
-    CallableT,
-    ExtraBodyField,
-    SchemaInfo,
-    WebMethod,
-    clear_dynamic_schema_types,
-    get_registered_schema_info,
-    iter_dynamic_schema_types,
-    iter_json_schema_types,
-    iter_registered_schema_types,
-    json_schema_type,
-    register_dynamic_schema_type,
-    register_schema,
-    webmethod,
-)
+
 from .scoring import (
     ScoreBatchRequest,
     ScoreBatchResponse,
@@ -549,6 +552,7 @@ from .version import (
 
 __all__ = [
     # Submodules
+    "schema_utils",
     "common",
     # Version constants
     "LLAMA_STACK_API_V1",
