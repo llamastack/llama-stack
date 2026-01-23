@@ -223,7 +223,7 @@ def available_providers() -> list[ProviderSpec]:
 
 Configuration:
 - Set VERTEX_AI_PROJECT environment variable (required)
-- Set VERTEX_AI_LOCATION environment variable (optional, defaults to us-central1)
+- Set VERTEX_AI_LOCATION environment variable (optional, defaults to global)
 - Use Google Cloud Application Default Credentials or service account key
 
 Authentication Setup:

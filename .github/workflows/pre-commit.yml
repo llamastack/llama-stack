@@ -64,6 +64,12 @@ jobs:
           path: ~/.cache/pre-commit
           key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
 
+      # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
+      - name: Install oasdiff
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
+          cp /usr/local/bin/oasdiff ~/oasdiff
+
       - name: Run pre-commit
         id: precommit
         run: |
