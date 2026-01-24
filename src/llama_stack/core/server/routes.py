@@ -102,10 +102,18 @@ def initialize_route_impls(impls, external_apis: dict[Api, ExternalApiSpec] | No
             router_routes = get_router_routes(router)
             for route in router_routes:
                 # Get the endpoint function from the route
-                # For FastAPI routes, the endpoint is the actual function
-                func = route.endpoint
-                if func is None:
+                # For library client mode, we need the implementation method, not the router wrapper
+                # Router wrappers may add HTTP-specific handling (like StreamingResponse) that breaks library mode
+                if route.endpoint is None:
                     continue
+
+                # Extract method name from router endpoint and get implementation method
+                method_name = route.endpoint.__name__
+                func = getattr(impl, method_name, None)
+                if func is None:
+                    # Fallback to router endpoint if implementation doesn't have the method
+                    # This shouldn't happen if routers are properly implemented
+                    func = route.endpoint
 
                 # Get the first (and typically only) method from the set, filtering out HEAD
                 available_methods = [m for m in (route.methods or []) if m != "HEAD"]
