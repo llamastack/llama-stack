@@ -5372,10 +5372,11 @@ wheels = [
 
 [[package]]
 name = "together"
-version = "1.5.21"
+version = "1.5.35"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
+    { name = "black" },
     { name = "click" },
     { name = "eval-type-backport" },
     { name = "filelock" },
@@ -5388,9 +5389,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typer" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ea/53/e33c5e6d53c2e2bbd07f9dcb1979e27ac670fca0e4e238b169aa4c358ee2/together-1.5.21.tar.gz", hash = "sha256:59adb8cf4c5b77eca76b8c66a73c47c45fd828aaf4f059f33f893f8c5f68f85a", size = 69887, upload-time = "2025-07-10T21:04:43.781Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/5a/1d/6c50e0e32af097d966723e63b8e5ee02cfb002a40b6095c8ac65d6c08fe8/together-1.5.35.tar.gz", hash = "sha256:db3fc7dbc04dca044f437cd28224432e17567e6650dc1afd09780b48c0187cff", size = 91037, upload-time = "2026-01-21T23:15:15.909Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/fc/31/6556a303ea39929fa016f4260eef289b620cf366a576c304507cb75b4d12/together-1.5.21-py3-none-any.whl", hash = "sha256:35e6c0072033a2e5f1105de8781e969f41cffc85dae508b6f4dc293360026872", size = 96141, upload-time = "2025-07-10T21:04:42.418Z" },
+    { url = "https://files.pythonhosted.org/packages/68/e6/cd079d92f9eab83cd48c932e9b1e5e7fe25d90576f913dde66373135c392/together-1.5.35-py3-none-any.whl", hash = "sha256:74b6192e26492dbce2570fb801f884e74739bae1045b20c5b070a71639d7d5fc", size = 120461, upload-time = "2026-01-21T23:15:14.054Z" },
 ]
 
 [[package]]
