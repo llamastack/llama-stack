@@ -1,0 +1,66 @@
+{
+  "test_id": "tests/integration/eval/test_eval.py::test_evaluate_benchmark[txt=openai/gpt-4o-basic::subset_of]",
+  "request": {
+    "method": "POST",
+    "url": "https://api.openai.com/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "gpt-4o",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the largest planet in our solar system?"
+        }
+      ],
+      "max_tokens": 512
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "gpt-4o"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-9c697e25c42b",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "The largest planet in our solar system is Jupiter. It has a diameter of about 86,881 miles (139,822 kilometers) and is primarily composed of hydrogen and helium. Jupiter is known for its prominent Great Red Spot, a massive storm, and its many moons, including the four largest known as the Galilean moons: Io, Europa, Ganymede, and Callisto.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": [],
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null
+            }
+          }
+        ],
+        "created": 0,
+        "model": "gpt-4o-2024-08-06",
+        "object": "chat.completion",
+        "service_tier": "default",
+        "system_fingerprint": "fp_deacdd5f6f",
+        "usage": {
+          "completion_tokens": 78,
+          "prompt_tokens": 17,
+          "total_tokens": 95,
+          "completion_tokens_details": {
+            "accepted_prediction_tokens": 0,
+            "audio_tokens": 0,
+            "reasoning_tokens": 0,
+            "rejected_prediction_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "audio_tokens": 0,
+            "cached_tokens": 0
+          }
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
