@@ -8,7 +8,10 @@
 Integration tests for OpenAI-compatible filter functionality in vector stores.
 
 These tests verify that filter operations (comparison and compound) work correctly
-across different vector store providers (sqlite-vec, faiss, etc.).
+across different vector store providers (sqlite-vec, faiss, milvus).
+
+Note: Some providers (chroma, pgvector, qdrant, weaviate) do not yet support native
+filtering and will be skipped in these tests.
 """
 
 import time
@@ -19,6 +22,21 @@ from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, Comp
 from llama_stack_api import ChunkMetadata, EmbeddedChunk
 
 from ..conftest import vector_provider_wrapper
+
+# Providers that support native filtering
+# Other providers (chroma, pgvector, qdrant, weaviate) raise NotImplementedError
+PROVIDERS_WITH_NATIVE_FILTERING = {"faiss", "sqlite-vec", "milvus"}
+
+
+def skip_if_provider_doesnt_support_filters(vector_io_provider_id: str):
+    """Skip test if the provider doesn't support native filtering."""
+    # Extract provider name from provider_id which may be like "inline::faiss" or just "faiss"
+    provider_name = vector_io_provider_id.split("::")[-1] if "::" in vector_io_provider_id else vector_io_provider_id
+    if provider_name not in PROVIDERS_WITH_NATIVE_FILTERING:
+        pytest.skip(
+            f"Provider '{provider_name}' does not yet support native filtering. "
+            f"Supported providers: {PROVIDERS_WITH_NATIVE_FILTERING}"
+        )
 
 
 @pytest.fixture(scope="session")
@@ -143,6 +161,7 @@ def test_filter_eq_string(
     vector_io_provider_id,
 ):
     """Test equality filter on string field."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -184,6 +203,7 @@ def test_filter_ne_string(
     vector_io_provider_id,
 ):
     """Test not-equal filter on string field."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -225,6 +245,7 @@ def test_filter_gt_numeric(
     vector_io_provider_id,
 ):
     """Test greater-than filter on numeric field."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -266,6 +287,7 @@ def test_filter_gte_numeric(
     vector_io_provider_id,
 ):
     """Test greater-than-or-equal filter on numeric field."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -307,6 +329,7 @@ def test_filter_lt_numeric(
     vector_io_provider_id,
 ):
     """Test less-than filter on numeric field."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -348,6 +371,7 @@ def test_filter_lte_numeric(
     vector_io_provider_id,
 ):
     """Test less-than-or-equal filter on numeric field."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -389,6 +413,7 @@ def test_filter_in_list(
     vector_io_provider_id,
 ):
     """Test 'in' filter with list of values."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -430,6 +455,7 @@ def test_filter_nin_list(
     vector_io_provider_id,
 ):
     """Test 'not in' filter with list of values."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -471,6 +497,7 @@ def test_filter_eq_boolean(
     vector_io_provider_id,
 ):
     """Test equality filter on boolean field."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -517,6 +544,7 @@ def test_filter_and_compound(
     vector_io_provider_id,
 ):
     """Test AND compound filter combining multiple conditions."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -565,6 +593,7 @@ def test_filter_or_compound(
     vector_io_provider_id,
 ):
     """Test OR compound filter combining multiple conditions."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -614,6 +643,7 @@ def test_filter_nested_compound(
     vector_io_provider_id,
 ):
     """Test nested compound filters with complex logic."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -674,6 +704,7 @@ def test_filter_no_matches(
     vector_io_provider_id,
 ):
     """Test filter that matches no documents."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -711,6 +742,7 @@ def test_filter_null_returns_all(
     vector_io_provider_id,
 ):
     """Test that None filter returns all matching results."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
@@ -746,6 +778,7 @@ def test_filter_multiple_and_conditions(
     vector_io_provider_id,
 ):
     """Test AND filter with three or more conditions."""
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
 
     vector_store = client.vector_stores.create(
