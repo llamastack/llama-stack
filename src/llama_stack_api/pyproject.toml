@@ -35,12 +35,57 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/llamastack/llama-stack"
 
-[tool.setuptools.packages.find]
-where = [".."]
-include = ["llama_stack_api", "llama_stack_api.*"]
+[tool.setuptools]
+# 1. Map the 'llama_stack_api' namespace to the current directory (.)
+# This anchors the package and ensures it's not empty.
+package-dir = {"llama_stack_api" = "."}
+
+# 2. List ONLY the directories as sub-packages.
+# WARNING: Update this list when adding/removing API directories (e.g., new FastAPI routers)
+packages = [
+    "llama_stack_api.admin",
+    "llama_stack_api.batches",
+    "llama_stack_api.benchmarks",
+    "llama_stack_api.common",
+    "llama_stack_api.conversations",
+    "llama_stack_api.datasetio",
+    "llama_stack_api.datasets",
+    "llama_stack_api.eval",
+    "llama_stack_api.file_processors",
+    "llama_stack_api.files",
+    "llama_stack_api.inspect_api",
+    "llama_stack_api.internal",
+    "llama_stack_api.models",
+    "llama_stack_api.post_training",
+    "llama_stack_api.providers",
+    "llama_stack_api.shields",
+    "llama_stack_api.scoring_functions",
+    "llama_stack_api.prompts",
+    "llama_stack_api.scoring",
+    "llama_stack_api.safety",
+]
+
+# 3. List every root-level .py file as a module.
+# Because of package-dir above, these will be placed INSIDE the llama_stack_api folder.
+# WARNING: Update this list when adding/removing root-level .py files
+py-modules = [
+    "llama_stack_api.agents",
+    "llama_stack_api.connectors",
+    "llama_stack_api.datatypes",
+    "llama_stack_api.inference",
+    "llama_stack_api.openai_responses",
+    "llama_stack_api.rag_tool",
+    "llama_stack_api.resource",
+    "llama_stack_api.router_utils",
+    "llama_stack_api.schema_utils",
+    "llama_stack_api.tools",
+    "llama_stack_api.vector_io",
+    "llama_stack_api.vector_stores",
+    "llama_stack_api.version",
+]
 
 [tool.setuptools.package-data]
-llama_stack_api = ["py.typed"]
+llama_stack_api = ["py.typed", "**/*.json", "**/*.yaml"]
 
 [tool.ruff]
 line-length = 120

@@ -10,6 +10,7 @@ from typing import Any
 import psycopg2
 from numpy.typing import NDArray
 from psycopg2 import sql
+from psycopg2.extensions import cursor
 from psycopg2.extras import Json, execute_values
 from pydantic import BaseModel, TypeAdapter
 
@@ -52,6 +53,17 @@ def check_extension_version(cur):
     cur.execute("SELECT extversion FROM pg_extension WHERE extname = 'vector'")
     result = cur.fetchone()
     return result[0] if result else None
+
+
+def create_vector_extension(cur: cursor) -> None:
+    try:
+        log.info("Vector extension not found, creating...")
+        cur.execute("CREATE EXTENSION vector;")
+        log.info("Vector extension created successfully")
+        log.info(f"Vector extension version: {check_extension_version(cur)}")
+
+    except psycopg2.Error as e:
+        raise RuntimeError(f"Failed to create vector extension for PGVector: {e}") from e
 
 
 def upsert_models(conn, keys_models: list[tuple[str, BaseModel]]):
@@ -416,7 +428,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 if version:
                     log.info(f"Vector extension version: {version}")
                 else:
-                    raise RuntimeError("Vector extension is not installed.")
+                    create_vector_extension(cur)
 
                 cur.execute(
                     """
