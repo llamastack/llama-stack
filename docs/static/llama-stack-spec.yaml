@@ -6112,6 +6112,10 @@ components:
           anyOf:
           - type: number
           - type: 'null'
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         text:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseText'

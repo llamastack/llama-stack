@@ -95,6 +95,7 @@ class Agents(Protocol):
         store: bool | None = True,
         stream: bool | None = False,
         temperature: float | None = None,
+        max_output_tokens: int | None = None,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
@@ -118,6 +119,7 @@ class Agents(Protocol):
         :param previous_response_id: (Optional) if specified, the new response will be a continuation of the previous response. This can be used to easily fork-off new responses from existing responses.
         :param conversation: (Optional) The ID of a conversation to add the response to. Must begin with 'conv_'. Input and output messages will be automatically added to the conversation.
         :param include: (Optional) Additional fields to include in the response.
+        :param max_output_tokens: (Optional) The maximum number of output tokens to generate.
         :param guardrails: (Optional) List of guardrails to apply during response generation. Can be guardrail IDs (strings) or guardrail specifications.
         :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response.
         :param reasoning: (Optional) Configuration for reasoning effort. Controls how much reasoning the model performs.

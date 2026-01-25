@@ -333,6 +333,7 @@ class StreamingResponseOrchestrator:
                     tool_choice=chat_tool_choice,
                     stream=True,
                     temperature=self.ctx.temperature,
+                    max_completion_tokens=self.ctx.max_output_tokens,
                     response_format=response_format,
                     stream_options={
                         "include_usage": True,
