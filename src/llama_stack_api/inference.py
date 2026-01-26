@@ -31,6 +31,8 @@ from llama_stack_api.schema_utils import (
 )
 from llama_stack_api.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 
+from .helpers import remove_null_from_anyof
+
 
 @json_schema_type
 class GreedySamplingStrategy(BaseModel):
@@ -1055,32 +1057,6 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
 
 
-def _remove_null_from_anyof(schema: dict) -> None:
-    """Remove null type from anyOf if present in JSON schema.
-
-    This is used to make optional fields non-nullable in the OpenAPI spec,
-    matching OpenAI's API specification where optional fields can be omitted
-    but cannot be explicitly set to null.
-
-    Handles both OpenAPI 3.0 format (anyOf with null) and OpenAPI 3.1 format
-    (type as array with null).
-    """
-    # Handle anyOf format: anyOf: [{type: integer}, {type: null}]
-    if "anyOf" in schema:
-        schema["anyOf"] = [s for s in schema["anyOf"] if s.get("type") != "null"]
-        if len(schema["anyOf"]) == 1:
-            # If only one type left, flatten it
-            only_schema = schema["anyOf"][0]
-            schema.pop("anyOf")
-            schema.update(only_schema)
-
-    # Handle OpenAPI 3.1 format: type: ['integer', 'null']
-    elif isinstance(schema.get("type"), list) and "null" in schema["type"]:
-        schema["type"].remove("null")
-        if len(schema["type"]) == 1:
-            schema["type"] = schema["type"][0]
-
-
 # extra_body can be accessed via .model_extra
 @json_schema_type
 class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
@@ -1104,8 +1080,8 @@ class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
         ]
     )
     encoding_format: Literal["float", "base64"] = Field(default="float")
-    dimensions: int | None = Field(default=None, ge=1, json_schema_extra=_remove_null_from_anyof)
-    user: str | None = Field(default=None, json_schema_extra=_remove_null_from_anyof)
+    dimensions: int | None = Field(default=None, ge=1, json_schema_extra=remove_null_from_anyof)
+    user: str | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
 
     @field_validator("dimensions", "user", mode="before")
     @classmethod

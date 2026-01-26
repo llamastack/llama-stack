@@ -3875,6 +3875,9 @@ components:
       description: Web search tool configuration for OpenAI response inputs.
     OpenAIResponseObjectWithInput:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -4315,6 +4318,9 @@ components:
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseObject:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At

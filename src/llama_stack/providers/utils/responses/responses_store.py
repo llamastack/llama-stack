@@ -216,6 +216,54 @@ class ResponsesStore:
         await self.sql_store.delete("openai_responses", where={"id": response_id})
         return OpenAIDeleteResponseObject(id=response_id)
 
+    async def update_response_object(
+        self,
+        response_object: OpenAIResponseObject,
+        input: list[OpenAIResponseInput] | None = None,
+        messages: list[OpenAIMessageParam] | None = None,
+    ) -> None:
+        """Update an existing response object in storage.
+
+        :param response_object: The updated response object.
+        :param input: Optional input items (if None, existing input is preserved).
+        :param messages: Optional messages (if None, existing messages are preserved).
+        """
+        if not self.sql_store:
+            raise ValueError("Responses store is not initialized")
+
+        # Fetch existing data to preserve input/messages if not provided
+        existing_row = await self.sql_store.fetch_one(
+            "openai_responses",
+            where={"id": response_object.id},
+        )
+
+        if not existing_row:
+            raise ValueError(f"Response with id {response_object.id} not found")
+
+        existing_data = existing_row["response_object"]
+
+        data = response_object.model_dump()
+        # Preserve existing input if not provided
+        if input is not None:
+            data["input"] = [input_item.model_dump() for input_item in input]
+        else:
+            data["input"] = existing_data.get("input", [])
+        # Preserve existing messages if not provided
+        if messages is not None:
+            data["messages"] = [msg.model_dump() for msg in messages]
+        else:
+            data["messages"] = existing_data.get("messages", [])
+
+        await self.sql_store.update(
+            "openai_responses",
+            data={
+                "created_at": data["created_at"],
+                "model": data["model"],
+                "response_object": data,
+            },
+            where={"id": response_object.id},
+        )
+
     async def list_response_input_items(
         self,
         response_id: str,

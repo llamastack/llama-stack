@@ -15,6 +15,8 @@ from llama_stack_api.inference import OpenAITokenLogProb
 from llama_stack_api.schema_utils import json_schema_type, register_schema
 from llama_stack_api.vector_io import SearchRankingOptions as FileSearchRankingOptions
 
+from .helpers import remove_null_from_anyof
+
 # NOTE(ashwin): this file is literally a copy of the OpenAI responses API schema. We should probably
 # take their YAML and generate this file automatically. Their YAML is available.
 
@@ -702,6 +704,7 @@ class OpenAIResponseUsage(BaseModel):
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
 
+    :param background: Whether this response was run in background mode
     :param created_at: Unix timestamp when the response was created
     :param error: (Optional) Error details if the response generation failed
     :param id: Unique identifier for this response
@@ -711,7 +714,7 @@ class OpenAIResponseObject(BaseModel):
     :param parallel_tool_calls: (Optional) Whether to allow more than one function tool call generated per turn.
     :param previous_response_id: (Optional) ID of the previous response in a conversation
     :param prompt: (Optional) Reference to a prompt template and its variables.
-    :param status: Current status of the response generation
+    :param status: Current status of the response generation (queued, in_progress, completed, failed, cancelled, incomplete)
     :param temperature: (Optional) Sampling temperature used for generation
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
@@ -724,6 +727,7 @@ class OpenAIResponseObject(BaseModel):
     :param metadata: (Optional) Dictionary of metadata key-value pairs
     """
 
+    background: bool | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     created_at: int
     completed_at: int | None = None
     error: OpenAIResponseError | None = None

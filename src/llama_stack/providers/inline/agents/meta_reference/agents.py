@@ -12,6 +12,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack_api import (
     Agents,
+    CancelResponseRequest,
     Connectors,
     Conversations,
     CreateResponseRequest,
@@ -110,6 +111,7 @@ class MetaReferenceAgentsImpl(Agents):
         result = await self.openai_responses_impl.create_openai_response(
             request.input,
             request.model,
+            request.background,
             request.prompt,
             request.instructions,
             request.previous_response_id,
@@ -159,3 +161,10 @@ class MetaReferenceAgentsImpl(Agents):
     ) -> OpenAIDeleteResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         return await self.openai_responses_impl.delete_openai_response(request.response_id)
+
+    async def cancel_openai_response(
+        self,
+        request: CancelResponseRequest,
+    ) -> OpenAIResponseObject:
+        assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
+        return await self.openai_responses_impl.cancel_openai_response(request.response_id)
