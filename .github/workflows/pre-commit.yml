@@ -33,7 +33,7 @@ jobs:
           fetch-depth: ${{ github.actor == 'dependabot[bot]' && 0 || 1 }}
 
       - name: Set up Python
-        uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # v6.1.0
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.12'
           cache: pip
@@ -42,14 +42,14 @@ jobs:
             .pre-commit-config.yaml
 
       - name: Set up Node.js
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node-version}}
           cache: 'npm'
           cache-dependency-path: 'src/llama_stack_ui/'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@681c641aba71e4a1c380be3ab5e12ad51f415867 # v7.1.6
+        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
 
       - name: Install npm dependencies
         run: npm ci
@@ -59,10 +59,16 @@ jobs:
         run: python -m pip install 'pre-commit>=4.4.0'
 
       - name: Cache pre-commit
-        uses: actions/cache@9255dc7a253b0ccc959486e2bca901246202afeb # v4
+        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
+
+      # Install oasdiff: https://github.com/oasdiff/oasdiff, a tool for detecting breaking changes in OpenAPI specs.
+      - name: Install oasdiff
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
+          cp /usr/local/bin/oasdiff ~/oasdiff
 
       - name: Run pre-commit
         id: precommit

@@ -143,6 +143,13 @@ def pytest_configure(config):
     if getattr(config.option, "embedding_dimension", None) is None:
         config.option.embedding_dimension = 384
 
+    # Apply global fallback for embedding_model when using stack configs with embedding models
+    if getattr(config.option, "embedding_model", None) is None:
+        stack_config = config.getoption("--stack-config", default=None)
+        if stack_config and "inference=inline::sentence-transformers" in stack_config:
+            # Use the full qualified model ID that matches what's actually registered
+            config.option.embedding_model = "inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+
 
 def pytest_addoption(parser):
     parser.addoption(
@@ -234,6 +241,28 @@ def get_short_id(value):
     return MODEL_SHORT_IDS.get(value, value)
 
 
+def parse_vector_io_providers_from_config(config):
+    """Parse stack config to extract vector_io provider from command line."""
+    config_str = config.getoption("--stack-config", default=None) or os.environ.get("LLAMA_STACK_CONFIG")
+
+    if not config_str:
+        return None
+
+    try:
+        # Handle stack-config format: "files=inline::localfs,inference=inline::sentence-transformers,vector_io=inline::milvus"
+        for part in config_str.replace(";", ",").split(","):
+            part = part.strip()
+            if part.startswith("vector_io="):
+                provider_spec = part.split("=", 1)[1].strip()
+                # Return the full provider specification (e.g. "inline::milvus")
+                # The runtime system expects full provider IDs
+                return [provider_spec]
+    except Exception as e:
+        logger.debug(f"Failed to parse vector_io provider from config: {e}")
+
+    return None
+
+
 def pytest_generate_tests(metafunc):
     """
     This is the main function which processes CLI arguments and generates various combinations of parameters.
@@ -241,6 +270,25 @@ def pytest_generate_tests(metafunc):
 
     Each option can be comma separated list of values which results in multiple parameter combinations.
     """
+    # Handle vector_io_provider_id dynamically
+    if "vector_io_provider_id" in metafunc.fixturenames:
+        providers = parse_vector_io_providers_from_config(metafunc.config)
+        if providers:
+            # Use the configured provider instead of letting decorator handle it
+            # Use short names in test IDs for readability
+            test_ids = [f"vector_io={p.split('::')[-1] if '::' in p else p}" for p in providers]
+            metafunc.parametrize("vector_io_provider_id", providers, ids=test_ids)
+        else:
+            # No stack config found, apply fallback parametrization here
+            inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
+            if inference_mode == "live":
+                all_providers = ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant"]
+            else:
+                all_providers = ["faiss", "sqlite-vec"]
+
+            test_ids = [f"vector_io={p.split('::')[-1] if '::' in p else p}" for p in all_providers]
+            metafunc.parametrize("vector_io_provider_id", all_providers, ids=test_ids)
+
     params = []
     param_values = {}
     id_parts = []
@@ -299,9 +347,6 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize(params, value_combinations, scope="session", ids=test_ids if test_ids else None)
 
 
-pytest_plugins = ["tests.integration.fixtures.common"]
-
-
 def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
     """Skip collecting paths outside the selected suite roots for speed."""
     suite = config.getoption("--suite")
@@ -321,7 +366,9 @@ def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
         return False
 
     for r in roots:
-        rp = (Path(str(config.rootpath)) / r).resolve()
+        # Handle pytest node IDs like "path/to/file.py::test_function"
+        file_path = r.split("::")[0] if "::" in r else r
+        rp = (Path(str(config.rootpath)) / file_path).resolve()
         if rp.is_file():
             # Allow the exact file and any ancestor directories so pytest can walk into it.
             if p == rp:
@@ -335,6 +382,57 @@ def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
     return True
 
 
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:
+    """Filter collected tests to only those matching suite roots with ::test_function specifiers."""
+    suite = config.getoption("--suite")
+    if not suite:
+        return
+
+    sobj = SUITE_DEFINITIONS.get(suite)
+    roots: list[str] = sobj.get("roots", []) if isinstance(sobj, dict) else getattr(sobj, "roots", [])
+    if not roots:
+        return
+
+    # Check if any roots have ::test_function specifiers
+    test_specifiers = [r for r in roots if "::" in r]
+    if not test_specifiers:
+        return  # No filtering needed for directory/file-only roots
+
+    # Build set of allowed (file, test_function) tuples
+    allowed_tests: set[tuple[str, str]] = set()
+    for r in test_specifiers:
+        file_path, test_name = r.split("::", 1)
+        allowed_tests.add((file_path, test_name))
+
+    allowed_roots: list[Path] = []
+    for r in roots:
+        if "::" not in r:
+            allowed_roots.append((config.rootpath / r).resolve())
+
+    # Filter items to only those matching the allowed tests
+    selected = []
+    for item in items:
+        # Get the file path relative to rootdir
+        rel_path = str(Path(item.fspath).relative_to(config.rootpath))
+        # Get the test function name (without parametrization)
+        test_name = item.originalname if hasattr(item, "originalname") else item.name.split("[")[0]
+
+        if (rel_path, test_name) in allowed_tests:
+            selected.append(item)
+            continue
+
+        item_path = Path(item.fspath).resolve()
+        for root in allowed_roots:
+            if root.is_file() and item_path == root:
+                selected.append(item)
+                break
+            elif root.is_dir() and item_path.is_relative_to(root):
+                selected.append(item)
+                break
+
+    items[:] = selected
+
+
 def get_vector_io_provider_ids(client):
     """Get all available vector_io provider IDs."""
     providers = [p for p in client.providers.list() if p.api == "vector_io"]
@@ -342,13 +440,11 @@ def get_vector_io_provider_ids(client):
 
 
 def vector_provider_wrapper(func):
-    """Decorator to run a test against all available vector_io providers."""
+    """Decorator with runtime validation and fallback parametrization."""
     import functools
-    import os
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        # Get the vector_io_provider_id from the test arguments
         import inspect
 
         sig = inspect.signature(func)
@@ -368,23 +464,10 @@ def vector_provider_wrapper(func):
 
         return func(*args, **kwargs)
 
-    inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
-    if inference_mode == "live":
-        # For live tests, try all providers (they'll skip if not available)
-        all_providers = [
-            "faiss",
-            "sqlite-vec",
-            "milvus",
-            "chromadb",
-            "pgvector",
-            "weaviate",
-            "qdrant",
-        ]
-    else:
-        # For CI tests (replay/record), only use providers that are available in ci-tests environment
-        all_providers = ["faiss", "sqlite-vec"]
-
-    return pytest.mark.parametrize("vector_io_provider_id", all_providers)(wrapper)
+    # Always return just the wrapper - pytest_generate_tests handles parametrization
+    # If pytest_generate_tests doesn't parametrize, that means there was no
+    # vector_io_provider_id in fixturenames, so no parametrization is needed
+    return wrapper
 
 
 @pytest.fixture

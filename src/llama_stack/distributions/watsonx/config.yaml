@@ -1,5 +1,5 @@
 version: 2
-image_name: watsonx
+distro_name: watsonx
 apis:
 - agents
 - datasetio
@@ -117,6 +117,9 @@ storage:
       backend: sql_default
     prompts:
       namespace: prompts
+      backend: kv_default
+    connectors:
+      namespace: connectors
       backend: kv_default
 registered_resources:
   models: []

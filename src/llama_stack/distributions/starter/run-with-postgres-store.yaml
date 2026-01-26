@@ -1,5 +1,5 @@
 version: 2
-image_name: starter
+distro_name: starter
 apis:
 - agents
 - batches
@@ -71,7 +71,7 @@ providers:
     provider_type: remote::vertexai
     config:
       project: ${env.VERTEX_AI_PROJECT:=}
-      location: ${env.VERTEX_AI_LOCATION:=us-central1}
+      location: ${env.VERTEX_AI_LOCATION:=global}
   - provider_id: groq
     provider_type: remote::groq
     config:
@@ -144,6 +144,14 @@ providers:
       weaviate_cluster_url: ${env.WEAVIATE_CLUSTER_URL:=localhost:8080}
       persistence:
         namespace: vector_io::weaviate
+        backend: kv_default
+  - provider_id: ${env.ELASTICSEARCH_URL:+elasticsearch}
+    provider_type: remote::elasticsearch
+    config:
+      elasticsearch_url: ${env.ELASTICSEARCH_URL:=localhost:9200}
+      elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
+      persistence:
+        namespace: vector_io::elasticsearch
         backend: kv_default
   files:
   - provider_id: meta-reference-files
@@ -261,6 +269,9 @@ storage:
     prompts:
       namespace: prompts
       backend: kv_default
+    connectors:
+      namespace: connectors
+      backend: kv_default
 registered_resources:
   models: []
   shields:
@@ -334,3 +345,4 @@ vector_stores:
     cleanup_interval_seconds: 86400
 safety:
   default_shield_id: llama-guard
+connectors: []

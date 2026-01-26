@@ -22,6 +22,8 @@ from llama_stack_api import (
     Api,
     Dataset,
     DatasetPurpose,
+    GetBenchmarkRequest,
+    GetShieldRequest,
     ListBenchmarksRequest,
     ListToolDefsResponse,
     Model,
@@ -29,10 +31,12 @@ from llama_stack_api import (
     ModelType,
     NumberType,
     RegisterBenchmarkRequest,
+    RegisterShieldRequest,
     Shield,
     ToolDef,
     ToolGroup,
     UnregisterBenchmarkRequest,
+    UnregisterShieldRequest,
     URIDataSource,
 )
 from llama_stack_api.datasets import (
@@ -219,8 +223,8 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     await table.initialize()
 
     # Register multiple shields and verify listing
-    await table.register_shield(shield_id="test-shield", provider_id="test_provider")
-    await table.register_shield(shield_id="test-shield-2", provider_id="test_provider")
+    await table.register_shield(RegisterShieldRequest(shield_id="test-shield", provider_id="test_provider"))
+    await table.register_shield(RegisterShieldRequest(shield_id="test-shield-2", provider_id="test_provider"))
     shields = await table.list_shields()
     assert len(shields.data) == 2
 
@@ -229,7 +233,7 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     assert "test-shield-2" in shield_ids
 
     # Test get specific shield
-    test_shield = await table.get_shield(identifier="test-shield")
+    test_shield = await table.get_shield(GetShieldRequest(identifier="test-shield"))
     assert test_shield is not None
     assert test_shield.identifier == "test-shield"
     assert test_shield.provider_id == "test_provider"
@@ -238,10 +242,10 @@ async def test_shields_routing_table(cached_disk_dist_registry):
 
     # Test get non-existent shield - should raise ValueError with specific message
     with pytest.raises(ValueError, match="Shield 'non-existent' not found"):
-        await table.get_shield(identifier="non-existent")
+        await table.get_shield(GetShieldRequest(identifier="non-existent"))
 
     # Test unregistering shields
-    await table.unregister_shield(identifier="test-shield")
+    await table.unregister_shield(UnregisterShieldRequest(identifier="test-shield"))
     shields = await table.list_shields()
 
     assert len(shields.data) == 1
@@ -250,13 +254,13 @@ async def test_shields_routing_table(cached_disk_dist_registry):
     assert "test-shield-2" in shield_ids
 
     # Unregister the remaining shield
-    await table.unregister_shield(identifier="test-shield-2")
+    await table.unregister_shield(UnregisterShieldRequest(identifier="test-shield-2"))
     shields = await table.list_shields()
     assert len(shields.data) == 0
 
     # Test unregistering non-existent shield - should raise ValueError with specific message
     with pytest.raises(ValueError, match="Shield 'non-existent' not found"):
-        await table.unregister_shield(identifier="non-existent")
+        await table.unregister_shield(UnregisterShieldRequest(identifier="non-existent"))
 
 
 async def test_datasets_routing_table(cached_disk_dist_registry):
@@ -297,19 +301,29 @@ async def test_scoring_functions_routing_table(cached_disk_dist_registry):
     await table.initialize()
 
     # Register multiple scoring functions and verify listing
+    from llama_stack_api import (
+        ListScoringFunctionsRequest,
+        RegisterScoringFunctionRequest,
+        UnregisterScoringFunctionRequest,
+    )
+
     await table.register_scoring_function(
-        scoring_fn_id="test-scoring-fn",
-        provider_id="test_provider",
-        description="Test scoring function",
-        return_type=NumberType(),
+        RegisterScoringFunctionRequest(
+            scoring_fn_id="test-scoring-fn",
+            provider_id="test_provider",
+            description="Test scoring function",
+            return_type=NumberType(),
+        )
     )
     await table.register_scoring_function(
-        scoring_fn_id="test-scoring-fn-2",
-        provider_id="test_provider",
-        description="Another test scoring function",
-        return_type=NumberType(),
+        RegisterScoringFunctionRequest(
+            scoring_fn_id="test-scoring-fn-2",
+            provider_id="test_provider",
+            description="Another test scoring function",
+            return_type=NumberType(),
+        )
     )
-    scoring_functions = await table.list_scoring_functions()
+    scoring_functions = await table.list_scoring_functions(ListScoringFunctionsRequest())
 
     assert len(scoring_functions.data) == 2
     scoring_fn_ids = {fn.identifier for fn in scoring_functions.data}
@@ -318,9 +332,11 @@ async def test_scoring_functions_routing_table(cached_disk_dist_registry):
 
     # Unregister scoring functions and verify listing
     for i in range(len(scoring_functions.data)):
-        await table.unregister_scoring_function(scoring_functions.data[i].scoring_fn_id)
+        await table.unregister_scoring_function(
+            UnregisterScoringFunctionRequest(scoring_fn_id=scoring_functions.data[i].scoring_fn_id)
+        )
 
-    scoring_functions_list_after_deletion = await table.list_scoring_functions()
+    scoring_functions_list_after_deletion = await table.list_scoring_functions(ListScoringFunctionsRequest())
     assert len(scoring_functions_list_after_deletion.data) == 0
 
 
@@ -360,42 +376,52 @@ async def test_double_registration_models_negative(cached_disk_dist_registry):
 
 async def test_double_registration_scoring_functions_positive(cached_disk_dist_registry):
     """Test that registering the same scoring function twice with identical data succeeds."""
+    from llama_stack_api import ListScoringFunctionsRequest, RegisterScoringFunctionRequest
+
     table = ScoringFunctionsRoutingTable({"test_provider": ScoringFunctionsImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
 
     # Register a scoring function
     await table.register_scoring_function(
-        scoring_fn_id="test-scoring-fn",
-        provider_id="test_provider",
-        description="Test scoring function",
-        return_type=NumberType(),
+        RegisterScoringFunctionRequest(
+            scoring_fn_id="test-scoring-fn",
+            provider_id="test_provider",
+            description="Test scoring function",
+            return_type=NumberType(),
+        )
     )
 
     # Register the exact same scoring function again - should succeed (idempotent)
     await table.register_scoring_function(
-        scoring_fn_id="test-scoring-fn",
-        provider_id="test_provider",
-        description="Test scoring function",
-        return_type=NumberType(),
+        RegisterScoringFunctionRequest(
+            scoring_fn_id="test-scoring-fn",
+            provider_id="test_provider",
+            description="Test scoring function",
+            return_type=NumberType(),
+        )
     )
 
     # Verify only one scoring function exists
-    scoring_functions = await table.list_scoring_functions()
+    scoring_functions = await table.list_scoring_functions(ListScoringFunctionsRequest())
     assert len(scoring_functions.data) == 1
     assert scoring_functions.data[0].identifier == "test-scoring-fn"
 
 
 async def test_double_registration_scoring_functions_negative(cached_disk_dist_registry):
     """Test that registering the same scoring function with different data fails."""
+    from llama_stack_api import RegisterScoringFunctionRequest
+
     table = ScoringFunctionsRoutingTable({"test_provider": ScoringFunctionsImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
 
     # Register a scoring function
     await table.register_scoring_function(
-        scoring_fn_id="test-scoring-fn",
-        provider_id="test_provider",
-        description="Test scoring function",
-        return_type=NumberType(),
+        RegisterScoringFunctionRequest(
+            scoring_fn_id="test-scoring-fn",
+            provider_id="test_provider",
+            description="Test scoring function",
+            return_type=NumberType(),
+        )
     )
 
     # Try to register the same scoring function with different description - should fail
@@ -403,10 +429,12 @@ async def test_double_registration_scoring_functions_negative(cached_disk_dist_r
         ValueError, match="Object of type 'scoring_function' and identifier 'test-scoring-fn' already exists"
     ):
         await table.register_scoring_function(
-            scoring_fn_id="test-scoring-fn",
-            provider_id="test_provider",
-            description="Different description",
-            return_type=NumberType(),
+            RegisterScoringFunctionRequest(
+                scoring_fn_id="test-scoring-fn",
+                provider_id="test_provider",
+                description="Different description",
+                return_type=NumberType(),
+            )
         )
 
 
@@ -455,6 +483,32 @@ async def test_benchmarks_routing_table(cached_disk_dist_registry):
     # Unregistering a non-existent benchmark should raise a clear error
     with pytest.raises(ValueError, match="Benchmark 'dummy_benchmark' not found"):
         await table.unregister_benchmark(UnregisterBenchmarkRequest(benchmark_id="dummy_benchmark"))
+
+
+async def test_benchmarks_routing_table_stores_dataset_id(cached_disk_dist_registry):
+    """Test that register_benchmark correctly stores dataset_id on the benchmark."""
+    table = BenchmarksRoutingTable({"test_provider": BenchmarksImpl()}, cached_disk_dist_registry, {})
+    await table.initialize()
+
+    test_dataset_id = "my-evaluation-dataset"
+    test_scoring_functions = ["accuracy", "f1-score"]
+
+    await table.register_benchmark(
+        RegisterBenchmarkRequest(
+            benchmark_id="test-benchmark-with-dataset",
+            dataset_id=test_dataset_id,
+            scoring_functions=test_scoring_functions,
+        )
+    )
+
+    benchmark = await table.get_benchmark(GetBenchmarkRequest(benchmark_id="test-benchmark-with-dataset"))
+
+    assert benchmark is not None
+    assert benchmark.identifier == "test-benchmark-with-dataset"
+    assert benchmark.dataset_id == test_dataset_id
+    assert benchmark.scoring_functions == test_scoring_functions
+
+    await table.unregister_benchmark(UnregisterBenchmarkRequest(benchmark_id="test-benchmark-with-dataset"))
 
 
 async def test_tool_groups_routing_table(cached_disk_dist_registry):

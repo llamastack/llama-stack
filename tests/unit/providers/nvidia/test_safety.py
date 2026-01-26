@@ -13,9 +13,11 @@ import pytest
 from llama_stack.providers.remote.safety.nvidia.config import NVIDIASafetyConfig
 from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter
 from llama_stack_api import (
+    GetShieldRequest,
     OpenAIAssistantMessageParam,
     OpenAIUserMessageParam,
     ResourceType,
+    RunShieldRequest,
     RunShieldResponse,
     Shield,
     ViolationLevel,
@@ -145,10 +147,11 @@ async def test_run_shield_allowed(nvidia_adapter, mock_guardrails_post):
             tool_calls=[],
         ),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
+    result = await adapter.run_shield(request)
 
     # Verify the shield store was called
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(
@@ -199,10 +202,11 @@ async def test_run_shield_blocked(nvidia_adapter, mock_guardrails_post):
             tool_calls=[],
         ),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
+    result = await adapter.run_shield(request)
 
     # Verify the shield store was called
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(
@@ -244,11 +248,12 @@ async def test_run_shield_not_found(nvidia_adapter, mock_guardrails_post):
         OpenAIUserMessageParam(content="Hello, how are you?"),
     ]
 
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
     with pytest.raises(ValueError):
-        await adapter.run_shield(shield_id, messages)
+        await adapter.run_shield(request)
 
     # Verify the shield store was called
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
 
     # Verify the Guardrails API was not called
     mock_guardrails_post.assert_not_called()
@@ -278,11 +283,12 @@ async def test_run_shield_http_error(nvidia_adapter, mock_guardrails_post):
             tool_calls=[],
         ),
     ]
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
     with pytest.raises(Exception) as exc_info:
-        await adapter.run_shield(shield_id, messages)
+        await adapter.run_shield(request)
 
     # Verify the shield store was called
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
 
     # Verify the Guardrails API was called correctly
     mock_guardrails_post.assert_called_once_with(

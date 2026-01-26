@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "PyYAML>=6.0",
-    "aiohttp",
+    "aiohttp>=3.13.3",
     "fastapi>=0.115.0,<1.0",                          # server
     "fire",                                           # for MCP in LLS client
     "httpx",
@@ -52,12 +52,13 @@ dependencies = [
     "starlette>=0.49.1",
     "psycopg2-binary",
     "tornado>=6.5.3",
-    "urllib3>=2.6.0",
+    "urllib3>=2.6.3",
+    "mcp>=1.23.0"                                             # for connectors
 ]
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client>=0.3.0", # Optional for library-only usage
+    "llama-stack-client>=0.4.0.dev0", # Optional for library-only usage
 ]
 
 [dependency-groups]
@@ -153,6 +154,7 @@ test = [
     "pymilvus>=2.6.1",
     "milvus-lite>=2.5.0",
     "weaviate-client>=4.16.4",
+    "elasticsearch>=8.16.0, <9.0.0"
 ]
 docs = [
     "setuptools",
@@ -188,8 +190,6 @@ where = ["src"]
 include = [
     "llama_stack",
     "llama_stack.*",
-    "llama_stack_api",
-    "llama_stack_api.*",
 ]
 
 [[tool.uv.index]]
@@ -335,6 +335,7 @@ exclude = [
     "^src/llama_stack/providers/remote/vector_io/qdrant/",
     "^src/llama_stack/providers/remote/vector_io/sample/",
     "^src/llama_stack/providers/remote/vector_io/weaviate/",
+    "^src/llama_stack/providers/remote/vector_io/elasticsearch/",
     "^src/llama_stack/providers/utils/bedrock/client\\.py$",
     "^src/llama_stack/providers/utils/bedrock/refreshable_boto_session\\.py$",
     "^src/llama_stack/providers/utils/inference/embedding_mixin\\.py$",

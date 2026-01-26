@@ -25,9 +25,10 @@ import yaml
 from llama_stack_client import LlamaStackClient
 from openai import OpenAI
 
-from llama_stack.core.datatypes import VectorStoresConfig
+from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.core.stack import run_config_from_adhoc_config_spec
+from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.env import get_env_or_fail
 
 DEFAULT_PORT = 8321
@@ -307,13 +308,19 @@ def instantiate_llama_stack_client(session):
         # --stack-config bypasses template so need this to set default embedding model
         if "vector_io" in config and "inference" in config:
             run_config.vector_stores = VectorStoresConfig(
-                embedding_model_id="inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+                default_embedding_model=QualifiedModel(
+                    provider_id="inline::sentence-transformers",
+                    model_id="nomic-ai/nomic-embed-text-v1.5",
+                )
             )
 
         run_config_file = tempfile.NamedTemporaryFile(delete=False, suffix=".yaml")
         with open(run_config_file.name, "w") as f:
             yaml.dump(run_config.model_dump(mode="json"), f)
         config = run_config_file.name
+    elif "::" in config:
+        # Handle distro::config.yaml format (e.g., ci-tests::run.yaml)
+        config = str(resolve_config_or_distro(config))
 
     client = LlamaStackAsLibraryClient(
         config,

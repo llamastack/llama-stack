@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import time
 import uuid
 from collections.abc import AsyncIterator
 from typing import Any
@@ -16,6 +17,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import interleaved_con
 from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
+    Connectors,
     Inference,
     MCPListToolsTool,
     ModelNotFoundError,
@@ -77,6 +79,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
+    OpenAIResponseReasoning,
     OpenAIResponseText,
     OpenAIResponseUsage,
     OpenAIResponseUsageInputTokensDetails,
@@ -133,11 +136,14 @@ class StreamingResponseOrchestrator:
         instructions: str | None,
         safety_api: Safety | None,
         guardrail_ids: list[str] | None = None,
+        connectors_api: Connectors | None = None,
         prompt: OpenAIResponsePrompt | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
+        reasoning: OpenAIResponseReasoning | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        store: bool | None = True,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -147,6 +153,7 @@ class StreamingResponseOrchestrator:
         self.max_infer_iters = max_infer_iters
         self.tool_executor = tool_executor
         self.safety_api = safety_api
+        self.connectors_api = connectors_api
         self.guardrail_ids = guardrail_ids or []
         self.prompt = prompt
         # System message that is inserted into the model's context
@@ -155,8 +162,11 @@ class StreamingResponseOrchestrator:
         self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
+        self.reasoning = reasoning
         self.metadata = metadata
+        self.store = store
         self.include = include
+        self.store = bool(store) if store is not None else True
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -192,6 +202,7 @@ class StreamingResponseOrchestrator:
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             metadata=self.metadata,
+            store=self.store,
         )
 
         return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
@@ -212,8 +223,10 @@ class StreamingResponseOrchestrator:
         *,
         error: OpenAIResponseError | None = None,
     ) -> OpenAIResponseObject:
+        completed_at = int(time.time()) if status == "completed" else None
         return OpenAIResponseObject(
             created_at=self.created_at,
+            completed_at=completed_at,
             id=self.response_id,
             model=self.ctx.model,
             object="response",
@@ -228,7 +241,9 @@ class StreamingResponseOrchestrator:
             prompt=self.prompt,
             parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
+            reasoning=self.reasoning,
             metadata=self.metadata,
+            store=self.store,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -324,6 +339,7 @@ class StreamingResponseOrchestrator:
                         "include_usage": True,
                     },
                     logprobs=logprobs,
+                    reasoning_effort=self.reasoning.effort if self.reasoning else None,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -486,17 +502,16 @@ class StreamingResponseOrchestrator:
                 input_tokens=chunk.usage.prompt_tokens,
                 output_tokens=chunk.usage.completion_tokens,
                 total_tokens=chunk.usage.total_tokens,
-                input_tokens_details=(
-                    OpenAIResponseUsageInputTokensDetails(cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens)
-                    if chunk.usage.prompt_tokens_details
-                    else None
+                input_tokens_details=OpenAIResponseUsageInputTokensDetails(
+                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens
+                    if chunk.usage.prompt_tokens_details and chunk.usage.prompt_tokens_details.cached_tokens is not None
+                    else 0
                 ),
-                output_tokens_details=(
-                    OpenAIResponseUsageOutputTokensDetails(
-                        reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
-                    )
+                output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
+                    reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
                     if chunk.usage.completion_tokens_details
-                    else None
+                    and chunk.usage.completion_tokens_details.reasoning_tokens is not None
+                    else 0
                 ),
             )
         else:
@@ -506,17 +521,16 @@ class StreamingResponseOrchestrator:
                 output_tokens=self.accumulated_usage.output_tokens + chunk.usage.completion_tokens,
                 total_tokens=self.accumulated_usage.total_tokens + chunk.usage.total_tokens,
                 # Use latest non-null details
-                input_tokens_details=(
-                    OpenAIResponseUsageInputTokensDetails(cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens)
-                    if chunk.usage.prompt_tokens_details
-                    else self.accumulated_usage.input_tokens_details
+                input_tokens_details=OpenAIResponseUsageInputTokensDetails(
+                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens
+                    if chunk.usage.prompt_tokens_details and chunk.usage.prompt_tokens_details.cached_tokens is not None
+                    else self.accumulated_usage.input_tokens_details.cached_tokens
                 ),
-                output_tokens_details=(
-                    OpenAIResponseUsageOutputTokensDetails(
-                        reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
-                    )
+                output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
+                    reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
                     if chunk.usage.completion_tokens_details
-                    else self.accumulated_usage.output_tokens_details
+                    and chunk.usage.completion_tokens_details.reasoning_tokens is not None
+                    else self.accumulated_usage.output_tokens_details.reasoning_tokens
                 ),
             )
 
@@ -744,9 +758,9 @@ class StreamingResponseOrchestrator:
                     chunk_finish_reason = chunk_choice.finish_reason
 
                 # Handle reasoning content if present (non-standard field for o1/o3 models)
-                if hasattr(chunk_choice.delta, "reasoning_content") and chunk_choice.delta.reasoning_content:
+                if hasattr(chunk_choice.delta, "reasoning") and chunk_choice.delta.reasoning:
                     async for event in self._handle_reasoning_content_chunk(
-                        reasoning_content=chunk_choice.delta.reasoning_content,
+                        reasoning_content=chunk_choice.delta.reasoning,
                         reasoning_part_emitted=reasoning_part_emitted,
                         reasoning_content_index=reasoning_content_index,
                         message_item_id=message_item_id,
@@ -758,7 +772,7 @@ class StreamingResponseOrchestrator:
                         else:
                             yield event
                     reasoning_part_emitted = True
-                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning_content)
+                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning)
 
                 # Handle refusal content if present
                 if chunk_choice.delta.refusal:
@@ -1175,6 +1189,9 @@ class StreamingResponseOrchestrator:
         """Process an MCP tool configuration and emit appropriate streaming events."""
         from llama_stack.providers.utils.tools.mcp import list_mcp_tools
 
+        # Resolve connector_id to server_url if provided
+        mcp_tool = await resolve_mcp_connector_id(mcp_tool, self.connectors_api)
+
         # Emit mcp_list_tools.in_progress
         self.sequence_number += 1
         yield OpenAIResponseObjectStreamResponseMcpListToolsInProgress(
@@ -1200,6 +1217,9 @@ class StreamingResponseOrchestrator:
                 "mcp_list_tools_id": list_id,
             }
 
+            # Get session manager from tool_executor if available (fix for #4452)
+            session_manager = getattr(self.tool_executor, "mcp_session_manager", None)
+
             # TODO: follow semantic conventions for Open Telemetry tool spans
             # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
             with tracer.start_as_current_span("list_mcp_tools", attributes=attributes):
@@ -1207,6 +1227,7 @@ class StreamingResponseOrchestrator:
                     endpoint=mcp_tool.server_url,
                     headers=mcp_tool.headers,
                     authorization=mcp_tool.authorization,
+                    session_manager=session_manager,
                 )
 
             # Create the MCP list tools message
@@ -1485,3 +1506,25 @@ async def _process_tool_choice(
                         tools=tool_choice,
                         mode="required",
                     )
+
+
+async def resolve_mcp_connector_id(
+    mcp_tool: OpenAIResponseInputToolMCP,
+    connectors_api: Connectors,
+) -> OpenAIResponseInputToolMCP:
+    """Resolve connector_id to server_url for an MCP tool.
+
+    If the mcp_tool has a connector_id but no server_url, this function
+    looks up the connector and populates the server_url from it.
+
+    Args:
+        mcp_tool: The MCP tool configuration to resolve
+        connectors_api: The connectors API for looking up connectors
+
+    Returns:
+        The mcp_tool with server_url populated (may be same instance if already set)
+    """
+    if mcp_tool.connector_id and not mcp_tool.server_url:
+        connector = await connectors_api.get_connector(mcp_tool.connector_id)
+        return mcp_tool.model_copy(update={"server_url": connector.url})
+    return mcp_tool

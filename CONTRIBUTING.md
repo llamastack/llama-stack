@@ -30,15 +30,17 @@ Note that you can create a dotenv file `.env` that includes necessary environmen
 LLAMA_STACK_BASE_URL=http://localhost:8321
 LLAMA_STACK_CLIENT_LOG=debug
 LLAMA_STACK_PORT=8321
-LLAMA_STACK_CONFIG=<provider-name>
+LLAMA_STACK_CONFIG=server:ci-tests
 TAVILY_SEARCH_API_KEY=
 BRAVE_SEARCH_API_KEY=
 ```
 
 And then use this dotenv file when running client SDK tests via the following:
 ```bash
-uv run --env-file .env -- pytest -v tests/integration/inference/test_text_inference.py --text-model=meta-llama/Llama-3.1-8B-Instruct
+uv run --env-file .env -- pytest -v tests/integration/conversations/test_openai_conversations.py --setup=gpt
 ```
+
+For additional information about testing, please refer to the [tests documentation](tests/README.md) for both unit and integration test.
 
 ### Pre-commit Hooks
 
@@ -49,8 +51,7 @@ uv pip install 'pre-commit>=4.4.0'
 uv run pre-commit install
 ```
 
-Note that the only version of pre-commit that works with the Llama Stack continuous integration is `4.3.0` so it is essential that you pull
-that specific version as shown above.  Once you have run these commands, pre-commit hooks will run automatically before each commit.
+Note that the pre-commit version used in continuous integration for Llama Stack is `>=4.4.0`. It is essential that you use the version specifier as shown above. Once you have run these commands, pre-commit hooks will run automatically before each commit.
 
 Alternatively, if you don't want to install the pre-commit hooks (or if you want to check if your changes are ready before committing),
 you can run the checks manually by running:
@@ -77,11 +78,11 @@ uv run --group dev --group type_checking mypy
 Before pushing your changes, make sure that the pre-commit hooks have passed successfully.
 ```
 
-## Discussions -> Issues -> Pull Requests
+## Issues and Pull Requests
 
 We actively welcome your pull requests. However, please read the following. This is heavily inspired by [Ghostty](https://github.com/ghostty-org/ghostty/blob/main/CONTRIBUTING.md).
 
-If in doubt, please open a [discussion](https://github.com/llamastack/llama-stack/discussions); we can always convert that to an issue later.
+If in doubt, please open a [issue](https://github.com/llamastack/llama-stack/issues).
 
 ### Issues
 We use GitHub issues to track public bugs. Please ensure your description is
@@ -110,23 +111,22 @@ Please avoid picking up too many issues at once. This helps you stay focused and
 
 **I have a bug!**
 
-1. Search the issue tracker and discussions for similar issues.
-2. If you don't have steps to reproduce, open a discussion.
-3. If you have steps to reproduce, open an issue.
+1. Search the issue tracker for similar issues.
+2. If you don't have steps to reproduce, open a "discussion-type" issue.
+3. If you have steps to reproduce, open a "bug-type" issue.
 
 **I have an idea for a feature!**
 
-1. Open a discussion.
+1. Open a "discussion-type" issue.
 
 **I've implemented a feature!**
 
 1. If there is an issue for the feature, open a pull request.
-2. If there is no issue, open a discussion and link to your branch.
+2. If there is no issue, open a "discussion-type" issue and link to your branch.
 
 **I have a question!**
 
-1. Open a discussion or use [Discord](https://discord.gg/llama-stack).
-
+1. Open a "discussion-type" issue or use [Discord](https://discord.gg/llama-stack).
 
 **Opening a Pull Request**
 
@@ -144,8 +144,51 @@ Please keep pull requests (PRs) small and focused. If you have a large set of ch
 ```{tip}
 As a general guideline:
 - Experienced contributors should try to keep no more than 5 open PRs at a time.
-- New contributors are encouraged to have only one open PR at a time until they’re familiar with the codebase and process.
+- New contributors are encouraged to have only one open PR at a time until they're familiar with the codebase and process.
 ```
+
+**Handling Pull Request Reviews**
+
+To ensure a smooth review process for both reviewers and contributors, please follow these guidelines:
+
+1. **Do not amend commits and force push.** Force pushing rewrites history, which confuses GitHub's review system and makes it difficult for reviewers to see what changed between review rounds. The diff becomes unreliable and reviewers lose track of their previous comments.
+
+2. **Use `git merge` to update your branch from main.** When you need to incorporate the latest changes from the main branch, use `git merge main` instead of `git rebase main`. This preserves the commit history and avoids the issues associated with force pushing.
+
+3. **Address review comments with new commits.** When responding to feedback, add new commits rather than modifying existing ones. This makes it easy for reviewers to see exactly how each comment was addressed. You can also use GitHub's "Accept suggestion" feature directly in the UI, which automatically creates new commits for you.
+
+Since Llama Stack uses squash merge, all commits will be combined into a single commit when the PR is merged. This means you don't need to worry about having a "clean" commit history during review; what matters is making the review process as clear as possible.
+
+### API Enhancement Pull Requests
+
+If your pull request modifies or extends the Llama Stack API, you must include a comprehensive **Test Plan** in your PR description. This helps reviewers verify the correctness of your changes and ensures the API behaves as expected.
+
+Your Test Plan should include:
+
+1. **A testing script**: Provide a script (Python, curl commands, or similar attached or pasted into the PR description) that demonstrates your API changes in action. The script should be self-contained and
+   easy to run. Do not commit the script to the repository.
+
+2. **Execution output**: Include the actual output from running your test script. This proves your implementation works and gives reviewers a clear picture of the expected behavior.
+
+This practice:
+- Validates that your implementation works end-to-end
+- Provides reviewers with reproducible verification steps
+- Serves as documentation for the new API behavior
+- Catches integration issues early in the review process
+
+### Adding a New Provider
+
+Llama Stack has "out-of-tree" providers referred to as [external providers](https://llamastack.github.io/docs/providers/external) as well as "in-tree" providers that are a part of the core project. The Llama Stack community is accepting of [new in-tree provider contributions](https://llamastack.github.io/docs/contributing/new_api_provider) so long as there is merit seen in the addition.
+
+If you wish to include a new in-tree provider in the Core project, please follow these steps:
+
+1. **Open a discussion issue**: Open an issue with label "discussion" describing the provider you want to add, its use case, and how it fits into the Llama Stack ecosystem.
+
+2. **Present at a community call** (optional): Bring your proposal to a [community call](README.md#community) to gather feedback, answer questions, and build consensus with other contributors and maintainers.
+
+3. **Implement and submit a PR**: Once approved, use the [Adding a New API Provider](https://llamastack.github.io/docs/contributing/new_api_provider) guide to help you get started. Once approved, follow the standard pull request process outlined above.
+
+This process helps ensure that new providers are well-designed, avoid duplication of effort, and integrate smoothly with the rest of the project.
 
 ## Repository guidelines
 
@@ -235,3 +278,7 @@ uv run ./scripts/run_openapi_generator.sh
 ```
 
 The generated API schema will be available in `docs/static/`. Make sure to review the changes before committing.
+
+## Release Process
+
+For information about how Llama Stack versions are released, including release schedules, testing requirements, and how to contribute to releases, see [RELEASE_PROCESS.md](./RELEASE_PROCESS.md).

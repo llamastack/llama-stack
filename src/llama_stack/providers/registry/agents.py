@@ -20,6 +20,7 @@ def available_providers() -> list[ProviderSpec]:
             provider_type="inline::meta-reference",
             pip_packages=[
                 "matplotlib",
+                "fonttools>=4.60.2",
                 "pillow",
                 "pandas",
                 "scikit-learn",
@@ -36,6 +37,7 @@ def available_providers() -> list[ProviderSpec]:
                 Api.conversations,
                 Api.prompts,
                 Api.files,
+                Api.connectors,
             ],
             optional_api_dependencies=[
                 Api.safety,

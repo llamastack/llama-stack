@@ -253,12 +253,8 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
 
             async def mock_add_chunks(embedded_chunks):
                 index._test_chunks = list(embedded_chunks)
-                # Extract embeddings for the original interface, convert to numpy arrays
-                import numpy as np
-
-                chunks = list(embedded_chunks)  # EmbeddedChunk inherits from Chunk
-                embeddings = [np.array(ec.embedding) for ec in embedded_chunks]
-                await original_add_chunks(chunks, embeddings)
+                # Call original method with correct signature (only embedded_chunks)
+                await original_add_chunks(embedded_chunks)
 
             index.add_chunks = mock_add_chunks
 

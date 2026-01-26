@@ -435,6 +435,7 @@ if [[ "$STACK_CONFIG" == *"docker:"* && "$COLLECT_ONLY" == false ]]; then
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_INFERENCE_MODE=$INFERENCE_MODE"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_STACK_CONFIG_TYPE=server"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e LLAMA_STACK_TEST_MCP_HOST=${LLAMA_STACK_TEST_MCP_HOST:-host.docker.internal}"
+    DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_SDK_DISABLED=true"
     # Disabled: https://github.com/llamastack/llama-stack/issues/4089
     #DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${COLLECTOR_PORT}"
     DOCKER_ENV_VARS="$DOCKER_ENV_VARS -e OTEL_METRIC_EXPORT_INTERVAL=200"
@@ -567,7 +568,7 @@ if [[ "$TYPESCRIPT_ONLY" == "false" ]]; then
         $EXTRA_PARAMS \
         --color=yes \
         --embedding-model=sentence-transformers/nomic-ai/nomic-embed-text-v1.5 \
-        --color=yes $EXTRA_PARAMS \
+        --color=yes \
         --capture=tee-sys
     exit_code=$?
 else

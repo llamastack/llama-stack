@@ -22,7 +22,21 @@ and considered a code smell. All exported symbols are explicitly listed in __all
 __version__ = "0.4.0.dev0"
 
 # Import submodules for those who need them
-from . import common  # noqa: F401
+from .schema_utils import (  # noqa: I001
+    CallableT,
+    ExtraBodyField,
+    SchemaInfo,
+    WebMethod,
+    clear_dynamic_schema_types,
+    get_registered_schema_info,
+    iter_dynamic_schema_types,
+    iter_json_schema_types,
+    iter_registered_schema_types,
+    json_schema_type,
+    register_dynamic_schema_type,
+    register_schema,
+    webmethod,
+)
 from .admin import (
     Admin,
     ApiFilter,
@@ -37,7 +51,17 @@ from .admin import (
 )
 
 # Import all public API symbols
-from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
+from .agents import (
+    Agents,
+    CreateResponseRequest,
+    DeleteResponseRequest,
+    ListResponseInputItemsRequest,
+    ListResponsesRequest,
+    ResponseGuardrail,
+    ResponseGuardrailSpec,
+    ResponseItemInclude,
+    RetrieveResponseRequest,
+)
 from .batches import (
     Batches,
     BatchObject,
@@ -70,6 +94,8 @@ from .common.content_types import (
 )
 from .common.errors import (
     ConflictError,
+    ConnectorNotFoundError,
+    ConnectorToolNotFoundError,
     DatasetNotFoundError,
     InvalidConversationIdError,
     ModelNotFoundError,
@@ -118,7 +144,12 @@ from .conversations import (
     RetrieveItemRequest,
     UpdateConversationRequest,
 )
-from .datasetio import DatasetIO, DatasetStore
+from .datasetio import (
+    AppendRowsRequest,
+    DatasetIO,
+    DatasetStore,
+    IterRowsRequest,
+)
 from .datasets import (
     CommonDatasetFields,
     Dataset,
@@ -151,7 +182,21 @@ from .datatypes import (
     ToolGroupsProtocolPrivate,
     VectorStoresProtocolPrivate,
 )
-from .eval import BenchmarkConfig, Eval, EvalCandidate, EvaluateResponse, ModelCandidate
+from .eval import (
+    BenchmarkConfig,
+    BenchmarkIdRequest,
+    Eval,
+    EvalCandidate,
+    EvaluateResponse,
+    EvaluateRowsBodyRequest,
+    EvaluateRowsRequest,
+    JobCancelRequest,
+    JobResultRequest,
+    JobStatusRequest,
+    ModelCandidate,
+    RunEvalBodyRequest,
+    RunEvalRequest,
+)
 from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
     DeleteFileRequest,
@@ -350,6 +395,7 @@ from .openai_responses import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
+    OpenAIResponseReasoning,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
     OpenAIResponseTool,
@@ -361,11 +407,14 @@ from .openai_responses import (
 )
 from .post_training import (
     AlgorithmConfig,
+    CancelTrainingJobRequest,
     DataConfig,
     DatasetFormat,
     DPOAlignmentConfig,
     DPOLossType,
     EfficiencyConfig,
+    GetTrainingJobArtifactsRequest,
+    GetTrainingJobStatusRequest,
     ListPostTrainingJobsResponse,
     LoraFinetuningConfig,
     OptimizerConfig,
@@ -376,11 +425,25 @@ from .post_training import (
     PostTrainingJobLogStream,
     PostTrainingJobStatusResponse,
     PostTrainingRLHFRequest,
+    PreferenceOptimizeRequest,
     QATFinetuningConfig,
     RLHFAlgorithm,
+    SupervisedFineTuneRequest,
     TrainingConfig,
 )
-from .prompts import ListPromptsResponse, Prompt, Prompts
+from .prompts import (
+    CreatePromptRequest,
+    DeletePromptRequest,
+    GetPromptRequest,
+    ListPromptsResponse,
+    ListPromptVersionsRequest,
+    Prompt,
+    Prompts,
+    SetDefaultVersionBodyRequest,
+    SetDefaultVersionRequest,
+    UpdatePromptBodyRequest,
+    UpdatePromptRequest,
+)
 from .providers import Providers
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
@@ -399,29 +462,19 @@ from .resource import Resource, ResourceType
 from .safety import (
     ModerationObject,
     ModerationObjectResults,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
     ShieldStore,
     ViolationLevel,
 )
-from .schema_utils import (
-    CallableT,
-    ExtraBodyField,
-    SchemaInfo,
-    WebMethod,
-    clear_dynamic_schema_types,
-    get_registered_schema_info,
-    iter_dynamic_schema_types,
-    iter_json_schema_types,
-    iter_registered_schema_types,
-    json_schema_type,
-    register_dynamic_schema_type,
-    register_schema,
-    webmethod,
-)
+
 from .scoring import (
+    ScoreBatchRequest,
     ScoreBatchResponse,
+    ScoreRequest,
     ScoreResponse,
     Scoring,
     ScoringFunctionStore,
@@ -432,21 +485,28 @@ from .scoring_functions import (
     AggregationFunctionType,
     BasicScoringFnParams,
     CommonScoringFnFields,
+    GetScoringFunctionRequest,
+    ListScoringFunctionsRequest,
     ListScoringFunctionsResponse,
     LLMAsJudgeScoringFnParams,
     RegexParserScoringFnParams,
+    RegisterScoringFunctionRequest,
     ScoringFn,
     ScoringFnInput,
     ScoringFnParams,
     ScoringFnParamsType,
     ScoringFunctions,
+    UnregisterScoringFunctionRequest,
 )
 from .shields import (
     CommonShieldFields,
+    GetShieldRequest,
     ListShieldsResponse,
+    RegisterShieldRequest,
     Shield,
     ShieldInput,
     Shields,
+    UnregisterShieldRequest,
 )
 from .tools import (
     ListToolDefsResponse,
@@ -499,9 +559,12 @@ from .version import (
     LLAMA_STACK_API_V1ALPHA,
     LLAMA_STACK_API_V1BETA,
 )
+from . import common  # noqa: F401
+
 
 __all__ = [
     # Submodules
+    "schema_utils",
     "common",
     # Version constants
     "LLAMA_STACK_API_V1",
@@ -510,6 +573,12 @@ __all__ = [
     # API Symbols
     "Agents",
     "AggregationFunctionType",
+    # Agents Request Models
+    "CreateResponseRequest",
+    "DeleteResponseRequest",
+    "ListResponseInputItemsRequest",
+    "ListResponsesRequest",
+    "RetrieveResponseRequest",
     "AlgorithmConfig",
     "AllowedToolsFilter",
     "Api",
@@ -519,6 +588,7 @@ __all__ = [
     "Batches",
     "BatchObject",
     "CancelBatchRequest",
+    "CancelTrainingJobRequest",
     "CreateBatchRequest",
     "ListBatchesRequest",
     "Benchmark",
@@ -543,6 +613,8 @@ __all__ = [
     "CompletionInputType",
     "CompletionRequest",
     "Connector",
+    "ConnectorNotFoundError",
+    "ConnectorToolNotFoundError",
     "ConnectorInput",
     "Connectors",
     "ConnectorType",
@@ -575,6 +647,8 @@ __all__ = [
     "DatasetNotFoundError",
     "DatasetStore",
     "DatasetType",
+    "AppendRowsRequest",
+    "IterRowsRequest",
     "Datasets",
     "DatasetsProtocolPrivate",
     "DefaultRAGQueryGeneratorConfig",
@@ -588,6 +662,14 @@ __all__ = [
     "Eval",
     "EvalCandidate",
     "EvaluateResponse",
+    "EvaluateRowsBodyRequest",
+    "EvaluateRowsRequest",
+    "BenchmarkIdRequest",
+    "JobCancelRequest",
+    "JobResultRequest",
+    "JobStatusRequest",
+    "RunEvalBodyRequest",
+    "RunEvalRequest",
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",
@@ -668,6 +750,8 @@ __all__ = [
     "ModelTypeError",
     "Models",
     "GetModelRequest",
+    "GetTrainingJobArtifactsRequest",
+    "GetTrainingJobStatusRequest",
     "RegisterModelRequest",
     "UnregisterModelRequest",
     "ModelsProtocolPrivate",
@@ -808,6 +892,7 @@ __all__ = [
     "OpenAIResponseOutputMessageMCPListTools",
     "OpenAIResponseOutputMessageWebSearchToolCall",
     "OpenAIResponsePrompt",
+    "OpenAIResponseReasoning",
     "OpenAIResponseText",
     "OpenAIResponseTextFormat",
     "OpenAIResponseTool",
@@ -833,8 +918,17 @@ __all__ = [
     "PostTrainingJobLogStream",
     "PostTrainingJobStatusResponse",
     "PostTrainingRLHFRequest",
+    "PreferenceOptimizeRequest",
     "Prompt",
     "Prompts",
+    "CreatePromptRequest",
+    "DeletePromptRequest",
+    "GetPromptRequest",
+    "ListPromptVersionsRequest",
+    "SetDefaultVersionBodyRequest",
+    "SetDefaultVersionRequest",
+    "UpdatePromptBodyRequest",
+    "UpdatePromptRequest",
     "ProviderInfo",
     "ProviderSpec",
     "Providers",
@@ -872,12 +966,16 @@ __all__ = [
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",
+    "RunModerationRequest",
+    "RunShieldRequest",
     "RunShieldResponse",
     "Safety",
     "SafetyViolation",
     "SamplingParams",
     "SamplingStrategy",
+    "ScoreBatchRequest",
     "ScoreBatchResponse",
+    "ScoreRequest",
     "ScoreResponse",
     "Scoring",
     "ScoringFn",
@@ -888,6 +986,10 @@ __all__ = [
     "ScoringFunctions",
     "ScoringFunctionsProtocolPrivate",
     "ScoringResult",
+    "GetScoringFunctionRequest",
+    "ListScoringFunctionsRequest",
+    "RegisterScoringFunctionRequest",
+    "UnregisterScoringFunctionRequest",
     "ScoringResultRow",
     "Schema",
     "SchemaInfo",
@@ -898,9 +1000,13 @@ __all__ = [
     "ShieldStore",
     "Shields",
     "ShieldsProtocolPrivate",
+    "GetShieldRequest",
+    "RegisterShieldRequest",
+    "UnregisterShieldRequest",
     "SpecialToolGroup",
     "StrictJsonType",
     "StringType",
+    "SupervisedFineTuneRequest",
     "SystemMessage",
     "SystemMessageBehavior",
     "TextContentItem",

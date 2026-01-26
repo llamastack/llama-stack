@@ -160,7 +160,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Scoring Functions
-      summary: List Scoring Functions
+      summary: List all scoring functions.
       description: List all scoring functions.
       operationId: list_scoring_functions_v1_scoring_functions_get
     post:
@@ -178,10 +178,10 @@ paths:
           description: Default Response
           $ref: '#/components/responses/DefaultError'
         '204':
-          description: Successful Response
+          description: The scoring function was successfully registered.
       tags:
       - Scoring Functions
-      summary: Register Scoring Function
+      summary: Register a scoring function.
       description: Register a scoring function.
       operationId: register_scoring_function_v1_scoring_functions_post
       requestBody:
@@ -201,20 +201,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScoringFn'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Scoring Functions
-      summary: Get Scoring Function
+      summary: Get a scoring function by its ID.
       description: Get a scoring function by its ID.
       operationId: get_scoring_function_v1_scoring_functions__scoring_fn_id__get
       parameters:
@@ -223,26 +223,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: scoring_fn_id'
+          description: The ID of the scoring function to get.
+          title: Scoring Fn Id
+        description: The ID of the scoring function to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The scoring function was successfully unregistered.
       tags:
       - Scoring Functions
-      summary: Unregister Scoring Function
+      summary: Unregister a scoring function.
       description: Unregister a scoring function.
       operationId: unregister_scoring_function_v1_scoring_functions__scoring_fn_id__delete
       parameters:
@@ -251,7 +253,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: scoring_fn_id'
+          description: The ID of the scoring function to unregister.
+          title: Scoring Fn Id
+        description: The ID of the scoring function to unregister.
       deprecated: true
   /v1/shields:
     get:
@@ -276,7 +280,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Shields
-      summary: List Shields
+      summary: List all shields.
       description: List all shields.
       operationId: list_shields_v1_shields_get
     post:
@@ -301,7 +305,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Shields
-      summary: Register Shield
+      summary: Register a shield.
       description: Register a shield.
       operationId: register_shield_v1_shields_post
       requestBody:
@@ -321,20 +325,20 @@ paths:
               schema:
                 $ref: '#/components/schemas/Shield'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Shields
-      summary: Get Shield
+      summary: Get a shield by its identifier.
       description: Get a shield by its identifier.
       operationId: get_shield_v1_shields__identifier__get
       parameters:
@@ -343,26 +347,28 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: identifier'
+          description: The identifier of the shield to get.
+          title: Identifier
+        description: The identifier of the shield to get.
     delete:
       responses:
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
         '204':
-          description: Successful Response
+          description: The shield was successfully unregistered.
       tags:
       - Shields
-      summary: Unregister Shield
+      summary: Unregister a shield.
       description: Unregister a shield.
       operationId: unregister_shield_v1_shields__identifier__delete
       parameters:
@@ -371,7 +377,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: identifier'
+          description: The identifier of the shield to unregister.
+          title: Identifier
+        description: The identifier of the shield to unregister.
       deprecated: true
   /v1/tool-runtime/invoke:
     post:
@@ -1780,6 +1788,17 @@ components:
         user:
           anyOf:
           - type: string
+          - type: 'null'
+        reasoning_effort:
+          anyOf:
+          - type: string
+            enum:
+            - none
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
           - type: 'null'
       additionalProperties: true
       type: object
@@ -3353,45 +3372,53 @@ components:
             type: array
             title: list[string]
           title: string | list[string]
+          description: Input (or inputs) to classify. Can be a single string or an array of strings.
         model:
           anyOf:
           - type: string
           - type: 'null'
+          description: The content moderation model to use. If not specified, the default shield will be used.
       type: object
       required:
       - input
       title: RunModerationRequest
+      description: Request model for running content moderation.
     ModerationObject:
       properties:
         id:
           type: string
           title: Id
+          description: The unique identifier for the moderation request
         model:
           type: string
           title: Model
+          description: The model used to generate the moderation results
         results:
           items:
             $ref: '#/components/schemas/ModerationObjectResults'
           type: array
           title: Results
+          description: A list of moderation result objects
       type: object
       required:
       - id
       - model
       - results
       title: ModerationObject
-      description: A moderation object.
+      description: A moderation object containing the results of content classification.
     ModerationObjectResults:
       properties:
         flagged:
           type: boolean
           title: Flagged
+          description: Whether any of the below categories are flagged
         categories:
           anyOf:
           - additionalProperties:
               type: boolean
             type: object
           - type: 'null'
+          description: A dictionary of the categories, and whether they are flagged or not
         category_applied_input_types:
           anyOf:
           - additionalProperties:
@@ -3400,25 +3427,29 @@ components:
               type: array
             type: object
           - type: 'null'
+          description: A dictionary of the categories along with the input type(s) that the score applies to
         category_scores:
           anyOf:
           - additionalProperties:
               type: number
             type: object
           - type: 'null'
+          description: A dictionary of the categories along with their scores as predicted by model
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          description: A message to convey to the user about the moderation result
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata about the moderation
       type: object
       required:
       - flagged
       title: ModerationObjectResults
-      description: A moderation object.
+      description: A moderation result object containing flagged status and category information.
     Prompt:
       properties:
         prompt:
@@ -3469,48 +3500,69 @@ components:
         prompt:
           type: string
           title: Prompt
+          description: The prompt text content with variable placeholders.
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: List of variable names that can be used in the prompt template.
       type: object
       required:
       - prompt
       title: CreatePromptRequest
+      description: Request model for creating a new prompt.
     UpdatePromptRequest:
+      description: Request model for updating a prompt (combines path and body parameters).
       properties:
-        prompt:
+        prompt_id:
+          description: The identifier of the prompt to update.
+          title: Prompt Id
           type: string
+        prompt:
+          description: The updated prompt text content.
           title: Prompt
+          type: string
         version:
-          type: integer
+          description: The current version of the prompt being updated.
           title: Version
+          type: integer
         variables:
           anyOf:
           - items:
               type: string
             type: array
           - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+          nullable: true
         set_as_default:
-          type: boolean
-          title: Set As Default
           default: true
-      type: object
+          description: Set the new version as the default (default=True).
+          title: Set As Default
+          type: boolean
       required:
+      - prompt_id
       - prompt
       - version
       title: UpdatePromptRequest
-    SetDefaultVersionRequest:
-      properties:
-        version:
-          type: integer
-          title: Version
       type: object
+    SetDefaultVersionRequest:
+      description: Request model for setting the default version of a prompt (combines path and body parameters).
+      properties:
+        prompt_id:
+          description: The identifier of the prompt.
+          title: Prompt Id
+          type: string
+        version:
+          description: The version to set as default.
+          title: Version
+          type: integer
       required:
+      - prompt_id
       - version
       title: SetDefaultVersionRequest
+      type: object
     ProviderInfo:
       properties:
         api:
@@ -3724,6 +3776,10 @@ components:
         created_at:
           type: integer
           title: Created At
+        completed_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
@@ -3877,12 +3933,21 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+        store:
+          type: boolean
+          title: Store
         input:
           items:
             anyOf:
@@ -3928,6 +3993,7 @@ components:
       - model
       - output
       - status
+      - store
       - input
       title: OpenAIResponseObjectWithInput
       description: OpenAI response object extended with input context information.
@@ -4060,34 +4126,29 @@ components:
           type: integer
           title: Total Tokens
         input_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
-            title: OpenAIResponseUsageInputTokensDetails
-          - type: 'null'
-          title: OpenAIResponseUsageInputTokensDetails
+          $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
         output_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
-            title: OpenAIResponseUsageOutputTokensDetails
-          - type: 'null'
-          title: OpenAIResponseUsageOutputTokensDetails
+          $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
       type: object
       required:
       - input_tokens
       - output_tokens
       - total_tokens
+      - input_tokens_details
+      - output_tokens_details
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
     ResponseGuardrailSpec:
-      description: Specification for a guardrail to apply during response generation.
       properties:
         type:
-          title: Type
           type: string
+          title: Type
+      additionalProperties: false
+      type: object
       required:
       - type
       title: ResponseGuardrailSpec
-      type: object
+      description: Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       discriminator:
         mapping:
@@ -4119,9 +4180,14 @@ components:
         server_label:
           type: string
           title: Server Label
+        connector_id:
+          anyOf:
+          - type: string
+          - type: 'null'
         server_url:
-          type: string
-          title: Server Url
+          anyOf:
+          - type: string
+          - type: 'null'
         headers:
           anyOf:
           - additionalProperties: true
@@ -4154,186 +4220,17 @@ components:
       type: object
       required:
       - server_label
-      - server_url
       title: OpenAIResponseInputToolMCP
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
-    CreateOpenaiResponseRequest:
-      properties:
-        input:
-          anyOf:
-          - type: string
-          - items:
-              anyOf:
-              - oneOf:
-                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                  title: OpenAIResponseMessage-Input
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                  title: OpenAIResponseOutputMessageWebSearchToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                  title: OpenAIResponseOutputMessageFileSearchToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                  title: OpenAIResponseOutputMessageFunctionToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                  title: OpenAIResponseOutputMessageMCPCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                  title: OpenAIResponseOutputMessageMCPListTools
-                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                  title: OpenAIResponseMCPApprovalRequest
-                discriminator:
-                  propertyName: type
-                  mapping:
-                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                    message: '#/components/schemas/OpenAIResponseMessage-Input'
-                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseMessage-Input | ... (7 variants)
-              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                title: OpenAIResponseInputFunctionToolCallOutput
-              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                title: OpenAIResponseMCPApprovalResponse
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
-            type: array
-            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
-          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
-        model:
-          type: string
-          title: Model
-        prompt:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponsePrompt'
-            title: OpenAIResponsePrompt
-          - type: 'null'
-          title: OpenAIResponsePrompt
-        instructions:
-          anyOf:
-          - type: string
-          - type: 'null'
-        parallel_tool_calls:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: true
-        previous_response_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        conversation:
-          anyOf:
-          - type: string
-          - type: 'null'
-        store:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: true
-        stream:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: false
-        temperature:
-          anyOf:
-          - type: number
-          - type: 'null'
-        text:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseText'
-            title: OpenAIResponseText
-          - type: 'null'
-          title: OpenAIResponseText
-        tool_choice:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
-            title: OpenAIResponseInputToolChoiceMode
-          - oneOf:
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
-              title: OpenAIResponseInputToolChoiceAllowedTools
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
-              title: OpenAIResponseInputToolChoiceFileSearch
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-              title: OpenAIResponseInputToolChoiceWebSearch
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
-              title: OpenAIResponseInputToolChoiceFunctionTool
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
-              title: OpenAIResponseInputToolChoiceMCPTool
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
-              title: OpenAIResponseInputToolChoiceCustomTool
-            discriminator:
-              propertyName: type
-              mapping:
-                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
-                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
-                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
-                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
-                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
-                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
-          - type: 'null'
-          title: OpenAIResponseInputToolChoiceMode
-        tools:
-          anyOf:
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                title: OpenAIResponseInputToolWebSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                title: OpenAIResponseInputToolFileSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-                title: OpenAIResponseInputToolFunction
-              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
-                title: OpenAIResponseInputToolMCP
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
-                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
-                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
-            type: array
-          - type: 'null'
-        include:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/ResponseItemInclude'
-            type: array
-          - type: 'null'
-        max_infer_iters:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          default: 10
-        max_tool_calls:
-          anyOf:
-          - type: integer
-          - type: 'null'
-        metadata:
-          anyOf:
-          - additionalProperties:
-              type: string
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - input
-      - model
-      title: CreateOpenaiResponseRequest
     OpenAIResponseObject:
       properties:
         created_at:
           type: integer
           title: Created At
+        completed_at:
+          anyOf:
+          - type: integer
+          - type: 'null'
         error:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseError'
@@ -4487,12 +4384,21 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          title: OpenAIResponseReasoning
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
           - type: 'null'
+        store:
+          type: boolean
+          title: Store
       type: object
       required:
       - created_at
@@ -4500,6 +4406,7 @@ components:
       - model
       - output
       - status
+      - store
       title: OpenAIResponseObject
       description: Complete OpenAI response object containing generation results and metadata.
     OpenAIResponseContentPartOutputText:
@@ -5743,7 +5650,9 @@ components:
       properties:
         shield_id:
           type: string
+          minLength: 1
           title: Shield Id
+          description: The identifier of the shield to run
         messages:
           items:
             oneOf:
@@ -5768,16 +5677,13 @@ components:
             title: OpenAIUserMessageParam-Input | ... (5 variants)
           type: array
           title: Messages
-        params:
-          additionalProperties: true
-          type: object
-          title: Params
+          description: The messages to run the shield on
       type: object
       required:
       - shield_id
       - messages
-      - params
       title: RunShieldRequest
+      description: Request model for running a safety shield.
     RunShieldResponse:
       properties:
         violation:
@@ -5785,6 +5691,7 @@ components:
           - $ref: '#/components/schemas/SafetyViolation'
             title: SafetyViolation
           - type: 'null'
+          description: Safety violation detected by the shield, if any
           title: SafetyViolation
       type: object
       title: RunShieldResponse
@@ -5793,14 +5700,17 @@ components:
       properties:
         violation_level:
           $ref: '#/components/schemas/ViolationLevel'
+          description: Severity level of the violation
         user_message:
           anyOf:
           - type: string
           - type: 'null'
+          description: Message to convey to the user about the violation
         metadata:
           additionalProperties: true
           type: object
           title: Metadata
+          description: Additional metadata including specific violation codes
       type: object
       required:
       - violation_level
@@ -6102,10 +6012,12 @@ components:
             $ref: '#/components/schemas/ScoringFn'
           type: array
           title: Data
+          description: List of scoring function objects.
       type: object
       required:
       - data
       title: ListScoringFunctionsResponse
+      description: Response containing a list of scoring function objects.
     ScoreRequest:
       properties:
         input_rows:
@@ -6114,6 +6026,7 @@ components:
             type: object
           type: array
           title: Input Rows
+          description: The rows to score.
         scoring_functions:
           additionalProperties:
             anyOf:
@@ -6135,11 +6048,13 @@ components:
             title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
+          description: The scoring functions to use for the scoring.
       type: object
       required:
       - input_rows
       - scoring_functions
       title: ScoreRequest
+      description: Request model for scoring a list of rows.
     ScoreResponse:
       properties:
         results:
@@ -6147,6 +6062,7 @@ components:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Results
+          description: A map of scoring function name to ScoringResult.
       type: object
       required:
       - results
@@ -6160,10 +6076,12 @@ components:
             type: object
           type: array
           title: Score Rows
+          description: The scoring result for each row. Each row is a map of column name to value.
         aggregated_results:
           additionalProperties: true
           type: object
           title: Aggregated Results
+          description: Map of metric name to aggregated value
       type: object
       required:
       - score_rows
@@ -6175,6 +6093,7 @@ components:
         dataset_id:
           type: string
           title: Dataset Id
+          description: The ID of the dataset to score.
         scoring_functions:
           additionalProperties:
             anyOf:
@@ -6196,26 +6115,31 @@ components:
             title: AdditionalpropertiesUnion
           type: object
           title: Scoring Functions
+          description: The scoring functions to use for the scoring.
         save_results_dataset:
           type: boolean
           title: Save Results Dataset
+          description: Whether to save the results to a dataset.
           default: false
       type: object
       required:
       - dataset_id
       - scoring_functions
       title: ScoreBatchRequest
+      description: Request model for scoring a batch of rows from a dataset.
     ScoreBatchResponse:
       properties:
         dataset_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: (Optional) The identifier of the dataset that was scored
         results:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Results
+          description: A map of scoring function name to ScoringResult
       type: object
       required:
       - results
@@ -6259,10 +6183,12 @@ components:
             $ref: '#/components/schemas/Shield'
           type: array
           title: Data
+          description: List of shield objects
       type: object
       required:
       - data
       title: ListShieldsResponse
+      description: Response containing a list of all shields.
     InvokeToolRequest:
       properties:
         tool_name:
@@ -7360,16 +7286,23 @@ components:
       description: Version information for the service.
     AppendRowsRequest:
       properties:
+        dataset_id:
+          type: string
+          title: Dataset Id
+          description: The ID of the dataset to append the rows to.
         rows:
           items:
             additionalProperties: true
             type: object
           type: array
           title: Rows
+          description: The rows to append to the dataset.
       type: object
       required:
+      - dataset_id
       - rows
       title: AppendRowsRequest
+      description: Request model for appending rows to a dataset.
     PaginatedResponse:
       properties:
         data:
@@ -7552,6 +7485,7 @@ components:
       properties:
         eval_candidate:
           $ref: '#/components/schemas/ModelCandidate'
+          description: The candidate to evaluate
         scoring_params:
           additionalProperties:
             oneOf:
@@ -7574,6 +7508,7 @@ components:
         num_examples:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated
       type: object
@@ -7600,14 +7535,18 @@ components:
           default: model
         model:
           type: string
+          minLength: 1
           title: Model
+          description: The model ID to evaluate
         sampling_params:
           $ref: '#/components/schemas/SamplingParams'
+          description: The sampling parameters for the model
         system_message:
           anyOf:
           - $ref: '#/components/schemas/SystemMessage'
             title: SystemMessage
           - type: 'null'
+          description: The system message providing instructions or context to the model
           title: SystemMessage
       type: object
       required:
@@ -7730,26 +7669,38 @@ components:
       title: TopPSamplingStrategy
       description: Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
     EvaluateRowsRequest:
+      description: Request model for evaluating a list of rows on a benchmark.
       properties:
+        benchmark_id:
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
+          title: Benchmark Id
+          type: string
         input_rows:
+          description: The rows to evaluate
           items:
             additionalProperties: true
             type: object
-          type: array
+          minItems: 1
           title: Input Rows
+          type: array
         scoring_functions:
+          description: The scoring functions to use for the evaluation
           items:
             type: string
-          type: array
+          minItems: 1
           title: Scoring Functions
+          type: array
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
+          description: The configuration for the benchmark
       required:
+      - benchmark_id
       - input_rows
       - scoring_functions
       - benchmark_config
       title: EvaluateRowsRequest
+      type: object
     EvaluateResponse:
       properties:
         generations:
@@ -7758,11 +7709,13 @@ components:
             type: object
           type: array
           title: Generations
+          description: The generations from the evaluation
         scores:
           additionalProperties:
             $ref: '#/components/schemas/ScoringResult'
           type: object
           title: Scores
+          description: The scores from the evaluation. Each key in the dict is a scoring function name
       type: object
       required:
       - generations
@@ -7770,13 +7723,21 @@ components:
       title: EvaluateResponse
       description: The response from an evaluation.
     RunEvalRequest:
+      description: Request model for running an evaluation on a benchmark.
       properties:
+        benchmark_id:
+          description: The ID of the benchmark to run the evaluation on
+          minLength: 1
+          title: Benchmark Id
+          type: string
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
-      type: object
+          description: The configuration for the benchmark
       required:
+      - benchmark_id
       - benchmark_config
       title: RunEvalRequest
+      type: object
     Job:
       properties:
         job_id:
@@ -7921,14 +7882,16 @@ components:
       title: PostTrainingMetric
       description: Training metrics captured during post-training jobs.
     CancelTrainingJobRequest:
+      description: Request to cancel a training job.
       properties:
         job_uuid:
-          type: string
+          description: The UUID of the job to cancel.
           title: Job Uuid
-      type: object
+          type: string
       required:
       - job_uuid
       title: CancelTrainingJobRequest
+      type: object
     PostTrainingJobStatusResponse:
       properties:
         job_uuid:
@@ -8146,21 +8109,27 @@ components:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job to create.
         finetuned_model:
           type: string
           title: Finetuned Model
+          description: The model to fine-tune.
         algorithm_config:
           $ref: '#/components/schemas/DPOAlignmentConfig'
+          description: The algorithm configuration.
         training_config:
           $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration.
         hyperparam_search_config:
           additionalProperties: true
           type: object
           title: Hyperparam Search Config
+          description: The hyperparam search configuration.
         logger_config:
           additionalProperties: true
           type: object
           title: Logger Config
+          description: The logger configuration.
       type: object
       required:
       - job_uuid
@@ -8170,6 +8139,7 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PreferenceOptimizeRequest
+      description: Request to run preference optimization of a model.
     PostTrainingJob:
       properties:
         job_uuid:
@@ -8258,25 +8228,30 @@ components:
         job_uuid:
           type: string
           title: Job Uuid
+          description: The UUID of the job to create.
         training_config:
           $ref: '#/components/schemas/TrainingConfig'
+          description: The training configuration.
         hyperparam_search_config:
           additionalProperties: true
           type: object
           title: Hyperparam Search Config
+          description: The hyperparam search configuration.
         logger_config:
           additionalProperties: true
           type: object
           title: Logger Config
+          description: The logger configuration.
         model:
           anyOf:
           - type: string
           - type: 'null'
-          description: Model descriptor for training if not in provider config`
+          description: Model descriptor for training if not in provider config
         checkpoint_dir:
           anyOf:
           - type: string
           - type: 'null'
+          description: The directory to save checkpoint(s) to.
         algorithm_config:
           anyOf:
           - oneOf:
@@ -8292,6 +8267,7 @@ components:
             title: LoraFinetuningConfig | QATFinetuningConfig
           - type: 'null'
           title: Algorithm Config
+          description: The algorithm configuration.
       type: object
       required:
       - job_uuid
@@ -8299,6 +8275,7 @@ components:
       - hyperparam_search_config
       - logger_config
       title: SupervisedFineTuneRequest
+      description: Request to run supervised fine-tuning of a model.
     RegisterModelRequest:
       properties:
         model_id:
@@ -8371,11 +8348,13 @@ components:
         scoring_fn_id:
           type: string
           title: Scoring Fn Id
+          description: The ID of the scoring function to register.
         description:
           type: string
           title: Description
+          description: The description of the scoring function.
         return_type:
-          anyOf:
+          oneOf:
           - $ref: '#/components/schemas/StringType'
             title: StringType
           - $ref: '#/components/schemas/NumberType'
@@ -8395,14 +8374,29 @@ components:
           - $ref: '#/components/schemas/CompletionInputType'
             title: CompletionInputType
           title: StringType | ... (9 variants)
+          description: The return type of the scoring function.
+          discriminator:
+            propertyName: type
+            mapping:
+              array: '#/components/schemas/ArrayType'
+              boolean: '#/components/schemas/BooleanType'
+              chat_completion_input: '#/components/schemas/ChatCompletionInputType'
+              completion_input: '#/components/schemas/CompletionInputType'
+              json: '#/components/schemas/JsonType'
+              number: '#/components/schemas/NumberType'
+              object: '#/components/schemas/ObjectType'
+              string: '#/components/schemas/StringType'
+              union: '#/components/schemas/UnionType'
         provider_scoring_fn_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the provider scoring function to use for the scoring function.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the provider to use for the scoring function.
         params:
           anyOf:
           - oneOf:
@@ -8421,34 +8415,41 @@ components:
             title: LLMAsJudgeScoringFnParams | RegexParserScoringFnParams | BasicScoringFnParams
           - type: 'null'
           title: Params
+          description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval.
       type: object
       required:
       - scoring_fn_id
       - description
       - return_type
       title: RegisterScoringFunctionRequest
+      description: Request model for registering a scoring function.
     RegisterShieldRequest:
       properties:
         shield_id:
           type: string
           title: Shield Id
+          description: The identifier of the shield to register.
         provider_shield_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the shield in the provider.
         provider_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: The identifier of the provider.
         params:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The parameters of the shield.
       type: object
       required:
       - shield_id
       title: RegisterShieldRequest
+      description: Request model for registering a shield.
     RegisterToolGroupRequest:
       properties:
         toolgroup_id:
@@ -8674,24 +8675,6 @@ components:
       title: Body_upload_file_v1_files_post
     Connector:
       properties:
-        identifier:
-          type: string
-          title: Identifier
-          description: Unique identifier for this resource in llama stack
-        provider_resource_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Unique identifier for this resource in the provider
-        provider_id:
-          type: string
-          title: Provider Id
-          description: ID of the provider that owns this resource
-        type:
-          type: string
-          const: connector
-          title: Type
-          default: connector
         connector_type:
           $ref: '#/components/schemas/ConnectorType'
           default: mcp
@@ -8718,14 +8701,17 @@ components:
           - type: string
           - type: 'null'
           description: Description of the server
+        server_version:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Version of the server
       type: object
       required:
-      - identifier
-      - provider_id
       - connector_id
       - url
       title: Connector
-      description: A connector resource representing a connector registered in Llama Stack.
+      description: A connector registered in Llama Stack.
     ConnectorType:
       type: string
       enum:
@@ -8744,6 +8730,218 @@ components:
       - reasoning.encrypted_content
       title: ConversationItemInclude
       description: Specify additional output data to include in the model response.
+    CreateResponseRequest:
+      properties:
+        input:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - oneOf:
+                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                  title: OpenAIResponseMessage-Input
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                  title: OpenAIResponseOutputMessageWebSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  title: OpenAIResponseOutputMessageFileSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  title: OpenAIResponseOutputMessageFunctionToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  title: OpenAIResponseOutputMessageMCPCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  title: OpenAIResponseOutputMessageMCPListTools
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  title: OpenAIResponseMCPApprovalRequest
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                title: OpenAIResponseMessage-Input | ... (7 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                title: OpenAIResponseInputFunctionToolCallOutput
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                title: OpenAIResponseMCPApprovalResponse
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                title: OpenAIResponseMessage-Input
+              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
+            type: array
+            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          description: Input message(s) to create the response.
+        model:
+          type: string
+          title: Model
+          description: The underlying LLM used for completions.
+        prompt:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponsePrompt'
+            title: OpenAIResponsePrompt
+          - type: 'null'
+          description: Prompt object with ID, version, and variables.
+          title: OpenAIResponsePrompt
+        instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Instructions to guide the model's behavior.
+        parallel_tool_calls:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to enable parallel tool calls.
+          default: true
+        previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional ID of a previous response to continue from.
+        conversation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional ID of a conversation to add the response to.
+        store:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to store the response in the database.
+          default: true
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to stream the response.
+          default: false
+        temperature:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: 0.0
+          - type: 'null'
+          description: Sampling temperature.
+        text:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseText'
+            title: OpenAIResponseText
+          - type: 'null'
+          description: Configuration for text response generation.
+          title: OpenAIResponseText
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
+          description: How the model should select which tool to call (if any).
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                title: OpenAIResponseInputToolWebSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                title: OpenAIResponseInputToolFileSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+                title: OpenAIResponseInputToolFunction
+              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+                title: OpenAIResponseInputToolMCP
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+            type: array
+          - type: 'null'
+          description: List of tools available to the model.
+        include:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ResponseItemInclude'
+            type: array
+          - type: 'null'
+          description: Additional fields to include in the response.
+        max_infer_iters:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Maximum number of inference iterations.
+          default: 10
+        guardrails:
+          anyOf:
+          - items:
+              anyOf:
+              - type: string
+              - $ref: '#/components/schemas/ResponseGuardrailSpec'
+                title: ResponseGuardrailSpec
+              title: string | ResponseGuardrailSpec
+            type: array
+          - type: 'null'
+          description: List of guardrails to apply during response generation.
+        max_tool_calls:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Max number of total calls to built-in tools that can be processed in a response.
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          description: Configuration for reasoning effort in responses.
+          title: OpenAIResponseReasoning
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          description: Dictionary of metadata key-value pairs to attach to the response.
+      additionalProperties: false
+      type: object
+      required:
+      - input
+      - model
+      title: CreateResponseRequest
+      description: Request model for creating a response.
     DatasetPurpose:
       type: string
       enum:
@@ -8893,6 +9091,33 @@ components:
       additionalProperties: true
       type: object
       title: Errors
+    EvaluateRowsBodyRequest:
+      properties:
+        input_rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          minItems: 1
+          title: Input Rows
+          description: The rows to evaluate
+        scoring_functions:
+          items:
+            type: string
+          type: array
+          minItems: 1
+          title: Scoring Functions
+          description: The scoring functions to use for the evaluation
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark
+      type: object
+      required:
+      - input_rows
+      - scoring_functions
+      - benchmark_config
+      title: EvaluateRowsBodyRequest
+      description: Request body model for evaluating rows (without path parameter).
     HealthStatus:
       type: string
       enum:
@@ -9420,6 +9645,25 @@ components:
       - text
       title: OpenAIResponseOutputMessageFileSearchToolCallResults
       description: Search results returned by the file search operation.
+    OpenAIResponseReasoning:
+      properties:
+        effort:
+          anyOf:
+          - type: string
+            enum:
+            - none
+            - minimal
+            - low
+            - medium
+            - high
+            - xhigh
+          - type: 'null'
+      type: object
+      title: OpenAIResponseReasoning
+      description: |-
+        Configuration for reasoning effort in OpenAI responses.
+
+        Controls how much reasoning the model performs before generating a response.
     OpenAIResponseTextFormat:
       properties:
         type:
@@ -9453,19 +9697,21 @@ components:
     OpenAIResponseUsageInputTokensDetails:
       properties:
         cached_tokens:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          title: Cached Tokens
       type: object
+      required:
+      - cached_tokens
       title: OpenAIResponseUsageInputTokensDetails
       description: Token details for input tokens in OpenAI response usage.
     OpenAIResponseUsageOutputTokensDetails:
       properties:
         reasoning_tokens:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          title: Reasoning Tokens
       type: object
+      required:
+      - reasoning_tokens
       title: OpenAIResponseUsageOutputTokensDetails
       description: Token details for output tokens in OpenAI response usage.
     OpenAIUserMessageParam-Input:
@@ -9564,6 +9810,16 @@ components:
       - reasoning.encrypted_content
       title: ResponseItemInclude
       description: Specify additional output data to include in the model response.
+    RunEvalBodyRequest:
+      properties:
+        benchmark_config:
+          $ref: '#/components/schemas/BenchmarkConfig'
+          description: The configuration for the benchmark
+      type: object
+      required:
+      - benchmark_config
+      title: RunEvalBodyRequest
+      description: Request body model for running an evaluation (without path parameter).
     SearchRankingOptions:
       properties:
         ranker:
@@ -9578,6 +9834,45 @@ components:
       type: object
       title: SearchRankingOptions
       description: Options for ranking and filtering search results.
+    SetDefaultVersionBodyRequest:
+      properties:
+        version:
+          type: integer
+          title: Version
+          description: The version to set as default.
+      type: object
+      required:
+      - version
+      title: SetDefaultVersionBodyRequest
+      description: Request body model for setting the default version of a prompt.
+    UpdatePromptBodyRequest:
+      properties:
+        prompt:
+          type: string
+          title: Prompt
+          description: The updated prompt text content.
+        version:
+          type: integer
+          title: Version
+          description: The current version of the prompt being updated.
+        variables:
+          anyOf:
+          - items:
+              type: string
+            type: array
+          - type: 'null'
+          description: Updated list of variable names that can be used in the prompt template.
+        set_as_default:
+          type: boolean
+          title: Set As Default
+          description: Set the new version as the default (default=True).
+          default: true
+      type: object
+      required:
+      - prompt
+      - version
+      title: UpdatePromptBodyRequest
+      description: Request body model for updating a prompt.
     _URLOrData:
       properties:
         url:
@@ -9887,6 +10182,55 @@ components:
           title: Type
           type: string
       title: DialogType
+      type: object
+    ListScoringFunctionsRequest:
+      description: Request model for listing scoring functions.
+      properties: {}
+      title: ListScoringFunctionsRequest
+      type: object
+    GetScoringFunctionRequest:
+      description: Request model for getting a scoring function.
+      properties:
+        scoring_fn_id:
+          description: The ID of the scoring function to get.
+          title: Scoring Fn Id
+          type: string
+      required:
+      - scoring_fn_id
+      title: GetScoringFunctionRequest
+      type: object
+    UnregisterScoringFunctionRequest:
+      description: Request model for unregistering a scoring function.
+      properties:
+        scoring_fn_id:
+          description: The ID of the scoring function to unregister.
+          title: Scoring Fn Id
+          type: string
+      required:
+      - scoring_fn_id
+      title: UnregisterScoringFunctionRequest
+      type: object
+    GetShieldRequest:
+      description: Request model for getting a shield by identifier.
+      properties:
+        identifier:
+          description: The identifier of the shield to get.
+          title: Identifier
+          type: string
+      required:
+      - identifier
+      title: GetShieldRequest
+      type: object
+    UnregisterShieldRequest:
+      description: Request model for unregistering a shield.
+      properties:
+        identifier:
+          description: The identifier of the shield to unregister.
+          title: Identifier
+          type: string
+      required:
+      - identifier
+      title: UnregisterShieldRequest
       type: object
     TextDelta:
       description: A text content delta for streaming responses.
@@ -10704,11 +11048,6 @@ components:
           - type: 'null'
           description: Label of the server
           nullable: true
-        type:
-          const: connector
-          default: connector
-          title: Type
-          type: string
       required:
       - connector_id
       - url
@@ -10892,6 +11231,95 @@ components:
       - item_id
       title: DeleteItemRequest
       type: object
+    IterRowsRequest:
+      description: Request model for iterating over rows in a dataset.
+      properties:
+        dataset_id:
+          description: The ID of the dataset to get the rows from.
+          title: Dataset Id
+          type: string
+        start_index:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Index into dataset for the first row to get. Get all rows if None.
+          nullable: true
+        limit:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The number of rows to get.
+          nullable: true
+      required:
+      - dataset_id
+      title: IterRowsRequest
+      type: object
+    BenchmarkIdRequest:
+      description: Request model containing benchmark_id path parameter.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark
+          minLength: 1
+          title: Benchmark Id
+          type: string
+      required:
+      - benchmark_id
+      title: BenchmarkIdRequest
+      type: object
+    JobStatusRequest:
+      description: Request model for getting the status of a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to get the status of
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobStatusRequest
+      type: object
+    JobCancelRequest:
+      description: Request model for canceling a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to cancel
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobCancelRequest
+      type: object
+    JobResultRequest:
+      description: Request model for getting the result of a job.
+      properties:
+        benchmark_id:
+          description: The ID of the benchmark associated with the job
+          minLength: 1
+          title: Benchmark Id
+          type: string
+        job_id:
+          description: The ID of the job to get the result of
+          minLength: 1
+          title: Job Id
+          type: string
+      required:
+      - benchmark_id
+      - job_id
+      title: JobResultRequest
+      type: object
     ProcessFileResponse:
       description: |-
         Response model for file processing operation.
@@ -11063,6 +11491,67 @@ components:
       - hyperparam_search_config
       - logger_config
       title: PostTrainingRLHFRequest
+      type: object
+    GetTrainingJobStatusRequest:
+      description: Request to get the status of a training job.
+      properties:
+        job_uuid:
+          description: The UUID of the job to get the status of.
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: GetTrainingJobStatusRequest
+      type: object
+    GetTrainingJobArtifactsRequest:
+      description: Request to get the artifacts of a training job.
+      properties:
+        job_uuid:
+          description: The UUID of the job to get the artifacts of.
+          title: Job Uuid
+          type: string
+      required:
+      - job_uuid
+      title: GetTrainingJobArtifactsRequest
+      type: object
+    ListPromptVersionsRequest:
+      description: Request model for listing all versions of a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to list versions for.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: ListPromptVersionsRequest
+      type: object
+    GetPromptRequest:
+      description: Request model for getting a prompt by ID and optional version.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to get.
+          title: Prompt Id
+          type: string
+        version:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: The version of the prompt to get (defaults to latest).
+          nullable: true
+      required:
+      - prompt_id
+      title: GetPromptRequest
+      type: object
+    DeletePromptRequest:
+      description: Request model for deleting a prompt.
+      properties:
+        prompt_id:
+          description: The identifier of the prompt to delete.
+          title: Prompt Id
+          type: string
+      required:
+      - prompt_id
+      title: DeletePromptRequest
       type: object
   responses:
     BadRequest400:

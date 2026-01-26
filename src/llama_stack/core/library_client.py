@@ -161,6 +161,45 @@ class LlamaStackAsLibraryClient(LlamaStackClient):
         """
         pass
 
+    def shutdown(self) -> None:
+        """Shutdown the client and release all resources.
+
+        This method should be called when you're done using the client to properly
+        close database connections and release other resources. Failure to call this
+        method may result in the program hanging on exit while waiting for background
+        threads to complete.
+
+        This method is idempotent and can be called multiple times safely.
+
+        Example:
+            client = LlamaStackAsLibraryClient("starter")
+            # ... use the client ...
+            client.shutdown()
+        """
+        loop = self.loop
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(self.async_client.shutdown())
+        finally:
+            loop.close()
+            asyncio.set_event_loop(None)
+
+    def __enter__(self) -> "LlamaStackAsLibraryClient":
+        """Enter the context manager.
+
+        The client is already initialized in __init__, so this just returns self.
+
+        Example:
+            with LlamaStackAsLibraryClient("starter") as client:
+                response = client.models.list()
+            # Client is automatically shut down here
+        """
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the context manager and shut down the client."""
+        self.shutdown()
+
     def request(self, *args, **kwargs):
         loop = self.loop
         asyncio.set_event_loop(loop)
@@ -224,6 +263,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         self.custom_provider_registry = custom_provider_registry
         self.provider_data = provider_data
         self.route_impls: RouteImpls | None = None  # Initialize to None to prevent AttributeError
+        self.stack: Stack | None = None
 
     def _remove_root_logger_handlers(self):
         """
@@ -246,9 +286,9 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         try:
             self.route_impls = None
 
-            stack = Stack(self.config, self.custom_provider_registry)
-            await stack.initialize()
-            self.impls = stack.impls
+            self.stack = Stack(self.config, self.custom_provider_registry)
+            await self.stack.initialize()
+            self.impls = self.stack.impls
         except ModuleNotFoundError as _e:
             cprint(_e.msg, color="red", file=sys.stderr)
             cprint(
@@ -282,6 +322,43 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
 
         self.route_impls = initialize_route_impls(self.impls)
         return True
+
+    async def shutdown(self) -> None:
+        """Shutdown the client and release all resources.
+
+        This method should be called when you're done using the client to properly
+        close database connections and release other resources. Failure to call this
+        method may result in the program hanging on exit while waiting for background
+        threads to complete.
+
+        This method is idempotent and can be called multiple times safely.
+
+        Example:
+            client = AsyncLlamaStackAsLibraryClient("starter")
+            await client.initialize()
+            # ... use the client ...
+            await client.shutdown()
+        """
+        if self.stack:
+            await self.stack.shutdown()
+            self.stack = None
+
+    async def __aenter__(self) -> "AsyncLlamaStackAsLibraryClient":
+        """Enter the async context manager.
+
+        Initializes the client and returns it.
+
+        Example:
+            async with AsyncLlamaStackAsLibraryClient("starter") as client:
+                response = await client.models.list()
+            # Client is automatically shut down here
+        """
+        await self.initialize()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        """Exit the async context manager and shut down the client."""
+        await self.shutdown()
 
     async def request(
         self,
@@ -427,11 +504,30 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         # Prepare body for the function call (handles both Pydantic and traditional params)
         body = self._convert_body(func, body)
 
+        result = await func(**body)
+        content_type = "application/json"
+        if isinstance(result, FastAPIResponse):
+            content_type = result.media_type or content_type
+
         async def gen():
-            async for chunk in await func(**body):
-                data = json.dumps(convert_pydantic_to_json_value(chunk))
-                sse_event = f"data: {data}\n\n"
-                yield sse_event.encode("utf-8")
+            # Handle FastAPI StreamingResponse (returned by router endpoints)
+            # Extract the async generator from the StreamingResponse body
+            from fastapi.responses import StreamingResponse
+
+            if isinstance(result, StreamingResponse):
+                # StreamingResponse.body_iterator is the async generator
+                async for chunk in result.body_iterator:
+                    # Chunk is already SSE-formatted string from sse_generator, encode to bytes
+                    if isinstance(chunk, str):
+                        yield chunk.encode("utf-8")
+                    else:
+                        yield chunk
+            else:
+                # Direct async generator from implementation
+                async for chunk in result:
+                    data = json.dumps(convert_pydantic_to_json_value(chunk))
+                    sse_event = f"data: {data}\n\n"
+                    yield sse_event.encode("utf-8")
 
         wrapped_gen = preserve_contexts_async_generator(gen(), [PROVIDER_DATA_VAR])
 
@@ -439,7 +535,7 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
             status_code=httpx.codes.OK,
             content=wrapped_gen,
             headers={
-                "Content-Type": "application/json",
+                "Content-Type": content_type,
             },
             request=httpx.Request(
                 method=options.method,

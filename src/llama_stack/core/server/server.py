@@ -48,7 +48,7 @@ from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack.core.server.routes import get_all_api_routes
 from llama_stack.core.stack import (
     Stack,
-    cast_image_name_to_string,
+    cast_distro_name_to_string,
     replace_env_vars,
 )
 from llama_stack.core.utils.config import redact_sensitive_fields
@@ -57,7 +57,7 @@ from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 
-from .auth import AuthenticationMiddleware
+from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
 from .quota import QuotaMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -396,7 +396,7 @@ def create_app() -> StackApp:
         logger = get_logger(name=__name__, category="core::server", config=logger_config)
 
         config = replace_env_vars(config_contents)
-        config = StackConfig(**cast_image_name_to_string(config))
+        config = StackConfig(**cast_distro_name_to_string(config))
 
     _log_run_config(run_config=config)
 
@@ -416,8 +416,19 @@ def create_app() -> StackApp:
     impls = app.stack.impls
 
     if config.server.auth:
-        logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
-        app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
+        # Add route authorization middleware if route_policy is configured
+        # This can work independently of authentication
+        # NOTE: Add this FIRST because middleware wraps in reverse order (last added runs first)
+        # We want: Request → Auth → RouteAuth → App
+        if config.server.auth.route_policy:
+            logger.info(f"Enabling route-level authorization with {len(config.server.auth.route_policy)} rules")
+            app.add_middleware(RouteAuthorizationMiddleware, route_policy=config.server.auth.route_policy)
+
+        # Add authentication middleware only if provider is configured
+        # This runs FIRST in the middleware chain (last added = first to run)
+        if config.server.auth.provider_config:
+            logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
+            app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
     else:
         if config.server.quota:
             quota = config.server.quota
@@ -474,6 +485,7 @@ def create_app() -> StackApp:
     apis_to_serve.add("providers")
     apis_to_serve.add("prompts")
     apis_to_serve.add("conversations")
+    apis_to_serve.add("connectors")
 
     for api_str in apis_to_serve:
         api = Api(api_str)

@@ -10,6 +10,7 @@ from typing import Any
 import psycopg2
 from numpy.typing import NDArray
 from psycopg2 import sql
+from psycopg2.extensions import cursor
 from psycopg2.extras import Json, execute_values
 from pydantic import BaseModel, TypeAdapter
 
@@ -18,7 +19,11 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
-from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator, sanitize_collection_name
+from llama_stack.providers.utils.vector_io.vector_utils import (
+    WeightedInMemoryAggregator,
+    load_embedded_chunk_with_backward_compat,
+    sanitize_collection_name,
+)
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
@@ -50,6 +55,17 @@ def check_extension_version(cur):
     return result[0] if result else None
 
 
+def create_vector_extension(cur: cursor) -> None:
+    try:
+        log.info("Vector extension not found, creating...")
+        cur.execute("CREATE EXTENSION vector;")
+        log.info("Vector extension created successfully")
+        log.info(f"Vector extension version: {check_extension_version(cur)}")
+
+    except psycopg2.Error as e:
+        raise RuntimeError(f"Failed to create vector extension for PGVector: {e}") from e
+
+
 def upsert_models(conn, keys_models: list[tuple[str, BaseModel]]):
     with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         query = sql.SQL(
@@ -65,6 +81,26 @@ def upsert_models(conn, keys_models: list[tuple[str, BaseModel]]):
         execute_values(cur, query, values, template="(%s, %s)")
 
 
+def remove_vector_store_metadata(conn: psycopg2.extensions.connection, vector_store_id: str) -> None:
+    """
+    Performs removal of vector store metadata from PGVector metadata_store table when vector store is unregistered
+
+    Args:
+        conn: active PostgreSQL connection
+        vector_store_id: identifier of VectorStore resource
+    """
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM metadata_store WHERE key = %s", (vector_store_id,))
+            if cur.rowcount > 0:
+                log.info(f"Removed metadata for vector store '{vector_store_id}' from PGVector metadata_store table.")
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Error removing metadata from PGVector metadata_store for vector_store: {vector_store_id}"
+        ) from e
+
+
 def load_models(cur, cls):
     cur.execute("SELECT key, data FROM metadata_store")
     rows = cur.fetchall()
@@ -73,14 +109,28 @@ def load_models(cur, cls):
 
 class PGVectorIndex(EmbeddingIndex):
     # reference: https://github.com/pgvector/pgvector?tab=readme-ov-file#querying
+    # Llama Stack supports only search functions that are applied for embeddings with vector type
     PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION: dict[str, str] = {
         "L2": "<->",
         "L1": "<+>",
         "COSINE": "<=>",
         "INNER_PRODUCT": "<#>",
-        "HAMMING": "<~>",
-        "JACCARD": "<%>",
     }
+
+    # reference: https://github.com/pgvector/pgvector?tab=readme-ov-file#hnsw
+    # Llama Stack supports only index operator classes that are applied for embeddings with vector type
+    PGVECTOR_DISTANCE_METRIC_TO_INDEX_OPERATOR_CLASS: dict[str, str] = {
+        "L2": "vector_l2_ops",
+        "L1": "vector_l1_ops",
+        "COSINE": "vector_cosine_ops",
+        "INNER_PRODUCT": "vector_ip_ops",
+    }
+
+    # pgvector's default HNSW parameter: maximum number of edges each vertex has to its neighboring vertices in the graph (defaults to 16)
+    HNSW_M = 16
+
+    # pgvector's default HNSW parameter: size of the dynamic candidate list used for graph construction (defaults to 64)
+    HNSW_EF_CONSTRUCTION = 64
 
     def __init__(
         self,
@@ -119,6 +169,16 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
 
+                # Create HNSW (Hierarchical Navigable Small Worlds) index on embedding column to allow efficient and performant vector search in pgvector
+                # HNSW finds the approximate nearest neighbors by only calculating distance metric for vectors it visits during graph traversal instead of processing all vectors
+                index_operator_class = self.get_pgvector_index_operator_class()
+                cur.execute(
+                    f"""
+                    CREATE INDEX IF NOT EXISTS {self.table_name}_hnsw_idx
+                    ON {self.table_name} USING hnsw(embedding {index_operator_class}) WITH (m = {self.HNSW_M}, ef_construction = {self.HNSW_EF_CONSTRUCTION});
+                """
+                )
+
                 # Create GIN index for full-text search performance
                 cur.execute(
                     f"""
@@ -130,19 +190,18 @@ class PGVectorIndex(EmbeddingIndex):
             log.exception(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}")
             raise RuntimeError(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}") from e
 
-    async def add_chunks(self, chunks: list[EmbeddedChunk], embeddings: NDArray):
-        assert len(chunks) == len(embeddings), (
-            f"Chunk length {len(chunks)} does not match embedding length {len(embeddings)}"
-        )
+    async def add_chunks(self, chunks: list[EmbeddedChunk]):
+        if not chunks:
+            return
 
         values = []
-        for i, chunk in enumerate(chunks):
+        for chunk in chunks:
             content_text = interleaved_content_as_str(chunk.content)
             values.append(
                 (
                     f"{chunk.chunk_id}",
                     Json(chunk.model_dump()),
-                    embeddings[i].tolist(),
+                    chunk.embedding,  # Already a list[float]
                     content_text,
                     content_text,  # Pass content_text twice - once for content_text column, once for to_tsvector function. Eg. to_tsvector(content_text) = tokenized_content
                 )
@@ -194,7 +253,7 @@ class PGVectorIndex(EmbeddingIndex):
                 score = 1.0 / float(dist) if dist != 0 else float("inf")
                 if score < score_threshold:
                     continue
-                chunks.append(EmbeddedChunk(**doc))
+                chunks.append(load_embedded_chunk_with_backward_compat(doc))
                 scores.append(score)
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
@@ -230,7 +289,7 @@ class PGVectorIndex(EmbeddingIndex):
             for doc, score in results:
                 if score < score_threshold:
                     continue
-                chunks.append(EmbeddedChunk(**doc))
+                chunks.append(load_embedded_chunk_with_backward_compat(doc))
                 scores.append(float(score))
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
@@ -306,7 +365,16 @@ class PGVectorIndex(EmbeddingIndex):
         """Remove a chunk from the PostgreSQL table."""
         chunk_ids = [c.chunk_id for c in chunks_for_deletion]
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-            cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s)", (chunk_ids))
+            # Fix: Use proper tuple parameter binding with explicit array cast
+            cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s::text[])", (chunk_ids,))
+
+    def get_pgvector_index_operator_class(self) -> str:
+        """Get the pgvector index operator class for the current distance metric.
+
+        Returns:
+            The operator class name.
+        """
+        return self.PGVECTOR_DISTANCE_METRIC_TO_INDEX_OPERATOR_CLASS[self.distance_metric]
 
     def get_pgvector_search_function(self) -> str:
         return self.PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION[self.distance_metric]
@@ -360,7 +428,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 if version:
                     log.info(f"Vector extension version: {version}")
                 else:
-                    raise RuntimeError("Vector extension is not installed.")
+                    create_vector_extension(cur)
 
                 cur.execute(
                     """
@@ -427,6 +495,9 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         if self.kvstore is None:
             raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
         await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_store_id}")
+
+        # Delete vector store metadata from PGVector metadata_store table
+        remove_vector_store_metadata(self.conn, vector_store_id)
 
     async def insert_chunks(
         self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
