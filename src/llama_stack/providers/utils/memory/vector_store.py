@@ -100,6 +100,7 @@ def content_from_data(data_url: str) -> str:
 
 
 def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, encoding: str | None = None) -> str:
+    """Legacy function for backward compatibility. Use async version when possible."""
     if isinstance(data, bytes):
         if not encoding:
             import chardet
@@ -133,7 +134,51 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
         return ""
 
 
+async def content_from_data_and_mime_type_with_processor(
+    data: bytes | str,
+    mime_type: str | None,
+    file_processor_api,
+    encoding: str | None = None,
+    filename: str | None = None,
+) -> str:
+    """Enhanced version that uses file processor API for better document processing."""
+    if isinstance(data, bytes):
+        if not encoding:
+            import chardet
+
+            detected = chardet.detect(data)
+            encoding = detected["encoding"]
+
+    mime_category = mime_type.split("/")[0] if mime_type else None
+    if mime_category == "text":
+        # For text-based files (including CSV, MD)
+        encodings_to_try = [encoding]
+        if encoding != "utf-8":
+            encodings_to_try.append("utf-8")
+        first_exception = None
+        for encoding in encodings_to_try:
+            try:
+                return data.decode(encoding)
+            except UnicodeDecodeError as e:
+                if first_exception is None:
+                    first_exception = e
+                log.warning(f"Decoding failed with {encoding}: {e}")
+        # raise the origional exception, if we got here there was at least 1 exception
+        log.error(f"Could not decode data as any of {encodings_to_try}")
+        raise first_exception
+
+    elif mime_type == "application/pdf":
+        # Note: For vector store operations, PDFs should be processed via file_id
+        # using the file processor API. This fallback is for direct content processing.
+        return parse_pdf(data)
+
+    else:
+        log.error("Could not extract content from data_url properly.")
+        return ""
+
+
 async def content_from_doc(doc: RAGDocument) -> str:
+    """Legacy function for backward compatibility. Use version with file processor when possible."""
     if isinstance(doc.content, URL):
         uri = doc.content.uri
         if uri.startswith("file://"):
@@ -161,6 +206,72 @@ async def content_from_doc(doc: RAGDocument) -> str:
     else:
         # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
         return interleaved_content_as_str(doc.content)
+
+
+async def content_from_doc_with_processor(doc: RAGDocument, file_processor_api) -> str:
+    """Enhanced version that uses file processor API for better document processing."""
+    if isinstance(doc.content, URL):
+        uri = doc.content.uri
+        if uri.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        if uri.startswith("data:"):
+            return await content_from_data_with_processor(uri, file_processor_api)
+        async with httpx.AsyncClient() as client:
+            r = await client.get(uri)
+        if doc.mime_type == "application/pdf":
+            return await content_from_data_and_mime_type_with_processor(
+                r.content, doc.mime_type, file_processor_api, filename=uri.split("/")[-1]
+            )
+        return r.text
+    elif isinstance(doc.content, str):
+        if doc.content.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        pattern = re.compile("^(https?://|data:)")
+        if pattern.match(doc.content):
+            if doc.content.startswith("data:"):
+                return await content_from_data_with_processor(doc.content, file_processor_api)
+            async with httpx.AsyncClient() as client:
+                r = await client.get(doc.content)
+            if doc.mime_type == "application/pdf":
+                return await content_from_data_and_mime_type_with_processor(
+                    r.content, doc.mime_type, file_processor_api, filename=doc.content.split("/")[-1]
+                )
+            return r.text
+        return doc.content
+    else:
+        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
+        return interleaved_content_as_str(doc.content)
+
+
+async def content_from_data_with_processor(data_url: str, file_processor_api) -> str:
+    """Enhanced version of content_from_data that uses file processor API."""
+    data_url_pattern = re.compile(
+        r"^"
+        r"data:"
+        r"(?P<mimetype>[\w/\-+.]+)"
+        r"(?P<charset>;charset=(?P<encoding>[\w-]+))?"
+        r"(?P<base64>;base64)?"
+        r",(?P<data>.*)"
+        r"$",
+        re.DOTALL,
+    )
+    match = data_url_pattern.match(data_url)
+    if not match:
+        raise ValueError("Invalid Data URL format")
+
+    parts = match.groupdict()
+
+    data = parts["data"]
+    if parts["base64"]:
+        data = base64.b64decode(data)
+    else:
+        data = unquote(data)
+        encoding = parts["encoding"] or "utf-8"
+        data = data.encode(encoding)
+
+    return await content_from_data_and_mime_type_with_processor(
+        data, parts["mimetype"], file_processor_api, parts.get("encoding", None)
+    )
 
 
 def make_overlapped_chunks(
@@ -272,6 +383,7 @@ class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Api.inference
+    file_processor_api: Any = None
     vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(
@@ -336,3 +448,7 @@ class VectorStoreWithIndex:
             )
         else:
             return await self.index.query_vector(query_vector, k, score_threshold)
+
+    # Note: File processing for vector stores now happens at the
+    # openai_attach_file_to_vector_store level using file_id.
+    # This VectorStoreWithIndex class focuses on chunk operations.

@@ -1,0 +1,62 @@
+---
+description: |
+  PyPDF file processor for extracting text content from PDF documents.
+
+  ## Features
+
+  - Simple PDF text extraction using PyPDF library
+  - Support for password-protected PDFs
+  - Configurable chunking strategies
+  - PDF metadata extraction
+  - Text cleaning and normalization
+  - Compatible with vector store chunking and embeddings APIs
+  - Support for both direct file upload and file_id processing (requires Files API)
+
+  ## Use Cases
+
+  - Document processing for RAG applications
+  - Text extraction from PDF documents
+  - Content preparation for vector databases
+sidebar_label: Pypdf
+title: inline::pypdf
+---
+
+# inline::pypdf
+
+## Description
+
+
+PyPDF file processor for extracting text content from PDF documents.
+
+## Features
+
+- Simple PDF text extraction using PyPDF library
+- Support for password-protected PDFs
+- Configurable chunking strategies
+- PDF metadata extraction
+- Text cleaning and normalization
+- Compatible with vector store chunking and embeddings APIs
+- Support for both direct file upload and file_id processing (requires Files API)
+
+## Use Cases
+
+- Document processing for RAG applications
+- Text extraction from PDF documents
+- Content preparation for vector databases
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `default_chunk_size_tokens` | `int` | No | 800 | Default chunk size in tokens when chunking_strategy type is 'auto' |
+| `default_chunk_overlap_tokens` | `int` | No | 400 | Default chunk overlap in tokens when chunking_strategy type is 'auto' |
+| `extract_metadata` | `bool` | No | True | Whether to extract PDF metadata (title, author, etc.) |
+| `password` | `str \| None` | No |  | Password for encrypted PDFs |
+| `clean_text` | `bool` | No | True | Whether to clean extracted text (remove extra whitespace, normalize line breaks) |
+
+## Sample Configuration
+
+```yaml
+password: null
+```
