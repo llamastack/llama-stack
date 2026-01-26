@@ -26,6 +26,11 @@ function HomepageHeader() {
               to="/docs/api/llama-stack-specification">
               📚 API Reference
             </Link>
+            <Link
+              className={clsx('button button--primary button--lg', styles.apiButton)}
+              to="/blog">
+              📝 Blogs
+            </Link>
           </div>
         </div>
       </div>
