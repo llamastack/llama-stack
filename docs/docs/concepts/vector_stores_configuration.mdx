@@ -113,6 +113,67 @@ chunk_retrieval_params:
 - **RRF (Reciprocal Rank Fusion)**: Combines vector and keyword rankings with configurable impact factor
 - **Weighted**: Linear combination with adjustable alpha (0=keyword only, 1=vector only)
 - **Normalized**: Normalizes scores before combination
+- **Neural**: Neural reranking using inference models (requires model parameter, Part II)
+
+### Using Ranking Options in Search
+
+You can override the default reranker strategy and parameters per-request using `SearchRankingOptions`:
+
+#### Weighted Ranker
+
+```python
+from llama_stack_api import SearchRankingOptions
+
+results = await client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="your query",
+    search_mode="hybrid",
+    ranking_options=SearchRankingOptions(
+        ranker="weighted",
+        alpha=0.8  # 80% vector, 20% keyword (overrides config default)
+    ),
+)
+```
+
+**Alpha Parameter:**
+- `alpha=0.0`: Use only keyword scores
+- `alpha=0.5`: Equal weight to vector and keyword (default)
+- `alpha=1.0`: Use only vector scores
+
+#### RRF Ranker
+
+```python
+results = await client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="your query",
+    search_mode="hybrid",
+    ranking_options=SearchRankingOptions(
+        ranker="rrf",
+        impact_factor=42.0  # Overrides config default of 60.0
+    ),
+)
+```
+
+**Impact Factor:**
+- Lower values (20-40): More emphasis on higher-ranked results
+- Default (60.0): Balanced approach (from RRF research)
+- Higher values (80-100): More uniform distribution across ranks
+
+#### Score Threshold
+
+Filter results by minimum relevance score:
+
+```python
+results = await client.vector_stores.search(
+    vector_store_id=vector_store.id,
+    query="your query",
+    ranking_options=SearchRankingOptions(
+        ranker="weighted",
+        alpha=0.7,
+        score_threshold=0.5  # Only return results with score >= 0.5
+    ),
+)
+```
 
 ### File Batch Parameters
 
