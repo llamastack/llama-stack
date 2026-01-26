@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 82.4% |
+| **Overall Conformance Score** | 82.6% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
-| **Schema/Type Issues** | 272 |
+| **Schema/Type Issues** | 268 |
 | **Missing Properties** | 184 |
-| **Total Issues to Fix** | 456 |
+| **Total Issues to Fix** | 452 |
 
 ## Category Scores
 
@@ -33,11 +33,11 @@ Categories are sorted by conformance score (lowest first, needing most attention
 |----------|-------|------------|--------|---------|
 | Moderations | 17.0% | 53 | 5 | 39 |
 | Batch | 36.3% | 168 | 66 | 41 |
-| Embeddings | 42.9% | 14 | 8 | 0 |
 | Completions | 52.2% | 46 | 20 | 2 |
 | Models | 53.3% | 15 | 2 | 5 |
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
+| Embeddings | 71.4% | 14 | 4 | 0 |
 | Responses | 80.9% | 225 | 22 | 21 |
 | Chat | 82.1% | 402 | 22 | 50 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
@@ -406,29 +406,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.output_file_id` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.request_counts` | Type removed: ['object']; Union variants added: 2 |
 | `responses.200.content.application/json.properties.usage` | Type removed: ['object']; Union variants added: 2 |
-
-</details>
-
-### Embeddings
-
-**Score:** 42.9% · **Issues:** 8 · **Missing:** 0
-
-#### `/embeddings`
-
-**POST**
-
-<details><summary>Schema Issues (8)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `requestBody.content.application/json.properties.dimensions` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `requestBody.content.application/json.properties.encoding_format` | Enum removed: ['float', 'base64']; Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `requestBody.content.application/json.properties.input` | Union variants added: 2; Union variants removed: 4 |
-| `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 2 |
-| `requestBody.content.application/json.properties.user` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.embedding` | Type removed: ['array']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.data.items.properties.object` | Enum removed: ['embedding']; Default changed: None -> embedding |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['list']; Default changed: None -> list |
 
 </details>
 
@@ -891,6 +868,25 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `requestBody.content.application/json.properties.rewrite_query` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.has_more` | Default changed: None -> False |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['vector_store.search_results.page']; Default changed: None -> vector_store.search_results.page |
+
+</details>
+
+### Embeddings
+
+**Score:** 71.4% · **Issues:** 4 · **Missing:** 0
+
+#### `/embeddings`
+
+**POST**
+
+<details><summary>Schema Issues (4)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `requestBody.content.application/json.properties.model` | Type added: ['string']; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.embedding` | Type removed: ['array']; Union variants added: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.object` | Enum removed: ['embedding']; Default changed: None -> embedding |
+| `responses.200.content.application/json.properties.object` | Enum removed: ['list']; Default changed: None -> list |
 
 </details>
 
