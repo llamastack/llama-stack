@@ -2664,7 +2664,7 @@ paths:
       description: |-
         Search for chunks in a vector store.
 
-        Searches a vector store for relevant chunks based on a query and optional file attribute filters.
+        Searches a vector store for relevant chunks based on a query and optional metadata filters.
       operationId: openai_search_vector_store_v1_vector_stores__vector_store_id__search_post
       parameters:
       - name: vector_store_id
@@ -8971,9 +8971,9 @@ components:
           title: string | list[string]
         filters:
           anyOf:
-          - additionalProperties: true
-            type: object
+          - {}
           - type: 'null'
+          title: Filters
         max_num_results:
           anyOf:
           - type: integer

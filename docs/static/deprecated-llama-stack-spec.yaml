@@ -7181,9 +7181,9 @@ components:
           title: string | list[string]
         filters:
           anyOf:
-          - additionalProperties: true
-            type: object
+          - {}
           - type: 'null'
+          title: Filters
         max_num_results:
           anyOf:
           - type: integer

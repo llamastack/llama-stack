@@ -13,6 +13,7 @@ from typing import Annotated, Any, Literal, Protocol, runtime_checkable
 from fastapi import Body, Query
 from pydantic import BaseModel, Field, field_validator
 
+# Filter type is defined in the implementation layer
 from llama_stack_api.inference import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
 from llama_stack_api.vector_stores import VectorStore
@@ -615,6 +616,9 @@ class VectorIO(Protocol):
         :param vector_store_id: The identifier of the vector database to query.
         :param query: The query to search for.
         :param params: The parameters of the query.
+        :param filters: Optional filters to apply to the search results based on metadata fields.
+            Supports comparison filters (eq, ne, gt, gte, lt, lte, in, nin) and compound
+            filters (and, or) for complex filtering logic.
         :returns: A QueryChunksResponse.
         """
         ...
@@ -709,7 +713,7 @@ class VectorIO(Protocol):
         self,
         vector_store_id: str,
         query: str | list[str],
-        filters: dict[str, Any] | None = None,
+        filters: Any | None = None,
         max_num_results: int | None = 10,
         ranking_options: SearchRankingOptions | None = None,
         rewrite_query: bool | None = False,
@@ -719,11 +723,13 @@ class VectorIO(Protocol):
     ) -> VectorStoreSearchResponsePage:
         """Search for chunks in a vector store.
 
-        Searches a vector store for relevant chunks based on a query and optional file attribute filters.
+        Searches a vector store for relevant chunks based on a query and optional metadata filters.
 
         :param vector_store_id: The ID of the vector store to search.
         :param query: The query string or array for performing the search.
-        :param filters: Filters based on file attributes to narrow the search results.
+        :param filters: Optional filters to apply to the search results based on metadata fields.
+            Supports comparison filters (eq, ne, gt, gte, lt, lte, in, nin) and compound
+            filters (and, or) for complex filtering logic.
         :param max_num_results: Maximum number of results to return (1 to 50 inclusive, default 10).
         :param ranking_options: Ranking options for fine-tuning the search results.
         :param rewrite_query: Whether to rewrite the natural language query for vector search (default false)

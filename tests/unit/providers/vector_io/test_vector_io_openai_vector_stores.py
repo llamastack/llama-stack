@@ -371,7 +371,12 @@ async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter
 
     response = await vector_io_adapter.query_chunks("db1", "my_query", {"param": 1})
 
-    fake_index.query_chunks.assert_awaited_once_with("my_query", {"param": 1})
+    # Verify query_chunks was called with the expected arguments
+    # Some adapters pass filters=None, others don't - check the first two positional args
+    fake_index.query_chunks.assert_awaited_once()
+    call_args = fake_index.query_chunks.await_args[0]
+    assert call_args[0] == "my_query"
+    assert call_args[1] == {"param": 1}
     assert response is expected
 
 
