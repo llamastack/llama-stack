@@ -347,9 +347,6 @@ def pytest_generate_tests(metafunc):
     metafunc.parametrize(params, value_combinations, scope="session", ids=test_ids if test_ids else None)
 
 
-pytest_plugins = ["tests.integration.fixtures.common"]
-
-
 def pytest_ignore_collect(path: str, config: pytest.Config) -> bool:
     """Skip collecting paths outside the selected suite roots for speed."""
     suite = config.getoption("--suite")

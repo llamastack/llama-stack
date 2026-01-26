@@ -419,6 +419,7 @@ There are three implementations of search for PGVectoIndex available:
   - Semantic understanding - finds documents similar in meaning even if they don't share keywords
   - Works with high-dimensional vector embeddings (typically 768, 1024, or higher dimensions)
   - Best for: Finding conceptually related content, handling synonyms, cross-language search
+  - By default, Llama Stack creates a HNSW (Hierarchical Navigable Small Worlds) index on a column "embedding" in a vector store table enabling production-ready, performant and scalable vector search for large datasets out of the box.
 
 2. Keyword Search
 - How it works:
@@ -448,6 +449,7 @@ There are three implementations of search for PGVectoIndex available:
   - Best for: General-purpose search where you want both precision and recall
 
 4. Database Schema
+
 The PGVector implementation stores data optimized for all three search types:
 CREATE TABLE vector_store_xxx (
     id TEXT PRIMARY KEY,
@@ -457,9 +459,6 @@ CREATE TABLE vector_store_xxx (
     tokenized_content TSVECTOR          -- For keyword search
 );
 
--- Indexes for performance
-CREATE INDEX content_gin_idx ON table USING GIN(tokenized_content);  -- Keyword search
--- Vector index created automatically by pgvector
 
 ## Usage
 
@@ -469,32 +468,34 @@ To use PGVector in your Llama Stack project, follow these steps:
 2. Configure your Llama Stack project to use pgvector. (e.g. remote::pgvector).
 3. Start storing and querying vectors.
 
-## This is an example how you can set up your environment for using PGVector
+## This is an example how you can set up your environment for using PGVector (you can use either Podman or Docker)
 
-1. Export env vars:
+1. Export PGVector environment variables:
 ```bash
-export ENABLE_PGVECTOR=true
+export PGVECTOR_DB=testvectordb
 export PGVECTOR_HOST=localhost
 export PGVECTOR_PORT=5432
-export PGVECTOR_DB=llamastack
-export PGVECTOR_USER=llamastack
-export PGVECTOR_PASSWORD=llamastack
+export PGVECTOR_USER=user
+export PGVECTOR_PASSWORD=password
 ```
 
-2. Create DB:
+2. Pull pgvector image with that tag you want:
 ```bash
-psql -h localhost -U postgres -c "CREATE ROLE llamastack LOGIN PASSWORD 'llamastack';"
-psql -h localhost -U postgres -c "CREATE DATABASE llamastack OWNER llamastack;"
-psql -h localhost -U llamastack -d llamastack -c "CREATE EXTENSION IF NOT EXISTS vector;"
+podman pull pgvector/pgvector:0.8.1-pg18-trixie
 ```
 
-## Installation
-
-You can install PGVector using docker:
-
+3. Run container with PGVector:
 ```bash
-docker pull pgvector/pgvector:pg17
+podman run -d \
+  --name pgvector \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_USER=user \
+  -e POSTGRES_DB=testvectordb \
+  -p 5432:5432 \
+  -v pgvector_data:/var/lib/postgresql \
+  pgvector/pgvector:0.8.1-pg18-trixie
 ```
+
 ## Documentation
 See [PGVector's documentation](https://github.com/pgvector/pgvector) for more details about PGVector in general.
 """,

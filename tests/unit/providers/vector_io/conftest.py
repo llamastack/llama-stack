@@ -247,7 +247,14 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
 
     with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2"):
         with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.execute_values"):
-            index = PGVectorIndex(vector_store, embedding_dimension, connection, distance_metric="COSINE")
+            index = PGVectorIndex(
+                vector_store,
+                embedding_dimension,
+                connection,
+                distance_metric="COSINE",
+                hnsw_m=16,
+                hnsw_ef_construction=64,
+            )
             index._test_chunks = []
             original_add_chunks = index.add_chunks
 
@@ -276,6 +283,9 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         db="test_db",
         user="test_user",
         password="test_password",
+        distance_metric="COSINE",
+        hnsw_m=16,
+        hnsw_ef_construction=64,
         persistence=unique_kvstore_config,
     )
 

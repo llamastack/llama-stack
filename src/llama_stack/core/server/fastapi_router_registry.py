@@ -18,6 +18,7 @@ from fastapi.routing import APIRoute
 
 from llama_stack_api import (
     admin,
+    agents,
     batches,
     benchmarks,
     conversations,
@@ -34,6 +35,7 @@ from llama_stack_api import (
     scoring,
     scoring_functions,
     shields,
+    vector_io,
 )
 from llama_stack_api.datatypes import Api
 
@@ -41,6 +43,7 @@ from llama_stack_api.datatypes import Api
 # Add new APIs here as they are migrated to the router system
 _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "admin": admin.fastapi_routes.create_router,
+    "agents": agents.fastapi_routes.create_router,
     "batches": batches.fastapi_routes.create_router,
     "benchmarks": benchmarks.fastapi_routes.create_router,
     "conversations": conversations.fastapi_routes.create_router,
@@ -57,6 +60,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "scoring": scoring.fastapi_routes.create_router,
     "scoring_functions": scoring_functions.fastapi_routes.create_router,
     "shields": shields.fastapi_routes.create_router,
+    "vector_io": vector_io.fastapi_routes.create_router,
 }
 
 

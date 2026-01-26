@@ -57,7 +57,7 @@ from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
 
-from .auth import AuthenticationMiddleware
+from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
 from .quota import QuotaMiddleware
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -87,6 +87,13 @@ def create_sse_event(data: Any) -> str:
 async def global_exception_handler(request: Request, exc: Exception):
     traceback.print_exception(type(exc), exc, exc.__traceback__)
     http_exc = translate_exception(exc)
+
+    # OpenAI-compat Vector Stores endpoints treat many "not found" conditions as 400s.
+    # Our core exceptions model these as ResourceNotFoundError (mapped to 404 by default),
+    # but integration tests (and OpenAI client behavior expectations in this repo)
+    # assert they surface as BadRequestError instead.
+    if isinstance(exc, ResourceNotFoundError) and request.url.path.startswith("/v1/vector_stores"):
+        http_exc = HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
 
     return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
 
@@ -416,8 +423,19 @@ def create_app() -> StackApp:
     impls = app.stack.impls
 
     if config.server.auth:
-        logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
-        app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
+        # Add route authorization middleware if route_policy is configured
+        # This can work independently of authentication
+        # NOTE: Add this FIRST because middleware wraps in reverse order (last added runs first)
+        # We want: Request → Auth → RouteAuth → App
+        if config.server.auth.route_policy:
+            logger.info(f"Enabling route-level authorization with {len(config.server.auth.route_policy)} rules")
+            app.add_middleware(RouteAuthorizationMiddleware, route_policy=config.server.auth.route_policy)
+
+        # Add authentication middleware only if provider is configured
+        # This runs FIRST in the middleware chain (last added = first to run)
+        if config.server.auth.provider_config:
+            logger.info(f"Enabling authentication with provider: {config.server.auth.provider_config.type.value}")
+            app.add_middleware(AuthenticationMiddleware, auth_config=config.server.auth, impls=impls)
     else:
         if config.server.quota:
             quota = config.server.quota

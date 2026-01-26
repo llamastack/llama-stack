@@ -22,7 +22,21 @@ and considered a code smell. All exported symbols are explicitly listed in __all
 __version__ = "0.4.0.dev0"
 
 # Import submodules for those who need them
-from . import common  # noqa: F401
+from .schema_utils import (  # noqa: I001
+    CallableT,
+    ExtraBodyField,
+    SchemaInfo,
+    WebMethod,
+    clear_dynamic_schema_types,
+    get_registered_schema_info,
+    iter_dynamic_schema_types,
+    iter_json_schema_types,
+    iter_registered_schema_types,
+    json_schema_type,
+    register_dynamic_schema_type,
+    register_schema,
+    webmethod,
+)
 from .admin import (
     Admin,
     ApiFilter,
@@ -37,7 +51,17 @@ from .admin import (
 )
 
 # Import all public API symbols
-from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
+from .agents import (
+    Agents,
+    CreateResponseRequest,
+    DeleteResponseRequest,
+    ListResponseInputItemsRequest,
+    ListResponsesRequest,
+    ResponseGuardrail,
+    ResponseGuardrailSpec,
+    ResponseItemInclude,
+    RetrieveResponseRequest,
+)
 from .batches import (
     Batches,
     BatchObject,
@@ -446,21 +470,7 @@ from .safety import (
     ShieldStore,
     ViolationLevel,
 )
-from .schema_utils import (
-    CallableT,
-    ExtraBodyField,
-    SchemaInfo,
-    WebMethod,
-    clear_dynamic_schema_types,
-    get_registered_schema_info,
-    iter_dynamic_schema_types,
-    iter_json_schema_types,
-    iter_registered_schema_types,
-    json_schema_type,
-    register_dynamic_schema_type,
-    register_schema,
-    webmethod,
-)
+
 from .scoring import (
     ScoreBatchRequest,
     ScoreBatchResponse,
@@ -510,6 +520,7 @@ from .tools import (
     ToolRuntime,
     ToolStore,
 )
+from .validators import validate_embeddings_input_is_text
 from .vector_io import (
     Chunk,
     ChunkMetadata,
@@ -549,9 +560,12 @@ from .version import (
     LLAMA_STACK_API_V1ALPHA,
     LLAMA_STACK_API_V1BETA,
 )
+from . import common  # noqa: F401
+
 
 __all__ = [
     # Submodules
+    "schema_utils",
     "common",
     # Version constants
     "LLAMA_STACK_API_V1",
@@ -560,6 +574,12 @@ __all__ = [
     # API Symbols
     "Agents",
     "AggregationFunctionType",
+    # Agents Request Models
+    "CreateResponseRequest",
+    "DeleteResponseRequest",
+    "ListResponseInputItemsRequest",
+    "ListResponsesRequest",
+    "RetrieveResponseRequest",
     "AlgorithmConfig",
     "AllowedToolsFilter",
     "Api",
@@ -1051,4 +1071,6 @@ __all__ = [
     "WebMethod",
     "WebSearchToolTypes",
     "WeightedRanker",
+    # Validators
+    "validate_embeddings_input_is_text",
 ]

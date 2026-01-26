@@ -59,7 +59,7 @@ def serialize_vector(vector: list[float]) -> bytes:
     return struct.pack(f"{len(vector)}f", *vector)
 
 
-def _create_sqlite_connection(db_path):
+def _create_sqlite_connection(db_path: str):
     """Create a SQLite connection with sqlite_vec extension loaded."""
     connection = sqlite3.connect(db_path)
     connection.enable_load_extension(True)

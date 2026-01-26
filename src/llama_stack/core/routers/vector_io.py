@@ -39,6 +39,7 @@ from llama_stack_api import (
     VectorStoreFileObject,
     VectorStoreFilesListInBatchResponse,
     VectorStoreFileStatus,
+    VectorStoreListFilesResponse,
     VectorStoreListResponse,
     VectorStoreObject,
     VectorStoreSearchResponsePage,
@@ -383,7 +384,7 @@ class VectorIORouter(VectorIO):
         after: str | None = None,
         before: str | None = None,
         filter: VectorStoreFileStatus | None = None,
-    ) -> list[VectorStoreFileObject]:
+    ) -> VectorStoreListFilesResponse:
         logger.debug(f"VectorIORouter.openai_list_files_in_vector_store: {vector_store_id}")
         return await self.routing_table.openai_list_files_in_vector_store(
             vector_store_id=vector_store_id,

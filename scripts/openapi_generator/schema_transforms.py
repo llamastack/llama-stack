@@ -817,6 +817,90 @@ def _extract_duplicate_union_types(openapi_schema: dict[str, Any]) -> dict[str, 
     return openapi_schema
 
 
+def _dedupe_create_response_request_input_union_for_stainless(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """Deduplicate inline unions in `CreateResponseRequest.input` for Stainless.
+
+    The stable OpenAPI spec intentionally preserves legacy structure for oasdiff
+    compatibility, but Stainless codegen treats duplicated inline unions as separate
+    types and can generate name clashes.
+
+    This transform is intended to run only on the combined (stainless) spec.
+    """
+    if "components" not in openapi_schema or "schemas" not in openapi_schema["components"]:
+        return openapi_schema
+
+    schemas = openapi_schema["components"]["schemas"]
+    create_request = schemas.get("CreateResponseRequest")
+    if not isinstance(create_request, dict):
+        return openapi_schema
+
+    properties = create_request.get("properties")
+    if not isinstance(properties, dict):
+        return openapi_schema
+
+    input_prop = properties.get("input")
+    if not isinstance(input_prop, dict):
+        return openapi_schema
+
+    any_of = input_prop.get("anyOf")
+    if not isinstance(any_of, list):
+        return openapi_schema
+
+    array_schema: dict[str, Any] | None = None
+    for item in any_of:
+        if isinstance(item, dict) and (item.get("type") == "array" or "items" in item):
+            array_schema = item
+            break
+
+    if array_schema is None:
+        return openapi_schema
+
+    items_schema = array_schema.get("items")
+    if not isinstance(items_schema, dict):
+        return openapi_schema
+
+    items_any_of = items_schema.get("anyOf")
+    if not isinstance(items_any_of, list):
+        return openapi_schema
+
+    def _collect_refs(obj: Any, refs: set[str]) -> None:
+        if isinstance(obj, dict):
+            ref = obj.get("$ref")
+            if isinstance(ref, str):
+                refs.add(ref)
+            for value in obj.values():
+                _collect_refs(value, refs)
+        elif isinstance(obj, list):
+            for value in obj:
+                _collect_refs(value, refs)
+
+    def _is_direct_ref_item(item: dict[str, Any]) -> bool:
+        if "$ref" not in item:
+            return False
+        # Direct refs are the sibling entries like: {$ref: ..., title: ...}
+        # Union/nesting containers also include oneOf/anyOf/items/etc.
+        container_keys = {"oneOf", "anyOf", "items", "properties", "additionalProperties"}
+        return not any(key in item for key in container_keys)
+
+    refs_in_nested_unions: set[str] = set()
+    for item in items_any_of:
+        if isinstance(item, dict) and not _is_direct_ref_item(item):
+            _collect_refs(item, refs_in_nested_unions)
+
+    if not refs_in_nested_unions:
+        return openapi_schema
+
+    # Remove sibling direct refs that are duplicates of refs found elsewhere
+    deduplicated: list[Any] = []
+    for item in items_any_of:
+        if isinstance(item, dict) and _is_direct_ref_item(item) and item["$ref"] in refs_in_nested_unions:
+            continue
+        deduplicated.append(item)
+
+    items_schema["anyOf"] = deduplicated
+    return openapi_schema
+
+
 def _convert_multiline_strings_to_literal(obj: Any) -> Any:
     """Recursively convert multi-line strings to LiteralScalarString for YAML block scalar formatting."""
     try:

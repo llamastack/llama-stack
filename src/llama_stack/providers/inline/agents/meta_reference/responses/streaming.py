@@ -164,6 +164,7 @@ class StreamingResponseOrchestrator:
         self.max_tool_calls = max_tool_calls
         self.reasoning = reasoning
         self.metadata = metadata
+        self.store = store
         self.include = include
         self.store = bool(store) if store is not None else True
         self.sequence_number = 0
@@ -757,9 +758,9 @@ class StreamingResponseOrchestrator:
                     chunk_finish_reason = chunk_choice.finish_reason
 
                 # Handle reasoning content if present (non-standard field for o1/o3 models)
-                if hasattr(chunk_choice.delta, "reasoning_content") and chunk_choice.delta.reasoning_content:
+                if hasattr(chunk_choice.delta, "reasoning") and chunk_choice.delta.reasoning:
                     async for event in self._handle_reasoning_content_chunk(
-                        reasoning_content=chunk_choice.delta.reasoning_content,
+                        reasoning_content=chunk_choice.delta.reasoning,
                         reasoning_part_emitted=reasoning_part_emitted,
                         reasoning_content_index=reasoning_content_index,
                         message_item_id=message_item_id,
@@ -771,7 +772,7 @@ class StreamingResponseOrchestrator:
                         else:
                             yield event
                     reasoning_part_emitted = True
-                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning_content)
+                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning)
 
                 # Handle refusal content if present
                 if chunk_choice.delta.refusal:
