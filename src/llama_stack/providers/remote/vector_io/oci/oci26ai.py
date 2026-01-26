@@ -101,7 +101,6 @@ class OCI26aiIndex(EmbeddingIndex):
         self.connection = connection
         self.vector_store = vector_store
         self.table_name = sanitize_collection_name(vector_store.vector_store_id)
-        # self.identifier = vector_store.vector_store_id
         self.dimensions = vector_store.embedding_dimension
         self.consistency_level = consistency_level
         self.kvstore = kvstore
