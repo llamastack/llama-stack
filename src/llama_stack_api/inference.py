@@ -19,9 +19,6 @@ from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.common.content_types import InterleavedContent
-from llama_stack_api.common.responses import (
-    Order,
-)
 from llama_stack_api.models import Model
 from llama_stack_api.schema_utils import json_schema_type, register_schema, webmethod
 from llama_stack_api.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
@@ -701,7 +698,7 @@ class OpenAIChunkChoice(BaseModel):
     """
 
     delta: OpenAIChoiceDelta
-    finish_reason: str
+    finish_reason: str | None
     index: int
     logprobs: OpenAIChoiceLogprobs | None = None
 
@@ -717,7 +714,7 @@ class OpenAIChoice(BaseModel):
     """
 
     message: OpenAIMessageParam
-    finish_reason: str
+    finish_reason: str | None
     index: int
     logprobs: OpenAIChoiceLogprobs | None = None
 
@@ -920,7 +917,7 @@ class EmbeddingTaskType(Enum):
 
 
 class OpenAICompletionWithInputMessages(OpenAIChatCompletion):
-    input_messages: list[OpenAIMessageParam]
+    input_messages: list[OpenAIMessageParam] | None = None
 
 
 @json_schema_type
@@ -1189,10 +1186,10 @@ class Inference(InferenceProvider):
     @webmethod(route="/chat/completions", method="GET", level=LLAMA_STACK_API_V1)
     async def list_chat_completions(
         self,
-        after: str | None = None,
-        limit: int | None = 20,
-        model: str | None = None,
-        order: Order | None = Order.desc,
+        after: str = None,  # type: ignore[assignment]
+        limit: int = 20,
+        model: str = None,  # type: ignore[assignment]
+        order: Literal["asc", "desc"] = "asc",
     ) -> ListOpenAIChatCompletionResponse:
         """List chat completions.
 

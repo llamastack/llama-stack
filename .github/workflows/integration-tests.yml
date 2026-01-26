@@ -24,6 +24,7 @@ on:
       - '.github/actions/run-and-record-tests/action.yml'
       - 'scripts/integration-tests.sh'
       - 'scripts/generate_ci_matrix.py'
+      - 'docs/static/llama-stack-spec.yaml'
   schedule:
     # If changing the cron schedule, update the provider in the test-matrix job
     - cron: '0 0 * * *'  # (test latest client) Daily at 12 AM UTC
