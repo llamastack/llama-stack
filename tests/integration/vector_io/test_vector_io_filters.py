@@ -24,7 +24,7 @@ from llama_stack_api import ChunkMetadata, EmbeddedChunk
 from ..conftest import vector_provider_wrapper
 
 # Providers that support native filtering
-# Other providers (chroma, pgvector, qdrant, weaviate) raise NotImplementedError
+# Other providers (chroma, pgvector, qdrant, weaviate, elasticsearch) raise NotImplementedError
 PROVIDERS_WITH_NATIVE_FILTERING = {"faiss", "sqlite-vec", "milvus"}
 
 
