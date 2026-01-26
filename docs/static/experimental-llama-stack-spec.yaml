@@ -1371,9 +1371,11 @@ components:
               system: '#/components/schemas/OpenAISystemMessageParam'
               tool: '#/components/schemas/OpenAIToolMessageParam'
               user: '#/components/schemas/OpenAIUserMessageParam-Output'
+          type: object
         finish_reason:
-          type: string
           title: Finish Reason
+          type: string
+          nullable: true
         index:
           type: integer
           title: Index
@@ -1900,6 +1902,7 @@ components:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
             title: OpenAIChatCompletionUsage
           - type: 'null'
+          type: object
           title: OpenAIChatCompletionUsage
       type: object
       required:
@@ -1985,6 +1988,7 @@ components:
         finish_reason:
           title: Finish Reason
           type: string
+          nullable: true
         index:
           title: Index
           type: integer
@@ -2201,8 +2205,9 @@ components:
     OpenAICompletionChoice:
       properties:
         finish_reason:
-          type: string
-          title: Finish Reason
+          anyOf:
+          - type: string
+          - type: 'null'
         text:
           type: string
           title: Text

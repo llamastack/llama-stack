@@ -701,7 +701,7 @@ class OpenAIChunkChoice(BaseModel):
     """
 
     delta: OpenAIChoiceDelta
-    finish_reason: str
+    finish_reason: str | None
     index: int
     logprobs: OpenAIChoiceLogprobs | None = None
 
@@ -717,7 +717,7 @@ class OpenAIChoice(BaseModel):
     """
 
     message: OpenAIMessageParam
-    finish_reason: str
+    finish_reason: str | None
     index: int
     logprobs: OpenAIChoiceLogprobs | None = None
 
@@ -824,7 +824,7 @@ class OpenAICompletionChoice(BaseModel):
     :logprobs: (Optional) The log probabilities for the tokens in the choice
     """
 
-    finish_reason: str
+    finish_reason: str | None
     text: str
     index: int
     logprobs: OpenAIChoiceLogprobs | None = None

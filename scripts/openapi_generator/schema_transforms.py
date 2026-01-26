@@ -1008,10 +1008,101 @@ def _apply_legacy_sorting(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     return openapi_schema
 
 
+def _convert_anyof_null_to_nullable(prop: dict[str, Any]) -> None:
+    """Convert anyOf with null type to nullable: true format (OpenAPI 3.0 style).
+
+    This converts patterns like:
+        anyOf:
+          - type: string
+          - type: 'null'
+    To:
+        type: string
+        nullable: true
+    """
+    if "anyOf" not in prop:
+        return
+
+    any_of = prop["anyOf"]
+    if not isinstance(any_of, list) or len(any_of) != 2:
+        return
+
+    # Find the null type and the actual type
+    null_item = None
+    actual_item = None
+    for item in any_of:
+        if isinstance(item, dict):
+            if item.get("type") == "null" or item.get("type") == "'null'":
+                null_item = item
+            else:
+                actual_item = item
+
+    if null_item is not None and actual_item is not None:
+        # Remove anyOf and add nullable: true with the actual type
+        del prop["anyOf"]
+        if "type" in actual_item:
+            prop["type"] = actual_item["type"]
+        if "$ref" in actual_item:
+            prop["$ref"] = actual_item["$ref"]
+        prop["nullable"] = True
+
+
+def _fix_openai_chat_completions_compatibility(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """Fix OpenAI chat completions schema for oasdiff compatibility.
+
+    This addresses several breaking change errors when comparing against OpenAI's spec:
+    - Converts finish_reason from anyOf null to nullable: true format
+    - Adds type: object to OpenAIChoice.message (oneOf without explicit type)
+    - Adds type: object to OpenAIChatCompletion.usage (anyOf without explicit type)
+    - Adds type: object to OpenAIChatCompletionRequestWithExtraBody request body
+    """
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
+
+    # Fix OpenAIChoice schema
+    if "OpenAIChoice" in schemas:
+        choice_schema = schemas["OpenAIChoice"]
+        if "properties" in choice_schema:
+            # Fix message - add type: object to the oneOf wrapper
+            if "message" in choice_schema["properties"]:
+                message_prop = choice_schema["properties"]["message"]
+                if "oneOf" in message_prop and "type" not in message_prop:
+                    message_prop["type"] = "object"
+
+            # Fix finish_reason - convert anyOf null to nullable: true
+            if "finish_reason" in choice_schema["properties"]:
+                _convert_anyof_null_to_nullable(choice_schema["properties"]["finish_reason"])
+
+    # Fix OpenAIChunkChoice schema (streaming response)
+    if "OpenAIChunkChoice" in schemas:
+        chunk_choice_schema = schemas["OpenAIChunkChoice"]
+        if "properties" in chunk_choice_schema:
+            # Fix finish_reason - convert anyOf null to nullable: true
+            if "finish_reason" in chunk_choice_schema["properties"]:
+                _convert_anyof_null_to_nullable(chunk_choice_schema["properties"]["finish_reason"])
+
+    # Fix OpenAIChatCompletion.usage - add type: object to the anyOf wrapper
+    if "OpenAIChatCompletion" in schemas:
+        completion_schema = schemas["OpenAIChatCompletion"]
+        if "properties" in completion_schema and "usage" in completion_schema["properties"]:
+            usage_prop = completion_schema["properties"]["usage"]
+            if "anyOf" in usage_prop and "type" not in usage_prop:
+                usage_prop["type"] = "object"
+
+    # Fix OpenAIChatCompletionRequestWithExtraBody - ensure type: object is present
+    if "OpenAIChatCompletionRequestWithExtraBody" in schemas:
+        request_schema = schemas["OpenAIChatCompletionRequestWithExtraBody"]
+        if "type" not in request_schema:
+            request_schema["type"] = "object"
+
+    return openapi_schema
+
+
 def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """Fix common schema issues: exclusiveMinimum, null defaults, and add titles to unions."""
     # Convert anyOf with const values to enums across the entire schema
     _convert_anyof_const_to_enum(openapi_schema)
+
+    # Fix OpenAI chat completions compatibility issues
+    _fix_openai_chat_completions_compatibility(openapi_schema)
 
     # Fix other schema issues and add titles to unions
     if "components" in openapi_schema and "schemas" in openapi_schema["components"]:
