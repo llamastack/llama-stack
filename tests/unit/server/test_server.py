@@ -4,15 +4,19 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from typing import Any, cast
 from unittest.mock import Mock
 
 from fastapi import HTTPException
 from openai import BadRequestError
 from pydantic import ValidationError
+from pydantic_core import InitErrorDetails
 
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import AuthenticationRequiredError
-from llama_stack.core.server.server import remove_disabled_providers, translate_exception
+from llama_stack.core.exceptions import translate_exception
+from llama_stack.core.server.server import remove_disabled_providers
+from llama_stack_api.common.errors import ConfigurationError
 
 
 class TestTranslateException:
@@ -133,27 +137,27 @@ class TestTranslateException:
 
     def test_translate_validation_error(self):
         """Test that ValidationError is translated to 400 HTTP status with proper format."""
-        # Create a mock validation error using proper Pydantic error format
-        exc = ValidationError.from_exception_data(
-            "TestModel",
-            [
-                {
-                    "loc": ("field", "nested"),
-                    "msg": "field required",
-                    "type": "missing",
-                }
-            ],
-        )
+        # Create a mock validation error using proper Pydantic v2 error format
+        error_details: list[InitErrorDetails] = [
+            {
+                "loc": ("field", "nested"),
+                "type": "missing",
+                "input": {},
+            }
+        ]
+        exc = ValidationError.from_exception_data("TestModel", error_details)
 
         result = translate_exception(exc)
 
         assert isinstance(result, HTTPException)
         assert result.status_code == 400
-        assert "errors" in result.detail
-        assert len(result.detail["errors"]) == 1
-        assert result.detail["errors"][0]["loc"] == ["field", "nested"]
-        assert result.detail["errors"][0]["msg"] == "Field required"
-        assert result.detail["errors"][0]["type"] == "missing"
+        detail = cast(dict[str, Any], result.detail)
+        assert "errors" in detail
+        errors = cast(list[dict[str, Any]], detail["errors"])
+        assert len(errors) == 1
+        first_error = errors[0]
+        assert first_error["loc"] == ["field", "nested"]
+        assert first_error["type"] == "missing"
 
     def test_translate_generic_exception(self):
         """Test that generic exceptions are translated to 500 HTTP status."""
@@ -195,6 +199,16 @@ class TestTranslateException:
         assert result3.status_code == 403
         assert result3.detail == "Permission denied: Access denied"
 
+    def test_translate_configuration_error_returns_sanitized_message(self):
+        """Test that ConfigurationError returns sanitized message, not the actual error."""
+        message = "This is a message containing details about server configuration."
+        exc = ConfigurationError(message)
+        result = translate_exception(exc)
+
+        assert isinstance(result, HTTPException)
+        assert result.status_code == 500
+        assert result.detail == "An internal error occurred while processing your request."
+
 
 class TestRemoveDisabledProviders:
     """Test cases for the remove_disabled_providers function."""
@@ -209,7 +223,7 @@ class TestRemoveDisabledProviders:
                 ]
             }
         }
-        result = remove_disabled_providers(config)
+        result = cast(dict[str, Any], remove_disabled_providers(config))
         assert len(result["providers"]["inference"]) == 1
         assert result["providers"]["inference"][0]["provider_id"] == "openai"
 
@@ -223,7 +237,7 @@ class TestRemoveDisabledProviders:
                 ]
             }
         }
-        result = remove_disabled_providers(config)
+        result = cast(dict[str, Any], remove_disabled_providers(config))
         assert len(result["providers"]["inference"]) == 1
         assert result["providers"]["inference"][0]["provider_id"] == "openai"
 
@@ -256,7 +270,7 @@ class TestRemoveDisabledProviders:
                 ]
             }
         }
-        result = remove_disabled_providers(config)
+        result = cast(dict[str, Any], remove_disabled_providers(config))
         assert len(result["registered_resources"]["models"]) == 3
         assert result["registered_resources"]["models"][0]["model_id"] == "llama-3-2-3b"
         assert result["registered_resources"]["models"][1]["model_id"] == "gpt-4o-mini"

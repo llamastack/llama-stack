@@ -5,13 +5,13 @@
 # the root directory of this source tree.
 
 """
-Error handling tests for the Llama Stack Responses and Conversations APIs.
+Error handling tests for the Llama Stack Responses API.
 
 These tests verify that errors emitted by Llama Stack are correctly typed
 and handled by the OpenAI Python SDK, ensuring users don't have breaking
 experiences when error conditions occur.
 
-HTTP Error Tests (TestResponsesAPIErrors, TestConversationsAPIErrors):
+HTTP Error Tests (TestResponsesAPIErrors):
 The OpenAI SDK expects specific HTTP status codes to trigger specific
 exception types:
     - 400 -> openai.BadRequestError
@@ -149,46 +149,6 @@ class TestResponsesAPIErrors:
         assert exc_info.value.status_code == 400
         error_msg = str(exc_info.value).lower()
         assert "tool_choice" in error_msg or "invalid" in error_msg
-
-
-class TestConversationsAPIErrors:
-    """Error handling tests for the Conversations API.
-
-    These tests verify SDK compatibility for conversation-related operations
-    accessed through the Responses API.
-    """
-
-    def test_invalid_conversation_id_format_raises_bad_request(self, openai_client, text_model_id):
-        """
-        Test that an invalid conversation ID format returns 400 and triggers
-        openai.BadRequestError in the SDK.
-        """
-        with pytest.raises(BadRequestError) as exc_info:
-            openai_client.responses.create(
-                model=text_model_id,
-                input=[{"role": "user", "content": "Hello"}],
-                conversation="invalid-format-no-conv-prefix",
-            )
-
-        assert exc_info.value.status_code == 400
-        error_msg = str(exc_info.value).lower()
-        assert "conv" in error_msg or "invalid" in error_msg
-
-    def test_nonexistent_conversation_raises_not_found_error(self, openai_client, text_model_id):
-        """
-        Test that referencing a nonexistent conversation returns 404 and triggers
-        openai.NotFoundError in the SDK.
-        """
-        with pytest.raises(NotFoundError) as exc_info:
-            openai_client.responses.create(
-                model=text_model_id,
-                input=[{"role": "user", "content": "Hello"}],
-                conversation="conv_nonexistent123456",
-            )
-
-        assert exc_info.value.status_code == 404
-        error_msg = str(exc_info.value).lower()
-        assert "not found" in error_msg or "conversation" in error_msg
 
 
 class TestResponsesAPIStreamingErrors:

@@ -9,6 +9,8 @@
 #   2. All classes should have a custom error message with the goal of informing the Llama Stack user specifically
 #   3. All classes should propogate the inherited __init__ function otherwise via 'super().__init__(message)'
 
+from typing import Literal
+
 import httpx
 
 
@@ -106,6 +108,13 @@ class ConversationNotFoundError(ResourceNotFoundError):
         super().__init__(conversation_id, "Conversation")
 
 
+class ConversationItemNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced conversation"""
+
+    def __init__(self, item_id: str, conversation_id: str) -> None:
+        super().__init__(item_id, "Conversation Item", ClientListCommand("conversations.items.list", conversation_id))
+
+
 class ResponseNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced response"""
 
@@ -146,7 +155,7 @@ class BatchNotFoundError(ResourceNotFoundError):
         super().__init__(batch_id, "Batch", ClientListCommand("batches.list", resource_name_plural="batches"))
 
 
-class UnsupportedModelError(ValueError, LlamaStackError):
+class UnsupportedModelError(LlamaStackError):
     """raised when model is not present in the list of supported models"""
 
     status_code: httpx.codes = httpx.codes.BAD_REQUEST
@@ -156,7 +165,7 @@ class UnsupportedModelError(ValueError, LlamaStackError):
         super().__init__(message)
 
 
-class ModelTypeError(TypeError, LlamaStackError):
+class ModelTypeError(LlamaStackError):
     """raised when a model is present but not the correct type"""
 
     status_code: httpx.codes = httpx.codes.BAD_REQUEST
@@ -168,7 +177,7 @@ class ModelTypeError(TypeError, LlamaStackError):
         super().__init__(message)
 
 
-class ConflictError(ValueError, LlamaStackError):
+class ConflictError(LlamaStackError):
     """raised when an operation cannot be performed due to a conflict with the current state"""
 
     status_code: httpx.codes = httpx.codes.CONFLICT
@@ -177,7 +186,7 @@ class ConflictError(ValueError, LlamaStackError):
         super().__init__(message)
 
 
-class TokenValidationError(ValueError, LlamaStackError):
+class TokenValidationError(LlamaStackError):
     """raised when token validation fails during authentication"""
 
     status_code: httpx.codes = httpx.codes.UNAUTHORIZED
@@ -186,17 +195,17 @@ class TokenValidationError(ValueError, LlamaStackError):
         super().__init__(message)
 
 
-class InvalidConversationIdError(ValueError, LlamaStackError):
+class InvalidConversationIdError(LlamaStackError):
     """raised when a conversation ID has an invalid format"""
 
     status_code: httpx.codes = httpx.codes.BAD_REQUEST
 
-    def __init__(self, conversation_id: str) -> None:
-        message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
+    def __init__(self, conversation_id: str, hint: str | None = None) -> None:
+        message = f"Invalid conversation ID '{conversation_id}'." + (f" {hint}" if hint else "")
         super().__init__(message)
 
 
-class InvalidParameterError(ValueError, LlamaStackError):
+class InvalidParameterError(LlamaStackError):
     """raised when a request parameter has an invalid value"""
 
     status_code: httpx.codes = httpx.codes.BAD_REQUEST
@@ -206,15 +215,39 @@ class InvalidParameterError(ValueError, LlamaStackError):
         super().__init__(message)
 
 
-class ServiceNotEnabledError(LlamaStackError, ValueError):
+class MissingRequiredParameterError(LlamaStackError):
+    """raised when a required request parameter is missing"""
+
+    status_code: httpx.codes = httpx.codes.BAD_REQUEST
+
+    def __init__(self, param_name: str) -> None:
+        message = f"Missing required parameter: '{param_name}'"
+        super().__init__(message)
+
+
+class ServiceNotEnabledError(LlamaStackError):
     """raised when a llama stack service is not enabled"""
 
     status_code: httpx.codes = httpx.codes.SERVICE_UNAVAILABLE
 
-    def __init__(self, service_name: str, *, provider_specific_message: str | None = None) -> None:
-        message = f"Service '{service_name}' is not enabled. Please check your configuration and enable the service before trying again."
-        if provider_specific_message:
-            message += f"\n\n{provider_specific_message}"
+    def __init__(
+        self,
+        service_name: str,
+        service_config_name: str | None = None,
+        *,
+        provider_specific_hint_override: str | None = None,
+    ) -> None:
+        """
+        Args:
+            service_name: The name of the service that is not enabled.
+            service_config_name: The name of the service configuration to enable in the run config. This is used to give a specific hint to the user on what to enable.
+            provider_specific_hint_override: A provider specific hint to override the default hint. This will completely override the default hint if provided.
+        """
+        message = f"Service '{service_name}' is not enabled."
+        if provider_specific_hint_override:
+            message += f" {provider_specific_hint_override}"
+        else:
+            message += f" Please check your configuration and enable {service_config_name.strip() if service_config_name else 'the service'} before trying again."
         super().__init__(message)
 
 
@@ -229,4 +262,40 @@ class InternalServerError(LlamaStackError):
 
     def __init__(self) -> None:
         message = "An internal error occurred while processing your request."
+        super().__init__(message)
+
+
+class ConfigurationError(Exception):
+    """
+    An error that gets raised during server initialization when the server configuration is invalid.
+    ConfigurationErrors are shielded from returning sensitive information to API users because they
+    are configured to return a generic 500 Internal Server Error response if they get raised during
+    normal operation of the server.
+    """
+
+    status_code: httpx.codes = httpx.codes.INTERNAL_SERVER_ERROR
+    sanitized_message: str = "An internal error occurred while processing your request."
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+
+
+class ServiceMisconfiguredError(ConfigurationError):
+    """
+    An error that gets raised during server initialization when a service is misconfigured.
+    """
+
+    def __init__(
+        self,
+        service_config_name: str,
+        error_condition: Literal["misconfigured", "not configured"],
+        hint: str | None = None,
+    ) -> None:
+        """
+        Args:
+            service_config_name: The name of the service configuration that is misconfigured.
+            misconfiguration_hint: The hint to describe the misconfiguration. Formatted as: 'service_config_name' is 'misconfiguration_hint'.
+            hint: A sentence or short paragraph hint to the user on how to fix the misconfiguration.
+        """
+        message = f"Service '{service_config_name}' is {error_condition}." + (f" {hint}" if hint else "")
         super().__init__(message)

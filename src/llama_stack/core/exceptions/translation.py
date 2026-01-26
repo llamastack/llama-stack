@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 
 from llama_stack.core.exceptions.mapping import translate_exception_to_http
-from llama_stack_api.common.errors import LlamaStackError
+from llama_stack_api.common.errors import ConfigurationError, LlamaStackError
 
 
 def translate_exception(exc: Exception) -> HTTPException:
@@ -31,6 +31,10 @@ def translate_exception(exc: Exception) -> HTTPException:
                 ]
             },
         )
+
+    # protect api users from seeing server configuration errors
+    if isinstance(exc, ConfigurationError):
+        return HTTPException(status_code=exc.status_code, detail=exc.sanitized_message)
 
     if isinstance(exc, LlamaStackError):
         return HTTPException(status_code=exc.status_code, detail=str(exc))

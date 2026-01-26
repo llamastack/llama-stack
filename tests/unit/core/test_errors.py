@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import httpx
 
 from llama_stack_api.common.errors import (
     ClientListCommand,
@@ -28,6 +29,14 @@ class TestClientListCommand:
         cmd = ClientListCommand("batches.list", resource_name_plural="batches")
         assert str(cmd) == "Use 'client.batches.list()' to list available batches."
 
+    def test_empty_arguments_list(self):
+        cmd = ClientListCommand("models.list", [])
+        assert str(cmd) == "Use 'client.models.list()'."
+
+    def test_none_arguments(self):
+        cmd = ClientListCommand("models.list", None)
+        assert str(cmd) == "Use 'client.models.list()'."
+
 
 class TestResourceNotFoundError:
     def test_without_client_list(self):
@@ -44,3 +53,7 @@ class TestResourceNotFoundError:
             "test-id", "Batch", ClientListCommand("batches.list", resource_name_plural="batches")
         )
         assert str(err) == "Batch 'test-id' not found. Use 'client.batches.list()' to list available batches."
+
+    def test_status_code_is_not_found(self):
+        err = ResourceNotFoundError("test-id", "Widget")
+        assert err.status_code == httpx.codes.NOT_FOUND

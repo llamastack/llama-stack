@@ -14,7 +14,13 @@ from llama_stack.core.datatypes import AccessRule, StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
-from llama_stack_api.common.errors import ConversationNotFoundError
+from llama_stack_api.common.errors import (
+    ConversationItemNotFoundError,
+    ConversationNotFoundError,
+    InvalidConversationIdError,
+    MissingRequiredParameterError,
+    ServiceMisconfiguredError,
+)
 from llama_stack_api.conversations import (
     AddItemsRequest,
     Conversation,
@@ -65,7 +71,11 @@ class ConversationServiceImpl(Conversations):
         # Use conversations store reference from run config
         conversations_ref = config.config.storage.stores.conversations
         if not conversations_ref:
-            raise ValueError("storage.stores.conversations must be configured in run config")
+            raise ServiceMisconfiguredError(
+                "conversations storage",
+                "not configured",
+                "Please configure storage.stores.conversations in the run config.",
+            )
 
         base_sql_store = sqlstore_impl(conversations_ref)
         self.sql_store = AuthorizedSqlStore(base_sql_store, self.policy)
@@ -166,9 +176,7 @@ class ConversationServiceImpl(Conversations):
     def _validate_conversation_id(self, conversation_id: str) -> None:
         """Validate conversation ID format."""
         if not conversation_id.startswith("conv_"):
-            raise ValueError(
-                f"Invalid 'conversation_id': '{conversation_id}'. Expected an ID that begins with 'conv_'."
-            )
+            raise InvalidConversationIdError(conversation_id, "Expected an ID that begins with 'conv_'.")
 
     def _get_or_generate_item_id(self, item: ConversationItem, item_dict: dict) -> str:
         """Get existing item ID or generate one if missing."""
@@ -232,11 +240,9 @@ class ConversationServiceImpl(Conversations):
     async def retrieve(self, request: RetrieveItemRequest) -> ConversationItem:
         """Retrieve a conversation item."""
         if not request.conversation_id:
-            raise ValueError(
-                f"Expected a non-empty value for `conversation_id` but received {request.conversation_id!r}"
-            )
+            raise MissingRequiredParameterError("conversation_id")
         if not request.item_id:
-            raise ValueError(f"Expected a non-empty value for `item_id` but received {request.item_id!r}")
+            raise MissingRequiredParameterError("item_id")
 
         # Get item from conversation_items table
         record = await self.sql_store.fetch_one(
@@ -244,7 +250,7 @@ class ConversationServiceImpl(Conversations):
         )
 
         if record is None:
-            raise ValueError(f"Item {request.item_id} not found in conversation {request.conversation_id}")
+            raise ConversationItemNotFoundError(request.item_id, request.conversation_id)
 
         adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
         return adapter.validate_python(record["item_data"])
@@ -252,9 +258,7 @@ class ConversationServiceImpl(Conversations):
     async def list_items(self, request: ListItemsRequest) -> ConversationItemList:
         """List items in the conversation."""
         if not request.conversation_id:
-            raise ValueError(
-                f"Expected a non-empty value for `conversation_id` but received {request.conversation_id!r}"
-            )
+            raise MissingRequiredParameterError("conversation_id")
 
         # check if conversation exists
         await self.get_conversation(GetConversationRequest(conversation_id=request.conversation_id))
@@ -290,11 +294,9 @@ class ConversationServiceImpl(Conversations):
     async def openai_delete_conversation_item(self, request: DeleteItemRequest) -> ConversationItemDeletedResource:
         """Delete a conversation item."""
         if not request.conversation_id:
-            raise ValueError(
-                f"Expected a non-empty value for `conversation_id` but received {request.conversation_id!r}"
-            )
+            raise MissingRequiredParameterError("conversation_id")
         if not request.item_id:
-            raise ValueError(f"Expected a non-empty value for `item_id` but received {request.item_id!r}")
+            raise MissingRequiredParameterError("item_id")
 
         _ = await self._get_validated_conversation(request.conversation_id)
 
@@ -303,7 +305,7 @@ class ConversationServiceImpl(Conversations):
         )
 
         if record is None:
-            raise ValueError(f"Item {request.item_id} not found in conversation {request.conversation_id}")
+            raise ConversationItemNotFoundError(request.item_id, request.conversation_id)
 
         await self.sql_store.delete(
             table="conversation_items", where={"id": request.item_id, "conversation_id": request.conversation_id}

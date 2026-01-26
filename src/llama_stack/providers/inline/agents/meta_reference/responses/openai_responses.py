@@ -378,7 +378,8 @@ class OpenAIResponsesImpl:
         if guardrail_ids and self.safety_api is None:
             raise ServiceNotEnabledError(
                 "Safety API",
-                provider_specific_message="Ensure the Safety API is enabled in your stack, otherwise remove the 'guardrails' parameter from your request.",
+                service_config_name="safety",
+                provider_specific_hint_override="Ensure the Safety API is enabled in your stack, or remove the 'guardrails' parameter from your request.",
             )
 
         if conversation is not None:
