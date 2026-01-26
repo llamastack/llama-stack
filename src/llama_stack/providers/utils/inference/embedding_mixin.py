@@ -23,9 +23,11 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
+    validate_embeddings_input_is_text,
 )
 
-EMBEDDING_MODELS = {}
+EMBEDDING_MODELS: dict[str, "SentenceTransformer"] = {}
+EMBEDDING_MODELS_LOCK = asyncio.Lock()
 
 DARWIN = "Darwin"
 
@@ -40,6 +42,9 @@ class SentenceTransformerEmbeddingMixin:
         self,
         params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
+        # Validate that input contains only text, not token arrays
+        validate_embeddings_input_is_text(params)
+
         # Convert input to list format if it's a single string
         input_list = [params.input] if isinstance(params.input, str) else params.input
         if not input_list:
@@ -76,26 +81,29 @@ class SentenceTransformerEmbeddingMixin:
         )
 
     async def _load_sentence_transformer_model(self, model: str) -> "SentenceTransformer":
-        global EMBEDDING_MODELS
-
         loaded_model = EMBEDDING_MODELS.get(model)
         if loaded_model is not None:
             return loaded_model
 
-        log.info(f"Loading sentence transformer for {model}...")
+        async with EMBEDDING_MODELS_LOCK:
+            loaded_model = EMBEDDING_MODELS.get(model)
+            if loaded_model is not None:
+                return loaded_model
 
-        def _load_model():
-            from sentence_transformers import SentenceTransformer
+            log.info(f"Loading sentence transformer for {model}...")
 
-            platform_name = platform.system()
-            if platform_name == DARWIN:
-                # PyTorch's OpenMP kernels can segfault on macOS when spawned from background
-                # threads with the default parallel settings, so force a single-threaded CPU run.
-                log.debug(f"Constraining torch threads on {platform_name} to a single worker")
-                torch.set_num_threads(1)
+            def _load_model():
+                from sentence_transformers import SentenceTransformer
 
-            return SentenceTransformer(model, trust_remote_code=True)
+                platform_name = platform.system()
+                if platform_name == DARWIN:
+                    # PyTorch's OpenMP kernels can segfault on macOS when spawned from background
+                    # threads with the default parallel settings, so force a single-threaded CPU run.
+                    log.debug(f"Constraining torch threads on {platform_name} to a single worker")
+                    torch.set_num_threads(1)
 
-        loaded_model = await asyncio.to_thread(_load_model)
-        EMBEDDING_MODELS[model] = loaded_model
-        return loaded_model
+                return SentenceTransformer(model, trust_remote_code=True)
+
+            loaded_model = await asyncio.to_thread(_load_model)
+            EMBEDDING_MODELS[model] = loaded_model
+            return loaded_model

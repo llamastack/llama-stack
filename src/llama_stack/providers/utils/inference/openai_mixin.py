@@ -34,6 +34,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
+    validate_embeddings_input_is_text,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
@@ -81,6 +82,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # Allow subclasses to control whether the provider supports stream_options parameter
     # Set to False for providers that don't support stream_options (e.g., Ollama, vLLM)
     supports_stream_options: bool = True
+
+    # Allow subclasses to control whether the provider supports tokenized embeddings input
+    # Set to True for providers that support pre-tokenized input (list[int] and list[list[int]])
+    supports_tokenized_embeddings_input: bool = False
 
     # Embedding model metadata for this provider
     # Can be set by subclasses or instances to provide embedding models
@@ -371,6 +376,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             top_logprobs=params.top_logprobs,
             top_p=params.top_p,
             user=params.user,
+            reasoning_effort=params.reasoning_effort,
         )
 
         if extra_body := params.model_extra:
@@ -386,6 +392,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI embeddings API call.
         """
+        # Validate token array support if provider doesn't support it
+        if not self.supports_tokenized_embeddings_input:
+            validate_embeddings_input_is_text(params)
+
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
 

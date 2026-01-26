@@ -286,6 +286,10 @@ class ServerStoresConfig(BaseModel):
         default=KVStoreReference(backend="kv_default", namespace="prompts"),
         description="Prompts store configuration (uses KV backend)",
     )
+    connectors: KVStoreReference | None = Field(
+        default=KVStoreReference(backend="kv_default", namespace="connectors"),
+        description="Connectors store configuration (uses KV backend)",
+    )
 
 
 class StorageConfig(BaseModel):

@@ -11,7 +11,7 @@ from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from llama_stack.core.access_control.datatypes import AccessRule
+from llama_stack.core.access_control.datatypes import AccessRule, RouteAccessRule
 from llama_stack.core.storage.datatypes import (
     KVStoreReference,
     StorageBackendType,
@@ -329,13 +329,17 @@ AuthProviderConfig = Annotated[
 class AuthenticationConfig(BaseModel):
     """Top-level authentication configuration."""
 
-    provider_config: AuthProviderConfig = Field(
-        ...,
-        description="Authentication provider configuration",
+    provider_config: AuthProviderConfig | None = Field(
+        default=None,
+        description="Authentication provider configuration (optional if only using route_policy)",
+    )
+    route_policy: list[RouteAccessRule] = Field(
+        default=[],
+        description="Rules for determining access to API routes (infrastructure-level)",
     )
     access_policy: list[AccessRule] = Field(
         default=[],
-        description="Rules for determining access to resources",
+        description="Rules for determining access to resources (data-level)",
     )
 
 
@@ -348,6 +352,7 @@ class QualifiedModel(BaseModel):
 
     provider_id: str
     model_id: str
+    embedding_dimensions: int | None = None
 
 
 class RewriteQueryParams(BaseModel):
@@ -654,7 +659,6 @@ class RegisteredResources(BaseModel):
     scoring_fns: list[ScoringFnInput] = Field(default_factory=list)
     benchmarks: list[BenchmarkInput] = Field(default_factory=list)
     tool_groups: list[ToolGroupInput] = Field(default_factory=list)
-    connectors: list[ConnectorInput] = Field(default_factory=list)
 
 
 class ServerConfig(BaseModel):
@@ -770,6 +774,11 @@ can be instantiated multiple times (with different configs) if necessary.
     safety: SafetyConfig | None = Field(
         default=None,
         description="Configuration for default moderations model",
+    )
+
+    connectors: list[ConnectorInput] = Field(
+        default_factory=list,
+        description="List of connectors to register at stack startup",
     )
 
     @field_validator("external_providers_dir")

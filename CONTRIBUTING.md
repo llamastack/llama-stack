@@ -147,6 +147,35 @@ As a general guideline:
 - New contributors are encouraged to have only one open PR at a time until they're familiar with the codebase and process.
 ```
 
+**Handling Pull Request Reviews**
+
+To ensure a smooth review process for both reviewers and contributors, please follow these guidelines:
+
+1. **Do not amend commits and force push.** Force pushing rewrites history, which confuses GitHub's review system and makes it difficult for reviewers to see what changed between review rounds. The diff becomes unreliable and reviewers lose track of their previous comments.
+
+2. **Use `git merge` to update your branch from main.** When you need to incorporate the latest changes from the main branch, use `git merge main` instead of `git rebase main`. This preserves the commit history and avoids the issues associated with force pushing.
+
+3. **Address review comments with new commits.** When responding to feedback, add new commits rather than modifying existing ones. This makes it easy for reviewers to see exactly how each comment was addressed. You can also use GitHub's "Accept suggestion" feature directly in the UI, which automatically creates new commits for you.
+
+Since Llama Stack uses squash merge, all commits will be combined into a single commit when the PR is merged. This means you don't need to worry about having a "clean" commit history during review; what matters is making the review process as clear as possible.
+
+### API Enhancement Pull Requests
+
+If your pull request modifies or extends the Llama Stack API, you must include a comprehensive **Test Plan** in your PR description. This helps reviewers verify the correctness of your changes and ensures the API behaves as expected.
+
+Your Test Plan should include:
+
+1. **A testing script**: Provide a script (Python, curl commands, or similar attached or pasted into the PR description) that demonstrates your API changes in action. The script should be self-contained and
+   easy to run. Do not commit the script to the repository.
+
+2. **Execution output**: Include the actual output from running your test script. This proves your implementation works and gives reviewers a clear picture of the expected behavior.
+
+This practice:
+- Validates that your implementation works end-to-end
+- Provides reviewers with reproducible verification steps
+- Serves as documentation for the new API behavior
+- Catches integration issues early in the review process
+
 ### Adding a New Provider
 
 Llama Stack has "out-of-tree" providers referred to as [external providers](https://llamastack.github.io/docs/providers/external) as well as "in-tree" providers that are a part of the core project. The Llama Stack community is accepting of [new in-tree provider contributions](https://llamastack.github.io/docs/contributing/new_api_provider) so long as there is merit seen in the addition.

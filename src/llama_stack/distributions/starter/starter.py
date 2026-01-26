@@ -266,6 +266,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         default_models=[],
         default_tool_groups=default_tool_groups,
         default_shields=default_shields,
+        default_connectors=[],
         vector_stores_config=VectorStoresConfig(
             default_provider_id="faiss",
             default_embedding_model=QualifiedModel(
@@ -329,7 +330,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 "Google Cloud Project ID for Vertex AI",
             ),
             "VERTEX_AI_LOCATION": (
-                "us-central1",
+                "global",
                 "Google Cloud Location for Vertex AI",
             ),
             "SAMBANOVA_API_KEY": (

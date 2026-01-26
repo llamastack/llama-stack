@@ -83,3 +83,8 @@ class MongoDBKVStoreImpl(KVStore):
         async for doc in cursor:
             result.append(doc["key"])
         return result
+
+    async def shutdown(self) -> None:
+        if self.conn:
+            await self.conn.close()
+            self.conn = None

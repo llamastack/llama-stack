@@ -10,6 +10,7 @@ from typing import Any
 import psycopg2
 from numpy.typing import NDArray
 from psycopg2 import sql
+from psycopg2.extensions import cursor
 from psycopg2.extras import Json, execute_values
 from pydantic import BaseModel, TypeAdapter
 
@@ -54,6 +55,17 @@ def check_extension_version(cur):
     return result[0] if result else None
 
 
+def create_vector_extension(cur: cursor) -> None:
+    try:
+        log.info("Vector extension not found, creating...")
+        cur.execute("CREATE EXTENSION vector;")
+        log.info("Vector extension created successfully")
+        log.info(f"Vector extension version: {check_extension_version(cur)}")
+
+    except psycopg2.Error as e:
+        raise RuntimeError(f"Failed to create vector extension for PGVector: {e}") from e
+
+
 def upsert_models(conn, keys_models: list[tuple[str, BaseModel]]):
     with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         query = sql.SQL(
@@ -69,6 +81,26 @@ def upsert_models(conn, keys_models: list[tuple[str, BaseModel]]):
         execute_values(cur, query, values, template="(%s, %s)")
 
 
+def remove_vector_store_metadata(conn: psycopg2.extensions.connection, vector_store_id: str) -> None:
+    """
+    Performs removal of vector store metadata from PGVector metadata_store table when vector store is unregistered
+
+    Args:
+        conn: active PostgreSQL connection
+        vector_store_id: identifier of VectorStore resource
+    """
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM metadata_store WHERE key = %s", (vector_store_id,))
+            if cur.rowcount > 0:
+                log.info(f"Removed metadata for vector store '{vector_store_id}' from PGVector metadata_store table.")
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Error removing metadata from PGVector metadata_store for vector_store: {vector_store_id}"
+        ) from e
+
+
 def load_models(cur, cls):
     cur.execute("SELECT key, data FROM metadata_store")
     rows = cur.fetchall()
@@ -77,13 +109,21 @@ def load_models(cur, cls):
 
 class PGVectorIndex(EmbeddingIndex):
     # reference: https://github.com/pgvector/pgvector?tab=readme-ov-file#querying
+    # Llama Stack supports only search functions that are applied for embeddings with vector type
     PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION: dict[str, str] = {
         "L2": "<->",
         "L1": "<+>",
         "COSINE": "<=>",
         "INNER_PRODUCT": "<#>",
-        "HAMMING": "<~>",
-        "JACCARD": "<%>",
+    }
+
+    # reference: https://github.com/pgvector/pgvector?tab=readme-ov-file#hnsw
+    # Llama Stack supports only index operator classes that are applied for embeddings with vector type
+    PGVECTOR_DISTANCE_METRIC_TO_INDEX_OPERATOR_CLASS: dict[str, str] = {
+        "L2": "vector_l2_ops",
+        "L1": "vector_l1_ops",
+        "COSINE": "vector_cosine_ops",
+        "INNER_PRODUCT": "vector_ip_ops",
     }
 
     def __init__(
@@ -91,8 +131,10 @@ class PGVectorIndex(EmbeddingIndex):
         vector_store: VectorStore,
         dimension: int,
         conn: psycopg2.extensions.connection,
+        distance_metric: str,
+        hnsw_m: int,
+        hnsw_ef_construction: int,
         kvstore: KVStore | None = None,
-        distance_metric: str = "COSINE",
     ):
         self.vector_store = vector_store
         self.dimension = dimension
@@ -100,6 +142,8 @@ class PGVectorIndex(EmbeddingIndex):
         self.kvstore = kvstore
         self.check_distance_metric_availability(distance_metric)
         self.distance_metric = distance_metric
+        self.hnsw_m = hnsw_m
+        self.hnsw_ef_construction = hnsw_ef_construction
         self.table_name = None
 
     async def initialize(self) -> None:
@@ -120,6 +164,16 @@ class PGVectorIndex(EmbeddingIndex):
                         content_text TEXT,
                         tokenized_content TSVECTOR
                     )
+                """
+                )
+
+                # Create HNSW (Hierarchical Navigable Small Worlds) index on embedding column to allow efficient and performant vector search in pgvector
+                # HNSW finds the approximate nearest neighbors by only calculating distance metric for vectors it visits during graph traversal instead of processing all vectors
+                index_operator_class = self.get_pgvector_index_operator_class()
+                cur.execute(
+                    f"""
+                    CREATE INDEX IF NOT EXISTS {self.table_name}_hnsw_idx
+                    ON {self.table_name} USING hnsw(embedding {index_operator_class}) WITH (m = {self.hnsw_m}, ef_construction = {self.hnsw_ef_construction});
                 """
                 )
 
@@ -312,6 +366,14 @@ class PGVectorIndex(EmbeddingIndex):
             # Fix: Use proper tuple parameter binding with explicit array cast
             cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s::text[])", (chunk_ids,))
 
+    def get_pgvector_index_operator_class(self) -> str:
+        """Get the pgvector index operator class for the current distance metric.
+
+        Returns:
+            The operator class name.
+        """
+        return self.PGVECTOR_DISTANCE_METRIC_TO_INDEX_OPERATOR_CLASS[self.distance_metric]
+
     def get_pgvector_search_function(self) -> str:
         return self.PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION[self.distance_metric]
 
@@ -364,7 +426,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 if version:
                     log.info(f"Vector extension version: {version}")
                 else:
-                    raise RuntimeError("Vector extension is not installed.")
+                    create_vector_extension(cur)
 
                 cur.execute(
                     """
@@ -389,6 +451,9 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 dimension=vector_store.embedding_dimension,
                 conn=self.conn,
                 kvstore=self.kvstore,
+                distance_metric=self.config.distance_metric,
+                hnsw_m=self.config.hnsw_m,
+                hnsw_ef_construction=self.config.hnsw_ef_construction,
             )
             await pgvector_index.initialize()
             index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
@@ -415,7 +480,13 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
 
         # Create and cache the PGVector index table for the vector DB
         pgvector_index = PGVectorIndex(
-            vector_store=vector_store, dimension=vector_store.embedding_dimension, conn=self.conn, kvstore=self.kvstore
+            vector_store=vector_store,
+            dimension=vector_store.embedding_dimension,
+            conn=self.conn,
+            kvstore=self.kvstore,
+            distance_metric=self.config.distance_metric,
+            hnsw_m=self.config.hnsw_m,
+            hnsw_ef_construction=self.config.hnsw_ef_construction,
         )
         await pgvector_index.initialize()
         index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
@@ -431,6 +502,9 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         if self.kvstore is None:
             raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
         await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_store_id}")
+
+        # Delete vector store metadata from PGVector metadata_store table
+        remove_vector_store_metadata(self.conn, vector_store_id)
 
     async def insert_chunks(
         self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
@@ -458,7 +532,14 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             raise VectorStoreNotFoundError(vector_store_id)
 
         vector_store = VectorStore.model_validate_json(vector_store_data)
-        index = PGVectorIndex(vector_store, vector_store.embedding_dimension, self.conn)
+        index = PGVectorIndex(
+            vector_store,
+            vector_store.embedding_dimension,
+            self.conn,
+            distance_metric=self.config.distance_metric,
+            hnsw_m=self.config.hnsw_m,
+            hnsw_ef_construction=self.config.hnsw_ef_construction,
+        )
         await index.initialize()
         self.cache[vector_store_id] = VectorStoreWithIndex(vector_store, index, self.inference_api)
         return self.cache[vector_store_id]

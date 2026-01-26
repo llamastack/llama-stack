@@ -72,7 +72,7 @@ providers:
     provider_type: remote::vertexai
     config:
       project: ${env.VERTEX_AI_PROJECT:=}
-      location: ${env.VERTEX_AI_LOCATION:=us-central1}
+      location: ${env.VERTEX_AI_LOCATION:=global}
   - provider_id: groq
     provider_type: remote::groq
     config:
@@ -278,6 +278,9 @@ storage:
     prompts:
       namespace: prompts
       backend: kv_default
+    connectors:
+      namespace: connectors
+      backend: kv_default
 registered_resources:
   models: []
   shields:
@@ -351,3 +354,4 @@ vector_stores:
     cleanup_interval_seconds: 86400
 safety:
   default_shield_id: llama-guard
+connectors: []

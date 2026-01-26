@@ -25,6 +25,20 @@ class Scope(BaseModel):
     resource: str | None = None
 
 
+class RouteScope(BaseModel):
+    """Scope for route-level access control.
+
+    Defines which API routes can be accessed. The paths field
+    accepts single paths, lists of paths, or wildcards:
+    - Exact: "/v1/chat/completions"
+    - List: ["/v1/files*", "/v1/models*"]
+    - Prefix wildcard: "/v1/files*" matches "/v1/files" and all paths starting with "/v1/files"
+    - Full wildcard: "*"
+    """
+
+    paths: str | list[str]
+
+
 def _mutually_exclusive(obj, a: str, b: str):
     if getattr(obj, a) and getattr(obj, b):
         raise ValueError(f"{a} and {b} are mutually exclusive")
@@ -87,6 +101,70 @@ class AccessRule(BaseModel):
 
     permit: Scope | None = None
     forbid: Scope | None = None
+    when: str | list[str] | None = None
+    unless: str | list[str] | None = None
+    description: str | None = None
+
+    @model_validator(mode="after")
+    def validate_rule_format(self) -> Self:
+        _require_one_of(self, "permit", "forbid")
+        _mutually_exclusive(self, "permit", "forbid")
+        _mutually_exclusive(self, "when", "unless")
+        if isinstance(self.when, list):
+            parse_conditions(self.when)
+        elif self.when:
+            parse_conditions([self.when])
+        if isinstance(self.unless, list):
+            parse_conditions(self.unless)
+        elif self.unless:
+            parse_conditions([self.unless])
+        return self
+
+
+class RouteAccessRule(BaseModel):
+    """Route-level access rule for controlling API route access.
+
+    This rule defines which API routes users can access based on their
+    attributes (roles, teams, etc). Rules are evaluated before resource-level
+    access control.
+
+    A rule defines either permit or forbid access to specific routes. The routes
+    are specified using the 'paths' field which can be:
+    - A single exact path: "/v1/chat/completions"
+    - A list of paths: ["/v1/files*", "/v1/models*"]
+    - A wildcard prefix: "/v1/files*" matches /v1/files and all paths starting with /v1/files
+    - Full wildcard: "*" matches all routes
+
+    Path normalization: Trailing slashes are automatically removed (e.g., /v1/files/ becomes /v1/files).
+
+    A rule may also specify a condition using 'when' or 'unless', with the same
+    constraints as resource-level rules:
+    - 'user with <attr-value> in <attr-name>'
+    - 'user with <attr-value> not in <attr-name>'
+
+    If no route_policy is configured, all routes are allowed.
+    If route_policy is configured, rules are tested in order to find a match.
+
+    Examples in yaml:
+
+    - permit:
+        paths: "/v1/chat/completions"
+      when: user with developer in roles
+      description: developers can access chat completions
+
+    - permit:
+        paths: ["/v1/files*", "/v1/models*"]
+      when: user with user in roles
+      description: users can access files and models routes
+
+    - permit:
+        paths: "*"
+      when: user with admin in roles
+      description: admins have access to all routes
+    """
+
+    permit: RouteScope | None = None
+    forbid: RouteScope | None = None
     when: str | list[str] | None = None
     unless: str | list[str] | None = None
     description: str | None = None

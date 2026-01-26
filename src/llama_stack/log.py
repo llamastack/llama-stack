@@ -51,6 +51,7 @@ CATEGORIES = [
     "post_training",
     "scoring",
     "tests",
+    "connectors",
 ]
 UNCATEGORIZED = "uncategorized"
 

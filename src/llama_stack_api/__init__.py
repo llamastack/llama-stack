@@ -22,7 +22,21 @@ and considered a code smell. All exported symbols are explicitly listed in __all
 __version__ = "0.4.0.dev0"
 
 # Import submodules for those who need them
-from . import common  # noqa: F401
+from .schema_utils import (  # noqa: I001
+    CallableT,
+    ExtraBodyField,
+    SchemaInfo,
+    WebMethod,
+    clear_dynamic_schema_types,
+    get_registered_schema_info,
+    iter_dynamic_schema_types,
+    iter_json_schema_types,
+    iter_registered_schema_types,
+    json_schema_type,
+    register_dynamic_schema_type,
+    register_schema,
+    webmethod,
+)
 from .admin import (
     Admin,
     ApiFilter,
@@ -37,7 +51,17 @@ from .admin import (
 )
 
 # Import all public API symbols
-from .agents import Agents, ResponseGuardrail, ResponseGuardrailSpec, ResponseItemInclude
+from .agents import (
+    Agents,
+    CreateResponseRequest,
+    DeleteResponseRequest,
+    ListResponseInputItemsRequest,
+    ListResponsesRequest,
+    ResponseGuardrail,
+    ResponseGuardrailSpec,
+    ResponseItemInclude,
+    RetrieveResponseRequest,
+)
 from .batches import (
     Batches,
     BatchObject,
@@ -70,6 +94,8 @@ from .common.content_types import (
 )
 from .common.errors import (
     ConflictError,
+    ConnectorNotFoundError,
+    ConnectorToolNotFoundError,
     DatasetNotFoundError,
     InvalidConversationIdError,
     ModelNotFoundError,
@@ -369,6 +395,7 @@ from .openai_responses import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
+    OpenAIResponseReasoning,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
     OpenAIResponseTool,
@@ -404,7 +431,19 @@ from .post_training import (
     SupervisedFineTuneRequest,
     TrainingConfig,
 )
-from .prompts import ListPromptsResponse, Prompt, Prompts
+from .prompts import (
+    CreatePromptRequest,
+    DeletePromptRequest,
+    GetPromptRequest,
+    ListPromptsResponse,
+    ListPromptVersionsRequest,
+    Prompt,
+    Prompts,
+    SetDefaultVersionBodyRequest,
+    SetDefaultVersionRequest,
+    UpdatePromptBodyRequest,
+    UpdatePromptRequest,
+)
 from .providers import Providers
 from .rag_tool import (
     DefaultRAGQueryGeneratorConfig,
@@ -423,27 +462,15 @@ from .resource import Resource, ResourceType
 from .safety import (
     ModerationObject,
     ModerationObjectResults,
+    RunModerationRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
     ShieldStore,
     ViolationLevel,
 )
-from .schema_utils import (
-    CallableT,
-    ExtraBodyField,
-    SchemaInfo,
-    WebMethod,
-    clear_dynamic_schema_types,
-    get_registered_schema_info,
-    iter_dynamic_schema_types,
-    iter_json_schema_types,
-    iter_registered_schema_types,
-    json_schema_type,
-    register_dynamic_schema_type,
-    register_schema,
-    webmethod,
-)
+
 from .scoring import (
     ScoreBatchRequest,
     ScoreBatchResponse,
@@ -458,14 +485,18 @@ from .scoring_functions import (
     AggregationFunctionType,
     BasicScoringFnParams,
     CommonScoringFnFields,
+    GetScoringFunctionRequest,
+    ListScoringFunctionsRequest,
     ListScoringFunctionsResponse,
     LLMAsJudgeScoringFnParams,
     RegexParserScoringFnParams,
+    RegisterScoringFunctionRequest,
     ScoringFn,
     ScoringFnInput,
     ScoringFnParams,
     ScoringFnParamsType,
     ScoringFunctions,
+    UnregisterScoringFunctionRequest,
 )
 from .shields import (
     CommonShieldFields,
@@ -489,6 +520,7 @@ from .tools import (
     ToolRuntime,
     ToolStore,
 )
+from .validators import validate_embeddings_input_is_text
 from .vector_io import (
     Chunk,
     ChunkMetadata,
@@ -528,9 +560,12 @@ from .version import (
     LLAMA_STACK_API_V1ALPHA,
     LLAMA_STACK_API_V1BETA,
 )
+from . import common  # noqa: F401
+
 
 __all__ = [
     # Submodules
+    "schema_utils",
     "common",
     # Version constants
     "LLAMA_STACK_API_V1",
@@ -539,6 +574,12 @@ __all__ = [
     # API Symbols
     "Agents",
     "AggregationFunctionType",
+    # Agents Request Models
+    "CreateResponseRequest",
+    "DeleteResponseRequest",
+    "ListResponseInputItemsRequest",
+    "ListResponsesRequest",
+    "RetrieveResponseRequest",
     "AlgorithmConfig",
     "AllowedToolsFilter",
     "Api",
@@ -573,6 +614,8 @@ __all__ = [
     "CompletionInputType",
     "CompletionRequest",
     "Connector",
+    "ConnectorNotFoundError",
+    "ConnectorToolNotFoundError",
     "ConnectorInput",
     "Connectors",
     "ConnectorType",
@@ -850,6 +893,7 @@ __all__ = [
     "OpenAIResponseOutputMessageMCPListTools",
     "OpenAIResponseOutputMessageWebSearchToolCall",
     "OpenAIResponsePrompt",
+    "OpenAIResponseReasoning",
     "OpenAIResponseText",
     "OpenAIResponseTextFormat",
     "OpenAIResponseTool",
@@ -878,6 +922,14 @@ __all__ = [
     "PreferenceOptimizeRequest",
     "Prompt",
     "Prompts",
+    "CreatePromptRequest",
+    "DeletePromptRequest",
+    "GetPromptRequest",
+    "ListPromptVersionsRequest",
+    "SetDefaultVersionBodyRequest",
+    "SetDefaultVersionRequest",
+    "UpdatePromptBodyRequest",
+    "UpdatePromptRequest",
     "ProviderInfo",
     "ProviderSpec",
     "Providers",
@@ -915,6 +967,8 @@ __all__ = [
     "RouteInfo",
     "RoutingTable",
     "RowsDataSource",
+    "RunModerationRequest",
+    "RunShieldRequest",
     "RunShieldResponse",
     "Safety",
     "SafetyViolation",
@@ -933,6 +987,10 @@ __all__ = [
     "ScoringFunctions",
     "ScoringFunctionsProtocolPrivate",
     "ScoringResult",
+    "GetScoringFunctionRequest",
+    "ListScoringFunctionsRequest",
+    "RegisterScoringFunctionRequest",
+    "UnregisterScoringFunctionRequest",
     "ScoringResultRow",
     "Schema",
     "SchemaInfo",
@@ -1013,4 +1071,6 @@ __all__ = [
     "WebMethod",
     "WebSearchToolTypes",
     "WeightedRanker",
+    # Validators
+    "validate_embeddings_input_is_text",
 ]

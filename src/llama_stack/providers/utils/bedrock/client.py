@@ -49,9 +49,9 @@ def create_bedrock_client(config: BedrockBaseConfig, service_name: str = "bedroc
         boto3_config = Config(**config_args)
 
         session_args = {
-            "aws_access_key_id": config.aws_access_key_id,
-            "aws_secret_access_key": config.aws_secret_access_key,
-            "aws_session_token": config.aws_session_token,
+            "aws_access_key_id": config.aws_access_key_id.get_secret_value(),
+            "aws_secret_access_key": config.aws_secret_access_key.get_secret_value(),
+            "aws_session_token": config.aws_session_token.get_secret_value() if config.aws_session_token else None,
             "region_name": config.region_name,
             "profile_name": config.profile_name,
             "session_ttl": config.session_ttl,

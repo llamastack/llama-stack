@@ -53,6 +53,7 @@ from llama_stack_api import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
     ResponseGuardrailSpec,
+    RunModerationRequest,
     Safety,
 )
 
@@ -468,7 +469,9 @@ async def run_guardrails(safety_api: Safety | None, messages: str, guardrail_ids
         else:
             raise ValueError(f"No shield found with identifier '{guardrail_id}'")
 
-    guardrail_tasks = [safety_api.run_moderation(messages, model=model_id) for model_id in model_ids]
+    guardrail_tasks = [
+        safety_api.run_moderation(RunModerationRequest(input=messages, model=model_id)) for model_id in model_ids
+    ]
     responses = await asyncio.gather(*guardrail_tasks)
 
     for response in responses:
