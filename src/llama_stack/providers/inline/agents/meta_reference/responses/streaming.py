@@ -320,7 +320,7 @@ class StreamingResponseOrchestrator:
                     and self.accumulated_builtin_output_tokens >= self.max_output_tokens
                 ):
                     logger.info(
-                        "Skipping chat completion since max_output_tokens reached: "
+                        "Skipping inference call since max_output_tokens reached: "
                         f"{self.accumulated_builtin_output_tokens}/{self.max_output_tokens}"
                     )
                     final_status = "incomplete"
