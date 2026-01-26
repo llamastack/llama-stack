@@ -3080,24 +3080,43 @@ components:
         input:
           anyOf:
           - type: string
+            title: string
           - items:
               type: string
             type: array
-            title: list[string]
-          title: string | list[string]
+            maxItems: 2048
+            minItems: 1
+            title: Array of strings
+          - items:
+              type: integer
+            type: array
+            maxItems: 2048
+            minItems: 1
+            title: Array of tokens
+          - items:
+              items:
+                type: integer
+              type: array
+              minItems: 1
+            type: array
+            maxItems: 2048
+            minItems: 1
+            title: Array of token arrays
+          title: string | ... (4 variants)
         encoding_format:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          enum:
+          - float
+          - base64
+          title: Encoding Format
           default: float
         dimensions:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          minimum: 1.0
+          title: Dimensions
         user:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: User
       additionalProperties: true
       type: object
       required:

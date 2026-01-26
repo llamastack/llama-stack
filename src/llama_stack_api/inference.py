@@ -15,7 +15,7 @@ from typing import (
 )
 
 from fastapi import Body
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.common.content_types import InterleavedContent
@@ -1045,23 +1045,68 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
 
 
+def _remove_null_from_anyof(schema: dict) -> None:
+    """Remove null type from anyOf if present in JSON schema.
+
+    This is used to make optional fields non-nullable in the OpenAPI spec,
+    matching OpenAI's API specification where optional fields can be omitted
+    but cannot be explicitly set to null.
+
+    Handles both OpenAPI 3.0 format (anyOf with null) and OpenAPI 3.1 format
+    (type as array with null).
+    """
+    # Handle anyOf format: anyOf: [{type: integer}, {type: null}]
+    if "anyOf" in schema:
+        schema["anyOf"] = [s for s in schema["anyOf"] if s.get("type") != "null"]
+        if len(schema["anyOf"]) == 1:
+            # If only one type left, flatten it
+            only_schema = schema["anyOf"][0]
+            schema.pop("anyOf")
+            schema.update(only_schema)
+
+    # Handle OpenAPI 3.1 format: type: ['integer', 'null']
+    elif isinstance(schema.get("type"), list) and "null" in schema["type"]:
+        schema["type"].remove("null")
+        if len(schema["type"]) == 1:
+            schema["type"] = schema["type"][0]
+
+
 # extra_body can be accessed via .model_extra
 @json_schema_type
 class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
     """Request parameters for OpenAI-compatible embeddings endpoint.
 
-    :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
-    :param input: Input text to embed, encoded as a string or array of strings. To embed multiple inputs in a single request, pass an array of strings.
-    :param encoding_format: (Optional) The format to return the embeddings in. Can be either "float" or "base64". Defaults to "float".
-    :param dimensions: (Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models.
-    :param user: (Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
+    :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint. Accepts any string model identifier.
+    :param input: Input text to embed, encoded as a string or array of tokens. To embed multiple inputs in a single request, pass an array of strings or array of token arrays. The input must not exceed the max input tokens for the model (8192 tokens for all embedding models), cannot be an empty string, and any array must be 2048 dimensions or less.
+    :param encoding_format: (Optional) The format to return the embeddings in. Must be either "float" or "base64". Defaults to "float".
+    :param dimensions: (Optional, non-nullable) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models. Must be >= 1 if provided. Field can be omitted but cannot be explicitly null.
+    :param user: (Optional, non-nullable) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. Field can be omitted but cannot be explicitly null.
     """
 
     model: str
-    input: str | list[str]
-    encoding_format: str | None = "float"
-    dimensions: int | None = None
-    user: str | None = None
+    input: (
+        Annotated[str, Field(title="string")]
+        | Annotated[list[str], Field(title="Array of strings", min_length=1, max_length=2048)]
+        | Annotated[list[int], Field(title="Array of tokens", min_length=1, max_length=2048)]
+        | Annotated[
+            list[Annotated[list[int], Field(min_length=1)]],
+            Field(title="Array of token arrays", min_length=1, max_length=2048),
+        ]
+    )
+    encoding_format: Literal["float", "base64"] = Field(default="float")
+    dimensions: int | None = Field(default=None, ge=1, json_schema_extra=_remove_null_from_anyof)
+    user: str | None = Field(default=None, json_schema_extra=_remove_null_from_anyof)
+
+    @field_validator("dimensions", "user", mode="before")
+    @classmethod
+    def _reject_explicit_null(cls, v: Any, info: Any) -> Any:
+        """Reject explicit null values to match OpenAI API behavior.
+
+        Fields are optional (can be omitted) but not nullable (cannot be explicitly null).
+        """
+        if v is None:
+            raise ValueError(f"{info.field_name} cannot be null")
+        return v
 
 
 @runtime_checkable

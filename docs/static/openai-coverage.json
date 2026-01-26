@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 82.4,
-      "issues": 272,
+      "score": 82.6,
+      "issues": 268,
       "missing_properties": 184,
-      "total_problems": 456,
+      "total_problems": 452,
       "total_properties": 2598
     }
   },
@@ -1384,8 +1384,8 @@
       ]
     },
     "Embeddings": {
-      "score": 42.9,
-      "issues": 8,
+      "score": 71.4,
+      "issues": 4,
       "missing_properties": 0,
       "total_properties": 14,
       "endpoints": [
@@ -1397,42 +1397,10 @@
               "missing_properties": [],
               "conformance_issues": [
                 {
-                  "property": "POST.requestBody.content.application/json.properties.dimensions",
-                  "details": [
-                    "Type removed: ['integer']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.requestBody.content.application/json.properties.encoding_format",
-                  "details": [
-                    "Enum removed: ['float', 'base64']",
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.requestBody.content.application/json.properties.input",
-                  "details": [
-                    "Union variants added: 2",
-                    "Union variants removed: 4"
-                  ]
-                },
-                {
                   "property": "POST.requestBody.content.application/json.properties.model",
                   "details": [
                     "Type added: ['string']",
                     "Union variants removed: 2"
-                  ]
-                },
-                {
-                  "property": "POST.requestBody.content.application/json.properties.user",
-                  "details": [
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -1458,7 +1426,7 @@
                 }
               ],
               "missing_count": 0,
-              "issues_count": 8
+              "issues_count": 4
             }
           ]
         }
