@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import time
 import uuid
 from collections.abc import AsyncIterator
 from typing import Any
@@ -78,6 +79,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageMCPListTools,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
+    OpenAIResponseReasoning,
     OpenAIResponseText,
     OpenAIResponseUsage,
     OpenAIResponseUsageInputTokensDetails,
@@ -138,8 +140,10 @@ class StreamingResponseOrchestrator:
         prompt: OpenAIResponsePrompt | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
+        reasoning: OpenAIResponseReasoning | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        store: bool | None = True,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -158,8 +162,11 @@ class StreamingResponseOrchestrator:
         self.parallel_tool_calls = parallel_tool_calls
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
+        self.reasoning = reasoning
         self.metadata = metadata
+        self.store = store
         self.include = include
+        self.store = bool(store) if store is not None else True
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -195,6 +202,7 @@ class StreamingResponseOrchestrator:
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             metadata=self.metadata,
+            store=self.store,
         )
 
         return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
@@ -215,8 +223,10 @@ class StreamingResponseOrchestrator:
         *,
         error: OpenAIResponseError | None = None,
     ) -> OpenAIResponseObject:
+        completed_at = int(time.time()) if status == "completed" else None
         return OpenAIResponseObject(
             created_at=self.created_at,
+            completed_at=completed_at,
             id=self.response_id,
             model=self.ctx.model,
             object="response",
@@ -231,7 +241,9 @@ class StreamingResponseOrchestrator:
             prompt=self.prompt,
             parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
+            reasoning=self.reasoning,
             metadata=self.metadata,
+            store=self.store,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -327,6 +339,7 @@ class StreamingResponseOrchestrator:
                         "include_usage": True,
                     },
                     logprobs=logprobs,
+                    reasoning_effort=self.reasoning.effort if self.reasoning else None,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -489,17 +502,16 @@ class StreamingResponseOrchestrator:
                 input_tokens=chunk.usage.prompt_tokens,
                 output_tokens=chunk.usage.completion_tokens,
                 total_tokens=chunk.usage.total_tokens,
-                input_tokens_details=(
-                    OpenAIResponseUsageInputTokensDetails(cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens)
-                    if chunk.usage.prompt_tokens_details
-                    else None
+                input_tokens_details=OpenAIResponseUsageInputTokensDetails(
+                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens
+                    if chunk.usage.prompt_tokens_details and chunk.usage.prompt_tokens_details.cached_tokens is not None
+                    else 0
                 ),
-                output_tokens_details=(
-                    OpenAIResponseUsageOutputTokensDetails(
-                        reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
-                    )
+                output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
+                    reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
                     if chunk.usage.completion_tokens_details
-                    else None
+                    and chunk.usage.completion_tokens_details.reasoning_tokens is not None
+                    else 0
                 ),
             )
         else:
@@ -509,17 +521,16 @@ class StreamingResponseOrchestrator:
                 output_tokens=self.accumulated_usage.output_tokens + chunk.usage.completion_tokens,
                 total_tokens=self.accumulated_usage.total_tokens + chunk.usage.total_tokens,
                 # Use latest non-null details
-                input_tokens_details=(
-                    OpenAIResponseUsageInputTokensDetails(cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens)
-                    if chunk.usage.prompt_tokens_details
-                    else self.accumulated_usage.input_tokens_details
+                input_tokens_details=OpenAIResponseUsageInputTokensDetails(
+                    cached_tokens=chunk.usage.prompt_tokens_details.cached_tokens
+                    if chunk.usage.prompt_tokens_details and chunk.usage.prompt_tokens_details.cached_tokens is not None
+                    else self.accumulated_usage.input_tokens_details.cached_tokens
                 ),
-                output_tokens_details=(
-                    OpenAIResponseUsageOutputTokensDetails(
-                        reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
-                    )
+                output_tokens_details=OpenAIResponseUsageOutputTokensDetails(
+                    reasoning_tokens=chunk.usage.completion_tokens_details.reasoning_tokens
                     if chunk.usage.completion_tokens_details
-                    else self.accumulated_usage.output_tokens_details
+                    and chunk.usage.completion_tokens_details.reasoning_tokens is not None
+                    else self.accumulated_usage.output_tokens_details.reasoning_tokens
                 ),
             )
 
@@ -747,9 +758,9 @@ class StreamingResponseOrchestrator:
                     chunk_finish_reason = chunk_choice.finish_reason
 
                 # Handle reasoning content if present (non-standard field for o1/o3 models)
-                if hasattr(chunk_choice.delta, "reasoning_content") and chunk_choice.delta.reasoning_content:
+                if hasattr(chunk_choice.delta, "reasoning") and chunk_choice.delta.reasoning:
                     async for event in self._handle_reasoning_content_chunk(
-                        reasoning_content=chunk_choice.delta.reasoning_content,
+                        reasoning_content=chunk_choice.delta.reasoning,
                         reasoning_part_emitted=reasoning_part_emitted,
                         reasoning_content_index=reasoning_content_index,
                         message_item_id=message_item_id,
@@ -761,7 +772,7 @@ class StreamingResponseOrchestrator:
                         else:
                             yield event
                     reasoning_part_emitted = True
-                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning_content)
+                    reasoning_text_accumulated.append(chunk_choice.delta.reasoning)
 
                 # Handle refusal content if present
                 if chunk_choice.delta.refusal:

@@ -75,5 +75,7 @@ class SqlStore(Protocol):
         nullable: bool = True,
     ) -> None: ...
 
+    async def shutdown(self) -> None: ...
+
 
 __all__ = ["ColumnDefinition", "ColumnType", "SqlStore"]

@@ -321,7 +321,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 "Google Cloud Project ID for Vertex AI",
             ),
             "VERTEX_AI_LOCATION": (
-                "us-central1",
+                "global",
                 "Google Cloud Location for Vertex AI",
             ),
             "SAMBANOVA_API_KEY": (

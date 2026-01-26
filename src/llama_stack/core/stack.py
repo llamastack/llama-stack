@@ -57,6 +57,7 @@ from llama_stack_api import (
     Providers,
     RegisterBenchmarkRequest,
     RegisterModelRequest,
+    RegisterScoringFunctionRequest,
     RegisterShieldRequest,
     Safety,
     Scoring,
@@ -109,7 +110,7 @@ RESOURCES = [
         Api.scoring_functions,
         "register_scoring_function",
         "list_scoring_functions",
-        None,
+        RegisterScoringFunctionRequest,
     ),
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
     ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
@@ -299,7 +300,8 @@ async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict
             f"Embedding model '{model_identifier}' not found. Available embedding models: {list(models_list.keys())}"
         )
 
-    embedding_dimension = model.metadata.get("embedding_dimension")
+    # if not in metadata, fetch from config default
+    embedding_dimension = model.metadata.get("embedding_dimension", embedding_model.embedding_dimensions)
     if embedding_dimension is None:
         raise ValueError(f"Embedding model '{model_identifier}' is missing 'embedding_dimension' in metadata")
 
@@ -652,7 +654,7 @@ class Stack:
     async def shutdown(self):
         for impl in self.impls.values():
             impl_name = impl.__class__.__name__
-            logger.info(f"Shutting down {impl_name}")
+            logger.debug(f"Shutting down {impl_name}")
             try:
                 if hasattr(impl, "shutdown"):
                     await asyncio.wait_for(impl.shutdown(), timeout=5)
@@ -673,6 +675,20 @@ class Stack:
         global REGISTRY_REFRESH_TASK
         if REGISTRY_REFRESH_TASK:
             REGISTRY_REFRESH_TASK.cancel()
+
+        # Shutdown storage backends
+        from llama_stack.core.storage.kvstore.kvstore import shutdown_kvstore_backends
+        from llama_stack.core.storage.sqlstore.sqlstore import shutdown_sqlstore_backends
+
+        try:
+            await shutdown_kvstore_backends()
+        except Exception as e:
+            logger.exception(f"Failed to shutdown KV store backends: {e}")
+
+        try:
+            await shutdown_sqlstore_backends()
+        except Exception as e:
+            logger.exception(f"Failed to shutdown SQL store backends: {e}")
 
 
 async def refresh_registry_once(impls: dict[Api, Any]):

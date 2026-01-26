@@ -16,9 +16,9 @@ AWS Bedrock safety provider for content moderation using AWS's safety services.
 |-------|------|----------|---------|-------------|
 | `allowed_models` | `list[str] \| None` | No |  | List of models that should be registered with the model registry. If None, all models are allowed. |
 | `refresh_models` | `bool` | No | False | Whether to refresh models periodically from the provider |
-| `aws_access_key_id` | `str \| None` | No |  | The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID |
-| `aws_secret_access_key` | `str \| None` | No |  | The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY |
-| `aws_session_token` | `str \| None` | No |  | The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN |
+| `aws_access_key_id` | `SecretStr \| None` | No |  | The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID |
+| `aws_secret_access_key` | `SecretStr \| None` | No |  | The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY |
+| `aws_session_token` | `SecretStr \| None` | No |  | The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN |
 | `region_name` | `str \| None` | No |  | The default AWS Region to use, for example, us-west-1 or us-west-2.Default use environment variable: AWS_DEFAULT_REGION |
 | `profile_name` | `str \| None` | No |  | The profile name that contains credentials to use.Default use environment variable: AWS_PROFILE |
 | `total_max_attempts` | `int \| None` | No |  | An integer representing the maximum number of attempts that will be made for a single request, including the initial attempt. Default use environment variable: AWS_MAX_ATTEMPTS |

@@ -7,6 +7,10 @@
 
 import pytest
 
+# Fixtures imported from test_openai_responses via root conftest.py for pytest 8.4+ compatibility
+from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
+    OpenAIResponsesImpl,
+)
 from llama_stack_api.common.errors import (
     ConversationNotFoundError,
     InvalidConversationIdError,
@@ -20,13 +24,6 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseCompleted,
     OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseOutputMessageContentOutputText,
-)
-
-# Import existing fixtures from the main responses test file
-pytest_plugins = ["tests.unit.providers.agents.meta_reference.test_openai_responses"]
-
-from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
-    OpenAIResponsesImpl,
 )
 
 
@@ -202,6 +199,7 @@ class TestIntegrationWorkflow:
                 object="response",
                 output=[message_item],
                 status="completed",
+                store=True,
             )
 
             yield OpenAIResponseObjectStreamResponseCompleted(response=mock_response, type="response.completed")
