@@ -515,7 +515,7 @@ class TestVLLMBackwardCompatibility:
 
             assert config.network is not None
             assert config.network.tls is not None
-            assert config.network.tls.verify == cert_path
+            assert config.network.tls.verify.resolve() == Path(cert_path).resolve()
         finally:
             Path(cert_path).unlink()
 
