@@ -29,8 +29,9 @@ jobs:
         with:
           # For dependabot PRs, we need to checkout with a token that can push changes
           token: ${{ github.actor == 'dependabot[bot]' && secrets.GITHUB_TOKEN || github.token }}
-          # Fetch full history for dependabot PRs to allow commits
-          fetch-depth: ${{ github.actor == 'dependabot[bot]' && 0 || 1 }}
+          # Fetch enough history for api-conformance check (needs HEAD~1 for comparison)
+          # Full history for dependabot PRs to allow commits
+          fetch-depth: ${{ github.actor == 'dependabot[bot]' && 0 || 2 }}
 
       - name: Set up Python
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0

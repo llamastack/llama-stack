@@ -154,16 +154,6 @@ class AuthenticationMiddleware:
                 f"Authentication successful: {validation_result.principal} with {len(validation_result.attributes)} attributes"
             )
 
-            # Scope-based API access control
-            if webmethod and webmethod.required_scope:
-                user = user_from_scope(scope)
-                if not _has_required_scope(webmethod.required_scope, user):
-                    return await self._send_auth_error(
-                        send,
-                        f"Access denied: user does not have required scope: {webmethod.required_scope}",
-                        status=403,
-                    )
-
         return await self.app(scope, receive, send)
 
     async def _send_auth_error(self, send, message, status=401):
@@ -177,18 +167,6 @@ class AuthenticationMiddleware:
         error_key = "message" if status == 401 else "detail"
         error_msg = json.dumps({"error": {error_key: message}}).encode()
         await send({"type": "http.response.body", "body": error_msg})
-
-
-def _has_required_scope(required_scope: str, user: User | None) -> bool:
-    # if no user, assume auth is not enabled
-    if not user:
-        return True
-
-    if not user.attributes:
-        return False
-
-    user_scopes = user.attributes.get("scopes", [])
-    return required_scope in user_scopes
 
 
 class RouteAuthorizationMiddleware:

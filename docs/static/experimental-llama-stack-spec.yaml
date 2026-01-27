@@ -1404,6 +1404,12 @@ components:
               user: '#/components/schemas/OpenAIUserMessageParam-Output'
         finish_reason:
           type: string
+          enum:
+          - stop
+          - length
+          - tool_calls
+          - content_filter
+          - function_call
           title: Finish Reason
         index:
           type: integer
@@ -2014,6 +2020,13 @@ components:
         delta:
           $ref: '#/components/schemas/OpenAIChoiceDelta'
         finish_reason:
+          enum:
+          - stop
+          - length
+          - tool_calls
+          - content_filter
+          - function_call
+          nullable: true
           title: Finish Reason
           type: string
         index:
@@ -2233,6 +2246,12 @@ components:
       properties:
         finish_reason:
           type: string
+          enum:
+          - stop
+          - length
+          - tool_calls
+          - content_filter
+          - function_call
           title: Finish Reason
         text:
           type: string
@@ -9684,6 +9703,14 @@ components:
       - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
         title: OpenAIChatCompletionToolChoiceCustomTool
       title: OpenAIChatCompletionToolChoiceAllowedTools | OpenAIChatCompletionToolChoiceFunctionTool | OpenAIChatCompletionToolChoiceCustomTool
+    OpenAIFinishReason:
+      enum:
+      - stop
+      - length
+      - tool_calls
+      - content_filter
+      - function_call
+      type: string
     OpenAIResponseInputToolChoice:
       anyOf:
       - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
