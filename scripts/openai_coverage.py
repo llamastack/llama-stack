@@ -615,8 +615,9 @@ def main():
             with open(args.output) as f:
                 previous_report = json.load(f)
                 previous_score = previous_report.get("summary", {}).get("conformance", {}).get("score")
-        except (json.JSONDecodeError, OSError):
-            pass  # If we can't read it, skip regression check
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"Error: could not load previous report: {e}")
+            sys.exit(1)
 
     try:
         report = calculate_coverage(args.openai_spec, args.llama_spec, args.openresponses_spec)
