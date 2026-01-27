@@ -23,7 +23,8 @@ from llama_stack_api import (
     EmbeddedChunk,
     Files,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
@@ -274,24 +275,20 @@ class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         await self.cache[vector_store_id].index.delete()
         del self.cache[vector_store_id]
 
-    async def insert_chunks(
-        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
-    ) -> None:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def insert_chunks(self, request: InsertChunksRequest) -> None:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if index is None:
-            raise ValueError(f"Vector DB {vector_store_id} not found in Chroma")
+            raise ValueError(f"Vector DB {request.vector_store_id} not found in Chroma")
 
-        await index.insert_chunks(chunks)
+        await index.insert_chunks(request)
 
-    async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
-    ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
 
         if index is None:
-            raise ValueError(f"Vector DB {vector_store_id} not found in Chroma")
+            raise ValueError(f"Vector DB {request.vector_store_id} not found in Chroma")
 
-        return await index.query_chunks(query, params)
+        return await index.query_chunks(request)
 
     async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex:
         if vector_store_id in self.cache:
