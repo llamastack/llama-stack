@@ -32,9 +32,9 @@ from llama_stack_api import (
     OpenAIFile,
     OpenAIFileObject,
     OpenAISystemMessageParam,
+    Order,
     Prompt,
 )
-from llama_stack_api.agents import Order
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartTextParam,

@@ -36,10 +36,24 @@ def is_unwrapped_body_param(param_type: Any) -> bool:
         base_type = args[0]
         metadata = args[1:]
 
-        # Look for Body annotation with embed=False
+        # Look for Body annotation; treat embed=None (default) as unwrapped
         # Body() returns a FieldInfo object, so we check for that type and the embed attribute
         for item in metadata:
-            if isinstance(item, FieldInfo) and hasattr(item, "embed") and not item.embed:
+            if isinstance(item, FieldInfo) and hasattr(item, "embed") and item.embed is not True:
                 return inspect.isclass(base_type) and issubclass(base_type, BaseModel)
 
+    return False
+
+
+def is_body_param(param_type: Any) -> bool:
+    """
+    Check if a parameter type represents a body parameter (Annotated with Body()).
+    """
+    if get_origin(param_type) is typing.Annotated:
+        args = get_args(param_type)
+        base_type = args[0]
+        metadata = args[1:]
+        for item in metadata:
+            if isinstance(item, FieldInfo):
+                return inspect.isclass(base_type) and issubclass(base_type, BaseModel)
     return False

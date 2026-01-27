@@ -1306,6 +1306,12 @@ components:
               user: '#/components/schemas/OpenAIUserMessageParam-Output'
         finish_reason:
           type: string
+          enum:
+          - stop
+          - length
+          - tool_calls
+          - content_filter
+          - function_call
           title: Finish Reason
         index:
           type: integer
@@ -1916,6 +1922,13 @@ components:
         delta:
           $ref: '#/components/schemas/OpenAIChoiceDelta'
         finish_reason:
+          enum:
+          - stop
+          - length
+          - tool_calls
+          - content_filter
+          - function_call
+          nullable: true
           title: Finish Reason
           type: string
         index:
@@ -2135,6 +2148,12 @@ components:
       properties:
         finish_reason:
           type: string
+          enum:
+          - stop
+          - length
+          - tool_calls
+          - content_filter
+          - function_call
           title: Finish Reason
         text:
           type: string
@@ -3013,24 +3032,43 @@ components:
         input:
           anyOf:
           - type: string
+            title: string
           - items:
               type: string
             type: array
-            title: list[string]
-          title: string | list[string]
+            maxItems: 2048
+            minItems: 1
+            title: Array of strings
+          - items:
+              type: integer
+            type: array
+            maxItems: 2048
+            minItems: 1
+            title: Array of tokens
+          - items:
+              items:
+                type: integer
+              type: array
+              minItems: 1
+            type: array
+            maxItems: 2048
+            minItems: 1
+            title: Array of token arrays
+          title: string | ... (4 variants)
         encoding_format:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          enum:
+          - float
+          - base64
+          title: Encoding Format
           default: float
         dimensions:
-          anyOf:
-          - type: integer
-          - type: 'null'
+          type: integer
+          minimum: 1.0
+          title: Dimensions
         user:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: User
       additionalProperties: true
       type: object
       required:
@@ -4139,15 +4177,16 @@ components:
       title: OpenAIResponseUsage
       description: Usage information for OpenAI response.
     ResponseGuardrailSpec:
-      description: Specification for a guardrail to apply during response generation.
       properties:
         type:
-          title: Type
           type: string
+          title: Type
+      additionalProperties: false
+      type: object
       required:
       - type
       title: ResponseGuardrailSpec
-      type: object
+      description: Specification for a guardrail to apply during response generation.
     OpenAIResponseInputTool:
       discriminator:
         mapping:
@@ -4221,184 +4260,6 @@ components:
       - server_label
       title: OpenAIResponseInputToolMCP
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
-    CreateOpenaiResponseRequest:
-      properties:
-        input:
-          anyOf:
-          - type: string
-          - items:
-              anyOf:
-              - oneOf:
-                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                  title: OpenAIResponseMessage-Input
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                  title: OpenAIResponseOutputMessageWebSearchToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                  title: OpenAIResponseOutputMessageFileSearchToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                  title: OpenAIResponseOutputMessageFunctionToolCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                  title: OpenAIResponseOutputMessageMCPCall
-                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                  title: OpenAIResponseOutputMessageMCPListTools
-                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                  title: OpenAIResponseMCPApprovalRequest
-                discriminator:
-                  propertyName: type
-                  mapping:
-                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
-                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
-                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
-                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
-                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
-                    message: '#/components/schemas/OpenAIResponseMessage-Input'
-                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
-                title: OpenAIResponseMessage-Input | ... (7 variants)
-              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
-                title: OpenAIResponseInputFunctionToolCallOutput
-              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
-                title: OpenAIResponseMCPApprovalResponse
-              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
-                title: OpenAIResponseMessage-Input
-              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
-            type: array
-            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
-          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
-        model:
-          type: string
-          title: Model
-        prompt:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponsePrompt'
-            title: OpenAIResponsePrompt
-          - type: 'null'
-          title: OpenAIResponsePrompt
-        instructions:
-          anyOf:
-          - type: string
-          - type: 'null'
-        parallel_tool_calls:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: true
-        previous_response_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-        conversation:
-          anyOf:
-          - type: string
-          - type: 'null'
-        store:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: true
-        stream:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: false
-        temperature:
-          anyOf:
-          - type: number
-          - type: 'null'
-        text:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseText'
-            title: OpenAIResponseText
-          - type: 'null'
-          title: OpenAIResponseText
-        tool_choice:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
-            title: OpenAIResponseInputToolChoiceMode
-          - oneOf:
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
-              title: OpenAIResponseInputToolChoiceAllowedTools
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
-              title: OpenAIResponseInputToolChoiceFileSearch
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-              title: OpenAIResponseInputToolChoiceWebSearch
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
-              title: OpenAIResponseInputToolChoiceFunctionTool
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
-              title: OpenAIResponseInputToolChoiceMCPTool
-            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
-              title: OpenAIResponseInputToolChoiceCustomTool
-            discriminator:
-              propertyName: type
-              mapping:
-                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
-                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
-                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
-                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
-                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
-                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
-            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
-          - type: 'null'
-          title: OpenAIResponseInputToolChoiceMode
-        tools:
-          anyOf:
-          - items:
-              oneOf:
-              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                title: OpenAIResponseInputToolWebSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                title: OpenAIResponseInputToolFileSearch
-              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
-                title: OpenAIResponseInputToolFunction
-              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
-                title: OpenAIResponseInputToolMCP
-              discriminator:
-                propertyName: type
-                mapping:
-                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
-                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
-                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
-                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
-              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
-            type: array
-          - type: 'null'
-        include:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/ResponseItemInclude'
-            type: array
-          - type: 'null'
-        max_infer_iters:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          default: 10
-        max_tool_calls:
-          anyOf:
-          - type: integer
-          - type: 'null'
-        reasoning:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIResponseReasoning'
-            title: OpenAIResponseReasoning
-          - type: 'null'
-          title: OpenAIResponseReasoning
-        metadata:
-          anyOf:
-          - additionalProperties:
-              type: string
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - input
-      - model
-      title: CreateOpenaiResponseRequest
     OpenAIResponseObject:
       properties:
         created_at:
@@ -6703,25 +6564,30 @@ components:
         vector_store_id:
           type: string
           title: Vector Store Id
+          description: The ID of the vector store to insert chunks into.
         chunks:
           items:
             $ref: '#/components/schemas/EmbeddedChunk-Input'
           type: array
           title: Chunks
+          description: The list of embedded chunks to insert.
         ttl_seconds:
           anyOf:
           - type: integer
           - type: 'null'
+          description: Time-to-live in seconds for the inserted chunks.
       type: object
       required:
       - vector_store_id
       - chunks
       title: InsertChunksRequest
+      description: Request body for inserting chunks into a vector store.
     QueryChunksRequest:
       properties:
         vector_store_id:
           type: string
           title: Vector Store Id
+          description: The ID of the vector store to query.
         query:
           anyOf:
           - type: string
@@ -6751,16 +6617,19 @@ components:
             type: array
             title: list[ImageContentItem-Input | TextContentItem]
           title: string | list[ImageContentItem-Input | TextContentItem]
+          description: The query content to search for.
         params:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: Additional query parameters.
       type: object
       required:
       - vector_store_id
       - query
       title: QueryChunksRequest
+      description: Request body for querying chunks from a vector store.
     QueryChunksResponse:
       properties:
         chunks:
@@ -6975,24 +6844,6 @@ components:
       type: object
       title: OpenAICreateVectorStoreRequestWithExtraBody
       description: Request to create a vector store with extra_body support.
-    OpenaiUpdateVectorStoreRequest:
-      properties:
-        name:
-          anyOf:
-          - type: string
-          - type: 'null'
-        expires_after:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        metadata:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      title: OpenaiUpdateVectorStoreRequest
     VectorStoreDeleteResponse:
       properties:
         id:
@@ -7232,45 +7083,6 @@ components:
       - data
       title: VectorStoreListFilesResponse
       description: Response from listing files in a vector store.
-    OpenaiAttachFileToVectorStoreRequest:
-      properties:
-        file_id:
-          type: string
-          title: File Id
-        attributes:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        chunking_strategy:
-          anyOf:
-          - oneOf:
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-              title: VectorStoreChunkingStrategyAuto
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-              title: VectorStoreChunkingStrategyStatic
-            discriminator:
-              propertyName: type
-              mapping:
-                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
-          - type: 'null'
-          title: Chunking Strategy
-      type: object
-      required:
-      - file_id
-      title: OpenaiAttachFileToVectorStoreRequest
-    OpenaiUpdateVectorStoreFileRequest:
-      properties:
-        attributes:
-          additionalProperties: true
-          type: object
-          title: Attributes
-      type: object
-      required:
-      - attributes
-      title: OpenaiUpdateVectorStoreFileRequest
     VectorStoreFileDeleteResponse:
       properties:
         id:
@@ -7346,46 +7158,6 @@ components:
       - data
       title: VectorStoreFileContentResponse
       description: Represents the parsed content of a vector store file.
-    OpenaiSearchVectorStoreRequest:
-      properties:
-        query:
-          anyOf:
-          - type: string
-          - items:
-              type: string
-            type: array
-            title: list[string]
-          title: string | list[string]
-        filters:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-        max_num_results:
-          anyOf:
-          - type: integer
-          - type: 'null'
-          default: 10
-        ranking_options:
-          anyOf:
-          - $ref: '#/components/schemas/SearchRankingOptions'
-            title: SearchRankingOptions
-          - type: 'null'
-          title: SearchRankingOptions
-        rewrite_query:
-          anyOf:
-          - type: boolean
-          - type: 'null'
-          default: false
-        search_mode:
-          anyOf:
-          - type: string
-          - type: 'null'
-          default: vector
-      type: object
-      required:
-      - query
-      title: OpenaiSearchVectorStoreRequest
     VectorStoreSearchResponse:
       properties:
         file_id:
@@ -8907,6 +8679,218 @@ components:
       - reasoning.encrypted_content
       title: ConversationItemInclude
       description: Specify additional output data to include in the model response.
+    CreateResponseRequest:
+      properties:
+        input:
+          anyOf:
+          - type: string
+          - items:
+              anyOf:
+              - oneOf:
+                - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                  title: OpenAIResponseMessage-Input
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                  title: OpenAIResponseOutputMessageWebSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                  title: OpenAIResponseOutputMessageFileSearchToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                  title: OpenAIResponseOutputMessageFunctionToolCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                  title: OpenAIResponseOutputMessageMCPCall
+                - $ref: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                  title: OpenAIResponseOutputMessageMCPListTools
+                - $ref: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                  title: OpenAIResponseMCPApprovalRequest
+                discriminator:
+                  propertyName: type
+                  mapping:
+                    file_search_call: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCall'
+                    function_call: '#/components/schemas/OpenAIResponseOutputMessageFunctionToolCall'
+                    mcp_approval_request: '#/components/schemas/OpenAIResponseMCPApprovalRequest'
+                    mcp_call: '#/components/schemas/OpenAIResponseOutputMessageMCPCall'
+                    mcp_list_tools: '#/components/schemas/OpenAIResponseOutputMessageMCPListTools'
+                    message: '#/components/schemas/OpenAIResponseMessage-Input'
+                    web_search_call: '#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall'
+                title: OpenAIResponseMessage-Input | ... (7 variants)
+              - $ref: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+                title: OpenAIResponseInputFunctionToolCallOutput
+              - $ref: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+                title: OpenAIResponseMCPApprovalResponse
+              - $ref: '#/components/schemas/OpenAIResponseMessage-Input'
+                title: OpenAIResponseMessage-Input
+              title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Input
+            type: array
+            title: list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          title: string | list[OpenAIResponseMessageUnion | OpenAIResponseInputFunctionToolCallOutput | ...]
+          description: Input message(s) to create the response.
+        model:
+          type: string
+          title: Model
+          description: The underlying LLM used for completions.
+        prompt:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponsePrompt'
+            title: OpenAIResponsePrompt
+          - type: 'null'
+          description: Prompt object with ID, version, and variables.
+          title: OpenAIResponsePrompt
+        instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Instructions to guide the model's behavior.
+        parallel_tool_calls:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to enable parallel tool calls.
+          default: true
+        previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional ID of a previous response to continue from.
+        conversation:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional ID of a conversation to add the response to.
+        store:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to store the response in the database.
+          default: true
+        stream:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to stream the response.
+          default: false
+        temperature:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: 0.0
+          - type: 'null'
+          description: Sampling temperature.
+        text:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseText'
+            title: OpenAIResponseText
+          - type: 'null'
+          description: Configuration for text response generation.
+          title: OpenAIResponseText
+        tool_choice:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'
+            title: OpenAIResponseInputToolChoiceMode
+          - oneOf:
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+              title: OpenAIResponseInputToolChoiceAllowedTools
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+              title: OpenAIResponseInputToolChoiceFileSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+              title: OpenAIResponseInputToolChoiceWebSearch
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+              title: OpenAIResponseInputToolChoiceFunctionTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+              title: OpenAIResponseInputToolChoiceMCPTool
+            - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+              title: OpenAIResponseInputToolChoiceCustomTool
+            discriminator:
+              propertyName: type
+              mapping:
+                allowed_tools: '#/components/schemas/OpenAIResponseInputToolChoiceAllowedTools'
+                custom: '#/components/schemas/OpenAIResponseInputToolChoiceCustomTool'
+                file_search: '#/components/schemas/OpenAIResponseInputToolChoiceFileSearch'
+                function: '#/components/schemas/OpenAIResponseInputToolChoiceFunctionTool'
+                mcp: '#/components/schemas/OpenAIResponseInputToolChoiceMCPTool'
+                web_search: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+                web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolChoiceWebSearch'
+            title: OpenAIResponseInputToolChoiceAllowedTools | ... (6 variants)
+          - type: 'null'
+          title: OpenAIResponseInputToolChoiceMode
+          description: How the model should select which tool to call (if any).
+        tools:
+          anyOf:
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                title: OpenAIResponseInputToolWebSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                title: OpenAIResponseInputToolFileSearch
+              - $ref: '#/components/schemas/OpenAIResponseInputToolFunction'
+                title: OpenAIResponseInputToolFunction
+              - $ref: '#/components/schemas/OpenAIResponseInputToolMCP'
+                title: OpenAIResponseInputToolMCP
+              discriminator:
+                propertyName: type
+                mapping:
+                  file_search: '#/components/schemas/OpenAIResponseInputToolFileSearch'
+                  function: '#/components/schemas/OpenAIResponseInputToolFunction'
+                  mcp: '#/components/schemas/OpenAIResponseInputToolMCP'
+                  web_search: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_2025_08_26: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+                  web_search_preview_2025_03_11: '#/components/schemas/OpenAIResponseInputToolWebSearch'
+              title: OpenAIResponseInputToolWebSearch | ... (4 variants)
+            type: array
+          - type: 'null'
+          description: List of tools available to the model.
+        include:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ResponseItemInclude'
+            type: array
+          - type: 'null'
+          description: Additional fields to include in the response.
+        max_infer_iters:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Maximum number of inference iterations.
+          default: 10
+        guardrails:
+          anyOf:
+          - items:
+              anyOf:
+              - type: string
+              - $ref: '#/components/schemas/ResponseGuardrailSpec'
+                title: ResponseGuardrailSpec
+              title: string | ResponseGuardrailSpec
+            type: array
+          - type: 'null'
+          description: List of guardrails to apply during response generation.
+        max_tool_calls:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Max number of total calls to built-in tools that can be processed in a response.
+        reasoning:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseReasoning'
+            title: OpenAIResponseReasoning
+          - type: 'null'
+          description: Configuration for reasoning effort in responses.
+          title: OpenAIResponseReasoning
+        metadata:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          description: Dictionary of metadata key-value pairs to attach to the response.
+      additionalProperties: false
+      type: object
+      required:
+      - input
+      - model
+      title: CreateResponseRequest
+      description: Request model for creating a response.
     DatasetPurpose:
       type: string
       enum:
@@ -9239,6 +9223,39 @@ components:
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
+    OpenAIAttachFileRequest:
+      properties:
+        file_id:
+          type: string
+          title: File Id
+          description: The ID of the file to attach.
+        attributes:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Attributes to associate with the file.
+        chunking_strategy:
+          anyOf:
+          - oneOf:
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              title: VectorStoreChunkingStrategyAuto
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              title: VectorStoreChunkingStrategyStatic
+            discriminator:
+              propertyName: type
+              mapping:
+                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          - type: 'null'
+          title: Chunking Strategy
+          description: Strategy for chunking the file content.
+      type: object
+      required:
+      - file_id
+      title: OpenAIAttachFileRequest
+      description: Request body for attaching a file to a vector store.
     OpenAIChatCompletionUsageCompletionTokensDetails:
       properties:
         reasoning_tokens:
@@ -9679,6 +9696,87 @@ components:
       - reasoning_tokens
       title: OpenAIResponseUsageOutputTokensDetails
       description: Token details for output tokens in OpenAI response usage.
+    OpenAISearchVectorStoreRequest:
+      properties:
+        query:
+          anyOf:
+          - type: string
+          - items:
+              type: string
+            type: array
+            title: list[string]
+          title: string | list[string]
+          description: The search query string or list of query strings.
+        filters:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Filters to apply to the search.
+        max_num_results:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Maximum number of results to return.
+          default: 10
+        ranking_options:
+          anyOf:
+          - $ref: '#/components/schemas/SearchRankingOptions'
+            title: SearchRankingOptions
+          - type: 'null'
+          description: Options for ranking results.
+          title: SearchRankingOptions
+        rewrite_query:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Whether to rewrite the query for better results.
+          default: false
+        search_mode:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The search mode to use (e.g., 'vector', 'keyword').
+          default: vector
+      type: object
+      required:
+      - query
+      title: OpenAISearchVectorStoreRequest
+      description: Request body for searching a vector store.
+    OpenAIUpdateVectorStoreFileRequest:
+      properties:
+        attributes:
+          additionalProperties: true
+          type: object
+          title: Attributes
+          description: The new attributes for the file.
+      type: object
+      required:
+      - attributes
+      title: OpenAIUpdateVectorStoreFileRequest
+      description: Request body for updating a vector store file.
+    OpenAIUpdateVectorStoreRequest:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The new name for the vector store.
+        expires_after:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Expiration policy for the vector store.
+        metadata:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Metadata to associate with the vector store.
+      type: object
+      title: OpenAIUpdateVectorStoreRequest
+      description: Request body for updating a vector store.
     OpenAIUserMessageParam-Input:
       properties:
         role:
@@ -10008,6 +10106,14 @@ components:
       - $ref: '#/components/schemas/OpenAIChatCompletionToolChoiceCustomTool'
         title: OpenAIChatCompletionToolChoiceCustomTool
       title: OpenAIChatCompletionToolChoiceAllowedTools | OpenAIChatCompletionToolChoiceFunctionTool | OpenAIChatCompletionToolChoiceCustomTool
+    OpenAIFinishReason:
+      enum:
+      - stop
+      - length
+      - tool_calls
+      - content_filter
+      - function_call
+      type: string
     OpenAIResponseInputToolChoice:
       anyOf:
       - $ref: '#/components/schemas/OpenAIResponseInputToolChoiceMode'

@@ -595,35 +595,204 @@ created by users sharing a team with them:
       description: any user has read access to any resource created by a user with the same team
 ```
 
-#### API Endpoint Authorization with Scopes
+### Route-Level Authorization
 
-In addition to resource-based access control, Llama Stack supports endpoint-level authorization using OAuth 2.0 style scopes. When authentication is enabled, specific API endpoints require users to have particular scopes in their authentication token.
+Route-level authorization provides infrastructure-level access control for Llama Stack API routes. This feature allows administrators to restrict which API routes can be accessed based on user attributes (when authentication is enabled) or to globally block/allow specific routes (without authentication).
 
-**Authentication Configuration:**
+#### Key Features
 
-For **JWT/OAuth2 providers**, scopes should be included in the JWT's claims:
-```json
-{
-  "sub": "user123",
-  "scope": "<scope>",
-  "aud": "llama-stack"
-}
+1. **API Surface Control**: Restrict the available API surface without authentication by blocking specific routes
+2. **Role-Based Route Access**: Control which users or teams can access specific API routes based on their roles, teams, or other attributes
+3. **Works With or Without Authentication**: Route authorization can be configured independently of authentication
+4. **Two-Level Access Control**: When both route-level and resource-level authorization are configured:
+   - Route authorization is checked first (infrastructure level)
+   - Resource authorization is checked second (data level)
+   - Both checks must pass for access to be granted
+
+#### Configuration
+
+Route authorization is configured in the server's authentication section under `route_policy`:
+
+```yaml
+server:
+  auth:
+    provider_config: # Optional - only needed if using user-based conditions
+      type: "oauth2_token"
+      # ... authentication provider configuration ...
+
+    # Route-level access control (infrastructure)
+    route_policy:
+      - permit:
+          paths: "<path or list of paths>"
+        when: "<optional user condition>"
+        description: "<optional description>"
+
+      - forbid:
+          paths: "<path or list of paths>"
+        unless: "<optional user condition>"
+        description: "<optional description>"
 ```
 
-For **custom authentication providers**, the endpoint must return user attributes including the `scopes` array:
-```json
-{
-  "principal": "user123",
-  "attributes": {
-    "scopes": ["<scope>"]
-  }
-}
+#### Path Matching
+
+Route paths support three matching patterns:
+
+1. **Exact Match**: `/v1/chat/completions` - matches only this specific path
+2. **Prefix Wildcard**: `/v1/files*` - matches `/v1/files` and all paths starting with `/v1/files` (e.g., `/v1/files/upload`, `/v1/files/list`)
+3. **Full Wildcard**: `*` - matches all routes
+
+**Path Normalization**: Trailing slashes are automatically removed during matching (e.g., `/v1/files/` is treated as `/v1/files`).
+
+Multiple paths can be specified in a single rule using a list:
+```yaml
+paths: ["/v1/files*", "/v1/models*"]
 ```
 
-**Behavior:**
-- Users without the required scope receive a 403 Forbidden response
-- When authentication is disabled, scope checks are bypassed
-- Endpoints without `required_scope` work normally for all authenticated users
+#### Rule Evaluation
+
+- **Permit Rules**: Grant access to specified routes
+- **Forbid Rules**: Deny access to specified routes
+- Rules are evaluated in order of definition
+- First matching rule determines access (permit or forbid)
+- If no rule matches, access is denied by default
+- If no `route_policy` is configured, all routes are allowed (backward compatible)
+
+#### User Conditions
+
+When authentication is enabled, rules can include conditions based on user attributes:
+
+- `when: user with <value> in <attribute>` - Require user has specific attribute value
+- `unless: user with <value> in <attribute>` - Apply rule unless user has specific attribute value
+
+Multiple conditions can be specified as a list (all must match):
+```yaml
+when:
+  - user with admin in roles
+  - user with platform in teams
+```
+
+Rules with user conditions are skipped when authentication is not configured. Rules without conditions apply regardless of authentication status.
+
+#### Examples
+
+**Example 1: Route Blocking Without Authentication**
+
+Block unused routes while allowing public access to others:
+
+```yaml
+server:
+  auth:
+    route_policy:
+      - permit:
+          paths: ["/v1/health", "/v1/version"]
+        description: "Public monitoring routes"
+
+      - permit:
+          paths: "/v1/chat/completions"
+        description: "Allow inference"
+```
+
+Result:
+- `/v1/health` and `/v1/version` are accessible
+- `/v1/chat/completions` is accessible
+- All other routes are blocked (no matching permit rule)
+
+**Example 2: Role-Based Route Access**
+
+Different roles have access to different API surfaces:
+
+```yaml
+server:
+  auth:
+    provider_config:
+      type: "oauth2_token"
+      # ... provider configuration ...
+
+    route_policy:
+      - permit:
+          paths: "/v1/chat/completions"
+        when: user with developer in roles
+        description: "Developers can use inference"
+
+      - permit:
+          paths: ["/v1/files*", "/v1/models*"]
+        when: user with user in roles
+        description: "Users can manage files and models"
+
+      - permit:
+          paths: "*"
+        when: user with admin in roles
+        description: "Admins have full access"
+```
+
+Result:
+- Users with `developer` role can only access `/v1/chat/completions`
+- Users with `user` role can access file and model routes
+- Users with `admin` role can access all routes
+- Users without matching roles are denied access
+
+**Example 3: Mixed Public and Protected Routes**
+
+Combine public routes with role-based access:
+
+```yaml
+server:
+  auth:
+    provider_config:
+      type: "oauth2_token"
+      # ... provider configuration ...
+
+    route_policy:
+      - permit:
+          paths: ["/v1/health", "/v1/version"]
+        description: "Public routes (no authentication required)"
+
+      - permit:
+          paths: "/v1/admin*"
+        when: user with admin in roles
+        description: "Admin routes require admin role"
+
+      - permit:
+          paths: "/v1/chat/completions"
+        when: user with developer in roles
+        description: "Inference requires developer role"
+```
+
+Result:
+- Anyone can access `/v1/health` and `/v1/version` (no authentication needed)
+- Only authenticated users with `admin` role can access `/v1/admin*` routes
+- Only authenticated users with `developer` role can access `/v1/chat/completions`
+- All other routes are denied
+
+**Example 4: Integration with Resource-Level Authorization**
+
+Route authorization works seamlessly with resource-level authorization:
+
+```yaml
+server:
+  auth:
+    provider_config:
+      type: "oauth2_token"
+      # ... provider configuration ...
+
+    # Route-level: Controls which API routes are accessible
+    route_policy:
+      - permit:
+          paths: "/v1/chat/completions"
+        when: user with developer in roles
+
+    # Resource-level: Controls which specific resources are accessible
+    access_policy:
+      - permit:
+          actions: [read]
+          resource: model::llama-3-2-3b
+        when: user with developer in roles
+```
+
+For a request to succeed:
+1. User must pass route authorization (can access `/v1/chat/completions`)
+2. User must pass resource authorization (can read `model::llama-3-2-3b`)
+3. Both checks must pass
 
 ### Quota Configuration
 
