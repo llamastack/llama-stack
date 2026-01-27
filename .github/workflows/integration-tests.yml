@@ -81,6 +81,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
 
+# Limit permissions of the GITHUB_TOKEN to the minimum required.
+# Default mode is 'replay' which only needs read access.
+# When called via workflow_call (e.g., from stainless-builds.yml with record-if-missing),
+# the caller's permissions apply.
+permissions:
+  contents: read
+
 jobs:
   generate-matrix:
     # Skip matrix generation if matrix_json is provided (e.g., from pull_request_target callers)

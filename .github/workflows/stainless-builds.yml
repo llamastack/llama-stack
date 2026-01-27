@@ -90,9 +90,14 @@ jobs:
 
       - name: Compute branch names
         id: compute
+        # Pass PR title via environment variable to prevent shell injection.
+        # Direct interpolation of ${{ github.event.pull_request.title }} into bash
+        # allows command substitution via backticks or $() in PR titles.
+        env:
+          PR_TITLE_FROM_EVENT: ${{ github.event.pull_request.title }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Extract from fetched PR data
+            # Extract from fetched PR data (jq -r safely handles special characters)
             PR_DATA='${{ steps.fetch-pr.outputs.pr_data }}'
             FORK_OWNER=$(echo "$PR_DATA" | jq -r '.headRepositoryOwner.login')
             REPO_NAME=$(echo "$PR_DATA" | jq -r '.headRepository.name')
@@ -110,7 +115,8 @@ jobs:
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
             BASE_REF="${{ github.event.pull_request.base.ref }}"
-            PR_TITLE="${{ github.event.pull_request.title }}"
+            # Use environment variable to prevent shell injection from PR titles
+            PR_TITLE="$PR_TITLE_FROM_EVENT"
           fi
 
           BASE_REPO="${{ github.repository }}"
