@@ -151,13 +151,13 @@ def _extract_client_config(existing_client: httpx.AsyncClient | DefaultAsyncHttp
 
     # Extract from DefaultAsyncHttpxClient
     if isinstance(existing_client, DefaultAsyncHttpxClient):
-        underlying_client = existing_client._client  # type: ignore[attr-defined]
+        underlying_client = existing_client._client  # type: ignore[union-attr,attr-defined]
         if hasattr(underlying_client, "_auth"):
             config["auth"] = underlying_client._auth  # type: ignore[attr-defined]
         if hasattr(existing_client, "_headers"):
             config["headers"] = existing_client._headers  # type: ignore[attr-defined]
-    # Extract from plain httpx.AsyncClient
-    elif isinstance(existing_client, httpx.AsyncClient):
+    else:
+        # Extract from plain httpx.AsyncClient
         if hasattr(existing_client, "_auth"):
             config["auth"] = existing_client._auth  # type: ignore[attr-defined]
         if hasattr(existing_client, "_headers"):
@@ -210,14 +210,12 @@ def _merge_network_config_into_client(
 
         # If original was DefaultAsyncHttpxClient, wrap the new client
         if isinstance(existing_client, DefaultAsyncHttpxClient):
-            return DefaultAsyncHttpxClient(client=new_client, headers=network_kwargs.get("headers"))
+            return DefaultAsyncHttpxClient(client=new_client, headers=network_kwargs.get("headers"))  # type: ignore[call-arg]
 
         return new_client
     except Exception as e:
         logger.debug(f"Could not merge network config into existing http_client: {e}. Using original client.")
         return existing_client
-
-    return existing_client
 
 
 def build_http_client(network_config: NetworkConfig | None) -> dict[str, Any]:
