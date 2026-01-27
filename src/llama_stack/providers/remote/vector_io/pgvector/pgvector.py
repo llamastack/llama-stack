@@ -126,19 +126,15 @@ class PGVectorIndex(EmbeddingIndex):
         "INNER_PRODUCT": "vector_ip_ops",
     }
 
-    # pgvector's default HNSW parameter: maximum number of edges each vertex has to its neighboring vertices in the graph (defaults to 16)
-    HNSW_M = 16
-
-    # pgvector's default HNSW parameter: size of the dynamic candidate list used for graph construction (defaults to 64)
-    HNSW_EF_CONSTRUCTION = 64
-
     def __init__(
         self,
         vector_store: VectorStore,
         dimension: int,
         conn: psycopg2.extensions.connection,
+        distance_metric: str,
+        hnsw_m: int,
+        hnsw_ef_construction: int,
         kvstore: KVStore | None = None,
-        distance_metric: str = "COSINE",
     ):
         self.vector_store = vector_store
         self.dimension = dimension
@@ -146,6 +142,8 @@ class PGVectorIndex(EmbeddingIndex):
         self.kvstore = kvstore
         self.check_distance_metric_availability(distance_metric)
         self.distance_metric = distance_metric
+        self.hnsw_m = hnsw_m
+        self.hnsw_ef_construction = hnsw_ef_construction
         self.table_name = None
 
     async def initialize(self) -> None:
@@ -175,7 +173,7 @@ class PGVectorIndex(EmbeddingIndex):
                 cur.execute(
                     f"""
                     CREATE INDEX IF NOT EXISTS {self.table_name}_hnsw_idx
-                    ON {self.table_name} USING hnsw(embedding {index_operator_class}) WITH (m = {self.HNSW_M}, ef_construction = {self.HNSW_EF_CONSTRUCTION});
+                    ON {self.table_name} USING hnsw(embedding {index_operator_class}) WITH (m = {self.hnsw_m}, ef_construction = {self.hnsw_ef_construction});
                 """
                 )
 
@@ -453,6 +451,9 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 dimension=vector_store.embedding_dimension,
                 conn=self.conn,
                 kvstore=self.kvstore,
+                distance_metric=self.config.distance_metric,
+                hnsw_m=self.config.hnsw_m,
+                hnsw_ef_construction=self.config.hnsw_ef_construction,
             )
             await pgvector_index.initialize()
             index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
@@ -479,7 +480,13 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
 
         # Create and cache the PGVector index table for the vector DB
         pgvector_index = PGVectorIndex(
-            vector_store=vector_store, dimension=vector_store.embedding_dimension, conn=self.conn, kvstore=self.kvstore
+            vector_store=vector_store,
+            dimension=vector_store.embedding_dimension,
+            conn=self.conn,
+            kvstore=self.kvstore,
+            distance_metric=self.config.distance_metric,
+            hnsw_m=self.config.hnsw_m,
+            hnsw_ef_construction=self.config.hnsw_ef_construction,
         )
         await pgvector_index.initialize()
         index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
@@ -525,7 +532,14 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             raise VectorStoreNotFoundError(vector_store_id)
 
         vector_store = VectorStore.model_validate_json(vector_store_data)
-        index = PGVectorIndex(vector_store, vector_store.embedding_dimension, self.conn)
+        index = PGVectorIndex(
+            vector_store,
+            vector_store.embedding_dimension,
+            self.conn,
+            distance_metric=self.config.distance_metric,
+            hnsw_m=self.config.hnsw_m,
+            hnsw_ef_construction=self.config.hnsw_ef_construction,
+        )
         await index.initialize()
         self.cache[vector_store_id] = VectorStoreWithIndex(vector_store, index, self.inference_api)
         return self.cache[vector_store_id]

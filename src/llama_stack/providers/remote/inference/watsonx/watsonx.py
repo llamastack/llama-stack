@@ -23,6 +23,7 @@ from llama_stack_api import (
     OpenAICompletionRequestWithExtraBody,
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
+    validate_embeddings_input_is_text,
 )
 
 logger = get_logger(name=__name__, category="providers::remote::watsonx")
@@ -147,6 +148,9 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         """
         Override parent method to add watsonx-specific parameters.
         """
+        # Validate that input contains only text, not token arrays
+        validate_embeddings_input_is_text(params)
+
         model_obj = await self.model_store.get_model(params.model)
 
         # Convert input to list if it's a string

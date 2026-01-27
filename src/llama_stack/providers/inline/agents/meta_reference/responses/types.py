@@ -12,6 +12,7 @@ from pydantic import BaseModel
 
 from llama_stack_api import (
     OpenAIChatCompletionToolCall,
+    OpenAIFinishReason,
     OpenAIMessageParam,
     OpenAIResponseFormatParam,
     OpenAIResponseInput,
@@ -52,7 +53,7 @@ class ChatCompletionResult:
     tool_calls: dict[int, OpenAIChatCompletionToolCall]
     created: int
     model: str
-    finish_reason: str
+    finish_reason: OpenAIFinishReason
     message_item_id: str  # For streaming events
     tool_call_item_ids: dict[int, str]  # For streaming events
     content_part_emitted: bool  # Tracking state

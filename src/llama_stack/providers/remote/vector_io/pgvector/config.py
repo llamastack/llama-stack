@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,6 +19,19 @@ class PGVectorVectorIOConfig(BaseModel):
     db: str | None = Field(default="postgres")
     user: str | None = Field(default="postgres")
     password: str | None = Field(default="mysecretpassword")
+    distance_metric: Literal["COSINE", "L2", "L1", "INNER_PRODUCT"] | None = Field(
+        default="COSINE", description="PGVector distance metric used for vector search in PGVectorIndex"
+    )
+    hnsw_m: int | None = Field(
+        gt=0,
+        default=16,
+        description="PGVector's HNSW index parameter - maximum number of edges each vertex has to its neighboring vertices in the graph",
+    )
+    hnsw_ef_construction: int | None = Field(
+        gt=0,
+        default=64,
+        description="PGVector's HNSW index parameter - size of the dynamic candidate list used for graph construction",
+    )
     persistence: KVStoreReference | None = Field(
         description="Config for KV store backend (SQLite only for now)", default=None
     )

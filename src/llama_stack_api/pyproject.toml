@@ -64,6 +64,7 @@ packages = [
     "llama_stack_api.prompts",
     "llama_stack_api.scoring",
     "llama_stack_api.safety",
+    "llama_stack_api.vector_io",
 ]
 
 # 3. List every root-level .py file as a module.
@@ -79,9 +80,9 @@ py-modules = [
     "llama_stack_api.router_utils",
     "llama_stack_api.schema_utils",
     "llama_stack_api.tools",
-    "llama_stack_api.vector_io",
     "llama_stack_api.vector_stores",
     "llama_stack_api.version",
+    "llama_stack_api.validators",
 ]
 
 [tool.setuptools.package-data]

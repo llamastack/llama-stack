@@ -88,6 +88,13 @@ async def global_exception_handler(request: Request, exc: Exception):
     traceback.print_exception(type(exc), exc, exc.__traceback__)
     http_exc = translate_exception(exc)
 
+    # OpenAI-compat Vector Stores endpoints treat many "not found" conditions as 400s.
+    # Our core exceptions model these as ResourceNotFoundError (mapped to 404 by default),
+    # but integration tests (and OpenAI client behavior expectations in this repo)
+    # assert they surface as BadRequestError instead.
+    if isinstance(exc, ResourceNotFoundError) and request.url.path.startswith("/v1/vector_stores"):
+        http_exc = HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
+
     return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
 
 
