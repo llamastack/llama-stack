@@ -149,7 +149,6 @@ class WebMethod:
     raw_bytes_request_body: bool | None = False
     # A descriptive name of the corresponding span created by tracing
     descriptive_name: str | None = None
-    required_scope: str | None = None
     deprecated: bool | None = False
     require_authentication: bool | None = True
 
@@ -166,7 +165,6 @@ def webmethod(
     response_examples: list[Any] | None = None,
     raw_bytes_request_body: bool | None = False,
     descriptive_name: str | None = None,
-    required_scope: str | None = None,
     deprecated: bool | None = False,
     require_authentication: bool | None = True,
 ) -> Callable[[CallableT], CallableT]:
@@ -177,7 +175,6 @@ def webmethod(
     :param public: True if the operation can be invoked without prior authentication.
     :param request_examples: Sample requests that the operation might take. Pass a list of objects, not JSON.
     :param response_examples: Sample responses that the operation might produce. Pass a list of objects, not JSON.
-    :param required_scope: Required scope for this endpoint (e.g., 'monitoring.viewer').
     :param require_authentication: Whether this endpoint requires authentication (default True).
     """
 
@@ -191,7 +188,6 @@ def webmethod(
             response_examples=response_examples,
             raw_bytes_request_body=raw_bytes_request_body,
             descriptive_name=descriptive_name,
-            required_scope=required_scope,
             deprecated=deprecated,
             require_authentication=require_authentication if require_authentication is not None else True,
         )
@@ -206,3 +202,50 @@ def webmethod(
         return func
 
     return wrap
+
+
+def remove_null_from_anyof(schema: dict, *, add_nullable: bool = False) -> None:
+    """Remove null type from anyOf and optionally add nullable flag.
+
+    Converts Pydantic's default OpenAPI 3.1 style:
+        anyOf: [{type: X, enum: [...]}, {type: null}]
+
+    To flattened format:
+        type: X
+        enum: [...]
+        nullable: true  # only if add_nullable=True
+
+    Args:
+        schema: The JSON schema dict to modify in-place
+        add_nullable: If True, adds 'nullable: true' when null was present.
+                      Use True for OpenAPI 3.0 compatibility with OpenAI's spec.
+    """
+    # Handle anyOf format: anyOf: [{type: string, enum: [...]}, {type: null}]
+    if "anyOf" in schema:
+        non_null = [s for s in schema["anyOf"] if s.get("type") != "null"]
+        has_null = len(non_null) < len(schema["anyOf"])
+
+        if len(non_null) == 1:
+            # Flatten to single type
+            only_schema = non_null[0]
+            schema.pop("anyOf")
+            schema.update(only_schema)
+            if has_null and add_nullable:
+                schema["nullable"] = True
+
+    # Handle OpenAPI 3.1 format: type: ['string', 'null']
+    elif isinstance(schema.get("type"), list) and "null" in schema["type"]:
+        has_null = "null" in schema["type"]
+        schema["type"].remove("null")
+        if len(schema["type"]) == 1:
+            schema["type"] = schema["type"][0]
+        if has_null and add_nullable:
+            schema["nullable"] = True
+
+
+def nullable_openai_style(schema: dict) -> None:
+    """Shorthand for remove_null_from_anyof with add_nullable=True.
+
+    Use this for fields that need OpenAPI 3.0 nullable style to match OpenAI's spec.
+    """
+    remove_null_from_anyof(schema, add_nullable=True)
