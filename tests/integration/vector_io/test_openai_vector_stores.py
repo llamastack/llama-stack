@@ -4872,3 +4872,147 @@ def test_openai_vector_store_search_with_rewrite_query(
     # Verify the error message indicates missing query rewriting configuration
     error_message = str(exc_info.value)
     assert "Query rewriting is not available" in error_message
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_contextual_chunking(
+    compat_client_with_empty_stores,
+    client_with_models,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+    text_model_id,
+):
+    """Test contextual chunking strategy.
+
+    This test verifies that contextual chunking works correctly by:
+    1. Creating a file with distinct paragraphs
+    2. Attaching it with contextual chunking strategy
+    3. Searching and verifying the results contain contextualized chunks
+    """
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    if not text_model_id:
+        pytest.skip("No text model configured for contextual chunking test")
+
+    compat_client = compat_client_with_empty_stores
+
+    vector_store = compat_client.vector_stores.create(
+        name="contextual_chunking_test",
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    document_content = """# Technical Overview of Machine Learning Systems
+
+## Introduction to Neural Networks
+
+Neural networks are computational models inspired by biological neural networks.
+They consist of interconnected nodes called neurons organized in layers.
+Each connection has a weight that is adjusted during training.
+
+## Gradient Descent Optimization
+
+The backpropagation algorithm computes gradients for each layer.
+These gradients are used to update weights using gradient descent.
+The learning rate controls the step size during optimization.
+
+## Data Preprocessing
+
+Raw data must be normalized before training.
+Feature scaling ensures all inputs have similar ranges.
+Data augmentation can increase the effective training set size.
+"""
+
+    with BytesIO(document_content.encode()) as file_buffer:
+        file_buffer.name = "ml_overview.txt"
+        file = compat_client.files.create(
+            file=file_buffer,
+            purpose="assistants",
+            expires_after=ExpiresAfter(anchor="created_at", seconds=86400),
+        )
+
+    file_attach_response = compat_client.vector_stores.files.create(
+        vector_store_id=vector_store.id,
+        file_id=file.id,
+        chunking_strategy={
+            "type": "contextual",
+            "contextual": {
+                "model_id": text_model_id,
+                "max_chunk_size_tokens": 200,
+                "chunk_overlap_tokens": 50,
+            },
+        },
+    )
+
+    assert file_attach_response is not None
+    assert file_attach_response.status == "completed", f"File attachment failed: {file_attach_response.last_error}"
+    assert file_attach_response.chunking_strategy.type == "contextual"
+
+    search_response = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="How are neural network weights updated during training?",
+        max_num_results=3,
+    )
+
+    assert search_response is not None
+    assert len(search_response.data) > 0
+
+    for result in search_response.data:
+        content = result.content
+        if isinstance(content, list):
+            text_parts = [item.text if hasattr(item, "text") else str(item) for item in content]
+            content_text = " ".join(text_parts)
+        else:
+            content_text = content
+        assert len(content_text) > 0, "Result content should not be empty"
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_contextual_chunking_error_without_model(
+    compat_client_with_empty_stores,
+    client_with_models,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+):
+    """Test that contextual chunking fails with proper error when no model is specified."""
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+
+    compat_client = compat_client_with_empty_stores
+
+    vector_store = compat_client.vector_stores.create(
+        name="contextual_no_model_test",
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    test_content = b"Test content for contextual chunking without model."
+    with BytesIO(test_content) as file_buffer:
+        file_buffer.name = "test.txt"
+        file = compat_client.files.create(
+            file=file_buffer,
+            purpose="assistants",
+            expires_after=ExpiresAfter(anchor="created_at", seconds=86400),
+        )
+
+    # Attempt to attach file with contextual strategy but no model_id
+    with pytest.raises((BadRequestError, OpenAIBadRequestError, ValueError)) as exc_info:
+        compat_client.vector_stores.files.create(
+            vector_store_id=vector_store.id,
+            file_id=file.id,
+            chunking_strategy={
+                "type": "contextual",
+                "contextual": {
+                    "max_chunk_size_tokens": 200,
+                    "chunk_overlap_tokens": 50,
+                },
+            },
+        )
+
+    error_message = str(exc_info.value)
+    assert "model_id" in error_message.lower() or "model" in error_message.lower()

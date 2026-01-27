@@ -550,6 +550,34 @@ class FileBatchParams(BaseModel):
     )
 
 
+class ContextualRetrievalParams(BaseModel):
+    """Configuration for contextual retrieval during file ingestion.
+
+    Contextual retrieval uses an LLM to generate situational context for each chunk
+    before embedding, improving search quality. See Anthropic's Contextual Retrieval.
+    """
+
+    model: QualifiedModel | None = Field(
+        default=None,
+        description="Default LLM model for contextual retrieval. Used when model_id is not specified in chunking strategy.",
+    )
+    default_timeout_seconds: int = Field(
+        default=120,
+        ge=10,
+        description="Default timeout in seconds for each LLM contextualization call.",
+    )
+    default_max_concurrency: int = Field(
+        default=3,
+        ge=1,
+        description="Default maximum concurrent LLM calls for contextualization.",
+    )
+    max_document_tokens: int = Field(
+        default=100000,
+        ge=1000,
+        description="Maximum document size in tokens. Documents exceeding this are rejected for contextual retrieval.",
+    )
+
+
 class VectorStoresConfig(BaseModel):
     """Configuration for vector stores in the stack."""
 
@@ -589,6 +617,10 @@ class VectorStoresConfig(BaseModel):
     file_batch_params: FileBatchParams = Field(
         default_factory=FileBatchParams,
         description="Configuration for file batch processing.",
+    )
+    contextual_retrieval_params: ContextualRetrievalParams = Field(
+        default_factory=ContextualRetrievalParams,
+        description="Configuration for contextual retrieval during file ingestion.",
     )
 
 

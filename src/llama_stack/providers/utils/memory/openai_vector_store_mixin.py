@@ -10,6 +10,8 @@ import mimetypes
 import time
 import uuid
 from abc import ABC, abstractmethod
+from collections.abc import AsyncIterator
+from enum import StrEnum
 from typing import Annotated, Any
 
 from fastapi import Body
@@ -31,15 +33,20 @@ from llama_stack_api import (
     EmbeddedChunk,
     Files,
     Inference,
+    OpenAIChatCompletionRequestWithExtraBody,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIFileObject,
+    OpenAIUserMessageParam,
     QueryChunksResponse,
     SearchRankingOptions,
+    TextContentItem,
     VectorStore,
     VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyAuto,
+    VectorStoreChunkingStrategyContextual,
+    VectorStoreChunkingStrategyContextualConfig,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
     VectorStoreContent,
@@ -77,6 +84,14 @@ OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_contents:{VERSION}::"
 OPENAI_VECTOR_STORES_FILE_BATCHES_PREFIX = f"openai_vector_stores_file_batches:{VERSION}::"
+
+
+class _ChunkContextResult(StrEnum):
+    """Internal enum for chunk contextualization results."""
+
+    SUCCESS = "success"
+    EMPTY = "empty"
+    FAILED = "failed"
 
 
 class OpenAIVectorStoreMixin(ABC):
@@ -471,7 +486,9 @@ class OpenAIVectorStoreMixin(ABC):
             total=0,
         )
         if not params.chunking_strategy or params.chunking_strategy.type == "auto":
-            chunking_strategy = VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig())
+            chunking_strategy: VectorStoreChunkingStrategy = VectorStoreChunkingStrategyStatic(
+                static=VectorStoreChunkingStrategyStaticConfig()
+            )
         else:
             chunking_strategy = params.chunking_strategy
         store_info: dict[str, Any] = {
@@ -853,6 +870,9 @@ class OpenAIVectorStoreMixin(ABC):
         if isinstance(chunking_strategy, VectorStoreChunkingStrategyStatic):
             max_chunk_size_tokens = chunking_strategy.static.max_chunk_size_tokens
             chunk_overlap_tokens = chunking_strategy.static.chunk_overlap_tokens
+        elif isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
+            max_chunk_size_tokens = chunking_strategy.contextual.max_chunk_size_tokens
+            chunk_overlap_tokens = chunking_strategy.contextual.chunk_overlap_tokens
         else:
             # Default values from OpenAI API spec
             max_chunk_size_tokens = 800
@@ -882,6 +902,9 @@ class OpenAIVectorStoreMixin(ABC):
                 chunk_overlap_tokens,
                 chunk_attributes,
             )
+            if isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
+                await self._apply_contextual_retrieval(chunks, content, chunking_strategy.contextual)
+
             if not chunks:
                 vector_store_file_object.status = "failed"
                 vector_store_file_object.last_error = VectorStoreFileLastError(
@@ -1432,3 +1455,116 @@ class OpenAIVectorStoreMixin(ABC):
         updated_batch = VectorStoreFileBatchObject(**batch_info)
 
         return updated_batch
+
+    async def _apply_contextual_retrieval(
+        self,
+        chunks: list[Chunk],
+        full_content: str,
+        strategy_config: VectorStoreChunkingStrategyContextualConfig,
+    ) -> None:
+        """
+        Applies contextual retrieval by situating each chunk within the overall document.
+
+        NOTE: This method mutates the Chunk objects in-place by prepending context to their content.
+        """
+        ctx_config = self.vector_stores_config.contextual_retrieval_params
+
+        # Resolve model_id: explicit > config > error
+        model_id = strategy_config.model_id
+        if not model_id:
+            if ctx_config.model:
+                model_id = f"{ctx_config.model.provider_id}/{ctx_config.model.model_id}"
+            else:
+                raise ValueError(
+                    "model_id must be provided in chunking strategy or configured in "
+                    "VectorStoresConfig.contextual_retrieval_params.model"
+                )
+
+        timeout_seconds = strategy_config.timeout_seconds or ctx_config.default_timeout_seconds
+        max_concurrency = strategy_config.max_concurrency or ctx_config.default_max_concurrency
+
+        doc_token_estimate = len(full_content) // 4  # Rough estimate: 4 chars per token
+        if doc_token_estimate > ctx_config.max_document_tokens:
+            raise ValueError(
+                f"Document size (~{doc_token_estimate} tokens) exceeds maximum allowed "
+                f"({ctx_config.max_document_tokens} tokens) for contextual retrieval"
+            )
+
+        context_prompt_template = strategy_config.context_prompt or (
+            "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
+            "Here is the chunk we want to situate within the whole document\n"
+            "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
+            "Please give a short succinct context to situate this chunk within the overall document "
+            "for the purposes of improving search retrieval of the chunk. "
+            "Answer only with the succinct context and nothing else."
+        )
+
+        logger.info(f"Applying contextual retrieval to {len(chunks)} chunks using model {model_id}")
+
+        semaphore = asyncio.Semaphore(max_concurrency)
+
+        async def contextualize_chunk(chunk: Chunk) -> _ChunkContextResult:
+            async with semaphore:
+                prompt = context_prompt_template.replace("{{WHOLE_DOCUMENT}}", full_content).replace(
+                    "{{CHUNK_CONTENT}}", interleaved_content_as_str(chunk.content)
+                )
+
+                params = OpenAIChatCompletionRequestWithExtraBody(
+                    model=model_id,
+                    messages=[OpenAIUserMessageParam(role="user", content=prompt)],
+                    stream=False,
+                )
+                try:
+                    response = await asyncio.wait_for(
+                        self.inference_api.openai_chat_completion(params), timeout=timeout_seconds
+                    )
+
+                    if isinstance(response, AsyncIterator):
+                        raise TypeError(
+                            f"Unexpected streaming response for chunk {chunk.chunk_id}. "
+                            "Contextual retrieval requires non-streaming inference."
+                        )
+
+                    if not response.choices:
+                        raise ValueError(f"LLM returned empty choices for chunk {chunk.chunk_id}")
+
+                    context = response.choices[0].message.content
+                    if context:
+                        if isinstance(chunk.content, str):
+                            chunk.content = f"{context}\n\n{chunk.content}"
+                        elif isinstance(chunk.content, list):
+                            chunk.content.insert(0, TextContentItem(text=f"{context}\n\n"))
+                        return _ChunkContextResult.SUCCESS
+                    logger.warning(f"LLM returned empty context for chunk {chunk.chunk_id}")
+                    return _ChunkContextResult.EMPTY
+
+                except asyncio.CancelledError:
+                    raise
+                except (MemoryError, SystemExit, KeyboardInterrupt, RecursionError):
+                    raise
+                except TimeoutError:
+                    logger.error(f"Failed to contextualize chunk {chunk.chunk_id}: timeout after {timeout_seconds}s")
+                    return _ChunkContextResult.FAILED
+                except (ValueError, TypeError, RuntimeError) as e:
+                    logger.error(f"Failed to contextualize chunk {chunk.chunk_id}: {e}")
+                    return _ChunkContextResult.FAILED
+                except Exception as e:
+                    logger.error(f"Failed to contextualize chunk {chunk.chunk_id}: {type(e).__name__}: {e}")
+                    return _ChunkContextResult.FAILED
+
+        results = await asyncio.gather(*(contextualize_chunk(chunk) for chunk in chunks))
+
+        total = len(chunks)
+        fail_count = sum(1 for r in results if r == _ChunkContextResult.FAILED)
+        empty_count = sum(1 for r in results if r == _ChunkContextResult.EMPTY)
+
+        if fail_count > 0:
+            if fail_count == total:
+                raise RuntimeError(f"Failed to contextualize any chunks for model {model_id}")
+            logger.warning(f"Contextual retrieval partially failed: {fail_count}/{total} chunks failed")
+
+        if empty_count > 0:
+            logger.warning(f"Contextual retrieval: {empty_count}/{total} chunks received empty context")
+
+        if fail_count == 0 and empty_count == 0:
+            logger.info(f"Successfully contextualized all {total} chunks")
