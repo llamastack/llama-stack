@@ -873,6 +873,13 @@ class OpenAIVectorStoreMixin(ABC):
         elif isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
             max_chunk_size_tokens = chunking_strategy.contextual.max_chunk_size_tokens
             chunk_overlap_tokens = chunking_strategy.contextual.chunk_overlap_tokens
+            # Validate model_id availability BEFORE processing to ensure proper error propagation
+            ctx_config = self.vector_stores_config.contextual_retrieval_params
+            if not chunking_strategy.contextual.model_id and not ctx_config.model:
+                raise ValueError(
+                    "model_id must be provided in chunking strategy or configured in "
+                    "VectorStoresConfig.contextual_retrieval_params.model"
+                )
         else:
             # Default values from OpenAI API spec
             max_chunk_size_tokens = 800
