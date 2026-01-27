@@ -312,19 +312,19 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
                         await adapter.initialize()
                         adapter.conn = mock_conn
 
-                        async def mock_insert_chunks(vector_store_id, chunks, ttl_seconds=None):
-                            index = await adapter._get_and_cache_vector_store_index(vector_store_id)
+                        async def mock_insert_chunks(request):
+                            index = await adapter._get_and_cache_vector_store_index(request.vector_store_id)
                             if not index:
-                                raise ValueError(f"Vector DB {vector_store_id} not found")
-                            await index.insert_chunks(chunks)
+                                raise ValueError(f"Vector DB {request.vector_store_id} not found")
+                            await index.insert_chunks(request)
 
                         adapter.insert_chunks = mock_insert_chunks
 
-                        async def mock_query_chunks(vector_store_id, query, params=None):
-                            index = await adapter._get_and_cache_vector_store_index(vector_store_id)
+                        async def mock_query_chunks(request):
+                            index = await adapter._get_and_cache_vector_store_index(request.vector_store_id)
                             if not index:
-                                raise ValueError(f"Vector DB {vector_store_id} not found")
-                            return await index.query_chunks(query, params)
+                                raise ValueError(f"Vector DB {request.vector_store_id} not found")
+                            return await index.query_chunks(request)
 
                         adapter.query_chunks = mock_query_chunks
 
@@ -416,19 +416,19 @@ async def qdrant_vec_adapter(unique_kvstore_config, mock_inference_api, embeddin
                 await adapter.initialize()
                 adapter.client = mock_client
 
-                async def mock_insert_chunks(vector_store_id, chunks, ttl_seconds=None):
-                    index = await adapter._get_and_cache_vector_store_index(vector_store_id)
+                async def mock_insert_chunks(request):
+                    index = await adapter._get_and_cache_vector_store_index(request.vector_store_id)
                     if not index:
-                        raise ValueError(f"Vector DB {vector_store_id} not found")
-                    await index.insert_chunks(chunks)
+                        raise ValueError(f"Vector DB {request.vector_store_id} not found")
+                    await index.insert_chunks(request)
 
                 adapter.insert_chunks = mock_insert_chunks
 
-                async def mock_query_chunks(vector_store_id, query, params=None):
-                    index = await adapter._get_and_cache_vector_store_index(vector_store_id)
+                async def mock_query_chunks(request):
+                    index = await adapter._get_and_cache_vector_store_index(request.vector_store_id)
                     if not index:
-                        raise ValueError(f"Vector DB {vector_store_id} not found")
-                    return await index.query_chunks(query, params)
+                        raise ValueError(f"Vector DB {request.vector_store_id} not found")
+                    return await index.query_chunks(request)
 
                 adapter.query_chunks = mock_query_chunks
 
