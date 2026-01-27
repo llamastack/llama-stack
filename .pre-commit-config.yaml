@@ -121,7 +121,7 @@ repos:
         name: OpenAI API Coverage
         additional_dependencies:
           - *uv-dependency
-        entry: ./scripts/uv-run-with-index.sh run python scripts/openai_coverage.py --update --generate-docs --quiet
+        entry: ./scripts/uv-run-with-index.sh run python scripts/openai_coverage.py --check-regression --update --generate-docs --quiet
         language: python
         pass_filenames: false
         require_serial: true
@@ -247,5 +247,5 @@ ci:
     autofix_prs: true
     autoupdate_branch: ''
     autoupdate_schedule: weekly
-    skip: [api-conformance]  # requires git history; covered by conformance.yml workflow
+    skip: [api-conformance]  # requires git history; covered by pre-commit.yml workflow
     submodules: false
