@@ -5931,6 +5931,10 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        prompt_cache_key:
+          anyOf:
+          - type: string
+          - type: 'null'
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -6387,6 +6391,10 @@ components:
           - type: 'null'
           default: true
         previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        prompt_cache_key:
           anyOf:
           - type: string
           - type: 'null'
@@ -10809,6 +10817,12 @@ components:
           - type: string
           - type: 'null'
           description: Optional ID of a previous response to continue from.
+        prompt_cache_key:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A key to use when reading from or writing to the prompt cache.
         conversation:
           anyOf:
           - type: string

@@ -2569,3 +2569,118 @@ async def test_create_openai_response_with_truncation_auto_streaming(
     stored_response = store_call_args.kwargs["response_object"]
     assert stored_response.truncation == ResponseTruncation.auto
     assert stored_response.status == "failed"
+
+
+async def test_create_openai_response_with_prompt_cache_key_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is properly handled in non-streaming responses."""
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "geography-cache-001"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the cache key
+    assert result.prompt_cache_key == cache_key
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_prompt_cache_key_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is properly handled in streaming responses."""
+    input_text = "What is the capital of Germany?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "geography-cache-002"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify cache key is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.prompt_cache_key == cache_key
+
+    # Verify cache key is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.prompt_cache_key == cache_key
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_prompt_cache_key_and_previous_response(
+    openai_responses_impl, mock_responses_store, mock_inference_api
+):
+    """Test that prompt_cache_key works correctly with previous_response_id."""
+    # Setup previous response
+    previous_response = _OpenAIResponseObjectWithInputAndMessages(
+        id="resp-prev-123",
+        object="response",
+        created_at=1234567890,
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        status="completed",
+        text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
+        input=[OpenAIResponseMessage(id="msg-1", role="user", content="First question")],
+        output=[OpenAIResponseMessage(id="msg-2", role="assistant", content="First answer")],
+        messages=[
+            OpenAIUserMessageParam(content="First question"),
+            OpenAIAssistantMessageParam(content="First answer"),
+        ],
+        prompt_cache_key="conversation-cache-001",
+        store=True,
+    )
+
+    mock_responses_store.get_response_object.return_value = previous_response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Create a new response with the same cache key
+    result = await openai_responses_impl.create_openai_response(
+        input="Second question",
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        previous_response_id="resp-prev-123",
+        prompt_cache_key="conversation-cache-001",
+        store=True,
+    )
+
+    # Verify cache key is preserved
+    assert result.prompt_cache_key == "conversation-cache-001"
+    assert result.status == "completed"
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == "conversation-cache-001"

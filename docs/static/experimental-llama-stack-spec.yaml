@@ -4132,6 +4132,10 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        prompt_cache_key:
+          anyOf:
+          - type: string
+          - type: 'null'
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -4577,6 +4581,10 @@ components:
           - type: 'null'
           default: true
         previous_response_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+        prompt_cache_key:
           anyOf:
           - type: string
           - type: 'null'
