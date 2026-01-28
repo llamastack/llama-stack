@@ -4,7 +4,7 @@
   "llama_spec": "docs/static/llama-stack-spec.yaml",
   "summary": {
     "endpoints": {
-      "implemented": 28,
+      "implemented": 33,
       "total": 114,
       "missing": [
         "/assistants",
@@ -23,11 +23,6 @@
         "/fine_tuning/alpha/graders/validate",
         "/fine_tuning/checkpoints/{fine_tuned_model_checkpoint}/permissions",
         "/fine_tuning/checkpoints/{fine_tuned_model_checkpoint}/permissions/{permission_id}",
-        "/fine_tuning/jobs",
-        "/fine_tuning/jobs/{fine_tuning_job_id}",
-        "/fine_tuning/jobs/{fine_tuning_job_id}/cancel",
-        "/fine_tuning/jobs/{fine_tuning_job_id}/checkpoints",
-        "/fine_tuning/jobs/{fine_tuning_job_id}/events",
         "/fine_tuning/jobs/{fine_tuning_job_id}/pause",
         "/fine_tuning/jobs/{fine_tuning_job_id}/resume",
         "/images/edits",
@@ -96,11 +91,11 @@
       ]
     },
     "conformance": {
-      "score": 82.8,
-      "issues": 263,
-      "missing_properties": 184,
-      "total_problems": 447,
-      "total_properties": 2598
+      "score": 83.7,
+      "issues": 326,
+      "missing_properties": 185,
+      "total_problems": 511,
+      "total_properties": 3138
     }
   },
   "categories": {
@@ -1541,6 +1536,567 @@
               "conformance_issues": [],
               "missing_count": 0,
               "issues_count": 0
+            }
+          ]
+        }
+      ]
+    },
+    "Fine-tuning": {
+      "score": 88.1,
+      "issues": 63,
+      "missing_properties": 1,
+      "total_properties": 540,
+      "endpoints": [
+        {
+          "path": "/fine_tuning/jobs",
+          "operations": [
+            {
+              "method": "GET",
+              "missing_properties": [
+                "GET.parameters.query.metadata"
+              ],
+              "conformance_issues": [
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.error",
+                  "details": [
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.estimated_finish",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.fine_tuned_model",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.finished_at",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.hyperparameters.properties.batch_size",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.hyperparameters.properties.learning_rate_multiplier",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.hyperparameters.properties.n_epochs",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.integrations",
+                  "details": [
+                    "Type added: ['array']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.metadata",
+                  "details": [
+                    "Type added: ['object']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.object",
+                  "details": [
+                    "Enum removed: ['fine_tuning.job']",
+                    "Default changed: None -> fine_tuning.job"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.trained_tokens",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.validation_file",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.has_more",
+                  "details": [
+                    "Default changed: None -> False"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum removed: ['list']",
+                    "Default changed: None -> list"
+                  ]
+                }
+              ],
+              "missing_count": 1,
+              "issues_count": 14
+            },
+            {
+              "method": "POST",
+              "missing_properties": [],
+              "conformance_issues": [
+                {
+                  "property": "POST.requestBody.content.application/json.properties.hyperparameters.properties.batch_size",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.hyperparameters.properties.learning_rate_multiplier",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.hyperparameters.properties.n_epochs",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.metadata",
+                  "details": [
+                    "Type added: ['object']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.model",
+                  "details": [
+                    "Type added: ['string']",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.error",
+                  "details": [
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.estimated_finish",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.fine_tuned_model",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.finished_at",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.hyperparameters.properties.batch_size",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.hyperparameters.properties.learning_rate_multiplier",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.hyperparameters.properties.n_epochs",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.integrations",
+                  "details": [
+                    "Type added: ['array']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.metadata",
+                  "details": [
+                    "Type added: ['object']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum removed: ['fine_tuning.job']",
+                    "Default changed: None -> fine_tuning.job"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.trained_tokens",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.validation_file",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                }
+              ],
+              "missing_count": 0,
+              "issues_count": 17
+            }
+          ]
+        },
+        {
+          "path": "/fine_tuning/jobs/{fine_tuning_job_id}",
+          "operations": [
+            {
+              "method": "GET",
+              "missing_properties": [],
+              "conformance_issues": [
+                {
+                  "property": "GET.responses.200.content.application/json.properties.error",
+                  "details": [
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.estimated_finish",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.fine_tuned_model",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.finished_at",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.hyperparameters.properties.batch_size",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.hyperparameters.properties.learning_rate_multiplier",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.hyperparameters.properties.n_epochs",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.integrations",
+                  "details": [
+                    "Type added: ['array']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.metadata",
+                  "details": [
+                    "Type added: ['object']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum removed: ['fine_tuning.job']",
+                    "Default changed: None -> fine_tuning.job"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.trained_tokens",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.validation_file",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                }
+              ],
+              "missing_count": 0,
+              "issues_count": 12
+            }
+          ]
+        },
+        {
+          "path": "/fine_tuning/jobs/{fine_tuning_job_id}/cancel",
+          "operations": [
+            {
+              "method": "POST",
+              "missing_properties": [],
+              "conformance_issues": [
+                {
+                  "property": "POST.responses.200.content.application/json.properties.error",
+                  "details": [
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.estimated_finish",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.fine_tuned_model",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.finished_at",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.hyperparameters.properties.batch_size",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.hyperparameters.properties.learning_rate_multiplier",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2",
+                    "Default changed: None -> auto"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.hyperparameters.properties.n_epochs",
+                  "details": [
+                    "Union variants added: 2",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.integrations",
+                  "details": [
+                    "Type added: ['array']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.metadata",
+                  "details": [
+                    "Type added: ['object']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum removed: ['fine_tuning.job']",
+                    "Default changed: None -> fine_tuning.job"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.trained_tokens",
+                  "details": [
+                    "Type added: ['integer']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.validation_file",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                }
+              ],
+              "missing_count": 0,
+              "issues_count": 12
+            }
+          ]
+        },
+        {
+          "path": "/fine_tuning/jobs/{fine_tuning_job_id}/checkpoints",
+          "operations": [
+            {
+              "method": "GET",
+              "missing_properties": [],
+              "conformance_issues": [
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.object",
+                  "details": [
+                    "Enum removed: ['fine_tuning.job.checkpoint']",
+                    "Default changed: None -> fine_tuning.job.checkpoint"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.first_id",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.has_more",
+                  "details": [
+                    "Default changed: None -> False"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.last_id",
+                  "details": [
+                    "Type added: ['string']",
+                    "Nullable removed (OpenAI nullable)",
+                    "Union variants removed: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum removed: ['list']",
+                    "Default changed: None -> list"
+                  ]
+                }
+              ],
+              "missing_count": 0,
+              "issues_count": 5
+            }
+          ]
+        },
+        {
+          "path": "/fine_tuning/jobs/{fine_tuning_job_id}/events",
+          "operations": [
+            {
+              "method": "GET",
+              "missing_properties": [],
+              "conformance_issues": [
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.object",
+                  "details": [
+                    "Enum removed: ['fine_tuning.job.event']",
+                    "Default changed: None -> fine_tuning.job.event"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.has_more",
+                  "details": [
+                    "Default changed: None -> False"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.object",
+                  "details": [
+                    "Enum removed: ['list']",
+                    "Default changed: None -> list"
+                  ]
+                }
+              ],
+              "missing_count": 0,
+              "issues_count": 3
             }
           ]
         }

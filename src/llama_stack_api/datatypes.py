@@ -101,6 +101,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar scoring: Model output evaluation and scoring
     :cvar eval: Model evaluation and benchmarking framework
     :cvar post_training: Fine-tuning and model training
+    :cvar fine_tuning: OpenAI-compatible fine-tuning API
     :cvar tool_runtime: Tool execution and management
     :cvar telemetry: Observability and system monitoring
     :cvar models: Model metadata and management
@@ -126,6 +127,7 @@ class Api(Enum, metaclass=DynamicApiMeta):
     scoring = "scoring"
     eval = "eval"
     post_training = "post_training"
+    fine_tuning = "fine_tuning"
     tool_runtime = "tool_runtime"
 
     models = "models"
