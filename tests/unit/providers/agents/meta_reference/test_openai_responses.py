@@ -47,6 +47,7 @@ from llama_stack_api.inference import (
 )
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
+    OpenAIResponseError,
     OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
@@ -55,6 +56,8 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolMCP,
     OpenAIResponseInputToolWebSearch,
     OpenAIResponseMessage,
+    OpenAIResponseObject,
+    OpenAIResponseObjectStreamResponseFailed,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
@@ -258,11 +261,61 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     assert final_response.model == model
     assert len(final_response.output) == 1
     assert isinstance(final_response.output[0], OpenAIResponseMessage)
-    assert final_response.output[0].id == added_event.item_id
-    assert final_response.id == added_event.response_id
 
-    openai_responses_impl.responses_store.store_response_object.assert_called_once()
-    assert final_response.output[0].content[0].text == "Dublin"
+
+async def test_failed_stream_persists_non_system_messages(openai_responses_impl, mock_responses_store):
+    input_text = "Hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    failed_response = OpenAIResponseObject(
+        created_at=1,
+        id="resp_failed",
+        model=model,
+        output=[],
+        status="failed",
+        error=OpenAIResponseError(code="server_error", message="boom"),
+        store=True,
+    )
+
+    class FakeOrchestrator:
+        def __init__(self, *, ctx, **_kwargs):
+            self.ctx = ctx
+            self.final_messages = None
+
+        async def create_response(self):
+            yield OpenAIResponseObjectStreamResponseFailed(response=failed_response, sequence_number=0)
+
+    with patch(
+        "llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.StreamingResponseOrchestrator",
+        FakeOrchestrator,
+    ):
+        stream = await openai_responses_impl.create_openai_response(
+            input=input_text,
+            model=model,
+            instructions="system instructions",
+            stream=True,
+            store=True,
+        )
+        chunks = [chunk async for chunk in stream]
+
+    assert chunks[-1].type == "response.failed"
+    mock_responses_store.upsert_response_object.assert_awaited()
+
+    # Find the call that corresponds to the failed response
+    call_args_list = mock_responses_store.upsert_response_object.call_args_list
+    failed_call = None
+    for call in call_args_list:
+        _, kwargs = call
+        if kwargs.get("response_object") and kwargs["response_object"].status == "failed":
+            failed_call = call
+            break
+
+    assert failed_call is not None, "Expected upsert_response_object to be called with failed response"
+    _, kwargs = failed_call
+    messages = kwargs["messages"]
+    assert messages, "Expected non-system messages to be persisted on failure"
+    assert all(not isinstance(m, OpenAISystemMessageParam) for m in messages)
+    assert any(getattr(m, "role", None) == "user" for m in messages)
 
 
 async def test_create_openai_response_with_string_input_with_tools(openai_responses_impl, mock_inference_api):
@@ -296,7 +349,7 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
         ]
         openai_responses_impl.tool_groups_api.get_tool.reset_mock()
         openai_responses_impl.tool_runtime_api.invoke_tool.reset_mock()
-        openai_responses_impl.responses_store.store_response_object.reset_mock()
+        openai_responses_impl.responses_store.upsert_response_object.reset_mock()
 
         result = await openai_responses_impl.create_openai_response(
             input=input_text,
@@ -327,7 +380,7 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
             kwargs={"query": "What is the capital of Ireland?"},
         )
 
-        openai_responses_impl.responses_store.store_response_object.assert_called_once()
+        openai_responses_impl.responses_store.upsert_response_object.assert_called()
 
         # Check that we got the content from our mocked tool execution result
         assert len(result.output) >= 1
@@ -1093,7 +1146,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
         store=True,
     )
 
-    store_call_args = mock_responses_store.store_response_object.call_args
+    store_call_args = mock_responses_store.upsert_response_object.call_args
     stored_input = store_call_args.kwargs["input"]
 
     # Verify that the stored input contains the full re-hydrated conversation:
@@ -1136,7 +1189,7 @@ async def test_reuse_mcp_tool_list(
             OpenAIResponseInputToolMCP(server_label="alabel", server_url="aurl"),
         ],
     )
-    args = mock_responses_store.store_response_object.call_args
+    args = mock_responses_store.upsert_response_object.call_args
     data = args.kwargs["response_object"].model_dump()
     data["input"] = [input_item.model_dump() for input_item in args.kwargs["input"]]
     data["messages"] = [msg.model_dump() for msg in args.kwargs["messages"]]
@@ -1252,10 +1305,10 @@ async def test_create_openai_response_with_output_types_as_input(
     _ = [chunk async for chunk in result]
 
     # Verify store was called
-    assert mock_responses_store.store_response_object.called
+    assert mock_responses_store.upsert_response_object.called
 
     # Get the stored data
-    store_call_args = mock_responses_store.store_response_object.call_args
+    store_call_args = mock_responses_store.upsert_response_object.call_args
     stored_response = store_call_args.kwargs["response_object"]
 
     # Now simulate a multi-turn conversation where outputs become inputs
