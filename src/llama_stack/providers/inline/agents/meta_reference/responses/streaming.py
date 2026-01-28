@@ -139,6 +139,7 @@ class StreamingResponseOrchestrator:
         guardrail_ids: list[str] | None = None,
         connectors_api: Connectors | None = None,
         prompt: OpenAIResponsePrompt | None = None,
+        prompt_cache_key: str | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
@@ -157,6 +158,7 @@ class StreamingResponseOrchestrator:
         self.connectors_api = connectors_api
         self.guardrail_ids = guardrail_ids or []
         self.prompt = prompt
+        self.prompt_cache_key = prompt_cache_key
         # System message that is inserted into the model's context
         self.instructions = instructions
         # Whether to allow more than one function tool call generated per turn.
@@ -204,6 +206,7 @@ class StreamingResponseOrchestrator:
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             metadata=self.metadata,
             store=self.store,
+            prompt_cache_key=self.prompt_cache_key,
         )
 
         return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
@@ -245,6 +248,7 @@ class StreamingResponseOrchestrator:
             reasoning=self.reasoning,
             metadata=self.metadata,
             store=self.store,
+            prompt_cache_key=self.prompt_cache_key,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
