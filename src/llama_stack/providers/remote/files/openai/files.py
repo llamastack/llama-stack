@@ -21,9 +21,9 @@ from llama_stack_api import (
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
     OpenAIFileObject,
+    OpenAIFileObjectNotFoundError,
     OpenAIFilePurpose,
     Order,
-    ResourceNotFoundError,
     RetrieveFileContentRequest,
     RetrieveFileRequest,
     UploadFileRequest,
@@ -85,7 +85,7 @@ class OpenAIFilesImpl(Files):
         if not return_expired:
             where["expires_at"] = {">": self._now()}
         if not (row := await self.sql_store.fetch_one("openai_files", where=where, action=action)):
-            raise ResourceNotFoundError(file_id, "File", "files.list()")
+            raise OpenAIFileObjectNotFoundError(file_id)
         return row
 
     async def _delete_file(self, file_id: str) -> None:
@@ -243,7 +243,7 @@ class OpenAIFilesImpl(Files):
         except Exception as e:
             if "not found" in str(e).lower():
                 await self._delete_file(file_id)
-                raise ResourceNotFoundError(file_id, "File", "files.list()") from e
+                raise OpenAIFileObjectNotFoundError(file_id) from e
             raise RuntimeError(f"Failed to download file from OpenAI: {e}") from e
 
         return Response(
