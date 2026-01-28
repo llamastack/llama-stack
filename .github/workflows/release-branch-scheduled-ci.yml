@@ -111,19 +111,28 @@ jobs:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
           setup: 'ollama'
-          suite: 'integration'
+          suite: 'base'
           inference-mode: 'replay'
 
+      - name: Check for TypeScript client tests
+        id: check-ts-client
+        run: |
+          if [ -d "tests/integration/client-typescript" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Setup Node.js for TypeScript client tests
-        if: matrix.client == 'server'
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        if: matrix.client == 'server' && steps.check-ts-client.outputs.exists == 'true'
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
           cache-dependency-path: tests/integration/client-typescript/package-lock.json
 
       - name: Setup TypeScript client
-        if: matrix.client == 'server'
+        if: matrix.client == 'server' && steps.check-ts-client.outputs.exists == 'true'
         id: setup-ts-client
         uses: ./.github/actions/setup-typescript-client
         with:
@@ -141,9 +150,7 @@ jobs:
                 || 'docker:ci-tests' }}
           setup: 'ollama'
           inference-mode: 'replay'
-          suite: 'integration'
-          target-branch: ''
-          is-fork-pr: 'false'
+          suite: 'base'
 
   build-verification:
     name: Build verification on ${{ matrix.branch }}
@@ -168,6 +175,7 @@ jobs:
           activate-environment: true
 
       - name: Build Llama Stack API package
+        if: hashFiles('src/llama_stack_api/pyproject.toml') != ''
         working-directory: src/llama_stack_api
         run: uv build
 
@@ -176,7 +184,11 @@ jobs:
 
       - name: Install Llama Stack package (with api stubs from local build)
         run: |
-          uv pip install --find-links src/llama_stack_api/dist dist/*.whl
+          if [ -d "src/llama_stack_api/dist" ]; then
+            uv pip install --find-links src/llama_stack_api/dist dist/*.whl
+          else
+            uv pip install dist/*.whl
+          fi
 
       - name: Verify Llama Stack package
         run: |
