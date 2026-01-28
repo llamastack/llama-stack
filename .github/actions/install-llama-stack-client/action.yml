@@ -49,6 +49,8 @@ runs:
           BRANCH="${{ github.base_ref || github.ref }}"
           BRANCH="${BRANCH#refs/heads/}"
         fi
+        # Trim leading/trailing whitespace (git branch -r output includes padding)
+        BRANCH="$(echo "$BRANCH" | xargs)"
 
         echo "Working with branch: $BRANCH"
 

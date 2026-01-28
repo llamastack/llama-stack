@@ -41,10 +41,10 @@ jobs:
             branches=$(git branch -r | \
               grep 'origin/release-[0-9]' | \
               grep '\.x$' | \
-              sed 's|origin/||' | \
+              sed 's|^[[:space:]]*origin/||' | \
               sort -V | \
               tail -2 | \
-              jq -R -s -c 'split("\n") | map(select(length > 0))')
+              jq -R -s -c 'split("\n") | map(select(length > 0) | ltrimstr(" ") | rtrimstr(" "))')
           fi
 
           echo "branches=$branches" >> $GITHUB_OUTPUT
