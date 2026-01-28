@@ -10,6 +10,7 @@ from io import BytesIO
 import pytest
 from llama_stack_client import BadRequestError
 from openai import BadRequestError as OpenAIBadRequestError
+from openai import OpenAI
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.log import get_logger
@@ -4896,6 +4897,10 @@ def test_openai_vector_store_contextual_chunking(
         pytest.skip("No text model configured for contextual chunking test")
 
     compat_client = compat_client_with_empty_stores
+    if isinstance(compat_client, OpenAI):
+        pytest.skip(
+            "Contextual chunking requires longer timeout than OpenAI client default; tested via client_with_models"
+        )
 
     vector_store = compat_client.vector_stores.create(
         name="contextual_chunking_test",
