@@ -54,7 +54,7 @@ def test_register_and_unregister_toolgroup(llama_stack_client):
         with pytest.raises(
             ToolGroupNotFoundError,
             match=re.escape(
-                f"Tool Group '{test_toolgroup_id}' not found. Use 'client.toolgroups.list()' to list available Tool Groups."
+                f"Tool Group '{test_toolgroup_id}' not found. Use 'client.toolgroups.list()' to list available tool groups."
             ),
         ):
             llama_stack_client.toolgroups.get(toolgroup_id=test_toolgroup_id)
@@ -62,7 +62,7 @@ def test_register_and_unregister_toolgroup(llama_stack_client):
         with pytest.raises(
             ToolGroupNotFoundError,
             match=re.escape(
-                f"Tool Group '{test_toolgroup_id}' not found. Use 'client.toolgroups.list()' to list available Tool Groups."
+                f"Tool Group '{test_toolgroup_id}' not found. Use 'client.toolgroups.list()' to list available tool groups."
             ),
         ):
             llama_stack_client.tools.list(toolgroup_id=test_toolgroup_id)
