@@ -6,6 +6,14 @@ inputs:
     description: 'Client version to install on non-release branches (latest or published). Ignored on release branches.'
     required: false
     default: ""
+  sdk_install_url:
+    description: 'URL to install Python SDK from (for testing preview builds). If provided, overrides client-version.'
+    required: false
+    default: ""
+  branch:
+    description: 'Explicit branch override (used by scheduled CI to pass the matrix branch)'
+    required: false
+    default: ""
 
 outputs:
   uv-extra-index-url:
@@ -26,8 +34,13 @@ runs:
       shell: bash
       run: |
         # Determine the branch we're working with
-        BRANCH="${{ github.base_ref || github.ref }}"
-        BRANCH="${BRANCH#refs/heads/}"
+        # Use explicit branch input if provided (for scheduled CI), otherwise detect from GitHub context
+        if [ -n "${{ inputs.branch }}" ]; then
+          BRANCH="${{ inputs.branch }}"
+        else
+          BRANCH="${{ github.base_ref || github.ref }}"
+          BRANCH="${BRANCH#refs/heads/}"
+        fi
 
         echo "Working with branch: $BRANCH"
 
