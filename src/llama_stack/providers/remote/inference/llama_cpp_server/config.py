@@ -15,12 +15,12 @@ from llama_stack_api import json_schema_type
 @json_schema_type
 class LlamaCppServerConfig(RemoteInferenceProviderConfig):
     base_url: HttpUrl | None = Field(
-        default=HttpUrl("https://localhost:8080/v1"),
+        default=HttpUrl("http://localhost:8080/v1"),
         description="The URL for the Llama cpp server",
     )
 
     @classmethod
     def sample_run_config(cls, **kwargs) -> dict[str, Any]:
         return {
-            "base_url": "https://localhost:8080/v1",
+            "base_url": "http://localhost:8080/v1",
         }
