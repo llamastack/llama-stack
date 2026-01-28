@@ -1228,11 +1228,11 @@ class OpenAIVectorStoreMixin(ABC):
 
             # Update batch info with results from this chunk
             completed_files = sum(1 for _, success in results if success)
+            failed_files = sum(1 for _, success in results if not success)
 
             # Update batch info in storage
             batch_info["file_counts"]["completed"] += completed_files
-
-            # batch_info["file_counts"]["failed"] += failed_files  # We don't track failed separately in counts yet
+            batch_info["file_counts"]["failed"] += failed_files
             batch_info["file_counts"]["in_progress"] -= len(results)
 
             await self._save_openai_vector_store_file_batch(batch_id, batch_info)
