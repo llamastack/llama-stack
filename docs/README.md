@@ -4,14 +4,49 @@ Here's a collection of comprehensive guides, examples, and resources for buildin
 
 ## Render locally
 
-From the llama-stack `docs/` directory, run the following commands to render the docs locally:
+From the repository root, use the build script:
+```bash
+./scripts/build-docs.sh --serve
+```
+
+Or from the `docs/` directory:
 ```bash
 npm install
 npm run gen-api-docs all
 npm run build
 npm run serve
 ```
+
 You can open up the docs in your browser at http://localhost:3000
+
+## API Documentation Generation
+
+The API documentation is generated from OpenAPI specs using `docusaurus-plugin-openapi-docs`. The generation is optimized with hash-based caching to skip regeneration when specs haven't changed.
+
+### npm Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run gen-api-docs` | Generate API docs with caching (skips if specs unchanged) |
+| `npm run gen-api-docs:force` | Force regeneration of all API docs |
+| `npm run gen-api-docs:parallel` | Generate API docs in parallel |
+| `npm run gen-api-docs:stable` | Generate only stable API docs |
+| `npm run gen-api-docs:experimental` | Generate only experimental API docs |
+| `npm run gen-api-docs:deprecated` | Generate only deprecated API docs |
+| `npm run gen-api-docs:raw` | Bypass caching and run docusaurus directly |
+
+### Build Script Options
+
+The `./scripts/build-docs.sh` script supports these options:
+
+| Option | Description |
+|--------|-------------|
+| `--force` | Force regeneration of API docs |
+| `--parallel` | Generate API docs in parallel |
+| `--skip-api` | Skip API docs generation entirely |
+| `--serve` | Start local server after building |
+
+Environment variables `SKIP_API_DOCS=1` and `FORCE_API_DOCS=1` are also supported.
 
 ## File Import System
 
