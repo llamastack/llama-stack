@@ -80,13 +80,19 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
 
     async def _index_tools(self, toolgroup: ToolGroup, authorization: str | None = None):
         provider_impl = await super().get_provider_impl(toolgroup.identifier, toolgroup.provider_id)
+
         tooldefs_response = await provider_impl.list_runtime_tools(
             toolgroup.identifier, toolgroup.mcp_endpoint, authorization=authorization
         )
-
         tooldefs = tooldefs_response.data
+
         for t in tooldefs:
             t.toolgroup_id = toolgroup.identifier
+            # Include MCP server instructions in metadata for easy access
+            if toolgroup.mcp_server_instructions:
+                if t.metadata is None:
+                    t.metadata = {}
+                t.metadata["mcp_server_instructions"] = toolgroup.mcp_server_instructions
 
         self.toolgroups_to_tools[toolgroup.identifier] = tooldefs
         for tool in tooldefs:
@@ -116,13 +122,37 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
         provider_id: str,
         mcp_endpoint: URL | None = None,
         args: dict[str, Any] | None = None,
+        mcp_server_instructions: str | None = None,
     ) -> None:
+        # If this is an MCP toolgroup and we don't have instructions yet, try to fetch them
+        if mcp_endpoint and not mcp_server_instructions:
+            try:
+                from llama_stack.providers.utils.tools.mcp import list_mcp_tools, prepare_mcp_headers
+
+                headers = args.get("headers") if args else None
+                final_headers = prepare_mcp_headers(headers, authorization=None)
+
+                tools_response = await list_mcp_tools(
+                    endpoint=str(mcp_endpoint),
+                    headers=final_headers,
+                    authorization=None,
+                )
+                # Extract instructions from the first tool's metadata (all tools share same server instructions)
+                if tools_response.data:
+                    first_tool = tools_response.data[0]
+                    if first_tool.metadata and "mcp_server_instructions" in first_tool.metadata:
+                        mcp_server_instructions = first_tool.metadata["mcp_server_instructions"]
+            except Exception as e:
+                logger.warning(f"Failed to fetch MCP server instructions for {toolgroup_id}: {e}")
+                # Continue without instructions
+
         toolgroup = ToolGroupWithOwner(
             identifier=toolgroup_id,
             provider_id=provider_id,
             provider_resource_id=toolgroup_id,
             mcp_endpoint=mcp_endpoint,
             args=args,
+            mcp_server_instructions=mcp_server_instructions,
         )
         await self.register_object(toolgroup)
 
