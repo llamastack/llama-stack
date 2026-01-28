@@ -261,6 +261,7 @@ from .inference import (
     OpenAIEmbeddingUsage,
     OpenAIFile,
     OpenAIFileFile,
+    OpenAIFinishReason,
     OpenAIImageURL,
     OpenAIJSONSchema,
     OpenAIMessageParam,
@@ -520,6 +521,7 @@ from .tools import (
     ToolRuntime,
     ToolStore,
 )
+from .validators import validate_embeddings_input_is_text
 from .vector_io import (
     Chunk,
     ChunkMetadata,
@@ -799,6 +801,7 @@ __all__ = [
     "OpenAIFileFile",
     "OpenAIFileObject",
     "OpenAIFilePurpose",
+    "OpenAIFinishReason",
     "OpenAIImageURL",
     "OpenAIJSONSchema",
     "OpenAIListModelsResponse",
@@ -1070,4 +1073,6 @@ __all__ = [
     "WebMethod",
     "WebSearchToolTypes",
     "WeightedRanker",
+    # Validators
+    "validate_embeddings_input_is_text",
 ]

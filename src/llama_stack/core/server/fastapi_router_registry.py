@@ -36,6 +36,7 @@ from llama_stack_api import (
     scoring,
     scoring_functions,
     shields,
+    vector_io,
 )
 from llama_stack_api.datatypes import Api
 
@@ -61,6 +62,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "scoring": scoring.fastapi_routes.create_router,
     "scoring_functions": scoring_functions.fastapi_routes.create_router,
     "shields": shields.fastapi_routes.create_router,
+    "vector_io": vector_io.fastapi_routes.create_router,
 }
 
 
