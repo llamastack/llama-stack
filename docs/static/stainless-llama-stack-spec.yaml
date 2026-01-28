@@ -2435,6 +2435,8 @@ paths:
         schema:
           anyOf:
           - type: integer
+            maximum: 100
+            minimum: 1
           - type: 'null'
           description: Maximum number of vector stores to return.
           default: 20
@@ -2817,6 +2819,8 @@ paths:
         schema:
           anyOf:
           - type: integer
+            maximum: 100
+            minimum: 1
           - type: 'null'
           description: Maximum number of files to return.
           default: 20
@@ -2874,6 +2878,8 @@ paths:
         schema:
           anyOf:
           - type: integer
+            maximum: 100
+            minimum: 1
           - type: 'null'
           description: Maximum number of files to return.
           default: 20

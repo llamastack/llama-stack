@@ -30,8 +30,9 @@ from llama_stack_api import (
     Chunk,
     ChunkMetadata,
     EmbeddedChunk,
-    InterleavedContent,
+    InsertChunksRequest,
     OpenAIEmbeddingsRequestWithExtraBody,
+    QueryChunksRequest,
     QueryChunksResponse,
     RAGDocument,
     VectorStore,
@@ -276,21 +277,21 @@ class VectorStoreWithIndex:
 
     async def insert_chunks(
         self,
-        chunks: list[EmbeddedChunk],
+        request: InsertChunksRequest,
     ) -> None:
         # Validate embedding dimensions match the vector store
-        for i, embedded_chunk in enumerate(chunks):
+        for i, embedded_chunk in enumerate(request.chunks):
             _validate_embedding(embedded_chunk.embedding, i, self.vector_store.embedding_dimension)
 
-        await self.index.add_chunks(chunks)
+        await self.index.add_chunks(request.chunks)
 
     async def query_chunks(
         self,
-        query: InterleavedContent,
-        params: dict[str, Any] | None = None,
+        request: QueryChunksRequest,
     ) -> QueryChunksResponse:
         config = self.vector_stores_config or VectorStoresConfig()
 
+        params = request.params
         if params is None:
             params = {}
         k = params.get("max_chunks", 3)
@@ -320,7 +321,7 @@ class VectorStoreWithIndex:
                 k_value = ranker.get("params", {}).get("k", config.chunk_retrieval_params.rrf_impact_factor)
                 reranker_params = {"impact_factor": k_value}
 
-        query_string = interleaved_content_as_str(query)
+        query_string = interleaved_content_as_str(request.query)
         if mode == "keyword":
             return await self.index.query_keyword(query_string, k, score_threshold)
 
