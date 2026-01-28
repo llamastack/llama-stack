@@ -327,6 +327,11 @@ class StreamingResponseOrchestrator:
                     True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
                 )
 
+                # In OpenAI, parallel_tool_calls is only allowed when 'tools' are specified.
+                effective_parallel_tool_calls = (
+                    self.parallel_tool_calls if effective_tools is not None and len(effective_tools) > 0 else None
+                )
+
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
@@ -340,6 +345,7 @@ class StreamingResponseOrchestrator:
                         "include_usage": True,
                     },
                     logprobs=logprobs,
+                    parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)

@@ -4150,140 +4150,11 @@ paths:
       summary: Get service version
       description: Get the version of the service.
       operationId: version_v1alpha_admin_version_get
-  /v1alpha/connectors/{connector_id}:
-    get:
-      responses:
-        '200':
-          description: A Connector.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Connector'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Connectors
-      summary: Get Connector
-      description: Get a connector by its ID.
-      operationId: get_connector_v1alpha_connectors__connector_id__get
-      parameters:
-      - name: authorization
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
-      - name: connector_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: connector_id'
-  /v1alpha/connectors/{connector_id}/tools/{tool_name}:
-    get:
-      responses:
-        '200':
-          description: A ToolDef.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ToolDef'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Connectors
-      summary: Get Connector Tool
-      description: Get a tool definition by its name from a connector.
-      operationId: get_connector_tool_v1alpha_connectors__connector_id__tools__tool_name__get
-      parameters:
-      - name: authorization
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
-      - name: connector_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: connector_id'
-      - name: tool_name
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: tool_name'
-  /v1alpha/connectors/{connector_id}/tools:
-    get:
-      responses:
-        '200':
-          description: A ListToolsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListToolsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Connectors
-      summary: List Connector Tools
-      description: List tools available from a connector.
-      operationId: list_connector_tools_v1alpha_connectors__connector_id__tools_get
-      parameters:
-      - name: authorization
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
-      - name: connector_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: connector_id'
   /v1alpha/connectors:
     get:
       responses:
         '200':
-          description: A ListConnectorsResponse.
+          description: Successful Response
           content:
             application/json:
               schema:
@@ -4302,9 +4173,152 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Connectors
-      summary: List Connectors
+      summary: List all connectors.
       description: List all configured connectors.
       operationId: list_connectors_v1alpha_connectors_get
+  /v1alpha/connectors/{connector_id}/tools/{tool_name}:
+    get:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolDef'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Connectors
+      summary: Get a tool by name from a connector.
+      description: Get a tool definition by its name from a connector.
+      operationId: get_connector_tool_v1alpha_connectors__connector_id__tools__tool_name__get
+      parameters:
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Identifier for the connector
+          title: Connector Id
+        description: Identifier for the connector
+      - name: tool_name
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Name of the tool
+          title: Tool Name
+        description: Name of the tool
+      - name: authorization
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Authorization token
+          title: Authorization
+        description: Authorization token
+  /v1alpha/connectors/{connector_id}/tools:
+    get:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Connectors
+      summary: List tools from a connector.
+      description: List all tools available from a connector.
+      operationId: list_connector_tools_v1alpha_connectors__connector_id__tools_get
+      parameters:
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Identifier for the connector
+          title: Connector Id
+        description: Identifier for the connector
+      - name: authorization
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Authorization token
+          title: Authorization
+        description: Authorization token
+  /v1alpha/connectors/{connector_id}:
+    get:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connector'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Connectors
+      summary: Get a connector by its ID.
+      description: Get a connector by its ID.
+      operationId: get_connector_v1alpha_connectors__connector_id__get
+      parameters:
+      - name: connector_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: Identifier for the connector
+          title: Connector Id
+        description: Identifier for the connector
+      - name: authorization
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Authorization token
+          title: Authorization
+        description: Authorization token
 components:
   schemas:
     Error:
@@ -12067,7 +12081,7 @@ components:
       - connector_id
       - url
       title: Connector
-      description: A connector registered in Llama Stack.
+      description: A connector registered in Llama Stack
     ConnectorType:
       type: string
       enum:
@@ -12538,7 +12552,7 @@ components:
       required:
       - data
       title: ListConnectorsResponse
-      description: Response containing a list of connectors.
+      description: Response containing a list of configured connectors
     ListToolsResponse:
       properties:
         data:
@@ -12550,7 +12564,7 @@ components:
       required:
       - data
       title: ListToolsResponse
-      description: Response containing a list of tools.
+      description: Response containing a list of tools
     MCPListToolsTool:
       properties:
         input_schema:
@@ -14528,6 +14542,44 @@ components:
       - connector_id
       - url
       title: ConnectorInput
+      type: object
+    GetConnectorRequest:
+      description: Request model for getting a connector by ID.
+      properties:
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+      required:
+      - connector_id
+      title: GetConnectorRequest
+      type: object
+    ListConnectorToolsRequest:
+      description: Request model for listing tools from a connector.
+      properties:
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+      required:
+      - connector_id
+      title: ListConnectorToolsRequest
+      type: object
+    GetConnectorToolRequest:
+      description: Request model for getting a tool from a connector.
+      properties:
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+        tool_name:
+          description: Name of the tool
+          title: Tool Name
+          type: string
+      required:
+      - connector_id
+      - tool_name
+      title: GetConnectorToolRequest
       type: object
     ConversationMessage:
       description: OpenAI-compatible message item for conversations.
