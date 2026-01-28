@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, cast
 
+import anyio
 import httpx
 from mcp import ClientSession, McpError
 from mcp import types as mcp_types
@@ -242,29 +243,39 @@ class MCPSessionManager:
             raise last_exception
         raise RuntimeError(f"Failed to create MCP session for {endpoint}")
 
-    async def close_all(self) -> None:
+    async def close_all(self, timeout: float = 5.0) -> None:
         """Close all cached sessions.
 
         Should be called at the end of a request to clean up resources.
+
+        Args:
+            timeout: Maximum time in seconds to wait for each session/client cleanup.
+                This prevents indefinite hangs if tasks don't respond to cancellation,
+                which can cause 100% CPU usage due to anyio's cancellation delivery loop.
 
         Note: We catch BaseException (not just Exception) because:
         1. CancelledError is a BaseException and can occur during cleanup
         2. anyio cancel scope errors can occur if cleanup runs in a different
            task context than where the session was created
+        3. TimeoutError from fail_after when cleanup takes too long
         These are expected in streaming response scenarios and are handled gracefully.
         """
         errors = []
         session_count = len(self._sessions)
         for key, (session, client_ctx, _) in list(self._sessions.items()):
             try:
-                await session.__aexit__(None, None, None)
+                # Use timeout to prevent indefinite hang if tasks don't respond to cancellation
+                # This avoids 100% CPU spin in anyio's _deliver_cancellation loop
+                with anyio.fail_after(timeout):
+                    await session.__aexit__(None, None, None)
             except BaseException as e:
                 # Debug level since these errors are expected in streaming scenarios
                 # where cleanup runs in a different async context than session creation
                 logger.debug(f"Error closing MCP session {key}: {e}")
                 errors.append(e)
             try:
-                await client_ctx.__aexit__(None, None, None)
+                with anyio.fail_after(timeout):
+                    await client_ctx.__aexit__(None, None, None)
             except BaseException as e:
                 logger.debug(f"Error closing MCP client context {key}: {e}")
                 errors.append(e)
