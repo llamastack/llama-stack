@@ -25,13 +25,7 @@ class ConnectorType(StrEnum):
 
 
 class CommonConnectorFields(BaseModel):
-    """Common fields for all connectors.
-
-    :param connector_type: Type of connector
-    :param connector_id: Identifier for the connector
-    :param url: URL of the connector
-    :param server_label: (Optional) Label of the server
-    """
+    """Common fields for all connectors"""
 
     connector_type: ConnectorType = Field(default=ConnectorType.MCP)
     connector_id: str = Field(..., description="Identifier for the connector")
@@ -41,12 +35,7 @@ class CommonConnectorFields(BaseModel):
 
 @json_schema_type
 class Connector(CommonConnectorFields):
-    """A connector registered in Llama Stack.
-
-    :param server_name: (Optional) Name of the server
-    :param server_description: (Optional) Description of the server
-    :param server_version: (Optional) Version of the server
-    """
+    """A connector registered in Llama Stack"""
 
     model_config = {"populate_by_name": True}
     server_name: str | None = Field(default=None, description="Name of the server")
@@ -89,20 +78,14 @@ class GetConnectorToolRequest(BaseModel):
 
 @json_schema_type
 class ListConnectorsResponse(BaseModel):
-    """Response containing a list of configured connectors.
-
-    :param data: List of connectors
-    """
+    """Response containing a list of configured connectors"""
 
     data: list[Connector]
 
 
 @json_schema_type
 class ListToolsResponse(BaseModel):
-    """Response containing a list of tools.
-
-    :param data: List of tools
-    """
+    """Response containing a list of tools"""
 
     data: list[ToolDef]
 

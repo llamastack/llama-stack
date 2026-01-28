@@ -262,7 +262,7 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
             connector_id=connector.connector_id,
             connector_type=connector.connector_type,
             url=connector.url,
-            # server_label=connector.server_label,
+            server_label=connector.server_label,
         )
 
 

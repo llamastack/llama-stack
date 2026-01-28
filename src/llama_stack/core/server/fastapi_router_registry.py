@@ -47,6 +47,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "agents": agents.fastapi_routes.create_router,
     "batches": batches.fastapi_routes.create_router,
     "benchmarks": benchmarks.fastapi_routes.create_router,
+    "connectors": connectors.fastapi_routes.create_router,
     "conversations": conversations.fastapi_routes.create_router,
     "datasetio": datasetio.fastapi_routes.create_router,
     "datasets": datasets.fastapi_routes.create_router,
@@ -62,7 +63,6 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "scoring_functions": scoring_functions.fastapi_routes.create_router,
     "shields": shields.fastapi_routes.create_router,
     "vector_io": vector_io.fastapi_routes.create_router,
-    "connectors": connectors.fastapi_routes.create_router,
 }
 
 
