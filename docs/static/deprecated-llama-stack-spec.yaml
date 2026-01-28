@@ -8679,6 +8679,59 @@ components:
       - reasoning.encrypted_content
       title: ConversationItemInclude
       description: Specify additional output data to include in the model response.
+    CreateFineTuningJobRequest:
+      properties:
+        model:
+          type: string
+          title: Model
+          description: Base model identifier
+        training_file:
+          type: string
+          title: Training File
+          description: Training dataset identifier
+        validation_file:
+          type: string
+          title: Validation File
+          description: Validation dataset identifier
+          nullable: true
+        hyperparameters:
+          $ref: '#/components/schemas/FineTuningJobHyperparameters'
+          description: Training hyperparameters
+          nullable: true
+        suffix:
+          type: string
+          title: Suffix
+          description: Fine-tuned model name suffix
+          nullable: true
+        method:
+          $ref: '#/components/schemas/FineTuneMethod-Input'
+          description: Fine-tuning method
+        seed:
+          type: integer
+          title: Seed
+          description: Random seed
+          nullable: true
+        integrations:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Integrations
+          description: Integration configurations
+          nullable: true
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Custom metadata
+          nullable: true
+      type: object
+      required:
+      - model
+      - training_file
+      - method
+      title: CreateFineTuningJobRequest
+      description: Request to create a fine-tuning job.
     CreateResponseRequest:
       properties:
         input:
@@ -9067,6 +9120,384 @@ components:
       - benchmark_config
       title: EvaluateRowsBodyRequest
       description: Request body model for evaluating rows (without path parameter).
+    FineTuneDPOHyperparameters:
+      properties:
+        n_epochs:
+          type: integer
+          title: N Epochs
+          description: Number of training epochs
+          nullable: true
+        batch_size:
+          type: integer
+          title: Batch Size
+          description: Training batch size
+          nullable: true
+        learning_rate_multiplier:
+          type: number
+          title: Learning Rate Multiplier
+          description: Learning rate multiplier
+          nullable: true
+        beta:
+          type: number
+          title: Beta
+          description: DPO beta parameter
+          nullable: true
+      type: object
+      title: FineTuneDPOHyperparameters
+      description: Hyperparameters for DPO fine-tuning.
+    FineTuneDPOMethod:
+      properties:
+        hyperparameters:
+          $ref: '#/components/schemas/FineTuneDPOHyperparameters'
+          nullable: true
+      type: object
+      title: FineTuneDPOMethod
+      description: Configuration for DPO fine-tuning method.
+    FineTuneMethod-Input:
+      properties:
+        type:
+          type: string
+          enum:
+          - supervised
+          - dpo
+          - reinforcement
+          title: Type
+          description: Fine-tuning method type
+        supervised:
+          $ref: '#/components/schemas/FineTuneSupervisedMethod'
+          description: Supervised fine-tuning configuration
+          nullable: true
+        dpo:
+          $ref: '#/components/schemas/FineTuneDPOMethod'
+          description: DPO fine-tuning configuration
+          nullable: true
+        reinforcement:
+          $ref: '#/components/schemas/FineTuneReinforcementMethod'
+          description: Reinforcement fine-tuning configuration
+          nullable: true
+      type: object
+      required:
+      - type
+      title: FineTuneMethod
+      description: |-
+        The method used for fine-tuning.
+
+        Matches OpenAI's structure where type is discriminator and
+        method-specific config is in optional fields.
+    FineTuneMethod-Output:
+      properties:
+        type:
+          type: string
+          enum:
+          - supervised
+          - dpo
+          - reinforcement
+          title: Type
+          description: Fine-tuning method type
+        supervised:
+          $ref: '#/components/schemas/FineTuneSupervisedMethod'
+          description: Supervised fine-tuning configuration
+          nullable: true
+        dpo:
+          $ref: '#/components/schemas/FineTuneDPOMethod'
+          description: DPO fine-tuning configuration
+          nullable: true
+        reinforcement:
+          $ref: '#/components/schemas/FineTuneReinforcementMethod'
+          description: Reinforcement fine-tuning configuration
+          nullable: true
+      type: object
+      required:
+      - type
+      title: FineTuneMethod
+      description: |-
+        The method used for fine-tuning.
+
+        Matches OpenAI's structure where type is discriminator and
+        method-specific config is in optional fields.
+    FineTuneReinforcementMethod:
+      properties:
+        hyperparameters:
+          $ref: '#/components/schemas/FineTuneDPOHyperparameters'
+          nullable: true
+      type: object
+      title: FineTuneReinforcementMethod
+      description: Configuration for reinforcement fine-tuning method.
+    FineTuneSupervisedHyperparameters:
+      properties:
+        n_epochs:
+          type: integer
+          title: N Epochs
+          description: Number of training epochs
+          nullable: true
+        batch_size:
+          type: integer
+          title: Batch Size
+          description: Training batch size
+          nullable: true
+        learning_rate_multiplier:
+          type: number
+          title: Learning Rate Multiplier
+          description: Learning rate multiplier
+          nullable: true
+      type: object
+      title: FineTuneSupervisedHyperparameters
+      description: Hyperparameters for supervised fine-tuning.
+    FineTuneSupervisedMethod:
+      properties:
+        hyperparameters:
+          $ref: '#/components/schemas/FineTuneSupervisedHyperparameters'
+          nullable: true
+      type: object
+      title: FineTuneSupervisedMethod
+      description: Configuration for supervised fine-tuning method.
+    FineTuningError:
+      properties:
+        code:
+          type: string
+          title: Code
+          description: Machine-readable error code
+        message:
+          type: string
+          title: Message
+          description: Human-readable error message
+        param:
+          type: string
+          title: Param
+          description: Parameter that caused the error (null if not parameter-specific)
+          nullable: true
+      type: object
+      required:
+      - code
+      - message
+      - param
+      title: FineTuningError
+      description: Error information for failed fine-tuning jobs.
+    FineTuningJob:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Job identifier
+        object:
+          type: string
+          const: fine_tuning.job
+          title: Object
+          description: Object type
+          default: fine_tuning.job
+        created_at:
+          type: integer
+          title: Created At
+          description: Unix timestamp of creation
+        finished_at:
+          type: integer
+          title: Finished At
+          description: Unix timestamp of completion
+          nullable: true
+        model:
+          type: string
+          title: Model
+          description: Base model identifier
+        fine_tuned_model:
+          type: string
+          title: Fine Tuned Model
+          description: Fine-tuned model identifier
+          nullable: true
+        status:
+          $ref: '#/components/schemas/FineTuningJobStatus'
+          description: Job status
+        training_file:
+          type: string
+          title: Training File
+          description: Training dataset identifier
+        validation_file:
+          type: string
+          title: Validation File
+          description: Validation dataset identifier
+          nullable: true
+        hyperparameters:
+          $ref: '#/components/schemas/FineTuningJobHyperparameters'
+          description: Training hyperparameters
+        trained_tokens:
+          type: integer
+          title: Trained Tokens
+          description: Total tokens processed
+          nullable: true
+        error:
+          $ref: '#/components/schemas/FineTuningError'
+          description: Error details if failed
+          nullable: true
+        seed:
+          type: integer
+          title: Seed
+          description: Random seed
+        estimated_finish:
+          type: integer
+          title: Estimated Finish
+          description: Estimated completion timestamp
+          nullable: true
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Custom metadata
+          nullable: true
+        organization_id:
+          type: string
+          title: Organization Id
+          description: Organization identifier
+        method:
+          $ref: '#/components/schemas/FineTuneMethod-Output'
+          description: Fine-tuning method configuration
+        result_files:
+          items:
+            type: string
+          type: array
+          title: Result Files
+          description: Result file identifiers
+        integrations:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Integrations
+          description: Integration configs (nullable in OpenAI)
+          nullable: true
+      type: object
+      required:
+      - id
+      - created_at
+      - model
+      - status
+      - training_file
+      title: FineTuningJob
+      description: |-
+        A fine-tuning job.
+
+        Matches OpenAI's FineTuningJob structure with Llama Stack extensions.
+    FineTuningJobCheckpoint:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Checkpoint identifier
+        created_at:
+          type: integer
+          title: Created At
+          description: Unix timestamp
+        fine_tuned_model_checkpoint:
+          type: string
+          title: Fine Tuned Model Checkpoint
+          description: Checkpoint name
+        step_number:
+          type: integer
+          title: Step Number
+          description: Step number
+        metrics:
+          additionalProperties: true
+          type: object
+          title: Metrics
+          description: Checkpoint metrics
+        fine_tuning_job_id:
+          type: string
+          title: Fine Tuning Job Id
+          description: Fine-tuning job ID
+        object:
+          type: string
+          const: fine_tuning.job.checkpoint
+          title: Object
+          description: Object type
+          default: fine_tuning.job.checkpoint
+      type: object
+      required:
+      - id
+      - created_at
+      - fine_tuned_model_checkpoint
+      - step_number
+      - metrics
+      - fine_tuning_job_id
+      title: FineTuningJobCheckpoint
+      description: A checkpoint from a fine-tuning job.
+    FineTuningJobEvent:
+      properties:
+        id:
+          type: string
+          title: Id
+          description: Event identifier
+        created_at:
+          type: integer
+          title: Created At
+          description: Unix timestamp
+        level:
+          type: string
+          enum:
+          - info
+          - warn
+          - warning
+          - error
+          title: Level
+          description: Log level
+        message:
+          type: string
+          title: Message
+          description: Event message
+        object:
+          type: string
+          const: fine_tuning.job.event
+          title: Object
+          description: Object type
+          default: fine_tuning.job.event
+      type: object
+      required:
+      - id
+      - created_at
+      - level
+      - message
+      title: FineTuningJobEvent
+      description: A log event from a fine-tuning job.
+    FineTuningJobHyperparameters:
+      properties:
+        n_epochs:
+          anyOf:
+          - type: integer
+          - type: string
+            const: auto
+          title: integer | string
+          description: Number of training epochs
+          default: auto
+        batch_size:
+          anyOf:
+          - type: integer
+          - type: string
+            const: auto
+          title: integer | string
+          description: Training batch size
+          default: auto
+        learning_rate_multiplier:
+          anyOf:
+          - type: number
+          - type: string
+            const: auto
+          title: number | string
+          description: Learning rate multiplier
+          default: auto
+      type: object
+      title: FineTuningJobHyperparameters
+      description: Hyperparameters object matching OpenAI's structure.
+    FineTuningJobStatus:
+      type: string
+      enum:
+      - validating_files
+      - queued
+      - running
+      - succeeded
+      - failed
+      - cancelled
+      title: FineTuningJobStatus
+      description: |-
+        Status of a fine-tuning job.
+
+        Matches OpenAI's fine-tuning job status values.
     HealthStatus:
       type: string
       enum:
@@ -9134,6 +9565,88 @@ components:
       - data
       title: ListConnectorsResponse
       description: Response containing a list of connectors.
+    ListFineTuningJobCheckpointsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/FineTuningJobCheckpoint'
+          type: array
+          title: Data
+          description: List of checkpoints
+        has_more:
+          type: boolean
+          title: Has More
+          description: More results available
+          default: false
+        object:
+          type: string
+          const: list
+          title: Object
+          description: Object type
+          default: list
+        first_id:
+          type: string
+          title: First Id
+          description: First checkpoint ID
+          nullable: true
+        last_id:
+          type: string
+          title: Last Id
+          description: Last checkpoint ID
+          nullable: true
+      type: object
+      required:
+      - data
+      title: ListFineTuningJobCheckpointsResponse
+      description: Response for listing fine-tuning job checkpoints.
+    ListFineTuningJobEventsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/FineTuningJobEvent'
+          type: array
+          title: Data
+          description: List of events
+        has_more:
+          type: boolean
+          title: Has More
+          description: More results available
+          default: false
+        object:
+          type: string
+          const: list
+          title: Object
+          description: Object type
+          default: list
+      type: object
+      required:
+      - data
+      title: ListFineTuningJobEventsResponse
+      description: Response for listing fine-tuning job events.
+    ListFineTuningJobsResponse:
+      properties:
+        data:
+          items:
+            $ref: '#/components/schemas/FineTuningJob'
+          type: array
+          title: Data
+          description: List of jobs
+        has_more:
+          type: boolean
+          title: Has More
+          description: More results available
+          default: false
+        object:
+          type: string
+          const: list
+          title: Object
+          description: Object type
+          default: list
+      type: object
+      required:
+      - data
+      title: ListFineTuningJobsResponse
+      description: Response for listing fine-tuning jobs.
     ListToolsResponse:
       properties:
         data:
@@ -10374,6 +10887,7 @@ components:
       - scoring
       - eval
       - post_training
+      - fine_tuning
       - tool_runtime
       - models
       - shields
@@ -11497,6 +12011,37 @@ components:
       required:
       - purpose
       title: UploadFileRequest
+      type: object
+    FineTuneMethod:
+      description: |-
+        The method used for fine-tuning.
+
+        Matches OpenAI's structure where type is discriminator and
+        method-specific config is in optional fields.
+      properties:
+        type:
+          description: Fine-tuning method type
+          enum:
+          - supervised
+          - dpo
+          - reinforcement
+          title: Type
+          type: string
+        supervised:
+          $ref: '#/components/schemas/FineTuneSupervisedMethod'
+          description: Supervised fine-tuning configuration
+          nullable: true
+        dpo:
+          $ref: '#/components/schemas/FineTuneDPOMethod'
+          description: DPO fine-tuning configuration
+          nullable: true
+        reinforcement:
+          $ref: '#/components/schemas/FineTuneReinforcementMethod'
+          description: Reinforcement fine-tuning configuration
+          nullable: true
+      required:
+      - type
+      title: FineTuneMethod
       type: object
     PostTrainingJobLogStream:
       description: Stream of logs from a finetuning job.
