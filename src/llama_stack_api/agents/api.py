@@ -16,6 +16,7 @@ from llama_stack_api.openai_responses import (
 )
 
 from .models import (
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -50,3 +51,8 @@ class Agents(Protocol):
         self,
         request: DeleteResponseRequest,
     ) -> OpenAIDeleteResponseObject: ...
+
+    async def cancel_openai_response(
+        self,
+        request: CancelResponseRequest,
+    ) -> OpenAIResponseObject: ...

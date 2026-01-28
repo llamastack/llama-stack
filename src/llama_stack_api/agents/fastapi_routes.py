@@ -37,6 +37,7 @@ from llama_stack_api.version import LLAMA_STACK_API_V1
 
 from .api import Agents
 from .models import (
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -79,6 +80,7 @@ async def sse_generator(event_gen):
 # Automatically generate dependency functions from Pydantic models
 get_retrieve_response_request = create_path_dependency(RetrieveResponseRequest)
 get_delete_response_request = create_path_dependency(DeleteResponseRequest)
+get_cancel_response_request = create_path_dependency(CancelResponseRequest)
 get_list_responses_request = create_query_dependency(ListResponsesRequest)
 
 
@@ -262,6 +264,20 @@ def create_router(impl: Agents) -> APIRouter:
     ) -> OpenAIDeleteResponseObject:
         try:
             return await impl.delete_openai_response(request)
+        except ValueError as exc:
+            raise _http_exception_from_value_error(exc) from exc
+
+    @router.post(
+        "/responses/{response_id}/cancel",
+        response_model=OpenAIResponseObject,
+        summary="Cancel a background response.",
+        description="Cancel a background response. Only responses created with background=true can be cancelled.",
+    )
+    async def cancel_openai_response(
+        request: Annotated[CancelResponseRequest, Depends(get_cancel_response_request)],
+    ) -> OpenAIResponseObject:
+        try:
+            return await impl.cancel_openai_response(request)
         except ValueError as exc:
             raise _http_exception_from_value_error(exc) from exc
 

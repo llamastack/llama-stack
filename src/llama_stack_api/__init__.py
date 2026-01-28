@@ -53,6 +53,7 @@ from .admin import (
 # Import all public API symbols
 from .agents import (
     Agents,
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -522,6 +523,7 @@ from .tools import (
     ToolStore,
 )
 from .validators import validate_embeddings_input_is_text
+from .helpers import remove_null_from_anyof
 from .vector_io import (
     Chunk,
     ChunkMetadata,
@@ -576,6 +578,7 @@ __all__ = [
     "Agents",
     "AggregationFunctionType",
     # Agents Request Models
+    "CancelResponseRequest",
     "CreateResponseRequest",
     "DeleteResponseRequest",
     "ListResponseInputItemsRequest",
@@ -1075,4 +1078,6 @@ __all__ = [
     "WeightedRanker",
     # Validators
     "validate_embeddings_input_is_text",
+    # helpers
+    "remove_null_from_anyof",
 ]

@@ -4150,6 +4150,41 @@ paths:
       summary: Get service version
       description: Get the version of the service.
       operationId: version_v1alpha_admin_version_get
+  /v1/responses/{response_id}/cancel:
+    post:
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAIResponseObject'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Agents
+      summary: Cancel a background response.
+      description: Cancel a background response. Only responses created with background=true can be cancelled.
+      operationId: cancel_openai_response_v1_responses__response_id__cancel_post
+      parameters:
+      - name: response_id
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The ID of the response to cancel.
+          title: Response Id
+        description: The ID of the response to cancel.
   /v1alpha/connectors/{connector_id}:
     get:
       responses:
@@ -7218,6 +7253,9 @@ components:
       description: Web search tool configuration for OpenAI response inputs.
     OpenAIResponseObjectWithInput:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -7669,6 +7707,9 @@ components:
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseObject:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -12132,6 +12173,10 @@ components:
           type: string
           title: Model
           description: The underlying LLM used for completions.
+        background:
+          type: boolean
+          title: Background
+          description: Whether to run the model response in the background. When true, returns immediately with status 'queued'.
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'

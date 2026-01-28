@@ -14,6 +14,7 @@ The FastAPI router is defined in llama_stack_api.agents.fastapi_routes.
 from . import fastapi_routes
 from .api import Agents
 from .models import (
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -26,6 +27,7 @@ from .models import (
 
 __all__ = [
     "Agents",
+    "CancelResponseRequest",
     "CreateResponseRequest",
     "DeleteResponseRequest",
     "ListResponseInputItemsRequest",
