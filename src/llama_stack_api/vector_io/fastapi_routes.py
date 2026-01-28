@@ -95,7 +95,9 @@ def create_router(impl: VectorIO) -> APIRouter:
         responses={200: {"description": "A list of vector stores."}},
     )
     async def openai_list_vector_stores(
-        limit: Annotated[int | None, Query(description="Maximum number of vector stores to return.")] = 20,
+        limit: Annotated[
+            int | None, Query(ge=1, le=100, description="Maximum number of vector stores to return.")
+        ] = 20,
         order: Annotated[str | None, Query(description="Sort order by created_at: asc or desc.")] = "desc",
         after: Annotated[
             str | None,
@@ -193,7 +195,7 @@ def create_router(impl: VectorIO) -> APIRouter:
     )
     async def openai_list_files_in_vector_store(
         vector_store_id: Annotated[str, Path(description="The vector store identifier.")],
-        limit: Annotated[int | None, Query(description="Maximum number of files to return.")] = 20,
+        limit: Annotated[int | None, Query(ge=1, le=100, description="Maximum number of files to return.")] = 20,
         order: Annotated[str | None, Query(description="Sort order by created_at: asc or desc.")] = "desc",
         after: Annotated[
             str | None,
@@ -341,7 +343,7 @@ def create_router(impl: VectorIO) -> APIRouter:
             ),
         ] = None,
         filter: Annotated[str | None, Query(description="Filter by file status.")] = None,
-        limit: Annotated[int | None, Query(description="Maximum number of files to return.")] = 20,
+        limit: Annotated[int | None, Query(ge=1, le=100, description="Maximum number of files to return.")] = 20,
         order: Annotated[str | None, Query(description="Sort order by created_at: asc or desc.")] = "desc",
     ) -> VectorStoreFilesListInBatchResponse:
         return await impl.openai_list_files_in_vector_store_file_batch(
