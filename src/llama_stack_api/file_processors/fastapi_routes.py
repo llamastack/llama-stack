@@ -11,9 +11,11 @@ FastAPI route decorators. The router is defined in the API package to keep
 all API-related code together.
 """
 
+import json
 from typing import Annotated, Any
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from pydantic import ValidationError
 
 from llama_stack_api.router_utils import standard_responses
 from llama_stack_api.vector_io import VectorStoreChunkingStrategy
@@ -62,17 +64,42 @@ def create_router(impl: FileProcessors) -> APIRouter:
             ),
         ] = None,
         chunking_strategy: Annotated[
-            VectorStoreChunkingStrategy | None,
-            Form(description="Optional chunking strategy for splitting content into chunks."),
+            str | None,
+            Form(
+                description="Optional chunking strategy for splitting content into chunks. Must be valid JSON string."
+            ),
         ] = None,
     ) -> ProcessFileResponse:
-        # Pass the parameters directly to the implementation
-        # The protocol method signature expects individual parameters for multipart handling
+        # Parse chunking_strategy JSON string if provided
+        parsed_chunking_strategy: VectorStoreChunkingStrategy | None = None
+        if chunking_strategy:
+            try:
+                chunking_data = json.loads(chunking_strategy)
+                # Import the specific classes for proper parsing
+                from llama_stack_api.vector_io import (
+                    VectorStoreChunkingStrategyAuto,
+                    VectorStoreChunkingStrategyStatic,
+                )
+
+                if chunking_data.get("type") == "auto":
+                    parsed_chunking_strategy = VectorStoreChunkingStrategyAuto.model_validate(chunking_data)
+                elif chunking_data.get("type") == "static":
+                    parsed_chunking_strategy = VectorStoreChunkingStrategyStatic.model_validate(chunking_data)
+                else:
+                    raise HTTPException(
+                        status_code=400, detail=f"Invalid chunking strategy type: {chunking_data.get('type')}"
+                    )
+            except json.JSONDecodeError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid JSON in chunking_strategy: {str(e)}") from e
+            except ValidationError as e:
+                raise HTTPException(status_code=400, detail=f"Invalid chunking strategy: {str(e)}") from e
+
+        # Pass the parameters to the implementation with parsed chunking strategy
         return await impl.process_file(
             file=file,
             file_id=file_id,
             options=options,
-            chunking_strategy=chunking_strategy,
+            chunking_strategy=parsed_chunking_strategy,
         )
 
     return router
