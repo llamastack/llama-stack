@@ -57,7 +57,7 @@ class ResponsesStore:
         self.sql_store = AuthorizedSqlStore(base_store, self.policy)
 
         await self.sql_store.create_table(
-            "openai_responses",
+            self.reference.table_name,
             {
                 "id": ColumnDefinition(type=ColumnType.STRING, primary_key=True),
                 "created_at": ColumnType.INTEGER,
@@ -112,7 +112,7 @@ class ResponsesStore:
         data["messages"] = [msg.model_dump() for msg in messages]
 
         await self.sql_store.upsert(
-            table="openai_responses",
+            table=self.reference.table_name,
             data={
                 "id": data["id"],
                 "created_at": data["created_at"],
@@ -137,7 +137,7 @@ class ResponsesStore:
         data["messages"] = [msg.model_dump() for msg in messages]
 
         await self.sql_store.insert(
-            "openai_responses",
+            self.reference.table_name,
             {
                 "id": data["id"],
                 "created_at": data["created_at"],
@@ -172,7 +172,7 @@ class ResponsesStore:
             where_conditions["model"] = model
 
         paginated_result = await self.sql_store.fetch_all(
-            table="openai_responses",
+            table=self.reference.table_name,
             where=where_conditions if where_conditions else None,
             order_by=[("created_at", order.value)],
             cursor=("id", after) if after else None,
@@ -195,7 +195,7 @@ class ResponsesStore:
             raise ValueError("Responses store is not initialized")
 
         row = await self.sql_store.fetch_one(
-            "openai_responses",
+            self.reference.table_name,
             where={"id": response_id},
         )
 
@@ -210,10 +210,10 @@ class ResponsesStore:
         if not self.sql_store:
             raise ValueError("Responses store is not initialized")
 
-        row = await self.sql_store.fetch_one("openai_responses", where={"id": response_id})
+        row = await self.sql_store.fetch_one(self.reference.table_name, where={"id": response_id})
         if not row:
             raise ValueError(f"Response with id {response_id} not found")
-        await self.sql_store.delete("openai_responses", where={"id": response_id})
+        await self.sql_store.delete(self.reference.table_name, where={"id": response_id})
         return OpenAIDeleteResponseObject(id=response_id)
 
     async def list_response_input_items(
