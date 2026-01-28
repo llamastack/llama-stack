@@ -5063,28 +5063,46 @@ components:
         input:
           anyOf:
           - type: string
+            title: string
           - items:
               type: string
             type: array
-            title: list[string]
-          title: string | list[string]
-          description: Input text to embed, encoded as a string or array of strings.
+            maxItems: 2048
+            minItems: 1
+            title: Array of strings
+          - items:
+              type: integer
+            type: array
+            maxItems: 2048
+            minItems: 1
+            title: Array of tokens
+          - items:
+              items:
+                type: integer
+              type: array
+              minItems: 1
+            type: array
+            maxItems: 2048
+            minItems: 1
+            title: Array of token arrays
+          title: string | ... (4 variants)
+          description: Input text to embed, encoded as a string or array of tokens.
         encoding_format:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: The format to return the embeddings in. Can be 'float' or 'base64'.
+          type: string
+          enum:
+          - float
+          - base64
+          title: Encoding Format
+          description: The format to return the embeddings in.
           default: float
         dimensions:
-          anyOf:
-          - type: integer
-            minimum: 1.0
-          - type: 'null'
-          description: The number of dimensions the resulting output embeddings should have.
+          type: integer
+          minimum: 1.0
+          title: Dimensions
+          description: The number of dimensions for output embeddings.
         user:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: User
           description: A unique identifier representing your end-user.
       additionalProperties: true
       type: object
@@ -5125,12 +5143,10 @@ components:
       properties:
         prompt_tokens:
           type: integer
-          minimum: 0.0
           title: Prompt Tokens
           description: The number of tokens in the input.
         total_tokens:
           type: integer
-          minimum: 0.0
           title: Total Tokens
           description: The total number of tokens used.
       type: object
@@ -12979,8 +12995,7 @@ components:
           nullable: true
         limit:
           anyOf:
-          - maximum: 100
-            minimum: 1
+          - minimum: 1
             type: integer
           - type: 'null'
           default: 20

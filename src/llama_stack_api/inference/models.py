@@ -13,7 +13,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 from enum import Enum, StrEnum
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.common.content_types import InterleavedContent
@@ -756,8 +756,8 @@ class OpenAIEmbeddingData(BaseModel):
 class OpenAIEmbeddingUsage(BaseModel):
     """Usage information for an OpenAI-compatible embeddings response."""
 
-    prompt_tokens: int = Field(..., ge=0, description="The number of tokens in the input.")
-    total_tokens: int = Field(..., ge=0, description="The total number of tokens used.")
+    prompt_tokens: int = Field(..., description="The number of tokens in the input.")
+    total_tokens: int = Field(..., description="The total number of tokens used.")
 
 
 @json_schema_type
@@ -887,20 +887,52 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     )
 
 
-# extra_body can be accessed via .model_extra
+def _remove_null_from_anyof(schema: dict) -> None:
+    """Remove null type from anyOf if present in JSON schema."""
+    if "anyOf" in schema:
+        schema["anyOf"] = [s for s in schema["anyOf"] if s.get("type") != "null"]
+        if len(schema["anyOf"]) == 1:
+            only_schema = schema["anyOf"][0]
+            del schema["anyOf"]
+            schema.update(only_schema)
+
+
 @json_schema_type
 class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
     """Request parameters for OpenAI-compatible embeddings endpoint."""
 
     model: str = Field(..., description="The identifier of the model to use.")
-    input: str | list[str] = Field(..., description="Input text to embed, encoded as a string or array of strings.")
-    encoding_format: str | None = Field(
-        default="float", description="The format to return the embeddings in. Can be 'float' or 'base64'."
+    input: (
+        Annotated[str, Field(title="string")]
+        | Annotated[list[str], Field(title="Array of strings", min_length=1, max_length=2048)]
+        | Annotated[list[int], Field(title="Array of tokens", min_length=1, max_length=2048)]
+        | Annotated[
+            list[Annotated[list[int], Field(min_length=1)]],
+            Field(title="Array of token arrays", min_length=1, max_length=2048),
+        ]
+    ) = Field(..., description="Input text to embed, encoded as a string or array of tokens.")
+    encoding_format: Literal["float", "base64"] = Field(
+        default="float", description="The format to return the embeddings in."
     )
     dimensions: int | None = Field(
-        default=None, ge=1, description="The number of dimensions the resulting output embeddings should have."
+        default=None,
+        ge=1,
+        description="The number of dimensions for output embeddings.",
+        json_schema_extra=_remove_null_from_anyof,
     )
-    user: str | None = Field(default=None, description="A unique identifier representing your end-user.")
+    user: str | None = Field(
+        default=None,
+        description="A unique identifier representing your end-user.",
+        json_schema_extra=_remove_null_from_anyof,
+    )
+
+    @field_validator("dimensions", "user", mode="before")
+    @classmethod
+    def _reject_explicit_null(cls, v: Any, info: Any) -> Any:
+        """Reject explicit null values to match OpenAI API behavior."""
+        if v is None:
+            raise ValueError(f"{info.field_name} cannot be null")
+        return v
 
 
 # New Request Models for Inference Endpoints
@@ -909,7 +941,7 @@ class ListChatCompletionsRequest(BaseModel):
     """Request model for listing chat completions."""
 
     after: str | None = Field(default=None, description="The ID of the last chat completion to return.")
-    limit: int | None = Field(default=20, ge=1, le=100, description="The maximum number of chat completions to return.")
+    limit: int | None = Field(default=20, ge=1, description="The maximum number of chat completions to return.")
     model: str | None = Field(default=None, description="The model to filter by.")
     order: Order | None = Field(
         default=Order.desc,
