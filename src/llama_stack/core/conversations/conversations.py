@@ -97,23 +97,13 @@ class ConversationServiceImpl(Conversations):
         conversation_id = f"conv_{random_bytes.hex()}"
         created_at = int(time.time())
 
-        record_data = {
-            "id": conversation_id,
-            "created_at": created_at,
-            "items": [],
-            "metadata": request.metadata,
-        }
-
-        await self.sql_store.insert(
-            table="openai_conversations",
-            data=record_data,
-        )
-
+        initial_items: list[dict] = []
         if request.items:
             item_records = []
             for item in request.items:
                 item_dict = item.model_dump()
                 item_id = self._get_or_generate_item_id(item, item_dict)
+                initial_items.append(item_dict)
 
                 item_record = {
                     "id": item_id,
@@ -126,10 +116,23 @@ class ConversationServiceImpl(Conversations):
 
             await self.sql_store.insert(table="conversation_items", data=item_records)
 
+        record_data = {
+            "id": conversation_id,
+            "created_at": created_at,
+            "items": initial_items,
+            "metadata": request.metadata,
+        }
+
+        await self.sql_store.insert(
+            table="openai_conversations",
+            data=record_data,
+        )
+
         conversation = Conversation(
             id=conversation_id,
             created_at=created_at,
             metadata=request.metadata,
+            items=initial_items,
             object="conversation",
         )
 
@@ -144,7 +147,11 @@ class ConversationServiceImpl(Conversations):
             raise ValueError(f"Conversation {request.conversation_id} not found")
 
         return Conversation(
-            id=record["id"], created_at=record["created_at"], metadata=record.get("metadata"), object="conversation"
+            id=record["id"],
+            created_at=record["created_at"],
+            metadata=record.get("metadata"),
+            items=record.get("items") or [],
+            object="conversation",
         )
 
     async def update_conversation(self, conversation_id: str, request: UpdateConversationRequest) -> Conversation:
@@ -216,6 +223,13 @@ class ConversationServiceImpl(Conversations):
             created_items.append(item_dict)
 
         logger.debug(f"Created {len(created_items)} items in conversation {conversation_id}")
+
+        updated_items = await self._get_items_for_conversation(conversation_id)
+        await self.sql_store.update(
+            table="openai_conversations",
+            data={"items": updated_items},
+            where={"id": conversation_id},
+        )
 
         # Convert created items (dicts) to proper ConversationItem types
         adapter: TypeAdapter[ConversationItem] = TypeAdapter(ConversationItem)
@@ -308,8 +322,22 @@ class ConversationServiceImpl(Conversations):
             table="conversation_items", where={"id": request.item_id, "conversation_id": request.conversation_id}
         )
 
+        updated_items = await self._get_items_for_conversation(request.conversation_id)
+        await self.sql_store.update(
+            table="openai_conversations",
+            data={"items": updated_items},
+            where={"id": request.conversation_id},
+        )
+
         logger.debug(f"Deleted item {request.item_id} from conversation {request.conversation_id}")
         return ConversationItemDeletedResource(id=request.item_id)
+
+    async def _get_items_for_conversation(self, conversation_id: str) -> list[dict]:
+        """Fetch all items for a conversation in ascending order."""
+        result = await self.sql_store.fetch_all(table="conversation_items", where={"conversation_id": conversation_id})
+        records = result.data
+        records.sort(key=lambda x: x["created_at"])
+        return [record["item_data"] for record in records]
 
     async def shutdown(self) -> None:
         pass

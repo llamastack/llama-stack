@@ -90,6 +90,10 @@ async def test_conversation_items(service):
     assert len(item_list.data) == 1
     assert item_list.data[0].id == "msg_test123"
 
+    retrieved = await service.get_conversation(GetConversationRequest(conversation_id=conversation.id))
+    assert len(retrieved.items or []) == 1
+    assert retrieved.items[0]["id"] == "msg_test123"
+
     items_result = await service.list_items(ListItemsRequest(conversation_id=conversation.id))
     assert len(items_result.data) == 1
 
