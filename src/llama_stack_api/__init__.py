@@ -123,6 +123,9 @@ from .connectors import (
     ConnectorType,
     ListConnectorsResponse,
     ListToolsResponse,
+    GetConnectorRequest,
+    GetConnectorToolRequest,
+    ListConnectorToolsRequest,
 )
 from .conversations import (
     AddItemsRequest,
@@ -721,6 +724,9 @@ __all__ = [
     "ListBenchmarksResponse",
     "RegisterBenchmarkRequest",
     "UnregisterBenchmarkRequest",
+    "GetConnectorRequest",
+    "GetConnectorToolRequest",
+    "ListConnectorToolsRequest",
     "ListConnectorsResponse",
     "ListDatasetsResponse",
     "ListFilesRequest",

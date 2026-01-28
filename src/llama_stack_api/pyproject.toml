@@ -65,13 +65,13 @@ packages = [
     "llama_stack_api.scoring",
     "llama_stack_api.safety",
     "llama_stack_api.vector_io",
+    "llama_stack_api.connectors",
 ]
 
 # 3. List every root-level .py file as a module.
 # Because of package-dir above, these will be placed INSIDE the llama_stack_api folder.
 # WARNING: Update this list when adding/removing root-level .py files
 py-modules = [
-    "llama_stack_api.connectors",
     "llama_stack_api.datatypes",
     "llama_stack_api.inference",
     "llama_stack_api.openai_responses",

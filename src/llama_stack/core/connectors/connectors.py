@@ -17,7 +17,10 @@ from llama_stack_api import (
     ConnectorNotFoundError,
     Connectors,
     ConnectorType,
+    GetConnectorRequest,
+    GetConnectorToolRequest,
     ListConnectorsResponse,
+    ListConnectorToolsRequest,
     ListToolsResponse,
     ToolDef,
 )
@@ -106,14 +109,14 @@ class ConnectorServiceImpl(Connectors):
 
     async def get_connector(
         self,
-        connector_id: str,
+        request: GetConnectorRequest,
         authorization: str | None = None,
     ) -> Connector:
         """Get a connector by its ID."""
 
-        connector_json = await self.kvstore.get(self._get_key(connector_id))
+        connector_json = await self.kvstore.get(self._get_key(request.connector_id))
         if not connector_json:
-            raise ConnectorNotFoundError(connector_id)
+            raise ConnectorNotFoundError(request.connector_id)
         connector = Connector.model_validate_json(connector_json)
 
         server_info = await get_mcp_server_info(connector.url, authorization=authorization)
@@ -125,10 +128,12 @@ class ConnectorServiceImpl(Connectors):
     async def list_connectors(self) -> ListConnectorsResponse:
         raise NotImplementedError("list_connectors not implemented")
 
-    async def get_connector_tool(self, connector_id: str, tool_name: str, authorization: str | None = None) -> ToolDef:
+    async def get_connector_tool(self, request: GetConnectorToolRequest, authorization: str | None = None) -> ToolDef:
         raise NotImplementedError("get_connector_tool not implemented")
 
-    async def list_connector_tools(self, connector_id: str, authorization: str | None = None) -> ListToolsResponse:
+    async def list_connector_tools(
+        self, request: ListConnectorToolsRequest, authorization: str | None = None
+    ) -> ListToolsResponse:
         raise NotImplementedError("list_connector_tools not implemented")
 
     async def shutdown(self):

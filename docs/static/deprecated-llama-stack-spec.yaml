@@ -8660,7 +8660,7 @@ components:
       - connector_id
       - url
       title: Connector
-      description: A connector registered in Llama Stack.
+      description: A connector registered in Llama Stack
     ConnectorType:
       type: string
       enum:
@@ -9133,7 +9133,7 @@ components:
       required:
       - data
       title: ListConnectorsResponse
-      description: Response containing a list of connectors.
+      description: Response containing a list of configured connectors
     ListToolsResponse:
       properties:
         data:
@@ -9145,7 +9145,7 @@ components:
       required:
       - data
       title: ListToolsResponse
-      description: Response containing a list of tools.
+      description: Response containing a list of tools
     MCPListToolsTool:
       properties:
         input_schema:
@@ -11123,6 +11123,44 @@ components:
       - connector_id
       - url
       title: ConnectorInput
+      type: object
+    GetConnectorRequest:
+      description: Request model for getting a connector by ID.
+      properties:
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+      required:
+      - connector_id
+      title: GetConnectorRequest
+      type: object
+    ListConnectorToolsRequest:
+      description: Request model for listing tools from a connector.
+      properties:
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+      required:
+      - connector_id
+      title: ListConnectorToolsRequest
+      type: object
+    GetConnectorToolRequest:
+      description: Request model for getting a tool from a connector.
+      properties:
+        connector_id:
+          description: Identifier for the connector
+          title: Connector Id
+          type: string
+        tool_name:
+          description: Name of the tool
+          title: Tool Name
+          type: string
+      required:
+      - connector_id
+      - tool_name
+      title: GetConnectorToolRequest
       type: object
     ConversationMessage:
       description: OpenAI-compatible message item for conversations.

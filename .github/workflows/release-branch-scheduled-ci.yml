@@ -113,6 +113,7 @@ jobs:
           setup: 'ollama'
           suite: 'base'
           inference-mode: 'replay'
+          branch: ${{ matrix.branch }}
 
       - name: Check for TypeScript client tests
         id: check-ts-client

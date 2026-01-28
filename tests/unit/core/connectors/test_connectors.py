@@ -18,6 +18,7 @@ from llama_stack_api import (
     Connector,
     ConnectorNotFoundError,
     ConnectorType,
+    GetConnectorRequest,
     OpenAIResponseInputToolMCP,
     ToolDef,
 )
@@ -155,7 +156,7 @@ class TestGetConnector:
     async def test_get_connector_not_found(self, connector_service):
         """Test getting a non-existent connector raises error."""
         with pytest.raises(ConnectorNotFoundError) as exc_info:
-            await connector_service.get_connector("non-existent")
+            await connector_service.get_connector(GetConnectorRequest(connector_id="non-existent"))
 
         assert "non-existent" in str(exc_info.value)
 
@@ -177,7 +178,7 @@ class TestGetConnector:
         with patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info:
             mock_get_info.return_value = mock_server_info
 
-            result = await connector_service.get_connector("my-mcp")
+            result = await connector_service.get_connector(GetConnectorRequest(connector_id="my-mcp"))
 
         assert result.connector_id == "my-mcp"
         assert result.server_name == "Test MCP Server"
@@ -200,7 +201,9 @@ class TestGetConnector:
         with patch("llama_stack.core.connectors.connectors.get_mcp_server_info") as mock_get_info:
             mock_get_info.return_value = mock_server_info
 
-            await connector_service.get_connector("my-mcp", authorization="Bearer token123")
+            await connector_service.get_connector(
+                GetConnectorRequest(connector_id="my-mcp"), authorization="Bearer token123"
+            )
 
             mock_get_info.assert_called_once_with(
                 "http://localhost:8080/mcp",
