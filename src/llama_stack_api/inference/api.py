@@ -44,11 +44,7 @@ class InferenceProvider(Protocol):
         self,
         request: RerankRequest,
     ) -> RerankResponse:
-        """Rerank a list of documents based on their relevance to a query.
-
-        :param request: The rerank request containing model, query, items, and optional max_num_results
-        :returns: RerankResponse with indices sorted by relevance score (descending).
-        """
+        """Rerank a list of documents based on their relevance to a query."""
         raise NotImplementedError("Reranking is not implemented")
         return  # this is so mypy's safe-super rule will consider the method concrete
 
@@ -56,33 +52,21 @@ class InferenceProvider(Protocol):
         self,
         params: OpenAICompletionRequestWithExtraBody,
     ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
-        """Create completion.
-
-        Generate an OpenAI-compatible completion for the given prompt using the specified model.
-        :returns: An OpenAICompletion. When streaming, returns Server-Sent Events (SSE) with OpenAICompletion chunks.
-        """
+        """Generate an OpenAI-compatible completion for the given prompt using the specified model."""
         ...
 
     async def openai_chat_completion(
         self,
         params: OpenAIChatCompletionRequestWithExtraBody,
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        """Create chat completions.
-
-        Generate an OpenAI-compatible chat completion for the given messages using the specified model.
-        :returns: An OpenAIChatCompletion. When streaming, returns Server-Sent Events (SSE) with OpenAIChatCompletionChunk objects.
-        """
+        """Generate an OpenAI-compatible chat completion for the given messages using the specified model."""
         ...
 
     async def openai_embeddings(
         self,
         params: OpenAIEmbeddingsRequestWithExtraBody,
     ) -> OpenAIEmbeddingsResponse:
-        """Create embeddings.
-
-        Generate OpenAI-compatible embeddings for the given input using the specified model.
-        :returns: An OpenAIEmbeddingsResponse containing the embeddings.
-        """
+        """Generate OpenAI-compatible embeddings for the given input using the specified model."""
         ...
 
 
@@ -101,19 +85,9 @@ class Inference(InferenceProvider):
         self,
         request: ListChatCompletionsRequest,
     ) -> ListOpenAIChatCompletionResponse:
-        """List chat completions.
-
-        :param request: The list request containing pagination and filtering parameters
-        :returns: A ListOpenAIChatCompletionResponse.
-        """
+        """List stored chat completions."""
         raise NotImplementedError("List chat completions is not implemented")
 
     async def get_chat_completion(self, request: GetChatCompletionRequest) -> OpenAICompletionWithInputMessages:
-        """Get chat completion.
-
-        Describe a chat completion by its ID.
-
-        :param request: The get request containing the completion_id
-        :returns: A OpenAICompletionWithInputMessages.
-        """
+        """Retrieve a stored chat completion by its ID."""
         raise NotImplementedError("Get chat completion is not implemented")

@@ -97,9 +97,9 @@
     },
     "conformance": {
       "score": 82.8,
-      "issues": 264,
+      "issues": 263,
       "missing_properties": 184,
-      "total_problems": 448,
+      "total_problems": 447,
       "total_properties": 2598
     }
   },
@@ -706,8 +706,8 @@
       ]
     },
     "Chat": {
-      "score": 82.8,
-      "issues": 19,
+      "score": 83.1,
+      "issues": 18,
       "missing_properties": 50,
       "total_properties": 402,
       "endpoints": [
@@ -844,15 +844,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.finish_reason",
-                  "details": [
-                    "Enum removed: ['stop', 'length', 'tool_calls', 'content_filter', 'function_call']",
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs",
                   "details": [
                     "Type removed: ['object']",
@@ -875,7 +866,7 @@
                 }
               ],
               "missing_count": 23,
-              "issues_count": 10
+              "issues_count": 9
             }
           ]
         },

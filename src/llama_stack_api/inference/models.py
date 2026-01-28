@@ -18,7 +18,7 @@ from typing_extensions import TypedDict
 
 from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.common.responses import Order
-from llama_stack_api.schema_utils import json_schema_type, register_schema
+from llama_stack_api.schema_utils import json_schema_type, nullable_openai_style, register_schema
 
 
 # Sampling Strategies
@@ -627,7 +627,7 @@ class OpenAIChunkChoice(BaseModel):
 
     delta: OpenAIChoiceDelta = Field(..., description="The delta from the chunk.")
     finish_reason: OpenAIFinishReason | None = Field(
-        default=None, description="The reason the model stopped generating."
+        default=None, json_schema_extra=nullable_openai_style, description="The reason the model stopped generating."
     )
     index: int = Field(..., ge=0, description="The index of the choice.")
     logprobs: OpenAIChoiceLogprobs | None = Field(

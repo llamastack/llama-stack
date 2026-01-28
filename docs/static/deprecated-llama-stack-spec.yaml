@@ -2039,17 +2039,16 @@ components:
           $ref: '#/components/schemas/OpenAIChoiceDelta'
           description: The delta from the chunk.
         finish_reason:
-          anyOf:
-          - enum:
-            - stop
-            - length
-            - tool_calls
-            - content_filter
-            - function_call
-            type: string
-          - type: 'null'
           description: The reason the model stopped generating.
+          enum:
+          - stop
+          - length
+          - tool_calls
+          - content_filter
+          - function_call
           nullable: true
+          title: Finish Reason
+          type: string
         index:
           description: The index of the choice.
           minimum: 0

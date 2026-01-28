@@ -21,9 +21,9 @@ This documentation is auto-generated from the OpenAI API specification compariso
 | **Overall Conformance Score** | 82.8% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
-| **Schema/Type Issues** | 264 |
+| **Schema/Type Issues** | 263 |
 | **Missing Properties** | 184 |
-| **Total Issues to Fix** | 448 |
+| **Total Issues to Fix** | 447 |
 
 ## Category Scores
 
@@ -39,7 +39,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
 | Responses | 80.9% | 225 | 22 | 21 |
-| Chat | 82.8% | 402 | 19 | 50 |
+| Chat | 83.1% | 402 | 18 | 50 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
 ## Missing Endpoints
@@ -954,7 +954,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Chat
 
-**Score:** 82.8% · **Issues:** 19 · **Missing:** 50
+**Score:** 83.1% · **Issues:** 18 · **Missing:** 50
 
 #### `/chat/completions`
 
@@ -1020,7 +1020,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 </details>
 
-<details><summary>Schema Issues (10)</summary>
+<details><summary>Schema Issues (9)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -1030,7 +1030,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.usage` | Type removed: ['object']; Union variants added: 2 |
 | `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.role` | Enum removed: ['developer', 'system', 'user', 'assistant', 'tool']; Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.finish_reason` | Enum removed: ['stop', 'length', 'tool_calls', 'content_filter', 'function_call']; Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs` | Type removed: ['object']; Union variants added: 2 |
 | `responses.200.content.text/event-stream.properties.object` | Enum removed: ['chat.completion.chunk']; Default changed: None -> chat.completion.chunk |
 | `responses.200.content.text/event-stream.properties.usage` | Type removed: ['object']; Union variants added: 2 |
