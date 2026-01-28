@@ -89,6 +89,40 @@ class ResponsesStore:
     ) -> None:
         await self._write_response_object(response_object, input, messages)
 
+    async def upsert_response_object(
+        self,
+        response_object: OpenAIResponseObject,
+        input: list[OpenAIResponseInput],
+        messages: list[OpenAIMessageParam],
+    ) -> None:
+        """Upsert response object using INSERT on first call, UPDATE on subsequent calls.
+
+        This method enables incremental persistence during streaming, allowing clients
+        to poll GET /v1/responses/{response_id} and see in-progress turn state.
+
+        :param response_object: The response object to store/update.
+        :param input: The input items for the response.
+        :param messages: The chat completion messages (for conversation continuity).
+        """
+        if self.sql_store is None:
+            raise ValueError("Responses store is not initialized")
+
+        data = response_object.model_dump()
+        data["input"] = [input_item.model_dump() for input_item in input]
+        data["messages"] = [msg.model_dump() for msg in messages]
+
+        await self.sql_store.upsert(
+            table="openai_responses",
+            data={
+                "id": data["id"],
+                "created_at": data["created_at"],
+                "model": data["model"],
+                "response_object": data,
+            },
+            conflict_columns=["id"],
+            update_columns=["response_object"],
+        )
+
     async def _write_response_object(
         self,
         response_object: OpenAIResponseObject,

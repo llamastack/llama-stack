@@ -121,7 +121,7 @@ repos:
         name: OpenAI API Coverage
         additional_dependencies:
           - *uv-dependency
-        entry: ./scripts/uv-run-with-index.sh run python scripts/openai_coverage.py --update --generate-docs --quiet
+        entry: ./scripts/uv-run-with-index.sh run python scripts/openai_coverage.py --check-regression --update --generate-docs --quiet
         language: python
         pass_filenames: false
         require_serial: true
@@ -231,6 +231,15 @@ repos:
               exit 1;
             }
             exit 0
+      - id: api-conformance
+        name: Check API spec for breaking changes
+        entry: ./scripts/check-api-conformance.sh
+        language: golang
+        additional_dependencies:
+          - github.com/oasdiff/oasdiff@latest
+        pass_filenames: false
+        require_serial: true
+        files: ^docs/static/(llama-stack-spec|stable-llama-stack-spec|experimental-llama-stack-spec|deprecated-llama-stack-spec)\.yaml$
 
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
@@ -238,5 +247,5 @@ ci:
     autofix_prs: true
     autoupdate_branch: ''
     autoupdate_schedule: weekly
-    skip: []
+    skip: [api-conformance]  # requires git history; covered by pre-commit.yml workflow
     submodules: false
