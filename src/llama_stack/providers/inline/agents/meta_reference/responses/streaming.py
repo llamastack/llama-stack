@@ -195,6 +195,8 @@ class StreamingResponseOrchestrator:
         self.accumulated_builtin_tool_calls = 0
         # Track total output tokens generated across inference calls
         self.accumulated_builtin_output_tokens = 0
+        # Accumulate MCP server instructions
+        self.mcp_server_instructions: list[str] = []
 
     async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
         """Create a refusal response to replace streaming content."""
@@ -279,6 +281,14 @@ class StreamingResponseOrchestrator:
 
         async for stream_event in self._process_tools(output_messages):
             yield stream_event
+
+        # Add accumulated MCP server instructions to the system message/instructions
+        if self.mcp_server_instructions:
+            mcp_instructions_text = "\n\n".join(self.mcp_server_instructions)
+            if self.instructions:
+                self.instructions = f"{self.instructions}\n\n{mcp_instructions_text}"
+            else:
+                self.instructions = mcp_instructions_text
 
         chat_tool_choice = None
         # Track allowed tools for filtering (persists across iterations)
@@ -1262,6 +1272,16 @@ class StreamingResponseOrchestrator:
                     authorization=mcp_tool.authorization,
                     session_manager=session_manager,
                 )
+
+            # Retrieve MCP server instructions from tooldef metadata
+            # Check the first tool for server instructions (all tools from same server share instructions)
+            if tool_defs.data:
+                first_tool = tool_defs.data[0]
+                if first_tool.metadata and "mcp_server_instructions" in first_tool.metadata:
+                    mcp_instructions = first_tool.metadata["mcp_server_instructions"]
+                    # Accumulate instructions (avoiding duplicates)
+                    if mcp_instructions and mcp_instructions not in self.mcp_server_instructions:
+                        self.mcp_server_instructions.append(mcp_instructions)
 
             # Create the MCP list tools message
             mcp_list_message = OpenAIResponseOutputMessageMCPListTools(

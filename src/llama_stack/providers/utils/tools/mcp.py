@@ -94,8 +94,8 @@ class MCPSessionManager:
     """
 
     def __init__(self):
-        # Cache of active sessions: key -> (session, client_context, session_context)
-        self._sessions: dict[str, tuple[ClientSession, Any, Any]] = {}
+        # Cache of active sessions: key -> (session, client_context, session_context, init_result)
+        self._sessions: dict[str, tuple[ClientSession, Any, Any, Any]] = {}
         # Locks to prevent concurrent session creation for the same key
         self._locks: dict[str, asyncio.Lock] = {}
         # Global lock for managing the locks dict
@@ -129,7 +129,7 @@ class MCPSessionManager:
 
         # Check if session already exists (fast path)
         if key in self._sessions:
-            session, _, _ = self._sessions[key]
+            session, _, _, _ = self._sessions[key]
             return session
 
         # Acquire lock for this specific key to prevent concurrent creation
@@ -137,20 +137,38 @@ class MCPSessionManager:
         async with lock:
             # Double-check after acquiring lock
             if key in self._sessions:
-                session, _, _ = self._sessions[key]
+                session, _, _, _ = self._sessions[key]
                 return session
 
             # Create new session
-            session, client_ctx, session_ctx = await self._create_session(endpoint, headers)
-            self._sessions[key] = (session, client_ctx, session_ctx)
+            session, client_ctx, session_ctx, init_result = await self._create_session(endpoint, headers)
+            self._sessions[key] = (session, client_ctx, session_ctx, init_result)
             logger.debug(f"Created new MCP session for {endpoint} (key: {key[:32]}...)")
             return session
 
-    async def _create_session(self, endpoint: str, headers: dict[str, str]) -> tuple[ClientSession, Any, Any]:
+    async def get_instructions(self, endpoint: str, headers: dict[str, str]) -> str | None:
+        """Get server instructions for the given endpoint and headers.
+
+        Args:
+            endpoint: MCP server endpoint URL
+            headers: Headers including authorization
+
+        Returns:
+            Server instructions from the initialize response, or None if not available
+        """
+        key = self._make_key(endpoint, headers)
+
+        if key in self._sessions:
+            _, _, _, init_result = self._sessions[key]
+            return init_result.instructions if init_result else None
+
+        return None
+
+    async def _create_session(self, endpoint: str, headers: dict[str, str]) -> tuple[ClientSession, Any, Any, Any]:
         """Create a new MCP session.
 
         Returns:
-            Tuple of (session, client_context, session_context) for lifecycle management
+            Tuple of (session, client_context, session_context, init_result) for lifecycle management
         """
         # Use the same protocol detection logic as client_wrapper
         connection_strategies = [MCPProtol.STREAMABLE_HTTP, MCPProtol.SSE]
@@ -177,9 +195,9 @@ class MCPSessionManager:
                     await session.__aenter__()
 
                     try:
-                        await session.initialize()
+                        init_result = await session.initialize()
                         protocol_cache[endpoint] = strategy
-                        return session, client_ctx, session_ctx
+                        return session, client_ctx, session_ctx, init_result
                     except BaseException:
                         await session.__aexit__(None, None, None)
                         raise
@@ -257,7 +275,7 @@ class MCPSessionManager:
         """
         errors = []
         session_count = len(self._sessions)
-        for key, (session, client_ctx, _) in list(self._sessions.items()):
+        for key, (session, client_ctx, _, _) in list(self._sessions.items()):
             try:
                 await session.__aexit__(None, None, None)
             except BaseException as e:
@@ -300,7 +318,9 @@ async def client_wrapper(endpoint: str, headers: dict[str, str]) -> AsyncGenerat
 
             async with client(endpoint, headers=headers) as client_streams:
                 async with ClientSession(read_stream=client_streams[0], write_stream=client_streams[1]) as session:
-                    await session.initialize()
+                    init_result = await session.initialize()
+                    # Store init_result as an attribute on the session for later access
+                    session._init_result = init_result  # type: ignore
                     protocol_cache[endpoint] = strategy
                     yield session
                     return
@@ -373,7 +393,7 @@ async def list_mcp_tools(
             server within a request. (Fix for #4452)
 
     Returns:
-        List of tool definitions from the MCP server
+        List of tool definitions from the MCP server (with server instructions in metadata)
 
     Raises:
         ValueError: If Authorization is found in the headers parameter
@@ -382,6 +402,7 @@ async def list_mcp_tools(
     final_headers = prepare_mcp_headers(headers, authorization)
 
     tools = []
+    instructions = None
 
     # Helper function to process session and list tools
     async def _list_tools_from_session(session):
@@ -402,11 +423,25 @@ async def list_mcp_tools(
     # If a session manager is provided, use it for session reuse (fix for #4452)
     if session_manager is not None:
         session = await session_manager.get_session(endpoint, final_headers)
+        # Get instructions from the session manager's cached initialize result
+        instructions = await session_manager.get_instructions(endpoint, final_headers)
         await _list_tools_from_session(session)
     else:
         # Fallback to original behavior: create a new session for this call
         async with client_wrapper(endpoint, final_headers) as session:
+            # The session was already initialized in client_wrapper, but we need
+            # to access the init result. We'll need to capture it separately.
+            # For now, get it via the session's internal state if available
+            if hasattr(session, '_init_result') and session._init_result:
+                instructions = session._init_result.instructions
             await _list_tools_from_session(session)
+
+    # Add MCP server instructions to each tool's metadata
+    if instructions:
+        for tool in tools:
+            if tool.metadata is None:
+                tool.metadata = {}
+            tool.metadata["mcp_server_instructions"] = instructions
 
     return ListToolDefsResponse(data=tools)
 
@@ -503,7 +538,8 @@ async def get_mcp_server_info(
     final_headers = prepare_mcp_headers(headers, authorization)
 
     async with client_wrapper(endpoint, final_headers) as session:
-        init_result = await session.initialize()
+        # client_wrapper already called session.initialize(), get the cached result
+        init_result = session._init_result  # type: ignore
 
         return MCPServerInfo(
             name=init_result.serverInfo.name,
