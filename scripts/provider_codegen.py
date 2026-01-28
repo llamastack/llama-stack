@@ -11,6 +11,7 @@ from pathlib import Path
 from types import UnionType
 from typing import Annotated, Any, Union, get_args, get_origin
 
+from pydantic import BaseModel
 from pydantic_core import PydanticUndefined
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
@@ -52,7 +53,92 @@ class ChangedPathTracker:
         return self._changed_paths
 
 
-def extract_type_annotation(annotation: Any) -> str:
+def is_pydantic_model(annotation: Any) -> bool:
+    """Check if an annotation is a Pydantic BaseModel."""
+    if not hasattr(annotation, "__bases__"):
+        return False
+    return BaseModel in annotation.__mro__
+
+
+def get_nested_type_fields(type_class: Any, visited: set[str] | None = None) -> dict[str, dict[str, Any]] | None:
+    """
+    Get fields from a Pydantic BaseModel type for expansion in documentation.
+
+    Returns None if the type is not a Pydantic model or if we've already visited it (to avoid cycles).
+    """
+    if visited is None:
+        visited = set()
+
+    if not is_pydantic_model(type_class):
+        return None
+
+    type_name = getattr(type_class, "__name__", str(type_class))
+    if type_name in visited:
+        return None  # Avoid infinite recursion
+
+    visited.add(type_name)
+
+    if not hasattr(type_class, "model_fields"):
+        return None
+
+    fields_info = {}
+    for field_name, field in type_class.model_fields.items():
+        if getattr(field, "exclude", False):
+            continue
+
+        # Extract the actual type class for potential expansion
+        field_annotation = field.annotation
+        origin = get_origin(field_annotation)
+        args = get_args(field_annotation)
+
+        # Handle Annotated types first
+        if origin is Annotated and args:
+            field_annotation = args[0]
+            origin = get_origin(field_annotation)
+            args = get_args(field_annotation)
+
+        # Handle Union types to find the non-None type
+        # Prefer Pydantic models over other types for expansion
+        type_class_for_expansion = None
+        if origin in [Union, UnionType]:
+            non_none_args = [arg for arg in args if arg is not type(None)]
+            if non_none_args:
+                # Prefer Pydantic models for expansion
+                for arg in non_none_args:
+                    if is_pydantic_model(arg):
+                        type_class_for_expansion = arg
+                        break
+                if not type_class_for_expansion:
+                    # Fall back to first non-None type
+                    type_class_for_expansion = non_none_args[0]
+        else:
+            type_class_for_expansion = field_annotation
+
+        field_type = extract_type_annotation(field.annotation)
+        default_value = field.default
+        if field.default_factory is not None:
+            try:
+                default_value = field.default_factory()
+            except Exception:
+                default_value = None
+        elif field.default is None or field.default is PydanticUndefined:
+            default_value = None
+
+        field_info = {
+            "type": field_type,
+            "type_class": type_class_for_expansion,  # Store the type class for expansion (preferring Pydantic models)
+            "description": field.description or "",
+            "default": default_value,
+            "required": field.default is None and not field.is_required,
+        }
+
+        display_name = field.alias if field.alias else field_name
+        fields_info[display_name] = field_info
+
+    return fields_info
+
+
+def extract_type_annotation(annotation: Any, expand_models: bool = False) -> str:
     """extract a type annotation into a clean string representation."""
     if annotation is None:
         return "Any"
@@ -65,24 +151,28 @@ def extract_type_annotation(annotation: Any) -> str:
 
     # recursive workaround for Annotated types to ignore FieldInfo part
     if origin is Annotated and args:
-        return extract_type_annotation(args[0])
+        return extract_type_annotation(args[0], expand_models=expand_models)
 
     if origin in [Union, UnionType]:
         non_none_args = [arg for arg in args if arg is not type(None)]
         has_none = len(non_none_args) < len(args)
 
         if len(non_none_args) == 1:
-            formatted = extract_type_annotation(non_none_args[0])
+            formatted = extract_type_annotation(non_none_args[0], expand_models=expand_models)
             return f"{formatted} | None" if has_none else formatted
         else:
-            formatted_args = [extract_type_annotation(arg) for arg in non_none_args]
+            formatted_args = [extract_type_annotation(arg, expand_models=expand_models) for arg in non_none_args]
             result = " | ".join(formatted_args)
             return f"{result} | None" if has_none else result
 
     if origin is not None and args:
         origin_name = getattr(origin, "__name__", str(origin))
-        formatted_args = [extract_type_annotation(arg) for arg in args]
+        formatted_args = [extract_type_annotation(arg, expand_models=expand_models) for arg in args]
         return f"{origin_name}[{', '.join(formatted_args)}]"
+
+    # Check if this is a Pydantic model that should be expanded
+    if expand_models and is_pydantic_model(annotation):
+        return annotation.__name__
 
     return annotation.__name__ if hasattr(annotation, "__name__") else str(annotation)
 
@@ -115,6 +205,34 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
                 if getattr(field, "exclude", False):
                     continue
 
+                # Extract the actual type class for potential expansion
+                field_annotation = field.annotation
+                origin = get_origin(field_annotation)
+                args = get_args(field_annotation)
+
+                # Handle Annotated types first
+                if origin is Annotated and args:
+                    field_annotation = args[0]
+                    origin = get_origin(field_annotation)
+                    args = get_args(field_annotation)
+
+                # Handle Union types to find the non-None type
+                # Prefer Pydantic models over other types for expansion
+                type_class_for_expansion = None
+                if origin in [Union, UnionType]:
+                    non_none_args = [arg for arg in args if arg is not type(None)]
+                    if non_none_args:
+                        # Prefer Pydantic models for expansion
+                        for arg in non_none_args:
+                            if is_pydantic_model(arg):
+                                type_class_for_expansion = arg
+                                break
+                        if not type_class_for_expansion:
+                            # Fall back to first non-None type
+                            type_class_for_expansion = non_none_args[0]
+                else:
+                    type_class_for_expansion = field_annotation
+
                 field_type = extract_type_annotation(field.annotation)
 
                 default_value = field.default
@@ -135,6 +253,7 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
 
                 field_info = {
                     "type": field_type,
+                    "type_class": type_class_for_expansion,  # Store the type class for expansion (preferring Pydantic models)
                     "description": field.description or "",
                     "default": default_value,
                     "required": field.default is None and not field.is_required,
@@ -298,6 +417,110 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
             description_text = description_text.replace("{", "&#123;").replace("}", "&#125;")
 
             md_lines.append(f"| `{field_name}` | `{field_type}` | {required} | {default} | {description_text} |")
+
+            # Expand nested Pydantic models
+            type_class = field_info.get("type_class")
+            original_type_str = field_info["type"]
+            # Check if the original type is a Union that includes non-model types
+            # We check the type string for primitive types that might be in a Union with a Pydantic model
+            is_union_with_other_types = False
+            model_name = None
+
+            # Check if the type string contains both a Pydantic model and primitive types
+            if type_class and is_pydantic_model(type_class):
+                model_name = type_class.__name__
+                # Check if the type string contains both the model name and primitive types
+                # This indicates a Union like "float | TimeoutConfig | None"
+                primitive_types = ["float", "int", "str", "bool"]
+                has_primitive = any(primitive in original_type_str for primitive in primitive_types)
+                has_model = model_name in original_type_str
+                has_union = "|" in original_type_str
+
+                if has_union and has_model and has_primitive:
+                    is_union_with_other_types = True
+
+            # Handle Union types - extract Pydantic model if present
+            if type_class:
+                origin = get_origin(type_class)
+                args = get_args(type_class) if origin else []
+                if origin in [Union, UnionType]:
+                    # Prefer Pydantic models for expansion
+                    for arg in args:
+                        if is_pydantic_model(arg):
+                            type_class = arg
+                            if not model_name:
+                                model_name = type_class.__name__
+                            break
+                    else:
+                        type_class = None  # No Pydantic model found in Union
+
+            if type_class and is_pydantic_model(type_class):
+                nested_fields = get_nested_type_fields(type_class, visited=set())
+                if nested_fields:
+                    # Add a note if this is a Union with other types (e.g., float | TimeoutConfig)
+                    first_nested = is_union_with_other_types
+
+                    for nested_field_name, nested_field_info in nested_fields.items():
+                        nested_field_type = nested_field_info["type"].replace("|", "\\|")
+                        nested_required = "Yes" if nested_field_info["required"] else "No"
+                        nested_default = (
+                            str(nested_field_info["default"]) if nested_field_info["default"] is not None else ""
+                        )
+                        nested_description = nested_field_info["description"] or ""
+
+                        # Add note for Union types that the expanded fields only apply when using the model
+                        if is_union_with_other_types and first_nested and model_name:
+                            nested_description = (
+                                f"Only available when `{field_name}` is a `{model_name}` object. {nested_description}"
+                            )
+                            first_nested = False
+                        elif is_union_with_other_types and first_nested:
+                            # Fallback if model_name wasn't set
+                            nested_description = f"Only available when `{field_name}` is an object (not a primitive type). {nested_description}"
+                            first_nested = False
+
+                        nested_description = nested_description.replace("{", "&#123;").replace("}", "&#125;")
+
+                        # Format nested field name with dot notation
+                        nested_field_display = f"`{field_name}.{nested_field_name}`"
+                        md_lines.append(
+                            f"| {nested_field_display} | `{nested_field_type}` | {nested_required} | {nested_default} | {nested_description} |"
+                        )
+
+                        # Recursively expand deeper nested models (e.g., network.tls, network.proxy, network.timeout)
+                        nested_type_class = nested_field_info.get("type_class")
+                        if nested_type_class:
+                            # Handle Union types in nested fields - prefer Pydantic models
+                            nested_origin = get_origin(nested_type_class)
+                            nested_args = get_args(nested_type_class) if nested_origin else []
+                            if nested_origin in [Union, UnionType]:
+                                for arg in nested_args:
+                                    if is_pydantic_model(arg):
+                                        nested_type_class = arg
+                                        break
+                                else:
+                                    nested_type_class = None
+
+                            if nested_type_class and is_pydantic_model(nested_type_class):
+                                deeper_fields = get_nested_type_fields(nested_type_class, visited=set())
+                                if deeper_fields:
+                                    for deeper_field_name, deeper_field_info in deeper_fields.items():
+                                        deeper_field_type = deeper_field_info["type"].replace("|", "\\|")
+                                        deeper_required = "Yes" if deeper_field_info["required"] else "No"
+                                        deeper_default = (
+                                            str(deeper_field_info["default"])
+                                            if deeper_field_info["default"] is not None
+                                            else ""
+                                        )
+                                        deeper_description = deeper_field_info["description"] or ""
+                                        deeper_description = deeper_description.replace("{", "&#123;").replace(
+                                            "}", "&#125;"
+                                        )
+
+                                        deeper_field_display = f"`{field_name}.{nested_field_name}.{deeper_field_name}`"
+                                        md_lines.append(
+                                            f"| {deeper_field_display} | `{deeper_field_type}` | {deeper_required} | {deeper_default} | {deeper_description} |"
+                                        )
 
         md_lines.append("")
 

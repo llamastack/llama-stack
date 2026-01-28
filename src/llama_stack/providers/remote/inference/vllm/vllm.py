@@ -73,9 +73,6 @@ class VLLMInferenceAdapter(OpenAIMixin):
         except Exception as e:
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")
 
-    def get_extra_client_params(self):
-        return {"http_client": httpx.AsyncClient(verify=self.config.tls_verify)}
-
     async def check_model_availability(self, model: str) -> bool:
         """
         Skip the check when running without authentication.
