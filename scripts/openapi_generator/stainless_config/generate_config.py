@@ -510,9 +510,6 @@ ALL_RESOURCES = {
             "cancel": "post /v1/batches/{batch_id}/cancel",
         }
     },
-    "inference": {
-        "methods": {"rerank": "post /v1/inference/rerank"},
-    },
     "alpha": {
         "subresources": {
             "post_training": {
@@ -583,6 +580,11 @@ ALL_RESOURCES = {
                     "list_routes": "get /v1alpha/admin/inspect/routes",
                     "health": "get /v1alpha/admin/health",
                     "version": "get /v1alpha/admin/version",
+                },
+            },
+            "inference": {
+                "methods": {
+                    "rerank": "post /v1alpha/inference/rerank",
                 },
             },
         }

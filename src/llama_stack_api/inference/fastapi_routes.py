@@ -11,13 +11,19 @@ FastAPI route decorators. The router is defined in the API package to keep
 all API-related code together.
 """
 
+import asyncio
+import contextvars
+import json
+import logging  # allow-direct-logging
 from collections.abc import AsyncIterator
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 from llama_stack_api.router_utils import create_path_dependency, create_query_dependency, standard_responses
-from llama_stack_api.version import LLAMA_STACK_API_V1
+from llama_stack_api.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 
 from .api import Inference
 from .models import (
@@ -25,7 +31,6 @@ from .models import (
     ListChatCompletionsRequest,
     ListOpenAIChatCompletionResponse,
     OpenAIChatCompletion,
-    OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICompletion,
     OpenAICompletionRequestWithExtraBody,
@@ -35,6 +40,76 @@ from .models import (
     RerankRequest,
     RerankResponse,
 )
+
+logger = logging.LoggerAdapter(logging.getLogger(__name__), {"category": "inference"})
+
+
+def _create_sse_event(data: Any) -> str:
+    """Create a Server-Sent Event string from data."""
+    if isinstance(data, BaseModel):
+        data = data.model_dump_json()
+    else:
+        data = json.dumps(data)
+    return f"data: {data}\n\n"
+
+
+async def _sse_generator(event_gen: AsyncIterator[Any], context: str = "inference") -> AsyncIterator[str]:
+    """Convert an async generator to SSE format."""
+    try:
+        async for item in event_gen:
+            yield _create_sse_event(item)
+    except asyncio.CancelledError:
+        if hasattr(event_gen, "aclose"):
+            await event_gen.aclose()
+        raise
+    except Exception as e:
+        logger.exception(f"Error in SSE generator ({context})")
+        exc = _http_exception_from_sse_error(e)
+        yield _create_sse_event({"error": {"status_code": exc.status_code, "message": exc.detail}})
+
+
+def _http_exception_from_value_error(exc: ValueError) -> HTTPException:
+    """Convert a ValueError to an HTTPException."""
+    detail = str(exc) or "Invalid value"
+    return HTTPException(status_code=400, detail=detail)
+
+
+def _http_exception_from_sse_error(exc: Exception) -> HTTPException:
+    """Convert an exception to an HTTPException."""
+    if isinstance(exc, HTTPException):
+        return exc
+    if isinstance(exc, ValueError):
+        return _http_exception_from_value_error(exc)
+    status_code = getattr(exc, "status_code", None)
+    if isinstance(status_code, int):
+        return HTTPException(status_code=status_code, detail=str(exc))
+    return HTTPException(status_code=500, detail="Internal server error: An unexpected error occurred.")
+
+
+def _preserve_context_for_sse(event_gen):
+    """Preserve request context for SSE streaming.
+
+    StreamingResponse runs in a different task, losing request contextvars.
+    This wrapper captures and restores the context.
+    """
+    context = contextvars.copy_context()
+
+    async def wrapper():
+        try:
+            while True:
+                try:
+                    task = context.run(asyncio.create_task, event_gen.__anext__())
+                    item = await task
+                except StopAsyncIteration:
+                    break
+                yield item
+        except (asyncio.CancelledError, GeneratorExit):
+            if hasattr(event_gen, "aclose"):
+                await event_gen.aclose()
+            raise
+
+    return wrapper()
+
 
 # Automatically generate dependency functions from Pydantic models
 # This ensures the models are the single source of truth for descriptions
@@ -51,14 +126,14 @@ def create_router(impl: Inference) -> APIRouter:
     Returns:
         APIRouter configured for the Inference API
     """
+    # Use no prefix - specify full paths for each route to support both v1 and v1alpha endpoints
     router = APIRouter(
-        prefix=f"/{LLAMA_STACK_API_V1}",
         tags=["Inference"],
         responses=standard_responses,
     )
 
     @router.post(
-        "/chat/completions",
+        f"/{LLAMA_STACK_API_V1}/chat/completions",
         response_model=None,  # Dynamic response: non-streaming (JSON) or streaming (SSE)
         summary="Create chat completions.",
         description="Generate an OpenAI-compatible chat completion for the given messages using the specified model.",
@@ -74,11 +149,17 @@ def create_router(impl: Inference) -> APIRouter:
     )
     async def openai_chat_completion(
         params: Annotated[OpenAIChatCompletionRequestWithExtraBody, Body(...)],
-    ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
-        return await impl.openai_chat_completion(params)
+    ) -> OpenAIChatCompletion | StreamingResponse:
+        result = await impl.openai_chat_completion(params)
+        if isinstance(result, AsyncIterator):
+            return StreamingResponse(
+                _preserve_context_for_sse(_sse_generator(result, context="chat_completion")),
+                media_type="text/event-stream",
+            )
+        return result
 
     @router.get(
-        "/chat/completions",
+        f"/{LLAMA_STACK_API_V1}/chat/completions",
         response_model=ListOpenAIChatCompletionResponse,
         summary="List chat completions.",
         description="List chat completions.",
@@ -92,7 +173,7 @@ def create_router(impl: Inference) -> APIRouter:
         return await impl.list_chat_completions(request)
 
     @router.get(
-        "/chat/completions/{completion_id}",
+        f"/{LLAMA_STACK_API_V1}/chat/completions/{{completion_id}}",
         response_model=OpenAICompletionWithInputMessages,
         summary="Get chat completion.",
         description="Describe a chat completion by its ID.",
@@ -106,7 +187,7 @@ def create_router(impl: Inference) -> APIRouter:
         return await impl.get_chat_completion(request)
 
     @router.post(
-        "/completions",
+        f"/{LLAMA_STACK_API_V1}/completions",
         response_model=None,  # Dynamic response: non-streaming (JSON) or streaming (SSE)
         summary="Create completion.",
         description="Generate an OpenAI-compatible completion for the given prompt using the specified model.",
@@ -122,11 +203,17 @@ def create_router(impl: Inference) -> APIRouter:
     )
     async def openai_completion(
         params: Annotated[OpenAICompletionRequestWithExtraBody, Body(...)],
-    ) -> OpenAICompletion | AsyncIterator[OpenAICompletion]:
-        return await impl.openai_completion(params)
+    ) -> OpenAICompletion | StreamingResponse:
+        result = await impl.openai_completion(params)
+        if isinstance(result, AsyncIterator):
+            return StreamingResponse(
+                _preserve_context_for_sse(_sse_generator(result, context="completion")),
+                media_type="text/event-stream",
+            )
+        return result
 
     @router.post(
-        "/embeddings",
+        f"/{LLAMA_STACK_API_V1}/embeddings",
         response_model=OpenAIEmbeddingsResponse,
         summary="Create embeddings.",
         description="Generate OpenAI-compatible embeddings for the given input using the specified model.",
@@ -140,7 +227,7 @@ def create_router(impl: Inference) -> APIRouter:
         return await impl.openai_embeddings(params)
 
     @router.post(
-        "/inference/rerank",
+        f"/{LLAMA_STACK_API_V1ALPHA}/inference/rerank",
         response_model=RerankResponse,
         summary="Rerank documents based on relevance to a query.",
         description="Rerank a list of documents based on their relevance to a query.",

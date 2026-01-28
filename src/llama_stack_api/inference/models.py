@@ -11,9 +11,9 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 """
 
 from enum import Enum, StrEnum
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.common.content_types import InterleavedContent
@@ -24,38 +24,32 @@ from llama_stack_api.schema_utils import json_schema_type, register_schema
 # Sampling Strategies
 @json_schema_type
 class GreedySamplingStrategy(BaseModel):
-    """Greedy sampling strategy that selects the highest probability token at each step.
+    """Greedy sampling strategy that selects the highest probability token at each step."""
 
-    :param type: Must be "greedy" to identify this sampling strategy
-    """
-
-    type: Literal["greedy"] = "greedy"
+    type: Literal["greedy"] = Field(
+        default="greedy", description="Must be 'greedy' to identify this sampling strategy."
+    )
 
 
 @json_schema_type
 class TopPSamplingStrategy(BaseModel):
-    """Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p.
+    """Top-p (nucleus) sampling strategy that samples from the smallest set of tokens with cumulative probability >= p."""
 
-    :param type: Must be "top_p" to identify this sampling strategy
-    :param temperature: Controls randomness in sampling. Higher values increase randomness
-    :param top_p: Cumulative probability threshold for nucleus sampling. Defaults to 0.95
-    """
-
-    type: Literal["top_p"] = "top_p"
-    temperature: float | None = Field(..., gt=0.0)
-    top_p: float | None = 0.95
+    type: Literal["top_p"] = Field(default="top_p", description="Must be 'top_p' to identify this sampling strategy.")
+    temperature: float = Field(
+        ..., gt=0.0, le=2.0, description="Controls randomness in sampling. Higher values increase randomness."
+    )
+    top_p: float = Field(
+        default=0.95, ge=0.0, le=1.0, description="Cumulative probability threshold for nucleus sampling."
+    )
 
 
 @json_schema_type
 class TopKSamplingStrategy(BaseModel):
-    """Top-k sampling strategy that restricts sampling to the k most likely tokens.
+    """Top-k sampling strategy that restricts sampling to the k most likely tokens."""
 
-    :param type: Must be "top_k" to identify this sampling strategy
-    :param top_k: Number of top tokens to consider for sampling. Must be at least 1
-    """
-
-    type: Literal["top_k"] = "top_k"
-    top_k: int = Field(..., ge=1)
+    type: Literal["top_k"] = Field(default="top_k", description="Must be 'top_k' to identify this sampling strategy.")
+    top_k: int = Field(..., ge=1, description="Number of top tokens to consider for sampling. Must be at least 1.")
 
 
 SamplingStrategy = Annotated[
@@ -67,31 +61,35 @@ register_schema(SamplingStrategy, name="SamplingStrategy")
 
 @json_schema_type
 class SamplingParams(BaseModel):
-    """Sampling parameters.
+    """Sampling parameters for text generation."""
 
-    :param strategy: The sampling strategy.
-    :param max_tokens: The maximum number of tokens that can be generated in the completion. The token count of
-        your prompt plus max_tokens cannot exceed the model's context length.
-    :param repetition_penalty: Number between -2.0 and 2.0. Positive values penalize new tokens
-        based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
-    :param stop: Up to 4 sequences where the API will stop generating further tokens.
-        The returned text will not contain the stop sequence.
-    """
-
-    strategy: SamplingStrategy = Field(default_factory=GreedySamplingStrategy)
-
-    max_tokens: int | None = None
-    repetition_penalty: float | None = 1.0
-    stop: list[str] | None = None
+    strategy: SamplingStrategy = Field(
+        default_factory=GreedySamplingStrategy, description="The sampling strategy to use."
+    )
+    max_tokens: int | None = Field(
+        default=None,
+        ge=1,
+        description="The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.",
+    )
+    repetition_penalty: float | None = Field(
+        default=1.0,
+        ge=-2.0,
+        le=2.0,
+        description="Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far.",
+    )
+    stop: list[str] | None = Field(
+        default=None,
+        max_length=4,
+        description="Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.",
+    )
 
 
 class LogProbConfig(BaseModel):
-    """
+    """Configuration for log probability output."""
 
-    :param top_k: How many tokens (for each position) to return log probabilities for.
-    """
-
-    top_k: int | None = 0
+    top_k: int | None = Field(
+        default=0, ge=0, description="How many tokens (for each position) to return log probabilities for."
+    )
 
 
 class QuantizationType(Enum):
@@ -109,34 +107,28 @@ class QuantizationType(Enum):
 
 @json_schema_type
 class Fp8QuantizationConfig(BaseModel):
-    """Configuration for 8-bit floating point quantization.
+    """Configuration for 8-bit floating point quantization."""
 
-    :param type: Must be "fp8_mixed" to identify this quantization type
-    """
-
-    type: Literal["fp8_mixed"] = "fp8_mixed"
+    type: Literal["fp8_mixed"] = Field(
+        default="fp8_mixed", description="Must be 'fp8_mixed' to identify this quantization type."
+    )
 
 
 @json_schema_type
 class Bf16QuantizationConfig(BaseModel):
-    """Configuration for BFloat16 precision (typically no quantization).
+    """Configuration for BFloat16 precision (typically no quantization)."""
 
-    :param type: Must be "bf16" to identify this quantization type
-    """
-
-    type: Literal["bf16"] = "bf16"
+    type: Literal["bf16"] = Field(default="bf16", description="Must be 'bf16' to identify this quantization type.")
 
 
 @json_schema_type
 class Int4QuantizationConfig(BaseModel):
-    """Configuration for 4-bit integer quantization.
+    """Configuration for 4-bit integer quantization."""
 
-    :param type: Must be "int4" to identify this quantization type
-    :param scheme: Quantization scheme to use. Defaults to "int4_weight_int8_dynamic_activation"
-    """
-
-    type: Literal["int4_mixed"] = "int4_mixed"
-    scheme: str | None = "int4_weight_int8_dynamic_activation"
+    type: Literal["int4_mixed"] = Field(
+        default="int4_mixed", description="Must be 'int4' to identify this quantization type."
+    )
+    scheme: str | None = Field(default="int4_weight_int8_dynamic_activation", description="Quantization scheme to use.")
 
 
 QuantizationConfig = Annotated[
@@ -148,46 +140,42 @@ QuantizationConfig = Annotated[
 # Message Models
 @json_schema_type
 class UserMessage(BaseModel):
-    """A message from the user in a chat conversation.
+    """A message from the user in a chat conversation."""
 
-    :param role: Must be "user" to identify this as a user message
-    :param content: The content of the message, which can include text and other media
-    :param context: (Optional) This field is used internally by Llama Stack to pass RAG context. This field may be removed in the API in the future.
-    """
-
-    role: Literal["user"] = "user"
-    content: InterleavedContent
-    context: InterleavedContent | None = None
+    role: Literal["user"] = Field(default="user", description="Must be 'user' to identify this as a user message.")
+    content: InterleavedContent = Field(
+        ..., description="The content of the message, which can include text and other media."
+    )
+    context: InterleavedContent | None = Field(
+        default=None,
+        description="This field is used internally by Llama Stack to pass RAG context. This field may be removed in the API in the future.",
+    )
 
 
 @json_schema_type
 class SystemMessage(BaseModel):
-    """A system message providing instructions or context to the model.
+    """A system message providing instructions or context to the model."""
 
-    :param role: Must be "system" to identify this as a system message
-    :param content: The content of the "system prompt". If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages (for example, for formatting tool definitions).
-    """
-
-    role: Literal["system"] = "system"
-    content: InterleavedContent
+    role: Literal["system"] = Field(
+        default="system", description="Must be 'system' to identify this as a system message."
+    )
+    content: InterleavedContent = Field(
+        ...,
+        description="The content of the 'system prompt'. If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages.",
+    )
 
 
 @json_schema_type
 class ToolResponseMessage(BaseModel):
-    """A message representing the result of a tool invocation.
+    """A message representing the result of a tool invocation."""
 
-    :param role: Must be "tool" to identify this as a tool response
-    :param call_id: Unique identifier for the tool call this response is for
-    :param content: The response content from the tool
-    """
-
-    role: Literal["tool"] = "tool"
-    call_id: str
-    content: InterleavedContent
+    role: Literal["tool"] = Field(default="tool", description="Must be 'tool' to identify this as a tool response.")
+    call_id: str = Field(..., description="Unique identifier for the tool call this response is for.")
+    content: InterleavedContent = Field(..., description="The response content from the tool.")
 
 
 class ToolChoice(Enum):
-    """Whether tool use is required or automatic. This is a hint to the model which may not be followed. It depends on the Instruction Following capabilities of the model.
+    """Whether tool use is required or automatic. This is a hint to the model which may not be followed.
 
     :cvar auto: The model may use tools if it determines that is appropriate.
     :cvar required: The model must use tools.
@@ -201,12 +189,11 @@ class ToolChoice(Enum):
 
 @json_schema_type
 class TokenLogProbs(BaseModel):
-    """Log probabilities for generated tokens.
+    """Log probabilities for generated tokens."""
 
-    :param logprobs_by_token: Dictionary mapping tokens to their log probabilities
-    """
-
-    logprobs_by_token: dict[str, float]
+    logprobs_by_token: dict[str, float] = Field(
+        ..., description="Dictionary mapping tokens to their log probabilities."
+    )
 
 
 class ChatCompletionResponseEventType(Enum):
@@ -225,7 +212,7 @@ class ChatCompletionResponseEventType(Enum):
 class ResponseFormatType(StrEnum):
     """Types of formats for structured (guided) decoding.
 
-    :cvar json_schema: Response should conform to a JSON schema. In a Python SDK, this is often a `pydantic` model.
+    :cvar json_schema: Response should conform to a JSON schema.
     :cvar grammar: Response should conform to a BNF grammar
     """
 
@@ -235,26 +222,22 @@ class ResponseFormatType(StrEnum):
 
 @json_schema_type
 class JsonSchemaResponseFormat(BaseModel):
-    """Configuration for JSON schema-guided response generation.
+    """Configuration for JSON schema-guided response generation."""
 
-    :param type: Must be "json_schema" to identify this format type
-    :param json_schema: The JSON schema the response should conform to. In a Python SDK, this is often a `pydantic` model.
-    """
-
-    type: Literal[ResponseFormatType.json_schema] = ResponseFormatType.json_schema
-    json_schema: dict[str, Any]
+    type: Literal[ResponseFormatType.json_schema] = Field(
+        default=ResponseFormatType.json_schema, description="Must be 'json_schema' to identify this format type."
+    )
+    json_schema: dict[str, Any] = Field(..., description="The JSON schema the response should conform to.")
 
 
 @json_schema_type
 class GrammarResponseFormat(BaseModel):
-    """Configuration for grammar-guided response generation.
+    """Configuration for grammar-guided response generation."""
 
-    :param type: Must be "grammar" to identify this format type
-    :param bnf: The BNF grammar specification the response should conform to
-    """
-
-    type: Literal[ResponseFormatType.grammar] = ResponseFormatType.grammar
-    bnf: dict[str, Any]
+    type: Literal[ResponseFormatType.grammar] = Field(
+        default=ResponseFormatType.grammar, description="Must be 'grammar' to identify this format type."
+    )
+    bnf: dict[str, Any] = Field(..., description="The BNF grammar specification the response should conform to.")
 
 
 ResponseFormat = Annotated[
@@ -277,10 +260,8 @@ class CompletionRequest(BaseModel):
 class SystemMessageBehavior(Enum):
     """Config for how to override the default system prompt.
 
-    :cvar append: Appends the provided system message to the default system prompt:
-        https://www.llama.com/docs/model-cards-and-prompt-formats/llama3_2/#-function-definitions-in-the-system-prompt-
-    :cvar replace: Replaces the default system prompt with the provided system message. The system message can include the string
-        '{{function_definitions}}' to indicate where the function definitions should be inserted.
+    :cvar append: Appends the provided system message to the default system prompt.
+    :cvar replace: Replaces the default system prompt with the provided system message.
     """
 
     append = "append"
@@ -289,84 +270,82 @@ class SystemMessageBehavior(Enum):
 
 @json_schema_type
 class EmbeddingsResponse(BaseModel):
-    """Response containing generated embeddings.
+    """Response containing generated embeddings."""
 
-    :param embeddings: List of embedding vectors, one per input content. Each embedding is a list of floats. The dimensionality of the embedding is model-specific; you can check model metadata using /models/{model_id}
-    """
-
-    embeddings: list[list[float]]
+    embeddings: list[list[float]] = Field(
+        ...,
+        description="List of embedding vectors, one per input content. Each embedding is a list of floats. The dimensionality is model-specific.",
+    )
 
 
 @json_schema_type
 class RerankData(BaseModel):
-    """A single rerank result from a reranking response.
+    """A single rerank result from a reranking response."""
 
-    :param index: The original index of the document in the input list
-    :param relevance_score: The relevance score from the model output. Values are inverted when applicable so that higher scores indicate greater relevance.
-    """
-
-    index: int
-    relevance_score: float
+    index: int = Field(..., ge=0, description="The original index of the document in the input list.")
+    relevance_score: float = Field(
+        ..., description="The relevance score from the model output. Higher scores indicate greater relevance."
+    )
 
 
 @json_schema_type
 class RerankResponse(BaseModel):
-    """Response from a reranking request.
+    """Response from a reranking request."""
 
-    :param data: List of rerank result objects, sorted by relevance score (descending)
-    """
-
-    data: list[RerankData]
+    data: list[RerankData] = Field(
+        ..., description="List of rerank result objects, sorted by relevance score (descending)."
+    )
 
 
 # OpenAI Compatibility Models
 @json_schema_type
 class OpenAIChatCompletionContentPartTextParam(BaseModel):
-    """Text content part for OpenAI-compatible chat completion messages.
+    """Text content part for OpenAI-compatible chat completion messages."""
 
-    :param type: Must be "text" to identify this as text content
-    :param text: The text content of the message
-    """
-
-    type: Literal["text"] = "text"
-    text: str
+    type: Literal["text"] = Field(default="text", description="Must be 'text' to identify this as text content.")
+    text: str = Field(..., description="The text content of the message.")
 
 
 @json_schema_type
 class OpenAIImageURL(BaseModel):
-    """Image URL specification for OpenAI-compatible chat completion messages.
+    """Image URL specification for OpenAI-compatible chat completion messages."""
 
-    :param url: URL of the image to include in the message
-    :param detail: (Optional) Level of detail for image processing. Can be "low", "high", or "auto"
-    """
-
-    url: str
-    detail: str | None = None
+    url: str = Field(..., description="URL of the image to include in the message.")
+    detail: Literal["low", "high", "auto"] | None = Field(
+        default=None, description="Level of detail for image processing. Can be 'low', 'high', or 'auto'."
+    )
 
 
 @json_schema_type
 class OpenAIChatCompletionContentPartImageParam(BaseModel):
-    """Image content part for OpenAI-compatible chat completion messages.
+    """Image content part for OpenAI-compatible chat completion messages."""
 
-    :param type: Must be "image_url" to identify this as image content
-    :param image_url: Image URL specification and processing details
-    """
-
-    type: Literal["image_url"] = "image_url"
-    image_url: OpenAIImageURL
+    type: Literal["image_url"] = Field(
+        default="image_url", description="Must be 'image_url' to identify this as image content."
+    )
+    image_url: OpenAIImageURL = Field(..., description="Image URL specification and processing details.")
 
 
 @json_schema_type
 class OpenAIFileFile(BaseModel):
-    file_data: str | None = None
-    file_id: str | None = None
-    filename: str | None = None
+    """File reference for OpenAI-compatible file content."""
+
+    file_data: str | None = Field(default=None, description="Base64-encoded file data.")
+    file_id: str | None = Field(default=None, description="ID of an uploaded file.")
+    filename: str | None = Field(default=None, description="Name of the file.")
+
+    @model_validator(mode="after")
+    def validate_file_reference(self) -> Self:
+        """Ensure at least one of file_data or file_id is provided."""
+        if self.file_data is None and self.file_id is None:
+            raise ValueError("Either file_data or file_id must be provided")
+        return self
 
 
 @json_schema_type
 class OpenAIFile(BaseModel):
-    type: Literal["file"] = "file"
-    file: OpenAIFileFile
+    type: Literal["file"] = Field(default="file", description="Must be 'file' to identify this as file content.")
+    file: OpenAIFileFile = Field(..., description="File specification.")
 
 
 OpenAIChatCompletionContentPartParam = Annotated[
@@ -383,102 +362,85 @@ OpenAIChatCompletionTextOnlyMessageContent = str | list[OpenAIChatCompletionCont
 
 @json_schema_type
 class OpenAIUserMessageParam(BaseModel):
-    """A message from the user in an OpenAI-compatible chat completion request.
+    """A message from the user in an OpenAI-compatible chat completion request."""
 
-    :param role: Must be "user" to identify this as a user message
-    :param content: The content of the message, which can include text and other media
-    :param name: (Optional) The name of the user message participant.
-    """
-
-    role: Literal["user"] = "user"
-    content: OpenAIChatCompletionMessageContent
-    name: str | None = None
+    role: Literal["user"] = Field(default="user", description="Must be 'user' to identify this as a user message.")
+    content: OpenAIChatCompletionMessageContent = Field(
+        ..., description="The content of the message, which can include text and other media."
+    )
+    name: str | None = Field(default=None, description="The name of the user message participant.")
 
 
 @json_schema_type
 class OpenAISystemMessageParam(BaseModel):
-    """A system message providing instructions or context to the model.
+    """A system message providing instructions or context to the model."""
 
-    :param role: Must be "system" to identify this as a system message
-    :param content: The content of the "system prompt". If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages (for example, for formatting tool definitions).
-    :param name: (Optional) The name of the system message participant.
-    """
-
-    role: Literal["system"] = "system"
-    content: OpenAIChatCompletionTextOnlyMessageContent
-    name: str | None = None
+    role: Literal["system"] = Field(
+        default="system", description="Must be 'system' to identify this as a system message."
+    )
+    content: OpenAIChatCompletionTextOnlyMessageContent = Field(
+        ...,
+        description="The content of the 'system prompt'. If multiple system messages are provided, they are concatenated.",
+    )
+    name: str | None = Field(default=None, description="The name of the system message participant.")
 
 
 @json_schema_type
 class OpenAIChatCompletionToolCallFunction(BaseModel):
-    """Function call details for OpenAI-compatible tool calls.
+    """Function call details for OpenAI-compatible tool calls."""
 
-    :param name: (Optional) Name of the function to call
-    :param arguments: (Optional) Arguments to pass to the function as a JSON string
-    """
-
-    name: str | None = None
-    arguments: str | None = None
+    name: str | None = Field(default=None, description="Name of the function to call.")
+    arguments: str | None = Field(default=None, description="Arguments to pass to the function as a JSON string.")
 
 
 @json_schema_type
 class OpenAIChatCompletionToolCall(BaseModel):
-    """Tool call specification for OpenAI-compatible chat completion responses.
+    """Tool call specification for OpenAI-compatible chat completion responses."""
 
-    :param index: (Optional) Index of the tool call in the list
-    :param id: (Optional) Unique identifier for the tool call
-    :param type: Must be "function" to identify this as a function call
-    :param function: (Optional) Function call details
-    """
-
-    index: int | None = None
-    id: str | None = None
-    type: Literal["function"] = "function"
-    function: OpenAIChatCompletionToolCallFunction | None = None
+    index: int | None = Field(default=None, ge=0, description="Index of the tool call in the list.")
+    id: str | None = Field(default=None, description="Unique identifier for the tool call.")
+    type: Literal["function"] = Field(
+        default="function", description="Must be 'function' to identify this as a function call."
+    )
+    function: OpenAIChatCompletionToolCallFunction | None = Field(default=None, description="Function call details.")
 
 
 @json_schema_type
 class OpenAIAssistantMessageParam(BaseModel):
-    """A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
+    """A message containing the model's (assistant) response in an OpenAI-compatible chat completion request."""
 
-    :param role: Must be "assistant" to identify this as the model's response
-    :param content: The content of the model's response
-    :param name: (Optional) The name of the assistant message participant.
-    :param tool_calls: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
-    """
-
-    role: Literal["assistant"] = "assistant"
-    content: OpenAIChatCompletionTextOnlyMessageContent | None = None
-    name: str | None = None
-    tool_calls: list[OpenAIChatCompletionToolCall] | None = None
+    role: Literal["assistant"] = Field(
+        default="assistant", description="Must be 'assistant' to identify this as the model's response."
+    )
+    content: OpenAIChatCompletionTextOnlyMessageContent | None = Field(
+        default=None, description="The content of the model's response."
+    )
+    name: str | None = Field(default=None, description="The name of the assistant message participant.")
+    tool_calls: list[OpenAIChatCompletionToolCall] | None = Field(
+        default=None, description="List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object."
+    )
 
 
 @json_schema_type
 class OpenAIToolMessageParam(BaseModel):
-    """A message representing the result of a tool invocation in an OpenAI-compatible chat completion request.
+    """A message representing the result of a tool invocation in an OpenAI-compatible chat completion request."""
 
-    :param role: Must be "tool" to identify this as a tool response
-    :param tool_call_id: Unique identifier for the tool call this response is for
-    :param content: The response content from the tool
-    """
-
-    role: Literal["tool"] = "tool"
-    tool_call_id: str
-    content: OpenAIChatCompletionTextOnlyMessageContent
+    role: Literal["tool"] = Field(default="tool", description="Must be 'tool' to identify this as a tool response.")
+    tool_call_id: str = Field(..., description="Unique identifier for the tool call this response is for.")
+    content: OpenAIChatCompletionTextOnlyMessageContent = Field(..., description="The response content from the tool.")
 
 
 @json_schema_type
 class OpenAIDeveloperMessageParam(BaseModel):
-    """A message from the developer in an OpenAI-compatible chat completion request.
+    """A message from the developer in an OpenAI-compatible chat completion request."""
 
-    :param role: Must be "developer" to identify this as a developer message
-    :param content: The content of the developer message
-    :param name: (Optional) The name of the developer message participant.
-    """
-
-    role: Literal["developer"] = "developer"
-    content: OpenAIChatCompletionTextOnlyMessageContent
-    name: str | None = None
+    role: Literal["developer"] = Field(
+        default="developer", description="Must be 'developer' to identify this as a developer message."
+    )
+    content: OpenAIChatCompletionTextOnlyMessageContent = Field(
+        ..., description="The content of the developer message."
+    )
+    name: str | None = Field(default=None, description="The name of the developer message participant.")
 
 
 OpenAIMessageParam = Annotated[
@@ -494,23 +456,14 @@ register_schema(OpenAIMessageParam, name="OpenAIMessageParam")
 
 @json_schema_type
 class OpenAIResponseFormatText(BaseModel):
-    """Text response format for OpenAI-compatible chat completion requests.
+    """Text response format for OpenAI-compatible chat completion requests."""
 
-    :param type: Must be "text" to indicate plain text response format
-    """
-
-    type: Literal["text"] = "text"
+    type: Literal["text"] = Field(default="text", description="Must be 'text' to indicate plain text response format.")
 
 
 @json_schema_type
 class OpenAIJSONSchema(TypedDict, total=False):
-    """JSON schema specification for OpenAI-compatible structured response format.
-
-    :param name: Name of the schema
-    :param description: (Optional) Description of the schema
-    :param strict: (Optional) Whether to enforce strict adherence to the schema
-    :param schema: (Optional) The JSON schema definition
-    """
+    """JSON schema specification for OpenAI-compatible structured response format."""
 
     name: str
     description: str | None
@@ -525,24 +478,21 @@ class OpenAIJSONSchema(TypedDict, total=False):
 
 @json_schema_type
 class OpenAIResponseFormatJSONSchema(BaseModel):
-    """JSON schema response format for OpenAI-compatible chat completion requests.
+    """JSON schema response format for OpenAI-compatible chat completion requests."""
 
-    :param type: Must be "json_schema" to indicate structured JSON response format
-    :param json_schema: The JSON schema specification for the response
-    """
-
-    type: Literal["json_schema"] = "json_schema"
-    json_schema: OpenAIJSONSchema
+    type: Literal["json_schema"] = Field(
+        default="json_schema", description="Must be 'json_schema' to indicate structured JSON response format."
+    )
+    json_schema: OpenAIJSONSchema = Field(..., description="The JSON schema specification for the response.")
 
 
 @json_schema_type
 class OpenAIResponseFormatJSONObject(BaseModel):
-    """JSON object response format for OpenAI-compatible chat completion requests.
+    """JSON object response format for OpenAI-compatible chat completion requests."""
 
-    :param type: Must be "json_object" to indicate generic JSON object response format
-    """
-
-    type: Literal["json_object"] = "json_object"
+    type: Literal["json_object"] = Field(
+        default="json_object", description="Must be 'json_object' to indicate generic JSON object response format."
+    )
 
 
 OpenAIResponseFormatParam = Annotated[
@@ -554,19 +504,17 @@ register_schema(OpenAIResponseFormatParam, name="OpenAIResponseFormatParam")
 
 @json_schema_type
 class FunctionToolConfig(BaseModel):
-    name: str
+    name: str = Field(..., description="Name of the function.")
 
 
 @json_schema_type
 class OpenAIChatCompletionToolChoiceFunctionTool(BaseModel):
-    """Function tool choice for OpenAI-compatible chat completion requests.
+    """Function tool choice for OpenAI-compatible chat completion requests."""
 
-    :param type: Must be "function" to indicate function tool choice
-    :param function: The function tool configuration
-    """
-
-    type: Literal["function"] = "function"
-    function: FunctionToolConfig
+    type: Literal["function"] = Field(
+        default="function", description="Must be 'function' to indicate function tool choice."
+    )
+    function: FunctionToolConfig = Field(..., description="The function tool configuration.")
 
     def __init__(self, name: str):
         super().__init__(type="function", function=FunctionToolConfig(name=name))
@@ -574,23 +522,17 @@ class OpenAIChatCompletionToolChoiceFunctionTool(BaseModel):
 
 @json_schema_type
 class CustomToolConfig(BaseModel):
-    """Custom tool configuration for OpenAI-compatible chat completion requests.
+    """Custom tool configuration for OpenAI-compatible chat completion requests."""
 
-    :param name: Name of the custom tool
-    """
-
-    name: str
+    name: str = Field(..., description="Name of the custom tool.")
 
 
 @json_schema_type
 class OpenAIChatCompletionToolChoiceCustomTool(BaseModel):
-    """Custom tool choice for OpenAI-compatible chat completion requests.
+    """Custom tool choice for OpenAI-compatible chat completion requests."""
 
-    :param type: Must be "custom" to indicate custom tool choice
-    """
-
-    type: Literal["custom"] = "custom"
-    custom: CustomToolConfig
+    type: Literal["custom"] = Field(default="custom", description="Must be 'custom' to indicate custom tool choice.")
+    custom: CustomToolConfig = Field(..., description="Custom tool configuration.")
 
     def __init__(self, name: str):
         super().__init__(type="custom", custom=CustomToolConfig(name=name))
@@ -598,19 +540,18 @@ class OpenAIChatCompletionToolChoiceCustomTool(BaseModel):
 
 @json_schema_type
 class AllowedToolsConfig(BaseModel):
-    tools: list[dict[str, Any]]
-    mode: Literal["auto", "required"]
+    tools: list[dict[str, Any]] = Field(..., description="List of allowed tools.")
+    mode: Literal["auto", "required"] = Field(..., description="Mode for allowed tools.")
 
 
 @json_schema_type
 class OpenAIChatCompletionToolChoiceAllowedTools(BaseModel):
-    """Allowed tools response format for OpenAI-compatible chat completion requests.
+    """Allowed tools response format for OpenAI-compatible chat completion requests."""
 
-    :param type: Must be "allowed_tools" to indicate allowed tools response format
-    """
-
-    type: Literal["allowed_tools"] = "allowed_tools"
-    allowed_tools: AllowedToolsConfig
+    type: Literal["allowed_tools"] = Field(
+        default="allowed_tools", description="Must be 'allowed_tools' to indicate allowed tools response format."
+    )
+    allowed_tools: AllowedToolsConfig = Field(..., description="Allowed tools configuration.")
 
     def __init__(self, tools: list[dict[str, Any]], mode: Literal["auto", "required"]):
         super().__init__(type="allowed_tools", allowed_tools=AllowedToolsConfig(tools=tools, mode=mode))
@@ -629,267 +570,208 @@ register_schema(OpenAIChatCompletionToolChoice, name="OpenAIChatCompletionToolCh
 
 @json_schema_type
 class OpenAITopLogProb(BaseModel):
-    """The top log probability for a token from an OpenAI-compatible chat completion response.
+    """The top log probability for a token from an OpenAI-compatible chat completion response."""
 
-    :token: The token
-    :bytes: (Optional) The bytes for the token
-    :logprob: The log probability of the token
-    """
-
-    token: str
-    bytes: list[int] | None = None
-    logprob: float
+    token: str = Field(..., description="The token.")
+    bytes: list[int] | None = Field(default=None, description="The bytes for the token.")
+    logprob: float = Field(..., description="The log probability of the token.")
 
 
 @json_schema_type
 class OpenAITokenLogProb(BaseModel):
-    """The log probability for a token from an OpenAI-compatible chat completion response.
+    """The log probability for a token from an OpenAI-compatible chat completion response."""
 
-    :token: The token
-    :bytes: (Optional) The bytes for the token
-    :logprob: The log probability of the token
-    :top_logprobs: The top log probabilities for the token
-    """
-
-    token: str
-    bytes: list[int] | None = None
-    logprob: float
-    top_logprobs: list[OpenAITopLogProb] | None = None
+    token: str = Field(..., description="The token.")
+    bytes: list[int] | None = Field(default=None, description="The bytes for the token.")
+    logprob: float = Field(..., description="The log probability of the token.")
+    top_logprobs: list[OpenAITopLogProb] | None = Field(
+        default=None, description="The top log probabilities for the token."
+    )
 
 
 @json_schema_type
 class OpenAIChoiceLogprobs(BaseModel):
-    """The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
+    """The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response."""
 
-    :param content: (Optional) The log probabilities for the tokens in the message
-    :param refusal: (Optional) The log probabilities for the tokens in the message
-    """
-
-    content: list[OpenAITokenLogProb] | None = None
-    refusal: list[OpenAITokenLogProb] | None = None
+    content: list[OpenAITokenLogProb] | None = Field(
+        default=None, description="The log probabilities for the tokens in the message."
+    )
+    refusal: list[OpenAITokenLogProb] | None = Field(
+        default=None, description="The log probabilities for the refusal tokens."
+    )
 
 
 @json_schema_type
 class OpenAIChoiceDelta(BaseModel):
-    """A delta from an OpenAI-compatible chat completion streaming response.
+    """A delta from an OpenAI-compatible chat completion streaming response."""
 
-    :param content: (Optional) The content of the delta
-    :param refusal: (Optional) The refusal of the delta
-    :param role: (Optional) The role of the delta
-    :param tool_calls: (Optional) The tool calls of the delta
-    :param reasoning_content: (Optional) The reasoning content from the model (non-standard, for o1/o3 models)
-    """
+    content: str | None = Field(default=None, description="The content of the delta.")
+    refusal: str | None = Field(default=None, description="The refusal of the delta.")
+    role: str | None = Field(default=None, description="The role of the delta.")
+    tool_calls: list[OpenAIChatCompletionToolCall] | None = Field(
+        default=None, description="The tool calls of the delta."
+    )
+    reasoning_content: str | None = Field(
+        default=None, description="The reasoning content from the model (for o1/o3 models)."
+    )
 
-    content: str | None = None
-    refusal: str | None = None
-    role: str | None = None
-    tool_calls: list[OpenAIChatCompletionToolCall] | None = None
-    reasoning_content: str | None = None
+
+# OpenAI finish_reason enum values
+OpenAIFinishReason = Literal["stop", "length", "tool_calls", "content_filter", "function_call"]
+register_schema(OpenAIFinishReason, name="OpenAIFinishReason")
 
 
 @json_schema_type
 class OpenAIChunkChoice(BaseModel):
-    """A chunk choice from an OpenAI-compatible chat completion streaming response.
+    """A chunk choice from an OpenAI-compatible chat completion streaming response."""
 
-    :param delta: The delta from the chunk
-    :param finish_reason: The reason the model stopped generating
-    :param index: The index of the choice
-    :param logprobs: (Optional) The log probabilities for the tokens in the message
-    """
-
-    delta: OpenAIChoiceDelta
-    finish_reason: str
-    index: int
-    logprobs: OpenAIChoiceLogprobs | None = None
+    delta: OpenAIChoiceDelta = Field(..., description="The delta from the chunk.")
+    finish_reason: OpenAIFinishReason | None = Field(
+        default=None, description="The reason the model stopped generating."
+    )
+    index: int = Field(..., ge=0, description="The index of the choice.")
+    logprobs: OpenAIChoiceLogprobs | None = Field(
+        default=None, description="The log probabilities for the tokens in the message."
+    )
 
 
 @json_schema_type
 class OpenAIChoice(BaseModel):
-    """A choice from an OpenAI-compatible chat completion response.
+    """A choice from an OpenAI-compatible chat completion response."""
 
-    :param message: The message from the model
-    :param finish_reason: The reason the model stopped generating
-    :param index: The index of the choice
-    :param logprobs: (Optional) The log probabilities for the tokens in the message
-    """
-
-    message: OpenAIMessageParam
-    finish_reason: str
-    index: int
-    logprobs: OpenAIChoiceLogprobs | None = None
+    message: OpenAIMessageParam = Field(..., description="The message from the model.")
+    finish_reason: OpenAIFinishReason = Field(..., description="The reason the model stopped generating.")
+    index: int = Field(..., ge=0, description="The index of the choice.")
+    logprobs: OpenAIChoiceLogprobs | None = Field(
+        default=None, description="The log probabilities for the tokens in the message."
+    )
 
 
 class OpenAIChatCompletionUsageCompletionTokensDetails(BaseModel):
-    """Token details for output tokens in OpenAI chat completion usage.
+    """Token details for output tokens in OpenAI chat completion usage."""
 
-    :param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)
-    """
-
-    reasoning_tokens: int | None = None
+    reasoning_tokens: int | None = Field(
+        default=None, ge=0, description="Number of tokens used for reasoning (o1/o3 models)."
+    )
 
 
 class OpenAIChatCompletionUsagePromptTokensDetails(BaseModel):
-    """Token details for prompt tokens in OpenAI chat completion usage.
+    """Token details for prompt tokens in OpenAI chat completion usage."""
 
-    :param cached_tokens: Number of tokens retrieved from cache
-    """
-
-    cached_tokens: int | None = None
+    cached_tokens: int | None = Field(default=None, ge=0, description="Number of tokens retrieved from cache.")
 
 
 @json_schema_type
 class OpenAIChatCompletionUsage(BaseModel):
-    """Usage information for OpenAI chat completion.
+    """Usage information for OpenAI chat completion."""
 
-    :param prompt_tokens: Number of tokens in the prompt
-    :param completion_tokens: Number of tokens in the completion
-    :param total_tokens: Total tokens used (prompt + completion)
-    :param input_tokens_details: Detailed breakdown of input token usage
-    :param output_tokens_details: Detailed breakdown of output token usage
-    """
-
-    prompt_tokens: int
-    completion_tokens: int
-    total_tokens: int
-    prompt_tokens_details: OpenAIChatCompletionUsagePromptTokensDetails | None = None
-    completion_tokens_details: OpenAIChatCompletionUsageCompletionTokensDetails | None = None
+    prompt_tokens: int = Field(..., ge=0, description="Number of tokens in the prompt.")
+    completion_tokens: int = Field(..., ge=0, description="Number of tokens in the completion.")
+    total_tokens: int = Field(..., ge=0, description="Total tokens used (prompt + completion).")
+    prompt_tokens_details: OpenAIChatCompletionUsagePromptTokensDetails | None = Field(
+        default=None, description="Detailed breakdown of input token usage."
+    )
+    completion_tokens_details: OpenAIChatCompletionUsageCompletionTokensDetails | None = Field(
+        default=None, description="Detailed breakdown of output token usage."
+    )
 
 
 @json_schema_type
 class OpenAIChatCompletion(BaseModel):
-    """Response from an OpenAI-compatible chat completion request.
+    """Response from an OpenAI-compatible chat completion request."""
 
-    :param id: The ID of the chat completion
-    :param choices: List of choices
-    :param object: The object type, which will be "chat.completion"
-    :param created: The Unix timestamp in seconds when the chat completion was created
-    :param model: The model that was used to generate the chat completion
-    :param usage: Token usage information for the completion
-    """
-
-    id: str
-    choices: list[OpenAIChoice]
-    object: Literal["chat.completion"] = "chat.completion"
-    created: int
-    model: str
-    usage: OpenAIChatCompletionUsage | None = None
+    id: str = Field(..., description="The ID of the chat completion.")
+    choices: list[OpenAIChoice] = Field(..., min_length=1, description="List of choices.")
+    object: Literal["chat.completion"] = Field(default="chat.completion", description="The object type.")
+    created: int = Field(..., ge=0, description="The Unix timestamp in seconds when the chat completion was created.")
+    model: str = Field(..., description="The model that was used to generate the chat completion.")
+    usage: OpenAIChatCompletionUsage | None = Field(
+        default=None, description="Token usage information for the completion."
+    )
 
 
 @json_schema_type
 class OpenAIChatCompletionChunk(BaseModel):
-    """Chunk from a streaming response to an OpenAI-compatible chat completion request.
+    """Chunk from a streaming response to an OpenAI-compatible chat completion request."""
 
-    :param id: The ID of the chat completion
-    :param choices: List of choices
-    :param object: The object type, which will be "chat.completion.chunk"
-    :param created: The Unix timestamp in seconds when the chat completion was created
-    :param model: The model that was used to generate the chat completion
-    :param usage: Token usage information (typically included in final chunk with stream_options)
-    """
-
-    id: str
-    choices: list[OpenAIChunkChoice]
-    object: Literal["chat.completion.chunk"] = "chat.completion.chunk"
-    created: int
-    model: str
-    usage: OpenAIChatCompletionUsage | None = None
+    id: str = Field(..., description="The ID of the chat completion.")
+    choices: list[OpenAIChunkChoice] = Field(..., description="List of choices.")
+    object: Literal["chat.completion.chunk"] = Field(default="chat.completion.chunk", description="The object type.")
+    created: int = Field(..., ge=0, description="The Unix timestamp in seconds when the chat completion was created.")
+    model: str = Field(..., description="The model that was used to generate the chat completion.")
+    usage: OpenAIChatCompletionUsage | None = Field(
+        default=None, description="Token usage information (typically included in final chunk with stream_options)."
+    )
 
 
 @json_schema_type
 class OpenAICompletionLogprobs(BaseModel):
-    """The log probabilities for the tokens in the message from an OpenAI-compatible completion response.
+    """The log probabilities for the tokens from an OpenAI-compatible completion response."""
 
-    :text_offset: (Optional) The offset of the token in the text
-    :token_logprobs: (Optional) The log probabilities for the tokens
-    :tokens: (Optional) The tokens
-    :top_logprobs: (Optional) The top log probabilities for the tokens
-    """
-
-    text_offset: list[int] | None = None
-    token_logprobs: list[float] | None = None
-    tokens: list[str] | None = None
-    top_logprobs: list[dict[str, float]] | None = None
+    text_offset: list[int] | None = Field(default=None, description="The offset of the token in the text.")
+    token_logprobs: list[float] | None = Field(default=None, description="The log probabilities for the tokens.")
+    tokens: list[str] | None = Field(default=None, description="The tokens.")
+    top_logprobs: list[dict[str, float]] | None = Field(
+        default=None, description="The top log probabilities for the tokens."
+    )
 
 
 @json_schema_type
 class OpenAICompletionChoice(BaseModel):
-    """A choice from an OpenAI-compatible completion response.
+    """A choice from an OpenAI-compatible completion response."""
 
-    :finish_reason: The reason the model stopped generating
-    :text: The text of the choice
-    :index: The index of the choice
-    :logprobs: (Optional) The log probabilities for the tokens in the choice
-    """
-
-    finish_reason: str
-    text: str
-    index: int
-    logprobs: OpenAIChoiceLogprobs | None = None
+    finish_reason: OpenAIFinishReason = Field(..., description="The reason the model stopped generating.")
+    text: str = Field(..., description="The text of the choice.")
+    index: int = Field(..., ge=0, description="The index of the choice.")
+    logprobs: OpenAIChoiceLogprobs | None = Field(
+        default=None, description="The log probabilities for the tokens in the choice."
+    )
 
 
 @json_schema_type
 class OpenAICompletion(BaseModel):
-    """Response from an OpenAI-compatible completion request.
+    """Response from an OpenAI-compatible completion request."""
 
-    :id: The ID of the completion
-    :choices: List of choices
-    :created: The Unix timestamp in seconds when the completion was created
-    :model: The model that was used to generate the completion
-    :object: The object type, which will be "text_completion"
-    """
-
-    id: str
-    choices: list[OpenAICompletionChoice]
-    created: int
-    model: str
-    object: Literal["text_completion"] = "text_completion"
+    id: str = Field(..., description="The ID of the completion.")
+    choices: list[OpenAICompletionChoice] = Field(..., min_length=1, description="List of choices.")
+    created: int = Field(..., ge=0, description="The Unix timestamp in seconds when the completion was created.")
+    model: str = Field(..., description="The model that was used to generate the completion.")
+    object: Literal["text_completion"] = Field(default="text_completion", description="The object type.")
 
 
 @json_schema_type
 class OpenAIEmbeddingData(BaseModel):
-    """A single embedding data object from an OpenAI-compatible embeddings response.
+    """A single embedding data object from an OpenAI-compatible embeddings response."""
 
-    :param object: The object type, which will be "embedding"
-    :param embedding: The embedding vector as a list of floats (when encoding_format="float") or as a base64-encoded string (when encoding_format="base64")
-    :param index: The index of the embedding in the input list
-    """
-
-    object: Literal["embedding"] = "embedding"
+    object: Literal["embedding"] = Field(default="embedding", description="The object type.")
     # TODO: consider dropping str and using openai.types.embeddings.Embedding instead of OpenAIEmbeddingData
-    embedding: list[float] | str
-    index: int
+    embedding: list[float] | str = Field(
+        ...,
+        description="The embedding vector as a list of floats (when encoding_format='float') or as a base64-encoded string.",
+    )
+    index: int = Field(..., ge=0, description="The index of the embedding in the input list.")
 
 
 @json_schema_type
 class OpenAIEmbeddingUsage(BaseModel):
-    """Usage information for an OpenAI-compatible embeddings response.
+    """Usage information for an OpenAI-compatible embeddings response."""
 
-    :param prompt_tokens: The number of tokens in the input
-    :param total_tokens: The total number of tokens used
-    """
-
-    prompt_tokens: int
-    total_tokens: int
+    prompt_tokens: int = Field(..., ge=0, description="The number of tokens in the input.")
+    total_tokens: int = Field(..., ge=0, description="The total number of tokens used.")
 
 
 @json_schema_type
 class OpenAIEmbeddingsResponse(BaseModel):
-    """Response from an OpenAI-compatible embeddings request.
+    """Response from an OpenAI-compatible embeddings request."""
 
-    :param object: The object type, which will be "list"
-    :param data: List of embedding data objects
-    :param model: The model that was used to generate the embeddings
-    :param usage: Usage information
-    """
-
-    object: Literal["list"] = "list"
-    data: list[OpenAIEmbeddingData]
-    model: str
-    usage: OpenAIEmbeddingUsage
+    object: Literal["list"] = Field(default="list", description="The object type.")
+    data: list[OpenAIEmbeddingData] = Field(..., min_length=1, description="List of embedding data objects.")
+    model: str = Field(..., description="The model that was used to generate the embeddings.")
+    usage: OpenAIEmbeddingUsage = Field(..., description="Usage information.")
 
 
 class TextTruncation(Enum):
-    """Config for how to truncate text for embedding when text is longer than the model's max sequence length. Start and End semantics depend on whether the language is left-to-right or right-to-left.
+    """Config for how to truncate text for embedding when text is longer than the model's max sequence length.
 
     :cvar none: No truncation (default). If the text is longer than the model's max sequence length, you will get an error.
     :cvar start: Truncate from the start
@@ -913,146 +795,112 @@ class EmbeddingTaskType(Enum):
 
 
 class OpenAICompletionWithInputMessages(OpenAIChatCompletion):
-    input_messages: list[OpenAIMessageParam]
+    input_messages: list[OpenAIMessageParam] = Field(
+        ..., description="The input messages used to generate this completion."
+    )
 
 
 @json_schema_type
 class ListOpenAIChatCompletionResponse(BaseModel):
-    """Response from listing OpenAI-compatible chat completions.
+    """Response from listing OpenAI-compatible chat completions."""
 
-    :param data: List of chat completion objects with their input messages
-    :param has_more: Whether there are more completions available beyond this list
-    :param first_id: ID of the first completion in this list
-    :param last_id: ID of the last completion in this list
-    :param object: Must be "list" to identify this as a list response
-    """
-
-    data: list[OpenAICompletionWithInputMessages]
-    has_more: bool
-    first_id: str
-    last_id: str
-    object: Literal["list"] = "list"
+    data: list[OpenAICompletionWithInputMessages] = Field(
+        ..., description="List of chat completion objects with their input messages."
+    )
+    has_more: bool = Field(..., description="Whether there are more completions available beyond this list.")
+    first_id: str = Field(..., description="ID of the first completion in this list.")
+    last_id: str = Field(..., description="ID of the last completion in this list.")
+    object: Literal["list"] = Field(default="list", description="Must be 'list' to identify this as a list response.")
 
 
 # extra_body can be accessed via .model_extra
 @json_schema_type
 class OpenAICompletionRequestWithExtraBody(BaseModel, extra="allow"):
-    """Request parameters for OpenAI-compatible completion endpoint.
-
-    :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-    :param prompt: The prompt to generate a completion for.
-    :param best_of: (Optional) The number of completions to generate.
-    :param echo: (Optional) Whether to echo the prompt.
-    :param frequency_penalty: (Optional) The penalty for repeated tokens.
-    :param logit_bias: (Optional) The logit bias to use.
-    :param logprobs: (Optional) The log probabilities to use.
-    :param max_tokens: (Optional) The maximum number of tokens to generate.
-    :param n: (Optional) The number of completions to generate.
-    :param presence_penalty: (Optional) The penalty for repeated tokens.
-    :param seed: (Optional) The seed to use.
-    :param stop: (Optional) The stop tokens to use.
-    :param stream: (Optional) Whether to stream the response.
-    :param stream_options: (Optional) The stream options to use.
-    :param temperature: (Optional) The temperature to use.
-    :param top_p: (Optional) The top p to use.
-    :param user: (Optional) The user to use.
-    :param suffix: (Optional) The suffix that should be appended to the completion.
-    """
+    """Request parameters for OpenAI-compatible completion endpoint."""
 
     # Standard OpenAI completion parameters
-    model: str
-    prompt: str | list[str] | list[int] | list[list[int]]
-    best_of: int | None = None
-    echo: bool | None = None
-    frequency_penalty: float | None = None
-    logit_bias: dict[str, float] | None = None
-    logprobs: bool | None = None
-    max_tokens: int | None = None
-    n: int | None = None
-    presence_penalty: float | None = None
-    seed: int | None = None
-    stop: str | list[str] | None = None
-    stream: bool | None = None
-    stream_options: dict[str, Any] | None = None
-    temperature: float | None = None
-    top_p: float | None = None
-    user: str | None = None
-    suffix: str | None = None
+    model: str = Field(..., description="The identifier of the model to use.")
+    prompt: str | list[str] | list[int] | list[list[int]] = Field(
+        ..., description="The prompt to generate a completion for."
+    )
+    best_of: int | None = Field(default=None, ge=1, description="The number of completions to generate.")
+    echo: bool | None = Field(default=None, description="Whether to echo the prompt.")
+    frequency_penalty: float | None = Field(
+        default=None, ge=-2.0, le=2.0, description="The penalty for repeated tokens."
+    )
+    logit_bias: dict[str, float] | None = Field(default=None, description="The logit bias to use.")
+    logprobs: bool | None = Field(default=None, description="The log probabilities to use.")
+    max_tokens: int | None = Field(default=None, ge=1, description="The maximum number of tokens to generate.")
+    n: int | None = Field(default=None, ge=1, description="The number of completions to generate.")
+    presence_penalty: float | None = Field(
+        default=None, ge=-2.0, le=2.0, description="The penalty for repeated tokens."
+    )
+    seed: int | None = Field(default=None, description="The seed to use.")
+    stop: str | list[str] | None = Field(default=None, description="The stop tokens to use.")
+    stream: bool | None = Field(default=None, description="Whether to stream the response.")
+    stream_options: dict[str, Any] | None = Field(default=None, description="The stream options to use.")
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0, description="The temperature to use.")
+    top_p: float | None = Field(default=None, ge=0.0, le=1.0, description="The top p to use.")
+    user: str | None = Field(default=None, description="The user to use.")
+    suffix: str | None = Field(default=None, description="The suffix that should be appended to the completion.")
 
 
 # extra_body can be accessed via .model_extra
 @json_schema_type
 class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
-    """Request parameters for OpenAI-compatible chat completion endpoint.
-
-    :param model: The identifier of the model to use. The model must be registered with Llama Stack and available via the /models endpoint.
-    :param messages: List of messages in the conversation.
-    :param frequency_penalty: (Optional) The penalty for repeated tokens.
-    :param function_call: (Optional) The function call to use.
-    :param functions: (Optional) List of functions to use.
-    :param logit_bias: (Optional) The logit bias to use.
-    :param logprobs: (Optional) The log probabilities to use.
-    :param max_completion_tokens: (Optional) The maximum number of tokens to generate.
-    :param max_tokens: (Optional) The maximum number of tokens to generate.
-    :param n: (Optional) The number of completions to generate.
-    :param parallel_tool_calls: (Optional) Whether to parallelize tool calls.
-    :param presence_penalty: (Optional) The penalty for repeated tokens.
-    :param response_format: (Optional) The response format to use.
-    :param seed: (Optional) The seed to use.
-    :param stop: (Optional) The stop tokens to use.
-    :param stream: (Optional) Whether to stream the response.
-    :param stream_options: (Optional) The stream options to use.
-    :param temperature: (Optional) The temperature to use.
-    :param tool_choice: (Optional) The tool choice to use.
-    :param tools: (Optional) The tools to use.
-    :param top_logprobs: (Optional) The top log probabilities to use.
-    :param top_p: (Optional) The top p to use.
-    :param user: (Optional) The user to use.
-    """
+    """Request parameters for OpenAI-compatible chat completion endpoint."""
 
     # Standard OpenAI chat completion parameters
-    model: str
-    messages: Annotated[list[OpenAIMessageParam], Field(..., min_length=1)]
-    frequency_penalty: float | None = None
-    function_call: str | dict[str, Any] | None = None
-    functions: list[dict[str, Any]] | None = None
-    logit_bias: dict[str, float] | None = None
-    logprobs: bool | None = None
-    max_completion_tokens: int | None = None
-    max_tokens: int | None = None
-    n: int | None = None
-    parallel_tool_calls: bool | None = None
-    presence_penalty: float | None = None
-    response_format: OpenAIResponseFormatParam | None = None
-    seed: int | None = None
-    stop: str | list[str] | None = None
-    stream: bool | None = None
-    stream_options: dict[str, Any] | None = None
-    temperature: float | None = None
-    tool_choice: str | dict[str, Any] | None = None
-    tools: list[dict[str, Any]] | None = None
-    top_logprobs: int | None = None
-    top_p: float | None = None
-    user: str | None = None
+    model: str = Field(..., description="The identifier of the model to use.")
+    messages: Annotated[
+        list[OpenAIMessageParam], Field(..., min_length=1, description="List of messages in the conversation.")
+    ]
+    frequency_penalty: float | None = Field(
+        default=None, ge=-2.0, le=2.0, description="The penalty for repeated tokens."
+    )
+    function_call: str | dict[str, Any] | None = Field(default=None, description="The function call to use.")
+    functions: list[dict[str, Any]] | None = Field(default=None, description="List of functions to use.")
+    logit_bias: dict[str, float] | None = Field(default=None, description="The logit bias to use.")
+    logprobs: bool | None = Field(default=None, description="The log probabilities to use.")
+    max_completion_tokens: int | None = Field(
+        default=None, ge=1, description="The maximum number of tokens to generate."
+    )
+    max_tokens: int | None = Field(default=None, ge=1, description="The maximum number of tokens to generate.")
+    n: int | None = Field(default=None, ge=1, description="The number of completions to generate.")
+    parallel_tool_calls: bool | None = Field(default=None, description="Whether to parallelize tool calls.")
+    presence_penalty: float | None = Field(
+        default=None, ge=-2.0, le=2.0, description="The penalty for repeated tokens."
+    )
+    response_format: OpenAIResponseFormatParam | None = Field(default=None, description="The response format to use.")
+    seed: int | None = Field(default=None, description="The seed to use.")
+    stop: str | list[str] | None = Field(default=None, description="The stop tokens to use.")
+    stream: bool | None = Field(default=None, description="Whether to stream the response.")
+    stream_options: dict[str, Any] | None = Field(default=None, description="The stream options to use.")
+    temperature: float | None = Field(default=None, ge=0.0, le=2.0, description="The temperature to use.")
+    tool_choice: str | dict[str, Any] | None = Field(default=None, description="The tool choice to use.")
+    tools: list[dict[str, Any]] | None = Field(default=None, description="The tools to use.")
+    top_logprobs: int | None = Field(default=None, ge=0, description="The top log probabilities to use.")
+    top_p: float | None = Field(default=None, ge=0.0, le=1.0, description="The top p to use.")
+    user: str | None = Field(default=None, description="The user to use.")
+    reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = Field(
+        default=None, description="The effort level for reasoning models."
+    )
 
 
 # extra_body can be accessed via .model_extra
 @json_schema_type
 class OpenAIEmbeddingsRequestWithExtraBody(BaseModel, extra="allow"):
-    """Request parameters for OpenAI-compatible embeddings endpoint.
+    """Request parameters for OpenAI-compatible embeddings endpoint."""
 
-    :param model: The identifier of the model to use. The model must be an embedding model registered with Llama Stack and available via the /models endpoint.
-    :param input: Input text to embed, encoded as a string or array of strings. To embed multiple inputs in a single request, pass an array of strings.
-    :param encoding_format: (Optional) The format to return the embeddings in. Can be either "float" or "base64". Defaults to "float".
-    :param dimensions: (Optional) The number of dimensions the resulting output embeddings should have. Only supported in text-embedding-3 and later models.
-    :param user: (Optional) A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
-    """
-
-    model: str
-    input: str | list[str]
-    encoding_format: str | None = "float"
-    dimensions: int | None = None
-    user: str | None = None
+    model: str = Field(..., description="The identifier of the model to use.")
+    input: str | list[str] = Field(..., description="Input text to embed, encoded as a string or array of strings.")
+    encoding_format: str | None = Field(
+        default="float", description="The format to return the embeddings in. Can be 'float' or 'base64'."
+    )
+    dimensions: int | None = Field(
+        default=None, ge=1, description="The number of dimensions the resulting output embeddings should have."
+    )
+    user: str | None = Field(default=None, description="A unique identifier representing your end-user.")
 
 
 # New Request Models for Inference Endpoints
@@ -1061,7 +909,7 @@ class ListChatCompletionsRequest(BaseModel):
     """Request model for listing chat completions."""
 
     after: str | None = Field(default=None, description="The ID of the last chat completion to return.")
-    limit: int | None = Field(default=20, description="The maximum number of chat completions to return.")
+    limit: int | None = Field(default=20, ge=1, le=100, description="The maximum number of chat completions to return.")
     model: str | None = Field(default=None, description="The model to filter by.")
     order: Order | None = Field(
         default=Order.desc,
@@ -1083,14 +931,15 @@ class RerankRequest(BaseModel):
     model: str = Field(..., description="The identifier of the reranking model to use.")
     query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam = Field(
         ...,
-        description="The search query to rank items against. Can be a string, text content part, or image content part. The input must not exceed the model's max input token length.",
+        description="The search query to rank items against. Can be a string, text content part, or image content part.",
     )
     items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam] = Field(
         ...,
-        description="List of items to rerank. Each item can be a string, text content part, or image content part. Each input must not exceed the model's max input token length.",
+        min_length=1,
+        description="List of items to rerank. Each item can be a string, text content part, or image content part.",
     )
     max_num_results: int | None = Field(
-        default=None, description="Maximum number of results to return. Default: returns all."
+        default=None, ge=1, description="Maximum number of results to return. Default: returns all."
     )
 
 
@@ -1168,6 +1017,7 @@ __all__ = [
     "OpenAICompletionLogprobs",
     "OpenAICompletionChoice",
     "OpenAICompletion",
+    "OpenAIFinishReason",
     "OpenAIEmbeddingData",
     "OpenAIEmbeddingUsage",
     "OpenAIEmbeddingsResponse",
