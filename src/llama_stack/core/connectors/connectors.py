@@ -11,11 +11,12 @@ from pydantic import BaseModel, Field
 from llama_stack.core.datatypes import StackConfig
 from llama_stack.core.storage.kvstore import KVStore, kvstore_impl
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.tools.mcp import get_mcp_server_info
+from llama_stack.providers.utils.tools.mcp import get_mcp_server_info, list_mcp_tools
 from llama_stack_api import (
     Connector,
     ConnectorNotFoundError,
     Connectors,
+    ConnectorToolNotFoundError,
     ConnectorType,
     GetConnectorRequest,
     GetConnectorToolRequest,
@@ -126,15 +127,35 @@ class ConnectorServiceImpl(Connectors):
         return connector
 
     async def list_connectors(self) -> ListConnectorsResponse:
-        raise NotImplementedError("list_connectors not implemented")
+        """List all connectors."""
+        connectors = []
+        for key in await self.kvstore.keys_in_range(start_key=KEY_PREFIX, end_key=KEY_PREFIX + "\uffff"):
+            connector_json = await self.kvstore.get(key)
+            if not connector_json:
+                continue
+            connector = Connector.model_validate_json(connector_json)
+            connectors.append(connector)
+        return ListConnectorsResponse(data=connectors)
 
     async def get_connector_tool(self, request: GetConnectorToolRequest, authorization: str | None = None) -> ToolDef:
-        raise NotImplementedError("get_connector_tool not implemented")
+        """Get a tool from a connector."""
+        connector_tools = await self.list_connector_tools(
+            ListConnectorToolsRequest(connector_id=request.connector_id), authorization=authorization
+        )
+        for tool in connector_tools.data:
+            if tool.name == request.tool_name:
+                return tool
+        raise ConnectorToolNotFoundError(request.connector_id, request.tool_name)
 
     async def list_connector_tools(
         self, request: ListConnectorToolsRequest, authorization: str | None = None
     ) -> ListToolsResponse:
-        raise NotImplementedError("list_connector_tools not implemented")
+        """List tools from a connector."""
+        connector = await self.get_connector(
+            GetConnectorRequest(connector_id=request.connector_id), authorization=authorization
+        )
+        tools = await list_mcp_tools(endpoint=connector.url, authorization=authorization)
+        return ListToolsResponse(data=tools.data)
 
     async def shutdown(self):
         """Shutdown the connector service."""
