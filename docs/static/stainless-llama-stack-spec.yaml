@@ -186,7 +186,7 @@ paths:
           description: Default Response
       tags:
       - Inference
-      summary: List Chat Completions
+      summary: List chat completions.
       description: List chat completions.
       operationId: list_chat_completions_v1_chat_completions_get
       parameters:
@@ -197,7 +197,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
+          description: The ID of the last chat completion to return.
           title: After
+        description: The ID of the last chat completion to return.
       - name: limit
         in: query
         required: false
@@ -205,8 +207,10 @@ paths:
           anyOf:
           - type: integer
           - type: 'null'
+          description: The maximum number of chat completions to return.
           default: 20
           title: Limit
+        description: The maximum number of chat completions to return.
       - name: model
         in: query
         required: false
@@ -214,7 +218,9 @@ paths:
           anyOf:
           - type: string
           - type: 'null'
+          description: The model to filter by.
           title: Model
+        description: The model to filter by.
       - name: order
         in: query
         required: false
@@ -222,8 +228,10 @@ paths:
           anyOf:
           - $ref: '#/components/schemas/Order'
           - type: 'null'
+          description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
           default: desc
           title: Order
+        description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
     post:
       responses:
         '200':
@@ -249,11 +257,8 @@ paths:
           description: Default Response
       tags:
       - Inference
-      summary: Openai Chat Completion
-      description: |-
-        Create chat completions.
-
-        Generate an OpenAI-compatible chat completion for the given messages using the specified model.
+      summary: Create chat completions.
+      description: Generate an OpenAI-compatible chat completion for the given messages using the specified model.
       operationId: openai_chat_completion_v1_chat_completions_post
       requestBody:
         required: true
@@ -271,24 +276,21 @@ paths:
               schema:
                 $ref: '#/components/schemas/OpenAICompletionWithInputMessages'
         '400':
-          description: Bad Request
           $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
         '429':
-          description: Too Many Requests
           $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
         '500':
-          description: Internal Server Error
           $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
         default:
-          description: Default Response
           $ref: '#/components/responses/DefaultError'
+          description: Default Response
       tags:
       - Inference
-      summary: Get Chat Completion
-      description: |-
-        Get chat completion.
-
-        Describe a chat completion by its ID.
+      summary: Get chat completion.
+      description: Describe a chat completion by its ID.
       operationId: get_chat_completion_v1_chat_completions__completion_id__get
       parameters:
       - name: completion_id
@@ -296,7 +298,9 @@ paths:
         required: true
         schema:
           type: string
-        description: 'Path parameter: completion_id'
+          description: ID of the chat completion.
+          title: Completion Id
+        description: ID of the chat completion.
   /v1/completions:
     post:
       responses:
@@ -323,11 +327,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Inference
-      summary: Openai Completion
-      description: |-
-        Create completion.
-
-        Generate an OpenAI-compatible completion for the given prompt using the specified model.
+      summary: Create completion.
+      description: Generate an OpenAI-compatible completion for the given prompt using the specified model.
       operationId: openai_completion_v1_completions_post
       requestBody:
         content:
@@ -718,11 +719,8 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Inference
-      summary: Openai Embeddings
-      description: |-
-        Create embeddings.
-
-        Generate OpenAI-compatible embeddings for the given input using the specified model.
+      summary: Create embeddings.
+      description: Generate OpenAI-compatible embeddings for the given input using the specified model.
       operationId: openai_embeddings_v1_embeddings_post
       requestBody:
         content:
@@ -3793,7 +3791,7 @@ paths:
           $ref: '#/components/responses/DefaultError'
       tags:
       - Inference
-      summary: Rerank
+      summary: Rerank documents based on relevance to a query.
       description: Rerank a list of documents based on their relevance to a query.
       operationId: rerank_v1alpha_inference_rerank_post
       requestBody:
@@ -4537,19 +4535,24 @@ components:
             $ref: '#/components/schemas/OpenAICompletionWithInputMessages'
           type: array
           title: Data
+          description: List of chat completion objects with their input messages.
         has_more:
           type: boolean
           title: Has More
+          description: Whether there are more completions available beyond this list.
         first_id:
           type: string
           title: First Id
+          description: ID of the first completion in this list.
         last_id:
           type: string
           title: Last Id
+          description: ID of the last completion in this list.
         object:
           type: string
           const: list
           title: Object
+          description: Must be 'list' to identify this as a list response.
           default: list
       type: object
       required:
@@ -4565,6 +4568,7 @@ components:
         role:
           const: assistant
           default: assistant
+          description: Must be 'assistant' to identify this as the model's response.
           title: Role
           type: string
         content:
@@ -4575,12 +4579,14 @@ components:
             type: array
             title: list[OpenAIChatCompletionContentPartTextParam]
           - type: 'null'
+          description: The content of the model's response.
           title: string | list[OpenAIChatCompletionContentPartTextParam]
           nullable: true
         name:
           anyOf:
           - type: string
           - type: 'null'
+          description: The name of the assistant message participant.
           nullable: true
         tool_calls:
           anyOf:
@@ -4588,6 +4594,7 @@ components:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+          description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
           nullable: true
       title: OpenAIAssistantMessageParam
       type: object
@@ -4597,9 +4604,11 @@ components:
           type: string
           const: image_url
           title: Type
+          description: Must be 'image_url' to identify this as image content.
           default: image_url
         image_url:
           $ref: '#/components/schemas/OpenAIImageURL'
+          description: Image URL specification and processing details.
       type: object
       required:
       - image_url
@@ -4626,10 +4635,12 @@ components:
           type: string
           const: text
           title: Type
+          description: Must be 'text' to identify this as text content.
           default: text
         text:
           type: string
           title: Text
+          description: The text content of the message.
       type: object
       required:
       - text
@@ -4640,21 +4651,26 @@ components:
         index:
           anyOf:
           - type: integer
+            minimum: 0.0
           - type: 'null'
+          description: Index of the tool call in the list.
         id:
           anyOf:
           - type: string
           - type: 'null'
+          description: Unique identifier for the tool call.
         type:
           type: string
           const: function
           title: Type
+          description: Must be 'function' to identify this as a function call.
           default: function
         function:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
             title: OpenAIChatCompletionToolCallFunction
           - type: 'null'
+          description: Function call details.
           title: OpenAIChatCompletionToolCallFunction
       type: object
       title: OpenAIChatCompletionToolCall
@@ -4665,10 +4681,12 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          description: Name of the function to call.
         arguments:
           anyOf:
           - type: string
           - type: 'null'
+          description: Arguments to pass to the function as a JSON string.
       type: object
       title: OpenAIChatCompletionToolCallFunction
       description: Function call details for OpenAI-compatible tool calls.
@@ -4676,24 +4694,32 @@ components:
       properties:
         prompt_tokens:
           type: integer
+          minimum: 0.0
           title: Prompt Tokens
+          description: Number of tokens in the prompt.
         completion_tokens:
           type: integer
+          minimum: 0.0
           title: Completion Tokens
+          description: Number of tokens in the completion.
         total_tokens:
           type: integer
+          minimum: 0.0
           title: Total Tokens
+          description: Total tokens used (prompt + completion).
         prompt_tokens_details:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
             title: OpenAIChatCompletionUsagePromptTokensDetails
           - type: 'null'
+          description: Detailed breakdown of input token usage.
           title: OpenAIChatCompletionUsagePromptTokensDetails
         completion_tokens_details:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
             title: OpenAIChatCompletionUsageCompletionTokensDetails
           - type: 'null'
+          description: Detailed breakdown of output token usage.
           title: OpenAIChatCompletionUsageCompletionTokensDetails
       type: object
       required:
@@ -4717,6 +4743,7 @@ components:
           - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
             title: OpenAIDeveloperMessageParam
           title: OpenAIUserMessageParam-Output | ... (5 variants)
+          description: The message from the model.
           discriminator:
             propertyName: role
             mapping:
@@ -4734,14 +4761,18 @@ components:
           - content_filter
           - function_call
           title: Finish Reason
+          description: The reason the model stopped generating.
         index:
           type: integer
+          minimum: 0.0
           title: Index
+          description: The index of the choice.
         logprobs:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
             title: OpenAIChoiceLogprobs
           - type: 'null'
+          description: The log probabilities for the tokens in the message.
           title: OpenAIChoiceLogprobs
       type: object
       required:
@@ -4758,12 +4789,14 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          description: The log probabilities for the tokens in the message.
         refusal:
           anyOf:
           - items:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
+          description: The log probabilities for the refusal tokens.
       type: object
       title: OpenAIChoiceLogprobs
       description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
@@ -4773,6 +4806,7 @@ components:
           type: string
           const: developer
           title: Role
+          description: Must be 'developer' to identify this as a developer message.
           default: developer
         content:
           anyOf:
@@ -4782,10 +4816,12 @@ components:
             type: array
             title: list[OpenAIChatCompletionContentPartTextParam]
           title: string | list[OpenAIChatCompletionContentPartTextParam]
+          description: The content of the developer message.
         name:
           anyOf:
           - type: string
           - type: 'null'
+          description: The name of the developer message participant.
       type: object
       required:
       - content
@@ -4797,9 +4833,11 @@ components:
           type: string
           const: file
           title: Type
+          description: Must be 'file' to identify this as file content.
           default: file
         file:
           $ref: '#/components/schemas/OpenAIFileFile'
+          description: File specification.
       type: object
       required:
       - file
@@ -4810,25 +4848,35 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          description: Base64-encoded file data.
         file_id:
           anyOf:
           - type: string
           - type: 'null'
+          description: ID of an uploaded file.
         filename:
           anyOf:
           - type: string
           - type: 'null'
+          description: Name of the file.
       type: object
       title: OpenAIFileFile
+      description: File reference for OpenAI-compatible file content.
     OpenAIImageURL:
       properties:
         url:
           type: string
           title: Url
+          description: URL of the image to include in the message.
         detail:
           anyOf:
           - type: string
+            enum:
+            - low
+            - high
+            - auto
           - type: 'null'
+          description: Level of detail for image processing. Can be 'low', 'high', or 'auto'.
       type: object
       required:
       - url
@@ -4861,6 +4909,7 @@ components:
           type: string
           const: system
           title: Role
+          description: Must be 'system' to identify this as a system message.
           default: system
         content:
           anyOf:
@@ -4870,10 +4919,12 @@ components:
             type: array
             title: list[OpenAIChatCompletionContentPartTextParam]
           title: string | list[OpenAIChatCompletionContentPartTextParam]
+          description: The content of the 'system prompt'. If multiple system messages are provided, they are concatenated.
         name:
           anyOf:
           - type: string
           - type: 'null'
+          description: The name of the system message participant.
       type: object
       required:
       - content
@@ -4884,43 +4935,43 @@ components:
         token:
           type: string
           title: Token
+          description: The token.
         bytes:
           anyOf:
           - items:
               type: integer
             type: array
           - type: 'null'
+          description: The bytes for the token.
         logprob:
           type: number
           title: Logprob
+          description: The log probability of the token.
         top_logprobs:
           anyOf:
           - items:
               $ref: '#/components/schemas/OpenAITopLogProb'
             type: array
           - type: 'null'
+          description: The top log probabilities for the token.
       type: object
       required:
       - token
       - logprob
       title: OpenAITokenLogProb
-      description: |-
-        The log probability for a token from an OpenAI-compatible chat completion response.
-
-        :token: The token
-        :bytes: (Optional) The bytes for the token
-        :logprob: The log probability of the token
-        :top_logprobs: The top log probabilities for the token
+      description: The log probability for a token from an OpenAI-compatible chat completion response.
     OpenAIToolMessageParam:
       properties:
         role:
           type: string
           const: tool
           title: Role
+          description: Must be 'tool' to identify this as a tool response.
           default: tool
         tool_call_id:
           type: string
           title: Tool Call Id
+          description: Unique identifier for the tool call this response is for.
         content:
           anyOf:
           - type: string
@@ -4929,6 +4980,7 @@ components:
             type: array
             title: list[OpenAIChatCompletionContentPartTextParam]
           title: string | list[OpenAIChatCompletionContentPartTextParam]
+          description: The response content from the tool.
       type: object
       required:
       - tool_call_id
@@ -4940,32 +4992,31 @@ components:
         token:
           type: string
           title: Token
+          description: The token.
         bytes:
           anyOf:
           - items:
               type: integer
             type: array
           - type: 'null'
+          description: The bytes for the token.
         logprob:
           type: number
           title: Logprob
+          description: The log probability of the token.
       type: object
       required:
       - token
       - logprob
       title: OpenAITopLogProb
-      description: |-
-        The top log probability for a token from an OpenAI-compatible chat completion response.
-
-        :token: The token
-        :bytes: (Optional) The bytes for the token
-        :logprob: The log probability of the token
+      description: The top log probability for a token from an OpenAI-compatible chat completion response.
     OpenAIUserMessageParam:
       description: A message from the user in an OpenAI-compatible chat completion request.
       properties:
         role:
           const: user
           default: user
+          description: Must be 'user' to identify this as a user message.
           title: Role
           type: string
         content:
@@ -4988,11 +5039,13 @@ components:
               title: OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile
             type: array
             title: list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
+          description: The content of the message, which can include text and other media.
           title: string | list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
         name:
           anyOf:
           - type: string
           - type: 'null'
+          description: The name of the user message participant.
           nullable: true
       required:
       - content
@@ -5025,6 +5078,7 @@ components:
           type: string
           const: json_object
           title: Type
+          description: Must be 'json_object' to indicate generic JSON object response format.
           default: json_object
       type: object
       title: OpenAIResponseFormatJSONObject
@@ -5035,9 +5089,11 @@ components:
           type: string
           const: json_schema
           title: Type
+          description: Must be 'json_schema' to indicate structured JSON response format.
           default: json_schema
         json_schema:
           $ref: '#/components/schemas/OpenAIJSONSchema'
+          description: The JSON schema specification for the response.
       type: object
       required:
       - json_schema
@@ -5064,6 +5120,7 @@ components:
           type: string
           const: text
           title: Type
+          description: Must be 'text' to indicate plain text response format.
           default: text
       type: object
       title: OpenAIResponseFormatText
@@ -5073,6 +5130,7 @@ components:
         model:
           type: string
           title: Model
+          description: The identifier of the model to use.
         messages:
           items:
             oneOf:
@@ -5098,10 +5156,14 @@ components:
           type: array
           minItems: 1
           title: Messages
+          description: List of messages in the conversation.
         frequency_penalty:
           anyOf:
           - type: number
+            maximum: 2.0
+            minimum: -2.0
           - type: 'null'
+          description: The penalty for repeated tokens.
         function_call:
           anyOf:
           - type: string
@@ -5109,6 +5171,7 @@ components:
             type: object
           - type: 'null'
           title: string | object
+          description: The function call to use.
         functions:
           anyOf:
           - items:
@@ -5116,36 +5179,49 @@ components:
               type: object
             type: array
           - type: 'null'
+          description: List of functions to use.
         logit_bias:
           anyOf:
           - additionalProperties:
               type: number
             type: object
           - type: 'null'
+          description: The logit bias to use.
         logprobs:
           anyOf:
           - type: boolean
           - type: 'null'
+          description: The log probabilities to use.
         max_completion_tokens:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
+          description: The maximum number of tokens to generate.
         max_tokens:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
+          description: The maximum number of tokens to generate.
         n:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
+          description: The number of completions to generate.
         parallel_tool_calls:
           anyOf:
           - type: boolean
           - type: 'null'
+          description: Whether to parallelize tool calls.
         presence_penalty:
           anyOf:
           - type: number
+            maximum: 2.0
+            minimum: -2.0
           - type: 'null'
+          description: The penalty for repeated tokens.
         response_format:
           anyOf:
           - oneOf:
@@ -5164,10 +5240,12 @@ components:
             title: OpenAIResponseFormatText | OpenAIResponseFormatJSONSchema | OpenAIResponseFormatJSONObject
           - type: 'null'
           title: Response Format
+          description: The response format to use.
         seed:
           anyOf:
           - type: integer
           - type: 'null'
+          description: The seed to use.
         stop:
           anyOf:
           - type: string
@@ -5177,19 +5255,25 @@ components:
             title: list[string]
           - type: 'null'
           title: string | list[string]
+          description: The stop tokens to use.
         stream:
           anyOf:
           - type: boolean
           - type: 'null'
+          description: Whether to stream the response.
         stream_options:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The stream options to use.
         temperature:
           anyOf:
           - type: number
+            maximum: 2.0
+            minimum: 0.0
           - type: 'null'
+          description: The temperature to use.
         tool_choice:
           anyOf:
           - type: string
@@ -5197,6 +5281,7 @@ components:
             type: object
           - type: 'null'
           title: string | object
+          description: The tool choice to use.
         tools:
           anyOf:
           - items:
@@ -5204,18 +5289,25 @@ components:
               type: object
             type: array
           - type: 'null'
+          description: The tools to use.
         top_logprobs:
           anyOf:
           - type: integer
+            minimum: 0.0
           - type: 'null'
+          description: The top log probabilities to use.
         top_p:
           anyOf:
           - type: number
+            maximum: 1.0
+            minimum: 0.0
           - type: 'null'
+          description: The top p to use.
         user:
           anyOf:
           - type: string
           - type: 'null'
+          description: The user to use.
         reasoning_effort:
           anyOf:
           - type: string
@@ -5227,6 +5319,7 @@ components:
             - high
             - xhigh
           - type: 'null'
+          description: The effort level for reasoning models.
       additionalProperties: true
       type: object
       required:
@@ -5235,47 +5328,58 @@ components:
       title: OpenAIChatCompletionRequestWithExtraBody
       description: Request parameters for OpenAI-compatible chat completion endpoint.
     OpenAIChatCompletion:
+      description: Response from an OpenAI-compatible chat completion request.
       properties:
         id:
-          type: string
+          description: The ID of the chat completion.
           title: Id
+          type: string
         choices:
+          description: List of choices.
           items:
             $ref: '#/components/schemas/OpenAIChoice'
-          type: array
+          minItems: 1
           title: Choices
+          type: array
         object:
-          type: string
           const: chat.completion
-          title: Object
           default: chat.completion
-        created:
-          type: integer
-          title: Created
-        model:
+          description: The object type.
+          title: Object
           type: string
+        created:
+          description: The Unix timestamp in seconds when the chat completion was created.
+          minimum: 0
+          title: Created
+          type: integer
+        model:
+          description: The model that was used to generate the chat completion.
           title: Model
+          type: string
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
             title: OpenAIChatCompletionUsage
           - type: 'null'
+          description: Token usage information for the completion.
+          nullable: true
           title: OpenAIChatCompletionUsage
-      type: object
       required:
       - id
       - choices
       - created
       - model
       title: OpenAIChatCompletion
-      description: Response from an OpenAI-compatible chat completion request.
+      type: object
     OpenAIChatCompletionChunk:
       description: Chunk from a streaming response to an OpenAI-compatible chat completion request.
       properties:
         id:
+          description: The ID of the chat completion.
           title: Id
           type: string
         choices:
+          description: List of choices.
           items:
             $ref: '#/components/schemas/OpenAIChunkChoice'
           title: Choices
@@ -5283,12 +5387,16 @@ components:
         object:
           const: chat.completion.chunk
           default: chat.completion.chunk
+          description: The object type.
           title: Object
           type: string
         created:
+          description: The Unix timestamp in seconds when the chat completion was created.
+          minimum: 0
           title: Created
           type: integer
         model:
+          description: The model that was used to generate the chat completion.
           title: Model
           type: string
         usage:
@@ -5296,6 +5404,7 @@ components:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
             title: OpenAIChatCompletionUsage
           - type: 'null'
+          description: Token usage information (typically included in final chunk with stream_options).
           nullable: true
           title: OpenAIChatCompletionUsage
       required:
@@ -5312,16 +5421,19 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+          description: The content of the delta.
           nullable: true
         refusal:
           anyOf:
           - type: string
           - type: 'null'
+          description: The refusal of the delta.
           nullable: true
         role:
           anyOf:
           - type: string
           - type: 'null'
+          description: The role of the delta.
           nullable: true
         tool_calls:
           anyOf:
@@ -5329,11 +5441,13 @@ components:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+          description: The tool calls of the delta.
           nullable: true
         reasoning_content:
           anyOf:
           - type: string
           - type: 'null'
+          description: The reasoning content from the model (for o1/o3 models).
           nullable: true
       title: OpenAIChoiceDelta
       type: object
@@ -5342,7 +5456,9 @@ components:
       properties:
         delta:
           $ref: '#/components/schemas/OpenAIChoiceDelta'
+          description: The delta from the chunk.
         finish_reason:
+          description: The reason the model stopped generating.
           enum:
           - stop
           - length
@@ -5353,6 +5469,8 @@ components:
           title: Finish Reason
           type: string
         index:
+          description: The index of the choice.
+          minimum: 0
           title: Index
           type: integer
         logprobs:
@@ -5360,11 +5478,11 @@ components:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
             title: OpenAIChoiceLogprobs
           - type: 'null'
+          description: The log probabilities for the tokens in the message.
           nullable: true
           title: OpenAIChoiceLogprobs
       required:
       - delta
-      - finish_reason
       - index
       title: OpenAIChunkChoice
       type: object
@@ -5373,27 +5491,35 @@ components:
         id:
           type: string
           title: Id
+          description: The ID of the chat completion.
         choices:
           items:
             $ref: '#/components/schemas/OpenAIChoice'
           type: array
+          minItems: 1
           title: Choices
+          description: List of choices.
         object:
           type: string
           const: chat.completion
           title: Object
+          description: The object type.
           default: chat.completion
         created:
           type: integer
+          minimum: 0.0
           title: Created
+          description: The Unix timestamp in seconds when the chat completion was created.
         model:
           type: string
           title: Model
+          description: The model that was used to generate the chat completion.
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
             title: OpenAIChatCompletionUsage
           - type: 'null'
+          description: Token usage information for the completion.
           title: OpenAIChatCompletionUsage
         input_messages:
           items:
@@ -5419,6 +5545,7 @@ components:
             title: OpenAIUserMessageParam-Output | ... (5 variants)
           type: array
           title: Input Messages
+          description: The input messages used to generate this completion.
       type: object
       required:
       - id
@@ -5432,6 +5559,7 @@ components:
         model:
           type: string
           title: Model
+          description: The identifier of the model to use.
         prompt:
           anyOf:
           - type: string
@@ -5450,44 +5578,61 @@ components:
             type: array
             title: list[array]
           title: string | ... (4 variants)
+          description: The prompt to generate a completion for.
         best_of:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
+          description: The number of completions to generate.
         echo:
           anyOf:
           - type: boolean
           - type: 'null'
+          description: Whether to echo the prompt.
         frequency_penalty:
           anyOf:
           - type: number
+            maximum: 2.0
+            minimum: -2.0
           - type: 'null'
+          description: The penalty for repeated tokens.
         logit_bias:
           anyOf:
           - additionalProperties:
               type: number
             type: object
           - type: 'null'
+          description: The logit bias to use.
         logprobs:
           anyOf:
           - type: boolean
           - type: 'null'
+          description: The log probabilities to use.
         max_tokens:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
+          description: The maximum number of tokens to generate.
         n:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
+          description: The number of completions to generate.
         presence_penalty:
           anyOf:
           - type: number
+            maximum: 2.0
+            minimum: -2.0
           - type: 'null'
+          description: The penalty for repeated tokens.
         seed:
           anyOf:
           - type: integer
           - type: 'null'
+          description: The seed to use.
         stop:
           anyOf:
           - type: string
@@ -5497,31 +5642,42 @@ components:
             title: list[string]
           - type: 'null'
           title: string | list[string]
+          description: The stop tokens to use.
         stream:
           anyOf:
           - type: boolean
           - type: 'null'
+          description: Whether to stream the response.
         stream_options:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
+          description: The stream options to use.
         temperature:
           anyOf:
           - type: number
+            maximum: 2.0
+            minimum: 0.0
           - type: 'null'
+          description: The temperature to use.
         top_p:
           anyOf:
           - type: number
+            maximum: 1.0
+            minimum: 0.0
           - type: 'null'
+          description: The top p to use.
         user:
           anyOf:
           - type: string
           - type: 'null'
+          description: The user to use.
         suffix:
           anyOf:
           - type: string
           - type: 'null'
+          description: The suffix that should be appended to the completion.
       additionalProperties: true
       type: object
       required:
@@ -5530,45 +5686,46 @@ components:
       title: OpenAICompletionRequestWithExtraBody
       description: Request parameters for OpenAI-compatible completion endpoint.
     OpenAICompletion:
+      description: Response from an OpenAI-compatible completion request.
       properties:
         id:
-          type: string
+          description: The ID of the completion.
           title: Id
+          type: string
         choices:
+          description: List of choices.
           items:
             $ref: '#/components/schemas/OpenAICompletionChoice'
-          type: array
+          minItems: 1
           title: Choices
+          type: array
         created:
-          type: integer
+          description: The Unix timestamp in seconds when the completion was created.
+          minimum: 0
           title: Created
+          type: integer
         model:
-          type: string
+          description: The model that was used to generate the completion.
           title: Model
-        object:
           type: string
+        object:
           const: text_completion
-          title: Object
           default: text_completion
-      type: object
+          description: The object type.
+          title: Object
+          type: string
       required:
       - id
       - choices
       - created
       - model
       title: OpenAICompletion
-      description: |-
-        Response from an OpenAI-compatible completion request.
-
-        :id: The ID of the completion
-        :choices: List of choices
-        :created: The Unix timestamp in seconds when the completion was created
-        :model: The model that was used to generate the completion
-        :object: The object type, which will be "text_completion"
+      type: object
     OpenAICompletionChoice:
+      description: A choice from an OpenAI-compatible completion response.
       properties:
         finish_reason:
-          type: string
+          description: The reason the model stopped generating.
           enum:
           - stop
           - length
@@ -5576,31 +5733,30 @@ components:
           - content_filter
           - function_call
           title: Finish Reason
-        text:
           type: string
+        text:
+          description: The text of the choice.
           title: Text
+          type: string
         index:
-          type: integer
+          description: The index of the choice.
+          minimum: 0
           title: Index
+          type: integer
         logprobs:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
             title: OpenAIChoiceLogprobs
           - type: 'null'
+          description: The log probabilities for the tokens in the choice.
+          nullable: true
           title: OpenAIChoiceLogprobs
-      type: object
       required:
       - finish_reason
       - text
       - index
       title: OpenAICompletionChoice
-      description: |-
-        A choice from an OpenAI-compatible completion response.
-
-        :finish_reason: The reason the model stopped generating
-        :text: The text of the choice
-        :index: The index of the choice
-        :logprobs: (Optional) The log probabilities for the tokens in the choice
+      type: object
     ConversationItem:
       discriminator:
         mapping:
@@ -6450,6 +6606,7 @@ components:
         model:
           type: string
           title: Model
+          description: The identifier of the model to use.
         input:
           anyOf:
           - type: string
@@ -6476,20 +6633,24 @@ components:
             minItems: 1
             title: Array of token arrays
           title: string | ... (4 variants)
+          description: Input text to embed, encoded as a string or array of tokens.
         encoding_format:
           type: string
           enum:
           - float
           - base64
           title: Encoding Format
+          description: The format to return the embeddings in.
           default: float
         dimensions:
           type: integer
           minimum: 1.0
           title: Dimensions
+          description: The number of dimensions for output embeddings.
         user:
           type: string
           title: User
+          description: A unique identifier representing your end-user.
       additionalProperties: true
       type: object
       required:
@@ -6503,6 +6664,7 @@ components:
           type: string
           const: embedding
           title: Object
+          description: The object type.
           default: embedding
         embedding:
           anyOf:
@@ -6512,9 +6674,12 @@ components:
             title: list[number]
           - type: string
           title: list[number] | string
+          description: The embedding vector as a list of floats (when encoding_format='float') or as a base64-encoded string.
         index:
           type: integer
+          minimum: 0.0
           title: Index
+          description: The index of the embedding in the input list.
       type: object
       required:
       - embedding
@@ -6526,9 +6691,11 @@ components:
         prompt_tokens:
           type: integer
           title: Prompt Tokens
+          description: The number of tokens in the input.
         total_tokens:
           type: integer
           title: Total Tokens
+          description: The total number of tokens used.
       type: object
       required:
       - prompt_tokens
@@ -6541,17 +6708,22 @@ components:
           type: string
           const: list
           title: Object
+          description: The object type.
           default: list
         data:
           items:
             $ref: '#/components/schemas/OpenAIEmbeddingData'
           type: array
+          minItems: 1
           title: Data
+          description: List of embedding data objects.
         model:
           type: string
           title: Model
+          description: The model that was used to generate the embeddings.
         usage:
           $ref: '#/components/schemas/OpenAIEmbeddingUsage'
+          description: Usage information.
       type: object
       required:
       - data
@@ -7398,6 +7570,10 @@ components:
             title: OpenAIResponseReasoning
           - type: 'null'
           title: OpenAIResponseReasoning
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -7849,6 +8025,10 @@ components:
             title: OpenAIResponseReasoning
           - type: 'null'
           title: OpenAIResponseReasoning
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -10892,6 +11072,7 @@ components:
           type: string
           const: greedy
           title: Type
+          description: Must be 'greedy' to identify this sampling strategy.
           default: greedy
       type: object
       title: GreedySamplingStrategy
@@ -10935,6 +11116,7 @@ components:
           - $ref: '#/components/schemas/TopKSamplingStrategy'
             title: TopKSamplingStrategy
           title: GreedySamplingStrategy | TopPSamplingStrategy | TopKSamplingStrategy
+          description: The sampling strategy to use.
           discriminator:
             propertyName: type
             mapping:
@@ -10944,27 +11126,35 @@ components:
         max_tokens:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
+          description: The maximum number of tokens that can be generated in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.
         repetition_penalty:
           anyOf:
           - type: number
+            maximum: 2.0
+            minimum: -2.0
           - type: 'null'
+          description: Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far.
           default: 1.0
         stop:
           anyOf:
           - items:
               type: string
             type: array
+            maxItems: 4
           - type: 'null'
+          description: Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
       type: object
       title: SamplingParams
-      description: Sampling parameters.
+      description: Sampling parameters for text generation.
     SystemMessage:
       properties:
         role:
           type: string
           const: system
           title: Role
+          description: Must be 'system' to identify this as a system message.
           default: system
         content:
           anyOf:
@@ -10995,6 +11185,7 @@ components:
             type: array
             title: list[ImageContentItem-Input | TextContentItem]
           title: string | list[ImageContentItem-Input | TextContentItem]
+          description: The content of the 'system prompt'. If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages.
       type: object
       required:
       - content
@@ -11006,11 +11197,13 @@ components:
           type: string
           const: top_k
           title: Type
+          description: Must be 'top_k' to identify this sampling strategy.
           default: top_k
         top_k:
           type: integer
           minimum: 1.0
           title: Top K
+          description: Number of top tokens to consider for sampling. Must be at least 1.
       type: object
       required:
       - top_k
@@ -11022,16 +11215,20 @@ components:
           type: string
           const: top_p
           title: Type
+          description: Must be 'top_p' to identify this sampling strategy.
           default: top_p
         temperature:
-          anyOf:
-          - type: number
-            minimum: 0.0
-          - type: 'null'
+          type: number
+          maximum: 2.0
+          title: Temperature
+          description: Controls randomness in sampling. Higher values increase randomness.
+          minimum: 0.0
         top_p:
-          anyOf:
-          - type: number
-          - type: 'null'
+          type: number
+          maximum: 1.0
+          minimum: 0.0
+          title: Top P
+          description: Cumulative probability threshold for nucleus sampling.
           default: 0.95
       type: object
       required:
@@ -11126,6 +11323,7 @@ components:
         model:
           type: string
           title: Model
+          description: The identifier of the reranking model to use.
         query:
           anyOf:
           - type: string
@@ -11134,6 +11332,7 @@ components:
           - $ref: '#/components/schemas/OpenAIChatCompletionContentPartImageParam'
             title: OpenAIChatCompletionContentPartImageParam
           title: string | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
+          description: The search query to rank items against. Can be a string, text content part, or image content part.
         items:
           items:
             anyOf:
@@ -11144,25 +11343,33 @@ components:
               title: OpenAIChatCompletionContentPartImageParam
             title: string | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
           type: array
+          minItems: 1
           title: Items
+          description: List of items to rerank. Each item can be a string, text content part, or image content part.
         max_num_results:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
+          description: 'Maximum number of results to return. Default: returns all.'
       type: object
       required:
       - model
       - query
       - items
       title: RerankRequest
+      description: Request model for reranking documents.
     RerankData:
       properties:
         index:
           type: integer
+          minimum: 0.0
           title: Index
+          description: The original index of the document in the input list.
         relevance_score:
           type: number
           title: Relevance Score
+          description: The relevance score from the model output. Higher scores indicate greater relevance.
       type: object
       required:
       - index
@@ -11176,6 +11383,7 @@ components:
             $ref: '#/components/schemas/RerankData'
           type: array
           title: Data
+          description: List of rerank result objects, sorted by relevance score (descending).
       type: object
       required:
       - data
@@ -12289,6 +12497,11 @@ components:
           - type: integer
           - type: 'null'
           description: Max number of total calls to built-in tools that can be processed in a response.
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          description: Upper bound for the number of tokens that can be generated for a response.
         reasoning:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseReasoning'
@@ -12590,6 +12803,7 @@ components:
           type: string
           const: assistant
           title: Role
+          description: Must be 'assistant' to identify this as the model's response.
           default: assistant
         content:
           anyOf:
@@ -12600,16 +12814,19 @@ components:
             title: list[OpenAIChatCompletionContentPartTextParam]
           - type: 'null'
           title: string | list[OpenAIChatCompletionContentPartTextParam]
+          description: The content of the model's response.
         name:
           anyOf:
           - type: string
           - type: 'null'
+          description: The name of the assistant message participant.
         tool_calls:
           anyOf:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+          description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -12619,6 +12836,7 @@ components:
           type: string
           const: assistant
           title: Role
+          description: Must be 'assistant' to identify this as the model's response.
           default: assistant
         content:
           anyOf:
@@ -12629,16 +12847,19 @@ components:
             title: list[OpenAIChatCompletionContentPartTextParam]
           - type: 'null'
           title: string | list[OpenAIChatCompletionContentPartTextParam]
+          description: The content of the model's response.
         name:
           anyOf:
           - type: string
           - type: 'null'
+          description: The name of the assistant message participant.
         tool_calls:
           anyOf:
           - items:
               $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
             type: array
           - type: 'null'
+          description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -12680,7 +12901,9 @@ components:
         reasoning_tokens:
           anyOf:
           - type: integer
+            minimum: 0.0
           - type: 'null'
+          description: Number of tokens used for reasoning (o1/o3 models).
       type: object
       title: OpenAIChatCompletionUsageCompletionTokensDetails
       description: Token details for output tokens in OpenAI chat completion usage.
@@ -12689,7 +12912,9 @@ components:
         cached_tokens:
           anyOf:
           - type: integer
+            minimum: 0.0
           - type: 'null'
+          description: Number of tokens retrieved from cache.
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
@@ -13202,6 +13427,7 @@ components:
           type: string
           const: user
           title: Role
+          description: Must be 'user' to identify this as a user message.
           default: user
         content:
           anyOf:
@@ -13224,10 +13450,12 @@ components:
             type: array
             title: list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
           title: string | list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
+          description: The content of the message, which can include text and other media.
         name:
           anyOf:
           - type: string
           - type: 'null'
+          description: The name of the user message participant.
       type: object
       required:
       - content
@@ -13239,6 +13467,7 @@ components:
           type: string
           const: user
           title: Role
+          description: Must be 'user' to identify this as a user message.
           default: user
         content:
           anyOf:
@@ -13261,10 +13490,12 @@ components:
             type: array
             title: list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
           title: string | list[OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam | OpenAIFile]
+          description: The content of the message, which can include text and other media.
         name:
           anyOf:
           - type: string
           - type: 'null'
+          description: The name of the user message participant.
       type: object
       required:
       - content
@@ -13392,10 +13623,12 @@ components:
         type:
           const: grammar
           default: grammar
+          description: Must be 'grammar' to identify this format type.
           title: Type
           type: string
         bnf:
           additionalProperties: true
+          description: The BNF grammar specification the response should conform to.
           title: Bnf
           type: object
       required:
@@ -13408,10 +13641,12 @@ components:
         type:
           const: json_schema
           default: json_schema
+          description: Must be 'json_schema' to identify this format type.
           title: Type
           type: string
         json_schema:
           additionalProperties: true
+          description: The JSON schema the response should conform to.
           title: Json Schema
           type: object
       required:
@@ -13433,12 +13668,14 @@ components:
     AllowedToolsConfig:
       properties:
         tools:
+          description: List of allowed tools.
           items:
             additionalProperties: true
             type: object
           title: Tools
           type: array
         mode:
+          description: Mode for allowed tools.
           enum:
           - auto
           - required
@@ -13453,6 +13690,7 @@ components:
       description: Custom tool configuration for OpenAI-compatible chat completion requests.
       properties:
         name:
+          description: Name of the custom tool.
           title: Name
           type: string
       required:
@@ -13462,6 +13700,7 @@ components:
     FunctionToolConfig:
       properties:
         name:
+          description: Name of the function.
           title: Name
           type: string
       required:
@@ -13474,10 +13713,12 @@ components:
         type:
           const: allowed_tools
           default: allowed_tools
+          description: Must be 'allowed_tools' to indicate allowed tools response format.
           title: Type
           type: string
         allowed_tools:
           $ref: '#/components/schemas/AllowedToolsConfig'
+          description: Allowed tools configuration.
       required:
       - allowed_tools
       title: OpenAIChatCompletionToolChoiceAllowedTools
@@ -13488,10 +13729,12 @@ components:
         type:
           const: custom
           default: custom
+          description: Must be 'custom' to indicate custom tool choice.
           title: Type
           type: string
         custom:
           $ref: '#/components/schemas/CustomToolConfig'
+          description: Custom tool configuration.
       required:
       - custom
       title: OpenAIChatCompletionToolChoiceCustomTool
@@ -13502,10 +13745,12 @@ components:
         type:
           const: function
           default: function
+          description: Must be 'function' to indicate function tool choice.
           title: Type
           type: string
         function:
           $ref: '#/components/schemas/FunctionToolConfig'
+          description: The function tool configuration.
       required:
       - function
       title: OpenAIChatCompletionToolChoiceFunctionTool
@@ -14116,6 +14361,7 @@ components:
         type:
           const: fp8_mixed
           default: fp8_mixed
+          description: Must be 'fp8_mixed' to identify this quantization type.
           title: Type
           type: string
       title: Fp8QuantizationConfig
@@ -14126,6 +14372,7 @@ components:
         type:
           const: bf16
           default: bf16
+          description: Must be 'bf16' to identify this quantization type.
           title: Type
           type: string
       title: Bf16QuantizationConfig
@@ -14136,6 +14383,7 @@ components:
         type:
           const: int4_mixed
           default: int4_mixed
+          description: Must be 'int4' to identify this quantization type.
           title: Type
           type: string
         scheme:
@@ -14143,6 +14391,7 @@ components:
           - type: string
           - type: 'null'
           default: int4_weight_int8_dynamic_activation
+          description: Quantization scheme to use.
       title: Int4QuantizationConfig
       type: object
     UserMessage:
@@ -14151,6 +14400,7 @@ components:
         role:
           const: user
           default: user
+          description: Must be 'user' to identify this as a user message.
           title: Role
           type: string
         content:
@@ -14181,6 +14431,7 @@ components:
               title: ImageContentItem | TextContentItem
             type: array
             title: list[ImageContentItem | TextContentItem]
+          description: The content of the message, which can include text and other media.
           title: string | list[ImageContentItem | TextContentItem]
         context:
           anyOf:
@@ -14211,6 +14462,7 @@ components:
             type: array
             title: list[ImageContentItem | TextContentItem]
           - type: 'null'
+          description: This field is used internally by Llama Stack to pass RAG context. This field may be removed in the API in the future.
           title: string | list[ImageContentItem | TextContentItem]
           nullable: true
       required:
@@ -14223,9 +14475,11 @@ components:
         role:
           const: tool
           default: tool
+          description: Must be 'tool' to identify this as a tool response.
           title: Role
           type: string
         call_id:
+          description: Unique identifier for the tool call this response is for.
           title: Call Id
           type: string
         content:
@@ -14256,6 +14510,7 @@ components:
               title: ImageContentItem | TextContentItem
             type: array
             title: list[ImageContentItem | TextContentItem]
+          description: The response content from the tool.
           title: string | list[ImageContentItem | TextContentItem]
       required:
       - call_id
@@ -14268,6 +14523,7 @@ components:
         logprobs_by_token:
           additionalProperties:
             type: number
+          description: Dictionary mapping tokens to their log probabilities.
           title: Logprobs By Token
           type: object
       required:
@@ -14278,6 +14534,7 @@ components:
       description: Response containing generated embeddings.
       properties:
         embeddings:
+          description: List of embedding vectors, one per input content. Each embedding is a list of floats. The dimensionality is model-specific.
           items:
             items:
               type: number
@@ -14289,13 +14546,7 @@ components:
       title: EmbeddingsResponse
       type: object
     OpenAICompletionLogprobs:
-      description: |-
-        The log probabilities for the tokens in the message from an OpenAI-compatible completion response.
-
-        :text_offset: (Optional) The offset of the token in the text
-        :token_logprobs: (Optional) The log probabilities for the tokens
-        :tokens: (Optional) The tokens
-        :top_logprobs: (Optional) The top log probabilities for the tokens
+      description: The log probabilities for the tokens from an OpenAI-compatible completion response.
       properties:
         text_offset:
           anyOf:
@@ -14303,6 +14554,7 @@ components:
               type: integer
             type: array
           - type: 'null'
+          description: The offset of the token in the text.
           nullable: true
         token_logprobs:
           anyOf:
@@ -14310,6 +14562,7 @@ components:
               type: number
             type: array
           - type: 'null'
+          description: The log probabilities for the tokens.
           nullable: true
         tokens:
           anyOf:
@@ -14317,6 +14570,7 @@ components:
               type: string
             type: array
           - type: 'null'
+          description: The tokens.
           nullable: true
         top_logprobs:
           anyOf:
@@ -14326,8 +14580,52 @@ components:
               type: object
             type: array
           - type: 'null'
+          description: The top log probabilities for the tokens.
           nullable: true
       title: OpenAICompletionLogprobs
+      type: object
+    ListChatCompletionsRequest:
+      description: Request model for listing chat completions.
+      properties:
+        after:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The ID of the last chat completion to return.
+          nullable: true
+        limit:
+          anyOf:
+          - minimum: 1
+            type: integer
+          - type: 'null'
+          default: 20
+          description: The maximum number of chat completions to return.
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The model to filter by.
+          nullable: true
+        order:
+          anyOf:
+          - $ref: '#/components/schemas/Order'
+            title: Order
+          - type: 'null'
+          default: desc
+          description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
+          title: Order
+      title: ListChatCompletionsRequest
+      type: object
+    GetChatCompletionRequest:
+      description: Request model for getting a chat completion.
+      properties:
+        completion_id:
+          description: ID of the chat completion.
+          title: Completion Id
+          type: string
+      required:
+      - completion_id
+      title: GetChatCompletionRequest
       type: object
     EmbeddedChunk:
       description: |-

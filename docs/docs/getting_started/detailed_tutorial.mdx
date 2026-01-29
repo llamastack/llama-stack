@@ -238,13 +238,8 @@ client = LlamaStackClient(base_url="http://localhost:8321")
 # List available models
 models = client.models.list()
 
-# Select the first LLM
-llm = next(
-    m for m in models
-    if m.custom_metadata
-    and m.custom_metadata.get("model_type") == "llm"
-    and m.custom_metadata.get("provider_id") == "ollama"
-)
+# Select the first ollama LLM
+llm = next(m for m in models if m.id and "ollama" in m.id)
 model_id = llm.id
 
 print("Model:", model_id)
@@ -284,12 +279,7 @@ import uuid
 client = LlamaStackClient(base_url=f"http://localhost:8321")
 
 models = client.models.list()
-llm = next(
-    m for m in models
-    if m.custom_metadata
-    and m.custom_metadata.get("model_type") == "llm"
-    and m.custom_metadata.get("provider_id") == "ollama"
-)
+llm = next(m for m in models if m.id and "ollama" in m.id)
 model_id = llm.id
 
 agent = Agent(client, model=model_id, instructions="You are a helpful assistant.")
@@ -302,7 +292,7 @@ response = agent.create_turn(
     session_id=s_id,
     stream=False,
 )
-print("agent>", response.output_message.content)
+print("agent>", response.output_text)
 
 print("Streaming ...")
 stream = agent.create_turn(
@@ -316,7 +306,7 @@ stream = agent.create_turn(
     messages=[{"role": "user", "content": "Who are you?"}], session_id=s_id, stream=True
 )
 for event in AgentEventLogger().log(stream):
-    event.print()
+    print(event, end="")
 ```
 #### ii. Run the Script
 Let's run the script using `uv`
@@ -452,120 +442,102 @@ in a vector database.
 Create a file `rag_agent.py` and add the following code:
 
 ```python
-import uuid, requests
-from io import BytesIO
-
 from llama_stack_client import LlamaStackClient
 from llama_stack_client import Agent, AgentEventLogger
+import uuid
+import requests
 
 client = LlamaStackClient(base_url="http://localhost:8321")
 
-# Get model to generate embeddings from text
-embed_lm = next(
-    m for m in client.models.list()
-    if m.custom_metadata and m.custom_metadata.get("model_type") == "embedding"
-)
-
-# Create vector store using documentations below
+# Create Documents - download and upload each file
 urls = [
-"memory_optimizations.rst",
-"chat.rst",
-"llama3.rst",
-"qat_finetune.rst",
-"lora_finetune.rst",
+    "memory_optimizations.rst",
+    "chat.rst",
+    "llama3.rst",
+    "qat_finetune.rst",
+    "lora_finetune.rst",
 ]
 
-docs = []
-for url in urls:
-    source = f"https://raw.githubusercontent.com/pytorch/torchtune/main/docs/source/tutorials/{url}"
-    r = requests.get(source)
-    docs.append(
-        (
-            r.text,
-            {"title": source}
-        )
-    )
-
 file_ids = []
-for content, metadata in docs:
-  with BytesIO(content.encode()) as file_buffer:
-      file_buffer.name = metadata['title']
-      create_file_response = client.files.create(file=file_buffer, purpose="assistants")
-      print(create_file_response)
-      file_ids.append(create_file_response.id)
+print("Downloading and uploading documents...")
+for i, url in enumerate(urls):
+    doc_url = f"https://raw.githubusercontent.com/pytorch/torchtune/main/docs/source/tutorials/{url}"
+    print(f"  {i+1}/{len(urls)}: {url}")
 
+    # Download the content
+    response = requests.get(doc_url)
+    content = response.text
 
-# Create vector store with those files
+    # Upload to Llama Stack
+    file_obj = client.files.create(
+        file=(url, content.encode('utf-8'), "text/plain"),
+        purpose="assistants",
+    )
+    file_ids.append(file_obj.id)
+
+print(f"Uploaded {len(file_ids)} files")
+
+# Create vector store with all files
+vector_db_id = f"torchtune_docs_{uuid.uuid4().hex[:8]}"
+print(f"Creating vector store: {vector_db_id}")
 vector_store = client.vector_stores.create(
-  name="torchtune_docs",
-  # file_ids=file_ids,
-  file_ids=file_ids,
-  extra_body={
-    "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
-    "embedding_dimension": 768,
-    "provider_id": "faiss"
-  },
-  # Not yet implemented... defaults to using `auto`
-  chunking_strategy={
-      "type": "static",
-      "static": {
-          "chunk_overlap_tokens": 50,
-          "max_chunk_size_tokens": 200
-      }
-  }
+    name=vector_db_id,
+    file_ids=file_ids,
 )
+vector_db_id = vector_store.id
+print(f"Vector store created: {vector_db_id}")
 
-# Let's test a semantic search to find some relavant docs to some query
-search_response = client.vector_stores.search(
-  vector_store_id=vector_store.id,
-  query="What does checkpointing activation mean ?",
-  max_num_results=2
-)
-
-for result in search_response.data:
-  content = result.content[0].text
-  print("## ", "-"*100, " ##")
-  print(content)
-
-
-# Get the model being served
-llm = next(
-    m
-    for m in client.models.list()
-    if m.custom_metadata
-    and m.custom_metadata.get("model_type") == "llm"
-    and m.custom_metadata.get("provider_id") == "ollama"
-    and "llama3.1" in m.id
-)
-model = llm.id # used llama3.1:8b
-
-print(model)
+# Get the model being served - prefer Ollama
+models_list = list(client.models.list())
+# Filter for LLM models (exclude embedding models)
+llm_models = [
+    m for m in models_list
+    if m.id and not m.id.startswith("sentence-transformers")
+]
+# Prefer Ollama models
+ollama_models = [
+    m for m in llm_models
+    if "ollama" in m.id
+]
+model = (ollama_models[0] if ollama_models else llm_models[0]).id
+print(f"Using model: {model}")
 
 # Create the RAG agent
+print("\nCreating RAG agent...")
 rag_agent = Agent(
     client,
     model=model,
-    instructions="You are a helpful assistant. Use the RAG tool to answer questions as needed.",
+    instructions="You are a helpful assistant. Use the file search tool to answer questions as needed.",
     tools=[
         {
             "type": "file_search",
-            "vector_store_ids": [vector_store.id],  # Use the actual ID, not the name
+            "vector_store_ids": [vector_db_id],
         }
     ],
 )
 
 session_id = rag_agent.create_session(session_name=f"s{uuid.uuid4().hex}")
+print(f"Session created: {session_id}")
 
-turns = ["what is torchtune", "tell me about dora"]
+turns = ["what is torchtune", "tell me about DORA"]
+
+print("\nNote: This script will fail due to Llama Stack server routing issues.")
+print("Use 'rag_agent_working.py' instead for a working version.\n")
 
 for t in turns:
-    print("user>", t)
+    print(f"\n{'='*60}")
+    print(f"user> {t}")
+    print('='*60)
     stream = rag_agent.create_turn(
-        messages=[{"role": "user", "content": t}],
-        session_id=session_id, stream=True
+        messages=[{"role": "user", "content": t}], session_id=session_id, stream=True
     )
-    for log in AgentEventLogger().log(stream):
-        print(log, end="")
+    for event in AgentEventLogger().log(stream):
+        if hasattr(event, 'print'):
+            event.print()
+        else:
+            # Print text chunks inline without newlines
+            print(event, end='', flush=True)
+    print()  # Final newline at the end
 ```
 #### ii. Run the Script
 Let's run the script using `uv`
