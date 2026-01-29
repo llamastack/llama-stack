@@ -25,9 +25,7 @@ from llama_stack_api import (
     Inference,
     InterleavedContent,
     QueryChunksResponse,
-    VectorIO,
     VectorStore,
-    VectorStoresProtocolPrivate,
 )
 from llama_stack_api.internal.kvstore import KVStore
 
@@ -221,7 +219,7 @@ class ChromaIndex(EmbeddingIndex):
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
 
-class ChromaVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+class ChromaVectorIOAdapter(OpenAIVectorStoreMixin):
     def __init__(
         self,
         config: RemoteChromaVectorIOConfig | InlineChromaVectorIOConfig,

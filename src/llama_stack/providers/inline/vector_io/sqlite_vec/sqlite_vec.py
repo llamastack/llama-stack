@@ -31,10 +31,8 @@ from llama_stack_api import (
     Files,
     Inference,
     QueryChunksResponse,
-    VectorIO,
     VectorStore,
     VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
 )
 from llama_stack_api.internal.kvstore import KVStore
 
@@ -385,7 +383,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         await asyncio.to_thread(_delete_chunks)
 
 
-class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin):
     """
     A VectorIO implementation using SQLite + sqlite_vec.
     This class handles vector database registration (with metadata stored in a table named `vector_stores`)
