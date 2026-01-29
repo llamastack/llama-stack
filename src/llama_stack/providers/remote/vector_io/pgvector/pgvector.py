@@ -126,6 +126,10 @@ class PGVectorIndex(EmbeddingIndex):
         "INNER_PRODUCT": "vector_ip_ops",
     }
 
+    # pgvector's maximum embedding dimension for HNSW/IVFFlat indexes on column with type vector
+    # references: https://github.com/pgvector/pgvector?tab=readme-ov-file#hnsw and https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat
+    MAX_EMBEDDING_DIMENSION_FOR_HNSW_AND_IVFFLAT_INDEX = 2000
+
     def __init__(
         self,
         vector_store: VectorStore,
@@ -167,15 +171,17 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
 
-                # Create HNSW (Hierarchical Navigable Small Worlds) index on embedding column to allow efficient and performant vector search in pgvector
-                # HNSW finds the approximate nearest neighbors by only calculating distance metric for vectors it visits during graph traversal instead of processing all vectors
-                index_operator_class = self.get_pgvector_index_operator_class()
-                cur.execute(
-                    f"""
+                # pgvector's embedding dimensions requirement to create an index for Approximate Nearest Neighbor (ANN) search is up to 2,000 dimensions for column with type vector
+                if self.dimension <= self.MAX_EMBEDDING_DIMENSION_FOR_HNSW_AND_IVFFLAT_INDEX:
+                    # Create HNSW (Hierarchical Navigable Small Worlds) index on embedding column to allow efficient and performant vector search in pgvector
+                    # HNSW finds the approximate nearest neighbors by only calculating distance metric for vectors it visits during graph traversal instead of processing all vectors
+                    index_operator_class = self.get_pgvector_index_operator_class()
+                    cur.execute(
+                        f"""
                     CREATE INDEX IF NOT EXISTS {self.table_name}_hnsw_idx
                     ON {self.table_name} USING hnsw(embedding {index_operator_class}) WITH (m = {self.hnsw_m}, ef_construction = {self.hnsw_ef_construction});
                 """
-                )
+                    )
 
                 # Create GIN index for full-text search performance
                 cur.execute(
