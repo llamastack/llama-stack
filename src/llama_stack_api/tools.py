@@ -44,12 +44,14 @@ class ToolGroupInput(BaseModel):
     :param provider_id: ID of the provider that will handle this tool group
     :param args: (Optional) Additional arguments to pass to the provider
     :param mcp_endpoint: (Optional) Model Context Protocol endpoint for remote tools
+    :param mcp_server_instructions: (Optional) Instructions from the MCP server (from initialize response)
     """
 
     toolgroup_id: str
     provider_id: str
     args: dict[str, Any] | None = None
     mcp_endpoint: URL | None = None
+    mcp_server_instructions: str | None = None
 
 
 @json_schema_type
@@ -59,11 +61,13 @@ class ToolGroup(Resource):
     :param type: Type of resource, always 'tool_group'
     :param mcp_endpoint: (Optional) Model Context Protocol endpoint for remote tools
     :param args: (Optional) Additional arguments for the tool group
+    :param mcp_server_instructions: (Optional) Instructions from the MCP server (from initialize response)
     """
 
     type: Literal[ResourceType.tool_group] = ResourceType.tool_group
     mcp_endpoint: URL | None = None
     args: dict[str, Any] | None = None
+    mcp_server_instructions: str | None = None
 
 
 @json_schema_type
@@ -116,6 +120,7 @@ class ToolGroups(Protocol):
         provider_id: str,
         mcp_endpoint: URL | None = None,
         args: dict[str, Any] | None = None,
+        mcp_server_instructions: str | None = None,
     ) -> None:
         """Register a tool group.
 
@@ -123,6 +128,7 @@ class ToolGroups(Protocol):
         :param provider_id: The ID of the provider to use for the tool group.
         :param mcp_endpoint: The MCP endpoint to use for the tool group.
         :param args: A dictionary of arguments to pass to the tool group.
+        :param mcp_server_instructions: Instructions from the MCP server (from initialize response).
         """
         ...
 
