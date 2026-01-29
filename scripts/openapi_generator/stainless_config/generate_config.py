@@ -512,7 +512,6 @@ ALL_RESOURCES = {
     },
     "alpha": {
         "subresources": {
-            "inference": {"methods": {"rerank": "post /v1alpha/inference/rerank"}},
             "post_training": {
                 "models": {
                     "algorithm_config": "AlgorithmConfig",
@@ -581,6 +580,11 @@ ALL_RESOURCES = {
                     "list_routes": "get /v1alpha/admin/inspect/routes",
                     "health": "get /v1alpha/admin/health",
                     "version": "get /v1alpha/admin/version",
+                },
+            },
+            "inference": {
+                "methods": {
+                    "rerank": "post /v1alpha/inference/rerank",
                 },
             },
         }
