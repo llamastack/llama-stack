@@ -229,9 +229,16 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
             index._test_chunks = []
             original_add_chunks = index.add_chunks
 
+<<<<<<< HEAD
             async def mock_add_chunks(chunks, embeddings):
                 index._test_chunks = list(chunks)
                 await original_add_chunks(chunks, embeddings)
+=======
+            async def mock_add_chunks(embedded_chunks):
+                index._test_chunks = list(embedded_chunks)
+                # Call original method with correct signature (only embedded_chunks)
+                await original_add_chunks(embedded_chunks)
+>>>>>>> 08d01c8c (fix: Fix Vector Store Integration Tests (#4472))
 
             index.add_chunks = mock_add_chunks
 
