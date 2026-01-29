@@ -10907,11 +10907,13 @@ components:
         max_tool_calls:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Max number of total calls to built-in tools that can be processed in a response.
         max_output_tokens:
           anyOf:
           - type: integer
+            minimum: 16.0
           - type: 'null'
           description: Upper bound for the number of tokens that can be generated for a response.
         reasoning:
