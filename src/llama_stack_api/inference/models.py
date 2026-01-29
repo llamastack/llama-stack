@@ -93,12 +93,7 @@ class LogProbConfig(BaseModel):
 
 
 class QuantizationType(Enum):
-    """Type of model quantization to run inference with.
-
-    :cvar bf16: BFloat16 typically this means _no_ quantization
-    :cvar fp8_mixed: 8-bit floating point quantization with mixed precision
-    :cvar int4_mixed: 4-bit integer quantization with mixed precision
-    """
+    """Type of model quantization to run inference with."""
 
     bf16 = "bf16"
     fp8_mixed = "fp8_mixed"
@@ -175,12 +170,7 @@ class ToolResponseMessage(BaseModel):
 
 
 class ToolChoice(Enum):
-    """Whether tool use is required or automatic. This is a hint to the model which may not be followed.
-
-    :cvar auto: The model may use tools if it determines that is appropriate.
-    :cvar required: The model must use tools.
-    :cvar none: The model must not use tools.
-    """
+    """Whether tool use is required or automatic. This is a hint to the model which may not be followed."""
 
     auto = "auto"
     required = "required"
@@ -197,12 +187,7 @@ class TokenLogProbs(BaseModel):
 
 
 class ChatCompletionResponseEventType(Enum):
-    """Types of events that can occur during chat completion.
-
-    :cvar start: Inference has started
-    :cvar complete: Inference is complete and a full response is available
-    :cvar progress: Inference is in progress and a partial response is available
-    """
+    """Types of events that can occur during chat completion."""
 
     start = "start"
     complete = "complete"
@@ -210,11 +195,7 @@ class ChatCompletionResponseEventType(Enum):
 
 
 class ResponseFormatType(StrEnum):
-    """Types of formats for structured (guided) decoding.
-
-    :cvar json_schema: Response should conform to a JSON schema.
-    :cvar grammar: Response should conform to a BNF grammar
-    """
+    """Types of formats for structured (guided) decoding."""
 
     json_schema = "json_schema"
     grammar = "grammar"
@@ -258,11 +239,7 @@ class CompletionRequest(BaseModel):
 
 
 class SystemMessageBehavior(Enum):
-    """Config for how to override the default system prompt.
-
-    :cvar append: Appends the provided system message to the default system prompt.
-    :cvar replace: Replaces the default system prompt with the provided system message.
-    """
+    """Config for how to override the default system prompt."""
 
     append = "append"
     replace = "replace"
@@ -771,12 +748,7 @@ class OpenAIEmbeddingsResponse(BaseModel):
 
 
 class TextTruncation(Enum):
-    """Config for how to truncate text for embedding when text is longer than the model's max sequence length.
-
-    :cvar none: No truncation (default). If the text is longer than the model's max sequence length, you will get an error.
-    :cvar start: Truncate from the start
-    :cvar end: Truncate from the end
-    """
+    """Config for how to truncate text for embedding when text is longer than the model's max sequence length."""
 
     none = "none"
     start = "start"
@@ -784,11 +756,7 @@ class TextTruncation(Enum):
 
 
 class EmbeddingTaskType(Enum):
-    """How is the embedding being used? This is only supported by asymmetric embedding models.
-
-    :cvar query: Used for a query for semantic search.
-    :cvar document: Used at indexing time when ingesting documents.
-    """
+    """How is the embedding being used? This is only supported by asymmetric embedding models."""
 
     query = "query"
     document = "document"
