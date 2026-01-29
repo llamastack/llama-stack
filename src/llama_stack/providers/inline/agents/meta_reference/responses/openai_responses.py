@@ -471,6 +471,7 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
     ):
         stream = bool(stream)
@@ -510,6 +511,9 @@ class OpenAIResponsesImpl:
 
         if max_tool_calls is not None and max_tool_calls < 1:
             raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
+        # OpenAI requires max_output_tokens to be >=16 otherwise an error is returned.
+        if max_output_tokens is not None and max_output_tokens < 16:
+            raise ValueError(f"Invalid {max_output_tokens=}; should be >= 16")
 
         stream_gen = self._create_streaming_response(
             input=input,
@@ -528,6 +532,7 @@ class OpenAIResponsesImpl:
             parallel_tool_calls=parallel_tool_calls,
             max_tool_calls=max_tool_calls,
             reasoning=reasoning,
+            max_output_tokens=max_output_tokens,
             metadata=metadata,
             include=include,
         )
@@ -584,6 +589,7 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = True,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -650,6 +656,7 @@ class OpenAIResponsesImpl:
             instructions=instructions,
             max_tool_calls=max_tool_calls,
             reasoning=reasoning,
+            max_output_tokens=max_output_tokens,
             metadata=metadata,
             include=include,
             store=store,

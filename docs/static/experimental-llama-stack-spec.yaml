@@ -4229,6 +4229,10 @@ components:
             title: OpenAIResponseReasoning
           - type: 'null'
           title: OpenAIResponseReasoning
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -4669,6 +4673,10 @@ components:
             title: OpenAIResponseReasoning
           - type: 'null'
           title: OpenAIResponseReasoning
+        max_output_tokens:
+          anyOf:
+          - type: integer
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
