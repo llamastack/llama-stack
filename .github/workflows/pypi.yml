@@ -235,7 +235,7 @@ jobs:
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
         working-directory: external-repo
         run: |
-          npm ci
+          npm install
           npm run build
 
       # === PYTHON PACKAGE VALIDATION ===
