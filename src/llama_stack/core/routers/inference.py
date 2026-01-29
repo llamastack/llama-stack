@@ -20,9 +20,11 @@ from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import (
+    GetChatCompletionRequest,
     HealthResponse,
     HealthStatus,
     Inference,
+    ListChatCompletionsRequest,
     ListOpenAIChatCompletionResponse,
     ModelNotFoundError,
     ModelType,
@@ -45,7 +47,6 @@ from llama_stack_api import (
     OpenAIMessageParam,
     OpenAITokenLogProb,
     OpenAITopLogProb,
-    Order,
     RegisterModelRequest,
     RerankResponse,
     RoutingTable,
@@ -237,18 +238,20 @@ class InferenceRouter(Inference):
 
     async def list_chat_completions(
         self,
-        after: str | None = None,
-        limit: int | None = 20,
-        model: str | None = None,
-        order: Order | None = Order.desc,
+        request: ListChatCompletionsRequest,
     ) -> ListOpenAIChatCompletionResponse:
         if self.store:
-            return await self.store.list_chat_completions(after, limit, model, order)
+            return await self.store.list_chat_completions(
+                after=request.after,
+                limit=request.limit,
+                model=request.model,
+                order=request.order,
+            )
         raise NotImplementedError("List chat completions is not supported: inference store is not configured.")
 
-    async def get_chat_completion(self, completion_id: str) -> OpenAICompletionWithInputMessages:
+    async def get_chat_completion(self, request: GetChatCompletionRequest) -> OpenAICompletionWithInputMessages:
         if self.store:
-            return await self.store.get_chat_completion(completion_id)
+            return await self.store.get_chat_completion(request.completion_id)
         raise NotImplementedError("Get chat completion is not supported: inference store is not configured.")
 
     async def _nonstream_openai_chat_completion(
