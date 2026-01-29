@@ -108,6 +108,8 @@ jobs:
   # Build and validate release artifacts
   build-package:
     name: Build ${{ matrix.package }}
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
