@@ -12,24 +12,7 @@
 # REQUIRED SECRETS
 # =============================================================================
 #
-# 1. RELEASE_PAT - GitHub Personal Access Token
-#    Purpose: Clone external client repos (llama-stack-client-python, llama-stack-client-typescript)
-#
-#    How to create (Fine-grained token - recommended):
-#    - Go to https://github.com/settings/tokens?type=beta
-#    - Token name: llama-stack-release
-#    - Resource owner: llamastack
-#    - Repository access: Select llama-stack-client-python and llama-stack-client-typescript
-#    - Permissions: Contents: Read-only
-#
-#    How to create (Classic token):
-#    - Go to https://github.com/settings/tokens
-#    - Select scope: repo (or public_repo if repos are public)
-#
-#    Add to repo: Settings > Secrets and variables > Actions > New repository secret
-#    Name: RELEASE_PAT
-#
-# 2. NPM_TOKEN - npm Access Token
+# 1. NPM_TOKEN - npm Access Token
 #    Purpose: Publish llama-stack-client package to npmjs.org (production only)
 #
 #    How to create:
@@ -183,45 +166,33 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       # === EXTERNAL PACKAGE STEPS ===
-      - name: Check RELEASE_PAT secret
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
-        id: check-pat
-        run: |
-          if [ -z "${{ secrets.RELEASE_PAT }}" ]; then
-            echo "::warning::RELEASE_PAT secret not configured. Skipping external package ${{ matrix.package }}."
-            echo "has_pat=false" >> $GITHUB_OUTPUT
-          else
-            echo "has_pat=true" >> $GITHUB_OUTPUT
-          fi
-
       - name: Checkout external repo
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && steps.check-pat.outputs.has_pat == 'true'
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ matrix.repo }}
-          token: ${{ secrets.RELEASE_PAT }}
           ref: ${{ inputs.client_ref || 'main' }}
           path: external-repo
           fetch-depth: 0
 
       # === PYTHON SETUP (for all Python packages) ===
       - name: Set up Python
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi' && (matrix.type == 'local' || steps.check-pat.outputs.has_pat == 'true')
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
 
       - name: Install uv
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi' && (matrix.type == 'local' || steps.check-pat.outputs.has_pat == 'true')
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
         uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
 
       - name: Install build dependencies
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi' && (matrix.type == 'local' || steps.check-pat.outputs.has_pat == 'true')
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
         run: uv pip install --system setuptools wheel build
 
       # === NODE SETUP (for npm packages) ===
       - name: Set up Node.js
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm' && steps.check-pat.outputs.has_pat == 'true'
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: '20'
@@ -250,7 +221,7 @@ jobs:
 
       # === EXTERNAL PYTHON PACKAGE BUILD ===
       - name: Build external Python package
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi' && steps.check-pat.outputs.has_pat == 'true'
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
         working-directory: external-repo
         run: |
           # Use python -m build for better compatibility
@@ -261,7 +232,7 @@ jobs:
 
       # === NPM PACKAGE BUILD ===
       - name: Build TypeScript package
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm' && steps.check-pat.outputs.has_pat == 'true'
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
         working-directory: external-repo
         run: |
           npm ci
@@ -269,7 +240,7 @@ jobs:
 
       # === PYTHON PACKAGE VALIDATION ===
       - name: Install validation tools
-        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi' && (matrix.type == 'local' || steps.check-pat.outputs.has_pat == 'true')
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
         run: uv pip install --system twine check-wheel-contents
 
       - name: Check wheel contents (local)
@@ -277,7 +248,7 @@ jobs:
         run: check-wheel-contents --ignore W002,W004 ${{ matrix.path }}/dist/*.whl
 
       - name: Check wheel contents (external)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi' && steps.check-pat.outputs.has_pat == 'true'
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
         run: check-wheel-contents --ignore W002,W004 external-repo/dist/*.whl
 
       - name: Validate package with twine (local)
@@ -285,7 +256,7 @@ jobs:
         run: twine check ${{ matrix.path }}/dist/*
 
       - name: Validate package with twine (external)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi' && steps.check-pat.outputs.has_pat == 'true'
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
         run: twine check external-repo/dist/*
 
       # === LIST AND UPLOAD ARTIFACTS ===
@@ -294,11 +265,11 @@ jobs:
         run: ls -la ${{ matrix.path }}/dist/
 
       - name: List dist contents (external Python)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi' && steps.check-pat.outputs.has_pat == 'true'
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
         run: ls -la external-repo/dist/
 
       - name: List package contents (external npm)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'npm' && steps.check-pat.outputs.has_pat == 'true'
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'npm'
         working-directory: external-repo
         run: |
           npm pack --dry-run
@@ -314,7 +285,7 @@ jobs:
           path: ${{ matrix.path }}/dist/*
 
       - name: Upload artifacts (external)
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && (steps.check-pat.outputs.has_pat == 'true' || matrix.registry != 'pypi')
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Packages-${{ matrix.package }}
