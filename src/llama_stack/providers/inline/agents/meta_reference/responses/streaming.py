@@ -142,6 +142,7 @@ class StreamingResponseOrchestrator:
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
@@ -164,6 +165,8 @@ class StreamingResponseOrchestrator:
         # Max number of total calls to built-in tools that can be processed in a response
         self.max_tool_calls = max_tool_calls
         self.reasoning = reasoning
+        # An upper bound for the number of tokens that can be generated for a response
+        self.max_output_tokens = max_output_tokens
         self.metadata = metadata
         self.store = store
         self.include = include
@@ -190,6 +193,8 @@ class StreamingResponseOrchestrator:
         self.violation_detected = False
         # Track total calls made to built-in tools
         self.accumulated_builtin_tool_calls = 0
+        # Track total output tokens generated across inference calls
+        self.accumulated_builtin_output_tokens = 0
 
     async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
         """Create a refusal response to replace streaming content."""
@@ -202,6 +207,7 @@ class StreamingResponseOrchestrator:
             model=self.ctx.model,
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
+            max_output_tokens=self.max_output_tokens,
             metadata=self.metadata,
             store=self.store,
         )
@@ -243,6 +249,7 @@ class StreamingResponseOrchestrator:
             parallel_tool_calls=self.parallel_tool_calls,
             max_tool_calls=self.max_tool_calls,
             reasoning=self.reasoning,
+            max_output_tokens=self.max_output_tokens,
             metadata=self.metadata,
             store=self.store,
         )
@@ -308,6 +315,22 @@ class StreamingResponseOrchestrator:
 
         try:
             while True:
+                if (
+                    self.max_output_tokens is not None
+                    and self.accumulated_builtin_output_tokens >= self.max_output_tokens
+                ):
+                    logger.info(
+                        "Skipping inference call since max_output_tokens reached: "
+                        f"{self.accumulated_builtin_output_tokens}/{self.max_output_tokens}"
+                    )
+                    final_status = "incomplete"
+                    break
+
+                remaining_output_tokens = (
+                    self.max_output_tokens - self.accumulated_builtin_output_tokens
+                    if self.max_output_tokens is not None
+                    else None
+                )
                 # Text is the default response format for chat completion so don't need to pass it
                 # (some providers don't support non-empty response_format when tools are present)
                 response_format = (
@@ -347,6 +370,7 @@ class StreamingResponseOrchestrator:
                     logprobs=logprobs,
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
+                    max_completion_tokens=remaining_output_tokens,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -502,6 +526,8 @@ class StreamingResponseOrchestrator:
         """Accumulate usage from a streaming chunk into the response usage format."""
         if not chunk.usage:
             return
+
+        self.accumulated_builtin_output_tokens += chunk.usage.completion_tokens
 
         if self.accumulated_usage is None:
             # Convert from chat completion format to response format

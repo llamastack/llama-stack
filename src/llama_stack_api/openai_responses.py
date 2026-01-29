@@ -721,6 +721,7 @@ class OpenAIResponseObject(BaseModel):
     :param usage: (Optional) Token usage information for the response
     :param instructions: (Optional) System message inserted into the model's context
     :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response
+    :param max_output_tokens: (Optional) An upper bound for the number of tokens that can be generated for a response, including visible output tokens.
     :param metadata: (Optional) Dictionary of metadata key-value pairs
     """
 
@@ -747,6 +748,7 @@ class OpenAIResponseObject(BaseModel):
     instructions: str | None = None
     max_tool_calls: int | None = None
     reasoning: OpenAIResponseReasoning | None = None
+    max_output_tokens: int | None = None
     metadata: dict[str, str] | None = None
     store: bool
 

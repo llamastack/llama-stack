@@ -1964,3 +1964,167 @@ async def test_file_search_results_include_chunk_metadata_attributes(mock_vector
         "Machine learning is a subset of AI",
         "Deep learning uses neural networks",
     ]
+
+
+async def test_create_openai_response_with_max_output_tokens_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that max_output_tokens is properly handled in non-streaming responses."""
+    input_text = "Write a long story about AI."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 100
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the max_output_tokens
+    assert result.max_output_tokens == max_tokens
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the max_output_tokens was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == max_tokens
+
+    # Verify the max_output_tokens was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.max_output_tokens == max_tokens
+
+
+async def test_create_openai_response_with_max_output_tokens_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that max_output_tokens is properly handled in streaming responses."""
+    input_text = "Explain machine learning in detail."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 200
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify max_output_tokens is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.max_output_tokens == max_tokens
+
+    # Verify max_output_tokens is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.max_output_tokens == max_tokens
+
+    # Verify the max_output_tokens was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == max_tokens
+
+    # Verify the max_output_tokens was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.max_output_tokens == max_tokens
+
+
+async def test_create_openai_response_with_max_output_tokens_boundary_value(openai_responses_impl, mock_inference_api):
+    """Test that max_output_tokens accepts the minimum valid value of 16."""
+    input_text = "Hi"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with minimum valid value
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=16,
+        stream=False,
+    )
+
+    # Verify it accepts 16
+    assert result.max_output_tokens == 16
+    assert result.status == "completed"
+
+    # Verify the inference API was called with max_completion_tokens=16
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == 16
+
+
+async def test_create_openai_response_with_max_output_tokens_and_tools(openai_responses_impl, mock_inference_api):
+    """Test that max_output_tokens works correctly with tool calls."""
+    input_text = "What's the weather in San Francisco?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 150
+
+    openai_responses_impl.tool_groups_api.get_tool.return_value = ToolDef(
+        name="get_weather",
+        toolgroup_id="weather",
+        description="Get weather information",
+        input_schema={
+            "type": "object",
+            "properties": {"location": {"type": "string"}},
+            "required": ["location"],
+        },
+    )
+
+    openai_responses_impl.tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(
+        status="completed",
+        content="Sunny, 72°F",
+    )
+
+    # Mock two inference calls: one for tool call, one for final response
+    mock_inference_api.openai_chat_completion.side_effect = [
+        fake_stream("tool_call_completion.yaml"),
+        fake_stream(),
+    ]
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_weather",
+                description="Get weather information",
+                parameters={"location": "string"},
+            )
+        ],
+    )
+
+    # Verify max_output_tokens is preserved
+    assert result.max_output_tokens == max_tokens
+    assert result.status == "completed"
+
+    # Verify both inference calls received max_completion_tokens
+    assert mock_inference_api.openai_chat_completion.call_count == 2
+    for call in mock_inference_api.openai_chat_completion.call_args_list:
+        params = call.args[0]
+        # The first call gets the full max_tokens, subsequent calls get remaining tokens
+        assert params.max_completion_tokens is not None
+        assert params.max_completion_tokens <= max_tokens
