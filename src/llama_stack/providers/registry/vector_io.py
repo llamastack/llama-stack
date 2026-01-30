@@ -915,7 +915,6 @@ vector_io:
     ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
     ewallet_password: "${env.OCI26AI_EWALLET_PWD}"
     vector_datatype: "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}"
-    distance_metric: "${env.OCI26AI_DISTANCE_METRIC:=COSINE}"
     persistence:
       namespace: vector_id::oci26ai
       backend: kv_default

@@ -307,10 +307,14 @@ def instantiate_llama_stack_client(session):
 
         # --stack-config bypasses template so need this to set default embedding model
         if "vector_io" in config and "inference" in config:
+            passed_provider, passed_emb_model = session.config.getoption("--embedding-model").split("/")
+            passed_emb_dim = session.config.getoption("--embedding-dimension")
+
             run_config.vector_stores = VectorStoresConfig(
                 default_embedding_model=QualifiedModel(
-                    provider_id="inline::sentence-transformers",
-                    model_id="nomic-ai/nomic-embed-text-v1.5",
+                    provider_id=passed_provider or "inline::sentence-transformers",
+                    model_id=passed_emb_model or "nomic-ai/nomic-embed-text-v1.5",
+                    embedding_dimensions=passed_emb_dim,
                 )
             )
 

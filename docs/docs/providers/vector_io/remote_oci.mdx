@@ -30,7 +30,6 @@ description: |
       ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
       ewallet_password: "${env.OCI26AI_EWALLET_PWD}"
       vector_datatype: "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}"
-      distance_metric: "${env.OCI26AI_DISTANCE_METRIC:=COSINE}"
       persistence:
         namespace: vector_id::oci26ai
         backend: kv_default
@@ -77,7 +76,6 @@ vector_io:
     ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
     ewallet_password: "${env.OCI26AI_EWALLET_PWD}"
     vector_datatype: "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}"
-    distance_metric: "${env.OCI26AI_DISTANCE_METRIC:=COSINE}"
     persistence:
       namespace: vector_id::oci26ai
       backend: kv_default
@@ -100,7 +98,6 @@ for more details about Oracle 26ai in general.
 | `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
 | `consistency_level` | `str` | No | Strong | The consistency level of the OCI26ai server |
 | `vector_datatype` | `str` | No | FLOAT32 | Vector datatype for embeddings |
-| `distance_metric` | `str` | No | COSINE | Distance metric for vector similarity search |
 
 ## Sample Configuration
 
@@ -112,7 +109,6 @@ tnsnames_loc: ${env.OCI26AI_TNSNAMES_LOC}
 ewallet_pem_loc: ${env.OCI26AI_EWALLET_PEM_LOC}
 ewallet_password: ${env.OCI26AI_EWALLET_PWD}
 vector_datatype: ${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}
-distance_metric: ${env.OCI26AI_DISTANCE_METRIC:=COSINE}
 persistence:
   namespace: vector_io::oci26ai
   backend: kv_default

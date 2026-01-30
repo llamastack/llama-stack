@@ -69,26 +69,6 @@ def normalize_embedding(embedding: np.typing.NDArray) -> np.typing.NDArray:
 
 
 class OCI26aiIndex(EmbeddingIndex):
-    # Oracle 26AI VECTOR_DISTANCE supported metrics
-    ORACLE_DISTANCE_METRICS: dict[str, str] = {
-        "COSINE": "COSINE",
-        "L2": "EUCLIDEAN",
-        "EUCLIDEAN": "EUCLIDEAN",
-        "L1": "MANHATTAN",
-        "MANHATTAN": "MANHATTAN",
-        "INNER_PRODUCT": "DOT",
-        "DOT": "DOT",
-    }
-    ORACLE_SCORE_TRANSFORMS = {
-        "COSINE": "1 - dist",
-        "DOT": "dist",
-        "INNER_PRODUCT": "dist",
-        "EUCLIDEAN": "1 / (1 + dist)",
-        "L2": "1 / (1 + dist)",
-        "MANHATTAN": "1 / (1 + dist)",
-        "L1": "1 / (1 + dist)",
-    }
-
     def __init__(
         self,
         connection,
@@ -96,7 +76,6 @@ class OCI26aiIndex(EmbeddingIndex):
         consistency_level="Strong",
         kvstore: KVStore | None = None,
         vector_datatype: str = "FLOAT32",
-        distance_metric: str = "COSINE",
     ):
         self.connection = connection
         self.vector_store = vector_store
@@ -105,27 +84,6 @@ class OCI26aiIndex(EmbeddingIndex):
         self.consistency_level = consistency_level
         self.kvstore = kvstore
         self.vector_datatype = vector_datatype
-        self.check_distance_metric_availability(distance_metric)
-        self.distance_metric = distance_metric
-
-    def check_distance_metric_availability(self, distance_metric: str) -> None:
-        """Check if the distance metric is supported by Oracle 26AI.
-
-        Args:
-            distance_metric: The distance metric to check
-
-        Raises:
-            ValueError: If the distance metric is not supported
-        """
-        if distance_metric not in self.ORACLE_DISTANCE_METRICS:
-            supported_metrics = list(self.ORACLE_DISTANCE_METRICS.keys())
-            raise ValueError(
-                f"Distance metric '{distance_metric}' is not supported by Oracle 26AI. "
-                f"Supported metrics are: {', '.join(supported_metrics)}"
-            )
-
-    def get_oracle_distance_function(self) -> str:
-        return self.ORACLE_DISTANCE_METRICS[self.distance_metric]
 
     async def initialize(self) -> None:
         logger.info(f"Attempting to create table: {self.table_name}")
@@ -182,7 +140,7 @@ class OCI26aiIndex(EmbeddingIndex):
                     CREATE VECTOR INDEX {self.table_name}_vector_ivf_idx
                     ON {self.table_name}(vector)
                     ORGANIZATION NEIGHBOR PARTITIONS
-                    DISTANCE {self.get_oracle_distance_function()}
+                    DISTANCE COSINE
                     WITH TARGET ACCURACY 95
                 """,
             },
@@ -268,17 +226,9 @@ class OCI26aiIndex(EmbeddingIndex):
         array_type = "d" if self.vector_datatype == "FLOAT64" else "f"
         query_vector = array(array_type, normalize_embedding(np.array(embedding)))
 
-        oracle_distance_function = self.get_oracle_distance_function()
-        score_transform = self.ORACLE_SCORE_TRANSFORMS[self.distance_metric]
-
         query = f"""
             SELECT
-                content,
-                chunk_id,
-                metadata,
-                chunk_metadata,
-                vector,
-                {score_transform} AS score
+                *
             FROM (
                 SELECT
                     content,
@@ -286,7 +236,7 @@ class OCI26aiIndex(EmbeddingIndex):
                     metadata,
                     chunk_metadata,
                     vector,
-                    VECTOR_DISTANCE(vector, :query_vector, {oracle_distance_function}) AS dist
+                    VECTOR_DISTANCE(vector, :query_vector, COSINE) AS score
                 FROM {self.table_name}
             )
         """
@@ -296,13 +246,14 @@ class OCI26aiIndex(EmbeddingIndex):
         }
 
         if score_threshold is not None:
-            query += f" WHERE {score_transform} >= :score_threshold"
+            query += " WHERE score >= :score_threshold"
             params["score_threshold"] = score_threshold
 
         query += " ORDER BY score DESC FETCH FIRST :k ROWS ONLY"
         params["k"] = k
 
         logger.debug(query)
+        logger.debug(query_vector)
         try:
             cursor.execute(query, params)
             results = cursor.fetchall()
@@ -534,7 +485,6 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
                 vector_store=vector_store,
                 kvstore=self.kvstore,
                 vector_datatype=self.config.vector_datatype,
-                distance_metric=self.config.distance_metric,
             )
             await oci_index.initialize()
             index = VectorStoreWithIndex(vector_store, index=oci_index, inference_api=self.inference_api)
@@ -566,7 +516,6 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             vector_store=vector_store,
             consistency_level=consistency_level,
             vector_datatype=self.config.vector_datatype,
-            distance_metric=self.config.distance_metric,
         )
         index = VectorStoreWithIndex(
             vector_store=vector_store,
@@ -597,7 +546,6 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
                 vector_store=vector_store,
                 kvstore=self.kvstore,
                 vector_datatype=self.config.vector_datatype,
-                distance_metric=self.config.distance_metric,
             ),
             inference_api=self.inference_api,
         )
