@@ -392,6 +392,7 @@ class TestBuildProxyMounts:
             assert config.cacert.resolve() == Path(cert_path).resolve()
             # The transport creation may fail with invalid cert content, but that's expected
             # We verify the config structure is correct
+            result = None
             try:
                 result = _build_proxy_mounts(config)
                 assert result is not None
@@ -401,7 +402,8 @@ class TestBuildProxyMounts:
             except ssl.SSLError:
                 # Expected for dummy cert files - the important part is that the config was accepted
                 pass
-            assert isinstance(result["https://"], httpx.AsyncHTTPTransport)
+            if result is not None:
+                assert isinstance(result["https://"], httpx.AsyncHTTPTransport)
         finally:
             if not (system_ca_bundle and Path(system_ca_bundle).exists()):
                 if Path(cert_path).exists():
