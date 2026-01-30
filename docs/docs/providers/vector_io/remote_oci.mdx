@@ -96,6 +96,8 @@ for more details about Oracle 26ai in general.
 | `ewallet_pem_loc` | `str` | No |  | Directory location of the ewallet.pem file |
 | `ewallet_password` | `str` | No |  | Password for the ewallet.pem file |
 | `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
+| `persistence.namespace` | `str` | No |  | Key prefix for KVStore backends |
+| `persistence.backend` | `str` | No |  | Name of backend from storage.backends |
 | `consistency_level` | `str` | No | Strong | The consistency level of the OCI26ai server |
 | `vector_datatype` | `str` | No | FLOAT32 | Vector datatype for embeddings |
 
