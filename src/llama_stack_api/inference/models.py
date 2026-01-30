@@ -858,6 +858,9 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = Field(
         default=None, description="The effort level for reasoning models."
     )
+    prompt_cache_key: str | None = Field(
+        default=None, max_length=64, description="A key to use when reading from or writing to the prompt cache."
+    )
 
 
 def _remove_null_from_anyof(schema: dict) -> None:

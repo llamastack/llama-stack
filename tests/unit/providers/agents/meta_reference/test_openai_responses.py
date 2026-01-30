@@ -2684,3 +2684,35 @@ async def test_create_openai_response_with_prompt_cache_key_and_previous_respons
     store_call_args = mock_responses_store.upsert_response_object.call_args
     stored_response = store_call_args.kwargs["response_object"]
     assert stored_response.prompt_cache_key == "conversation-cache-001"
+
+
+async def test_prompt_cache_key_propagated_to_chat_completions(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is propagated to /v1/chat/completions endpoint."""
+    input_text = "What is 2+2?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "math-cache-key"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute streaming request
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=True,
+        store=True,
+    )
+
+    # Consume the stream
+    _ = [chunk async for chunk in result]
+
+    # Verify that openai_chat_completion was called with prompt_cache_key
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args[0][0]  # First positional argument
+
+    # Verify the prompt_cache_key is propagated to the chat completion params
+    assert hasattr(params, "prompt_cache_key"), "params should have prompt_cache_key attribute"
+    assert params.prompt_cache_key == cache_key
