@@ -679,8 +679,9 @@ def test_max_tool_calls_invalid(responses_client, text_model_id):
         )
 
     error_message = str(excinfo.value)
-    assert f"Invalid max_tool_calls={invalid_max_tool_calls}; should be >= 1" in error_message, (
-        f"Expected error message about invalid max_tool_calls, got: {error_message}"
+    # Pydantic validation error (custom validation was removed in PR #4780)
+    assert "Input should be greater than or equal to 1" in error_message, (
+        f"Expected Pydantic validation error about max_tool_calls >= 1, got: {error_message}"
     )
 
 

@@ -509,12 +509,6 @@ class OpenAIResponsesImpl:
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)
 
-        if max_tool_calls is not None and max_tool_calls < 1:
-            raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
-        # OpenAI requires max_output_tokens to be >=16 otherwise an error is returned.
-        if max_output_tokens is not None and max_output_tokens < 16:
-            raise ValueError(f"Invalid {max_output_tokens=}; should be >= 16")
-
         stream_gen = self._create_streaming_response(
             input=input,
             conversation=conversation,
