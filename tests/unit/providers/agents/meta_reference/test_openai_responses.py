@@ -2214,3 +2214,124 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
     assert params.safety_identifier == safety_id, (
         f"Expected safety_identifier={safety_id}, got {params.safety_identifier}"
     )
+
+
+async def test_function_tool_strict_field_excluded_when_none(openai_responses_impl, mock_inference_api):
+    """Test that function tool 'strict' field is excluded when None (fix for #4617)."""
+    input_text = "What is the weather?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock inference response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with function tool that has strict=None (default)
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                type="function",
+                name="get_weather",
+                description="Get weather information",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+                # strict is None by default
+            )
+        ],
+    )
+
+    # Verify the call was made
+    assert mock_inference_api.openai_chat_completion.call_count == 1
+    params = mock_inference_api.openai_chat_completion.call_args[0][0]
+
+    # Verify tools were passed
+    assert params.tools is not None
+    assert len(params.tools) == 1
+
+    # Critical: verify 'strict' field is NOT present when it's None
+    # This prevents "strict: null" from being sent to OpenAI API
+    tool_function = params.tools[0]["function"]
+    assert "strict" not in tool_function, (
+        "strict field should be excluded when None to avoid OpenAI API validation error"
+    )
+
+    # Verify other fields are present
+    assert tool_function["name"] == "get_weather"
+    assert tool_function["description"] == "Get weather information"
+    assert tool_function["parameters"] is not None
+
+
+async def test_function_tool_strict_field_included_when_set(openai_responses_impl, mock_inference_api):
+    """Test that function tool 'strict' field is included when explicitly set."""
+    input_text = "What is the weather?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock inference response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with function tool that has strict=True
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                type="function",
+                name="get_weather",
+                description="Get weather information",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+                strict=True,  # Explicitly set to True
+            )
+        ],
+    )
+
+    # Verify the call was made
+    assert mock_inference_api.openai_chat_completion.call_count == 1
+    params = mock_inference_api.openai_chat_completion.call_args[0][0]
+
+    # Verify tools were passed
+    assert params.tools is not None
+    assert len(params.tools) == 1
+
+    # Verify 'strict' field IS present when explicitly set
+    tool_function = params.tools[0]["function"]
+    assert "strict" in tool_function, "strict field should be included when explicitly set"
+    assert tool_function["strict"] is True, "strict field should have the correct value"
+
+    # Verify other fields are present
+    assert tool_function["name"] == "get_weather"
+    assert tool_function["description"] == "Get weather information"
+
+
+async def test_function_tool_strict_false_included(openai_responses_impl, mock_inference_api):
+    """Test that function tool 'strict' field is included when set to False."""
+    input_text = "What is the weather?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock inference response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with function tool that has strict=False
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                type="function",
+                name="get_weather",
+                description="Get weather information",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+                strict=False,  # Explicitly set to False
+            )
+        ],
+    )
+
+    # Verify the call was made
+    assert mock_inference_api.openai_chat_completion.call_count == 1
+    params = mock_inference_api.openai_chat_completion.call_args[0][0]
+
+    # Verify 'strict' field IS present and set to False
+    tool_function = params.tools[0]["function"]
+    assert "strict" in tool_function, "strict field should be included when explicitly set to False"
+    assert tool_function["strict"] is False, "strict field should be False"
