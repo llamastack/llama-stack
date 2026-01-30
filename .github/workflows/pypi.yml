@@ -525,11 +525,11 @@ jobs:
         if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'pypi' && steps.check-artifacts.outputs.has_artifacts == 'true'
         id: pypi-target
         run: |
-          DRY_RUN="${{ inputs.dry_run || 'test-pypi' }}"
+          DRY_RUN="${{ inputs.dry_run }}"
           EVENT="${{ github.event_name }}"
 
           # Determine target registry
-          if [ "$EVENT" == "release" ] && [ "$DRY_RUN" == "off" -o -z "$DRY_RUN" ]; then
+          if [ "$EVENT" == "release" ]; then
             echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
             echo "target=pypi.org" >> $GITHUB_OUTPUT
             echo "is_production=true" >> $GITHUB_OUTPUT
@@ -596,14 +596,14 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          DRY_RUN="${{ inputs.dry_run || 'test-pypi' }}"
+          DRY_RUN="${{ inputs.dry_run }}"
           EVENT="${{ github.event_name }}"
 
           echo "Event: $EVENT"
           echo "Dry run: $DRY_RUN"
 
           # Check if we should do production publish
-          if [ "$EVENT" == "release" ] && [ "$DRY_RUN" == "off" -o -z "$DRY_RUN" ]; then
+          if [ "$EVENT" == "release" ]; then
             IS_PRODUCTION=true
           elif [ "$DRY_RUN" == "off" ]; then
             IS_PRODUCTION=true
