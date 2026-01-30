@@ -3264,7 +3264,7 @@ def compat_client_with_empty_stores(compat_client):
         except Exception as e:
             # If the API is not available or fails, just continue
             logger.warning(f"Failed to clear files: {str(e)}")
-            logger.warning(f"Ensure that a file config such as `files=inline::localfs` is set")
+            logger.warning("Ensure that a file config such as `files=inline::localfs` is set")
             pass
 
     clear_vector_stores()
