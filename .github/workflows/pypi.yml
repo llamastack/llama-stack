@@ -251,18 +251,36 @@ jobs:
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
         working-directory: external-repo
         run: |
+          # Override version from tag or input
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          if [ -n "$VERSION" ]; then
+            echo "Setting version to $VERSION"
+            sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+            # Also update __version__ in _version.py if it exists
+            VERSION_FILE=$(find . -name "_version.py" -path "*/llama_stack_client/*" | head -1)
+            if [ -n "$VERSION_FILE" ]; then
+              sed -i "s/__version__ = .*/__version__ = \"$VERSION\"/" "$VERSION_FILE"
+            fi
+          fi
           # Use python -m build for better compatibility
           uv pip install --system build
           python -m build --outdir dist
-        env:
-          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.version || '' }}
-          # Note: external packages have their own versioning; only override if explicitly provided
 
       # === NPM PACKAGE BUILD ===
       - name: Build TypeScript package
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
         working-directory: external-repo
         run: |
+          # Override version from tag or input
+          if [ -n "${{ inputs.version }}" ]; then
+            npm version "${{ inputs.version }}" --no-git-tag-version
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            npm version "${GITHUB_REF#refs/tags/v}" --no-git-tag-version
+          fi
           npm install
           npm run build
 
@@ -618,14 +636,14 @@ jobs:
               exit 1
             fi
             # Extract and publish from the tarball
-            TARBALL=$(ls dist/*.tgz | head -1)
+            TARBALL=$(ls ./dist/*.tgz | head -1)
             npm publish "$TARBALL" --access public
           else
             echo "DRY RUN: Verifying npm package (not publishing)"
             echo "Package tarball:"
             ls -la dist/*.tgz
             # Verify the tarball is valid
-            TARBALL=$(ls dist/*.tgz | head -1)
+            TARBALL=$(ls ./dist/*.tgz | head -1)
             tar -tzf "$TARBALL" | head -20
             echo "... (truncated)"
           fi
