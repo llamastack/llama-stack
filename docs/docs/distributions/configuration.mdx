@@ -946,6 +946,36 @@ server:
 - `cors: true` enables localhost access only (secure for development)
 - For public APIs, always specify exact allowed origins
 
+### TLS Context Caching
+
+When Llama Stack makes outbound HTTPS connections to external services (such as remote inference providers, authentication endpoints, or other APIs), it optimizes performance by creating and reusing SSL contexts. An SSL context (`ssl.SSLContext`) is created once during provider initialization and shared across all subsequent connections to that endpoint.
+
+**Why Caching Matters**: Creating an SSL context is expensive—it involves reading certificate bundles from disk, parsing certificate chains, and initializing cryptographic structures. By caching these contexts, Llama Stack avoids this overhead on every API request.
+
+Performance benefits:
+
+- **Reduced I/O overhead**: Certificate bundle files are read from disk only once
+- **Lower CPU usage**: Certificate parsing and validation happens once per provider
+- **Faster request initialization**: Each new HTTP client reuses the cached SSL context
+
+The caching happens automatically during provider initialization and requires no configuration.
+
+**Important: Server Restart Required for TLS Bundle Changes**
+
+Because SSL contexts are created during provider initialization and cached for the lifetime of the server process, updates to system TLS certificate bundles will not be picked up automatically. If you update trusted CA certificates or modify the system certificate store, you **must restart the Llama Stack server** for the changes to take effect.
+
+Common scenarios requiring a restart:
+
+- System CA bundle updates (e.g., `/etc/ssl/certs/ca-certificates.crt` on Linux)
+- Custom CA certificate additions
+- Certificate bundle updates in containerized environments
+- Changes to provider-specific `tls_verify` configuration
+
+To apply TLS bundle updates:
+1. Update the system certificate store or custom CA files
+2. Restart the Llama Stack server to reload all SSL contexts
+3. Verify outbound connections to external services work correctly
+
 ## Extending to handle Safety
 
 Configuring Safety can be a little involved so it is instructive to go through an example.
