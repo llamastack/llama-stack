@@ -60,7 +60,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client==0.4.3",
+    "llama-stack-client==0.4.4",
 ]
 
 [dependency-groups]
@@ -109,7 +109,7 @@ type_checking = [
     "lm-format-enforcer",
     "mcp",
     "ollama",
-    "llama-stack-client==0.4.3",
+    "llama-stack-client==0.4.4",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
