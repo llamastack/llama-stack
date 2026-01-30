@@ -276,6 +276,7 @@ class LiteLLMOpenAIMixin(
             user=params.user,
             safety_identifier=params.safety_identifier,
             reasoning_effort=params.reasoning_effort,
+            prompt_cache_key=params.prompt_cache_key,
             api_key=self.get_api_key(),
             api_base=self.api_base,
             **self._litellm_extra_request_params(params),
