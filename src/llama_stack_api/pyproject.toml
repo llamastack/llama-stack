@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.uv]
@@ -7,7 +7,7 @@ required-version = ">=0.7.0"
 
 [project]
 name = "llama-stack-api"
-version = "0.4.0.dev0"
+dynamic = ["version"]
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "API and Provider specifications for Llama Stack - lightweight package with protocol definitions and provider specs"
 readme = "README.md"
@@ -87,6 +87,10 @@ py-modules = [
 
 [tool.setuptools.package-data]
 llama_stack_api = ["py.typed", "**/*.json", "**/*.yaml"]
+
+[tool.setuptools_scm]
+root = "../.."
+fallback_version = "0.4.4.dev0"
 
 [tool.ruff]
 line-length = 120

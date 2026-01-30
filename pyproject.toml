@@ -1,13 +1,16 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+fallback_version = "0.4.4.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
 
 [project]
 name = "llama_stack"
-version = "0.4.0.dev0"
+dynamic = ["version"]
 authors = [{ name = "Meta Llama", email = "llama-oss@meta.com" }]
 description = "Llama Stack"
 readme = "README.md"

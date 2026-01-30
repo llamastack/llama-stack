@@ -200,6 +200,31 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
+      # === COMPUTE VERSION ===
+      # Since version tags live on release branches (not main), we compute
+      # the version explicitly rather than relying on setuptools-scm git inference.
+      - name: Compute package version
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
+        id: compute-version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            # Read base version from fallback_version in pyproject.toml
+            BASE=$(python3 -c "
+          import tomllib, pathlib
+          p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
+          print(v.split('.dev')[0])
+          ")
+            DATE=$(date -u +%Y%m%d)
+            VERSION="${BASE}.dev${DATE}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Computed version: ${VERSION}"
+
       # === LOCAL PYTHON PACKAGE BUILD ===
       - name: Check for missing package entries (llama-stack-api)
         if: steps.should-build.outputs.skip != 'true' && matrix.package == 'llama-stack-api'
@@ -219,7 +244,7 @@ jobs:
         run: uv build --out-dir dist --no-build-isolation
         working-directory: ${{ matrix.path }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.version || '' }}
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ steps.compute-version.outputs.version }}
 
       # === EXTERNAL PYTHON PACKAGE BUILD ===
       - name: Build external Python package
@@ -231,6 +256,7 @@ jobs:
           python -m build --outdir dist
         env:
           SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.version || '' }}
+          # Note: external packages have their own versioning; only override if explicitly provided
 
       # === NPM PACKAGE BUILD ===
       - name: Build TypeScript package
