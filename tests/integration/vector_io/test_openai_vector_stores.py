@@ -35,7 +35,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
             "remote::qdrant",
             "remote::weaviate",
             "remote::elasticsearch",
-            "remote::oci",
         ]:
             return
 
@@ -57,7 +56,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::qdrant",
             "remote::weaviate",
             "remote::elasticsearch",
-            "remote::oci",
         ],
         "keyword": [
             "inline::milvus",
@@ -69,7 +67,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::weaviate",
             "remote::chromadb",
             "remote::elasticsearch",
-            "remote::oci",
         ],
         "hybrid": [
             "inline::milvus",
@@ -81,7 +78,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::weaviate",
             "remote::chromadb",
             "remote::elasticsearch",
-            "remote::oci",
         ],
     }
     supported_providers = search_mode_support.get(search_mode, [])
@@ -3534,7 +3530,7 @@ def test_openai_vector_store_with_chunks(
     filtered_search = compat_client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="artificial intelligence",
-        filters={"topic": "ai", "type": "and"},
+        filters={"topic": "ai"},
         max_num_results=5,
     )
 
