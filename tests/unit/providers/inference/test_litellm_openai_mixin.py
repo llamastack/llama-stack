@@ -279,3 +279,22 @@ class TestLiteLLMOpenAIMixinStreamOptionsInjection:
                 call_kwargs = mock_acompletion.call_args[1]
                 # Telemetry must override False to ensure complete metrics
                 assert call_kwargs["stream_options"]["include_usage"] is True
+
+    async def test_chat_completion_with_prompt_cache_key(self, mixin_with_model_store):
+        """Test that prompt_cache_key is properly passed through to litellm"""
+        cache_key = "test-cache-key-456"
+
+        with patch("litellm.acompletion", new_callable=AsyncMock) as mock_acompletion:
+            mock_acompletion.return_value = MagicMock()
+
+            await mixin_with_model_store.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="test-model",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    prompt_cache_key=cache_key,
+                )
+            )
+
+            mock_acompletion.assert_called_once()
+            call_kwargs = mock_acompletion.call_args[1]
+            assert call_kwargs["prompt_cache_key"] == cache_key
