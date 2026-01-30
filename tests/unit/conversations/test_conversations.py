@@ -145,18 +145,16 @@ async def test_items_not_returned_on_creation_or_retrieval(service):
     # Create a conversation
     conversation = await service.create_conversation(CreateConversationRequest(metadata={"test": "value"}))
 
-    # Verify items is None or not present in creation response
-    assert conversation.items is None, "items should be None when creating a conversation"
+    # Verify items field doesn't exist in serialized response
+    conversation_dict = conversation.model_dump(exclude_none=True)
+    assert "items" not in conversation_dict, "items should not be in creation response"
 
     # Retrieve the conversation
     retrieved = await service.get_conversation(GetConversationRequest(conversation_id=conversation.id))
 
-    # Verify items is None or not present in retrieval response
-    assert retrieved.items is None, "items should be None when retrieving a conversation"
-
-    # Verify that the serialized response doesn't include items field when it's None
-    conversation_dict = conversation.model_dump(exclude_none=True)
-    assert "items" not in conversation_dict, "items should not be in serialized response when None"
+    # Verify items field doesn't exist in retrieval response
+    retrieved_dict = retrieved.model_dump(exclude_none=True)
+    assert "items" not in retrieved_dict, "items should not be in retrieval response"
 
 
 async def test_policy_configuration():
