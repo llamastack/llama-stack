@@ -190,7 +190,7 @@ jobs:
 
       - name: Install build dependencies
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
-        run: uv pip install --system setuptools wheel build
+        run: uv pip install --system setuptools setuptools-scm wheel build
 
       # === NODE SETUP (for npm packages) ===
       - name: Set up Node.js
