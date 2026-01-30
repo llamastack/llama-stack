@@ -125,6 +125,11 @@ class CreateResponseRequest(BaseModel):
         default=None,
         description="Configuration for reasoning effort in responses.",
     )
+    safety_identifier: str | None = Field(
+        default=None,
+        max_length=64,
+        description="A stable identifier used for safety monitoring and abuse detection.",
+    )
     metadata: dict[str, str] | None = Field(
         default=None,
         description="Dictionary of metadata key-value pairs to attach to the response.",

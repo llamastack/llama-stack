@@ -127,6 +127,7 @@ class MetaReferenceAgentsImpl(Agents):
             request.max_tool_calls,
             request.max_output_tokens,
             request.reasoning,
+            request.safety_identifier,
             request.metadata,
         )
         return result
