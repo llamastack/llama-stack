@@ -2128,3 +2128,59 @@ async def test_create_openai_response_with_max_output_tokens_and_tools(openai_re
         # The first call gets the full max_tokens, subsequent calls get remaining tokens
         assert params.max_completion_tokens is not None
         assert params.max_completion_tokens <= max_tokens
+
+
+async def test_create_openai_response_with_safety_identifier(openai_responses_impl, mock_inference_api):
+    """Test creating an OpenAI response with safety_identifier parameter."""
+    # Setup
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    safety_id = "safety-test-12345"
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming to get final response directly
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        safety_identifier=safety_id,
+        stream=False,
+    )
+
+    # Verify safety_identifier is preserved in the response
+    assert result.safety_identifier == safety_id
+    assert result.status == "completed"
+
+
+async def test_create_openai_response_with_safety_identifier_streaming(openai_responses_impl, mock_inference_api):
+    """Test creating a streaming OpenAI response with safety_identifier parameter."""
+    # Setup
+    input_text = "Tell me a story"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    safety_id = "stream-safety-67890"
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - streaming
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        safety_identifier=safety_id,
+        stream=True,
+    )
+
+    # For streaming response, collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify safety_identifier is in all response snapshots
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.safety_identifier == safety_id
+
+    # Check final response
+    final_event = chunks[-1]
+    assert final_event.type == "response.completed"
+    assert final_event.response.safety_identifier == safety_id
+    assert final_event.response.status == "completed"

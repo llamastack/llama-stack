@@ -4233,6 +4233,10 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        safety_identifier:
+          anyOf:
+          - type: string
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -4676,6 +4680,10 @@ components:
         max_output_tokens:
           anyOf:
           - type: integer
+          - type: 'null'
+        safety_identifier:
+          anyOf:
+          - type: string
           - type: 'null'
         metadata:
           anyOf:
