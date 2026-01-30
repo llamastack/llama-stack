@@ -58,8 +58,12 @@ def test_add_dependent_providers_include_configs():
         distro_dir="~/.llama/distributions/providers-run",
     )
 
-    inference_provider = provider_list["inference"][0]
-    assert inference_provider.config, "Expected sample config for inference provider"
+    # Some providers like sentence-transformers don't need configuration,
+    # so they may have empty configs. Check providers that have actual config needs.
+    vector_io_provider = provider_list["vector_io"][0]
+    assert vector_io_provider.config, "Expected sample config for vector_io provider"
+    assert "persistence" in vector_io_provider.config
 
     files_provider = provider_list["files"][0]
+    assert files_provider.config, "Expected sample config for files provider"
     assert "storage_dir" in files_provider.config
