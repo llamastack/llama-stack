@@ -34,7 +34,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
             "remote::pgvector",
             "remote::qdrant",
             "remote::weaviate",
-            "remote::oci",
             "remote::elasticsearch",
         ]:
             return
@@ -56,7 +55,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::pgvector",
             "remote::qdrant",
             "remote::weaviate",
-            "remote::oci",
             "remote::elasticsearch",
         ],
         "keyword": [
@@ -68,7 +66,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::qdrant",
             "remote::weaviate",
             "remote::chromadb",
-            "remote::oci",
             "remote::elasticsearch",
         ],
         "hybrid": [
@@ -80,7 +77,6 @@ def skip_if_provider_doesnt_support_openai_vector_stores_search(client_with_mode
             "remote::qdrant",
             "remote::weaviate",
             "remote::chromadb",
-            "remote::oci",
             "remote::elasticsearch",
         ],
     }
