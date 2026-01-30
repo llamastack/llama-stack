@@ -57,7 +57,7 @@ class ResponsesStore:
         self.sql_store = AuthorizedSqlStore(base_store, self.policy)
 
         await self.sql_store.create_table(
-            "openai_responses",
+            self.reference.table_name,
             {
                 "id": ColumnDefinition(type=ColumnType.STRING, primary_key=True),
                 "created_at": ColumnType.INTEGER,
@@ -89,6 +89,40 @@ class ResponsesStore:
     ) -> None:
         await self._write_response_object(response_object, input, messages)
 
+    async def upsert_response_object(
+        self,
+        response_object: OpenAIResponseObject,
+        input: list[OpenAIResponseInput],
+        messages: list[OpenAIMessageParam],
+    ) -> None:
+        """Upsert response object using INSERT on first call, UPDATE on subsequent calls.
+
+        This method enables incremental persistence during streaming, allowing clients
+        to poll GET /v1/responses/{response_id} and see in-progress turn state.
+
+        :param response_object: The response object to store/update.
+        :param input: The input items for the response.
+        :param messages: The chat completion messages (for conversation continuity).
+        """
+        if self.sql_store is None:
+            raise ValueError("Responses store is not initialized")
+
+        data = response_object.model_dump()
+        data["input"] = [input_item.model_dump() for input_item in input]
+        data["messages"] = [msg.model_dump() for msg in messages]
+
+        await self.sql_store.upsert(
+            table=self.reference.table_name,
+            data={
+                "id": data["id"],
+                "created_at": data["created_at"],
+                "model": data["model"],
+                "response_object": data,
+            },
+            conflict_columns=["id"],
+            update_columns=["response_object"],
+        )
+
     async def _write_response_object(
         self,
         response_object: OpenAIResponseObject,
@@ -103,7 +137,7 @@ class ResponsesStore:
         data["messages"] = [msg.model_dump() for msg in messages]
 
         await self.sql_store.insert(
-            "openai_responses",
+            self.reference.table_name,
             {
                 "id": data["id"],
                 "created_at": data["created_at"],
@@ -138,7 +172,7 @@ class ResponsesStore:
             where_conditions["model"] = model
 
         paginated_result = await self.sql_store.fetch_all(
-            table="openai_responses",
+            table=self.reference.table_name,
             where=where_conditions if where_conditions else None,
             order_by=[("created_at", order.value)],
             cursor=("id", after) if after else None,
@@ -161,7 +195,7 @@ class ResponsesStore:
             raise ValueError("Responses store is not initialized")
 
         row = await self.sql_store.fetch_one(
-            "openai_responses",
+            self.reference.table_name,
             where={"id": response_id},
         )
 
@@ -176,10 +210,10 @@ class ResponsesStore:
         if not self.sql_store:
             raise ValueError("Responses store is not initialized")
 
-        row = await self.sql_store.fetch_one("openai_responses", where={"id": response_id})
+        row = await self.sql_store.fetch_one(self.reference.table_name, where={"id": response_id})
         if not row:
             raise ValueError(f"Response with id {response_id} not found")
-        await self.sql_store.delete("openai_responses", where={"id": response_id})
+        await self.sql_store.delete(self.reference.table_name, where={"id": response_id})
         return OpenAIDeleteResponseObject(id=response_id)
 
     async def list_response_input_items(

@@ -215,10 +215,10 @@ def test_response_non_streaming_mcp_tool(responses_client, text_model_id, case, 
         call = response.output[1]
         assert call.type == "mcp_call"
         assert call.name == "get_boiling_point"
-        assert json.loads(call.arguments) == {
-            "liquid_name": "myawesomeliquid",
-            "celsius": True,
-        }
+        args = json.loads(call.arguments)
+        assert args["liquid_name"] == "myawesomeliquid"
+        # celsius has a default value of True, so it may be omitted or explicitly set
+        assert args.get("celsius", True) is True
         assert call.error is None
         assert "-100" in call.output
 
@@ -285,10 +285,10 @@ def test_response_sequential_mcp_tool(responses_client, text_model_id, case):
         call = response.output[1]
         assert call.type == "mcp_call"
         assert call.name == "get_boiling_point"
-        assert json.loads(call.arguments) == {
-            "liquid_name": "myawesomeliquid",
-            "celsius": True,
-        }
+        args = json.loads(call.arguments)
+        assert args["liquid_name"] == "myawesomeliquid"
+        # celsius has a default value of True, so it may be omitted or explicitly set
+        assert args.get("celsius", True) is True
         assert call.error is None
         assert "-100" in call.output
 
@@ -363,10 +363,10 @@ def test_response_mcp_tool_approval(responses_client, text_model_id, case, appro
             call = response.output[1]
             assert call.type == "mcp_call"
             assert call.name == "get_boiling_point"
-            assert json.loads(call.arguments) == {
-                "liquid_name": "myawesomeliquid",
-                "celsius": True,
-            }
+            args = json.loads(call.arguments)
+            assert args["liquid_name"] == "myawesomeliquid"
+            # celsius has a default value of True, so it may be omitted or explicitly set
+            assert args.get("celsius", True) is True
             assert call.error is None
             assert "-100" in call.output
 
@@ -752,3 +752,129 @@ def test_max_tool_calls_with_mcp_tools(responses_client, text_model_id):
 
         # Verify we have a valid max_tool_calls field
         assert response_3.max_tool_calls == max_tool_calls[1]
+
+
+def test_parallel_tool_calls_with_function_tools(responses_client, text_model_id):
+    """Test handling of parallel_tool_calls with function tools in responses."""
+
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get weather information for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city name (e.g., 'New York', 'London')",
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "name": "get_time",
+            "description": "Get current time for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city name (e.g., 'New York', 'London')",
+                    },
+                },
+            },
+        },
+    ]
+
+    # First create a response that triggers function tools with parallel_tool_calls enabled
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="Can you tell me the weather in Paris and the current time?",
+        tools=tools,
+        stream=False,
+        parallel_tool_calls=True,
+    )
+
+    # Verify we got two function calls
+    assert len(response.output) == 2
+    assert response.output[0].type == "function_call"
+    assert response.output[0].name == "get_weather"
+    assert response.output[0].status == "completed"
+    assert response.output[1].type == "function_call"
+    assert response.output[1].name == "get_time"
+    assert response.output[1].status == "completed"
+
+    # Verify we have a valid parallel_tool_calls field
+    assert response.parallel_tool_calls
+
+    # Next create a response that triggers function tools with parallel_tool_calls disabled
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input="Can you tell me the weather in Paris and the current time?",
+        tools=tools,
+        stream=False,
+        parallel_tool_calls=False,
+    )
+
+    # Verify we got one function call i.e. get_weather
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "function_call"
+    assert response2.output[0].name == "get_weather"
+    assert response2.output[0].status == "completed"
+
+    # Verify we have a valid parallel_tool_calls field
+    assert not response2.parallel_tool_calls
+
+
+def test_parallel_tool_calls_with_mcp_tools(responses_client, text_model_id):
+    """Test handling of parallel_tool_calls with mcp tools in responses."""
+
+    with make_mcp_server(tools=dependency_tools()) as mcp_server_info:
+        input = "Get the experiment ID for 'boiling_point' and get the user ID for 'charlie'"
+        tools = [
+            {"type": "mcp", "server_label": "localmcp", "server_url": mcp_server_info["server_url"]},
+        ]
+
+        # First create a response that triggers mcp tools with parallel_tool_calls enabled
+        response = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            parallel_tool_calls=True,
+        )
+
+        # Verify we got two mcp tool calls followed by a message
+        assert len(response.output) == 4
+        mcp_list_tools = [output for output in response.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 2, f"Expected two mcp calls, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Verify we have a valid parallel_tool_calls field
+        assert response.parallel_tool_calls
+
+        # Next create a response that triggers mcp tools with parallel_tool_calls disabled
+        response2 = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            parallel_tool_calls=False,
+        )
+
+        # Verify we got two mcp tool calls followed by a message
+        assert len(response2.output) == 4
+        mcp_list_tools = [output for output in response2.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response2.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response2.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 2, f"Expected two mcp calls, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Verify we have a valid parallel_tool_calls field
+        assert not response2.parallel_tool_calls

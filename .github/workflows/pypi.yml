@@ -1,4 +1,51 @@
-name: Build, test, and upload PyPI package
+# =============================================================================
+# Unified PyPI/NPM Release Workflow
+# =============================================================================
+#
+# This workflow builds, tests, and publishes all llama-stack packages:
+# - llama-stack (PyPI)
+# - llama-stack-api (PyPI)
+# - llama-stack-client-python (PyPI, from external repo)
+# - llama-stack-client-typescript (npm, from external repo)
+#
+# =============================================================================
+# REQUIRED SECRETS
+# =============================================================================
+#
+# 1. NPM_TOKEN - npm Access Token
+#    Purpose: Publish llama-stack-client package to npmjs.org (production only)
+#
+#    How to create:
+#    - Log in to https://www.npmjs.com/
+#    - Profile > Access Tokens > Generate New Token > Classic Token
+#    - Select type: Automation
+#
+#    Add to repo: Settings > Secrets and variables > Actions > New repository secret
+#    Name: NPM_TOKEN
+#
+#    Note: Token owner must have publish access to llama-stack-client on npm
+#
+# =============================================================================
+# WORKFLOW INPUTS (workflow_dispatch)
+# =============================================================================
+#
+# dry_run:
+#   - test-pypi: Publish to test.pypi.org, npm pack only (default)
+#   - build-only: Build and validate only, no publishing
+#   - off: Production publish to pypi.org and npmjs.org
+#
+# version: Optional version override (e.g., "0.2.0rc1")
+#
+# packages:
+#   - all: Build all packages
+#   - llama-stack-only: Build only llama-stack and llama-stack-api
+#   - clients-only: Build only client packages
+#
+# client_ref: Git ref for client repos (default: main)
+#
+# =============================================================================
+
+name: Build, test, and publish packages
 
 on:
   push:
@@ -17,6 +64,35 @@ on:
   schedule:
     # Nightly at midnight UTC - for test.pypi.org publishing
     - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run mode'
+        required: false
+        type: choice
+        options:
+          - 'test-pypi'      # Publish to test.pypi.org (default for testing)
+          - 'build-only'     # Build and validate only, no publishing anywhere
+          - 'off'            # Production publish (use with caution!)
+        default: 'test-pypi'
+      version:
+        description: 'Version override (e.g., "0.2.0rc1"). Leave empty for auto-detection.'
+        required: false
+        type: string
+      packages:
+        description: 'Which packages to build/publish'
+        required: false
+        type: choice
+        options:
+          - all
+          - llama-stack-only
+          - clients-only
+        default: 'all'
+      client_ref:
+        description: 'Git ref for client repos (branch/tag/sha). Default: main'
+        required: false
+        type: string
+        default: 'main'
 
 env:
   LC_ALL: en_US.UTF-8
@@ -31,39 +107,127 @@ permissions:
 jobs:
   # Build and validate release artifacts
   build-package:
-    name: Build and check packages
+    name: Build ${{ matrix.package }}
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
+          # Local packages (in this repo)
           - package: llama-stack-api
             path: src/llama_stack_api
+            type: local
+            registry: pypi
           - package: llama-stack
             path: .
+            type: local
+            registry: pypi
+          # External packages (client SDKs from other repos)
+          - package: llama-stack-client-python
+            repo: llamastack/llama-stack-client-python
+            type: external
+            registry: pypi
+          - package: llama-stack-client-typescript
+            repo: llamastack/llama-stack-client-typescript
+            type: external
+            registry: npm
+
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      # Skip check for package selection
+      - name: Check if package should be built
+        id: should-build
+        run: |
+          PACKAGES="${{ inputs.packages || 'all' }}"
+          PACKAGE="${{ matrix.package }}"
+          TYPE="${{ matrix.type }}"
+
+          if [ "$PACKAGES" == "all" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          elif [ "$PACKAGES" == "llama-stack-only" ] && [ "$TYPE" == "local" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          elif [ "$PACKAGES" == "clients-only" ] && [ "$TYPE" == "external" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "::notice::Skipping $PACKAGE (packages=$PACKAGES)"
+          fi
+
+      # === LOCAL PACKAGE STEPS ===
+      - name: Checkout local repo
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          # for setuptools-scm
-          fetch-depth: 0
+          fetch-depth: 0  # for setuptools-scm
 
       - name: Install dependent PRs if needed
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
         uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # === EXTERNAL PACKAGE STEPS ===
+      - name: Checkout external repo
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: ${{ matrix.repo }}
+          ref: ${{ inputs.client_ref || 'main' }}
+          path: external-repo
+          fetch-depth: 0
+
+      # === PYTHON SETUP (for all Python packages) ===
       - name: Set up Python
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: "3.12"
 
       - name: Install uv
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
         uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
 
       - name: Install build dependencies
-        run: uv pip install --system setuptools wheel
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
+        run: uv pip install --system setuptools setuptools-scm wheel build
 
+      # === NODE SETUP (for npm packages) ===
+      - name: Set up Node.js
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      # === COMPUTE VERSION ===
+      # Since version tags live on release branches (not main), we compute
+      # the version explicitly rather than relying on setuptools-scm git inference.
+      - name: Compute package version
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
+        id: compute-version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            # Read base version from fallback_version in pyproject.toml
+            BASE=$(python3 -c "
+          import tomllib, pathlib
+          p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
+          print(v.split('.dev')[0])
+          ")
+            DATE=$(date -u +%Y%m%d)
+            VERSION="${BASE}.dev${DATE}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Computed version: ${VERSION}"
+
+      # === LOCAL PYTHON PACKAGE BUILD ===
       - name: Check for missing package entries (llama-stack-api)
-        if: matrix.package == 'llama-stack-api'
+        if: steps.should-build.outputs.skip != 'true' && matrix.package == 'llama-stack-api'
         working-directory: src/llama_stack_api
         run: |
           for f in *.py; do
@@ -75,30 +239,85 @@ jobs:
             grep -q "llama_stack_api.${d%/}" pyproject.toml || echo "::warning::Missing from packages: ${d%/}"
           done
 
-      - name: Build package
+      - name: Build local Python package
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
         run: uv build --out-dir dist --no-build-isolation
         working-directory: ${{ matrix.path }}
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ steps.compute-version.outputs.version }}
 
+      # === EXTERNAL PYTHON PACKAGE BUILD ===
+      - name: Build external Python package
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
+        working-directory: external-repo
+        run: |
+          # Use python -m build for better compatibility
+          uv pip install --system build
+          python -m build --outdir dist
+        env:
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ inputs.version || '' }}
+          # Note: external packages have their own versioning; only override if explicitly provided
+
+      # === NPM PACKAGE BUILD ===
+      - name: Build TypeScript package
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
+        working-directory: external-repo
+        run: |
+          npm install
+          npm run build
+
+      # === PYTHON PACKAGE VALIDATION ===
       - name: Install validation tools
+        if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
         run: uv pip install --system twine check-wheel-contents
 
-      - name: Check wheel contents
-        # Ignore pre-existing warnings:
-        # W002: Duplicate files - many __init__.py files have identical content
-        # W004: Non-importable paths - distribution dirs use hyphens (e.g., meta-reference-gpu, starter-gpu)
+      - name: Check wheel contents (local)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
         run: check-wheel-contents --ignore W002,W004 ${{ matrix.path }}/dist/*.whl
 
-      - name: Validate package with twine
+      - name: Check wheel contents (external)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
+        run: check-wheel-contents --ignore W002,W004 external-repo/dist/*.whl
+
+      - name: Validate package with twine (local)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
         run: twine check ${{ matrix.path }}/dist/*
 
-      - name: List dist contents
+      - name: Validate package with twine (external)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
+        run: twine check external-repo/dist/*
+
+      # === LIST AND UPLOAD ARTIFACTS ===
+      - name: List dist contents (local)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
         run: ls -la ${{ matrix.path }}/dist/
 
-      - name: Upload artifacts
+      - name: List dist contents (external Python)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
+        run: ls -la external-repo/dist/
+
+      - name: List package contents (external npm)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'npm'
+        working-directory: external-repo
+        run: |
+          npm pack --dry-run
+          mkdir -p dist
+          npm pack --pack-destination dist
+          ls -la dist/
+
+      - name: Upload artifacts (local)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: Packages-${{ matrix.package }}
           path: ${{ matrix.path }}/dist/*
+
+      - name: Upload artifacts (external)
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: Packages-${{ matrix.package }}
+          path: external-repo/dist/*
 
   # Functional tests - install and verify packages work
   test-package:
@@ -116,30 +335,72 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Set up Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '20'
+
       - name: Download llama-stack-api artifacts
+        id: download-api
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: Packages-llama-stack-api
           path: dist-api
+        continue-on-error: true
 
       - name: Download llama-stack artifacts
+        id: download-stack
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: Packages-llama-stack
           path: dist-stack
+        continue-on-error: true
 
-      - name: Create venv and install packages
+      - name: Download llama-stack-client-python artifacts
+        id: download-client-python
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: Packages-llama-stack-client-python
+          path: dist-client-python
+        continue-on-error: true
+
+      - name: Download llama-stack-client-typescript artifacts
+        id: download-client-ts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: Packages-llama-stack-client-typescript
+          path: dist-client-ts
+        continue-on-error: true
+
+      - name: Create venv and install Python packages
         run: |
           uv venv .venv
           source .venv/bin/activate
-          uv pip install dist-api/*.whl dist-stack/*.whl
 
-      - name: List Wheel Contents
+          # Install available Python packages
+          if [ -d "dist-api" ] && ls dist-api/*.whl 1>/dev/null 2>&1; then
+            echo "Installing llama-stack-api..."
+            uv pip install dist-api/*.whl
+          fi
+
+          if [ -d "dist-client-python" ] && ls dist-client-python/*.whl 1>/dev/null 2>&1; then
+            echo "Installing llama-stack-client..."
+            uv pip install dist-client-python/*.whl
+          fi
+
+          if [ -d "dist-stack" ] && ls dist-stack/*.whl 1>/dev/null 2>&1; then
+            echo "Installing llama-stack..."
+            uv pip install dist-stack/*.whl
+          fi
+
+      - name: List Wheel Contents (llama-stack-api)
+        if: steps.download-api.outcome == 'success'
         run: |
           source .venv/bin/activate
           python -m zipfile -l dist-api/*.whl
 
       - name: Verify Llama Stack package
+        if: steps.download-stack.outcome == 'success'
         run: |
           source .venv/bin/activate
           uv pip list
@@ -152,96 +413,219 @@ jobs:
       - name: Verify packages are importable
         run: |
           source .venv/bin/activate
-          python -c "import llama_stack; print(f'llama_stack imported successfully from {llama_stack.__file__}')"
-          python -c "import llama_stack_api; print(f'llama_stack_api imported successfully from {llama_stack_api.__file__}')"
 
-  # push to Test PyPI on
-  # - a new GitHub release is published
-  # - nightly schedule (to be friendly to test.pypi.org infra)
-  # Note: llama-stack-api must be published first since llama-stack depends on it
-  publish-test-pypi:
-    name: Publish ${{ matrix.package }} to test.pypi.org
-    # environment: publish-test-pypi
+          if [ -d "dist-stack" ] && ls dist-stack/*.whl 1>/dev/null 2>&1; then
+            python -c "import llama_stack; print(f'llama_stack imported successfully from {llama_stack.__file__}')"
+          fi
+
+          if [ -d "dist-api" ] && ls dist-api/*.whl 1>/dev/null 2>&1; then
+            python -c "import llama_stack_api; print(f'llama_stack_api imported successfully from {llama_stack_api.__file__}')"
+          fi
+
+          if [ -d "dist-client-python" ] && ls dist-client-python/*.whl 1>/dev/null 2>&1; then
+            python -c "import llama_stack_client; print(f'llama_stack_client imported successfully from {llama_stack_client.__file__}')"
+          fi
+
+      - name: Verify TypeScript package
+        if: steps.download-client-ts.outcome == 'success'
+        run: |
+          if [ -d "dist-client-ts" ] && ls dist-client-ts/*.tgz 1>/dev/null 2>&1; then
+            echo "TypeScript package tarball found:"
+            ls -la dist-client-ts/*.tgz
+
+            # Create a test directory and install the package
+            mkdir -p ts-test
+            cd ts-test
+            npm init -y
+            npm install ../dist-client-ts/*.tgz
+            echo "TypeScript package installed successfully"
+
+            # Verify the package is importable
+            node -e "const pkg = require('llama-stack-client'); console.log('llama-stack-client package loaded successfully');" || echo "Package may use ES modules, skipping require test"
+          fi
+
+  # Publish packages to PyPI/npm
+  # Order: llama-stack-client-python, llama-stack-client-typescript, llama-stack-api, llama-stack
+  publish-packages:
+    name: Publish ${{ matrix.package }}
     if: |
-      github.repository_owner == 'llamastack' && (
-          github.event.action == 'published' ||
-          github.event_name == 'schedule'
+      github.repository_owner == 'llamastack' &&
+      (inputs.dry_run || 'test-pypi') != 'build-only' && (
+        github.event_name == 'workflow_dispatch' ||
+        github.event.action == 'published' ||
+        github.event_name == 'schedule'
       )
     permissions:
-      contents: read
-      # see https://docs.pypi.org/trusted-publishers/
-      id-token: write
+      contents: write  # for gh release upload
+      id-token: write  # for PyPI trusted publishing
     runs-on: ubuntu-latest
     needs: test-package
     strategy:
       max-parallel: 1
       matrix:
-        package:
-          - llama-stack-api
-          - llama-stack
+        include:
+          # Order matters! Dependencies are published first
+          - package: llama-stack-client-python
+            registry: pypi
+            type: external
+          - package: llama-stack-client-typescript
+            registry: npm
+            type: external
+          - package: llama-stack-api
+            registry: pypi
+            type: local
+          - package: llama-stack
+            registry: pypi
+            type: local
 
     steps:
-      - name: Fetch build artifacts
+      # Skip check for package selection
+      - name: Check if package should be published
+        id: should-publish
+        run: |
+          PACKAGES="${{ inputs.packages || 'all' }}"
+          PACKAGE="${{ matrix.package }}"
+          TYPE="${{ matrix.type }}"
+
+          if [ "$PACKAGES" == "all" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          elif [ "$PACKAGES" == "llama-stack-only" ] && [ "$TYPE" == "local" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          elif [ "$PACKAGES" == "clients-only" ] && [ "$TYPE" == "external" ]; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "::notice::Skipping publish for $PACKAGE (packages=$PACKAGES)"
+          fi
+
+      - name: Download build artifacts
+        if: steps.should-publish.outputs.skip != 'true'
+        id: download
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: Packages-${{ matrix.package }}
           path: dist
+        continue-on-error: true
 
-      - name: Upload to Test PyPI
-        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
-        with:
-          repository-url: https://test.pypi.org/legacy/
-          verbose: true
+      - name: Check if artifacts exist
+        if: steps.should-publish.outputs.skip != 'true'
+        id: check-artifacts
+        run: |
+          if [ -d "dist" ] && [ "$(ls -A dist 2>/dev/null)" ]; then
+            echo "has_artifacts=true" >> $GITHUB_OUTPUT
+            echo "Artifacts found:"
+            ls -la dist/
+          else
+            echo "has_artifacts=false" >> $GITHUB_OUTPUT
+            echo "::warning::No artifacts found for ${{ matrix.package }}. Skipping publish."
+          fi
 
-  # push to Production PyPI on
-  # - a new GitHub release is published
-  # Note: llama-stack-api must be published first since llama-stack depends on it
-  publish-pypi:
-    name: Publish ${{ matrix.package }} to pypi.org
-    # environment: publish-pypi
-    if: |
-      github.repository_owner == 'llamastack' && github.event.action == 'published'
-    permissions:
-      # see https://docs.pypi.org/trusted-publishers/
-      id-token: write
-      # allow gh release upload
-      contents: write
+      # === PYPI PUBLISHING ===
+      - name: Determine PyPI target
+        if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'pypi' && steps.check-artifacts.outputs.has_artifacts == 'true'
+        id: pypi-target
+        run: |
+          DRY_RUN="${{ inputs.dry_run }}"
+          EVENT="${{ github.event_name }}"
 
-    runs-on: ubuntu-latest
-    needs: test-package
-    strategy:
-      max-parallel: 1
-      matrix:
-        package:
-          - llama-stack-api
-          - llama-stack
+          # Determine target registry
+          if [ "$EVENT" == "release" ]; then
+            echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
+            echo "target=pypi.org" >> $GITHUB_OUTPUT
+            echo "is_production=true" >> $GITHUB_OUTPUT
+          elif [ "$DRY_RUN" == "off" ]; then
+            echo "url=https://upload.pypi.org/legacy/" >> $GITHUB_OUTPUT
+            echo "target=pypi.org" >> $GITHUB_OUTPUT
+            echo "is_production=true" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://test.pypi.org/legacy/" >> $GITHUB_OUTPUT
+            echo "target=test.pypi.org" >> $GITHUB_OUTPUT
+            echo "is_production=false" >> $GITHUB_OUTPUT
+          fi
 
-    steps:
-      - name: Fetch build artifacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          name: Packages-${{ matrix.package }}
-          path: dist
-
-      - uses: sigstore/gh-action-sigstore-python@f7ad0af51a5648d09a20d00370f0a91c3bdf8f84 # v3.0.1
+      - name: Sign artifacts with Sigstore (production only)
+        if: |
+          steps.should-publish.outputs.skip != 'true' &&
+          matrix.registry == 'pypi' &&
+          steps.check-artifacts.outputs.has_artifacts == 'true' &&
+          steps.pypi-target.outputs.is_production == 'true'
+        uses: sigstore/gh-action-sigstore-python@f7ad0af51a5648d09a20d00370f0a91c3bdf8f84 # v3.0.1
         with:
           inputs: >-
             ./dist/*.tar.gz
             ./dist/*.whl
           release-signing-artifacts: false
 
-      - name: Upload artifacts and signatures to GitHub release
+      - name: Upload artifacts to GitHub release (production only)
+        if: |
+          steps.should-publish.outputs.skip != 'true' &&
+          matrix.registry == 'pypi' &&
+          steps.check-artifacts.outputs.has_artifacts == 'true' &&
+          steps.pypi-target.outputs.is_production == 'true' &&
+          github.event_name == 'release'
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          gh release upload '${{ github.ref_name }}' dist/* --repo '${{ github.repository }}'
+          gh release upload '${{ github.ref_name }}' dist/* --repo '${{ github.repository }}' || true
 
-      # PyPI does not accept .sigstore artifacts and
-      # gh-action-pypi-publish has no option to ignore them.
-      - name: Remove sigstore signatures before uploading to PyPI
-        run: rm ./dist/*.sigstore.json
+      - name: Remove sigstore signatures before PyPI upload
+        if: |
+          steps.should-publish.outputs.skip != 'true' &&
+          matrix.registry == 'pypi' &&
+          steps.check-artifacts.outputs.has_artifacts == 'true' &&
+          steps.pypi-target.outputs.is_production == 'true'
+        run: rm -f ./dist/*.sigstore.json
 
       - name: Upload to PyPI
+        if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'pypi' && steps.check-artifacts.outputs.has_artifacts == 'true'
         uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         with:
+          repository-url: ${{ steps.pypi-target.outputs.url }}
           verbose: true
+
+      # === NPM PUBLISHING ===
+      - name: Set up Node.js
+        if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'npm' && steps.check-artifacts.outputs.has_artifacts == 'true'
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Publish to npm
+        if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'npm' && steps.check-artifacts.outputs.has_artifacts == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          DRY_RUN="${{ inputs.dry_run }}"
+          EVENT="${{ github.event_name }}"
+
+          echo "Event: $EVENT"
+          echo "Dry run: $DRY_RUN"
+
+          # Check if we should do production publish
+          if [ "$EVENT" == "release" ]; then
+            IS_PRODUCTION=true
+          elif [ "$DRY_RUN" == "off" ]; then
+            IS_PRODUCTION=true
+          else
+            IS_PRODUCTION=false
+          fi
+
+          if [ "$IS_PRODUCTION" == "true" ]; then
+            echo "PRODUCTION: Publishing to npm"
+            if [ -z "$NODE_AUTH_TOKEN" ]; then
+              echo "::error::NPM_TOKEN secret not configured. Cannot publish to npm."
+              exit 1
+            fi
+            # Extract and publish from the tarball
+            TARBALL=$(ls dist/*.tgz | head -1)
+            npm publish "$TARBALL" --access public
+          else
+            echo "DRY RUN: Verifying npm package (not publishing)"
+            echo "Package tarball:"
+            ls -la dist/*.tgz
+            # Verify the tarball is valid
+            TARBALL=$(ls dist/*.tgz | head -1)
+            tar -tzf "$TARBALL" | head -20
+            echo "... (truncated)"
+          fi

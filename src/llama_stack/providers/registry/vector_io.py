@@ -480,13 +480,34 @@ export PGVECTOR_PASSWORD=password
 ```
 
 2. Pull pgvector image with that tag you want:
+
+Via Podman:
 ```bash
 podman pull pgvector/pgvector:0.8.1-pg18-trixie
 ```
 
+Via Docker:
+```bash
+docker pull pgvector/pgvector:0.8.1-pg18-trixie
+```
+
 3. Run container with PGVector:
+
+Via Podman
 ```bash
 podman run -d \
+  --name pgvector \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_USER=user \
+  -e POSTGRES_DB=testvectordb \
+  -p 5432:5432 \
+  -v pgvector_data:/var/lib/postgresql \
+  pgvector/pgvector:0.8.1-pg18-trixie
+```
+
+Via Docker
+```bash
+docker run -d \
   --name pgvector \
   -e POSTGRES_PASSWORD=password \
   -e POSTGRES_USER=user \
