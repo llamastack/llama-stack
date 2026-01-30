@@ -60,7 +60,27 @@ def test_list_deps_formatting_quotes_only_for_uv():
 
 
 def test_stack_list_deps_expands_provider_dependencies():
-    args = argparse.Namespace(
+    """Test that listing deps for a provider also includes deps from its API dependencies.
+
+    For example, agents=inline::meta-reference depends on the inference API.
+    When we list deps for agents, we should also get dependencies from an inference provider.
+    This test verifies the expansion happens by checking that dependencies unique to
+    inference providers appear in the agents output.
+    """
+    # First, get dependencies for just the inference provider
+    inference_args = argparse.Namespace(
+        config=None,
+        env_name="test-env",
+        providers="inference=inline::meta-reference",
+        format="deps-only",
+    )
+
+    with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
+        run_stack_list_deps_command(inference_args)
+        inference_output = mock_stdout.getvalue()
+
+    # Now get dependencies for agents, which should include inference deps
+    agents_args = argparse.Namespace(
         config=None,
         env_name="test-env",
         providers="agents=inline::meta-reference",
@@ -68,8 +88,14 @@ def test_stack_list_deps_expands_provider_dependencies():
     )
 
     with patch("sys.stdout", new_callable=StringIO) as mock_stdout:
-        run_stack_list_deps_command(args)
-        output = mock_stdout.getvalue()
+        run_stack_list_deps_command(agents_args)
+        agents_output = mock_stdout.getvalue()
 
-        # Agents provider depends on inference and others; ensure at least inference deps show up.
-        assert "torch" in output
+    # Verify that inference-specific dependencies appear in agents output
+    # (because agents depends on inference API and dependencies were expanded)
+    # Pick a few packages that are specific to inference providers
+    inference_specific_packages = ["torch", "transformers", "accelerate"]
+
+    for package in inference_specific_packages:
+        assert package in inference_output, f"{package} should be in inference deps"
+        assert package in agents_output, f"{package} should be in agents deps (expanded from inference dependency)"
