@@ -794,36 +794,6 @@ For a request to succeed:
 2. User must pass resource authorization (can read `model::llama-3-2-3b`)
 3. Both checks must pass
 
-#### API Endpoint Authorization with Scopes
-
-In addition to resource-based access control, Llama Stack supports endpoint-level authorization using OAuth 2.0 style scopes. When authentication is enabled, specific API endpoints require users to have particular scopes in their authentication token.
-
-**Authentication Configuration:**
-
-For **JWT/OAuth2 providers**, scopes should be included in the JWT's claims:
-```json
-{
-  "sub": "user123",
-  "scope": "<scope>",
-  "aud": "llama-stack"
-}
-```
-
-For **custom authentication providers**, the endpoint must return user attributes including the `scopes` array:
-```json
-{
-  "principal": "user123",
-  "attributes": {
-    "scopes": ["<scope>"]
-  }
-}
-```
-
-**Behavior:**
-- Users without the required scope receive a 403 Forbidden response
-- When authentication is disabled, scope checks are bypassed
-- Endpoints without `required_scope` work normally for all authenticated users
-
 ### Quota Configuration
 
 The `quota` section allows you to enable server-side request throttling for both

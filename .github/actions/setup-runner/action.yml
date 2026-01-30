@@ -13,6 +13,10 @@ inputs:
     description: 'URL to install Python SDK from (for testing preview builds). If provided, overrides client-version.'
     required: false
     default: ""
+  branch:
+    description: 'Explicit branch override (used by scheduled CI to pass the matrix branch)'
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
@@ -27,6 +31,7 @@ runs:
       with:
         client-version: ${{ inputs.client-version }}
         sdk_install_url: ${{ inputs.sdk_install_url }}
+        branch: ${{ inputs.branch }}
 
     - name: Install dependencies
       shell: bash

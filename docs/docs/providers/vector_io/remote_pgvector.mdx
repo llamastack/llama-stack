@@ -82,13 +82,27 @@ description: |
   ```
 
   2. Pull pgvector image with that tag you want:
+
+  Via Podman:
   ```bash
   podman pull pgvector/pgvector:0.8.1-pg18-trixie
   ```
 
+  Via Docker:
+  ```bash
+  docker pull pgvector/pgvector:0.8.1-pg18-trixie
+  ```
+
   3. Run container with PGVector:
+
+  Via Podman
   ```bash
   podman run -d   --name pgvector   -e POSTGRES_PASSWORD=password   -e POSTGRES_USER=user   -e POSTGRES_DB=testvectordb   -p 5432:5432   -v pgvector_data:/var/lib/postgresql   pgvector/pgvector:0.8.1-pg18-trixie
+  ```
+
+  Via Docker
+  ```bash
+  docker run -d   --name pgvector   -e POSTGRES_PASSWORD=password   -e POSTGRES_USER=user   -e POSTGRES_DB=testvectordb   -p 5432:5432   -v pgvector_data:/var/lib/postgresql   pgvector/pgvector:0.8.1-pg18-trixie
   ```
 
   ## Documentation
@@ -184,13 +198,27 @@ export PGVECTOR_PASSWORD=password
 ```
 
 2. Pull pgvector image with that tag you want:
+
+Via Podman:
 ```bash
 podman pull pgvector/pgvector:0.8.1-pg18-trixie
 ```
 
+Via Docker:
+```bash
+docker pull pgvector/pgvector:0.8.1-pg18-trixie
+```
+
 3. Run container with PGVector:
+
+Via Podman
 ```bash
 podman run -d   --name pgvector   -e POSTGRES_PASSWORD=password   -e POSTGRES_USER=user   -e POSTGRES_DB=testvectordb   -p 5432:5432   -v pgvector_data:/var/lib/postgresql   pgvector/pgvector:0.8.1-pg18-trixie
+```
+
+Via Docker
+```bash
+docker run -d   --name pgvector   -e POSTGRES_PASSWORD=password   -e POSTGRES_USER=user   -e POSTGRES_DB=testvectordb   -p 5432:5432   -v pgvector_data:/var/lib/postgresql   pgvector/pgvector:0.8.1-pg18-trixie
 ```
 
 ## Documentation
@@ -207,8 +235,7 @@ See [PGVector's documentation](https://github.com/pgvector/pgvector) for more de
 | `user` | `str \| None` | No | postgres |  |
 | `password` | `str \| None` | No | mysecretpassword |  |
 | `distance_metric` | `Literal[COSINE, L2, L1, INNER_PRODUCT] \| None` | No | COSINE | PGVector distance metric used for vector search in PGVectorIndex |
-| `hnsw_m` | `int \| None` | No | 16 | PGVector's HNSW index parameter - maximum number of edges each vertex has to its neighboring vertices in the graph |
-| `hnsw_ef_construction` | `int \| None` | No | 64 | PGVector's HNSW index parameter - size of the dynamic candidate list used for graph construction |
+| `vector_index` | `PGVectorHNSWVectorIndex \| PGVectorIVFFlatVectorIndex \| None` | No | type=&lt;PGVectorIndexType.HNSW: 'HNSW'&gt; m=16 ef_construction=64 | PGVector vector index used for Approximate Nearest Neighbor (ANN) search |
 | `persistence` | `KVStoreReference \| None` | No |  | Config for KV store backend (SQLite only for now) |
 
 ## Sample Configuration
@@ -219,6 +246,11 @@ port: ${env.PGVECTOR_PORT:=5432}
 db: ${env.PGVECTOR_DB}
 user: ${env.PGVECTOR_USER}
 password: ${env.PGVECTOR_PASSWORD}
+distance_metric: COSINE
+vector_index:
+  type: HNSW
+  m: 16
+  ef_construction: 64
 persistence:
   namespace: vector_io::pgvector
   backend: kv_default

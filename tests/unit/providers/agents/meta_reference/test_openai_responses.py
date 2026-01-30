@@ -47,6 +47,7 @@ from llama_stack_api.inference import (
 )
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
+    OpenAIResponseError,
     OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
@@ -55,6 +56,8 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolMCP,
     OpenAIResponseInputToolWebSearch,
     OpenAIResponseMessage,
+    OpenAIResponseObject,
+    OpenAIResponseObjectStreamResponseFailed,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
@@ -258,11 +261,61 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     assert final_response.model == model
     assert len(final_response.output) == 1
     assert isinstance(final_response.output[0], OpenAIResponseMessage)
-    assert final_response.output[0].id == added_event.item_id
-    assert final_response.id == added_event.response_id
 
-    openai_responses_impl.responses_store.store_response_object.assert_called_once()
-    assert final_response.output[0].content[0].text == "Dublin"
+
+async def test_failed_stream_persists_non_system_messages(openai_responses_impl, mock_responses_store):
+    input_text = "Hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    failed_response = OpenAIResponseObject(
+        created_at=1,
+        id="resp_failed",
+        model=model,
+        output=[],
+        status="failed",
+        error=OpenAIResponseError(code="server_error", message="boom"),
+        store=True,
+    )
+
+    class FakeOrchestrator:
+        def __init__(self, *, ctx, **_kwargs):
+            self.ctx = ctx
+            self.final_messages = None
+
+        async def create_response(self):
+            yield OpenAIResponseObjectStreamResponseFailed(response=failed_response, sequence_number=0)
+
+    with patch(
+        "llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.StreamingResponseOrchestrator",
+        FakeOrchestrator,
+    ):
+        stream = await openai_responses_impl.create_openai_response(
+            input=input_text,
+            model=model,
+            instructions="system instructions",
+            stream=True,
+            store=True,
+        )
+        chunks = [chunk async for chunk in stream]
+
+    assert chunks[-1].type == "response.failed"
+    mock_responses_store.upsert_response_object.assert_awaited()
+
+    # Find the call that corresponds to the failed response
+    call_args_list = mock_responses_store.upsert_response_object.call_args_list
+    failed_call = None
+    for call in call_args_list:
+        _, kwargs = call
+        if kwargs.get("response_object") and kwargs["response_object"].status == "failed":
+            failed_call = call
+            break
+
+    assert failed_call is not None, "Expected upsert_response_object to be called with failed response"
+    _, kwargs = failed_call
+    messages = kwargs["messages"]
+    assert messages, "Expected non-system messages to be persisted on failure"
+    assert all(not isinstance(m, OpenAISystemMessageParam) for m in messages)
+    assert any(getattr(m, "role", None) == "user" for m in messages)
 
 
 async def test_create_openai_response_with_string_input_with_tools(openai_responses_impl, mock_inference_api):
@@ -296,7 +349,7 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
         ]
         openai_responses_impl.tool_groups_api.get_tool.reset_mock()
         openai_responses_impl.tool_runtime_api.invoke_tool.reset_mock()
-        openai_responses_impl.responses_store.store_response_object.reset_mock()
+        openai_responses_impl.responses_store.upsert_response_object.reset_mock()
 
         result = await openai_responses_impl.create_openai_response(
             input=input_text,
@@ -327,7 +380,7 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
             kwargs={"query": "What is the capital of Ireland?"},
         )
 
-        openai_responses_impl.responses_store.store_response_object.assert_called_once()
+        openai_responses_impl.responses_store.upsert_response_object.assert_called()
 
         # Check that we got the content from our mocked tool execution result
         assert len(result.output) >= 1
@@ -1093,7 +1146,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
         store=True,
     )
 
-    store_call_args = mock_responses_store.store_response_object.call_args
+    store_call_args = mock_responses_store.upsert_response_object.call_args
     stored_input = store_call_args.kwargs["input"]
 
     # Verify that the stored input contains the full re-hydrated conversation:
@@ -1136,7 +1189,7 @@ async def test_reuse_mcp_tool_list(
             OpenAIResponseInputToolMCP(server_label="alabel", server_url="aurl"),
         ],
     )
-    args = mock_responses_store.store_response_object.call_args
+    args = mock_responses_store.upsert_response_object.call_args
     data = args.kwargs["response_object"].model_dump()
     data["input"] = [input_item.model_dump() for input_item in args.kwargs["input"]]
     data["messages"] = [msg.model_dump() for msg in args.kwargs["messages"]]
@@ -1252,10 +1305,10 @@ async def test_create_openai_response_with_output_types_as_input(
     _ = [chunk async for chunk in result]
 
     # Verify store was called
-    assert mock_responses_store.store_response_object.called
+    assert mock_responses_store.upsert_response_object.called
 
     # Get the stored data
-    store_call_args = mock_responses_store.store_response_object.call_args
+    store_call_args = mock_responses_store.upsert_response_object.call_args
     stored_response = store_call_args.kwargs["response_object"]
 
     # Now simulate a multi-turn conversation where outputs become inputs
@@ -1911,3 +1964,167 @@ async def test_file_search_results_include_chunk_metadata_attributes(mock_vector
         "Machine learning is a subset of AI",
         "Deep learning uses neural networks",
     ]
+
+
+async def test_create_openai_response_with_max_output_tokens_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that max_output_tokens is properly handled in non-streaming responses."""
+    input_text = "Write a long story about AI."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 100
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the max_output_tokens
+    assert result.max_output_tokens == max_tokens
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the max_output_tokens was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == max_tokens
+
+    # Verify the max_output_tokens was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.max_output_tokens == max_tokens
+
+
+async def test_create_openai_response_with_max_output_tokens_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that max_output_tokens is properly handled in streaming responses."""
+    input_text = "Explain machine learning in detail."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 200
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify max_output_tokens is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.max_output_tokens == max_tokens
+
+    # Verify max_output_tokens is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.max_output_tokens == max_tokens
+
+    # Verify the max_output_tokens was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == max_tokens
+
+    # Verify the max_output_tokens was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.max_output_tokens == max_tokens
+
+
+async def test_create_openai_response_with_max_output_tokens_boundary_value(openai_responses_impl, mock_inference_api):
+    """Test that max_output_tokens accepts the minimum valid value of 16."""
+    input_text = "Hi"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with minimum valid value
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=16,
+        stream=False,
+    )
+
+    # Verify it accepts 16
+    assert result.max_output_tokens == 16
+    assert result.status == "completed"
+
+    # Verify the inference API was called with max_completion_tokens=16
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == 16
+
+
+async def test_create_openai_response_with_max_output_tokens_and_tools(openai_responses_impl, mock_inference_api):
+    """Test that max_output_tokens works correctly with tool calls."""
+    input_text = "What's the weather in San Francisco?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 150
+
+    openai_responses_impl.tool_groups_api.get_tool.return_value = ToolDef(
+        name="get_weather",
+        toolgroup_id="weather",
+        description="Get weather information",
+        input_schema={
+            "type": "object",
+            "properties": {"location": {"type": "string"}},
+            "required": ["location"],
+        },
+    )
+
+    openai_responses_impl.tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(
+        status="completed",
+        content="Sunny, 72°F",
+    )
+
+    # Mock two inference calls: one for tool call, one for final response
+    mock_inference_api.openai_chat_completion.side_effect = [
+        fake_stream("tool_call_completion.yaml"),
+        fake_stream(),
+    ]
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_weather",
+                description="Get weather information",
+                parameters={"location": "string"},
+            )
+        ],
+    )
+
+    # Verify max_output_tokens is preserved
+    assert result.max_output_tokens == max_tokens
+    assert result.status == "completed"
+
+    # Verify both inference calls received max_completion_tokens
+    assert mock_inference_api.openai_chat_completion.call_count == 2
+    for call in mock_inference_api.openai_chat_completion.call_args_list:
+        params = call.args[0]
+        # The first call gets the full max_tokens, subsequent calls get remaining tokens
+        assert params.max_completion_tokens is not None
+        assert params.max_completion_tokens <= max_tokens

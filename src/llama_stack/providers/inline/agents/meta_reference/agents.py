@@ -125,6 +125,7 @@ class MetaReferenceAgentsImpl(Agents):
             request.guardrails,
             request.parallel_tool_calls,
             request.max_tool_calls,
+            request.max_output_tokens,
             request.reasoning,
             request.metadata,
         )

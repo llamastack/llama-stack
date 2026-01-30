@@ -148,7 +148,8 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
                 lines.append("")
 
                 if op["missing_properties"]:
-                    lines.append(f"<details><summary>Missing Properties ({op['missing_count']})</summary>")
+                    lines.append("<details>")
+                    lines.append(f"<summary>Missing Properties ({op['missing_count']})</summary>")
                     lines.append("")
                     for prop in op["missing_properties"]:
                         # Clean up the property path for readability
@@ -159,7 +160,8 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
                     lines.append("")
 
                 if op["conformance_issues"]:
-                    lines.append(f"<details><summary>Schema Issues ({op['issues_count']})</summary>")
+                    lines.append("<details>")
+                    lines.append(f"<summary>Schema Issues ({op['issues_count']})</summary>")
                     lines.append("")
                     lines.append("| Property | Issues |")
                     lines.append("|----------|--------|")
