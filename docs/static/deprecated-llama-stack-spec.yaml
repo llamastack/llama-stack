@@ -12105,6 +12105,50 @@ components:
           nullable: true
       title: ProcessFileRequest
       type: object
+    ComparisonFilter:
+      description: A filter that compares a metadata field against a value.
+      properties:
+        type:
+          enum:
+          - eq
+          - ne
+          - gt
+          - gte
+          - lt
+          - lte
+          - in
+          - nin
+          title: Type
+          type: string
+        key:
+          title: Key
+          type: string
+        value:
+          title: Value
+      required:
+      - type
+      - key
+      - value
+      title: ComparisonFilter
+      type: object
+    CompoundFilter:
+      description: A filter that combines multiple filters with a logical operator.
+      properties:
+        type:
+          enum:
+          - and
+          - or
+          title: Type
+          type: string
+        filters:
+          items: {}
+          title: Filters
+          type: array
+      required:
+      - type
+      - filters
+      title: CompoundFilter
+      type: object
     ListFilesRequest:
       description: Request model for listing files.
       properties:
