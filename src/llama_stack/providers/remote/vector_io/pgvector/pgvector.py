@@ -18,20 +18,18 @@ from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import (
     WeightedInMemoryAggregator,
     load_embedded_chunk_with_backward_compat,
     sanitize_collection_name,
 )
 from llama_stack_api import (
-    ChunkForDeletion,
-    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     Inference,
-    InsertChunksRequest,
-    QueryChunksRequest,
+    InterleavedContent,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
@@ -243,7 +241,9 @@ class PGVectorIndex(EmbeddingIndex):
             ):
                 await self.create_ivfflat_vector_index(cur)
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
         """
         Performs vector similarity search using PostgreSQL's search function. Default distance metric is COSINE.
 
@@ -251,10 +251,15 @@ class PGVectorIndex(EmbeddingIndex):
             embedding: The query embedding vector
             k: Number of results to return
             score_threshold: Minimum similarity score threshold
+            filters: Optional filters (not yet supported for PGVector provider)
 
         Returns:
             QueryChunksResponse with combined results
         """
+        # Filters are not yet implemented for PGVector provider
+        if filters is not None:
+            raise NotImplementedError("PGVector provider does not yet support native filtering")
+
         pgvector_search_function = self.get_pgvector_search_function()
 
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
@@ -690,13 +695,24 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         # Delete vector store metadata from PGVector metadata_store table
         remove_vector_store_metadata(self.conn, vector_store_id)
 
-    async def insert_chunks(self, request: InsertChunksRequest) -> None:
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
-        await index.insert_chunks(request)
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
+        await index.insert_chunks(chunks)
 
-    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
-        return await index.query_chunks(request)
+    async def query_chunks(
+        self,
+        vector_store_id: str,
+        query: InterleavedContent,
+        params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
+    ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("PGVector provider does not yet support native filtering")
+
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
+        return await index.query_chunks(query, params)
 
     async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex:
         if vector_store_id in self.cache:
@@ -723,10 +739,10 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
         self.cache[vector_store_id] = VectorStoreWithIndex(vector_store, index, self.inference_api)
         return self.cache[vector_store_id]
 
-    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
+    async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Delete a chunk from a PostgreSQL vector store."""
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+        index = await self._get_and_cache_vector_store_index(store_id)
         if not index:
-            raise VectorStoreNotFoundError(request.vector_store_id)
+            raise VectorStoreNotFoundError(store_id)
 
-        await index.index.delete_chunks(request.chunks)
+        await index.index.delete_chunks(chunks_for_deletion)

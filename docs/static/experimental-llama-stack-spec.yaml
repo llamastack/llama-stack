@@ -11615,45 +11615,49 @@ components:
       - metadata
       title: ProcessFileResponse
       type: object
-    ProcessFileRequest:
-      description: |-
-        Request model for file processing operation.
-
-        Wraps the serializable parameters for process_file. The UploadFile parameter
-        is kept separate (not serializable), following the same pattern as
-        UploadFileRequest in the Files API.
+    ComparisonFilter:
+      description: A filter that compares a metadata field against a value.
       properties:
-        file_id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: ID of file already uploaded to file storage. Mutually exclusive with file.
-          nullable: true
-        options:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-          description: Optional processing options. Provider-specific parameters (e.g., OCR settings, output format).
-          nullable: true
-        chunking_strategy:
-          anyOf:
-          - discriminator:
-              mapping:
-                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
-              title: VectorStoreChunkingStrategyAuto
-            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-              title: VectorStoreChunkingStrategyStatic
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
-          - type: 'null'
-          description: Optional chunking strategy for splitting content into chunks.
-          title: Chunking Strategy
-          nullable: true
-      title: ProcessFileRequest
+        type:
+          enum:
+          - eq
+          - ne
+          - gt
+          - gte
+          - lt
+          - lte
+          - in
+          - nin
+          title: Type
+          type: string
+        key:
+          title: Key
+          type: string
+        value:
+          title: Value
+      required:
+      - type
+      - key
+      - value
+      title: ComparisonFilter
+      type: object
+    CompoundFilter:
+      description: A filter that combines multiple filters with a logical operator.
+      properties:
+        type:
+          enum:
+          - and
+          - or
+          title: Type
+          type: string
+        filters:
+          items: {}
+          title: Filters
+          type: array
+      required:
+      - type
+      - filters
+      title: CompoundFilter
       type: object
     ListFilesRequest:
       description: Request model for listing files.

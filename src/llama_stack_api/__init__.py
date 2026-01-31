@@ -207,6 +207,7 @@ from .eval import (
     resolve_run_eval_request,
 )
 from .file_processors import FileProcessors, ProcessFileRequest, ProcessFileResponse
+from .filters import ComparisonFilter, CompoundFilter, Filter
 from .files import (
     DeleteFileRequest,
     ExpiresAfter,
@@ -709,6 +710,9 @@ __all__ = [
     "ExtraBodyField",
     "FileProcessors",
     "Files",
+    "Filter",
+    "ComparisonFilter",
+    "CompoundFilter",
     "Fp8QuantizationConfig",
     "clear_dynamic_schema_types",
     "get_schema_identifier",

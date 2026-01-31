@@ -18,19 +18,18 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_RRF,
+    ChunkForDeletion,
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
+from llama_stack.providers.utils.vector_io.filters import Filter as LlamaStackFilter
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from llama_stack_api import (
-    ChunkForDeletion,
-    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     Inference,
-    InsertChunksRequest,
-    QueryChunksRequest,
+    InterleavedContent,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
@@ -88,16 +87,23 @@ class WeaviateIndex(EmbeddingIndex):
         chunk_ids = [chunk.chunk_id for chunk in chunks_for_deletion]
         collection.data.delete_many(where=Filter.by_property("chunk_id").contains_any(chunk_ids))
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
         """
         Performs vector search using Weaviate's built-in vector search.
         Args:
             embedding: The query embedding vector
             k: Limit of number of results to return
             score_threshold: Minimum similarity score threshold
+            filters: Optional filters (not yet supported for Weaviate provider)
         Returns:
             QueryChunksResponse with chunks and scores.
         """
+        # Filters are not yet implemented for Weaviate provider
+        if filters is not None:
+            raise NotImplementedError("Weaviate provider does not yet support native filtering")
+
         log.debug(
             f"WEAVIATE VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
         )
@@ -374,23 +380,34 @@ class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProv
         self.cache[vector_store_id] = index
         return index
 
-    async def insert_chunks(self, request: InsertChunksRequest) -> None:
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(request.vector_store_id)
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        await index.insert_chunks(request)
+        await index.insert_chunks(chunks)
 
-    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+    async def query_chunks(
+        self,
+        vector_store_id: str,
+        query: InterleavedContent,
+        params: dict[str, Any] | None = None,
+        filters: LlamaStackFilter | None = None,
+    ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("Weaviate provider does not yet support native filtering")
+
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(request.vector_store_id)
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        return await index.query_chunks(request)
+        return await index.query_chunks(query, params)
 
-    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+    async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
+        index = await self._get_and_cache_vector_store_index(store_id)
         if not index:
-            raise ValueError(f"Vector DB {request.vector_store_id} not found")
+            raise ValueError(f"Vector DB {store_id} not found")
 
-        await index.index.delete_chunks(request.chunks)
+        await index.index.delete_chunks(chunks_for_deletion)

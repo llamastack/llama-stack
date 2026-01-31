@@ -18,20 +18,18 @@ from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
-    ChunkForDeletion,
-    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     Inference,
-    InsertChunksRequest,
-    OpenAIAttachFileRequest,
-    QueryChunksRequest,
+    InterleavedContent,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
+    VectorStoreChunkingStrategy,
     VectorStoreFileObject,
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
@@ -110,7 +108,13 @@ class QdrantIndex(EmbeddingIndex):
             log.error(f"Error deleting chunks from Qdrant collection {self.collection_name}: {e}")
             raise
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
+        # Filters are not yet implemented for Qdrant provider
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         results = (
             await self.client.query_points(
                 collection_name=self.collection_name,
@@ -369,33 +373,48 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         self.cache[vector_store_id] = index
         return index
 
-    async def insert_chunks(self, request: InsertChunksRequest) -> None:
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+    async def insert_chunks(
+        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
+    ) -> None:
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(request.vector_store_id)
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        await index.insert_chunks(request)
+        await index.insert_chunks(chunks)
 
-    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+    async def query_chunks(
+        self,
+        vector_store_id: str,
+        query: InterleavedContent,
+        params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
+    ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
+        index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(request.vector_store_id)
+            raise VectorStoreNotFoundError(vector_store_id)
 
-        return await index.query_chunks(request)
+        return await index.query_chunks(query, params)
 
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
-        request: OpenAIAttachFileRequest,
+        file_id: str,
+        attributes: dict[str, Any] | None = None,
+        chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> VectorStoreFileObject:
         # Qdrant doesn't allow multiple clients to access the same storage path simultaneously.
         async with self._qdrant_lock:
-            return await super().openai_attach_file_to_vector_store(vector_store_id, request)
+            return await super().openai_attach_file_to_vector_store(
+                vector_store_id, file_id, attributes, chunking_strategy
+            )
 
-    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
+    async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Delete chunks from a Qdrant vector store."""
-        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+        index = await self._get_and_cache_vector_store_index(store_id)
         if not index:
-            raise ValueError(f"Vector DB {request.vector_store_id} not found")
+            raise ValueError(f"Vector DB {store_id} not found")
 
-        await index.index.delete_chunks(request.chunks)
+        await index.index.delete_chunks(chunks_for_deletion)
