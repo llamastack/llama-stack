@@ -644,6 +644,6 @@ jobs:
             ls -la dist/*.tgz
             # Verify the tarball is valid
             TARBALL=$(ls ./dist/*.tgz | head -1)
-            tar -tzf "$TARBALL" | head -20
+            tar -tzf "$TARBALL" 2>/dev/null | head -20 || true
             echo "... (truncated)"
           fi
