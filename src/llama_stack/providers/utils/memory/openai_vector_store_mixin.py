@@ -11,7 +11,7 @@ import random
 import time
 import uuid
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from enum import StrEnum
 from typing import Annotated, Any
 
@@ -84,11 +84,27 @@ from llama_stack_api.files.models import (
     RetrieveFileContentRequest,
     RetrieveFileRequest,
 )
+from llama_stack_api.filters import (
+    COMPARISON_FILTER_TYPES,
+    COMPOUND_FILTER_TYPES,
+)
 from llama_stack_api.internal.kvstore import KVStore
 
 EMBEDDING_DIMENSION = 768
 
 logger = get_logger(name=__name__, category="providers::utils")
+
+# Comparison operators for filter matching (dispatch table)
+COMPARISON_OPERATORS: dict[str, Callable[[Any, Any], bool]] = {
+    "eq": lambda mv, fv: bool(mv == fv),
+    "ne": lambda mv, fv: bool(mv != fv),
+    "gt": lambda mv, fv: bool(mv > fv),
+    "gte": lambda mv, fv: bool(mv >= fv),
+    "lt": lambda mv, fv: bool(mv < fv),
+    "lte": lambda mv, fv: bool(mv <= fv),
+    "in": lambda mv, fv: bool(isinstance(fv, list) and mv in fv),
+    "nin": lambda mv, fv: bool(isinstance(fv, list) and mv not in fv),
+}
 
 # Constants for OpenAI vector stores
 
@@ -839,64 +855,102 @@ class OpenAIVectorStoreMixin(ABC):
 
         return params
 
+    def _matches_comparison_filter(self, metadata_value: Any, filter_type: str, filter_value: Any) -> bool:
+        """Check if a metadata value matches a comparison filter.
+
+        Args:
+            metadata_value: The value from the metadata to test
+            filter_type: The comparison operator (eq, ne, gt, etc.)
+            filter_value: The value to compare against
+
+        Returns:
+            bool: True if the comparison matches, False otherwise
+        """
+        if filter_type not in COMPARISON_OPERATORS:
+            raise ValueError(f"Unsupported comparison filter type: {filter_type}")
+
+        return COMPARISON_OPERATORS[filter_type](metadata_value, filter_value)
+
+    def _matches_legacy_filter(self, metadata: dict[str, Any], filters: dict[str, Any]) -> bool:
+        """Handle legacy filter format (direct key-value pairs without type field).
+
+        Args:
+            metadata: The metadata to test against
+            filters: Dict of key-value pairs to match
+
+        Returns:
+            bool: True if all key-value pairs match the metadata
+        """
+        for key, value in filters.items():
+            if key not in metadata or metadata[key] != value:
+                return False
+        return True
+
+    def _matches_compound_filter(
+        self, metadata: dict[str, Any], filter_type: str, sub_filters: list[dict[str, Any]]
+    ) -> bool:
+        """Handle compound filters (and/or logic).
+
+        Args:
+            metadata: The metadata to test against
+            filter_type: Either "and" or "or"
+            sub_filters: List of filters to combine
+
+        Returns:
+            bool: True if the compound filter matches
+        """
+        if filter_type == "and":
+            return all(self._matches_filters(metadata, f) for f in sub_filters)
+        elif filter_type == "or":
+            return any(self._matches_filters(metadata, f) for f in sub_filters)
+        else:
+            raise ValueError(f"Unsupported compound filter type: {filter_type}")
+
     def _matches_filters(self, metadata: dict[str, Any], filters: dict[str, Any]) -> bool:
-        """Check if metadata matches the provided filters."""
+        """Check if metadata matches the provided filters.
+
+        This method supports multiple filter formats:
+        - OpenAI-style typed filters with "type" field
+        - Legacy direct key-value filters
+        - Compound filters with nested logic
+
+        Args:
+            metadata: The metadata to test against
+            filters: The filter specification
+
+        Returns:
+            bool: True if the metadata matches the filter criteria
+        """
         if not filters:
             return True
 
         filter_type = filters.get("type")
 
+        # Handle legacy format (no type field)
         if filter_type is None:
             if "key" not in filters and "value" not in filters and "filters" not in filters:
-                for key, value in filters.items():
-                    if key not in metadata:
-                        return False
-                    if metadata[key] != value:
-                        return False
-                return True
+                return self._matches_legacy_filter(metadata, filters)
             else:
                 raise ValueError("Unsupported filter structure: missing 'type' field")
 
-        if filter_type in ["eq", "ne", "gt", "gte", "lt", "lte"]:
-            # Comparison filter
+        # Handle comparison filters
+        if filter_type in COMPARISON_FILTER_TYPES:
             filter_key = filters.get("key")
-            value = filters.get("value")
+            filter_value = filters.get("value")
 
-            if filter_key is None or not isinstance(filter_key, str):
-                return False
-
-            if filter_key not in metadata:
+            # Validate filter structure
+            if not isinstance(filter_key, str) or filter_key not in metadata:
                 return False
 
             metadata_value = metadata[filter_key]
+            return self._matches_comparison_filter(metadata_value, filter_type, filter_value)
 
-            if filter_type == "eq":
-                return bool(metadata_value == value)
-            elif filter_type == "ne":
-                return bool(metadata_value != value)
-            elif filter_type == "gt":
-                return bool(metadata_value > value)
-            elif filter_type == "gte":
-                return bool(metadata_value >= value)
-            elif filter_type == "lt":
-                return bool(metadata_value < value)
-            elif filter_type == "lte":
-                return bool(metadata_value <= value)
-            else:
-                raise ValueError(f"Unsupported filter type: {filter_type}")
-
-        elif filter_type == "and":
-            # All filters must match
+        # Handle compound filters
+        elif filter_type in COMPOUND_FILTER_TYPES:
             sub_filters = filters.get("filters", [])
-            return all(self._matches_filters(metadata, f) for f in sub_filters)
-
-        elif filter_type == "or":
-            # At least one filter must match
-            sub_filters = filters.get("filters", [])
-            return any(self._matches_filters(metadata, f) for f in sub_filters)
+            return self._matches_compound_filter(metadata, filter_type, sub_filters)
 
         else:
-            # Unknown filter type, default to no match
             raise ValueError(f"Unsupported filter type: {filter_type}")
 
     def _chunk_to_vector_store_content(
@@ -1509,6 +1563,16 @@ class OpenAIVectorStoreMixin(ABC):
         if batch_info["vector_store_id"] != vector_store_id:
             raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
 
+        # Check if batch has expired (7 days from creation)
+        import time
+
+        current_time = int(time.time())
+        created_at = batch_info.get("created_at", current_time)
+        expires_at = batch_info.get("expires_at", created_at + (7 * 24 * 60 * 60))  # 7 days default
+
+        if current_time > expires_at:
+            raise ValueError(f"File batch {batch_id} has expired after 7 days from creation")
+
         return VectorStoreFileBatchObject(**batch_info)
 
     async def openai_list_files_in_vector_store_file_batch(
@@ -1603,8 +1667,8 @@ class OpenAIVectorStoreMixin(ABC):
         if batch_info["vector_store_id"] != vector_store_id:
             raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
 
-        if batch_info["status"] == "completed":
-            return VectorStoreFileBatchObject(**batch_info)
+        if batch_info["status"] in ["completed", "failed"]:
+            raise ValueError(f"Cannot cancel batch {batch_id} with status {batch_info['status']}")
 
         # Cancel the background task if running
         if batch_id in self._file_batch_tasks:

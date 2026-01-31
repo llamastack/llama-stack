@@ -18,10 +18,9 @@ from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
-    ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -36,6 +35,7 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
+from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 
 from .config import QdrantVectorIOConfig as RemoteQdrantVectorIOConfig
 
@@ -80,6 +80,18 @@ class QdrantIndex(EmbeddingIndex):
                 self.collection_name,
                 vectors_config=models.VectorParams(size=len(chunks[0].embedding), distance=models.Distance.COSINE),
             )
+            # Create text index for keyword search functionality
+            await self.client.create_payload_index(
+                collection_name=self.collection_name,
+                field_name="chunk_content.content",
+                field_schema=models.TextIndexParams(
+                    type="text",
+                    tokenizer=models.TokenizerType.WORD,
+                    min_token_len=2,
+                    max_token_len=20,
+                    lowercase=True,
+                ),
+            )
 
         points = []
         for chunk in chunks:
@@ -110,7 +122,13 @@ class QdrantIndex(EmbeddingIndex):
             log.error(f"Error deleting chunks from Qdrant collection {self.collection_name}: {e}")
             raise
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
+        # Filters are not yet implemented for Qdrant provider
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         results = (
             await self.client.query_points(
                 collection_name=self.collection_name,
@@ -137,7 +155,13 @@ class QdrantIndex(EmbeddingIndex):
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self,
+        query_string: str,
+        k: int,
+        score_threshold: float,
+        filters: ComparisonFilter | CompoundFilter | None = None,
+    ) -> QueryChunksResponse:
         """
         Performs keyword-based search using Qdrant's MatchText filter.
 
@@ -152,6 +176,10 @@ class QdrantIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with chunks and scores matching the keyword query
         """
+        # Qdrant provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         try:
             # Use scroll for keyword-only search since query_points requires a query vector
             # Scroll allows filtering without a query vector
@@ -209,6 +237,7 @@ class QdrantIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: ComparisonFilter | CompoundFilter | None = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword filtering in a single query.
@@ -227,6 +256,10 @@ class QdrantIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with filtered vector search results
         """
+        # Qdrant provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         try:
             query_words = query_string.lower().split()
             if not query_words:

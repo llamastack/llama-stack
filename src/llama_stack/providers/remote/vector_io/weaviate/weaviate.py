@@ -17,13 +17,13 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_RRF,
+    ChunkForDeletion,
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from llama_stack_api import (
-    ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -36,6 +36,7 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
+from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 from llama_stack_api.internal.kvstore import KVStore
 
 from .config import WeaviateVectorIOConfig
@@ -87,16 +88,23 @@ class WeaviateIndex(EmbeddingIndex):
         chunk_ids = [chunk.chunk_id for chunk in chunks_for_deletion]
         collection.data.delete_many(where=Filter.by_property("chunk_id").contains_any(chunk_ids))
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
         """
         Performs vector search using Weaviate's built-in vector search.
         Args:
             embedding: The query embedding vector
             k: Limit of number of results to return
             score_threshold: Minimum similarity score threshold
+            filters: Optional filters (not yet supported for Weaviate provider)
         Returns:
             QueryChunksResponse with chunks and scores.
         """
+        # Filters are not yet implemented for Weaviate provider
+        if filters is not None:
+            raise NotImplementedError("Weaviate provider does not yet support native filtering")
+
         log.debug(
             f"WEAVIATE VECTOR SEARCH CALLED: embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}"
         )
@@ -148,7 +156,13 @@ class WeaviateIndex(EmbeddingIndex):
         collection = self.client.collections.get(sanitized_collection_name)
         collection.data.delete_many(where=Filter.by_property("id").contains_any(chunk_ids))
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self,
+        query_string: str,
+        k: int,
+        score_threshold: float,
+        filters: ComparisonFilter | CompoundFilter | None = None,
+    ) -> QueryChunksResponse:
         """
         Performs BM25-based keyword search using Weaviate's built-in full-text search.
         Args:
@@ -158,6 +172,10 @@ class WeaviateIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with chunks and scores
         """
+        # Weaviate provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Weaviate provider does not yet support native filtering")
+
         log.debug(f"WEAVIATE KEYWORD SEARCH CALLED: query='{query_string}', k={k}, threshold={score_threshold}")
         sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
         collection = self.client.collections.get(sanitized_collection_name)
@@ -200,6 +218,7 @@ class WeaviateIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: ComparisonFilter | CompoundFilter | None = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword search using Weaviate's native hybrid search.
@@ -213,6 +232,10 @@ class WeaviateIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
+        # Weaviate provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Weaviate provider does not yet support native filtering")
+
         log.debug(
             f"WEAVIATE HYBRID SEARCH CALLED: query='{query_string}', embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}, reranker={reranker_type}"
         )
