@@ -14,6 +14,7 @@ from llama_stack.log import get_logger
 # Removed VectorStores import to avoid exposing public API
 from llama_stack_api import (
     EmbeddedChunk,
+    Filter,
     InterleavedContent,
     ModelNotFoundError,
     ModelType,
@@ -113,10 +114,11 @@ class VectorStoresRoutingTable(CommonRoutingTableImpl):
         vector_store_id: str,
         query: InterleavedContent,
         params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         await self.assert_action_allowed("read", "vector_store", vector_store_id)
         provider = await self.get_provider_impl(vector_store_id)
-        return await provider.query_chunks(vector_store_id, query, params)
+        return await provider.query_chunks(vector_store_id, query, params, filters)
 
     async def openai_retrieve_vector_store(
         self,

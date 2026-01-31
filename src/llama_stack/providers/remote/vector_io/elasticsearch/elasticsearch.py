@@ -14,6 +14,7 @@ from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack_api import (
     EmbeddedChunk,
     Files,
@@ -178,8 +179,12 @@ class ElasticsearchIndex(EmbeddingIndex):
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         """Vector search using kNN."""
+        if filters is not None:
+            raise NotImplementedError("Elasticsearch provider does not yet support native filtering")
 
         try:
             results = await self.client.search(
@@ -196,8 +201,12 @@ class ElasticsearchIndex(EmbeddingIndex):
 
         return await self._results_to_chunks(results)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         """Keyword search using match query."""
+        if filters is not None:
+            raise NotImplementedError("Elasticsearch provider does not yet support native filtering")
 
         try:
             results = await self.client.search(
@@ -222,7 +231,10 @@ class ElasticsearchIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("Elasticsearch provider does not yet support native filtering")
         supported_retrievers = ["rrf", "linear"]
         if reranker_type not in supported_retrievers:
             raise ValueError(f"Unsupported reranker type: {reranker_type}. Supported types are: {supported_retrievers}")
@@ -372,8 +384,15 @@ class ElasticsearchVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStore
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
+        self,
+        vector_store_id: str,
+        query: InterleavedContent,
+        params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("Elasticsearch provider does not yet support native filtering")
+
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)
