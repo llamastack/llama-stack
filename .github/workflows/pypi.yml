@@ -163,7 +163,7 @@ jobs:
 
       - name: Install dependent PRs if needed
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local'
-        uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
+        uses: depends-on/depends-on-action@826c144163ac67bf08347590a5f81afd45da63ca # main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -360,7 +360,7 @@ jobs:
 
       - name: Download llama-stack-api artifacts
         id: download-api
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-llama-stack-api
           path: dist-api
@@ -368,7 +368,7 @@ jobs:
 
       - name: Download llama-stack artifacts
         id: download-stack
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-llama-stack
           path: dist-stack
@@ -376,7 +376,7 @@ jobs:
 
       - name: Download llama-stack-client-python artifacts
         id: download-client-python
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-llama-stack-client-python
           path: dist-client-python
@@ -384,7 +384,7 @@ jobs:
 
       - name: Download llama-stack-client-typescript artifacts
         id: download-client-ts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-llama-stack-client-typescript
           path: dist-client-ts
@@ -519,7 +519,7 @@ jobs:
       - name: Download build artifacts
         if: steps.should-publish.outputs.skip != 'true'
         id: download
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: Packages-${{ matrix.package }}
           path: dist
@@ -567,7 +567,7 @@ jobs:
           matrix.registry == 'pypi' &&
           steps.check-artifacts.outputs.has_artifacts == 'true' &&
           steps.pypi-target.outputs.is_production == 'true'
-        uses: sigstore/gh-action-sigstore-python@f7ad0af51a5648d09a20d00370f0a91c3bdf8f84 # v3.0.1
+        uses: sigstore/gh-action-sigstore-python@a5caf349bc536fbef3668a10ed7f5cd309a4b53d # v3.2.0
         with:
           inputs: >-
             ./dist/*.tar.gz
