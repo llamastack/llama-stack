@@ -113,6 +113,7 @@ class MetaReferenceAgentsImpl(Agents):
             request.prompt,
             request.instructions,
             request.previous_response_id,
+            request.prompt_cache_key,
             request.conversation,
             request.store,
             request.stream,

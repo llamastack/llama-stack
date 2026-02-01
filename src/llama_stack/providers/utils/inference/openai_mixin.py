@@ -406,6 +406,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             top_p=params.top_p,
             user=params.user,
             reasoning_effort=params.reasoning_effort,
+            prompt_cache_key=params.prompt_cache_key,
         )
 
         if extra_body := params.model_extra:
