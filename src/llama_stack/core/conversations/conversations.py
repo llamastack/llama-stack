@@ -76,7 +76,7 @@ class ConversationServiceImpl(Conversations):
             {
                 "id": ColumnDefinition(type=ColumnType.STRING, primary_key=True),
                 "created_at": ColumnType.INTEGER,
-                "items": ColumnType.JSON,
+                "items": ColumnType.JSON,  # Deprecated: kept for backward compatibility, use conversation_items table instead
                 "metadata": ColumnType.JSON,
             },
         )
@@ -100,7 +100,6 @@ class ConversationServiceImpl(Conversations):
         record_data = {
             "id": conversation_id,
             "created_at": created_at,
-            "items": [],
             "metadata": request.metadata,
         }
 
