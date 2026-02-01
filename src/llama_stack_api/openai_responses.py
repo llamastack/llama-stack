@@ -749,6 +749,7 @@ class OpenAIResponseObject(BaseModel):
     max_tool_calls: int | None = None
     reasoning: OpenAIResponseReasoning | None = None
     max_output_tokens: int | None = None
+    safety_identifier: str | None = None
     metadata: dict[str, str] | None = None
     store: bool
 

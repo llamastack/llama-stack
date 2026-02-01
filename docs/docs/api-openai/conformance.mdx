@@ -22,8 +22,8 @@ This documentation is auto-generated from the OpenAI API specification compariso
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
 | **Schema/Type Issues** | 263 |
-| **Missing Properties** | 182 |
-| **Total Issues to Fix** | 445 |
+| **Missing Properties** | 180 |
+| **Total Issues to Fix** | 443 |
 
 ## Category Scores
 
@@ -38,7 +38,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
-| Responses | 81.8% | 225 | 22 | 19 |
+| Responses | 82.7% | 225 | 22 | 17 |
 | Chat | 83.1% | 402 | 18 | 50 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
@@ -936,20 +936,19 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 81.8% · **Issues:** 22 · **Missing:** 19
+**Score:** 82.7% · **Issues:** 22 · **Missing:** 17
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Missing Properties (19)</summary>
+<summary>Missing Properties (17)</summary>
 
 - `requestBody.content.application/json.properties.background`
 - `requestBody.content.application/json.properties.frequency_penalty`
 - `requestBody.content.application/json.properties.presence_penalty`
 - `requestBody.content.application/json.properties.prompt_cache_key`
-- `requestBody.content.application/json.properties.safety_identifier`
 - `requestBody.content.application/json.properties.service_tier`
 - `requestBody.content.application/json.properties.stream_options`
 - `requestBody.content.application/json.properties.top_logprobs`
@@ -961,7 +960,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 - `responses.200.content.application/json.properties.incomplete_details`
 - `responses.200.content.application/json.properties.presence_penalty`
 - `responses.200.content.application/json.properties.prompt_cache_key`
-- `responses.200.content.application/json.properties.safety_identifier`
 - `responses.200.content.application/json.properties.service_tier`
 - `responses.200.content.application/json.properties.top_logprobs`
 
