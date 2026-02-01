@@ -13,6 +13,17 @@ import TabItem from '@theme/TabItem';
 Llama Stack is a stateful service with REST APIs to support the seamless transition of AI applications across different
 environments. You can build and test using a local server first and deploy to a hosted endpoint for production.
 
+## Development → Production Journey
+
+This quickstart gets you started with **local development**. Once you're ready to scale:
+
+1. **Testing**: Run in [Docker containers](/docs/distributions/list_of_distributions) for consistent testing
+2. **Production**: Deploy to [Kubernetes](/docs/deploying/) or use [managed hosting](/docs/distributions/remote_hosted_distro/)
+
+The beauty of Llama Stack: **your application code stays the same** across all these environments!
+
+---
+
 In this guide, we'll walk through how to build a RAG application locally using Llama Stack with [Ollama](https://ollama.com/)
 as the inference [provider](/docs/providers/inference) for a Llama Model.
 
