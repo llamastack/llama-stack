@@ -19,6 +19,7 @@ from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig a
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
     EmbeddedChunk,
@@ -107,7 +108,13 @@ class QdrantIndex(EmbeddingIndex):
             log.error(f"Error deleting chunks from Qdrant collection {self.collection_name}: {e}")
             raise
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
+        # Filters are not yet implemented for Qdrant provider
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         results = (
             await self.client.query_points(
                 collection_name=self.collection_name,
@@ -376,8 +383,15 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         await index.insert_chunks(chunks)
 
     async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
+        self,
+        vector_store_id: str,
+        query: InterleavedContent,
+        params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         index = await self._get_and_cache_vector_store_index(vector_store_id)
         if not index:
             raise VectorStoreNotFoundError(vector_store_id)

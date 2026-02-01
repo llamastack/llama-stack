@@ -14,6 +14,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+# Filter type is defined in the implementation layer
 from llama_stack_api.inference import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema
 
