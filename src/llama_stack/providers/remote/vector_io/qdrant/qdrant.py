@@ -24,11 +24,12 @@ from llama_stack_api import (
     EmbeddedChunk,
     Files,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
+    OpenAIAttachFileRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
-    VectorStoreChunkingStrategy,
     VectorStoreFileObject,
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
@@ -366,36 +367,28 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         self.cache[vector_store_id] = index
         return index
 
-    async def insert_chunks(
-        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
-    ) -> None:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def insert_chunks(self, request: InsertChunksRequest) -> None:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        await index.insert_chunks(chunks)
+        await index.insert_chunks(request)
 
-    async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
-    ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        return await index.query_chunks(query, params)
+        return await index.query_chunks(request)
 
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
-        file_id: str,
-        attributes: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+        request: OpenAIAttachFileRequest,
     ) -> VectorStoreFileObject:
         # Qdrant doesn't allow multiple clients to access the same storage path simultaneously.
         async with self._qdrant_lock:
-            return await super().openai_attach_file_to_vector_store(
-                vector_store_id, file_id, attributes, chunking_strategy
-            )
+            return await super().openai_attach_file_to_vector_store(vector_store_id, request)
 
     async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Delete chunks from a Qdrant vector store."""

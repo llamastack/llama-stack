@@ -15,8 +15,11 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_
 from llama_stack_api import (
     Chunk,
     EmbeddedChunk,
+    InsertChunksRequest,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAISearchVectorStoreRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorStore,
     VectorStoreChunkingStrategyAuto,
@@ -49,8 +52,8 @@ async def test_initialize_index(vector_index):
 
 
 async def test_add_chunks_query_vector(vector_index, sample_chunks, sample_embeddings):
-    vector_index.delete()
-    vector_index.initialize()
+    await vector_index.delete()
+    await vector_index.initialize()
     # Create EmbeddedChunk objects using inheritance pattern
     embedded_chunks = [
         EmbeddedChunk(
@@ -67,7 +70,7 @@ async def test_add_chunks_query_vector(vector_index, sample_chunks, sample_embed
     await vector_index.add_chunks(embedded_chunks)
     resp = await vector_index.query_vector(sample_embeddings[0], k=1, score_threshold=-1)
     assert resp.chunks[0].content == sample_chunks[0].content
-    vector_index.delete()
+    await vector_index.delete()
 
 
 async def test_chunk_id_conflict(vector_index, sample_chunks, embedding_dimension):
@@ -225,31 +228,55 @@ async def test_register_and_unregister_vector_store(vector_io_adapter):
 
 
 async def test_query_unregistered_raises(vector_io_adapter, vector_provider):
-    fake_emb = np.zeros(8, dtype=np.float32)
     with pytest.raises(ValueError):
-        await vector_io_adapter.query_chunks("no_such_db", fake_emb)
+        await vector_io_adapter.query_chunks(QueryChunksRequest(vector_store_id="no_such_db", query="test"))
 
 
 async def test_insert_chunks_calls_underlying_index(vector_io_adapter):
+    from llama_stack_api import ChunkMetadata
+
     fake_index = AsyncMock()
     vector_io_adapter.cache["db1"] = fake_index
 
-    chunks = ["chunk1", "chunk2"]
-    await vector_io_adapter.insert_chunks("db1", chunks)
+    chunks = [
+        EmbeddedChunk(
+            chunk_id="chunk1",
+            content="content1",
+            metadata={},
+            chunk_metadata=ChunkMetadata(document_id="doc1"),
+            embedding=[0.1, 0.2],
+            embedding_model="test-model",
+            embedding_dimension=2,
+        ),
+        EmbeddedChunk(
+            chunk_id="chunk2",
+            content="content2",
+            metadata={},
+            chunk_metadata=ChunkMetadata(document_id="doc1"),
+            embedding=[0.3, 0.4],
+            embedding_model="test-model",
+            embedding_dimension=2,
+        ),
+    ]
+    request = InsertChunksRequest(vector_store_id="db1", chunks=chunks)
+    await vector_io_adapter.insert_chunks(request)
 
-    fake_index.insert_chunks.assert_awaited_once_with(chunks)
+    fake_index.insert_chunks.assert_awaited_once()
+    call_args = fake_index.insert_chunks.call_args[0][0]
+    assert call_args.vector_store_id == "db1"
+    assert len(call_args.chunks) == 2
 
 
 async def test_insert_chunks_missing_db_raises(vector_io_adapter):
     vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
     with pytest.raises(ValueError):
-        await vector_io_adapter.insert_chunks("db_not_exist", [])
+        await vector_io_adapter.insert_chunks(InsertChunksRequest(vector_store_id="db_not_exist", chunks=[]))
 
 
 async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
     """Ensure no KeyError when document_id is missing or in different places."""
-    from llama_stack_api import Chunk, ChunkMetadata
+    from llama_stack_api import ChunkMetadata
 
     fake_index = AsyncMock()
     vector_io_adapter.cache["db1"] = fake_index
@@ -258,11 +285,13 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
     from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 
     chunks = [
-        Chunk(
+        EmbeddedChunk(
             content="has doc_id in metadata",
             chunk_id=generate_chunk_id("doc-1", "has doc_id in metadata"),
             metadata={"document_id": "doc-1"},
-            embedding=[],
+            embedding=[0.1] * 768,
+            embedding_model="test-model",
+            embedding_dimension=768,
             chunk_metadata=ChunkMetadata(
                 document_id="doc-1",
                 chunk_id=generate_chunk_id("doc-1", "has doc_id in metadata"),
@@ -273,11 +302,13 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
                 content_token_count=5,
             ),
         ),
-        Chunk(
+        EmbeddedChunk(
             content="no doc_id anywhere",
             chunk_id=generate_chunk_id("unknown", "no doc_id anywhere"),
             metadata={"source": "test"},
-            embedding=[],
+            embedding=[0.1] * 768,
+            embedding_model="test-model",
+            embedding_dimension=768,
             chunk_metadata=ChunkMetadata(
                 document_id=None,
                 chunk_id=generate_chunk_id("unknown", "no doc_id anywhere"),
@@ -288,11 +319,13 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
                 content_token_count=4,
             ),
         ),
-        Chunk(
+        EmbeddedChunk(
             content="doc_id in chunk_metadata",
             chunk_id=generate_chunk_id("doc-3", "doc_id in chunk_metadata"),
             metadata={},
-            embedding=[],
+            embedding=[0.1] * 768,
+            embedding_model="test-model",
+            embedding_dimension=768,
             chunk_metadata=ChunkMetadata(
                 document_id="doc-3",
                 chunk_id=generate_chunk_id("doc-3", "doc_id in chunk_metadata"),
@@ -306,7 +339,7 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
     ]
 
     # Should work without KeyError
-    await vector_io_adapter.insert_chunks("db1", chunks)
+    await vector_io_adapter.insert_chunks(InsertChunksRequest(vector_store_id="db1", chunks=chunks))
     fake_index.insert_chunks.assert_awaited_once()
 
 
@@ -369,9 +402,21 @@ async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter
     fake_index = AsyncMock(query_chunks=AsyncMock(return_value=expected))
     vector_io_adapter.cache["db1"] = fake_index
 
-    response = await vector_io_adapter.query_chunks("db1", "my_query", {"param": 1})
+    response = await vector_io_adapter.query_chunks(
+        QueryChunksRequest(
+            vector_store_id="db1",
+            query="my_query",
+            params={"param": 1},
+        )
+    )
 
-    fake_index.query_chunks.assert_awaited_once_with("my_query", {"param": 1})
+    fake_index.query_chunks.assert_awaited_once_with(
+        QueryChunksRequest(
+            vector_store_id="db1",
+            query="my_query",
+            params={"param": 1},
+        )
+    )
     assert response is expected
 
 
@@ -379,7 +424,7 @@ async def test_query_chunks_missing_db_raises(vector_io_adapter):
     vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
     with pytest.raises(ValueError):
-        await vector_io_adapter.query_chunks("db_missing", "q", None)
+        await vector_io_adapter.query_chunks(QueryChunksRequest(vector_store_id="db_missing", query="q"))
 
 
 async def test_save_openai_vector_store(vector_io_adapter):
@@ -851,8 +896,8 @@ async def test_file_batch_status_filtering(vector_io_adapter):
     assert response.data[0].status == "in_progress"
 
 
-async def test_cancel_completed_batch_fails(vector_io_adapter):
-    """Test that cancelling completed batch fails."""
+async def test_cancel_completed_batch_returns_batch(vector_io_adapter):
+    """Test that cancelling completed batch returns the batch object (no-op)."""
     store_id = "vs_1234"
     file_ids = ["file_1"]
 
@@ -875,12 +920,13 @@ async def test_cancel_completed_batch_fails(vector_io_adapter):
     batch_info = vector_io_adapter.openai_file_batches[batch.id]
     batch_info["status"] = "completed"
 
-    # Try to cancel - should fail
-    with pytest.raises(ValueError, match="Cannot cancel batch .* with status completed"):
-        await vector_io_adapter.openai_cancel_vector_store_file_batch(
-            batch_id=batch.id,
-            vector_store_id=store_id,
-        )
+    # Cancelling a completed batch should return the batch object (no-op, OpenAI API behavior)
+    result = await vector_io_adapter.openai_cancel_vector_store_file_batch(
+        batch_id=batch.id,
+        vector_store_id=store_id,
+    )
+    assert result.id == batch.id
+    assert result.status == "completed"
 
 
 async def test_file_batch_persistence_across_restarts(vector_io_adapter):
@@ -1116,8 +1162,8 @@ async def test_cleanup_expired_file_batches(vector_io_adapter):
     assert new_stored is not None  # Valid batch should remain
 
 
-async def test_expired_batch_access_error(vector_io_adapter):
-    """Test that accessing expired batches returns clear error message."""
+async def test_expired_batch_retrieved_before_cleanup(vector_io_adapter):
+    """Test that expired batches can be retrieved before cleanup runs."""
     store_id = "vs_1234"
 
     # Setup vector store
@@ -1135,19 +1181,25 @@ async def test_expired_batch_access_error(vector_io_adapter):
 
     expired_batch_info = {
         "id": "batch_expired",
+        "object": "vector_store.file_batch",
         "vector_store_id": store_id,
         "status": "completed",
         "created_at": current_time - (10 * 24 * 60 * 60),  # 10 days ago
         "expires_at": current_time - (3 * 24 * 60 * 60),  # Expired 3 days ago
         "file_ids": ["file_1"],
+        "file_counts": {"cancelled": 0, "completed": 1, "failed": 0, "in_progress": 0, "total": 1},
     }
 
     # Add to in-memory cache (simulating it was loaded before expiration)
     vector_io_adapter.openai_file_batches["batch_expired"] = expired_batch_info
 
-    # Try to access expired batch
-    with pytest.raises(ValueError, match="File batch batch_expired has expired after 7 days from creation"):
-        vector_io_adapter._get_and_validate_batch("batch_expired", store_id)
+    # Expired batch can still be retrieved (cleanup happens in background)
+    result = await vector_io_adapter.openai_retrieve_vector_store_file_batch(
+        batch_id="batch_expired",
+        vector_store_id=store_id,
+    )
+    assert result.id == "batch_expired"
+    assert result.status == "completed"
 
 
 async def test_max_concurrent_files_per_batch(vector_io_adapter):
@@ -1166,7 +1218,7 @@ async def test_max_concurrent_files_per_batch(vector_io_adapter):
 
     active_files = 0
 
-    async def mock_attach_file_with_delay(vector_store_id: str, file_id: str, **kwargs):
+    async def mock_attach_file_with_delay(vector_store_id: str, request):
         """Mock that tracks concurrency and blocks indefinitely to test concurrency limit."""
         nonlocal active_files
         active_files += 1
@@ -1353,9 +1405,11 @@ async def test_search_vector_store_ignores_rewrite_query(vector_io_adapter):
     # The mixin should process the search request without attempting to rewrite the query
     result = await vector_io_adapter.openai_search_vector_store(
         vector_store_id=vector_store_id,
-        query="test query",
-        rewrite_query=True,  # This should be ignored at mixin level
-        max_num_results=5,
+        request=OpenAISearchVectorStoreRequest(
+            query="test query",
+            rewrite_query=True,  # This should be ignored at mixin level
+            max_num_results=5,
+        ),
     )
 
     # Search should succeed - the mixin ignores rewrite_query and just does the search
