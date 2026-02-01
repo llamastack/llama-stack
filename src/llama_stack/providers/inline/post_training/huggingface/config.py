@@ -8,8 +8,12 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
+from llama_stack.providers.utils.common.security_config import (
+    TrustedModelConfig,
+)
 
-class HuggingFacePostTrainingConfig(BaseModel):
+
+class HuggingFacePostTrainingConfig(TrustedModelConfig, BaseModel):
     # Device to run training on (cuda, cpu, mps)
     device: str = "cuda"
 
@@ -28,12 +32,17 @@ class HuggingFacePostTrainingConfig(BaseModel):
     chat_template: str = "<|user|>\n{input}\n<|assistant|>\n{output}"
 
     # Model-specific configuration parameters
-    # trust_remote_code: Allow execution of custom model code
     # attn_implementation: Use SDPA (Scaled Dot Product Attention) for better performance
+    # Note: trust_remote_code is now determined dynamically based on trusted_model_prefixes
     model_specific_config: dict = {
-        "trust_remote_code": True,
         "attn_implementation": "sdpa",
     }
+
+    def get_model_specific_config(self, model: str) -> dict:
+        """Get model-specific config with trust_remote_code set based on model trustworthiness"""
+        config = self.model_specific_config.copy()
+        config["trust_remote_code"] = self.is_trusted_model(model)
+        return config
 
     # Maximum sequence length for training
     # Set to 2048 as this is the maximum that works reliably on MPS (Apple Silicon)
