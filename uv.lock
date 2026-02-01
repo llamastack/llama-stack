@@ -726,6 +726,15 @@ wheels = [
 ]
 
 [[package]]
+name = "circuitbreaker"
+version = "2.1.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/df/ac/de7a92c4ed39cba31fe5ad9203b76a25ca67c530797f6bb420fff5f65ccb/circuitbreaker-2.1.3.tar.gz", hash = "sha256:1a4baee510f7bea3c91b194dcce7c07805fe96c4423ed5594b75af438531d084", size = 10787, upload-time = "2025-03-31T08:12:08.963Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ae/34/15f08edd4628f65217de1fc3c1a27c82e46fe357d60c217fc9881e12ebcc/circuitbreaker-2.1.3-py3-none-any.whl", hash = "sha256:87ba6a3ed03fdc7032bc175561c2b04d52ade9d5faf94ca2b035fbdc5e6b1dd1", size = 7737, upload-time = "2025-03-31T08:12:07.802Z" },
+]
+
+[[package]]
 name = "click"
 version = "8.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2063,10 +2072,13 @@ dependencies = [
     { name = "jinja2" },
     { name = "jsonschema" },
     { name = "llama-stack-api" },
+    { name = "numpy" },
+    { name = "oci" },
     { name = "mcp" },
     { name = "openai" },
     { name = "opentelemetry-exporter-otlp-proto-http" },
     { name = "opentelemetry-sdk" },
+    { name = "oracledb" },
     { name = "pillow" },
     { name = "prompt-toolkit" },
     { name = "psycopg2-binary" },
@@ -2220,10 +2232,13 @@ requires-dist = [
     { name = "jsonschema" },
     { name = "llama-stack-api", editable = "src/llama_stack_api" },
     { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.4.0.dev0" },
+    { name = "numpy", specifier = ">=2.3.2" },
+    { name = "oci", specifier = ">=2.165.0" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "openai", specifier = ">=2.5.0" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.30.0" },
     { name = "opentelemetry-sdk", specifier = ">=1.30.0" },
+    { name = "oracledb", specifier = ">=3.4.1" },
     { name = "pillow" },
     { name = "prompt-toolkit" },
     { name = "psycopg2-binary" },
@@ -3064,6 +3079,23 @@ wheels = [
 ]
 
 [[package]]
+name = "oci"
+version = "2.165.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "circuitbreaker" },
+    { name = "cryptography" },
+    { name = "pyopenssl" },
+    { name = "python-dateutil" },
+    { name = "pytz" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/7a/20/7cab8a81f81fa1c185e5fa659fc12066a894393bd05920c2523142ba58a3/oci-2.165.0.tar.gz", hash = "sha256:c04586994bad57b3d929ba3f0e640dcd80c7122a074e4fe54f2b4886e2b27529", size = 16302512, upload-time = "2026-01-13T04:51:18.678Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/ec/e65a03afe77c5d96d391f3421b349fa8818e9568ef7b3910cffdc6d1df6b/oci-2.165.0-py3-none-any.whl", hash = "sha256:5dcf32fa3aaf47dde65ca16f0822a1cfd75487a5fc21253ad2045a9dfff4abc7", size = 33227901, upload-time = "2026-01-13T04:51:10.824Z" },
+]
+
+[[package]]
 name = "ollama"
 version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3262,6 +3294,33 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/7e/31/67dfa252ee88476a29200b0255bda8dfc2cf07b56ad66dc9a6221f7dc787/opentelemetry_semantic_conventions-0.57b0.tar.gz", hash = "sha256:609a4a79c7891b4620d64c7aac6898f872d790d75f22019913a660756f27ff32", size = 124225, upload-time = "2025-07-29T15:12:17.873Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/05/75/7d591371c6c39c73de5ce5da5a2cc7b72d1d1cd3f8f4638f553c01c37b11/opentelemetry_semantic_conventions-0.57b0-py3-none-any.whl", hash = "sha256:757f7e76293294f124c827e514c2a3144f191ef175b069ce8d1211e1e38e9e78", size = 201627, upload-time = "2025-07-29T15:12:04.174Z" },
+]
+
+[[package]]
+name = "oracledb"
+version = "3.4.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5e/9d/4e86cd410294ebbb1f90a609aaae61c5fa064a5c10e501de3f4c67664e6c/oracledb-3.4.1.tar.gz", hash = "sha256:f5920df5ac9446579e8409607bba31dc2d23a2286a5b0ea17cb0d78d419392a6", size = 852693, upload-time = "2025-11-12T03:21:36.157Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f7/d9/98367ba2c358de366de70b505531f9717cdfa7e29eff0c9ad113eecfce96/oracledb-3.4.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:1c3f92c023ef1983e0e7f9a1b4a31df8568974c28c06ab0a574b1126e45083a8", size = 4222133, upload-time = "2025-11-12T03:21:58.212Z" },
+    { url = "https://files.pythonhosted.org/packages/36/52/48ad2f7dae6288a2ddf0ac536d46ce4883d2d10ec7e16afbbd48f1ec0ff3/oracledb-3.4.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:251211d64b90cc42d00ec2d2893873bc02ff4bc22125e9fc5a7f148a6208fd88", size = 2230374, upload-time = "2025-11-12T03:21:59.656Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/08/60d4301b4f72f099ed2252f8d0eb143e6fe9e5c8f4c2705c3163cea36808/oracledb-3.4.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ea529a5e6036fae3e2bc195fa76b6f48cd9c431e68c74ef78ee6a5e39c855c39", size = 2421755, upload-time = "2025-11-12T03:22:01.543Z" },
+    { url = "https://files.pythonhosted.org/packages/48/35/412a90019a030f5dff0c031319733c6b8dd477832bafa88b733b4b3ec57b/oracledb-3.4.1-cp312-cp312-win32.whl", hash = "sha256:94e8e6d63b45fedd4e243147cb25dea1a0f6599d83852f3979fe725a8533e85a", size = 1449688, upload-time = "2025-11-12T03:22:03.422Z" },
+    { url = "https://files.pythonhosted.org/packages/7b/01/ae9eca3055dc625923564ca653ca99ddd8eda95e44953ce55c18aba55066/oracledb-3.4.1-cp312-cp312-win_amd64.whl", hash = "sha256:84f15c483f9ec80dcded925df6ff473c69a293cd694d09b69abb911500659df4", size = 1794622, upload-time = "2025-11-12T03:22:04.941Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/4d/e32db901340dc6fc824d0d3b5e4660fe0199fba8adb0e81ac08b639c8ab9/oracledb-3.4.1-cp313-cp313-macosx_10_13_universal2.whl", hash = "sha256:ad817807b293e371c951af8ee67a56a5af88a5680a54fe79dfc7b9393ca128aa", size = 4206469, upload-time = "2025-11-12T03:22:06.881Z" },
+    { url = "https://files.pythonhosted.org/packages/cf/68/1a038f29523eea19e42f4dd765bf523752408816b5ff21e8b998d8b25457/oracledb-3.4.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:34b9bc25eae217defa3f4b8289b4915cd1101aaeeec33c7bace74f927996d452", size = 2233055, upload-time = "2025-11-12T03:22:08.259Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/66/a51243553ac6b0e1bc2cfd4db8a2f3299b1b60c9231d7c9133ee1442d15b/oracledb-3.4.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:be6575759ba56ab3758f82bfbb74f75288ce69190e19c087793050cb012c0aa1", size = 2443312, upload-time = "2025-11-12T03:22:09.615Z" },
+    { url = "https://files.pythonhosted.org/packages/f7/57/a6056d4432c07a959fd1032dd45bfaff69b91ac7e1204dbccf7bf7b4a91d/oracledb-3.4.1-cp313-cp313-win32.whl", hash = "sha256:635587e5f28be83ec0bf72e4bfb2f3a4544c0f8e303f2327f376d57116894541", size = 1453553, upload-time = "2025-11-12T03:22:11.045Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/57/dca415d8dd18a2a030a9402d49039493cdce6acfd37c8a038a4ede2328e6/oracledb-3.4.1-cp313-cp313-win_amd64.whl", hash = "sha256:354177708352e124c0f97ceccbe34be05e7f3ce7040a7dd3c2ebd857145ffe74", size = 1794005, upload-time = "2025-11-12T03:22:12.694Z" },
+    { url = "https://files.pythonhosted.org/packages/59/07/dff7b9e6242b627d56f3fa6ad6639802003e1e5fbcc883d0ce27d82455ad/oracledb-3.4.1-cp314-cp314-macosx_10_15_universal2.whl", hash = "sha256:3ec1f9dd7310da7cbf219c2a05bb52df08da950c95ad2ace8a289854947bdc6b", size = 4247946, upload-time = "2025-11-12T03:22:14.473Z" },
+    { url = "https://files.pythonhosted.org/packages/1f/95/739868c6f312683cc3afe9534644b4ce2d054fe137d8f7a1e7786df9f5aa/oracledb-3.4.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:337a67d6c91015dfe7a2a1915f65c74adad26fcd428daaead296d91c92f09ad1", size = 2271628, upload-time = "2025-11-12T03:22:15.956Z" },
+    { url = "https://files.pythonhosted.org/packages/fb/7c/307da513f5fb68e6454beb5bc1c715ec09a70d2af70a28b9fa6001c1b09b/oracledb-3.4.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9d5ffe4dd26e8012de433ec69f93be5737d81b04324072ec36dad37eb778fd9d", size = 2455603, upload-time = "2025-11-12T03:22:18.112Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/1a/af5bd7239cebfc33541432cfcba75893a3f2f44fa66648e6d8ce1fe96b0c/oracledb-3.4.1-cp314-cp314-win32.whl", hash = "sha256:693ef5f8c420545511096b3bc9a3861617222717321bc78c776afbbb6c16c5b9", size = 1474932, upload-time = "2025-11-12T03:22:19.574Z" },
+    { url = "https://files.pythonhosted.org/packages/f1/ee/79d2ed18fd234bcbd407c1b36372dc898cf68de825ec650df7b1627acb51/oracledb-3.4.1-cp314-cp314-win_amd64.whl", hash = "sha256:6adb483d7120cdd056173b71c901f71dbe2265c5bd402f768b0b1ab27af519b1", size = 1837566, upload-time = "2025-11-12T03:22:20.959Z" },
 ]
 
 [[package]]
@@ -4163,6 +4222,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/5b/fe/7a6a6b331d9f2024ab171028ab53d5d9026959b1d713fe170be591a4d9a8/pymongo-4.15.3-cp314-cp314t-win32.whl", hash = "sha256:e7cde58ef6470c0da922b65e885fb1ffe04deef81e526bd5dea429290fa358ca", size = 1043993, upload-time = "2025-10-07T21:57:28.727Z" },
     { url = "https://files.pythonhosted.org/packages/70/c8/bc64321711e19bd48ea3371f0082f10295c433833245d73e7606d3b9afbe/pymongo-4.15.3-cp314-cp314t-win_amd64.whl", hash = "sha256:fae552767d8e5153ed498f1bca92d905d0d46311d831eefb0f06de38f7695c95", size = 1078481, upload-time = "2025-10-07T21:57:30.372Z" },
     { url = "https://files.pythonhosted.org/packages/39/31/2bb2003bb978eb25dfef7b5f98e1c2d4a86e973e63b367cc508a9308d31c/pymongo-4.15.3-cp314-cp314t-win_arm64.whl", hash = "sha256:47ffb068e16ae5e43580d5c4e3b9437f05414ea80c32a1e5cac44a835859c259", size = 1051179, upload-time = "2025-10-07T21:57:31.829Z" },
+]
+
+[[package]]
+name = "pyopenssl"
+version = "25.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "cryptography" },
+    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/04/8c/cd89ad05804f8e3c17dea8f178c3f40eeab5694c30e0c9f5bcd49f576fc3/pyopenssl-25.1.0.tar.gz", hash = "sha256:8d031884482e0c67ee92bf9a4d8cceb08d92aba7136432ffb0703c5280fc205b", size = 179937, upload-time = "2025-05-17T16:28:31.31Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/80/28/2659c02301b9500751f8d42f9a6632e1508aa5120de5e43042b8b30f8d5d/pyopenssl-25.1.0-py3-none-any.whl", hash = "sha256:2b11f239acc47ac2e5aca04fd7fa829800aeee22a2eb30d744572a157bd8a1ab", size = 56771, upload-time = "2025-05-17T16:28:29.197Z" },
 ]
 
 [[package]]

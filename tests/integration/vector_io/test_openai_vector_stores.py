@@ -3295,9 +3295,10 @@ def compat_client_with_empty_stores(compat_client):
             response = compat_client.files.list()
             for file in response.data:
                 compat_client.files.delete(file_id=file.id)
-        except Exception:
+        except Exception as e:
             # If the API is not available or fails, just continue
-            logger.warning("Failed to clear files")
+            logger.warning(f"Failed to clear files: {str(e)}")
+            logger.warning("Ensure that a file config such as `files=inline::localfs` is set")
             pass
 
     clear_vector_stores()
@@ -3561,7 +3562,10 @@ def test_openai_vector_store_with_chunks(
 
     # Test filtering by metadata
     filtered_search = compat_client.vector_stores.search(
-        vector_store_id=vector_store.id, query="artificial intelligence", filters={"topic": "ai"}, max_num_results=5
+        vector_store_id=vector_store.id,
+        query="artificial intelligence",
+        filters={"topic": "ai"},
+        max_num_results=5,
     )
 
     assert filtered_search is not None

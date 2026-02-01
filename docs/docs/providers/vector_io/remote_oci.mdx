@@ -1,0 +1,117 @@
+---
+description: |
+  [Oracle 26ai](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
+  is a remote vector database provider for Llama Stack. It allows you to store and query vectors directly
+  in an Oracle 26ai database.
+  ## Features
+  - Easy to use
+  - Fully integrated with Llama Stack
+  - Supports vector search, keyword search, and hybrid search
+  ## Usage
+  To use Oracle 26ai in your Llama Stack project, follow these steps:
+  1. Install the necessary dependencies.
+  2. Configure your Llama Stack project to use Oracle 26ai.
+  3. Start storing and querying vectors.
+  ## Installation
+  You can install the Oracle 26ai client using pip:
+  ```bash
+  pip install oracledb
+  ```
+  ## Configuration
+  ```yaml
+  vector_io:
+  - provider_id: oci
+    provider_type: remote::oci
+    config:
+      conn_str: "${env.OCI26AI_CONNECTION_STRING}"
+      user: "${env.OCI26AI_USER}"
+      password: "${env.OCI26AI_PASSWORD}"
+      tnsnames_loc: "${env.OCI26AI_TNSNAMES_LOC}"
+      ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
+      ewallet_password: "${env.OCI26AI_EWALLET_PWD}"
+      vector_datatype: "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}"
+      persistence:
+        namespace: vector_id::oci26ai
+        backend: kv_default
+  ```
+  ## Documentation
+  See the [Oracle 26ai documentation](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
+  for more details about Oracle 26ai in general.
+sidebar_label: Remote - Oci
+title: remote::oci
+---
+
+# remote::oci
+
+## Description
+
+
+[Oracle 26ai](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
+is a remote vector database provider for Llama Stack. It allows you to store and query vectors directly
+in an Oracle 26ai database.
+## Features
+- Easy to use
+- Fully integrated with Llama Stack
+- Supports vector search, keyword search, and hybrid search
+## Usage
+To use Oracle 26ai in your Llama Stack project, follow these steps:
+1. Install the necessary dependencies.
+2. Configure your Llama Stack project to use Oracle 26ai.
+3. Start storing and querying vectors.
+## Installation
+You can install the Oracle 26ai client using pip:
+```bash
+pip install oracledb
+```
+## Configuration
+```yaml
+vector_io:
+- provider_id: oci
+  provider_type: remote::oci
+  config:
+    conn_str: "${env.OCI26AI_CONNECTION_STRING}"
+    user: "${env.OCI26AI_USER}"
+    password: "${env.OCI26AI_PASSWORD}"
+    tnsnames_loc: "${env.OCI26AI_TNSNAMES_LOC}"
+    ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
+    ewallet_password: "${env.OCI26AI_EWALLET_PWD}"
+    vector_datatype: "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}"
+    persistence:
+      namespace: vector_id::oci26ai
+      backend: kv_default
+```
+## Documentation
+See the [Oracle 26ai documentation](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
+for more details about Oracle 26ai in general.
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `conn_str` | `str` | No |  | Connection string for the given 26ai Service |
+| `user` | `str` | No |  | Username name to connect to the service |
+| `password` | `str` | No |  | Password to connect to the service |
+| `tnsnames_loc` | `str` | No |  | Directory location of the tsnanames.ora file |
+| `ewallet_pem_loc` | `str` | No |  | Directory location of the ewallet.pem file |
+| `ewallet_password` | `str` | No |  | Password for the ewallet.pem file |
+| `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
+| `persistence.namespace` | `str` | No |  | Key prefix for KVStore backends |
+| `persistence.backend` | `str` | No |  | Name of backend from storage.backends |
+| `consistency_level` | `str` | No | Strong | The consistency level of the OCI26ai server |
+| `vector_datatype` | `str` | No | FLOAT32 | Vector datatype for embeddings |
+
+## Sample Configuration
+
+```yaml
+conn_str: ${env.OCI26AI_CONNECTION_STRING}
+user: ${env.OCI26AI_USER}
+password: ${env.OCI26AI_PASSWORD}
+tnsnames_loc: ${env.OCI26AI_TNSNAMES_LOC}
+ewallet_pem_loc: ${env.OCI26AI_EWALLET_PEM_LOC}
+ewallet_password: ${env.OCI26AI_EWALLET_PWD}
+vector_datatype: ${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}
+persistence:
+  namespace: vector_io::oci26ai
+  backend: kv_default
+```

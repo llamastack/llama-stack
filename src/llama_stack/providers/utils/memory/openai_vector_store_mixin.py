@@ -987,6 +987,7 @@ class OpenAIVectorStoreMixin(ABC):
                 params = OpenAIEmbeddingsRequestWithExtraBody(
                     model=embedding_model,
                     input=[interleaved_content_as_str(c.content) for c in chunks],
+                    dimensions=embedding_dimension,
                 )
                 resp = await self.inference_api.openai_embeddings(params)
 

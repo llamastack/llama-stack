@@ -896,4 +896,53 @@ For more information on how to deploy Elasticsearch, see the [official documenta
 See [Elasticsearch's documentation](https://www.elastic.co/docs/solutions/search) for more details about Elasticsearch in general.
 """,
         ),
+        RemoteProviderSpec(
+            api=Api.vector_io,
+            adapter_type="oci",
+            provider_type="remote::oci",
+            pip_packages=["oracledb", "numpy"] + DEFAULT_VECTOR_IO_DEPS,
+            module="llama_stack.providers.remote.vector_io.oci",
+            config_class="llama_stack.providers.remote.vector_io.oci.OCI26aiVectorIOConfig",
+            api_dependencies=[Api.inference],
+            optional_api_dependencies=[Api.files, Api.models],
+            description="""
+[Oracle 26ai](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
+is a remote vector database provider for Llama Stack. It allows you to store and query vectors directly
+in an Oracle 26ai database.
+## Features
+- Easy to use
+- Fully integrated with Llama Stack
+- Supports vector search, keyword search, and hybrid search
+## Usage
+To use Oracle 26ai in your Llama Stack project, follow these steps:
+1. Install the necessary dependencies.
+2. Configure your Llama Stack project to use Oracle 26ai.
+3. Start storing and querying vectors.
+## Installation
+You can install the Oracle 26ai client using pip:
+```bash
+pip install oracledb
+```
+## Configuration
+```yaml
+vector_io:
+- provider_id: oci
+  provider_type: remote::oci
+  config:
+    conn_str: "${env.OCI26AI_CONNECTION_STRING}"
+    user: "${env.OCI26AI_USER}"
+    password: "${env.OCI26AI_PASSWORD}"
+    tnsnames_loc: "${env.OCI26AI_TNSNAMES_LOC}"
+    ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
+    ewallet_password: "${env.OCI26AI_EWALLET_PWD}"
+    vector_datatype: "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}"
+    persistence:
+      namespace: vector_id::oci26ai
+      backend: kv_default
+```
+## Documentation
+See the [Oracle 26ai documentation](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
+for more details about Oracle 26ai in general.
+""",
+        ),
     ]

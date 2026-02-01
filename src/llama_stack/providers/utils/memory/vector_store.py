@@ -347,10 +347,14 @@ class VectorStoreWithIndex:
         if mode == "keyword":
             return await self.index.query_keyword(query_string, k, score_threshold)
 
-        params = OpenAIEmbeddingsRequestWithExtraBody(
-            model=self.vector_store.embedding_model,
-            input=[query_string],
-        )
+        if "embedding_dimensions" in params:
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model=self.vector_store.embedding_model,
+                input=[query_string],
+                dimensions=params.get("embedding_dimensions"),
+            )
+        else:
+            params = OpenAIEmbeddingsRequestWithExtraBody(model=self.vector_store.embedding_model, input=[query_string])
         embeddings_response = await self.inference_api.openai_embeddings(params)
         query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
         if mode == "hybrid":

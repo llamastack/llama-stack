@@ -56,7 +56,10 @@ dependencies = [
     "psycopg2-binary",
     "tornado>=6.5.3",
     "urllib3>=2.6.3",
-    "mcp>=1.23.0"                                             # for connectors
+    "oracledb>=3.4.1",
+    "oci>=2.165.0",
+    "numpy>=2.3.2",
+    "mcp>=1.23.0",                                    # for connectors
 ]
 
 [project.optional-dependencies]

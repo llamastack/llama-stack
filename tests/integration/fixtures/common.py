@@ -230,6 +230,24 @@ def llama_stack_client(request):
     return client
 
 
+def parse_vector_io_provider(config_string: str) -> str:
+    # Split the string into individual key-value pairs
+    pairs = config_string.split(",")
+    for pair in pairs:
+        # Split each pair into key and value
+        key_value = pair.split("=")
+        if len(key_value) == 2 and key_value[0].strip() == "vector_io":
+            # Extract the provider after the last '::' if it exists
+            return key_value[1].strip()
+    return "inline::sentence-transformers"
+
+
+def extract_model(model: str | None, default: str) -> str:
+    if not model or "/" not in model:
+        return default
+    return model.split("/", 1)[1]
+
+
 def instantiate_llama_stack_client(session):
     config = session.config.getoption("--stack-config")
     if not config:
@@ -307,10 +325,18 @@ def instantiate_llama_stack_client(session):
 
         # --stack-config bypasses template so need this to set default embedding model
         if "vector_io" in config and "inference" in config:
+            if "inline" in session.config.getoption("embedding_model"):
+                provider_id = "inline::sentence-transformers"
+            else:
+                provider_id = parse_vector_io_provider(config)
+            passed_model = extract_model(session.config.getoption("embedding_model"), "nomic-ai/nomic-embed-text-v1.5")
+            passed_emb = session.config.getoption("embedding_dimension")
+
             run_config.vector_stores = VectorStoresConfig(
                 default_embedding_model=QualifiedModel(
-                    provider_id="inline::sentence-transformers",
-                    model_id="nomic-ai/nomic-embed-text-v1.5",
+                    provider_id=provider_id,
+                    model_id=passed_model,
+                    embedding_dimensions=passed_emb,
                 )
             )
 
