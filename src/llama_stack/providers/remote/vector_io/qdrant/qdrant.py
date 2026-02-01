@@ -26,12 +26,10 @@ from llama_stack_api import (
     Inference,
     InterleavedContent,
     QueryChunksResponse,
-    VectorIO,
     VectorStore,
     VectorStoreChunkingStrategy,
     VectorStoreFileObject,
     VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
 )
 
 from .config import QdrantVectorIOConfig as RemoteQdrantVectorIOConfig
@@ -285,7 +283,7 @@ class QdrantIndex(EmbeddingIndex):
         await self.client.delete_collection(collection_name=self.collection_name)
 
 
-class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+class QdrantVectorIOAdapter(OpenAIVectorStoreMixin):
     def __init__(
         self,
         config: RemoteQdrantVectorIOConfig | InlineQdrantVectorIOConfig,
