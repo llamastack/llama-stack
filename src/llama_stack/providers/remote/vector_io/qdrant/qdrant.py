@@ -78,6 +78,18 @@ class QdrantIndex(EmbeddingIndex):
                 self.collection_name,
                 vectors_config=models.VectorParams(size=len(chunks[0].embedding), distance=models.Distance.COSINE),
             )
+            # Create text index for keyword search functionality
+            await self.client.create_payload_index(
+                collection_name=self.collection_name,
+                field_name="chunk_content.content",
+                field_schema=models.TextIndexParams(
+                    type="text",
+                    tokenizer=models.TokenizerType.WORD,
+                    min_token_len=2,
+                    max_token_len=20,
+                    lowercase=True,
+                ),
+            )
 
         points = []
         for chunk in chunks:

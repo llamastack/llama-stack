@@ -21,6 +21,8 @@ AWS S3-based file storage provider for scalable cloud file management with metad
 | `endpoint_url` | `str \| None` | No |  | Custom S3 endpoint URL (for MinIO, LocalStack, etc.) |
 | `auto_create_bucket` | `bool` | No | False | Automatically create the S3 bucket if it doesn't exist |
 | `metadata_store` | `SqlStoreReference` | No |  | SQL store configuration for file metadata |
+| `metadata_store.table_name` | `str` | No |  | Name of the table to use for the SqlStore |
+| `metadata_store.backend` | `str` | No |  | Name of backend from storage.backends |
 
 ## Sample Configuration
 
