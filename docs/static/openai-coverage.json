@@ -97,9 +97,9 @@
     },
     "conformance": {
       "score": 83.6,
-      "issues": 276,
-      "missing_properties": 150,
-      "total_problems": 426,
+      "issues": 277,
+      "missing_properties": 148,
+      "total_problems": 425,
       "total_properties": 2598
     }
   },
@@ -1740,9 +1740,9 @@
       ]
     },
     "Responses": {
-      "score": 83.6,
-      "issues": 26,
-      "missing_properties": 11,
+      "score": 84.0,
+      "issues": 27,
+      "missing_properties": 9,
       "total_properties": 225,
       "endpoints": [
         {
@@ -1755,13 +1755,11 @@
                 "POST.requestBody.content.application/json.properties.frequency_penalty",
                 "POST.requestBody.content.application/json.properties.presence_penalty",
                 "POST.requestBody.content.application/json.properties.stream_options",
-                "POST.requestBody.content.application/json.properties.top_logprobs",
                 "POST.requestBody.content.application/json.properties.top_p",
                 "POST.requestBody.content.application/x-www-form-urlencoded",
                 "POST.responses.200.content.application/json.properties.background",
                 "POST.responses.200.content.application/json.properties.frequency_penalty",
-                "POST.responses.200.content.application/json.properties.presence_penalty",
-                "POST.responses.200.content.application/json.properties.top_logprobs"
+                "POST.responses.200.content.application/json.properties.presence_penalty"
               ],
               "conformance_issues": [
                 {
@@ -1930,6 +1928,14 @@
                   ]
                 },
                 {
+                  "property": "POST.responses.200.content.application/json.properties.top_logprobs",
+                  "details": [
+                    "Type removed: ['integer']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
                   "property": "POST.responses.200.content.application/json.properties.top_p",
                   "details": [
                     "Type removed: ['number']",
@@ -1951,8 +1957,8 @@
                   ]
                 }
               ],
-              "missing_count": 11,
-              "issues_count": 26
+              "missing_count": 9,
+              "issues_count": 27
             }
           ]
         }
