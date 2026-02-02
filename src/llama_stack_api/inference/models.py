@@ -762,6 +762,13 @@ class EmbeddingTaskType(Enum):
     document = "document"
 
 
+class ResponseTruncation(StrEnum):
+    """Controls how the service truncates input when it exceeds the model context window."""
+
+    auto = "auto"  # Let the service decide how to truncate
+    disabled = "disabled"  # Disable truncation; context over limit results in 400 error
+
+
 class OpenAICompletionWithInputMessages(OpenAIChatCompletion):
     input_messages: list[OpenAIMessageParam] = Field(
         ..., description="The input messages used to generate this completion."
@@ -857,6 +864,10 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     )
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = Field(
         default=None, description="The effort level for reasoning models."
+    )
+    truncation: ResponseTruncation | None = Field(
+        default=None,
+        description="Controls how the service truncates input when it exceeds the model context window.",
     )
 
 

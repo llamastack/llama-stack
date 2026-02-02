@@ -89,6 +89,7 @@ from llama_stack_api import (
     OpenAIResponseUsageOutputTokensDetails,
     OpenAIToolMessageParam,
     ResponseItemInclude,
+    ResponseTruncation,
     Safety,
     ToolDef,
     WebSearchToolTypes,
@@ -145,6 +146,7 @@ class StreamingResponseOrchestrator:
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
+        truncation: ResponseTruncation | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -168,6 +170,7 @@ class StreamingResponseOrchestrator:
         self.max_output_tokens = max_output_tokens
         self.safety_identifier = safety_identifier
         self.metadata = metadata
+        self.truncation = truncation
         self.store = store
         self.include = include
         self.store = bool(store) if store is not None else True
@@ -210,6 +213,7 @@ class StreamingResponseOrchestrator:
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
             metadata=self.metadata,
+            truncation=self.truncation,
             store=self.store,
         )
 
@@ -253,6 +257,7 @@ class StreamingResponseOrchestrator:
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
             metadata=self.metadata,
+            truncation=self.truncation,
             store=self.store,
         )
 
@@ -374,6 +379,7 @@ class StreamingResponseOrchestrator:
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
                     safety_identifier=self.safety_identifier,
                     max_completion_tokens=remaining_output_tokens,
+                    truncation=self.truncation,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

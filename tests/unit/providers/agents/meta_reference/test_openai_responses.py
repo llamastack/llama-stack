@@ -37,6 +37,7 @@ from llama_stack_api import (
     OpenAISystemMessageParam,
     Order,
     Prompt,
+    ResponseTruncation,
 )
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
@@ -2483,3 +2484,91 @@ async def test_function_tool_strict_false_included(openai_responses_impl, mock_i
     tool_function = params.tools[0]["function"]
     assert "strict" in tool_function, "strict field should be included when explicitly set to False"
     assert tool_function["strict"] is False, "strict field should be False"
+
+
+async def test_create_openai_response_with_truncation_disabled_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that truncation='disabled' is properly handled in streaming responses."""
+    input_text = "Explain machine learning comprehensively."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        truncation=ResponseTruncation.disabled,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify truncation is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.truncation == ResponseTruncation.disabled
+
+    # Verify truncation is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.truncation == ResponseTruncation.disabled
+
+    # Verify the truncation was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.truncation == ResponseTruncation.disabled
+
+    # Verify the truncation was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.truncation == ResponseTruncation.disabled
+
+
+async def test_create_openai_response_with_truncation_auto_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that truncation='auto' is properly handled in streaming responses."""
+    input_text = "Tell me about quantum computing."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        truncation=ResponseTruncation.auto,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify truncation is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.truncation == ResponseTruncation.auto
+
+    # Verify truncation is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.truncation == ResponseTruncation.auto
+
+    # Verify the truncation was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.truncation == ResponseTruncation.auto
+
+    # Verify the truncation was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.truncation == ResponseTruncation.auto

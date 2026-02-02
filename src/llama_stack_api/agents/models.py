@@ -15,6 +15,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack_api.common.responses import Order
+from llama_stack_api.inference.models import ResponseTruncation
 from llama_stack_api.openai_responses import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
@@ -133,6 +134,10 @@ class CreateResponseRequest(BaseModel):
     metadata: dict[str, str] | None = Field(
         default=None,
         description="Dictionary of metadata key-value pairs to attach to the response.",
+    )
+    truncation: ResponseTruncation | None = Field(
+        default=None,
+        description="Controls how the service truncates input when it exceeds the model context window.",
     )
 
 
