@@ -3760,6 +3760,12 @@ components:
           - type: string
           - type: 'null'
           description: The user to use.
+        safety_identifier:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A stable identifier used for safety monitoring and abuse detection.
         reasoning_effort:
           anyOf:
           - type: string

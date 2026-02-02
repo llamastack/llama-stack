@@ -374,6 +374,7 @@ class StreamingResponseOrchestrator:
                     logprobs=logprobs,
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
+                    safety_identifier=self.safety_identifier,
                     max_completion_tokens=remaining_output_tokens,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)

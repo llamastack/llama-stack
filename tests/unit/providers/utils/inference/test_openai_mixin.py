@@ -1145,3 +1145,25 @@ class TestOpenAIMixinStreamOptionsInjection:
                 call_kwargs = mock_client.completions.create.call_args[1]
                 # Should NOT inject stream_options even though telemetry is active
                 assert "stream_options" not in call_kwargs or call_kwargs["stream_options"] is None
+
+
+class TestOpenAIMixinSafetyIdentifierPassing:
+    """Test cases for safety_identifier parameter passing to OpenAI API"""
+
+    async def test_chat_completion_passes_safety_identifier(self, mixin, mock_client_context):
+        """Test that safety_identifier is passed to OpenAI chat completions API"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    safety_identifier="user-123-hashed",
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["safety_identifier"] == "user-123-hashed"

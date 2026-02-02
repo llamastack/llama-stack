@@ -405,6 +405,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             top_logprobs=params.top_logprobs,
             top_p=params.top_p,
             user=params.user,
+            safety_identifier=params.safety_identifier,
             reasoning_effort=params.reasoning_effort,
         )
 
