@@ -332,9 +332,6 @@ def test_include_logprobs_with_web_search(client_with_models, text_model_id):
     )
 
 
-@pytest.mark.skip(
-    reason="Recording file needs regeneration after fix for issue #4617 (removed 'strict: null' from function tools). "
-)
 def test_include_logprobs_with_function_tools(client_with_models, text_model_id):
     """Test include logprobs with function tools."""
 
