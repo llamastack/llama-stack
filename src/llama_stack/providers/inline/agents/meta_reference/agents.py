@@ -129,6 +129,7 @@ class MetaReferenceAgentsImpl(Agents):
             request.reasoning,
             request.safety_identifier,
             request.metadata,
+            request.top_logprobs,
         )
         return result
 

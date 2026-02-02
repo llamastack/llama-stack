@@ -473,6 +473,7 @@ class OpenAIResponsesImpl:
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
         metadata: dict[str, str] | None = None,
+        top_logprobs: int | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -530,6 +531,7 @@ class OpenAIResponsesImpl:
             safety_identifier=safety_identifier,
             metadata=metadata,
             include=include,
+            top_logprobs=top_logprobs,
         )
 
         if stream:
@@ -588,6 +590,7 @@ class OpenAIResponsesImpl:
         safety_identifier: str | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        top_logprobs: int | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -655,6 +658,7 @@ class OpenAIResponsesImpl:
                 metadata=metadata,
                 include=include,
                 store=store,
+                top_logprobs=top_logprobs,
             )
 
             final_response = None
