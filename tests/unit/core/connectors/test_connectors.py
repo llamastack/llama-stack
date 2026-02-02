@@ -41,8 +41,8 @@ def mock_kvstore():
         async def delete(self, key):
             del storage[key]
 
-        async def keys_in_range(self, start, end):
-            return [k for k in storage.keys() if start <= k < end]
+        async def keys_in_range(self, start_key, end_key):
+            return [k for k in storage.keys() if start_key <= k < end_key]
 
         async def close(self):
             pass
@@ -209,6 +209,98 @@ class TestGetConnector:
                 "http://localhost:8080/mcp",
                 authorization="Bearer token123",
             )
+
+
+# --- list_connectors tests ---
+
+
+class TestListConnectors:
+    """Tests for list_connectors method."""
+
+    async def test_list_connectors_empty(self, connector_service):
+        """Test listing connectors when none exist."""
+        result = await connector_service.list_connectors()
+
+        assert result.data == []
+
+    async def test_list_connectors_returns_all(self, connector_service):
+        """Test listing returns all registered connectors."""
+        # Register multiple connectors
+        await connector_service.register_connector(
+            connector_id="mcp-1",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8081/mcp",
+            server_label="MCP Server 1",
+        )
+        await connector_service.register_connector(
+            connector_id="mcp-2",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8082/mcp",
+            server_label="MCP Server 2",
+        )
+        await connector_service.register_connector(
+            connector_id="mcp-3",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8083/mcp",
+        )
+
+        result = await connector_service.list_connectors()
+
+        assert len(result.data) == 3
+        connector_ids = {c.connector_id for c in result.data}
+        assert connector_ids == {"mcp-1", "mcp-2", "mcp-3"}
+
+    async def test_list_connectors_after_unregister(self, connector_service):
+        """Test that unregistered connectors are not listed."""
+        # Register connectors
+        await connector_service.register_connector(
+            connector_id="keep-me",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8081/mcp",
+        )
+        await connector_service.register_connector(
+            connector_id="remove-me",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8082/mcp",
+        )
+
+        # Unregister one
+        await connector_service.unregister_connector("remove-me")
+
+        result = await connector_service.list_connectors()
+
+        assert len(result.data) == 1
+        assert result.data[0].connector_id == "keep-me"
+
+
+# --- unregister_connector tests ---
+
+
+class TestUnregisterConnector:
+    """Tests for unregister_connector method."""
+
+    async def test_unregister_existing_connector(self, connector_service, mock_kvstore):
+        """Test unregistering an existing connector removes it from store."""
+        # Register a connector
+        await connector_service.register_connector(
+            connector_id="to-remove",
+            connector_type=ConnectorType.MCP,
+            url="http://localhost:8080/mcp",
+        )
+
+        # Verify it exists
+        assert await mock_kvstore.get(f"{KEY_PREFIX}to-remove") is not None
+
+        # Unregister it
+        await connector_service.unregister_connector("to-remove")
+
+        # Verify it's gone
+        assert await mock_kvstore.get(f"{KEY_PREFIX}to-remove") is None
+
+    async def test_unregister_nonexistent_connector_does_not_raise(self, connector_service):
+        """Test unregistering a non-existent connector doesn't raise an error."""
+        # Should not raise - graceful handling
+        await connector_service.unregister_connector("does-not-exist")
 
 
 # --- Key prefix tests ---

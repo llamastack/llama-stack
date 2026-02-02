@@ -16,6 +16,8 @@ OpenAI Files API provider for managing files through OpenAI's native file storag
 |-------|------|----------|---------|-------------|
 | `api_key` | `str` | No |  | OpenAI API key for authentication |
 | `metadata_store` | `SqlStoreReference` | No |  | SQL store configuration for file metadata |
+| `metadata_store.table_name` | `str` | No |  | Name of the table to use for the SqlStore |
+| `metadata_store.backend` | `str` | No |  | Name of backend from storage.backends |
 
 ## Sample Configuration
 

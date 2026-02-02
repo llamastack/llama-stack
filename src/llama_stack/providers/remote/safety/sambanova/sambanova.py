@@ -9,10 +9,9 @@ import requests
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.safety import ShieldToModerationMixin
 from llama_stack_api import (
     GetShieldRequest,
-    ModerationObject,
-    RunModerationRequest,
     RunShieldRequest,
     RunShieldResponse,
     Safety,
@@ -29,7 +28,7 @@ logger = get_logger(name=__name__, category="safety::sambanova")
 CANNED_RESPONSE_TEXT = "I can't answer that. Can I help with something else?"
 
 
-class SambaNovaSafetyAdapter(Safety, ShieldsProtocolPrivate, NeedsRequestProviderData):
+class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate, NeedsRequestProviderData):
     def __init__(self, config: SambaNovaSafetyConfig) -> None:
         self.config = config
         self.environment_available_models = []
@@ -79,7 +78,9 @@ class SambaNovaSafetyAdapter(Safety, ShieldsProtocolPrivate, NeedsRequestProvide
         logger.debug(f"run_shield::{shield_params}::messages={request.messages}")
 
         response = litellm.completion(
-            model=shield.provider_resource_id, messages=request.messages, api_key=self._get_api_key()
+            model=shield.provider_resource_id,
+            messages=request.messages,
+            api_key=self._get_api_key(),
         )
         shield_message = response.choices[0].message.content
 
@@ -97,6 +98,3 @@ class SambaNovaSafetyAdapter(Safety, ShieldsProtocolPrivate, NeedsRequestProvide
             )
 
         return RunShieldResponse()
-
-    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
-        raise NotImplementedError("SambaNova safety provider currently does not implement run_moderation")
