@@ -2890,3 +2890,47 @@ async def test_create_openai_response_service_tier_propagation_streaming(openai_
     completed_event = chunks[-1]
     assert completed_event.type == "response.completed"
     assert completed_event.response.service_tier == "priority", "Final response should have actual tier from provider"
+
+
+def test_response_object_incomplete_details_null_when_completed():
+    """Test that completed response has incomplete_details as null."""
+    from llama_stack_api.openai_responses import OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_123",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="completed",
+        store=False,
+    )
+
+    assert response.incomplete_details is None
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] is None
+
+
+def test_response_object_incomplete_details_with_max_output_tokens_reason():
+    """Test that incomplete response has incomplete_details with max_output_tokens reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_456",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="max_output_tokens"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "max_output_tokens"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "max_output_tokens"}

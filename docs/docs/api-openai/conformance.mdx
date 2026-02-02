@@ -21,8 +21,8 @@ This documentation is auto-generated from the OpenAI API specification compariso
 | **Overall Conformance Score** | 83.6% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
-| **Schema/Type Issues** | 275 |
-| **Missing Properties** | 151 |
+| **Schema/Type Issues** | 276 |
+| **Missing Properties** | 150 |
 | **Total Issues to Fix** | 426 |
 
 ## Category Scores
@@ -38,7 +38,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
-| Responses | 83.6% | 225 | 25 | 12 |
+| Responses | 83.6% | 225 | 26 | 11 |
 | Chat | 86.8% | 402 | 27 | 26 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
@@ -936,14 +936,14 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 83.6% · **Issues:** 25 · **Missing:** 12
+**Score:** 83.6% · **Issues:** 26 · **Missing:** 11
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Missing Properties (12)</summary>
+<summary>Missing Properties (11)</summary>
 
 - `requestBody.content.application/json.properties.background`
 - `requestBody.content.application/json.properties.frequency_penalty`
@@ -954,14 +954,13 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 - `requestBody.content.application/x-www-form-urlencoded`
 - `responses.200.content.application/json.properties.background`
 - `responses.200.content.application/json.properties.frequency_penalty`
-- `responses.200.content.application/json.properties.incomplete_details`
 - `responses.200.content.application/json.properties.presence_penalty`
 - `responses.200.content.application/json.properties.top_logprobs`
 
 </details>
 
 <details>
-<summary>Schema Issues (25)</summary>
+<summary>Schema Issues (26)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -977,6 +976,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `requestBody.content.application/json.properties.tool_choice` | Union variants added: 2; Union variants removed: 1 |
 | `requestBody.content.application/json.properties.truncation` | Union variants added: 2 |
 | `responses.200.content.application/json.properties.error` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.incomplete_details` | Union variants added: 1; Union variants removed: 1 |
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['response'] |
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 7; Union variants removed: 4 |

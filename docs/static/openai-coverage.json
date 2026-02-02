@@ -97,8 +97,8 @@
     },
     "conformance": {
       "score": 83.6,
-      "issues": 275,
-      "missing_properties": 151,
+      "issues": 276,
+      "missing_properties": 150,
       "total_problems": 426,
       "total_properties": 2598
     }
@@ -1741,8 +1741,8 @@
     },
     "Responses": {
       "score": 83.6,
-      "issues": 25,
-      "missing_properties": 12,
+      "issues": 26,
+      "missing_properties": 11,
       "total_properties": 225,
       "endpoints": [
         {
@@ -1760,7 +1760,6 @@
                 "POST.requestBody.content.application/x-www-form-urlencoded",
                 "POST.responses.200.content.application/json.properties.background",
                 "POST.responses.200.content.application/json.properties.frequency_penalty",
-                "POST.responses.200.content.application/json.properties.incomplete_details",
                 "POST.responses.200.content.application/json.properties.presence_penalty",
                 "POST.responses.200.content.application/json.properties.top_logprobs"
               ],
@@ -1847,6 +1846,13 @@
                 },
                 {
                   "property": "POST.responses.200.content.application/json.properties.error",
+                  "details": [
+                    "Union variants added: 1",
+                    "Union variants removed: 1"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.incomplete_details",
                   "details": [
                     "Union variants added: 1",
                     "Union variants removed: 1"
@@ -1945,8 +1951,8 @@
                   ]
                 }
               ],
-              "missing_count": 12,
-              "issues_count": 25
+              "missing_count": 11,
+              "issues_count": 26
             }
           ]
         }

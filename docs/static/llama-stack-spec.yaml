@@ -5895,6 +5895,12 @@ components:
         id:
           type: string
           title: Id
+        incomplete_details:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseIncompleteDetails'
+            title: OpenAIResponseIncompleteDetails
+          - type: 'null'
+          title: OpenAIResponseIncompleteDetails
         model:
           type: string
           title: Model
@@ -6362,6 +6368,12 @@ components:
         id:
           type: string
           title: Id
+        incomplete_details:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseIncompleteDetails'
+            title: OpenAIResponseIncompleteDetails
+          - type: 'null'
+          title: OpenAIResponseIncompleteDetails
         model:
           type: string
           title: Model
@@ -11448,6 +11460,16 @@ components:
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
+    OpenAIResponseIncompleteDetails:
+      properties:
+        reason:
+          type: string
+          title: Reason
+      type: object
+      required:
+      - reason
+      title: OpenAIResponseIncompleteDetails
+      description: Details explaining why a response was incomplete.
     OpenAIResponseInputToolChoiceAllowedTools:
       properties:
         mode:
