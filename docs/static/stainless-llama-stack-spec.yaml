@@ -5302,9 +5302,10 @@ components:
         top_logprobs:
           anyOf:
           - type: integer
+            maximum: 20.0
             minimum: 0.0
           - type: 'null'
-          description: The top log probabilities to use.
+          description: The number of most likely tokens to return at each position.
         top_p:
           anyOf:
           - type: number
@@ -7535,6 +7536,10 @@ components:
           anyOf:
           - type: number
           - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
+          - type: 'null'
         tools:
           anyOf:
           - items:
@@ -8010,6 +8015,10 @@ components:
         top_p:
           anyOf:
           - type: number
+          - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
           - type: 'null'
         tools:
           anyOf:
@@ -12668,6 +12677,13 @@ components:
           - type: 'null'
           description: Controls how the service truncates input when it exceeds the model context window.
           title: ResponseTruncation
+        top_logprobs:
+          anyOf:
+          - type: integer
+            maximum: 20.0
+            minimum: 0.0
+          - type: 'null'
+          description: The number of most likely tokens to return at each position, along with their log probabilities.
       additionalProperties: false
       type: object
       required:

@@ -3338,3 +3338,70 @@ async def test_create_openai_response_with_top_p_streaming(
     store_call_args = mock_responses_store.upsert_response_object.call_args
     stored_response = store_call_args.kwargs["response_object"]
     assert stored_response.top_p == top_p_value
+
+
+async def test_create_openai_response_with_top_logprobs_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that top_logprobs is properly handled in non-streaming responses."""
+    input_text = "What is machine learning?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    top_logprobs = 5
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        top_logprobs=top_logprobs,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the top_logprobs
+    assert result.top_logprobs == top_logprobs
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the top_logprobs was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.top_logprobs == top_logprobs
+
+    # Verify the top_logprobs was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.top_logprobs == top_logprobs
+
+
+async def test_create_openai_response_with_top_logprobs_boundary_values(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that top_logprobs works with boundary values (0 and 20)."""
+    input_text = "Test message"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Test with minimum value (0)
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        top_logprobs=0,
+        stream=False,
+        store=True,
+    )
+    assert result.top_logprobs == 0
+
+    # Test with maximum value (20)
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        top_logprobs=20,
+        stream=False,
+        store=True,
+    )
+    assert result.top_logprobs == 20
