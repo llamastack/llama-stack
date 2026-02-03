@@ -371,7 +371,7 @@ def require_server(llama_stack_client):
 
 @pytest.fixture(scope="session")
 def openai_client(llama_stack_client, require_server):
-    base_url = f"{llama_stack_client.base_url}/v1"
+    base_url = llama_stack_client.base_url
     client = OpenAI(base_url=base_url, api_key="fake", max_retries=0, timeout=30.0)
     yield client
     # Cleanup: close HTTP connections
