@@ -255,6 +255,9 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
 
     connectors_impl = impls[Api.connectors]
 
+    # Get connector IDs from config
+    config_connector_ids = {c.connector_id for c in run_config.connectors}
+
     # Register/Update config connectors
     for connector in run_config.connectors:
         logger.debug(f"Registering connector: {connector.connector_id}")
@@ -264,6 +267,13 @@ async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
             url=connector.url,
             server_label=connector.server_label,
         )
+
+    # Remove connectors not in config (orphan cleanup)
+    existing_connectors = await connectors_impl.list_connectors()
+    for connector in existing_connectors.data:
+        if connector.connector_id not in config_connector_ids:
+            logger.info(f"Removing orphaned connector: {connector.connector_id}")
+            await connectors_impl.unregister_connector(connector.connector_id)
 
 
 async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):

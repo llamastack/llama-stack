@@ -8,10 +8,9 @@ import json
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.bedrock.client import create_bedrock_client
+from llama_stack.providers.utils.safety import ShieldToModerationMixin
 from llama_stack_api import (
     GetShieldRequest,
-    ModerationObject,
-    RunModerationRequest,
     RunShieldRequest,
     RunShieldResponse,
     Safety,
@@ -26,7 +25,7 @@ from .config import BedrockSafetyConfig
 logger = get_logger(name=__name__, category="safety::bedrock")
 
 
-class BedrockSafetyAdapter(Safety, ShieldsProtocolPrivate):
+class BedrockSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate):
     def __init__(self, config: BedrockSafetyConfig) -> None:
         self.config = config
         self.registered_shields = []
@@ -93,6 +92,3 @@ class BedrockSafetyAdapter(Safety, ShieldsProtocolPrivate):
             )
 
         return RunShieldResponse()
-
-    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
-        raise NotImplementedError("Bedrock safety provider currently does not implement run_moderation")

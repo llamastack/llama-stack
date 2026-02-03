@@ -9,11 +9,10 @@ from typing import Any
 import requests
 
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.safety import ShieldToModerationMixin
 from llama_stack_api import (
     GetShieldRequest,
-    ModerationObject,
     OpenAIMessageParam,
-    RunModerationRequest,
     RunShieldRequest,
     RunShieldResponse,
     Safety,
@@ -28,7 +27,7 @@ from .config import NVIDIASafetyConfig
 logger = get_logger(name=__name__, category="safety::nvidia")
 
 
-class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
+class NVIDIASafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate):
     def __init__(self, config: NVIDIASafetyConfig) -> None:
         """
         Initialize the NVIDIASafetyAdapter with a given safety configuration.
@@ -59,9 +58,6 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
 
         self.shield = NeMoGuardrails(self.config, shield.shield_id)
         return await self.shield.run(request.messages)
-
-    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
-        raise NotImplementedError("NVIDIA safety provider currently does not implement run_moderation")
 
 
 class NeMoGuardrails:
