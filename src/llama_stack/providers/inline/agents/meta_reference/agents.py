@@ -142,6 +142,7 @@ class MetaReferenceAgentsImpl(Agents):
             top_logprobs=request.top_logprobs,
             presence_penalty=request.presence_penalty,
             extra_body=request.model_extra,
+            stream_options=request.stream_options,
         )
         return result
 

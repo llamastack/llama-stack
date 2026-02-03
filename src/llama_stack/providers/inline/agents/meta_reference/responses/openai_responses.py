@@ -9,6 +9,7 @@ import re
 import time
 import uuid
 from collections.abc import AsyncIterator
+from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 
@@ -575,6 +576,7 @@ class OpenAIResponsesImpl:
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
+        stream_options: dict[str, Any] | None = None,
     ):
         stream = bool(stream)
         background = bool(background)
@@ -687,6 +689,7 @@ class OpenAIResponsesImpl:
             top_logprobs=top_logprobs,
             presence_penalty=presence_penalty,
             extra_body=extra_body,
+            stream_options=stream_options,
         )
 
         if stream:
@@ -983,6 +986,7 @@ class OpenAIResponsesImpl:
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
         extra_body: dict | None = None,
+        stream_options: dict[str, Any] | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -1060,6 +1064,7 @@ class OpenAIResponsesImpl:
                 top_logprobs=top_logprobs,
                 presence_penalty=presence_penalty,
                 extra_body=extra_body,
+                stream_options=stream_options,
             )
 
             final_response = None
