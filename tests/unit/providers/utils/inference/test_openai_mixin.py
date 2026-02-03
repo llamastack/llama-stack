@@ -1168,6 +1168,26 @@ class TestOpenAIMixinSafetyIdentifierPassing:
             call_kwargs = mock_client.chat.completions.create.call_args[1]
             assert call_kwargs["safety_identifier"] == "user-123-hashed"
 
+    async def test_chat_completion_with_top_p(self, mixin, mock_client_context):
+        """Test that top_p is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        top_p_value = 0.9
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_p=top_p_value,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_p"] == top_p_value
+
 
 class TestOpenAIMixinPromptCacheKey:
     """Test cases for prompt_cache_key parameter propagation"""
