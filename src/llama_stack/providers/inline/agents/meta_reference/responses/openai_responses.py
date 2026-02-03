@@ -8,6 +8,7 @@ import re
 import time
 import uuid
 from collections.abc import AsyncIterator
+from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 
@@ -472,6 +473,7 @@ class OpenAIResponsesImpl:
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
+        stream_options: dict[str, Any] | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -528,6 +530,7 @@ class OpenAIResponsesImpl:
             max_output_tokens=max_output_tokens,
             metadata=metadata,
             include=include,
+            stream_options=stream_options,
         )
 
         if stream:
@@ -585,6 +588,7 @@ class OpenAIResponsesImpl:
         max_output_tokens: int | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        stream_options: dict[str, Any] | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -651,6 +655,7 @@ class OpenAIResponsesImpl:
                 metadata=metadata,
                 include=include,
                 store=store,
+                stream_options=stream_options,
             )
 
             final_response = None

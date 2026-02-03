@@ -11,6 +11,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 """
 
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -128,6 +129,10 @@ class CreateResponseRequest(BaseModel):
     metadata: dict[str, str] | None = Field(
         default=None,
         description="Dictionary of metadata key-value pairs to attach to the response.",
+    )
+    stream_options: dict[str, Any] | None = Field(
+        default=None,
+        description="Options that control streamed response behavior.",
     )
 
 

@@ -2128,3 +2128,61 @@ async def test_create_openai_response_with_max_output_tokens_and_tools(openai_re
         # The first call gets the full max_tokens, subsequent calls get remaining tokens
         assert params.max_completion_tokens is not None
         assert params.max_completion_tokens <= max_tokens
+
+
+async def test_create_openai_response_with_stream_options_merges_with_default(
+    openai_responses_impl, mock_inference_api
+):
+    """Test that stream_options merges with default include_usage."""
+    input_text = "Test stream options"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    stream_options = {"include_obfuscation": False}
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream_options=stream_options,
+        stream=True,
+    )
+
+    # Collect chunks (consume the async iterator)
+    _ = [chunk async for chunk in result]
+
+    # Verify the stream_options was merged properly
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.stream_options is not None
+    # Should have both default include_usage and user's option
+    assert params.stream_options["include_usage"] is True
+    assert params.stream_options["include_obfuscation"] is False
+
+
+async def test_create_openai_response_with_empty_stream_options(openai_responses_impl, mock_inference_api):
+    """Test that empty stream_options dict still merges with default include_usage."""
+    input_text = "Test empty options"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    stream_options = {}
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream_options=stream_options,
+        stream=True,
+    )
+
+    # Collect chunks (consume the async iterator)
+    _ = [chunk async for chunk in result]
+
+    # Verify the stream_options has at least the default include_usage
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.stream_options is not None
+    assert params.stream_options["include_usage"] is True

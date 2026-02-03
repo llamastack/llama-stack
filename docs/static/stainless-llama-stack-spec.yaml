@@ -12518,6 +12518,12 @@ components:
             type: object
           - type: 'null'
           description: Dictionary of metadata key-value pairs to attach to the response.
+        stream_options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Options that control streamed response behavior.
       additionalProperties: false
       type: object
       required:

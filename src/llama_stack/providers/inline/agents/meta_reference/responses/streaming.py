@@ -146,6 +146,7 @@ class StreamingResponseOrchestrator:
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
+        stream_options: dict[str, Any] | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -168,6 +169,7 @@ class StreamingResponseOrchestrator:
         # An upper bound for the number of tokens that can be generated for a response
         self.max_output_tokens = max_output_tokens
         self.metadata = metadata
+        self.stream_options = stream_options
         self.store = store
         self.include = include
         self.store = bool(store) if store is not None else True
@@ -355,6 +357,11 @@ class StreamingResponseOrchestrator:
                     self.parallel_tool_calls if effective_tools is not None and len(effective_tools) > 0 else None
                 )
 
+                # Merge user stream_options with default include_usage
+                effective_stream_options = {"include_usage": True}
+                if self.stream_options:
+                    effective_stream_options.update(self.stream_options)
+
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
@@ -364,9 +371,7 @@ class StreamingResponseOrchestrator:
                     stream=True,
                     temperature=self.ctx.temperature,
                     response_format=response_format,
-                    stream_options={
-                        "include_usage": True,
-                    },
+                    stream_options=effective_stream_options,
                     logprobs=logprobs,
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
