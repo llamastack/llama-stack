@@ -153,7 +153,7 @@ class QdrantIndex(EmbeddingIndex):
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float, filters: Any = None) -> QueryChunksResponse:
         """
         Performs keyword-based search using Qdrant's MatchText filter.
 
@@ -168,6 +168,10 @@ class QdrantIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with chunks and scores matching the keyword query
         """
+        # Qdrant provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         try:
             # Use scroll for keyword-only search since query_points requires a query vector
             # Scroll allows filtering without a query vector
@@ -225,6 +229,7 @@ class QdrantIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Any = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword filtering in a single query.
@@ -243,6 +248,10 @@ class QdrantIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with filtered vector search results
         """
+        # Qdrant provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Qdrant provider does not yet support native filtering")
+
         try:
             query_words = query_string.lower().split()
             if not query_words:
