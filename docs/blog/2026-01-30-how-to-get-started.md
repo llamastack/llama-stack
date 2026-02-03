@@ -46,7 +46,30 @@ The current set of Llama Stack APIs can be found here: [https://llamastack.githu
 
 All of these APIs, if set in the `config.yaml` which defines the stack to be stood up, will be available via a REST API with their initialized providers. Each API can have one or more providers and the `provider_id` can be specified at request time.
 
-To get started quickly, all you need is Llama Stack, Ollama, and your favorite inference model! For this example, we are using `gpt-oss:20b`:
+To get started quickly, all you need is Llama Stack, Ollama, and your favorite inference model! For this example, we are using `gpt-oss:20b`.
+
+If you already have Ollama installed as a service, you can simply pull the model:
+
+```bash
+ollama pull gpt-oss:20b
+uv run --with llama-stack llama stack list-deps --providers inference=remote::ollama --format uv | sh
+uv run --with llama-stack llama stack run --providers inference=remote::ollama
+
+```
+
+If you don't have Ollama running as a service, you can start it manually:
+
+```bash
+ollama serve > /dev/null 2>&1 &
+ollama run gpt-oss:20b --keepalive 60m # you can exit this once the model is running due to --keepalive
+uv run --with llama-stack llama stack --providers inference=remote::ollama --format uv | sh
+uv run --with llama-stack llama stack run --providers inference=remote::ollama
+
+```
+
+Now you have Ollama running with `gpt-oss:20b`, and Llama Stack running pointing to Ollama as the inference provider. This minimal setup is sufficient to connect to local Ollama and respond to `/v1/chat/completions` requests.
+
+For a more feature-rich setup, you can use the starter distribution which gives you a full stack with additional APIs and providers:
 
 ```bash
 ollama serve > /dev/null 2>&1 &
@@ -56,8 +79,7 @@ export OLLAMA_URL=http://localhost:11434/v1
 uv run --with llama-stack llama stack run starter
 
 ```
-
-Now you have Ollama running with `gpt-oss:20b`, and Llama Stack running pointing to Ollama as the inference provider.  A sample chat completion request would look like this:
+A sample chat completion request would look like this:
 
 ```bash
 curl -X POST http://localhost:8321/v1/chat/completions \
