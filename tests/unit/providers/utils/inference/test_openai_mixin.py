@@ -1293,3 +1293,59 @@ class TestOpenAIMixinTopLogprobs:
             mock_client.chat.completions.create.assert_called_once()
             call_kwargs = mock_client.chat.completions.create.call_args[1]
             assert call_kwargs["top_logprobs"] == 20
+
+
+class TestOpenAIMixinUserProvidedStreamOptions:
+    """Test cases for user-provided stream_options parameter handling"""
+
+    async def test_user_stream_options_passed_through_when_telemetry_inactive(self, mixin, mock_client_context):
+        """Test that user-provided stream_options are passed through unchanged when telemetry is inactive"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        mock_span = MagicMock()
+        mock_span.is_recording.return_value = False
+
+        # OpenAI stream_options supports include_usage (bool) and include_obfuscation (bool)
+        # Using dict[str, Any] allows for future extensions and provider-specific options
+        user_stream_options = {"include_obfuscation": True, "custom_field": 123}
+
+        with mock_client_context(mixin, mock_client):
+            with patch("opentelemetry.trace.get_current_span", return_value=mock_span):
+                await mixin.openai_chat_completion(
+                    OpenAIChatCompletionRequestWithExtraBody(
+                        model="gpt-4",
+                        messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                        stream=True,
+                        stream_options=user_stream_options,
+                    )
+                )
+
+                call_kwargs = mock_client.chat.completions.create.call_args[1]
+                # User's stream_options should be passed through unchanged
+                assert call_kwargs["stream_options"] == user_stream_options
+
+    async def test_user_stream_options_include_usage_false_overridden_by_telemetry(self, mixin, mock_client_context):
+        """Test that include_usage=False is overridden to True when telemetry is active"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        mock_span = MagicMock()
+        mock_span.is_recording.return_value = True
+
+        with mock_client_context(mixin, mock_client):
+            with patch("opentelemetry.trace.get_current_span", return_value=mock_span):
+                await mixin.openai_chat_completion(
+                    OpenAIChatCompletionRequestWithExtraBody(
+                        model="gpt-4",
+                        messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                        stream=True,
+                        stream_options={"include_usage": False, "other_option": True},
+                    )
+                )
+
+                call_kwargs = mock_client.chat.completions.create.call_args[1]
+                # Telemetry must override include_usage to True
+                assert call_kwargs["stream_options"]["include_usage"] is True
+                # Other options should be preserved
+                assert call_kwargs["stream_options"]["other_option"] is True

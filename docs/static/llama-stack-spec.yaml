@@ -11095,6 +11095,12 @@ components:
             minimum: -2.0
           - type: 'null'
           description: Penalizes new tokens based on whether they appear in the text so far.
+        stream_options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Options that control streamed response behavior.
       additionalProperties: false
       type: object
       required:
