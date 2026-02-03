@@ -122,9 +122,17 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
                 if first_exception is None:
                     first_exception = e
                 log.warning(f"Decoding failed with {encoding}: {e}")
-        # raise the origional exception, if we got here there was at least 1 exception
+        # raise the original exception if we have one; otherwise raise a generic error
         log.error(f"Could not decode data as any of {encodings_to_try}")
-        raise first_exception
+        if first_exception is not None:
+            raise first_exception
+        raise UnicodeDecodeError(
+            encoding or "utf-8",
+            data,
+            0,
+            1,
+            f"Unable to decode data using encodings {encodings_to_try}",
+        )
 
     elif mime_type == "application/pdf":
         return parse_pdf(data)
@@ -163,14 +171,50 @@ async def content_from_data_and_mime_type_with_processor(
                 if first_exception is None:
                     first_exception = e
                 log.warning(f"Decoding failed with {encoding}: {e}")
-        # raise the origional exception, if we got here there was at least 1 exception
+        # raise the original exception if we have one; otherwise raise a generic error
         log.error(f"Could not decode data as any of {encodings_to_try}")
-        raise first_exception
+        if first_exception is not None:
+            raise first_exception
+        raise UnicodeDecodeError(
+            encoding or "utf-8",
+            data,
+            0,
+            1,
+            f"Unable to decode data using encodings {encodings_to_try}",
+        )
 
     elif mime_type == "application/pdf":
-        # Note: For vector store operations, PDFs should be processed via file_id
-        # using the file processor API. This fallback is for direct content processing.
-        return parse_pdf(data)
+        # Use file processor API if available for better PDF processing
+        if file_processor_api:
+            try:
+                # Create a minimal file-like object that mimics UploadFile interface
+                file_data = data if isinstance(data, bytes) else data.encode()
+
+                class FileUpload:
+                    def __init__(self, content: bytes, filename: str):
+                        self.file = io.BytesIO(content)
+                        self.filename = filename
+
+                    async def read(self) -> bytes:
+                        return self.file.read()
+
+                upload = FileUpload(file_data, filename or "document.pdf")
+                response = await file_processor_api.process_file(file=upload)
+
+                # Extract text from chunks
+                text_parts = []
+                for chunk in response.chunks:
+                    if hasattr(chunk, "content") and chunk.content:
+                        text_parts.append(chunk.content)
+
+                return "\n".join(text_parts) if text_parts else ""
+            except Exception as e:
+                log.warning(f"File processor API failed for PDF processing: {e}, falling back to legacy parser")
+                # Fall back to legacy parser
+                return parse_pdf(data)
+        else:
+            # Fall back to legacy parser when no file processor API available
+            return parse_pdf(data)
 
     else:
         log.error("Could not extract content from data_url properly.")

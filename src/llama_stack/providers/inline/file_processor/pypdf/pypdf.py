@@ -42,11 +42,6 @@ class PyPDFFileProcessor:
     ) -> ProcessFileResponse:
         """Process a PDF file and return chunks."""
 
-        # Note: options parameter is currently unused for PyPDF processor
-        # All processing options are configured via PyPDFFileProcessorConfig
-        if options:
-            log.debug("PyPDFFileProcessor ignoring options=%s (MVP)", options)
-
         # Validate input
         if not file and not file_id:
             raise ValueError("Either file or file_id must be provided")
@@ -65,7 +60,6 @@ class PyPDFFileProcessor:
             if not self.files_api:
                 raise ValueError("Files API not available - cannot process file_id")
 
-            # Import here to avoid circular dependencies
             from llama_stack_api.files import RetrieveFileContentRequest, RetrieveFileRequest
 
             # Get file metadata
@@ -144,7 +138,7 @@ class PyPDFFileProcessor:
         for page_num, page in enumerate(reader.pages):
             try:
                 page_text = page.extract_text()
-                if page_text.strip():  # Only add non-empty pages
+                if page_text and page_text.strip():  # Only add non-empty pages
                     text_parts.append(page_text)
             except Exception as e:
                 # Log warning but continue processing other pages
@@ -162,6 +156,13 @@ class PyPDFFileProcessor:
 
         pdf_bytes = io.BytesIO(pdf_data)
         reader = PdfReader(pdf_bytes)
+
+        # Handle password-protected PDFs
+        if reader.is_encrypted:
+            if self.config.password:
+                reader.decrypt(self.config.password)
+            else:
+                raise ValueError("PDF is encrypted but no password provided")
 
         metadata: dict[str, Any] = {"page_count": len(reader.pages)}
 

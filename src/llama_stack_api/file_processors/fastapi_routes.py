@@ -75,6 +75,14 @@ def create_router(impl: FileProcessors) -> APIRouter:
         if chunking_strategy:
             try:
                 chunking_data = json.loads(chunking_strategy)
+
+                # Validate that chunking_data is a JSON object (dict)
+                if not isinstance(chunking_data, dict):
+                    raise HTTPException(
+                        status_code=400,
+                        detail="chunking_strategy must be a JSON object, not a list, string, or other type",
+                    )
+
                 # Import the specific classes for proper parsing
                 from llama_stack_api.vector_io import (
                     VectorStoreChunkingStrategyAuto,
