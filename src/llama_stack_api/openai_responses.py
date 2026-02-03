@@ -752,6 +752,7 @@ class OpenAIResponseObject(BaseModel):
     reasoning: OpenAIResponseReasoning | None = None
     max_output_tokens: int | None = None
     safety_identifier: str | None = None
+    service_tier: str | None = None
     metadata: dict[str, str] | None = None
     store: bool
 

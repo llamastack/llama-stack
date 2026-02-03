@@ -1957,6 +1957,13 @@ components:
             maxLength: 64
           - type: 'null'
           description: A stable identifier used for safety monitoring and abuse detection.
+        service_tier:
+          anyOf:
+          - $ref: '#/components/schemas/ServiceTier'
+            title: ServiceTier
+          - type: 'null'
+          description: The service tier to use for this request.
+          title: ServiceTier
         reasoning_effort:
           anyOf:
           - type: string
@@ -2011,6 +2018,12 @@ components:
           description: The model that was used to generate the chat completion.
           title: Model
           type: string
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The service tier that was used for this response.
+          nullable: true
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
@@ -2054,6 +2067,12 @@ components:
           description: The model that was used to generate the chat completion.
           title: Model
           type: string
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The service tier that was used for this response.
+          nullable: true
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
@@ -2169,6 +2188,11 @@ components:
           type: string
           title: Model
           description: The model that was used to generate the chat completion.
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The service tier that was used for this response.
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
@@ -4234,6 +4258,10 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -4683,6 +4711,10 @@ components:
           - type: integer
           - type: 'null'
         safety_identifier:
+          anyOf:
+          - type: string
+          - type: 'null'
+        service_tier:
           anyOf:
           - type: string
           - type: 'null'
@@ -9999,6 +10031,15 @@ components:
 
             # Score threshold filtering
             SearchRankingOptions(ranker="weighted", score_threshold=0.5)
+    ServiceTier:
+      type: string
+      enum:
+      - auto
+      - default
+      - flex
+      - priority
+      title: ServiceTier
+      description: The service tier for the request.
     SetDefaultVersionBodyRequest:
       properties:
         version:
