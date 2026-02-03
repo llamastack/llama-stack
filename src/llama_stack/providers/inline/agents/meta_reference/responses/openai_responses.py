@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import asyncio
 import re
 import time
 import uuid
@@ -31,6 +32,7 @@ from llama_stack_api import (
     OpenAIChatCompletionContentPartParam,
     OpenAIDeleteResponseObject,
     OpenAIMessageParam,
+    OpenAIResponseError,
     OpenAIResponseInput,
     OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
@@ -454,6 +456,7 @@ class OpenAIResponsesImpl:
         self,
         input: str | list[OpenAIResponseInput],
         model: str,
+        background: bool | None = False,
         prompt: OpenAIResponsePrompt | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
@@ -474,7 +477,15 @@ class OpenAIResponsesImpl:
         metadata: dict[str, str] | None = None,
     ):
         stream = bool(stream)
+        background = bool(background)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
+
+        # Validate that stream and background are mutually exclusive
+        if stream and background:
+            raise ValueError(
+                "Cannot use 'stream' and 'background' together. "
+                "Background mode returns immediately with a queued response."
+            )
 
         # Validate MCP tools: ensure Authorization header is not passed via headers dict
         if tools:
@@ -507,6 +518,32 @@ class OpenAIResponsesImpl:
 
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)
+
+        if max_tool_calls is not None and max_tool_calls < 1:
+            raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
+
+        # Handle background mode
+        if background:
+            return await self._create_background_response(
+                input=input,
+                model=model,
+                prompt=prompt,
+                instructions=instructions,
+                previous_response_id=previous_response_id,
+                conversation=conversation,
+                store=store,
+                temperature=temperature,
+                text=text,
+                tool_choice=tool_choice,
+                tools=tools,
+                include=include,
+                max_infer_iters=max_infer_iters,
+                guardrail_ids=guardrail_ids,
+                parallel_tool_calls=parallel_tool_calls,
+                max_tool_calls=max_tool_calls,
+                reasoning=reasoning,
+                metadata=metadata,
+            )
 
         stream_gen = self._create_streaming_response(
             input=input,
@@ -562,7 +599,203 @@ class OpenAIResponsesImpl:
 
             if final_response is None:
                 raise ValueError("The response stream never reached a terminal state")
+            # Set background=False for non-background responses
+            final_response.background = False
             return final_response
+
+    async def _create_background_response(
+        self,
+        input: str | list[OpenAIResponseInput],
+        model: str,
+        prompt: OpenAIResponsePrompt | None = None,
+        instructions: str | None = None,
+        previous_response_id: str | None = None,
+        conversation: str | None = None,
+        store: bool | None = True,
+        temperature: float | None = None,
+        text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
+        tools: list[OpenAIResponseInputTool] | None = None,
+        include: list[ResponseItemInclude] | None = None,
+        max_infer_iters: int | None = 10,
+        guardrail_ids: list[str] | None = None,
+        parallel_tool_calls: bool | None = None,
+        max_tool_calls: int | None = None,
+        reasoning: OpenAIResponseReasoning | None = None,
+        metadata: dict[str, str] | None = None,
+    ) -> OpenAIResponseObject:
+        """Create a response that processes in the background.
+
+        Returns immediately with a queued response object.
+        """
+        response_id = f"resp_{uuid.uuid4()}"
+        created_at = int(time.time())
+
+        # Normalize input to list format for storage
+        input_items = [OpenAIResponseMessage(content=input, role="user")] if isinstance(input, str) else input
+
+        # Create initial queued response
+        queued_response = OpenAIResponseObject(
+            id=response_id,
+            created_at=created_at,
+            model=model,
+            status="queued",
+            output=[],
+            background=True,
+            parallel_tool_calls=parallel_tool_calls if parallel_tool_calls is not None else True,
+            previous_response_id=previous_response_id,
+            prompt=prompt,
+            temperature=temperature,
+            text=text if text else OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
+            tools=[],  # Will be populated when processing completes
+            tool_choice=tool_choice,
+            instructions=instructions,
+            max_tool_calls=max_tool_calls,
+            reasoning=reasoning,
+            metadata=metadata,
+            store=store if store is not None else True,
+        )
+
+        # Store the queued response
+        await self.responses_store.store_response_object(
+            response_object=queued_response,
+            input=input_items,
+            messages=[],
+        )
+
+        # Schedule background processing task
+        asyncio.create_task(
+            self._process_background_response(
+                response_id=response_id,
+                input=input,
+                model=model,
+                prompt=prompt,
+                instructions=instructions,
+                previous_response_id=previous_response_id,
+                conversation=conversation,
+                store=store,
+                temperature=temperature,
+                text=text,
+                tool_choice=tool_choice,
+                tools=tools,
+                include=include,
+                max_infer_iters=max_infer_iters,
+                guardrail_ids=guardrail_ids,
+                parallel_tool_calls=parallel_tool_calls,
+                max_tool_calls=max_tool_calls,
+                reasoning=reasoning,
+                metadata=metadata,
+            )
+        )
+
+        return queued_response
+
+    async def _process_background_response(
+        self,
+        response_id: str,
+        input: str | list[OpenAIResponseInput],
+        model: str,
+        prompt: OpenAIResponsePrompt | None = None,
+        instructions: str | None = None,
+        previous_response_id: str | None = None,
+        conversation: str | None = None,
+        store: bool | None = True,
+        temperature: float | None = None,
+        text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
+        tools: list[OpenAIResponseInputTool] | None = None,
+        include: list[ResponseItemInclude] | None = None,
+        max_infer_iters: int | None = 10,
+        guardrail_ids: list[str] | None = None,
+        parallel_tool_calls: bool | None = None,
+        max_tool_calls: int | None = None,
+        reasoning: OpenAIResponseReasoning | None = None,
+        metadata: dict[str, str] | None = None,
+    ) -> None:
+        """Process a background response asynchronously."""
+        try:
+            # Check if response was cancelled before starting
+            existing = await self.responses_store.get_response_object(response_id)
+            if existing.status == "cancelled":
+                logger.info(f"Background response {response_id} was cancelled before processing started")
+                return
+
+            # Update status to in_progress
+            existing.status = "in_progress"
+            await self.responses_store.update_response_object(existing)
+
+            # Process the response using existing streaming logic
+            stream_gen = self._create_streaming_response(
+                input=input,
+                conversation=conversation,
+                model=model,
+                prompt=prompt,
+                instructions=instructions,
+                previous_response_id=previous_response_id,
+                store=store,
+                temperature=temperature,
+                text=text,
+                tools=tools,
+                tool_choice=tool_choice,
+                max_infer_iters=max_infer_iters,
+                guardrail_ids=guardrail_ids,
+                parallel_tool_calls=parallel_tool_calls,
+                max_tool_calls=max_tool_calls,
+                reasoning=reasoning,
+                metadata=metadata,
+                include=include,
+            )
+
+            final_response = None
+            failed_response = None
+
+            async for stream_chunk in stream_gen:
+                # Check for cancellation periodically
+                current = await self.responses_store.get_response_object(response_id)
+                if current.status == "cancelled":
+                    logger.info(f"Background response {response_id} was cancelled during processing")
+                    return
+
+                match stream_chunk.type:
+                    case "response.completed" | "response.incomplete":
+                        final_response = stream_chunk.response
+                    case "response.failed":
+                        failed_response = stream_chunk.response
+                    case _:
+                        pass
+
+            if failed_response is not None:
+                # Update with failed status
+                failed_response.background = True
+                failed_response.id = response_id  # Ensure we update the correct response
+                await self.responses_store.update_response_object(failed_response)
+            elif final_response is not None:
+                # Update with completed response
+                final_response.background = True
+                final_response.id = response_id  # Ensure we update the correct response
+                await self.responses_store.update_response_object(final_response)
+            else:
+                # Something went wrong - mark as failed
+                existing = await self.responses_store.get_response_object(response_id)
+                existing.status = "failed"
+                existing.error = OpenAIResponseError(
+                    code="processing_error",
+                    message="Response stream never reached a terminal state",
+                )
+                await self.responses_store.update_response_object(existing)
+
+        except Exception as e:
+            logger.exception(f"Error processing background response {response_id}: {e}")
+            try:
+                existing = await self.responses_store.get_response_object(response_id)
+                existing.status = "failed"
+                existing.error = OpenAIResponseError(
+                    code="processing_error",
+                    message=str(e),
+                )
+                await self.responses_store.update_response_object(existing)
+            except Exception as update_error:
+                logger.exception(f"Failed to update response {response_id} with error status: {update_error}")
 
     async def _create_streaming_response(
         self,

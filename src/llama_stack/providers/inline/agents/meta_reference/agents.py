@@ -110,6 +110,7 @@ class MetaReferenceAgentsImpl(Agents):
         result = await self.openai_responses_impl.create_openai_response(
             request.input,
             request.model,
+            request.background,
             request.prompt,
             request.instructions,
             request.previous_response_id,

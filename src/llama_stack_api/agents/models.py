@@ -15,6 +15,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack_api.common.responses import Order
+from llama_stack_api.helpers import remove_null_from_anyof
 from llama_stack_api.openai_responses import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
@@ -56,6 +57,11 @@ class CreateResponseRequest(BaseModel):
 
     input: str | list[OpenAIResponseInput] = Field(..., description="Input message(s) to create the response.")
     model: str = Field(..., description="The underlying LLM used for completions.")
+    background: bool | None = Field(
+        default=None,
+        description="Whether to run the model response in the background. When true, returns immediately with status 'queued'.",
+        json_schema_extra=remove_null_from_anyof,
+    )
     prompt: OpenAIResponsePrompt | None = Field(
         default=None, description="Prompt object with ID, version, and variables."
     )
