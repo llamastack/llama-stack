@@ -140,6 +140,7 @@ class MetaReferenceAgentsImpl(Agents):
             background=request.background,
             truncation=request.truncation,
             top_logprobs=request.top_logprobs,
+            presence_penalty=request.presence_penalty,
         )
         return result
 

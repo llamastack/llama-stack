@@ -773,6 +773,7 @@ class OpenAIResponseObject(BaseModel):
     safety_identifier: str | None = None
     service_tier: str | None = None
     metadata: dict[str, str] | None = None
+    presence_penalty: float | None = None
     store: bool
 
 

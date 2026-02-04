@@ -179,6 +179,12 @@ class CreateResponseRequest(BaseModel):
         le=20,
         description="The number of most likely tokens to return at each position, along with their log probabilities.",
     )
+    presence_penalty: float | None = Field(
+        default=None,
+        ge=-2.0,
+        le=2.0,
+        description="Penalizes new tokens based on whether they appear in the text so far.",
+    )
 
 
 class RetrieveResponseRequest(BaseModel):

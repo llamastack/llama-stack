@@ -4187,6 +4187,10 @@ components:
               type: string
             type: object
           - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         store:
           type: boolean
           title: Store
@@ -4670,6 +4674,10 @@ components:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean
@@ -9245,6 +9253,13 @@ components:
             minimum: 0.0
           - type: 'null'
           description: The number of most likely tokens to return at each position, along with their log probabilities.
+        presence_penalty:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: -2.0
+          - type: 'null'
+          description: Penalizes new tokens based on whether they appear in the text so far.
       additionalProperties: false
       type: object
       required:
