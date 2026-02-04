@@ -41,7 +41,10 @@
 #   - llama-stack-only: Build only llama-stack and llama-stack-api
 #   - clients-only: Build only client packages
 #
-# client_ref: Git ref for client repos (default: main)
+# client_ref: Git ref for client repos. Auto-detected from branch:
+#   - On release-X.Y.x branches or vX.Y.Z tags: uses matching release-X.Y.x
+#   - Otherwise: defaults to main
+#   - Explicit value overrides auto-detection
 #
 # =============================================================================
 
@@ -167,13 +170,41 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # === DETERMINE CLIENT REF ===
+      # Use release branch from client repos when running on a release branch,
+      # unless client_ref is explicitly provided via workflow_dispatch.
+      - name: Determine client ref
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
+        id: client-ref
+        run: |
+          if [ -n "${{ inputs.client_ref }}" ] && [ "${{ inputs.client_ref }}" != "main" ]; then
+            # Explicit override from workflow_dispatch
+            echo "ref=${{ inputs.client_ref }}" >> $GITHUB_OUTPUT
+            echo "Using explicit client_ref: ${{ inputs.client_ref }}"
+          elif [[ "$GITHUB_REF" == refs/heads/release-* ]]; then
+            # Running on a release branch — use the same branch name in client repos
+            BRANCH="${GITHUB_REF#refs/heads/}"
+            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "Using release branch: $BRANCH"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            # Running from a version tag — derive release branch (e.g., v0.5.1 -> release-0.5.x)
+            TAG="${GITHUB_REF#refs/tags/v}"
+            MAJOR_MINOR="${TAG%.*}"
+            BRANCH="release-${MAJOR_MINOR}.x"
+            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "Using derived release branch from tag: $BRANCH"
+          else
+            echo "ref=main" >> $GITHUB_OUTPUT
+            echo "Using default: main"
+          fi
+
       # === EXTERNAL PACKAGE STEPS ===
       - name: Checkout external repo
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ matrix.repo }}
-          ref: ${{ inputs.client_ref || 'main' }}
+          ref: ${{ steps.client-ref.outputs.ref }}
           path: external-repo
           fetch-depth: 0
 
