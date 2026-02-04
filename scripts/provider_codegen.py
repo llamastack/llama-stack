@@ -5,7 +5,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import inspect
 import subprocess
 import sys
 from pathlib import Path
@@ -122,8 +121,14 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
                 if field.default_factory is not None:
                     try:
                         default_value = field.default_factory()
-                    except (OSError, TypeError, AttributeError):
-                        # Can't execute factory - leave blank
+                        # HACK ALERT:
+                        # If the default value contains a path that looks like it came from RUNTIME_BASE_DIR,
+                        # replace it with a generic ~/.llama/ path for documentation
+                        if isinstance(default_value, str) and "/.llama/" in default_value:
+                            if ".llama/" in default_value:
+                                path_part = default_value.split(".llama/")[-1]
+                                default_value = f"~/.llama/{path_part}"
+                    except Exception:
                         default_value = ""
                 elif field.default is None or field.default is PydanticUndefined:
                     default_value = ""
@@ -142,6 +147,8 @@ def get_config_class_info(config_class_path: str) -> dict[str, Any]:
         if accepts_extra_config:
             config_description = "Additional configuration options that will be forwarded to the underlying provider"
             try:
+                import inspect
+
                 source = inspect.getsource(config_class)
                 lines = source.split("\n")
 
@@ -307,9 +314,11 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
         md_lines.append("")
         md_lines.append("```yaml")
         try:
+            sample_config_func = config_info["sample_config"]
+            import inspect
+
             import yaml
 
-            sample_config_func = config_info["sample_config"]
             if sample_config_func is not None:
                 sig = inspect.signature(sample_config_func)
                 if "__distro_dir__" in sig.parameters:
