@@ -75,7 +75,6 @@ const sidebars: SidebarsConfig = {
             'distributions/self_hosted_distro/starter',
             'distributions/self_hosted_distro/dell',
             'distributions/self_hosted_distro/dell-tgi',
-            'distributions/self_hosted_distro/meta-reference-gpu',
             'distributions/self_hosted_distro/nvidia',
             'distributions/self_hosted_distro/passthrough',
           ],
@@ -112,7 +111,6 @@ const sidebars: SidebarsConfig = {
           collapsed: true,
           items: [
             'providers/inference/index',
-            'providers/inference/inline_meta-reference',
             'providers/inference/inline_sentence-transformers',
             'providers/inference/remote_anthropic',
             'providers/inference/remote_azure',
