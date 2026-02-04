@@ -195,3 +195,10 @@ class InvalidConversationIdError(LlamaStackError):
     def __init__(self, conversation_id: str) -> None:
         message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
         super().__init__(message)
+
+
+class ResponseNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced response"""
+
+    def __init__(self, response_id: str) -> None:
+        super().__init__(response_id, resource_type="Response", client_command="responses.list")

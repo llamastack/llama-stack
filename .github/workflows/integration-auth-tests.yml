@@ -82,6 +82,9 @@ jobs:
           apis:
             - files
             - inference
+            - agents
+            - vector_io
+            - tool_runtime
           providers:
             files:
               - provider_id: meta-reference-files
@@ -91,6 +94,19 @@ jobs:
                   metadata_store:
                     table_name: files_metadata
                     backend: sql_default
+            agents:
+              - provider_id: meta-reference
+                provider_type: inline::meta-reference
+                config:
+                  persistence:
+                    agent_state:
+                      namespace: agents
+                      backend: kv_default
+                    responses:
+                      table_name: responses
+                      backend: sql_default
+                      max_write_queue_size: 10000
+                      num_writers: 4
           storage:
             backends:
               kv_default:
@@ -108,6 +124,9 @@ jobs:
                 backend: sql_default
               conversations:
                 table_name: openai_conversations
+                backend: sql_default
+              responses:
+                table_name: openai_responses
                 backend: sql_default
               prompts:
                 namespace: prompts
@@ -129,6 +148,36 @@ jobs:
                   when:
                     - user in owners roles
                   description: Owners can read their Files
+                - permit:
+                    actions: [create]
+                    resource: sql_record::openai_conversations::*
+                  description: Any authenticated user can create conversations
+                - permit:
+                    actions: [read, update, delete]
+                    resource: sql_record::openai_conversations::*
+                  when:
+                    - user is owner
+                  description: Users can access their own conversations
+                - permit:
+                    actions: [create]
+                    resource: sql_record::conversation_items::*
+                  description: Any authenticated user can create conversation items
+                - permit:
+                    actions: [read, update, delete]
+                    resource: sql_record::conversation_items::*
+                  when:
+                    - user is owner
+                  description: Users can access items in their own conversations
+                - permit:
+                    actions: [create]
+                    resource: sql_record::openai_responses::*
+                  description: Any authenticated user can create responses
+                - permit:
+                    actions: [read, update, delete]
+                    resource: sql_record::openai_responses::*
+                  when:
+                    - user is owner
+                  description: Users can access their own responses
           EOF
           yq eval '.server.auth.provider_config.type = "${{ matrix.auth-provider }}"' -i $run_dir/config.yaml
           yq eval '.server.auth.provider_config.tls_cafile = "${{ env.KUBERNETES_CA_CERT_PATH }}"' -i $run_dir/config.yaml
