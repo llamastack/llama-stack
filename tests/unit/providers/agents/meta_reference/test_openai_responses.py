@@ -34,6 +34,7 @@ from llama_stack_api import (
     OpenAISystemMessageParam,
     Order,
     Prompt,
+    ResponseStreamOptions,
 )
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
@@ -2136,7 +2137,7 @@ async def test_create_openai_response_with_stream_options_merges_with_default(
     """Test that stream_options merges with default include_usage."""
     input_text = "Test stream options"
     model = "meta-llama/Llama-3.1-8B-Instruct"
-    stream_options = {"include_obfuscation": False}
+    stream_options = ResponseStreamOptions(include_obfuscation=False)
 
     mock_inference_api.openai_chat_completion.return_value = fake_stream()
 
@@ -2162,10 +2163,10 @@ async def test_create_openai_response_with_stream_options_merges_with_default(
 
 
 async def test_create_openai_response_with_empty_stream_options(openai_responses_impl, mock_inference_api):
-    """Test that empty stream_options dict still merges with default include_usage."""
+    """Test that default stream_options still merges with default include_usage."""
     input_text = "Test empty options"
     model = "meta-llama/Llama-3.1-8B-Instruct"
-    stream_options = {}
+    stream_options = ResponseStreamOptions()  # Uses default include_obfuscation=True
 
     mock_inference_api.openai_chat_completion.return_value = fake_stream()
 
@@ -2180,9 +2181,10 @@ async def test_create_openai_response_with_empty_stream_options(openai_responses
     # Collect chunks (consume the async iterator)
     _ = [chunk async for chunk in result]
 
-    # Verify the stream_options has at least the default include_usage
+    # Verify the stream_options has both defaults
     mock_inference_api.openai_chat_completion.assert_called()
     call_args = mock_inference_api.openai_chat_completion.call_args
     params = call_args.args[0]
     assert params.stream_options is not None
     assert params.stream_options["include_usage"] is True
+    assert params.stream_options["include_obfuscation"] is True

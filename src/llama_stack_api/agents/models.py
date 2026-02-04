@@ -11,7 +11,6 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 """
 
 from enum import StrEnum
-from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -48,6 +47,17 @@ class ResponseGuardrailSpec(BaseModel):
 
 
 ResponseGuardrail = str | ResponseGuardrailSpec
+
+
+class ResponseStreamOptions(BaseModel):
+    """Options that control streamed response behavior."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    include_obfuscation: bool = Field(
+        default=True,
+        description="Whether to obfuscate sensitive information in streamed output.",
+    )
 
 
 class CreateResponseRequest(BaseModel):
@@ -130,7 +140,7 @@ class CreateResponseRequest(BaseModel):
         default=None,
         description="Dictionary of metadata key-value pairs to attach to the response.",
     )
-    stream_options: dict[str, Any] | None = Field(
+    stream_options: ResponseStreamOptions | None = Field(
         default=None,
         description="Options that control streamed response behavior.",
     )

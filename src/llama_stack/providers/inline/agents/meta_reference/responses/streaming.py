@@ -87,6 +87,7 @@ from llama_stack_api import (
     OpenAIResponseUsageOutputTokensDetails,
     OpenAIToolMessageParam,
     ResponseItemInclude,
+    ResponseStreamOptions,
     Safety,
     WebSearchToolTypes,
 )
@@ -146,7 +147,7 @@ class StreamingResponseOrchestrator:
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
-        stream_options: dict[str, Any] | None = None,
+        stream_options: ResponseStreamOptions | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx

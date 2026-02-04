@@ -60,6 +60,7 @@ from .agents import (
     ResponseGuardrail,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseStreamOptions,
     RetrieveResponseRequest,
 )
 from .batches import (
@@ -986,6 +987,7 @@ __all__ = [
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
     "ResponseItemInclude",
+    "ResponseStreamOptions",
     "RetrieveFileContentRequest",
     "RetrieveFileRequest",
     "RouteInfo",
