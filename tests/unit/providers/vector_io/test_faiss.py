@@ -156,8 +156,11 @@ async def test_health_success():
     inference_api = MagicMock()
     files_api = MagicMock()
 
-    with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
-        mock_index_flat.return_value = MagicMock()
+    # Create a mock faiss module with IndexFlatL2
+    mock_faiss = MagicMock()
+    mock_faiss.IndexFlatL2.return_value = MagicMock()
+
+    with patch("llama_stack.providers.inline.vector_io.faiss.faiss._get_faiss", return_value=mock_faiss):
         adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
         # Calling the health method directly
@@ -169,7 +172,7 @@ async def test_health_success():
         assert "message" not in response
 
         # Verifying that IndexFlatL2 was called with the correct dimension
-        mock_index_flat.assert_called_once_with(128)  # VECTOR_DIMENSION is 128
+        mock_faiss.IndexFlatL2.assert_called_once_with(128)  # VECTOR_DIMENSION is 128
 
 
 async def test_health_failure():
@@ -179,9 +182,11 @@ async def test_health_failure():
     inference_api = MagicMock()
     files_api = MagicMock()
 
-    with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
-        mock_index_flat.side_effect = Exception("Test error")
+    # Create a mock faiss module that raises an exception
+    mock_faiss = MagicMock()
+    mock_faiss.IndexFlatL2.side_effect = Exception("Test error")
 
+    with patch("llama_stack.providers.inline.vector_io.faiss.faiss._get_faiss", return_value=mock_faiss):
         adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
         # Calling the health method directly
