@@ -95,6 +95,7 @@ from llama_stack_api import (
     ToolDef,
     WebSearchToolTypes,
 )
+from llama_stack_api.inference import ServiceTier
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
@@ -145,7 +146,7 @@ class StreamingResponseOrchestrator:
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
-        service_tier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
@@ -173,7 +174,9 @@ class StreamingResponseOrchestrator:
         # An upper bound for the number of tokens that can be generated for a response
         self.max_output_tokens = max_output_tokens
         self.safety_identifier = safety_identifier
-        self.service_tier = service_tier
+        # Convert ServiceTier enum to string for internal storage
+        # This allows us to update it with the actual tier returned by the provider
+        self.service_tier = service_tier.value if service_tier is not None else None
         self.metadata = metadata
         self.truncation = truncation
         self.store = store
@@ -424,6 +427,12 @@ class StreamingResponseOrchestrator:
                 if not completion_result_data:
                     raise ValueError("Streaming chunk processor failed to return completion data")
                 last_completion_result = completion_result_data
+
+                # Update service_tier with actual value from provider response
+                # This is especially important when "auto" was used as input
+                if completion_result_data.service_tier is not None:
+                    self.service_tier = completion_result_data.service_tier
+
                 current_response = self._build_chat_completion(completion_result_data)
 
                 (
@@ -738,6 +747,7 @@ class StreamingResponseOrchestrator:
         chunk_model = ""
         chunk_finish_reason: OpenAIFinishReason = "stop"
         chat_response_logprobs = []
+        chunk_service_tier: str | None = None
 
         # Create a placeholder message item for delta events
         message_item_id = f"msg_{uuid.uuid4()}"
@@ -759,6 +769,9 @@ class StreamingResponseOrchestrator:
             chat_response_id = chunk.id
             chunk_created = chunk.created
             chunk_model = chunk.model
+            # Extract service_tier from chunk if available (may be in final chunk)
+            if chunk.service_tier is not None:
+                chunk_service_tier = chunk.service_tier
 
             # Accumulate usage from chunks (typically in final chunk with stream_options)
             self._accumulate_chunk_usage(chunk)
@@ -1045,6 +1058,7 @@ class StreamingResponseOrchestrator:
             tool_call_item_ids=tool_call_item_ids,
             content_part_emitted=content_part_emitted,
             logprobs=OpenAIChoiceLogprobs(content=chat_response_logprobs) if chat_response_logprobs else None,
+            service_tier=chunk_service_tier,
         )
 
     def _build_chat_completion(self, result: ChatCompletionResult) -> OpenAIChatCompletion:
