@@ -97,9 +97,9 @@
     },
     "conformance": {
       "score": 84.8,
-      "issues": 275,
+      "issues": 276,
       "missing_properties": 120,
-      "total_problems": 395,
+      "total_problems": 396,
       "total_properties": 2598
     }
   },
@@ -1692,8 +1692,8 @@
       ]
     },
     "Responses": {
-      "score": 86.7,
-      "issues": 29,
+      "score": 86.2,
+      "issues": 30,
       "missing_properties": 1,
       "total_properties": 225,
       "endpoints": [
@@ -1764,6 +1764,13 @@
                     "Nullable added (OpenAI non-nullable)",
                     "Union variants added: 2",
                     "Default changed: None -> False"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.stream_options",
+                  "details": [
+                    "Union variants added: 1",
+                    "Union variants removed: 1"
                   ]
                 },
                 {
@@ -1918,7 +1925,7 @@
                 }
               ],
               "missing_count": 1,
-              "issues_count": 29
+              "issues_count": 30
             }
           ]
         }

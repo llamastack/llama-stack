@@ -9,7 +9,6 @@ import re
 import time
 import uuid
 from collections.abc import AsyncIterator
-from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 
@@ -54,6 +53,7 @@ from llama_stack_api import (
     Prompts,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseStreamOptions,
     ResponseTruncation,
     Safety,
     ServiceNotEnabledError,
@@ -571,7 +571,7 @@ class OpenAIResponsesImpl:
         truncation: ResponseTruncation | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
-        stream_options: dict[str, Any] | None = None,
+        stream_options: ResponseStreamOptions | None = None,
     ):
         stream = bool(stream)
         background = bool(background)
@@ -970,7 +970,7 @@ class OpenAIResponsesImpl:
         response_id: str | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
-        stream_options: dict[str, Any] | None = None,
+        stream_options: ResponseStreamOptions | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types

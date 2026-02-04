@@ -93,6 +93,7 @@ from llama_stack_api import (
     OpenAIResponseUsageOutputTokensDetails,
     OpenAIToolMessageParam,
     ResponseItemInclude,
+    ResponseStreamOptions,
     ResponseTruncation,
     Safety,
     ToolDef,
@@ -228,7 +229,7 @@ class StreamingResponseOrchestrator:
         truncation: ResponseTruncation | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
-        stream_options: dict[str, Any] | None = None,
+        stream_options: ResponseStreamOptions | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
