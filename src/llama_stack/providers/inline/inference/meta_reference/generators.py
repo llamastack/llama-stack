@@ -31,7 +31,7 @@ from .inference import resolve_model
 
 
 class LogitsProcessor:
-    def __init__(self, token_enforcer: Any, torch_module: torch):
+    def __init__(self, token_enforcer: Any, torch_module: Any):
         self.token_enforcer = token_enforcer
         self.torch = torch_module
         self.mask: torch.Tensor | None = None

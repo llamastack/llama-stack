@@ -14,17 +14,15 @@ from typing import TYPE_CHECKING, Any
 from llama_stack.core.storage.kvstore import kvstore_impl
 
 if TYPE_CHECKING:
-    import faiss as faiss_module
-    import numpy as np
     from numpy.typing import NDArray
 
 # Lazy-loaded modules (defers loading faiss ~50MB and numpy ~30MB)
-_faiss: "faiss_module | None" = None
-_numpy: "np | None" = None
+_faiss: Any = None
+_numpy: Any = None
 _lazy_load_lock = threading.Lock()
 
 
-def _get_faiss() -> "faiss_module":
+def _get_faiss() -> Any:
     """Lazily load faiss module on first use."""
     global _faiss
     if _faiss is not None:
@@ -39,7 +37,7 @@ def _get_faiss() -> "faiss_module":
         return _faiss
 
 
-def _get_numpy() -> "np":
+def _get_numpy() -> Any:
     """Lazily load numpy module on first use."""
     global _numpy
     if _numpy is not None:

@@ -15,17 +15,15 @@ from typing import TYPE_CHECKING, Any
 from llama_stack.core.storage.kvstore import kvstore_impl
 
 if TYPE_CHECKING:
-    import numpy as np
-    import sqlite_vec as sqlite_vec_module
     from numpy.typing import NDArray
 
 # Lazy-loaded modules (defers loading numpy ~30MB and sqlite_vec)
-_numpy: "np | None" = None
-_sqlite_vec: "sqlite_vec_module | None" = None
+_numpy: Any = None
+_sqlite_vec: Any = None
 _lazy_load_lock = threading.Lock()
 
 
-def _get_numpy() -> "np":
+def _get_numpy() -> Any:
     """Lazily load numpy module on first use."""
     global _numpy
     if _numpy is not None:
@@ -40,7 +38,7 @@ def _get_numpy() -> "np":
         return _numpy
 
 
-def _get_sqlite_vec() -> "sqlite_vec_module":
+def _get_sqlite_vec() -> Any:
     """Lazily load sqlite_vec module on first use."""
     global _sqlite_vec
     if _sqlite_vec is not None:

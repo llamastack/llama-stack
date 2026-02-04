@@ -4,13 +4,9 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from llama_stack.core.utils.model_utils import model_local_dir
-
-if TYPE_CHECKING:
-    import torch as torch_module
-
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
@@ -75,7 +71,7 @@ class PromptGuardShield:
         self,
         model_dir: str,
         config: PromptGuardConfig,
-        torch_module: "torch_module",
+        torch_module: Any,
         auto_model_class: Any,
         auto_tokenizer_class: Any,
         threshold: float = 0.9,

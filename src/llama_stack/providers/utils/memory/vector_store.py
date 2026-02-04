@@ -17,15 +17,14 @@ import httpx
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
-    import numpy as np
     from numpy.typing import NDArray
 
 # Lazy-loaded numpy (defers loading ~30MB)
-_numpy: "np | None" = None
+_numpy: Any = None
 _numpy_lock = threading.Lock()
 
 
-def _get_numpy() -> "np":
+def _get_numpy() -> Any:
     """Lazily load numpy module on first use."""
     global _numpy
     if _numpy is not None:
