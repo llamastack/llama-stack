@@ -45,12 +45,12 @@ class BedrockBaseConfig(RemoteInferenceProviderConfig):
         "Default use environment variable: AWS_RETRY_MODE",
     )
     connect_timeout: float | None = Field(
-        default_factory=lambda: float(os.getenv("AWS_CONNECT_TIMEOUT", "60.0")),
+        default_factory=lambda: float(os.getenv("AWS_CONNECT_TIMEOUT", "60")),
         description="The time in seconds till a timeout exception is thrown when attempting to make a connection. "
         "The default is 60 seconds.",
     )
     read_timeout: float | None = Field(
-        default_factory=lambda: float(os.getenv("AWS_READ_TIMEOUT", "60.0")),
+        default_factory=lambda: float(os.getenv("AWS_READ_TIMEOUT", "60")),
         description="The time in seconds till a timeout exception is thrown when attempting to read from a connection."
         "The default is 60 seconds.",
     )
