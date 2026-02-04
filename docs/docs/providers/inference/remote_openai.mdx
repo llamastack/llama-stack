@@ -34,11 +34,11 @@ OpenAI inference provider for accessing GPT models and other OpenAI services.
 | `network.timeout.connect` | `float \| None` | No |  | Connection timeout in seconds. |
 | `network.timeout.read` | `float \| None` | No |  | Read timeout in seconds. |
 | `network.headers` | `dict[str, str] \| None` | No |  | Additional HTTP headers to include in all requests. |
-| `base_url` | `HttpUrl \| None` | No | https://api.openai.com/v1 | Base URL for OpenAI API |
+| `base_url` | `HttpUrl \| None` | No | https://api.openai.com/ | Base URL for OpenAI API |
 
 ## Sample Configuration
 
 ```yaml
 api_key: ${env.OPENAI_API_KEY:=}
-base_url: ${env.OPENAI_BASE_URL:=https://api.openai.com/v1}
+base_url: ${env.OPENAI_BASE_URL:=https://api.openai.com}
 ```

@@ -61,7 +61,7 @@ providers:
     provider_type: remote::openai
     config:
       api_key: ${env.OPENAI_API_KEY:=}
-      base_url: ${env.OPENAI_BASE_URL:=https://api.openai.com/v1}
+      base_url: ${env.OPENAI_BASE_URL:=https://api.openai.com}
   - provider_id: anthropic
     provider_type: remote::anthropic
     config:

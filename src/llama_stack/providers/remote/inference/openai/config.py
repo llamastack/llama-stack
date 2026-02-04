@@ -22,7 +22,7 @@ class OpenAIProviderDataValidator(BaseModel):
 @json_schema_type
 class OpenAIConfig(RemoteInferenceProviderConfig):
     base_url: HttpUrl | None = Field(
-        default=HttpUrl("https://api.openai.com/v1"),
+        default=HttpUrl("https://api.openai.com"),
         description="Base URL for OpenAI API",
     )
 
@@ -30,7 +30,7 @@ class OpenAIConfig(RemoteInferenceProviderConfig):
     def sample_run_config(
         cls,
         api_key: str = "${env.OPENAI_API_KEY:=}",
-        base_url: str = "${env.OPENAI_BASE_URL:=https://api.openai.com/v1}",
+        base_url: str = "${env.OPENAI_BASE_URL:=https://api.openai.com}",
         **kwargs,
     ) -> dict[str, Any]:
         return {
