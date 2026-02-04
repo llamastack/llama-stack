@@ -9,13 +9,52 @@ import json
 import re
 import sqlite3
 import struct
-from typing import Any
-
-import numpy as np
-import sqlite_vec  # type: ignore[import-untyped]
-from numpy.typing import NDArray
+import threading
+from typing import TYPE_CHECKING, Any
 
 from llama_stack.core.storage.kvstore import kvstore_impl
+
+if TYPE_CHECKING:
+    import numpy as np
+    import sqlite_vec as sqlite_vec_module
+    from numpy.typing import NDArray
+
+# Lazy-loaded modules (defers loading numpy ~30MB and sqlite_vec)
+_numpy: "np | None" = None
+_sqlite_vec: "sqlite_vec_module | None" = None
+_lazy_load_lock = threading.Lock()
+
+
+def _get_numpy() -> "np":
+    """Lazily load numpy module on first use."""
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+
+    with _lazy_load_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
+
+def _get_sqlite_vec() -> "sqlite_vec_module":
+    """Lazily load sqlite_vec module on first use."""
+    global _sqlite_vec
+    if _sqlite_vec is not None:
+        return _sqlite_vec
+
+    with _lazy_load_lock:
+        if _sqlite_vec is not None:
+            return _sqlite_vec
+        import sqlite_vec  # type: ignore[import-untyped]
+
+        _sqlite_vec = sqlite_vec
+        return _sqlite_vec
+
+
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
@@ -63,7 +102,7 @@ def _create_sqlite_connection(db_path: str):
     """Create a SQLite connection with sqlite_vec extension loaded."""
     connection = sqlite3.connect(db_path)
     connection.enable_load_extension(True)
-    sqlite_vec.load(connection)
+    _get_sqlite_vec().load(connection)
     connection.enable_load_extension(False)
     return connection
 
@@ -151,6 +190,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         If any insert fails, the transaction is rolled back to maintain consistency.
         Also inserts chunk content into FTS table for keyword search support.
         """
+        np = _get_numpy()
         chunks = embedded_chunks  # EmbeddedChunk now inherits from Chunk
         embeddings = np.array([ec.embedding for ec in embedded_chunks], dtype=np.float32)
         assert all(isinstance(chunk.content, str) for chunk in chunks), "SQLiteVecIndex only supports text chunks"
@@ -205,7 +245,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         # Run batch insertion in a background thread
         await asyncio.to_thread(_execute_all_batch_inserts)
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(self, embedding: "NDArray", k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Performs vector-based search using a virtual table for vector similarity.
         """
@@ -214,7 +254,7 @@ class SQLiteVecIndex(EmbeddingIndex):
             connection = _create_sqlite_connection(self.db_path)
             cur = connection.cursor()
             try:
-                emb_list = embedding.tolist() if isinstance(embedding, np.ndarray) else list(embedding)
+                emb_list = embedding.tolist() if isinstance(embedding, _get_numpy().ndarray) else list(embedding)
                 emb_blob = serialize_vector(emb_list)
                 query_sql = f"""
                     SELECT m.id, m.chunk, v.distance
@@ -290,7 +330,7 @@ class SQLiteVecIndex(EmbeddingIndex):
 
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,

@@ -8,13 +8,52 @@ import asyncio
 import base64
 import io
 import json
-from typing import Any
-
-import faiss  # type: ignore[import-untyped]
-import numpy as np
-from numpy.typing import NDArray
+import threading
+from typing import TYPE_CHECKING, Any
 
 from llama_stack.core.storage.kvstore import kvstore_impl
+
+if TYPE_CHECKING:
+    import faiss as faiss_module
+    import numpy as np
+    from numpy.typing import NDArray
+
+# Lazy-loaded modules (defers loading faiss ~50MB and numpy ~30MB)
+_faiss: "faiss_module | None" = None
+_numpy: "np | None" = None
+_lazy_load_lock = threading.Lock()
+
+
+def _get_faiss() -> "faiss_module":
+    """Lazily load faiss module on first use."""
+    global _faiss
+    if _faiss is not None:
+        return _faiss
+
+    with _lazy_load_lock:
+        if _faiss is not None:
+            return _faiss
+        import faiss  # type: ignore[import-untyped]
+
+        _faiss = faiss
+        return _faiss
+
+
+def _get_numpy() -> "np":
+    """Lazily load numpy module on first use."""
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+
+    with _lazy_load_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
+
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
@@ -48,7 +87,7 @@ OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_conten
 
 class FaissIndex(EmbeddingIndex):
     def __init__(self, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
-        self.index = faiss.IndexFlatL2(dimension)
+        self.index = _get_faiss().IndexFlatL2(dimension)
         self.chunk_by_index: dict[int, EmbeddedChunk] = {}
         self.kvstore = kvstore
         self.bank_id = bank_id
@@ -81,7 +120,7 @@ class FaissIndex(EmbeddingIndex):
 
             buffer = io.BytesIO(base64.b64decode(data["faiss_index"]))
             try:
-                self.index = faiss.deserialize_index(np.load(buffer, allow_pickle=False))
+                self.index = _get_faiss().deserialize_index(_get_numpy().load(buffer, allow_pickle=False))
                 self.chunk_ids = [embedded_chunk.chunk_id for embedded_chunk in self.chunk_by_index.values()]
             except Exception as e:
                 logger.debug(e, exc_info=True)
@@ -95,9 +134,9 @@ class FaissIndex(EmbeddingIndex):
         if not self.kvstore or not self.bank_id:
             return
 
-        np_index = faiss.serialize_index(self.index)
+        np_index = _get_faiss().serialize_index(self.index)
         buffer = io.BytesIO()
-        np.save(buffer, np_index, allow_pickle=False)
+        _get_numpy().save(buffer, np_index, allow_pickle=False)
         data = {
             "chunk_by_index": {k: v.model_dump_json() for k, v in self.chunk_by_index.items()},
             "faiss_index": base64.b64encode(buffer.getvalue()).decode("utf-8"),
@@ -117,6 +156,7 @@ class FaissIndex(EmbeddingIndex):
             return
 
         # Extract embeddings and validate dimensions
+        np = _get_numpy()
         embeddings = np.array([ec.embedding for ec in embedded_chunks], dtype=np.float32)
         embedding_dim = embeddings.shape[1] if len(embeddings.shape) > 1 else embeddings.shape[0]
         if embedding_dim != self.index.d:
@@ -141,7 +181,7 @@ class FaissIndex(EmbeddingIndex):
 
         def remove_chunk(chunk_id: str):
             index = self.chunk_ids.index(chunk_id)
-            self.index.remove_ids(np.array([index]))
+            self.index.remove_ids(_get_numpy().array([index]))
 
             new_chunk_by_index = {}
             for idx, chunk in self.chunk_by_index.items():
@@ -159,7 +199,8 @@ class FaissIndex(EmbeddingIndex):
 
         await self._save_index()
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(self, embedding: "NDArray", k: int, score_threshold: float) -> QueryChunksResponse:
+        np = _get_numpy()
         distances, indices = await asyncio.to_thread(self.index.search, embedding.reshape(1, -1).astype(np.float32), k)
         chunks: list[EmbeddedChunk] = []
         scores: list[float] = []
@@ -181,7 +222,7 @@ class FaissIndex(EmbeddingIndex):
 
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
@@ -233,7 +274,7 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         """
         try:
             vector_dimension = 128  # sample dimension
-            faiss.IndexFlatL2(vector_dimension)
+            _get_faiss().IndexFlatL2(vector_dimension)
             return HealthResponse(status=HealthStatus.OK)
         except Exception as e:
             return HealthResponse(status=HealthStatus.ERROR, message=f"Health check failed: {str(e)}")

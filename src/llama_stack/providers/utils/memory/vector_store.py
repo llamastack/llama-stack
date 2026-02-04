@@ -6,16 +6,39 @@
 import base64
 import io
 import re
+import threading
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import unquote
 
 import httpx
-import numpy as np
-from numpy.typing import NDArray
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
+# Lazy-loaded numpy (defers loading ~30MB)
+_numpy: "np | None" = None
+_numpy_lock = threading.Lock()
+
+
+def _get_numpy() -> "np":
+    """Lazily load numpy module on first use."""
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+
+    with _numpy_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
@@ -217,8 +240,9 @@ def make_overlapped_chunks(
     return chunks
 
 
-def _validate_embedding(embedding: NDArray, index: int, expected_dimension: int):
+def _validate_embedding(embedding: "NDArray", index: int, expected_dimension: int):
     """Helper method to validate embedding format and dimensions"""
+    np = _get_numpy()
     if not isinstance(embedding, (list | np.ndarray)):
         raise ValueError(f"Embedding at index {index} must be a list or numpy array, got {type(embedding)}")
 
@@ -243,7 +267,7 @@ class EmbeddingIndex(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(self, embedding: "NDArray", k: int, score_threshold: float) -> QueryChunksResponse:
         raise NotImplementedError()
 
     @abstractmethod
@@ -253,7 +277,7 @@ class EmbeddingIndex(ABC):
     @abstractmethod
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
@@ -356,7 +380,7 @@ class VectorStoreWithIndex:
         else:
             params = OpenAIEmbeddingsRequestWithExtraBody(model=self.vector_store.embedding_model, input=[query_string])
         embeddings_response = await self.inference_api.openai_embeddings(params)
-        query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
+        query_vector = _get_numpy().array(embeddings_response.data[0].embedding, dtype=_get_numpy().float32)
         if mode == "hybrid":
             return await self.index.query_hybrid(
                 query_vector, query_string, k, score_threshold, reranker_type, reranker_params

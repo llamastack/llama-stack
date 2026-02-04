@@ -4,18 +4,16 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from __future__ import annotations
+
 import math
-from typing import Optional
+from typing import TYPE_CHECKING, Any
 
-import torch
-from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
-
-from llama_stack.models.llama.datatypes import QuantizationMode, ToolPromptFormat
-from llama_stack.models.llama.llama3.generation import Llama3
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer as Llama3Tokenizer
-from llama_stack.models.llama.llama4.generation import Llama4
-from llama_stack.models.llama.llama4.tokenizer import Tokenizer as Llama4Tokenizer
 from llama_stack.models.llama.sku_types import Model, ModelFamily
+
+if TYPE_CHECKING:
+    import torch
+
 from llama_stack_api import (
     GreedySamplingStrategy,
     JsonSchemaResponseFormat,
@@ -31,12 +29,11 @@ from .common import model_checkpoint_dir
 from .config import MetaReferenceInferenceConfig
 from .inference import resolve_model
 
-Tokenizer = Llama4Tokenizer | Llama3Tokenizer
-
 
 class LogitsProcessor:
-    def __init__(self, token_enforcer: TokenEnforcer):
+    def __init__(self, token_enforcer: Any, torch_module: torch):
         self.token_enforcer = token_enforcer
+        self.torch = torch_module
         self.mask: torch.Tensor | None = None
 
     def __call__(self, tokens: torch.Tensor, scores: torch.Tensor) -> torch.Tensor:
@@ -46,7 +43,7 @@ class LogitsProcessor:
         if self.mask is not None:
             self.mask.fill_(-math.inf)
         else:
-            self.mask = torch.full_like(scores, -math.inf)
+            self.mask = self.torch.full_like(scores, -math.inf)
 
         self.mask[:, :, allowed_tokens] = 0
         scores = scores + self.mask
@@ -54,15 +51,19 @@ class LogitsProcessor:
 
 
 def get_logits_processor(
-    tokenizer: Tokenizer,
+    tokenizer: Any,
     vocab_size: int,
     response_format: ResponseFormat | None,
-) -> Optional["LogitsProcessor"]:
+) -> LogitsProcessor | None:
     if response_format is None:
         return None
 
     if not isinstance(response_format, JsonSchemaResponseFormat):
         raise ValueError(f"Unsupported response format type {response_format.type}")
+
+    # Lazy import torch and lmformatenforcer only when logits processor is needed
+    import torch
+    from lmformatenforcer import JsonSchemaParser, TokenEnforcer, TokenEnforcerTokenizerData
 
     parser = JsonSchemaParser(response_format.json_schema)
     data = TokenEnforcerTokenizerData(
@@ -71,10 +72,10 @@ def get_logits_processor(
         tokenizer.stop_tokens,
     )
     token_enforcer = TokenEnforcer(data, parser)
-    return LogitsProcessor(token_enforcer)
+    return LogitsProcessor(token_enforcer, torch)
 
 
-def _build_regular_tokens_list(tokenizer: Tokenizer, vocab_size: int) -> list[tuple[int, str, bool]]:
+def _build_regular_tokens_list(tokenizer: Any, vocab_size: int) -> list[tuple[int, str, bool]]:
     token_0 = tokenizer.encode("0", bos=False, eos=False)[-1]
     regular_tokens = []
 
@@ -110,6 +111,11 @@ class LlamaGenerator:
         model_id: str,
         llama_model: Model,
     ):
+        # Lazy import heavy dependencies (torch, generation modules) to reduce startup memory (~46MB+ savings)
+        from llama_stack.models.llama.datatypes import QuantizationMode
+        from llama_stack.models.llama.llama3.generation import Llama3
+        from llama_stack.models.llama.llama4.generation import Llama4
+
         if config.checkpoint_dir and config.checkpoint_dir != "null":
             ckpt_dir = config.checkpoint_dir
         else:
@@ -157,6 +163,7 @@ class LlamaGenerator:
             request: OpenAI chat completion request
             raw_messages: Pre-converted list of RawMessage objects
         """
+        from llama_stack.models.llama.datatypes import ToolPromptFormat
 
         # Determine tool prompt format
         tool_prompt_format = ToolPromptFormat.json if request.tools else ToolPromptFormat.json
