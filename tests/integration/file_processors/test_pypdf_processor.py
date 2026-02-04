@@ -18,6 +18,94 @@ from llama_stack_api.vector_io import (
     VectorStoreChunkingStrategyStaticConfig,
 )
 
+# Minimal valid PDF for testing edge cases
+MINIMAL_PDF_CONTENT = b"""%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 44
+>>
+stream
+BT
+/F1 12 Tf
+100 700 Td
+(Hello World) Tj
+ET
+endstream
+endobj
+xref
+0 5
+0000000000 65535 f
+0000000010 00000 n
+0000000060 00000 n
+0000000120 00000 n
+0000000210 00000 n
+trailer
+<<
+/Size 5
+/Root 1 0 R
+>>
+startxref
+295
+%%EOF"""
+
+# Empty PDF with no text content for testing edge cases
+EMPTY_PDF_CONTENT = b"""%PDF-1.4
+1 0 obj
+<<
+/Type /Catalog
+/Pages 2 0 R
+>>
+endobj
+2 0 obj
+<<
+/Type /Pages
+/Kids [3 0 R]
+/Count 1
+>>
+endobj
+3 0 obj
+<<
+/Type /Page
+/Parent 2 0 R
+/MediaBox [0 0 612 792]
+>>
+endobj
+xref
+0 4
+0000000000 65535 f
+0000000010 00000 n
+0000000060 00000 n
+0000000120 00000 n
+trailer
+<<
+/Size 4
+/Root 1 0 R
+>>
+startxref
+200
+%%EOF"""
+
 
 class TestPyPDFFileProcessor:
     """Integration tests for PyPDF file processor."""
@@ -223,64 +311,9 @@ class TestPyPDFFileProcessor:
         with pytest.raises(ValueError, match="Files API not available"):
             await processor.process_file(file_id="test_file_id")
 
-    def _create_minimal_pdf(self) -> bytes:
-        """Create a minimal valid PDF for testing edge cases."""
-        # Minimal PDF content
-        pdf_content = b"""%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
-/Contents 4 0 R
->>
-endobj
-4 0 obj
-<<
-/Length 44
->>
-stream
-BT
-/F1 12 Tf
-100 700 Td
-(Hello World) Tj
-ET
-endstream
-endobj
-xref
-0 5
-0000000000 65535 f
-0000000010 00000 n
-0000000060 00000 n
-0000000120 00000 n
-0000000210 00000 n
-trailer
-<<
-/Size 5
-/Root 1 0 R
->>
-startxref
-295
-%%EOF"""
-        return pdf_content
-
     async def test_minimal_pdf_processing(self, processor: PyPDFFileProcessor):
         """Test processing a minimal PDF."""
-        minimal_pdf = self._create_minimal_pdf()
-        upload_file = UploadFile(file=io.BytesIO(minimal_pdf), filename="minimal.pdf")
+        upload_file = UploadFile(file=io.BytesIO(MINIMAL_PDF_CONTENT), filename="minimal.pdf")
 
         response = await processor.process_file(file=upload_file, chunking_strategy=None)
 
@@ -313,44 +346,7 @@ startxref
 
     async def test_empty_pdf_handling(self, processor: PyPDFFileProcessor):
         """Test handling of empty or contentless PDF."""
-        # Create a PDF with no text content
-        empty_pdf_content = b"""%PDF-1.4
-1 0 obj
-<<
-/Type /Catalog
-/Pages 2 0 R
->>
-endobj
-2 0 obj
-<<
-/Type /Pages
-/Kids [3 0 R]
-/Count 1
->>
-endobj
-3 0 obj
-<<
-/Type /Page
-/Parent 2 0 R
-/MediaBox [0 0 612 792]
->>
-endobj
-xref
-0 4
-0000000000 65535 f
-0000000010 00000 n
-0000000060 00000 n
-0000000120 00000 n
-trailer
-<<
-/Size 4
-/Root 1 0 R
->>
-startxref
-200
-%%EOF"""
-
-        upload_file = UploadFile(file=io.BytesIO(empty_pdf_content), filename="empty.pdf")
+        upload_file = UploadFile(file=io.BytesIO(EMPTY_PDF_CONTENT), filename="empty.pdf")
 
         response = await processor.process_file(file=upload_file, chunking_strategy=None)
 

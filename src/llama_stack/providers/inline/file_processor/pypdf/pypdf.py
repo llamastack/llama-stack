@@ -166,23 +166,23 @@ class PyPDFFileProcessor:
 
         metadata: dict[str, Any] = {"page_count": len(reader.pages)}
 
-        # Extract document metadata
         if reader.metadata:
             pdf_metadata = reader.metadata
-            if pdf_metadata.title:
-                metadata["title"] = str(pdf_metadata.title)
-            if pdf_metadata.author:
-                metadata["author"] = str(pdf_metadata.author)
-            if pdf_metadata.subject:
-                metadata["subject"] = str(pdf_metadata.subject)
-            if pdf_metadata.creator:
-                metadata["creator"] = str(pdf_metadata.creator)
-            if pdf_metadata.producer:
-                metadata["producer"] = str(pdf_metadata.producer)
-            if pdf_metadata.creation_date:
-                metadata["creation_date"] = str(pdf_metadata.creation_date)
-            if pdf_metadata.modification_date:
-                metadata["modification_date"] = str(pdf_metadata.modification_date)
+
+            keys = [
+                "title",
+                "author",
+                "subject",
+                "creator",
+                "producer",
+                "creation_date",
+                "modification_date",
+            ]
+
+            for key in keys:
+                value = getattr(pdf_metadata, key, None)
+                if value:
+                    metadata[key] = str(value)
 
         return metadata
 
