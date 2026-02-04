@@ -103,7 +103,7 @@ repos:
         name: Provider Codegen
         additional_dependencies:
           - *uv-dependency
-        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py
+        entry: sh -c 'env -i PATH="$PATH" ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py'
         language: python
         pass_filenames: false
         require_serial: true
