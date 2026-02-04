@@ -12,6 +12,7 @@ from typing import Any
 from fastapi import UploadFile
 
 from llama_stack.log import get_logger
+from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.memory.vector_store import make_overlapped_chunks
 from llama_stack_api.file_processors import ProcessFileResponse
 from llama_stack_api.vector_io import (
@@ -216,16 +217,9 @@ class PyPDFFileProcessor:
 
         if not chunking_strategy:
             # No chunking - return entire text as a single chunk
-            # Use tiktoken directly for token counting to avoid dependency on Llama tokenizer
-            try:
-                import tiktoken
-
-                enc = tiktoken.get_encoding("cl100k_base")
-                tokens = enc.encode(text)
-                token_count = len(tokens)
-            except Exception:
-                # Fallback to word-based estimation if tiktoken fails
-                token_count = len(text.split()) * 4 // 3  # Rough approximation
+            # Use same tokenization approach as make_overlapped_chunks for consistency
+            tokenizer = Tokenizer.get_instance()
+            tokens = tokenizer.encode(text, bos=False, eos=False)
 
             chunk_id = f"{document_id}_chunk_0"
 
@@ -233,7 +227,7 @@ class PyPDFFileProcessor:
                 chunk_id=chunk_id,
                 document_id=document_id,
                 chunk_tokenizer="DEFAULT_TIKTOKEN_TOKENIZER",
-                content_token_count=token_count,
+                content_token_count=len(tokens),
             )
 
             chunk = Chunk(
