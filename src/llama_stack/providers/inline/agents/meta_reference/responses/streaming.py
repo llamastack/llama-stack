@@ -284,6 +284,22 @@ class StreamingResponseOrchestrator:
                 yield await self._create_refusal_response(input_violation_message)
                 return
 
+        # Only 'disabled' truncation is supported for now
+        # TODO: Implement actual truncation logic when 'auto' mode is supported
+        if self.truncation == ResponseTruncation.auto:
+            logger.warning("Truncation mode 'auto' is not yet supported")
+            self.sequence_number += 1
+            error = OpenAIResponseError(
+                code="invalid_request_error",
+                message="Truncation mode 'auto' is not supported. Use 'disabled' to let the inference provider reject oversized contexts.",
+            )
+            failure_response = self._snapshot_response("failed", output_messages, error=error)
+            yield OpenAIResponseObjectStreamResponseFailed(
+                response=failure_response,
+                sequence_number=self.sequence_number,
+            )
+            return
+
         async for stream_event in self._process_tools(output_messages):
             yield stream_event
 
@@ -361,12 +377,6 @@ class StreamingResponseOrchestrator:
                 effective_parallel_tool_calls = (
                     self.parallel_tool_calls if effective_tools is not None and len(effective_tools) > 0 else None
                 )
-
-                # Apply truncation logic if needed
-                # When self.truncation == 'auto', truncate messages from the beginning
-                # to fit within the model's context window.
-                # When self.truncation == 'disabled', don't modify messages and let
-                # the inference provider return a 400 error if context exceeds limit.
 
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
