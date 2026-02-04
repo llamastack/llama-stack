@@ -12,12 +12,10 @@ from typing import Any
 from fastapi import UploadFile
 
 from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.memory.vector_store import make_overlapped_chunks
 from llama_stack_api.file_processors import ProcessFileResponse
 from llama_stack_api.vector_io import (
     Chunk,
-    ChunkMetadata,
     VectorStoreChunkingStrategy,
 )
 
@@ -200,6 +198,28 @@ class PyPDFFileProcessor:
 
         return "\n".join(cleaned_lines)
 
+    def _make_single_chunk(
+        self,
+        text: str,
+        document_id: str,
+        document_metadata: dict[str, Any],
+    ) -> list[Chunk]:
+        """Create a single chunk containing the entire text using make_overlapped_chunks."""
+        # Use a very large window size to ensure the entire text fits in one chunk
+        # 1M tokens should be larger than any reasonable document
+        very_large_window = 1_000_000
+
+        return make_overlapped_chunks(
+            document_id=document_id,
+            text=text,
+            window_len=very_large_window,
+            overlap_len=0,
+            metadata={
+                "document_id": document_id,
+                **document_metadata,
+            },
+        )
+
     def _create_chunks(
         self,
         text: str,
@@ -217,29 +237,7 @@ class PyPDFFileProcessor:
 
         if not chunking_strategy:
             # No chunking - return entire text as a single chunk
-            # Use same tokenization approach as make_overlapped_chunks for consistency
-            tokenizer = Tokenizer.get_instance()
-            tokens = tokenizer.encode(text, bos=False, eos=False)
-
-            chunk_id = f"{document_id}_chunk_0"
-
-            chunk_metadata = ChunkMetadata(
-                chunk_id=chunk_id,
-                document_id=document_id,
-                chunk_tokenizer="DEFAULT_TIKTOKEN_TOKENIZER",
-                content_token_count=len(tokens),
-            )
-
-            chunk = Chunk(
-                content=text,  # Simple string content
-                chunk_id=chunk_id,
-                metadata={
-                    "document_id": document_id,
-                    **document_metadata,
-                },
-                chunk_metadata=chunk_metadata,
-            )
-            return [chunk]
+            return self._make_single_chunk(text, document_id, document_metadata)
 
         # Determine chunk parameters based on strategy
         if chunking_strategy.type == "auto":
