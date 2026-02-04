@@ -316,9 +316,10 @@ jobs:
         working-directory: external-repo
         run: |
           VERSION="${{ needs.compute-version.outputs.version }}"
-          # Convert PEP 440 dev version to valid semver for npm
+          # Convert PEP 440 version to valid semver for npm
           # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
-          NPM_VERSION=$(echo "$VERSION" | sed 's/\.dev/-dev./')
+          #      0.5.0rc1          -> 0.5.0-rc.1
+          NPM_VERSION=$(echo "$VERSION" | sed -e 's/\.dev/-dev./' -e 's/rc\([0-9]\)/-rc.\1/')
           echo "Setting version to $NPM_VERSION (from $VERSION)"
           npm version "$NPM_VERSION" --no-git-tag-version
           npm install
