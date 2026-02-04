@@ -119,7 +119,7 @@ class PyPDFFileProcessor:
     def _extract_pdf_text(self, pdf_data: bytes) -> str:
         """Extract text from PDF using PyPDF."""
         try:
-            from pypdf import PdfReader
+            from pypdf import PdfReader  # type: ignore[import-not-found]
         except ImportError as err:
             raise ImportError("PyPDF is required for PDF processing. Install with: pip install pypdf") from err
 
@@ -150,7 +150,7 @@ class PyPDFFileProcessor:
     def _extract_pdf_metadata(self, pdf_data: bytes) -> dict[str, Any]:
         """Extract metadata from PDF."""
         try:
-            from pypdf import PdfReader
+            from pypdf import PdfReader  # type: ignore[import-not-found]
         except ImportError:
             return {}
 
