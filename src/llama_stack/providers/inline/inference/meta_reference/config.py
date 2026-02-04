@@ -8,11 +8,14 @@ from typing import Any
 
 from pydantic import BaseModel, field_validator
 
+from llama_stack.providers.utils.common.security_config import (
+    TrustedModelConfig,
+)
 from llama_stack.providers.utils.inference import supported_inference_models
 from llama_stack_api import QuantizationConfig
 
 
-class MetaReferenceInferenceConfig(BaseModel):
+class MetaReferenceInferenceConfig(TrustedModelConfig, BaseModel):
     # this is a placeholder to indicate inference model id
     # the actual inference model id is dtermined by the moddel id in the request
     # Note: you need to register the model before using it for inference

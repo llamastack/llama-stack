@@ -8,8 +8,12 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from llama_stack.providers.utils.common.security_config import (
+    TrustedModelConfig,
+)
 
-class SentenceTransformersInferenceConfig(BaseModel):
+
+class SentenceTransformersInferenceConfig(TrustedModelConfig, BaseModel):
     @classmethod
     def sample_run_config(cls, **kwargs) -> dict[str, Any]:
         return {}

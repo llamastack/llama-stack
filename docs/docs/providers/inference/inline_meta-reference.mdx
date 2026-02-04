@@ -14,6 +14,7 @@ Meta's reference implementation of inference with support for various model form
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
+| `trusted_model_prefixes` | `list[str]` | No | ['nomic-ai/'] | List of trusted model prefixes/organizations. Models from these sources will be loaded with trust_remote_code=True. Others will be loaded with trust_remote_code=False for security. |
 | `model` | `str \| None` | No |  |  |
 | `torch_seed` | `int \| None` | No |  |  |
 | `max_seq_len` | `int` | No | 4096 |  |

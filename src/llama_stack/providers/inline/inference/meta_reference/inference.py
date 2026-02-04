@@ -235,6 +235,7 @@ class MetaReferenceInferenceImpl(
         self.config = config
         self.model_id = None
         self.llama_model = None
+        self.trusted_model_config = config
 
     async def initialize(self) -> None:
         pass
