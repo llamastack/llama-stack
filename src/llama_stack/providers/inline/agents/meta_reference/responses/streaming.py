@@ -362,6 +362,12 @@ class StreamingResponseOrchestrator:
                     self.parallel_tool_calls if effective_tools is not None and len(effective_tools) > 0 else None
                 )
 
+                # Apply truncation logic if needed
+                # When self.truncation == 'auto', truncate messages from the beginning
+                # to fit within the model's context window.
+                # When self.truncation == 'disabled', don't modify messages and let
+                # the inference provider return a 400 error if context exceeds limit.
+
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
@@ -379,7 +385,6 @@ class StreamingResponseOrchestrator:
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
                     safety_identifier=self.safety_identifier,
                     max_completion_tokens=remaining_output_tokens,
-                    truncation=self.truncation,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

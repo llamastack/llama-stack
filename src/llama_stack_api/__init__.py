@@ -60,6 +60,7 @@ from .agents import (
     ResponseGuardrail,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseTruncation,
     RetrieveResponseRequest,
 )
 from .batches import (
@@ -291,7 +292,6 @@ from .inference import (
     RerankResponse,
     ResponseFormat,
     ResponseFormatType,
-    ResponseTruncation,
     SamplingParams,
     SamplingStrategy,
     SystemMessage,

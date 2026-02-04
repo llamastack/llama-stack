@@ -1988,13 +1988,6 @@ components:
             - xhigh
           - type: 'null'
           description: The effort level for reasoning models.
-        truncation:
-          anyOf:
-          - $ref: '#/components/schemas/ResponseTruncation'
-            title: ResponseTruncation
-          - type: 'null'
-          description: Controls how the service truncates input when it exceeds the model context window.
-          title: ResponseTruncation
       additionalProperties: true
       type: object
       required:
@@ -9901,13 +9894,6 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
-    ResponseTruncation:
-      type: string
-      enum:
-      - auto
-      - disabled
-      title: ResponseTruncation
-      description: Controls how the service truncates input when it exceeds the model context window.
     RunEvalBodyRequest:
       properties:
         benchmark_config:

@@ -2517,11 +2517,7 @@ async def test_create_openai_response_with_truncation_disabled_streaming(
     assert completed_event.type == "response.completed"
     assert completed_event.response.truncation == ResponseTruncation.disabled
 
-    # Verify the truncation was passed to inference API
     mock_inference_api.openai_chat_completion.assert_called()
-    call_args = mock_inference_api.openai_chat_completion.call_args
-    params = call_args.args[0]
-    assert params.truncation == ResponseTruncation.disabled
 
     # Verify the truncation was stored
     mock_responses_store.upsert_response_object.assert_called()
@@ -2561,11 +2557,7 @@ async def test_create_openai_response_with_truncation_auto_streaming(
     assert completed_event.type == "response.completed"
     assert completed_event.response.truncation == ResponseTruncation.auto
 
-    # Verify the truncation was passed to inference API
     mock_inference_api.openai_chat_completion.assert_called()
-    call_args = mock_inference_api.openai_chat_completion.call_args
-    params = call_args.args[0]
-    assert params.truncation == ResponseTruncation.auto
 
     # Verify the truncation was stored
     mock_responses_store.upsert_response_object.assert_called()

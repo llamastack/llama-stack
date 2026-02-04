@@ -15,7 +15,6 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack_api.common.responses import Order
-from llama_stack_api.inference.models import ResponseTruncation
 from llama_stack_api.openai_responses import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
@@ -36,6 +35,13 @@ class ResponseItemInclude(StrEnum):
     message_input_image_image_url = "message.input_image.image_url"
     message_output_text_logprobs = "message.output_text.logprobs"
     reasoning_encrypted_content = "reasoning.encrypted_content"
+
+
+class ResponseTruncation(StrEnum):
+    """Controls how the service truncates input when it exceeds the model context window."""
+
+    auto = "auto"  # Let the service decide how to truncate
+    disabled = "disabled"  # Disable truncation; context over limit results in 400 error
 
 
 class ResponseGuardrailSpec(BaseModel):
