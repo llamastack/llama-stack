@@ -99,3 +99,21 @@ echo "  ✓ Delete correctly blocked"
 
 echo ""
 echo "✓ ABAC test completed successfully!"
+
+echo ""
+echo "Running conversations isolation tests..."
+
+# Set tokens for pytest-based access control tests
+export ALICE_TOKEN=$(cat llama-stack-user1-token)
+export BOB_TOKEN=$(cat llama-stack-user2-token)
+
+# Run conversations access control tests using pytest
+# These tests verify that users cannot access each other's conversations
+uv run pytest tests/integration/conversations/test_openai_conversations.py \
+    -k "TestConversationAccessControl" \
+    --stack-config="http://127.0.0.1:8321" \
+    -v -s \
+    --color=yes || exit 1
+
+echo ""
+echo "✓ Conversations isolation tests completed successfully!"

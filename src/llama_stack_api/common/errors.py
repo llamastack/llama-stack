@@ -87,6 +87,13 @@ class ConversationNotFoundError(ResourceNotFoundError):
         super().__init__(conversation_id, "Conversation", "client.conversations.list()")
 
 
+class ResponseNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced response"""
+
+    def __init__(self, response_id: str) -> None:
+        super().__init__(response_id, "Response", "client.responses.list()")
+
+
 class InvalidConversationIdError(ValueError):
     """raised when a conversation ID has an invalid format"""
 
