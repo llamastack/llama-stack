@@ -293,7 +293,7 @@ class PGVectorIndex(EmbeddingIndex):
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float, filters: Any = None) -> QueryChunksResponse:
         """
         Performs keyword-based search using PostgreSQL's full-text search with ts_rank scoring.
 
@@ -305,6 +305,10 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
+        # PGVector provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("PGVector provider does not yet support native filtering")
+
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             # Use plainto_tsquery to handle user input safely and ts_rank for relevance scoring
             cur.execute(
@@ -337,6 +341,7 @@ class PGVectorIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Any = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword search using configurable reranking.
@@ -352,6 +357,10 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
+        # PGVector provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("PGVector provider does not yet support native filtering")
+
         if reranker_params is None:
             reranker_params = {}
 

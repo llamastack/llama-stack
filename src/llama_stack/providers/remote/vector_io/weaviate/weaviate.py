@@ -155,7 +155,7 @@ class WeaviateIndex(EmbeddingIndex):
         collection = self.client.collections.get(sanitized_collection_name)
         collection.data.delete_many(where=Filter.by_property("id").contains_any(chunk_ids))
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(self, query_string: str, k: int, score_threshold: float, filters: Any = None) -> QueryChunksResponse:
         """
         Performs BM25-based keyword search using Weaviate's built-in full-text search.
         Args:
@@ -165,6 +165,10 @@ class WeaviateIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with chunks and scores
         """
+        # Weaviate provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Weaviate provider does not yet support native filtering")
+
         log.debug(f"WEAVIATE KEYWORD SEARCH CALLED: query='{query_string}', k={k}, threshold={score_threshold}")
         sanitized_collection_name = sanitize_collection_name(self.collection_name, weaviate_format=True)
         collection = self.client.collections.get(sanitized_collection_name)
@@ -207,6 +211,7 @@ class WeaviateIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Any = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword search using Weaviate's native hybrid search.
@@ -220,6 +225,10 @@ class WeaviateIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
+        # Weaviate provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Weaviate provider does not yet support native filtering")
+
         log.debug(
             f"WEAVIATE HYBRID SEARCH CALLED: query='{query_string}', embedding_shape={embedding.shape}, k={k}, threshold={score_threshold}, reranker={reranker_type}"
         )
