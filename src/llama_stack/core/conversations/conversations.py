@@ -141,7 +141,7 @@ class ConversationServiceImpl(Conversations):
         record = await self.sql_store.fetch_one(table="openai_conversations", where={"id": request.conversation_id})
 
         if record is None:
-            raise ValueError(f"Conversation {request.conversation_id} not found")
+            raise ConversationNotFoundError(request.conversation_id)
 
         return Conversation(
             id=record["id"], created_at=record["created_at"], metadata=record.get("metadata"), object="conversation"
