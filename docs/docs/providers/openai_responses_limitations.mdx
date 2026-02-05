@@ -206,20 +206,6 @@ Align Llama Stack Responses Paralell tool calls behavior with OpenAI and harden 
 
 ---
 
-### Connectors
-
-**Status:** In Progress
-
-**Issue:** [#4061](https://github.com/llamastack/llama-stack/issues/4061)
-
-Connectors are MCP servers maintained and managed by the Responses API provider. OpenAI has documented their connectors at [https://platform.openai.com/docs/guides/tools-connectors-mcp](https://platform.openai.com/docs/guides/tools-connectors-mcp).
-
-**Open Questions:**
-- Should Llama Stack include built-in support for some, all, or none of OpenAI's connectors?
-- Should there be a mechanism for administrators to add custom connectors via `config.yaml` or an API?
-
----
-
 ### Top Logprobs
 
 **Status:** In Progress
@@ -267,9 +253,23 @@ longer raise an HTTP error when these fields are passed, however most of them ar
 
 ---
 
+### Connectors
+
+**Status:** Merged [Planned 0.5.z]
+
+**Issue:** [#4061](https://github.com/llamastack/llama-stack/issues/4061)
+
+Connectors are MCP servers maintained and managed by the Responses API provider. OpenAI has documented their connectors at [https://platform.openai.com/docs/guides/tools-connectors-mcp](https://platform.openai.com/docs/guides/tools-connectors-mcp).
+
+---
+
+## Fixed
+
+The following limitations have been addressed in recent releases:
+
 ### Max Tool Calls
 
-**Status:** Merged [Planned 0.4.z]
+**Status:** ✅ Resolved
 
 **Issue:** [#3563](https://github.com/llamastack/llama-stack/issues/3563)
 
@@ -279,7 +279,7 @@ The Responses API can accept a `max_tool_calls` parameter that limits the number
 
 ### Metadata
 
-**Status:** Merged [Planned 0.4.z]
+**Status:** ✅ Resolved
 
 **Issue:** [#3564](https://github.com/llamastack/llama-stack/issues/3564)
 
@@ -289,17 +289,13 @@ Metadata allows you to attach additional information to a response for your own 
 
 ### Tool Choice
 
-**Status:** Merged [Planned 0.4.z]
+**Status:** ✅ Resolved
 
 **Issue:** [#3548](https://github.com/llamastack/llama-stack/issues/3548)
 
 In OpenAI's API, the `tool_choice` parameter allows you to set restrictions or requirements for which tools should be used when generating a response.
 
 ---
-
-## Fixed
-
-The following limitations have been addressed in recent releases:
 
 ### MCP and Function Tools with No Arguments
 
