@@ -97,8 +97,8 @@
     },
     "conformance": {
       "score": 82.9,
-      "issues": 263,
-      "missing_properties": 182,
+      "issues": 264,
+      "missing_properties": 181,
       "total_problems": 445,
       "total_properties": 2598
     }
@@ -1696,8 +1696,8 @@
     },
     "Responses": {
       "score": 81.8,
-      "issues": 22,
-      "missing_properties": 19,
+      "issues": 23,
+      "missing_properties": 18,
       "total_properties": 225,
       "endpoints": [
         {
@@ -1712,7 +1712,6 @@
                 "POST.requestBody.content.application/json.properties.prompt_cache_key",
                 "POST.requestBody.content.application/json.properties.safety_identifier",
                 "POST.requestBody.content.application/json.properties.service_tier",
-                "POST.requestBody.content.application/json.properties.stream_options",
                 "POST.requestBody.content.application/json.properties.top_logprobs",
                 "POST.requestBody.content.application/json.properties.top_p",
                 "POST.requestBody.content.application/json.properties.truncation",
@@ -1779,6 +1778,13 @@
                     "Nullable added (OpenAI non-nullable)",
                     "Union variants added: 2",
                     "Default changed: None -> False"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.stream_options",
+                  "details": [
+                    "Union variants added: 1",
+                    "Union variants removed: 1"
                   ]
                 },
                 {
@@ -1887,8 +1893,8 @@
                   ]
                 }
               ],
-              "missing_count": 19,
-              "issues_count": 22
+              "missing_count": 18,
+              "issues_count": 23
             }
           ]
         }

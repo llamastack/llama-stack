@@ -10930,6 +10930,13 @@ components:
             type: object
           - type: 'null'
           description: Dictionary of metadata key-value pairs to attach to the response.
+        stream_options:
+          anyOf:
+          - $ref: '#/components/schemas/ResponseStreamOptions'
+            title: ResponseStreamOptions
+          - type: 'null'
+          description: Options that control streamed response behavior.
+          title: ResponseStreamOptions
       additionalProperties: false
       type: object
       required:
@@ -11937,6 +11944,17 @@ components:
       - reasoning.encrypted_content
       title: ResponseItemInclude
       description: Specify additional output data to include in the model response.
+    ResponseStreamOptions:
+      properties:
+        include_obfuscation:
+          type: boolean
+          title: Include Obfuscation
+          description: Whether to obfuscate sensitive information in streamed output.
+          default: true
+      additionalProperties: false
+      type: object
+      title: ResponseStreamOptions
+      description: Options that control streamed response behavior.
     RunEvalBodyRequest:
       properties:
         benchmark_config:
