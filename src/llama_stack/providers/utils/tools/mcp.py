@@ -432,7 +432,7 @@ async def list_mcp_tools(
             # The session was already initialized in client_wrapper, but we need
             # to access the init result. We'll need to capture it separately.
             # For now, get it via the session's internal state if available
-            if hasattr(session, '_init_result') and session._init_result:
+            if hasattr(session, "_init_result") and session._init_result:
                 instructions = session._init_result.instructions
             await _list_tools_from_session(session)
 

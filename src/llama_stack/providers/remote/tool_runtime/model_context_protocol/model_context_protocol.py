@@ -51,7 +51,9 @@ class ModelContextProtocolToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime
         # Get other headers from provider data (but NOT authorization)
         provider_headers = await self.get_headers_from_request(mcp_endpoint.uri)
 
-        tools_response = await list_mcp_tools(endpoint=mcp_endpoint.uri, headers=provider_headers, authorization=authorization)
+        tools_response = await list_mcp_tools(
+            endpoint=mcp_endpoint.uri, headers=provider_headers, authorization=authorization
+        )
         return tools_response
 
     async def invoke_tool(

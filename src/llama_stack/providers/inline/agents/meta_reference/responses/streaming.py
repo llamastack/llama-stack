@@ -102,6 +102,11 @@ from .utils import (
 logger = get_logger(name=__name__, category="agents::meta_reference")
 tracer = trace.get_tracer(__name__)
 
+# Maximum length for MCP server instructions (untrusted remote input)
+# These instructions come from external MCP servers and should be treated as untrusted.
+# Set to 0 to disable including MCP server instructions entirely.
+MCP_INSTRUCTIONS_MAX_LENGTH = 1000
+
 
 def convert_tooldef_to_chat_tool(tool_def):
     """Convert a ToolDef to OpenAI ChatCompletionToolParam format.
@@ -197,6 +202,8 @@ class StreamingResponseOrchestrator:
         self.accumulated_builtin_output_tokens = 0
         # Accumulate MCP server instructions
         self.mcp_server_instructions: list[str] = []
+        # Map server_label -> instructions for restoring when reusing MCP lists
+        self.server_label_to_instructions: dict[str, str] = {}
 
     async def _create_refusal_response(self, violation_message: str) -> OpenAIResponseObjectStream:
         """Create a refusal response to replace streaming content."""
@@ -283,6 +290,9 @@ class StreamingResponseOrchestrator:
             yield stream_event
 
         # Add accumulated MCP server instructions to the system message/instructions
+        # NOTE: These are untrusted inputs from external MCP servers.
+        # They have been truncated to MCP_INSTRUCTIONS_MAX_LENGTH and logged.
+        # Consider this a trust boundary as these instructions can influence model behavior.
         if self.mcp_server_instructions:
             mcp_instructions_text = "\n\n".join(self.mcp_server_instructions)
             if self.instructions:
@@ -320,6 +330,18 @@ class StreamingResponseOrchestrator:
 
         n_iter = 0
         messages = self.ctx.messages.copy()
+
+        # Update/insert system message with accumulated instructions (including MCP server instructions)
+        if self.instructions:
+            from llama_stack_api import OpenAISystemMessageParam
+
+            if messages and isinstance(messages[0], OpenAISystemMessageParam):
+                # Update existing system message with accumulated instructions
+                messages[0] = OpenAISystemMessageParam(content=self.instructions)
+            else:
+                # Insert new system message at the beginning
+                messages.insert(0, OpenAISystemMessageParam(content=self.instructions))
+
         final_status = "completed"
         last_completion_result: ChatCompletionResult | None = None
 
@@ -1275,13 +1297,27 @@ class StreamingResponseOrchestrator:
 
             # Retrieve MCP server instructions from tooldef metadata
             # Check the first tool for server instructions (all tools from same server share instructions)
-            if tool_defs.data:
+            # NOTE: MCP server instructions are untrusted remote input.
+            # Only include them if MCP_INSTRUCTIONS_MAX_LENGTH > 0 (opt-in).
+            if tool_defs.data and MCP_INSTRUCTIONS_MAX_LENGTH > 0:
                 first_tool = tool_defs.data[0]
                 if first_tool.metadata and "mcp_server_instructions" in first_tool.metadata:
                     mcp_instructions = first_tool.metadata["mcp_server_instructions"]
                     # Accumulate instructions (avoiding duplicates)
                     if mcp_instructions and mcp_instructions not in self.mcp_server_instructions:
+                        # Truncate if exceeds max length
+                        if len(mcp_instructions) > MCP_INSTRUCTIONS_MAX_LENGTH:
+                            logger.warning(
+                                f"MCP server instructions from {mcp_tool.server_label} truncated from "
+                                f"{len(mcp_instructions)} to {MCP_INSTRUCTIONS_MAX_LENGTH} characters"
+                            )
+                            mcp_instructions = mcp_instructions[:MCP_INSTRUCTIONS_MAX_LENGTH] + "...[truncated]"
+                        logger.info(
+                            f"Including MCP server instructions from {mcp_tool.server_label} ({len(mcp_instructions)} chars)"
+                        )
                         self.mcp_server_instructions.append(mcp_instructions)
+                        # Store instructions by server_label for later reuse
+                        self.server_label_to_instructions[mcp_tool.server_label] = mcp_instructions
 
             # Create the MCP list tools message
             mcp_list_message = OpenAIResponseOutputMessageMCPListTools(
@@ -1441,6 +1477,16 @@ class StreamingResponseOrchestrator:
             if self.ctx.chat_tools is None:
                 self.ctx.chat_tools = []
             self.ctx.chat_tools.append(openai_tool)  # type: ignore[arg-type]  # Returns dict but ChatCompletionToolParam expects TypedDict
+
+        # Restore MCP server instructions for this server_label if they were previously stored
+        # This ensures consistent behavior between fresh MCP list and reused MCP list
+        if original.server_label in self.server_label_to_instructions:
+            mcp_instructions = self.server_label_to_instructions[original.server_label]
+            if mcp_instructions and mcp_instructions not in self.mcp_server_instructions:
+                logger.info(
+                    f"Restoring MCP server instructions from {original.server_label} ({len(mcp_instructions)} chars)"
+                )
+                self.mcp_server_instructions.append(mcp_instructions)
 
         mcp_list_message = OpenAIResponseOutputMessageMCPListTools(
             id=f"mcp_list_{uuid.uuid4()}",

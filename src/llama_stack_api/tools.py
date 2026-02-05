@@ -121,6 +121,7 @@ class ToolGroups(Protocol):
         mcp_endpoint: URL | None = None,
         args: dict[str, Any] | None = None,
         mcp_server_instructions: str | None = None,
+        authorization: str | None = None,
     ) -> None:
         """Register a tool group.
 
@@ -129,6 +130,7 @@ class ToolGroups(Protocol):
         :param mcp_endpoint: The MCP endpoint to use for the tool group.
         :param args: A dictionary of arguments to pass to the tool group.
         :param mcp_server_instructions: Instructions from the MCP server (from initialize response).
+        :param authorization: (Optional) OAuth access token for authenticating with the MCP server.
         """
         ...
 
@@ -153,10 +155,13 @@ class ToolGroups(Protocol):
         ...
 
     @webmethod(route="/tools", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
-    async def list_tools(self, toolgroup_id: str | None = None) -> ListToolDefsResponse:
+    async def list_tools(
+        self, toolgroup_id: str | None = None, authorization: str | None = None
+    ) -> ListToolDefsResponse:
         """List tools with optional tool group.
 
         :param toolgroup_id: The ID of the tool group to list tools for.
+        :param authorization: (Optional) OAuth access token for authenticating with the MCP server.
         :returns: A ListToolDefsResponse.
         """
         ...

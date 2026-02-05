@@ -123,28 +123,29 @@ class ToolGroupsRoutingTable(CommonRoutingTableImpl, ToolGroups):
         mcp_endpoint: URL | None = None,
         args: dict[str, Any] | None = None,
         mcp_server_instructions: str | None = None,
+        authorization: str | None = None,
     ) -> None:
         # If this is an MCP toolgroup and we don't have instructions yet, try to fetch them
+        # using a lightweight server info call
         if mcp_endpoint and not mcp_server_instructions:
             try:
-                from llama_stack.providers.utils.tools.mcp import list_mcp_tools, prepare_mcp_headers
+                from llama_stack.providers.utils.tools.mcp import get_mcp_server_info, prepare_mcp_headers
 
                 headers = args.get("headers") if args else None
-                final_headers = prepare_mcp_headers(headers, authorization=None)
+                # Extract authorization from args if not provided directly
+                auth_token = authorization or (args.get("authorization") if args else None)
+                final_headers = prepare_mcp_headers(headers, auth_token)
 
-                tools_response = await list_mcp_tools(
+                server_info = await get_mcp_server_info(
                     endpoint=str(mcp_endpoint),
                     headers=final_headers,
-                    authorization=None,
+                    authorization=auth_token,
                 )
-                # Extract instructions from the first tool's metadata (all tools share same server instructions)
-                if tools_response.data:
-                    first_tool = tools_response.data[0]
-                    if first_tool.metadata and "mcp_server_instructions" in first_tool.metadata:
-                        mcp_server_instructions = first_tool.metadata["mcp_server_instructions"]
+                if server_info.description:
+                    mcp_server_instructions = server_info.description
             except Exception as e:
                 logger.warning(f"Failed to fetch MCP server instructions for {toolgroup_id}: {e}")
-                # Continue without instructions
+                # Continue without instructions - they'll be fetched lazily on first tool use
 
         toolgroup = ToolGroupWithOwner(
             identifier=toolgroup_id,
