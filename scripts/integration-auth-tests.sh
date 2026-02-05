@@ -117,3 +117,26 @@ uv run pytest tests/integration/conversations/test_openai_conversations.py \
 
 echo ""
 echo "✓ Conversations isolation tests completed successfully!"
+
+# Run responses access control tests if INFERENCE_MODEL is set
+# Uses record-if-missing mode: replays from recordings if available, records if API key is set
+if [ -n "${INFERENCE_MODEL:-}" ]; then
+    echo ""
+    echo "Running responses isolation tests..."
+    echo "  Mode: ${LLAMA_STACK_TEST_INFERENCE_MODE:-replay}"
+    echo "  Recording dir: ${LLAMA_STACK_TEST_RECORDING_DIR:-default}"
+
+    uv run pytest tests/integration/responses/test_responses_access_control.py \
+        -k "TestResponsesAccessControl" \
+        --stack-config="http://127.0.0.1:8321" \
+        --text-model="$INFERENCE_MODEL" \
+        --inference-mode="${LLAMA_STACK_TEST_INFERENCE_MODE:-replay}" \
+        -v -s \
+        --color=yes || exit 1
+
+    echo ""
+    echo "✓ Responses isolation tests completed successfully!"
+else
+    echo ""
+    echo "⚠ Skipping responses isolation tests (INFERENCE_MODEL not set)"
+fi
