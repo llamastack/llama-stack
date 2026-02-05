@@ -1169,7 +1169,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
     assert result.status == "completed"
 
 
-@patch("llama_stack.providers.utils.tools.mcp.list_mcp_tools")
+@patch("llama_stack.providers.inline.agents.meta_reference.responses.streaming.list_mcp_tools")
 async def test_reuse_mcp_tool_list(
     mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api
 ):
@@ -1834,7 +1834,7 @@ async def test_prepend_prompt_image_variable_missing_required_fields(openai_resp
         await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
 
 
-@patch("llama_stack.providers.utils.tools.mcp.list_mcp_tools")
+@patch("llama_stack.providers.inline.agents.meta_reference.responses.streaming.list_mcp_tools")
 async def test_mcp_tool_connector_id_resolved_to_server_url(
     mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api, mock_connectors_api
 ):
