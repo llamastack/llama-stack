@@ -7417,6 +7417,10 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
@@ -7872,6 +7876,10 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
@@ -12401,6 +12409,13 @@ components:
             minimum: 0.0
           - type: 'null'
           description: Sampling temperature.
+        frequency_penalty:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: -2.0
+          - type: 'null'
+          description: Penalizes new tokens based on their frequency in the text so far.
         text:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseText'

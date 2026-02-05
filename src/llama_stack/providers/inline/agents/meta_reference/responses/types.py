@@ -162,6 +162,7 @@ class ChatCompletionContext(BaseModel):
     response_tools: list[OpenAIResponseInputTool] | None = None
     chat_tools: list[ChatCompletionToolParam] | None = None
     temperature: float | None
+    frequency_penalty: float | None = None
     response_format: OpenAIResponseFormatParam
     tool_context: ToolContext | None
     tool_choice: OpenAIResponseInputToolChoice | None = None
@@ -178,12 +179,14 @@ class ChatCompletionContext(BaseModel):
         tool_context: ToolContext,
         inputs: list[OpenAIResponseInput] | str,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
+        frequency_penalty: float | None = None,
     ):
         super().__init__(
             model=model,
             messages=messages,
             response_tools=response_tools,
             temperature=temperature,
+            frequency_penalty=frequency_penalty,
             response_format=response_format,
             tool_context=tool_context,
             tool_choice=tool_choice,

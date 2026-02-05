@@ -86,6 +86,12 @@ class CreateResponseRequest(BaseModel):
         le=2.0,
         description="Sampling temperature.",
     )
+    frequency_penalty: float | None = Field(
+        default=None,
+        ge=-2.0,
+        le=2.0,
+        description="Penalizes new tokens based on their frequency in the text so far.",
+    )
     text: OpenAIResponseText | None = Field(
         default=None,
         description="Configuration for text response generation.",

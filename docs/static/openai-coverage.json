@@ -97,9 +97,9 @@
     },
     "conformance": {
       "score": 82.9,
-      "issues": 263,
-      "missing_properties": 182,
-      "total_problems": 445,
+      "issues": 264,
+      "missing_properties": 180,
+      "total_problems": 444,
       "total_properties": 2598
     }
   },
@@ -1695,9 +1695,9 @@
       ]
     },
     "Responses": {
-      "score": 81.8,
-      "issues": 22,
-      "missing_properties": 19,
+      "score": 82.2,
+      "issues": 23,
+      "missing_properties": 17,
       "total_properties": 225,
       "endpoints": [
         {
@@ -1707,7 +1707,6 @@
               "method": "POST",
               "missing_properties": [
                 "POST.requestBody.content.application/json.properties.background",
-                "POST.requestBody.content.application/json.properties.frequency_penalty",
                 "POST.requestBody.content.application/json.properties.presence_penalty",
                 "POST.requestBody.content.application/json.properties.prompt_cache_key",
                 "POST.requestBody.content.application/json.properties.safety_identifier",
@@ -1718,7 +1717,6 @@
                 "POST.requestBody.content.application/json.properties.truncation",
                 "POST.requestBody.content.application/x-www-form-urlencoded",
                 "POST.responses.200.content.application/json.properties.background",
-                "POST.responses.200.content.application/json.properties.frequency_penalty",
                 "POST.responses.200.content.application/json.properties.incomplete_details",
                 "POST.responses.200.content.application/json.properties.presence_penalty",
                 "POST.responses.200.content.application/json.properties.prompt_cache_key",
@@ -1800,6 +1798,14 @@
                   "details": [
                     "Union variants added: 1",
                     "Union variants removed: 1"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.frequency_penalty",
+                  "details": [
+                    "Type removed: ['number']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -1887,8 +1893,8 @@
                   ]
                 }
               ],
-              "missing_count": 19,
-              "issues_count": 22
+              "missing_count": 17,
+              "issues_count": 23
             }
           ]
         }

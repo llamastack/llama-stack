@@ -4076,6 +4076,10 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
@@ -4520,6 +4524,10 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id

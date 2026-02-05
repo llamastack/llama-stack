@@ -117,6 +117,7 @@ class MetaReferenceAgentsImpl(Agents):
             request.store,
             request.stream,
             request.temperature,
+            request.frequency_penalty,
             request.text,
             request.tool_choice,
             request.tools,
