@@ -390,7 +390,10 @@ class StreamingResponseOrchestrator:
                 logger.debug(f"calling openai_chat_completion with tools: {effective_tools}")
 
                 logprobs = (
-                    True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
+                    True
+                    if (self.include and ResponseItemInclude.message_output_text_logprobs in self.include)
+                    or self.top_logprobs
+                    else None
                 )
 
                 # In OpenAI, parallel_tool_calls is only allowed when 'tools' are specified.
