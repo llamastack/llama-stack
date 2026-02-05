@@ -143,6 +143,7 @@ class StreamingResponseOrchestrator:
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
@@ -167,6 +168,7 @@ class StreamingResponseOrchestrator:
         self.reasoning = reasoning
         # An upper bound for the number of tokens that can be generated for a response
         self.max_output_tokens = max_output_tokens
+        self.safety_identifier = safety_identifier
         self.metadata = metadata
         self.store = store
         self.include = include
@@ -208,6 +210,7 @@ class StreamingResponseOrchestrator:
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             max_output_tokens=self.max_output_tokens,
+            safety_identifier=self.safety_identifier,
             metadata=self.metadata,
             store=self.store,
         )
@@ -250,6 +253,7 @@ class StreamingResponseOrchestrator:
             max_tool_calls=self.max_tool_calls,
             reasoning=self.reasoning,
             max_output_tokens=self.max_output_tokens,
+            safety_identifier=self.safety_identifier,
             metadata=self.metadata,
             store=self.store,
         )
@@ -370,6 +374,7 @@ class StreamingResponseOrchestrator:
                     logprobs=logprobs,
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
+                    safety_identifier=self.safety_identifier,
                     max_completion_tokens=remaining_output_tokens,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
