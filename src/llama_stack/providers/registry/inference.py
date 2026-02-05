@@ -30,14 +30,6 @@ def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.inference,
-            provider_type="inline::meta-reference",
-            pip_packages=META_REFERENCE_DEPS,
-            module="llama_stack.providers.inline.inference.meta_reference",
-            config_class="llama_stack.providers.inline.inference.meta_reference.MetaReferenceInferenceConfig",
-            description="Meta's reference implementation of inference with support for various model formats and optimization techniques.",
-        ),
-        InlineProviderSpec(
-            api=Api.inference,
             provider_type="inline::sentence-transformers",
             # CrossEncoder depends on torchao.quantization
             pip_packages=[

@@ -98,9 +98,6 @@ jobs:
     strategy:
       matrix:
         distro: ${{ fromJson(needs.generate-matrix.outputs.distros) }}
-        exclude:
-          # meta-reference-gpu depends on fbgemm-gpu-genai which only has x86_64 wheels
-          - distro: meta-reference-gpu
       fail-fast: false # We want to run all jobs even if some fail
 
     steps:
