@@ -71,12 +71,7 @@ jobs:
 
       - name: Set Kube Auth Config and run server
         env:
-          INFERENCE_MODEL: "openai/gpt-4o-mini"
-          OPENAI_API_KEY: "dummy"
-          # Enable API replay mode for responses tests (uses pre-recorded responses)
-          LLAMA_STACK_TEST_INFERENCE_MODE: "replay"
-          LLAMA_STACK_TEST_RECORDING_DIR: "${{ github.workspace }}/tests/integration/responses/recordings"
-          LLAMA_STACK_TEST_STACK_CONFIG_TYPE: "server"
+          OPENAI_API_KEY: "dummy-key-for-replay-mode"
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           run_dir=$(mktemp -d)
@@ -87,9 +82,9 @@ jobs:
           apis:
             - files
             - inference
-            - agents
             - vector_io
             - tool_runtime
+            - agents
           providers:
             files:
               - provider_id: meta-reference-files
@@ -99,6 +94,22 @@ jobs:
                   metadata_store:
                     table_name: files_metadata
                     backend: sql_default
+            inference:
+              - provider_id: openai
+                provider_type: remote::openai
+                config:
+                  api_key: \${env.OPENAI_API_KEY}
+            vector_io:
+              - provider_id: faiss
+                provider_type: inline::faiss
+                config:
+                  persistence:
+                    namespace: vector_io::faiss
+                    backend: kv_default
+            tool_runtime:
+              - provider_id: rag-runtime
+                provider_type: inline::rag-runtime
+                config: {}
             agents:
               - provider_id: meta-reference
                 provider_type: inline::meta-reference
@@ -112,11 +123,6 @@ jobs:
                       backend: sql_default
                       max_write_queue_size: 10000
                       num_writers: 4
-            inference:
-              - provider_id: openai
-                provider_type: remote::openai
-                config:
-                  api_key: \${env.OPENAI_API_KEY}
           storage:
             backends:
               kv_default:
@@ -135,29 +141,31 @@ jobs:
               conversations:
                 table_name: openai_conversations
                 backend: sql_default
-              responses:
-                table_name: openai_responses
-                backend: sql_default
               prompts:
                 namespace: prompts
                 backend: kv_default
+          models:
+          - model_id: openai/gpt-4o
+            model_type: llm
+            provider_id: openai
           server:
             port: 8321
             auth:
               access_policy:
                 - permit:
+                    actions: [read]
+                    resource: model::*
+                  description: Any authenticated user can use configured models (inference, responses)
+                - permit:
+                    actions: [create]
+                    resource: sql_record::openai_files::*
+                  description: Any authenticated user can create files
+                - permit:
                     actions: [read, delete]
                     resource: sql_record::openai_files::*
                   when:
-                    - user with system:serviceaccount:llama-stack:llama-stack-user1 in roles
-                    - user in owners roles
-                  description: User1 can read and delete their Files
-                - permit:
-                    actions: [read]
-                    resource: sql_record::openai_files::*
-                  when:
-                    - user in owners roles
-                  description: Owners can read their Files
+                    - user is owner
+                  description: Users can read and delete their own files
                 - permit:
                     actions: [create]
                     resource: sql_record::openai_conversations::*
@@ -180,11 +188,11 @@ jobs:
                   description: Users can access items in their own conversations
                 - permit:
                     actions: [create]
-                    resource: sql_record::openai_responses::*
+                    resource: sql_record::responses::*
                   description: Any authenticated user can create responses
                 - permit:
                     actions: [read, update, delete]
-                    resource: sql_record::openai_responses::*
+                    resource: sql_record::responses::*
                   when:
                     - user is owner
                   description: Users can access their own responses
@@ -225,13 +233,13 @@ jobs:
           exit 1
 
       - name: Test auth
-        env:
-          INFERENCE_MODEL: "openai/gpt-4o-mini"
-          OPENAI_API_KEY: "dummy"
-          # Enable API replay mode for responses tests (uses pre-recorded responses)
-          LLAMA_STACK_TEST_INFERENCE_MODE: "replay"
-          LLAMA_STACK_TEST_RECORDING_DIR: "${{ github.workspace }}/tests/integration/responses/recordings"
-          LLAMA_STACK_TEST_STACK_CONFIG_TYPE: "server"
         run: |
+          export INFERENCE_MODEL=openai/gpt-4o
           # Run the auth tests
           ./scripts/integration-auth-tests.sh
+
+      - name: Server log on failure
+        if: failure()
+        run: |
+          echo "=== Llama Stack server log (last 500 lines) ==="
+          tail -500 server.log
