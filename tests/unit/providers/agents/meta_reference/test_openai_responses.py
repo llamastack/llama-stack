@@ -2128,3 +2128,89 @@ async def test_create_openai_response_with_max_output_tokens_and_tools(openai_re
         # The first call gets the full max_tokens, subsequent calls get remaining tokens
         assert params.max_completion_tokens is not None
         assert params.max_completion_tokens <= max_tokens
+
+
+async def test_create_openai_response_with_safety_identifier(openai_responses_impl, mock_inference_api):
+    """Test creating an OpenAI response with safety_identifier parameter."""
+    # Setup
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    safety_id = "safety-test-12345"
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming to get final response directly
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        safety_identifier=safety_id,
+        stream=False,
+    )
+
+    # Verify safety_identifier is preserved in the response
+    assert result.safety_identifier == safety_id
+    assert result.status == "completed"
+
+
+async def test_create_openai_response_with_safety_identifier_streaming(openai_responses_impl, mock_inference_api):
+    """Test creating a streaming OpenAI response with safety_identifier parameter."""
+    # Setup
+    input_text = "Tell me a story"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    safety_id = "stream-safety-67890"
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - streaming
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        safety_identifier=safety_id,
+        stream=True,
+    )
+
+    # For streaming response, collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify safety_identifier is in all response snapshots
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.safety_identifier == safety_id
+
+    # Check final response
+    final_event = chunks[-1]
+    assert final_event.type == "response.completed"
+    assert final_event.response.safety_identifier == safety_id
+    assert final_event.response.status == "completed"
+
+
+async def test_safety_identifier_passed_to_chat_completions(openai_responses_impl, mock_inference_api):
+    """Test that safety_identifier is passed to the underlying /v1/chat/completions API call."""
+    # Setup
+    input_text = "What is AI?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    safety_id = "user-12345-hashed"
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        safety_identifier=safety_id,
+        stream=False,
+    )
+
+    # Verify that openai_chat_completion was called with safety_identifier
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args[0][0]  # First positional argument is the params object
+
+    # Assert safety_identifier was included in the chat completions request
+    assert hasattr(params, "safety_identifier"), "safety_identifier should be in chat completion params"
+    assert params.safety_identifier == safety_id, (
+        f"Expected safety_identifier={safety_id}, got {params.safety_identifier}"
+    )

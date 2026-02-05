@@ -199,6 +199,12 @@ from .eval import (
     ModelCandidate,
     RunEvalBodyRequest,
     RunEvalRequest,
+    # Backward compatibility helpers
+    resolve_evaluate_rows_request,
+    resolve_job_cancel_request,
+    resolve_job_result_request,
+    resolve_job_status_request,
+    resolve_run_eval_request,
 )
 from .file_processors import FileProcessors, ProcessFileResponse
 from .files import (
@@ -677,6 +683,12 @@ __all__ = [
     "JobStatusRequest",
     "RunEvalBodyRequest",
     "RunEvalRequest",
+    # Backward compatibility helpers
+    "resolve_run_eval_request",
+    "resolve_evaluate_rows_request",
+    "resolve_job_status_request",
+    "resolve_job_cancel_request",
+    "resolve_job_result_request",
     "ExpiresAfter",
     "ExternalApiSpec",
     "ExtraBodyField",

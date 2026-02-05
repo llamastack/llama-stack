@@ -242,10 +242,12 @@ class MCPSessionManager:
             raise last_exception
         raise RuntimeError(f"Failed to create MCP session for {endpoint}")
 
-    async def close_all(self) -> None:
-        """Close all cached sessions.
+    async def __aenter__(self):
+        """Enter the async context manager."""
+        return self
 
-        Should be called at the end of a request to clean up resources.
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Exit the async context manager and cleanup all sessions.
 
         Note: We catch BaseException (not just Exception) because:
         1. CancelledError is a BaseException and can occur during cleanup
@@ -275,6 +277,8 @@ class MCPSessionManager:
 
         if errors:
             logger.debug(f"Encountered {len(errors)} errors while closing MCP sessions (expected in streaming)")
+
+        return False
 
 
 @asynccontextmanager

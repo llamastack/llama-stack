@@ -351,8 +351,45 @@ register_schema(VectorStoreChunkingStrategy, name="VectorStoreChunkingStrategy")
 class SearchRankingOptions(BaseModel):
     """Options for ranking and filtering search results.
 
-    :param ranker: (Optional) Name of the ranking algorithm to use
-    :param score_threshold: (Optional) Minimum relevance score threshold for results
+    This class configures how search results are ranked and filtered. You can use algorithm-based
+    rerankers (weighted, RRF) or neural rerankers. Defaults from VectorStoresConfig are
+    used when parameters are not provided.
+
+    Examples:
+        # Weighted ranker with custom alpha
+        SearchRankingOptions(ranker="weighted", alpha=0.7)
+
+        # RRF ranker with custom impact factor
+        SearchRankingOptions(ranker="rrf", impact_factor=50.0)
+
+        # Use config defaults (just specify ranker type)
+        SearchRankingOptions(ranker="weighted")  # Uses alpha from VectorStoresConfig
+
+        # Score threshold filtering
+        SearchRankingOptions(ranker="weighted", score_threshold=0.5)
+
+    :param ranker: (Optional) Name of the ranking algorithm to use. Supported values:
+        - "weighted": Weighted combination of vector and keyword scores
+        - "rrf": Reciprocal Rank Fusion algorithm
+        - "neural": Neural reranking model (requires model parameter, Part II)
+        Note: For OpenAI API compatibility, any string value is accepted, but only the above values are supported.
+    :param score_threshold: (Optional) Minimum relevance score threshold for results. Default: 0.0
+    :param alpha: (Optional) Weight factor for weighted ranker (0-1).
+        - 0.0 = keyword only
+        - 0.5 = equal weight (default)
+        - 1.0 = vector only
+        Only used when ranker="weighted" and weights is not provided.
+        Falls back to VectorStoresConfig.chunk_retrieval_params.weighted_search_alpha if not provided.
+    :param impact_factor: (Optional) Impact factor (k) for RRF algorithm.
+        Lower values emphasize higher-ranked results. Default: 60.0 (optimal from research).
+        Only used when ranker="rrf".
+        Falls back to VectorStoresConfig.chunk_retrieval_params.rrf_impact_factor if not provided.
+    :param weights: (Optional) Dictionary of weights for combining different signal types.
+        Keys can be "vector", "keyword", "neural". Values should sum to 1.0.
+        Used when combining algorithm-based reranking with neural reranking (Part II).
+        Example: {"vector": 0.3, "keyword": 0.3, "neural": 0.4}
+    :param model: (Optional) Model identifier for neural reranker (e.g., "vllm/Qwen3-Reranker-0.6B").
+        Required when ranker="neural" or when weights contains "neural" (Part II).
     """
 
     ranker: str | None = None
@@ -360,6 +397,25 @@ class SearchRankingOptions(BaseModel):
     # we don't guarantee that the score is between 0 and 1, so will leave this unconstrained
     # and let the provider handle it
     score_threshold: float | None = Field(default=0.0)
+    alpha: float | None = Field(default=None, ge=0.0, le=1.0, description="Weight factor for weighted ranker")
+    impact_factor: float | None = Field(default=None, gt=0.0, description="Impact factor for RRF algorithm")
+    weights: dict[str, float] | None = Field(
+        default=None,
+        description="Weights for combining vector, keyword, and neural scores. Keys: 'vector', 'keyword', 'neural'",
+    )
+    model: str | None = Field(default=None, description="Model identifier for neural reranker")
+
+    @field_validator("weights")
+    @classmethod
+    def validate_weights(cls, v: dict[str, float] | None) -> dict[str, float] | None:
+        if v is None:
+            return v
+        allowed_keys = {"vector", "keyword", "neural"}
+        if not all(key in allowed_keys for key in v.keys()):
+            raise ValueError(f"weights keys must be from {allowed_keys}")
+        if abs(sum(v.values()) - 1.0) > 0.001:
+            raise ValueError("weights must sum to 1.0")
+        return v
 
 
 @json_schema_type
