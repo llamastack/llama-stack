@@ -11,7 +11,6 @@ from string import Template
 from llama_stack.core.datatypes import Api
 from llama_stack.log import get_logger
 from llama_stack.models.llama.datatypes import Role
-from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
@@ -93,13 +92,13 @@ DEFAULT_LG_V3_SAFETY_CATEGORIES = [
 
 # accept both CoreModelId and huggingface repo id
 LLAMA_GUARD_MODEL_IDS = {
-    CoreModelId.llama_guard_3_8b.value: "meta-llama/Llama-Guard-3-8B",
+    "Llama-Guard-3-8B": "meta-llama/Llama-Guard-3-8B",
     "meta-llama/Llama-Guard-3-8B": "meta-llama/Llama-Guard-3-8B",
-    CoreModelId.llama_guard_3_1b.value: "meta-llama/Llama-Guard-3-1B",
+    "Llama-Guard-3-1B": "meta-llama/Llama-Guard-3-1B",
     "meta-llama/Llama-Guard-3-1B": "meta-llama/Llama-Guard-3-1B",
-    CoreModelId.llama_guard_3_11b_vision.value: "meta-llama/Llama-Guard-3-11B-Vision",
+    "Llama-Guard-3-11B-Vision": "meta-llama/Llama-Guard-3-11B-Vision",
     "meta-llama/Llama-Guard-3-11B-Vision": "meta-llama/Llama-Guard-3-11B-Vision",
-    CoreModelId.llama_guard_4_12b.value: "meta-llama/Llama-Guard-4-12B",
+    "Llama-Guard-4-12B": "meta-llama/Llama-Guard-4-12B",
     "meta-llama/Llama-Guard-4-12B": "meta-llama/Llama-Guard-4-12B",
 }
 
@@ -290,7 +289,7 @@ class LlamaGuardShield:
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         messages = self.validate_messages(messages)
 
-        if self.model == CoreModelId.llama_guard_3_11b_vision.value:
+        if self.model == "Llama-Guard-3-11B-Vision":
             shield_input_message = self.build_vision_shield_input(messages)
         else:
             shield_input_message = self.build_text_shield_input(messages)
