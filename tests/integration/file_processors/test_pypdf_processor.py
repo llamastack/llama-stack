@@ -312,14 +312,14 @@ class TestPyPDFFileProcessor:
             await processor.process_file(file_id="test_file_id")
 
     async def test_minimal_pdf_processing(self, processor: PyPDFFileProcessor):
-        """Test processing a minimal PDF."""
+        """Test processing a minimal PDF with no extractable text."""
         upload_file = UploadFile(file=io.BytesIO(MINIMAL_PDF_CONTENT), filename="minimal.pdf")
 
         response = await processor.process_file(file=upload_file, chunking_strategy=None)
 
-        # Should process successfully
+        # Minimal PDFs often have no extractable text - should return empty chunks
         assert response.chunks is not None
-        assert len(response.chunks) == 1
+        assert len(response.chunks) == 0
         assert response.metadata["processor"] == "pypdf"
 
     async def test_options_parameter_ignored(self, processor: PyPDFFileProcessor, upload_file: UploadFile):
@@ -350,9 +350,9 @@ class TestPyPDFFileProcessor:
 
         response = await processor.process_file(file=upload_file, chunking_strategy=None)
 
-        # Should handle empty content gracefully
+        # Empty PDFs should return empty chunks but still have metadata
         assert response.chunks is not None
-        # May have empty or minimal content, but should not crash
+        assert len(response.chunks) == 0
         assert response.metadata["processor"] == "pypdf"
 
     async def test_document_id_generation(self, processor: PyPDFFileProcessor, upload_file: UploadFile):

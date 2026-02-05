@@ -23,6 +23,10 @@ from .config import PyPDFFileProcessorConfig
 
 log = get_logger(name=__name__, category="providers::file_processors")
 
+# Window size for single-chunk mode (no chunking strategy)
+# Large enough to fit any reasonable document in one chunk
+SINGLE_CHUNK_WINDOW_TOKENS = 1_000_000
+
 
 class PyPDFFileProcessor:
     """PyPDF-based file processor for PDF documents."""
@@ -97,9 +101,6 @@ class PyPDFFileProcessor:
         if file_id:
             document_metadata["file_id"] = file_id
 
-        # Create chunks
-        chunks = self._create_chunks(text_content, document_id, chunking_strategy, document_metadata)
-
         processing_time_ms = int((time.time() - start_time) * 1000)
 
         # Create response metadata
@@ -111,6 +112,13 @@ class PyPDFFileProcessor:
             "file_size_bytes": len(content),
             **pdf_metadata,
         }
+
+        # Handle empty text - return empty chunks with metadata
+        if not text_content or not text_content.strip():
+            return ProcessFileResponse(chunks=[], metadata=response_metadata)
+
+        # Create chunks for non-empty text
+        chunks = self._create_chunks(text_content, document_id, chunking_strategy, document_metadata)
 
         return ProcessFileResponse(chunks=chunks, metadata=response_metadata)
 
@@ -198,28 +206,6 @@ class PyPDFFileProcessor:
 
         return "\n".join(cleaned_lines)
 
-    def _make_single_chunk(
-        self,
-        text: str,
-        document_id: str,
-        document_metadata: dict[str, Any],
-    ) -> list[Chunk]:
-        """Create a single chunk containing the entire text using make_overlapped_chunks."""
-        # Use a very large window size to ensure the entire text fits in one chunk
-        # 1M tokens should be larger than any reasonable document
-        very_large_window = 1_000_000
-
-        return make_overlapped_chunks(
-            document_id=document_id,
-            text=text,
-            window_len=very_large_window,
-            overlap_len=0,
-            metadata={
-                "document_id": document_id,
-                **document_metadata,
-            },
-        )
-
     def _create_chunks(
         self,
         text: str,
@@ -227,20 +213,19 @@ class PyPDFFileProcessor:
         chunking_strategy: VectorStoreChunkingStrategy | None,
         document_metadata: dict[str, Any],
     ) -> list[Chunk]:
-        """Create chunks from text content.
+        """Create chunks from text content using make_overlapped_chunks.
 
         Chunking semantics:
-        - chunking_strategy is None → return single chunk (no chunking)
-        - chunking_strategy.type == "auto" → use configured defaults (derived from vector-io)
+        - chunking_strategy is None → return single chunk (large window, no overlap)
+        - chunking_strategy.type == "auto" → use configured defaults
         - chunking_strategy.type == "static" → use provided values
         """
-
-        if not chunking_strategy:
-            # No chunking - return entire text as a single chunk
-            return self._make_single_chunk(text, document_id, document_metadata)
-
         # Determine chunk parameters based on strategy
-        if chunking_strategy.type == "auto":
+        if not chunking_strategy:
+            # No chunking - use very large window to get single chunk
+            chunk_size = SINGLE_CHUNK_WINDOW_TOKENS
+            overlap_size = 0
+        elif chunking_strategy.type == "auto":
             # Use configured defaults for auto chunking
             chunk_size = self.config.default_chunk_size_tokens
             overlap_size = self.config.default_chunk_overlap_tokens
@@ -255,13 +240,11 @@ class PyPDFFileProcessor:
             **document_metadata,
         }
 
-        # Create overlapped chunks using existing utility (returns Chunk objects directly)
-        chunks = make_overlapped_chunks(
+        # Create chunks using existing utility (returns Chunk objects directly)
+        return make_overlapped_chunks(
             document_id=document_id,
             text=text,
             window_len=chunk_size,
             overlap_len=overlap_size,
             metadata=chunks_metadata_dict,
         )
-
-        return chunks
