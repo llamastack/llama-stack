@@ -750,6 +750,7 @@ class OpenAIResponseObject(BaseModel):
     reasoning: OpenAIResponseReasoning | None = None
     max_output_tokens: int | None = None
     metadata: dict[str, str] | None = None
+    presence_penalty: float | None = None
     store: bool
 
 

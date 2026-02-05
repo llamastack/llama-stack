@@ -128,6 +128,7 @@ class MetaReferenceAgentsImpl(Agents):
             request.max_output_tokens,
             request.reasoning,
             request.metadata,
+            request.presence_penalty,
         )
         return result
 

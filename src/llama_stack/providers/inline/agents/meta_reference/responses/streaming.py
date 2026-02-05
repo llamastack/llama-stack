@@ -146,6 +146,7 @@ class StreamingResponseOrchestrator:
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
+        presence_penalty: float | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -171,6 +172,7 @@ class StreamingResponseOrchestrator:
         self.store = store
         self.include = include
         self.store = bool(store) if store is not None else True
+        self.presence_penalty = presence_penalty
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -209,6 +211,7 @@ class StreamingResponseOrchestrator:
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             max_output_tokens=self.max_output_tokens,
             metadata=self.metadata,
+            presence_penalty=self.presence_penalty,
             store=self.store,
         )
 
@@ -251,6 +254,7 @@ class StreamingResponseOrchestrator:
             reasoning=self.reasoning,
             max_output_tokens=self.max_output_tokens,
             metadata=self.metadata,
+            presence_penalty=self.presence_penalty,
             store=self.store,
         )
 
@@ -371,6 +375,7 @@ class StreamingResponseOrchestrator:
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
                     max_completion_tokens=remaining_output_tokens,
+                    presence_penalty=self.presence_penalty,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

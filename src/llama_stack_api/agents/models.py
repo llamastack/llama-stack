@@ -129,6 +129,12 @@ class CreateResponseRequest(BaseModel):
         default=None,
         description="Dictionary of metadata key-value pairs to attach to the response.",
     )
+    presence_penalty: float | None = Field(
+        default=None,
+        ge=-2.0,
+        le=2.0,
+        description="Penalizes new tokens based on whether they appear in the text so far.",
+    )
 
 
 class RetrieveResponseRequest(BaseModel):

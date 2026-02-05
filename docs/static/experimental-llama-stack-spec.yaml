@@ -4239,6 +4239,10 @@ components:
               type: string
             type: object
           - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         store:
           type: boolean
           title: Store
@@ -4682,6 +4686,10 @@ components:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean

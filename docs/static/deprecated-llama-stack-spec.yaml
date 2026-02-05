@@ -4161,6 +4161,10 @@ components:
               type: string
             type: object
           - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         store:
           type: boolean
           title: Store
@@ -4615,6 +4619,10 @@ components:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean
@@ -9101,6 +9109,13 @@ components:
             type: object
           - type: 'null'
           description: Dictionary of metadata key-value pairs to attach to the response.
+        presence_penalty:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: -2.0
+          - type: 'null'
+          description: Penalizes new tokens based on whether they appear in the text so far.
       additionalProperties: false
       type: object
       required:

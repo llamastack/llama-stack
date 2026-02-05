@@ -2128,3 +2128,137 @@ async def test_create_openai_response_with_max_output_tokens_and_tools(openai_re
         # The first call gets the full max_tokens, subsequent calls get remaining tokens
         assert params.max_completion_tokens is not None
         assert params.max_completion_tokens <= max_tokens
+
+
+async def test_create_openai_response_with_presence_penalty_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that presence_penalty is properly handled in non-streaming responses."""
+    input_text = "Write a story about AI."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    penalty = 0.5
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        presence_penalty=penalty,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the presence_penalty
+    assert result.presence_penalty == penalty
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the presence_penalty was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.presence_penalty == penalty
+
+    # Verify the presence_penalty was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.presence_penalty == penalty
+
+
+async def test_create_openai_response_with_presence_penalty_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that presence_penalty is properly handled in streaming responses."""
+    input_text = "Explain machine learning in detail."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    penalty = 1.5
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        presence_penalty=penalty,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify presence_penalty is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.presence_penalty == penalty
+
+    # Verify presence_penalty is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.presence_penalty == penalty
+
+    # Verify the presence_penalty was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.presence_penalty == penalty
+
+    # Verify the presence_penalty was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.presence_penalty == penalty
+
+
+async def test_create_openai_response_with_presence_penalty_default_none(openai_responses_impl, mock_inference_api):
+    """Test that presence_penalty defaults to None when not provided."""
+    input_text = "Hi"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute without presence_penalty
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=False,
+    )
+
+    # Verify presence_penalty is None
+    assert result.presence_penalty is None
+    assert result.status == "completed"
+
+    # Verify the inference API was called with presence_penalty=None
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.presence_penalty is None
+
+
+async def test_create_openai_response_with_presence_penalty_negative_value(openai_responses_impl, mock_inference_api):
+    """Test that presence_penalty accepts negative values (valid range is -2.0 to 2.0)."""
+    input_text = "Hi"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    penalty = -1.5
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with negative value
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        presence_penalty=penalty,
+        stream=False,
+    )
+
+    # Verify it accepts negative values
+    assert result.presence_penalty == penalty
+    assert result.status == "completed"
+
+    # Verify the inference API was called with the negative presence_penalty
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.presence_penalty == penalty
