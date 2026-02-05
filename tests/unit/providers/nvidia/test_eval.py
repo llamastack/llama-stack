@@ -9,7 +9,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack.providers.remote.eval.nvidia.config import NVIDIAEvalConfig
 from llama_stack.providers.remote.eval.nvidia.eval import NVIDIAEvalImpl
 from llama_stack_api import (
@@ -140,7 +139,7 @@ async def test_run_eval(nvidia_eval_setup):
     benchmark_config = BenchmarkConfig(
         eval_candidate=ModelCandidate(
             type="model",
-            model=CoreModelId.llama3_1_8b_instruct.value,
+            model="Llama3.1-8B-Instruct",
             sampling_params=SamplingParams(max_tokens=100, strategy=TopPSamplingStrategy(temperature=0.7)),
         )
     )
