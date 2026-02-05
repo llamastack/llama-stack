@@ -13,12 +13,11 @@ from collections.abc import Generator
 
 import pytest
 
-from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack_api import ViolationLevel
 
 # Llama Guard models available for text and vision shields
-LLAMA_GUARD_TEXT_MODELS = [CoreModelId.llama_guard_4_12b.value]
-LLAMA_GUARD_VISION_MODELS = [CoreModelId.llama_guard_4_12b.value]
+LLAMA_GUARD_TEXT_MODELS = ["Llama-Guard-4-12B"]
+LLAMA_GUARD_VISION_MODELS = ["Llama-Guard-4-12B"]
 
 
 def data_url_from_image(file_path):
