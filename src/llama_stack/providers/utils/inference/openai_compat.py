@@ -10,54 +10,49 @@ from typing import (
 from pydantic import BaseModel
 
 from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import BuiltinTool, ToolDefinition
 
 logger = get_logger(name=__name__, category="providers::utils")
 
 
-def convert_tooldef_to_openai_tool(tool: ToolDefinition) -> dict:
+def convert_tooldef_to_openai_tool(
+    tool_name: str,
+    description: str | None = None,
+    input_schema: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
-    Convert a ToolDefinition to an OpenAI API-compatible dictionary.
+    Convert tool parameters to an OpenAI API-compatible dictionary.
 
-    ToolDefinition:
-        tool_name: str | BuiltinTool
-        description: Optional[str]
-        input_schema: Optional[Dict[str, Any]]  # JSON Schema
-        output_schema: Optional[Dict[str, Any]]  # JSON Schema (not used by OpenAI)
+    Args:
+        tool_name: Tool name as string
+        description: Optional tool description
+        input_schema: Optional JSON Schema for tool parameters
 
-    OpenAI spec -
+    Returns:
+        OpenAI-compatible tool dictionary:
+        {
+            "type": "function",
+            "function": {
+                "name": tool_name,
+                "description": description,
+                "parameters": {<JSON Schema>},
+            },
+        }
 
-    {
-        "type": "function",
-        "function": {
-            "name": tool_name,
-            "description": description,
-            "parameters": {<JSON Schema>},
-        },
-    }
-
-    NOTE: OpenAI does not support output_schema, so it is dropped here.
+    NOTE: OpenAI does not support output_schema, so it is not included.
     """
-    out = {
+    out: dict[str, Any] = {
         "type": "function",
         "function": {},
     }
-    function = out["function"]
+    function: dict[str, Any] = out["function"]
 
-    if isinstance(tool.tool_name, BuiltinTool):
-        function["name"] = tool.tool_name.value  # type: ignore[index]  # dict value inferred as Any but mypy sees Collection[str]
-    else:
-        function["name"] = tool.tool_name  # type: ignore[index]  # dict value inferred as Any but mypy sees Collection[str]
+    function["name"] = tool_name
 
-    if tool.description:
-        function["description"] = tool.description  # type: ignore[index]  # dict value inferred as Any but mypy sees Collection[str]
+    if description:
+        function["description"] = description
 
-    if tool.input_schema:
-        # Pass through the entire JSON Schema as-is
-        function["parameters"] = tool.input_schema  # type: ignore[index]  # dict value inferred as Any but mypy sees Collection[str]
-
-    # NOTE: OpenAI does not support output_schema, so we drop it here
-    # It's stored in LlamaStack for validation and other provider usage
+    if input_schema:
+        function["parameters"] = input_schema
 
     return out
 
