@@ -279,3 +279,34 @@ class TestLiteLLMOpenAIMixinStreamOptionsInjection:
                 call_kwargs = mock_acompletion.call_args[1]
                 # Telemetry must override False to ensure complete metrics
                 assert call_kwargs["stream_options"]["include_usage"] is True
+
+
+class TestLiteLLMOpenAIMixinSafetyIdentifierPassing:
+    """Test cases for safety_identifier parameter passing through LiteLLM"""
+
+    @pytest.fixture
+    def mixin_with_model_store(self, adapter_with_config_key):
+        """Fixture to create adapter with mocked model store"""
+        mock_model_store = AsyncMock()
+        mock_model = MagicMock()
+        mock_model.provider_resource_id = "test-model-id"
+        mock_model_store.get_model = AsyncMock(return_value=mock_model)
+        adapter_with_config_key.model_store = mock_model_store
+        return adapter_with_config_key
+
+    async def test_chat_completion_passes_safety_identifier(self, mixin_with_model_store):
+        """Test that safety_identifier is passed to LiteLLM chat completions"""
+        with patch("litellm.acompletion", new_callable=AsyncMock) as mock_acompletion:
+            mock_acompletion.return_value = MagicMock()
+
+            await mixin_with_model_store.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="test-model",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    safety_identifier="user-456-hashed",
+                )
+            )
+
+            mock_acompletion.assert_called_once()
+            call_kwargs = mock_acompletion.call_args[1]
+            assert call_kwargs["safety_identifier"] == "user-456-hashed"

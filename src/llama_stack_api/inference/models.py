@@ -850,6 +850,11 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     top_logprobs: int | None = Field(default=None, ge=0, description="The top log probabilities to use.")
     top_p: float | None = Field(default=None, ge=0.0, le=1.0, description="The top p to use.")
     user: str | None = Field(default=None, description="The user to use.")
+    safety_identifier: str | None = Field(
+        default=None,
+        max_length=64,
+        description="A stable identifier used for safety monitoring and abuse detection.",
+    )
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = Field(
         default=None, description="The effort level for reasoning models."
     )

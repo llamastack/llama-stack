@@ -22,7 +22,6 @@ from torchtune.models.llama3_2 import lora_llama3_2_3b
 from torchtune.modules.transforms import Transform
 
 from llama_stack.models.llama.sku_list import resolve_model
-from llama_stack.models.llama.sku_types import Model
 from llama_stack_api import DatasetFormat
 
 BuildLoraModelCallable = Callable[..., torch.nn.Module]
@@ -54,18 +53,17 @@ DATA_FORMATS: dict[str, Transform] = {
 }
 
 
-def _validate_model_id(model_id: str) -> Model:
+def _validate_model_id(model_id: str) -> str:
     model = resolve_model(model_id)
     if model is None or model.core_model_id.value not in MODEL_CONFIGS:
         raise ValueError(f"Model {model_id} is not supported.")
-    return model
+    return model.core_model_id.value
 
 
 async def get_model_definition(
     model_id: str,
 ) -> BuildLoraModelCallable:
-    model = _validate_model_id(model_id)
-    model_config = MODEL_CONFIGS[model.core_model_id.value]
+    model_config = MODEL_CONFIGS[_validate_model_id(model_id)]
     if not hasattr(model_config, "model_definition"):
         raise ValueError(f"Model {model_id} does not have model definition.")
     return model_config.model_definition
@@ -74,8 +72,7 @@ async def get_model_definition(
 async def get_tokenizer_type(
     model_id: str,
 ) -> BuildTokenizerCallable:
-    model = _validate_model_id(model_id)
-    model_config = MODEL_CONFIGS[model.core_model_id.value]
+    model_config = MODEL_CONFIGS[_validate_model_id(model_id)]
     if not hasattr(model_config, "tokenizer_type"):
         raise ValueError(f"Model {model_id} does not have tokenizer_type.")
     return model_config.tokenizer_type
@@ -88,8 +85,7 @@ async def get_checkpointer_model_type(
     checkpointer model type is used in checkpointer for some special treatment on some specific model types
     For example, llama3.2 model tied weights (https://github.com/pytorch/torchtune/blob/main/torchtune/training/checkpointing/_checkpointer.py#L1041)
     """
-    model = _validate_model_id(model_id)
-    model_config = MODEL_CONFIGS[model.core_model_id.value]
+    model_config = MODEL_CONFIGS[_validate_model_id(model_id)]
     if not hasattr(model_config, "checkpoint_type"):
         raise ValueError(f"Model {model_id} does not have checkpoint_type.")
     return model_config.checkpoint_type
