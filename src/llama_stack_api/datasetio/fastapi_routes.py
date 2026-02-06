@@ -21,6 +21,7 @@ from llama_stack_api.version import LLAMA_STACK_API_V1BETA
 from .api import DatasetIO
 from .models import (
     AppendRowsRequest,
+    AppendRowsRequestBody,
     IterRowsRequest,
 )
 
@@ -82,13 +83,13 @@ The response includes:
     )
     async def append_rows(
         dataset_id: Annotated[str, Path(description="The ID of the dataset to append the rows to.")],
-        request: Annotated[AppendRowsRequest, Body(...)],
+        body: Annotated[AppendRowsRequestBody, Body(...)],
     ) -> None:
-        # Override the dataset_id from the path
-        request_with_id = AppendRowsRequest(
+        # Combine path parameter with request body
+        request = AppendRowsRequest(
             dataset_id=dataset_id,
-            rows=request.rows,
+            rows=body.rows,
         )
-        return await impl.append_rows(request_with_id)
+        return await impl.append_rows(request)
 
     return router

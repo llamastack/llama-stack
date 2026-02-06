@@ -149,6 +149,7 @@ from .conversations import (
 )
 from .datasetio import (
     AppendRowsRequest,
+    AppendRowsRequestBody,
     DatasetIO,
     DatasetStore,
     IterRowsRequest,
@@ -661,6 +662,7 @@ __all__ = [
     "DatasetStore",
     "DatasetType",
     "AppendRowsRequest",
+    "AppendRowsRequestBody",
     "IterRowsRequest",
     "Datasets",
     "DatasetsProtocolPrivate",

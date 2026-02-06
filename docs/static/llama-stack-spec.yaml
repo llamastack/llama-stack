@@ -9282,25 +9282,6 @@ components:
       - version
       title: VersionInfo
       description: Version information for the service.
-    AppendRowsRequest:
-      properties:
-        dataset_id:
-          type: string
-          title: Dataset Id
-          description: The ID of the dataset to append the rows to.
-        rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Rows
-          description: The rows to append to the dataset.
-      type: object
-      required:
-      - dataset_id
-      - rows
-      title: AppendRowsRequest
-      description: Request model for appending rows to a dataset.
     PaginatedResponse:
       properties:
         data:
@@ -10573,6 +10554,20 @@ components:
       type: object
       title: AllowedToolsFilter
       description: Filter configuration for restricting which MCP tools can be used.
+    AppendRowsRequestBody:
+      properties:
+        rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Rows
+          description: The rows to append to the dataset.
+      type: object
+      required:
+      - rows
+      title: AppendRowsRequestBody
+      description: Request body for appending rows to a dataset (excludes dataset_id from path).
     ApprovalFilter:
       properties:
         always:
