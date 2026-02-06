@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-fallback_version = "0.4.5.dev0"
+fallback_version = "0.5.1.dev0"
 
 [tool.uv]
 required-version = ">=0.7.0"
@@ -45,7 +45,7 @@ dependencies = [
     "tiktoken",
     "pillow",
     "h11>=0.16.0",
-    "python-multipart>=0.0.20",                       # For fastapi Form
+    "python-multipart>=0.0.22",                       # For fastapi Form
     "uvicorn>=0.34.0",                                # server
     "opentelemetry-sdk>=1.30.0",                      # server
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
@@ -301,13 +301,10 @@ exclude = [
     "^src/llama_stack/models/llama/llama3/interface\\.py$",
     "^src/llama_stack/models/llama/llama3/tokenizer\\.py$",
     "^src/llama_stack/models/llama/llama3/tool_utils\\.py$",
-    "^src/llama_stack/models/llama/llama3/generation\\.py$",
-    "^src/llama_stack/models/llama/llama3/multimodal/model\\.py$",
     "^src/llama_stack/models/llama/llama4/",
     "^src/llama_stack/providers/inline/agents/meta_reference/",
     "^src/llama_stack/providers/inline/datasetio/localfs/",
     "^src/llama_stack/providers/inline/eval/meta_reference/eval\\.py$",
-    "^src/llama_stack/providers/inline/inference/meta_reference/inference\\.py$",
     "^src/llama_stack/providers/inline/inference/sentence_transformers/sentence_transformers\\.py$",
     "^src/llama_stack/providers/inline/post_training/common/validator\\.py$",
     "^src/llama_stack/providers/inline/safety/code_scanner/",

@@ -9,7 +9,6 @@ from typing import Any
 import httpx
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.models.llama.datatypes import BuiltinTool
 from llama_stack_api import (
     URL,
     ListToolDefsResponse,
@@ -68,7 +67,6 @@ class BraveSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRe
                         },
                         "required": ["query"],
                     },
-                    built_in_type=BuiltinTool.brave_search,
                 )
             ]
         )
