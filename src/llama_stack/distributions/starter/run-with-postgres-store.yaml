@@ -172,8 +172,6 @@ providers:
   file_processors:
   - provider_id: pypdf
     provider_type: inline::pypdf
-    config:
-      password: null
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard

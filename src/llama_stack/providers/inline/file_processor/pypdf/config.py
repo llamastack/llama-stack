@@ -31,8 +31,6 @@ class PyPDFFileProcessorConfig(BaseModel):
     # PDF-specific options
     extract_metadata: bool = Field(default=True, description="Whether to extract PDF metadata (title, author, etc.)")
 
-    password: str | None = Field(default=None, description="Password for encrypted PDFs")
-
     # Text processing options
     clean_text: bool = Field(
         default=True, description="Whether to clean extracted text (remove extra whitespace, normalize line breaks)"
@@ -40,6 +38,4 @@ class PyPDFFileProcessorConfig(BaseModel):
 
     @classmethod
     def sample_run_config(cls, **kwargs: Any) -> dict[str, Any]:
-        return {
-            "password": None,
-        }
+        return {}

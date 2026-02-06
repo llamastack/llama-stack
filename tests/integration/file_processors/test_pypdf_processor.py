@@ -413,7 +413,6 @@ class TestPyPDFFileProcessorConfig:
 
         assert config.extract_metadata is True
         assert config.clean_text is True
-        assert config.password is None
         assert config.default_chunk_size_tokens >= 100
         assert config.default_chunk_overlap_tokens >= 0
 
@@ -425,19 +424,8 @@ class TestPyPDFFileProcessorConfig:
             default_chunk_overlap_tokens=100,
             extract_metadata=False,
             clean_text=False,
-            password="test_password",
         )
         assert config.default_chunk_size_tokens == 500
         assert config.default_chunk_overlap_tokens == 100
         assert config.extract_metadata is False
         assert config.clean_text is False
-        assert config.password == "test_password"
-
-    def test_config_with_password(self):
-        """Test configuration with password for encrypted PDFs."""
-        config = PyPDFFileProcessorConfig(password="secret123")
-        assert config.password == "secret123"
-
-        # Test processor creation with password
-        processor = PyPDFFileProcessor(config, files_api=None)
-        assert processor.config.password == "secret123"

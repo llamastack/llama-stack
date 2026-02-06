@@ -29,6 +29,7 @@ from llama_stack.providers.utils.memory.vector_store import (
 from llama_stack_api import (
     Chunk,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
@@ -94,6 +95,7 @@ class OpenAIVectorStoreMixin(ABC):
         files_api: Files | None = None,
         kvstore: KVStore | None = None,
         vector_stores_config: VectorStoresConfig | None = None,
+        file_processor_api: FileProcessors | None = None,
     ):
         if not inference_api:
             raise RuntimeError("Inference API is required for vector store operations")
@@ -104,6 +106,7 @@ class OpenAIVectorStoreMixin(ABC):
         self.files_api = files_api
         self.kvstore = kvstore
         self.vector_stores_config = vector_stores_config or VectorStoresConfig()
+        self.file_processor_api = file_processor_api
         self._last_file_batch_cleanup_time = 0
         self._file_batch_tasks: dict[str, asyncio.Task[None]] = {}
         self._vector_store_locks: dict[str, asyncio.Lock] = {}

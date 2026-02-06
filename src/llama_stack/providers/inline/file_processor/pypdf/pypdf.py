@@ -9,7 +9,7 @@ import time
 import uuid
 from typing import Any
 
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.vector_store import make_overlapped_chunks
@@ -56,7 +56,7 @@ class PyPDFFileProcessor:
         if file:
             # Read from uploaded file
             content = await file.read()
-            filename = file.filename or "uploaded_file.pdf"
+            filename = file.filename or f"{uuid.uuid4()}.pdf"
         elif file_id:
             # Get file from file storage using Files API
             if not self.files_api:
@@ -132,12 +132,8 @@ class PyPDFFileProcessor:
         pdf_bytes = io.BytesIO(pdf_data)
         reader = PdfReader(pdf_bytes)
 
-        # Handle password-protected PDFs
         if reader.is_encrypted:
-            if self.config.password:
-                reader.decrypt(self.config.password)
-            else:
-                raise ValueError("PDF is encrypted but no password provided")
+            raise HTTPException(status_code=422, detail="Password-protected PDFs are not supported")
 
         # Extract text from all pages
         text_parts = []
@@ -163,12 +159,8 @@ class PyPDFFileProcessor:
         pdf_bytes = io.BytesIO(pdf_data)
         reader = PdfReader(pdf_bytes)
 
-        # Handle password-protected PDFs
         if reader.is_encrypted:
-            if self.config.password:
-                reader.decrypt(self.config.password)
-            else:
-                raise ValueError("PDF is encrypted but no password provided")
+            raise HTTPException(status_code=422, detail="Password-protected PDFs are not supported")
 
         metadata: dict[str, Any] = {"page_count": len(reader.pages)}
 
