@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from openai.types.chat.chat_completion_chunk import (
@@ -23,6 +23,8 @@ from llama_stack.providers.inline.agents.meta_reference.responses.openai_respons
     OpenAIResponsesImpl,
 )
 from llama_stack.providers.inline.agents.meta_reference.responses.tool_executor import ToolExecutor
+from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
+from llama_stack.providers.remote.inference.openai.openai import OpenAIInferenceAdapter
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
@@ -2214,3 +2216,73 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
     assert params.safety_identifier == safety_id, (
         f"Expected safety_identifier={safety_id}, got {params.safety_identifier}"
     )
+
+
+@pytest.mark.parametrize(
+    "param_name,param_value,backend_param_name,backend_expected_value",
+    [
+        ("temperature", 1.5, "temperature", 1.5),
+        ("safety_identifier", "user-123", "safety_identifier", "user-123"),
+        ("max_output_tokens", 500, "max_completion_tokens", 500),
+    ],
+)
+async def test_params_passed_through_full_chain_to_backend_service(
+    param_name, param_value, backend_param_name, backend_expected_value
+):
+    """Test that parameters flow through the full chain: create_openai_response -> openai_chat_completion -> backend service."""
+    config = OpenAIConfig(api_key="test-key")
+    openai_adapter = OpenAIInferenceAdapter(config=config)
+    openai_adapter.provider_data_api_key_field = None
+
+    mock_model_store = AsyncMock()
+    mock_model_store.has_model = AsyncMock(return_value=False)
+    openai_adapter.model_store = mock_model_store
+
+    mock_responses_store = AsyncMock(spec=ResponsesStore)
+    openai_responses_impl = OpenAIResponsesImpl(
+        inference_api=openai_adapter,
+        tool_groups_api=AsyncMock(),
+        tool_runtime_api=AsyncMock(),
+        responses_store=mock_responses_store,
+        vector_io_api=AsyncMock(),
+        safety_api=AsyncMock(),
+        conversations_api=AsyncMock(),
+        prompts_api=AsyncMock(),
+        files_api=AsyncMock(),
+        connectors_api=AsyncMock(),
+    )
+
+    with patch("llama_stack.providers.utils.inference.openai_mixin.AsyncOpenAI") as mock_openai_class:
+        mock_client = MagicMock()
+        mock_chat_completions = AsyncMock()
+        mock_client.chat.completions.create = mock_chat_completions
+        mock_openai_class.return_value = mock_client
+
+        mock_response = MagicMock()
+        mock_response.id = "chatcmpl-123"
+        mock_response.choices = [
+            MagicMock(
+                index=0,
+                message=MagicMock(content="Test response", role="assistant", tool_calls=None),
+                finish_reason="stop",
+            )
+        ]
+        mock_response.model = "fake-model"
+        mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+        mock_chat_completions.return_value = mock_response
+
+        await openai_responses_impl.create_openai_response(
+            **{
+                "input": "Test message",
+                "model": "fake-model",
+                param_name: param_value,
+            }
+        )
+
+        mock_chat_completions.assert_called_once()
+        call_kwargs = mock_chat_completions.call_args[1]
+
+        assert backend_param_name in call_kwargs, f"{backend_param_name} not found in backend call"
+        assert call_kwargs[backend_param_name] == backend_expected_value, (
+            f"Expected {backend_param_name}={backend_expected_value}, got {call_kwargs[backend_param_name]}"
+        )
