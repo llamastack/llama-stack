@@ -31,6 +31,7 @@ from llama_stack.providers.utils.responses.responses_store import (
     _OpenAIResponseObjectWithInputAndMessages,
 )
 from llama_stack_api import (
+    GetConnectorRequest,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIFile,
     OpenAIFileObject,
@@ -1871,7 +1872,7 @@ async def test_mcp_tool_connector_id_resolved_to_server_url(
     )
 
     # Verify the connector_id was resolved via the connectors API
-    mock_connectors_api.get_connector.assert_called_once_with("my-mcp-connector")
+    mock_connectors_api.get_connector.assert_called_once_with(GetConnectorRequest(connector_id="my-mcp-connector"))
 
     # Verify list_mcp_tools was called with the resolved URL
     mock_list_mcp_tools.assert_called_once()
