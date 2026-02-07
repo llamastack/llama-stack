@@ -394,7 +394,7 @@ class TestConnectorIdResolution:
         resolved_tool = await resolve_mcp_connector_id(mcp_tool, mock_connectors_api)
 
         assert resolved_tool.server_url == "http://localhost:8080/mcp"
-        mock_connectors_api.get_connector.assert_called_once_with("my-mcp-server")
+        mock_connectors_api.get_connector.assert_called_once_with(GetConnectorRequest(connector_id="my-mcp-server"))
 
     async def test_server_url_not_overwritten_when_provided(self, mock_connectors_api):
         """Test that existing server_url is not overwritten even if connector_id provided."""
