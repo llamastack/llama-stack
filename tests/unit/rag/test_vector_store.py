@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 import pytest
+from tiktoken import get_encoding
 
 from llama_stack.providers.utils.memory.vector_store import (
     URL,
@@ -192,8 +193,10 @@ class TestVectorStore:
         document_id = "test_doc_123"
         text = "This is a sample document for testing the chunking behavior"
         original_metadata = {"source": "test", "date": "2023-01-01", "author": "llama"}
-        len_metadata_tokens = 24  # specific to the metadata above
+        encoding = get_encoding("cl100k_base")
+        len_metadata_tokens = len(encoding.encode(str(original_metadata)))
 
+        expected_tokenizer_name = "tiktoken:cl100k_base"
         chunks = make_overlapped_chunks(document_id, text, window_len, overlap_len, original_metadata)
 
         assert len(chunks) == expected_chunks
@@ -211,6 +214,7 @@ class TestVectorStore:
             assert isinstance(chunk.metadata["token_count"], int)
             assert chunk.metadata["token_count"] > 0
             assert chunk.metadata["metadata_token_count"] == len_metadata_tokens
+            assert chunk.chunk_metadata.chunk_tokenizer == expected_tokenizer_name
 
     def test_raise_overlapped_chunks_metadata_serialization_error(self):
         document_id = "test_doc_ex"
