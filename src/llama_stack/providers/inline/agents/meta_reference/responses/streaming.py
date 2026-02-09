@@ -428,9 +428,15 @@ class StreamingResponseOrchestrator:
                     raise ValueError("Streaming chunk processor failed to return completion data")
                 last_completion_result = completion_result_data
 
-                # Update service_tier with actual value from provider response
-                # This is especially important when "auto" was used as input
-                if completion_result_data.service_tier is not None:
+                if completion_result_data.service_tier is None:
+                    # Since the default service_tier is "auto" and the returned service_tier is the
+                    # "mode actually used, here we are setting output value for service_tier as "default"
+                    # when service_tier is not supported.
+                    logger.warning("Service tier is None, setting to default")
+                    self.service_tier = "default"
+                else:
+                    # Update service_tier with actual value from provider response
+                    # This is especially important when "auto" was used as input
                     self.service_tier = completion_result_data.service_tier
 
                 current_response = self._build_chat_completion(completion_result_data)

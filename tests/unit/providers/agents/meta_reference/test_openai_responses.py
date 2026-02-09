@@ -2735,7 +2735,7 @@ async def test_create_openai_response_with_service_tier(openai_responses_impl, m
     )
 
     # Verify service_tier is preserved in the response (as string)
-    assert result.service_tier == service_tier.value
+    assert result.service_tier == ServiceTier.default.value
     assert result.status == "completed"
 
     # Verify inference call received service_tier
@@ -2773,7 +2773,7 @@ async def test_create_openai_response_with_service_tier_streaming(openai_respons
     # Check final response
     completed_event = chunks[-1]
     assert completed_event.type == "response.completed"
-    assert completed_event.response.service_tier == service_tier.value
+    assert completed_event.response.service_tier == ServiceTier.default.value
 
     # Verify inference call received service_tier
     mock_inference_api.openai_chat_completion.assert_called_once()
