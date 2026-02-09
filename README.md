@@ -120,6 +120,8 @@ Check out our client SDKs for connecting to a Llama Stack server in your preferr
 | Typescript   | [llama-stack-client-typescript](https://github.com/meta-llama/llama-stack-client-typescript) | [![NPM version](https://img.shields.io/npm/v/llama-stack-client.svg)](https://npmjs.org/package/llama-stack-client)
 | Kotlin | [llama-stack-client-kotlin](https://github.com/meta-llama/llama-stack-client-kotlin) | [![Maven version](https://img.shields.io/maven-central/v/com.llama.llamastack/llama-stack-client-kotlin)](https://central.sonatype.com/artifact/com.llama.llamastack/llama-stack-client-kotlin)
 
+> **Note**: We are considering a transition from Stainless to OpenAPI Generator for SDK generation ([#4609](https://github.com/llamastack/llama-stack/issues/4609)). The `client-sdks/openapi/` directory contains the new tooling for local SDK generation.
+
 You can find more example scripts with client SDKs to talk with the Llama Stack server in our [llama-stack-apps](https://github.com/meta-llama/llama-stack-apps/tree/main/examples) repo.
 
 ## Community
