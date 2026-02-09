@@ -2934,3 +2934,49 @@ def test_response_object_incomplete_details_with_max_output_tokens_reason():
     # Verify JSON serialization
     json_data = response.model_dump(mode="json")
     assert json_data["incomplete_details"] == {"reason": "max_output_tokens"}
+
+
+def test_response_object_incomplete_details_with_length_reason():
+    """Test that incomplete response has incomplete_details with length reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_length",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="length"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "length"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "length"}
+
+
+def test_response_object_incomplete_details_with_max_iterations_exceeded_reason():
+    """Test that incomplete response has incomplete_details with max_iterations_exceeded reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_iters",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="max_iterations_exceeded"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "max_iterations_exceeded"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "max_iterations_exceeded"}
