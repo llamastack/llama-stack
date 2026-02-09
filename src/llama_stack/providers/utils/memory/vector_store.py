@@ -9,17 +9,18 @@ import re
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from functools import cache
 from typing import Any
 from urllib.parse import unquote
 
 import httpx
 import numpy as np
+import tiktoken
 from numpy.typing import NDArray
 from pydantic import BaseModel
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
@@ -38,6 +39,11 @@ from llama_stack_api import (
 )
 
 log = get_logger(name=__name__, category="providers::utils")
+
+
+@cache
+def _get_encoding(name: str) -> tiktoken.Encoding:
+    return tiktoken.get_encoding(name)
 
 
 class ChunkForDeletion(BaseModel):
@@ -169,21 +175,33 @@ def make_overlapped_chunks(
     window_len: int,
     overlap_len: int,
     metadata: dict[str, Any],
+    chunk_tokenizer_encoding: str = "cl100k_base",
 ) -> list[Chunk]:
-    default_tokenizer = "DEFAULT_TIKTOKEN_TOKENIZER"
-    tokenizer = Tokenizer.get_instance()
-    tokens = tokenizer.encode(text, bos=False, eos=False)
+    """Split `text` into overlapping windows while tracking the tokenizer used.
+
+    The function converts the document and metadata into tokens via `tiktoken`,
+    defaulting to `cl100k_base` but allowing callers to override the encoding name
+    if they already know the embedding model's tokenizer. Each window advances by
+    `window_len - overlap_len`, decodes for storage, and records the tokenizer name and token
+    counts on both metadata layers so downstream consumers can stay within their limits.
+    Downstream tokenizers may split the decoded text into more tokens than the original
+    encoding, so adjust `window_len` when targeting a model whose tokenizer expands the
+    chunk beyond its token limit."""
+    encoding_name = chunk_tokenizer_encoding
+    encoding = _get_encoding(encoding_name)
+    chunk_tokenizer_name = f"tiktoken:{encoding_name}"
+    tokens = encoding.encode(text)
     try:
         metadata_string = str(metadata)
     except Exception as e:
         raise ValueError("Failed to serialize metadata to string") from e
 
-    metadata_tokens = tokenizer.encode(metadata_string, bos=False, eos=False)
+    metadata_tokens = encoding.encode(metadata_string)
 
     chunks = []
     for i in range(0, len(tokens), window_len - overlap_len):
         toks = tokens[i : i + window_len]
-        chunk = tokenizer.decode(toks)
+        chunk = encoding.decode(toks)
         chunk_window = f"{i}-{i + len(toks)}"
         chunk_id = generate_chunk_id(chunk, text, chunk_window)
         chunk_metadata = metadata.copy()
@@ -191,6 +209,7 @@ def make_overlapped_chunks(
         chunk_metadata["document_id"] = document_id
         chunk_metadata["token_count"] = len(toks)
         chunk_metadata["metadata_token_count"] = len(metadata_tokens)
+        chunk_metadata["chunk_tokenizer"] = chunk_tokenizer_name
 
         backend_chunk_metadata = ChunkMetadata(
             chunk_id=chunk_id,
@@ -199,7 +218,7 @@ def make_overlapped_chunks(
             created_timestamp=metadata.get("created_timestamp", int(time.time())),
             updated_timestamp=int(time.time()),
             chunk_window=chunk_window,
-            chunk_tokenizer=default_tokenizer,
+            chunk_tokenizer=chunk_tokenizer_name,
             content_token_count=len(toks),
             metadata_token_count=len(metadata_tokens),
         )

@@ -136,6 +136,27 @@ async def test_openai_type_compatibility(service):
     openai_item_adapter.validate_python(item_dict)
 
 
+async def test_items_not_returned_on_creation_or_retrieval(service):
+    """Test that items field is not returned when creating or retrieving a conversation.
+
+    The items field is deprecated and kept for backward compatibility.
+    Items should be accessed via the conversation_items table using the /items endpoint.
+    """
+    # Create a conversation
+    conversation = await service.create_conversation(CreateConversationRequest(metadata={"test": "value"}))
+
+    # Verify items field doesn't exist in serialized response
+    conversation_dict = conversation.model_dump(exclude_none=True)
+    assert "items" not in conversation_dict, "items should not be in creation response"
+
+    # Retrieve the conversation
+    retrieved = await service.get_conversation(GetConversationRequest(conversation_id=conversation.id))
+
+    # Verify items field doesn't exist in retrieval response
+    retrieved_dict = retrieved.model_dump(exclude_none=True)
+    assert "items" not in retrieved_dict, "items should not be in retrieval response"
+
+
 async def test_policy_configuration():
     from llama_stack.core.access_control.datatypes import Action, Scope
     from llama_stack.core.datatypes import AccessRule

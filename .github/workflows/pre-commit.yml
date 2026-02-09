@@ -50,7 +50,7 @@ jobs:
           cache-dependency-path: 'src/llama_stack_ui/'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
 
       - name: Install npm dependencies
         run: npm ci
@@ -60,7 +60,7 @@ jobs:
         run: python -m pip install 'pre-commit>=4.4.0'
 
       - name: Cache pre-commit
-        uses: actions/cache@8b402f58fbc84540c8b491a91e594a4576fec3d7 # v4
+        uses: actions/cache@cdf6c1fa76f9f475f3d7449005a359c84ca0f306 # v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-3|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
