@@ -126,6 +126,10 @@ class PGVectorIndex(EmbeddingIndex):
         "INNER_PRODUCT": "vector_ip_ops",
     }
 
+    # pgvector's maximum embedding dimension for HNSW/IVFFlat indexes on column with type vector
+    # references: https://github.com/pgvector/pgvector?tab=readme-ov-file#hnsw and https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat
+    MAX_EMBEDDING_DIMENSION_FOR_HNSW_AND_IVFFLAT_INDEX = 2000
+
     def __init__(
         self,
         vector_store: VectorStore,
@@ -165,16 +169,26 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
 
-                if self.vector_index.type == PGVectorIndexType.HNSW:
-                    await self.create_hnsw_vector_index(cur)
+                # pgvector's embedding dimensions requirement to create an index for Approximate Nearest Neighbor (ANN) search is up to 2,000 dimensions for column with type vector
+                if self.dimension <= self.MAX_EMBEDDING_DIMENSION_FOR_HNSW_AND_IVFFLAT_INDEX:
+                    if self.vector_index.type == PGVectorIndexType.HNSW:
+                        await self.create_hnsw_vector_index(cur)
 
-                # Create the index only after the table has some data (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
-                elif (
-                    self.vector_index.type == PGVectorIndexType.IVFFlat
-                    and not await self.check_conflicting_vector_index_exists(cur)
-                ):
+                    # Create the index only after the table has some data (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
+                    elif (
+                        self.vector_index.type == PGVectorIndexType.IVFFlat
+                        and not await self.check_conflicting_vector_index_exists(cur)
+                    ):
+                        log.info(
+                            f"Creation of {PGVectorIndexType.IVFFlat} vector index in vector_store: {self.vector_store.identifier} was deferred. It will be created when the table has some data."
+                        )
+
+                else:
                     log.info(
-                        f"Creation of {PGVectorIndexType.IVFFlat} vector index in vector_store: {self.vector_store.identifier} was deferred. It will be created when the table has some data."
+                        f"Skip creation of {self.vector_index.type} vector index for embedding in PGVector for vector_store: {self.vector_store.identifier}"
+                    )
+                    log.info(
+                        "PGVector requires embedding dimensions are up to 2,000 to successfully create a vector index."
                     )
 
                 # Create GIN index for full-text search performance
@@ -220,7 +234,10 @@ class PGVectorIndex(EmbeddingIndex):
             execute_values(cur, query, values, template="(%s, %s, %s::vector, %s, to_tsvector('english', %s))")
 
             # Create the IVFFlat index only after the table has some data (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
-            if self.vector_index.type == PGVectorIndexType.IVFFlat:
+            if (
+                self.vector_index.type == PGVectorIndexType.IVFFlat
+                and self.dimension <= self.MAX_EMBEDDING_DIMENSION_FOR_HNSW_AND_IVFFLAT_INDEX
+            ):
                 await self.create_ivfflat_vector_index(cur)
 
     async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:

@@ -41,7 +41,10 @@
 #   - llama-stack-only: Build only llama-stack and llama-stack-api
 #   - clients-only: Build only client packages
 #
-# client_ref: Git ref for client repos (default: main)
+# client_ref: Git ref for client repos. Auto-detected from branch:
+#   - On release-X.Y.x branches or vX.Y.Z tags: uses matching release-X.Y.x
+#   - Otherwise: defaults to main
+#   - Explicit value overrides auto-detection
 #
 # =============================================================================
 
@@ -105,9 +108,50 @@ permissions:
   contents: read
 
 jobs:
+  # Compute version once, shared by all build jobs.
+  # This ensures external packages (client-python, client-typescript) get the
+  # same version as local packages during nightly/manual runs.
+  compute-version:
+    name: Compute version
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Checkout local repo
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Compute package version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            VERSION="${{ inputs.version }}"
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            # Read base version from fallback_version in pyproject.toml
+            BASE=$(python3 -c "
+          import tomllib, pathlib
+          p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
+          v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
+          print(v.split('.dev')[0])
+          ")
+            DATE=$(date -u +%Y%m%d)
+            VERSION="${BASE}.dev${DATE}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Computed version: ${VERSION}"
+
   # Build and validate release artifacts
   build-package:
     name: Build ${{ matrix.package }}
+    needs: compute-version
     permissions:
       contents: read
     runs-on: ubuntu-latest
@@ -167,13 +211,41 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      # === DETERMINE CLIENT REF ===
+      # Use release branch from client repos when running on a release branch,
+      # unless client_ref is explicitly provided via workflow_dispatch.
+      - name: Determine client ref
+        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
+        id: client-ref
+        run: |
+          if [ -n "${{ inputs.client_ref }}" ] && [ "${{ inputs.client_ref }}" != "main" ]; then
+            # Explicit override from workflow_dispatch
+            echo "ref=${{ inputs.client_ref }}" >> $GITHUB_OUTPUT
+            echo "Using explicit client_ref: ${{ inputs.client_ref }}"
+          elif [[ "$GITHUB_REF" == refs/heads/release-* ]]; then
+            # Running on a release branch — use the same branch name in client repos
+            BRANCH="${GITHUB_REF#refs/heads/}"
+            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "Using release branch: $BRANCH"
+          elif [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            # Running from a version tag — derive release branch (e.g., v0.5.1 -> release-0.5.x)
+            TAG="${GITHUB_REF#refs/tags/v}"
+            MAJOR_MINOR="${TAG%.*}"
+            BRANCH="release-${MAJOR_MINOR}.x"
+            echo "ref=$BRANCH" >> $GITHUB_OUTPUT
+            echo "Using derived release branch from tag: $BRANCH"
+          else
+            echo "ref=main" >> $GITHUB_OUTPUT
+            echo "Using default: main"
+          fi
+
       # === EXTERNAL PACKAGE STEPS ===
       - name: Checkout external repo
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external'
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: ${{ matrix.repo }}
-          ref: ${{ inputs.client_ref || 'main' }}
+          ref: ${{ steps.client-ref.outputs.ref }}
           path: external-repo
           fetch-depth: 0
 
@@ -186,7 +258,7 @@ jobs:
 
       - name: Install uv
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
-        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
 
       - name: Install build dependencies
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
@@ -199,31 +271,6 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
-
-      # === COMPUTE VERSION ===
-      # Since version tags live on release branches (not main), we compute
-      # the version explicitly rather than relying on setuptools-scm git inference.
-      - name: Compute package version
-        if: steps.should-build.outputs.skip != 'true' && matrix.type == 'local' && matrix.registry == 'pypi'
-        id: compute-version
-        run: |
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          else
-            # Read base version from fallback_version in pyproject.toml
-            BASE=$(python3 -c "
-          import tomllib, pathlib
-          p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
-          v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
-          print(v.split('.dev')[0])
-          ")
-            DATE=$(date -u +%Y%m%d)
-            VERSION="${BASE}.dev${DATE}"
-          fi
-          echo "version=${VERSION}" >> $GITHUB_OUTPUT
-          echo "Computed version: ${VERSION}"
 
       # === LOCAL PYTHON PACKAGE BUILD ===
       - name: Check for missing package entries (llama-stack-api)
@@ -244,27 +291,20 @@ jobs:
         run: uv build --out-dir dist --no-build-isolation
         working-directory: ${{ matrix.path }}
         env:
-          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ steps.compute-version.outputs.version }}
+          SETUPTOOLS_SCM_PRETEND_VERSION: ${{ needs.compute-version.outputs.version }}
 
       # === EXTERNAL PYTHON PACKAGE BUILD ===
       - name: Build external Python package
         if: steps.should-build.outputs.skip != 'true' && matrix.type == 'external' && matrix.registry == 'pypi'
         working-directory: external-repo
         run: |
-          # Override version from tag or input
-          if [ -n "${{ inputs.version }}" ]; then
-            VERSION="${{ inputs.version }}"
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            VERSION="${GITHUB_REF#refs/tags/v}"
-          fi
-          if [ -n "$VERSION" ]; then
-            echo "Setting version to $VERSION"
-            sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
-            # Also update __version__ in _version.py if it exists
-            VERSION_FILE=$(find . -name "_version.py" -path "*/llama_stack_client/*" | head -1)
-            if [ -n "$VERSION_FILE" ]; then
-              sed -i "s/__version__ = .*/__version__ = \"$VERSION\"/" "$VERSION_FILE"
-            fi
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          echo "Setting version to $VERSION"
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+          # Also update __version__ in _version.py if it exists
+          VERSION_FILE=$(find . -name "_version.py" -path "*/llama_stack_client/*" | head -1)
+          if [ -n "$VERSION_FILE" ]; then
+            sed -i "s/__version__ = .*/__version__ = \"$VERSION\"/" "$VERSION_FILE"
           fi
           # Use python -m build for better compatibility
           uv pip install --system build
@@ -275,12 +315,12 @@ jobs:
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
         working-directory: external-repo
         run: |
-          # Override version from tag or input
-          if [ -n "${{ inputs.version }}" ]; then
-            npm version "${{ inputs.version }}" --no-git-tag-version
-          elif [ "${{ github.event_name }}" == "release" ]; then
-            npm version "${GITHUB_REF#refs/tags/v}" --no-git-tag-version
-          fi
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          # Convert PEP 440 dev version to valid semver for npm
+          # e.g. 0.4.5.dev20260202 -> 0.4.5-dev.20260202
+          NPM_VERSION=$(echo "$VERSION" | sed 's/\.dev/-dev./')
+          echo "Setting version to $NPM_VERSION (from $VERSION)"
+          npm version "$NPM_VERSION" --no-git-tag-version
           npm install
           npm run build
 
@@ -349,7 +389,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@61cb8a9741eeb8a550a1b8544337180c0fc8476b # v7.2.0
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
         with:
           python-version: ${{ matrix.python-version }}
 
