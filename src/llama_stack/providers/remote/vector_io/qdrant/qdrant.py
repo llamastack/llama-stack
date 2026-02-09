@@ -20,7 +20,6 @@ from llama_stack.providers.utils.inference.prompt_adapter import interleaved_con
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.filters import Filter
-from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
     EmbeddedChunk,
@@ -35,6 +34,7 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
+from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 
 from .config import QdrantVectorIOConfig as RemoteQdrantVectorIOConfig
 
@@ -155,7 +155,11 @@ class QdrantIndex(EmbeddingIndex):
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def query_keyword(
-        self, query_string: str, k: int, score_threshold: float, filters: ComparisonFilter | CompoundFilter | None = None
+        self,
+        query_string: str,
+        k: int,
+        score_threshold: float,
+        filters: ComparisonFilter | CompoundFilter | None = None,
     ) -> QueryChunksResponse:
         """
         Performs keyword-based search using Qdrant's MatchText filter.

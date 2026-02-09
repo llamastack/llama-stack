@@ -24,7 +24,6 @@ from llama_stack.providers.utils.memory.vector_store import (
 )
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack.providers.utils.vector_io.filters import Filter as LlamaStackFilter
-from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from llama_stack_api import (
     EmbeddedChunk,
@@ -37,6 +36,7 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
+from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 from llama_stack_api.internal.kvstore import KVStore
 
 from .config import WeaviateVectorIOConfig
@@ -156,7 +156,13 @@ class WeaviateIndex(EmbeddingIndex):
         collection = self.client.collections.get(sanitized_collection_name)
         collection.data.delete_many(where=Filter.by_property("id").contains_any(chunk_ids))
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float, filters: ComparisonFilter | CompoundFilter | None = None) -> QueryChunksResponse:
+    async def query_keyword(
+        self,
+        query_string: str,
+        k: int,
+        score_threshold: float,
+        filters: ComparisonFilter | CompoundFilter | None = None,
+    ) -> QueryChunksResponse:
         """
         Performs BM25-based keyword search using Weaviate's built-in full-text search.
         Args:
