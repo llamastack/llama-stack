@@ -2228,6 +2228,7 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service(
@@ -2299,6 +2300,7 @@ async def test_params_passed_through_full_chain_to_backend_service(
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service_litellm(
@@ -2622,7 +2624,12 @@ async def test_create_openai_response_with_prompt_cache_key_streaming(
         prompt_cache_key=cache_key,
         stream=True,
         store=True,
-        # Verify cache key is in the created event
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify cache key is in the created event
     created_event = chunks[0]
     assert created_event.type == "response.created"
     assert created_event.response.prompt_cache_key == cache_key
