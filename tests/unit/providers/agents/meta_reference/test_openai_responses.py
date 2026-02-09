@@ -2226,6 +2226,7 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
         ("temperature", 1.5, "temperature", 1.5),
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
+        ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service(
@@ -2296,6 +2297,7 @@ async def test_params_passed_through_full_chain_to_backend_service(
         ("temperature", 1.5, "temperature", 1.5),
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
+        ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service_litellm(
