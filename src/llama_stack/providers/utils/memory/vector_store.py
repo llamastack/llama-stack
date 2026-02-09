@@ -3,7 +3,6 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-import base64
 import io
 import re
 import time
@@ -11,9 +10,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
-from urllib.parse import unquote
 
-import httpx
 import numpy as np
 import tiktoken
 from numpy.typing import NDArray
@@ -26,7 +23,6 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
-    URL,
     Api,
     Chunk,
     ChunkMetadata,
@@ -34,7 +30,6 @@ from llama_stack_api import (
     InterleavedContent,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksResponse,
-    RAGDocument,
     VectorStore,
 )
 
@@ -92,19 +87,6 @@ def parse_data_url(data_url: str):
     return parts
 
 
-def content_from_data(data_url: str) -> str:
-    parts = parse_data_url(data_url)
-    data = parts["data"]
-
-    if parts["is_base64"]:
-        data = base64.b64decode(data)
-    else:
-        data = unquote(data)
-        encoding = parts["encoding"] or "utf-8"
-        data = data.encode(encoding)
-    return content_from_data_and_mime_type(data, parts["mimetype"], parts.get("encoding", None))
-
-
 def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, encoding: str | None = None) -> str:
     if isinstance(data, bytes):
         if not encoding:
@@ -137,36 +119,6 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
     else:
         log.error("Could not extract content from data_url properly.")
         return ""
-
-
-async def content_from_doc(doc: RAGDocument) -> str:
-    if isinstance(doc.content, URL):
-        uri = doc.content.uri
-        if uri.startswith("file://"):
-            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
-        if uri.startswith("data:"):
-            return content_from_data(uri)
-        async with httpx.AsyncClient() as client:
-            r = await client.get(uri)
-        if doc.mime_type == "application/pdf":
-            return parse_pdf(r.content)
-        return r.text
-    elif isinstance(doc.content, str):
-        if doc.content.startswith("file://"):
-            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
-        pattern = re.compile("^(https?://|data:)")
-        if pattern.match(doc.content):
-            if doc.content.startswith("data:"):
-                return content_from_data(doc.content)
-            async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content)
-            if doc.mime_type == "application/pdf":
-                return parse_pdf(r.content)
-            return r.text
-        return doc.content
-    else:
-        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
-        return interleaved_content_as_str(doc.content)
 
 
 def make_overlapped_chunks(
