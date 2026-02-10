@@ -30,10 +30,8 @@ from llama_stack_api import (
     Inference,
     InterleavedContent,
     QueryChunksResponse,
-    VectorIO,
     VectorStore,
     VectorStoreNotFoundError,
-    VectorStoresProtocolPrivate,
 )
 from llama_stack_api.internal.kvstore import KVStore
 
@@ -577,7 +575,7 @@ class PGVectorIndex(EmbeddingIndex):
             raise RuntimeError(f"Failed to check if vector store has records in PGVector: {e}") from e
 
 
-class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
+class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin):
     def __init__(
         self, config: PGVectorVectorIOConfig, inference_api: Inference, files_api: Files | None = None
     ) -> None:
