@@ -44,8 +44,10 @@ def is_port_available(port: int, host: str = "localhost") -> bool:
         return False
 
 
-def start_llama_stack_server(config_name: str) -> subprocess.Popen:
+def start_llama_stack_server(config_name: str, *, log_stderr: bool | None = None) -> subprocess.Popen:
     """Start a llama stack server with the given config."""
+    if log_stderr is None:
+        log_stderr = os.environ.get("LLAMA_STACK_TEST_LOG_STDERR", "1") == "1"
 
     # remove server.log if it exists
     if os.path.exists("server.log"):
@@ -56,7 +58,7 @@ def start_llama_stack_server(config_name: str) -> subprocess.Popen:
     process = subprocess.Popen(
         shlex.split(cmd),
         stdout=devnull,  # redirect stdout to devnull to prevent deadlock
-        stderr=subprocess.PIPE,  # keep stderr to see errors
+        stderr=subprocess.PIPE if log_stderr else subprocess.DEVNULL,
         text=True,
         env={**os.environ, "LLAMA_STACK_LOG_FILE": "server.log"},
         # Create new process group so we can kill all child processes
@@ -73,7 +75,10 @@ def wait_for_server_ready(base_url: str, timeout: int = 30, process: subprocess.
     while time.time() - start_time < timeout:
         if process and process.poll() is not None:
             print(f"Server process terminated with return code: {process.returncode}")
-            print(f"Server stderr: {process.stderr.read()}")
+            if process.stderr:
+                print(f"Server stderr: {process.stderr.read()}")
+            else:
+                print("Server stderr disabled. Check server.log for details.")
             return False
 
         try:
