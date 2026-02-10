@@ -206,7 +206,7 @@ from .eval import (
     resolve_job_status_request,
     resolve_run_eval_request,
 )
-from .file_processors import FileProcessors, ProcessFileResponse
+from .file_processors import FileProcessors, ProcessFileRequest, ProcessFileResponse
 from .files import (
     DeleteFileRequest,
     ExpiresAfter,
@@ -936,6 +936,7 @@ __all__ = [
     "ParamType",
     "parse_type",
     "PostTraining",
+    "ProcessFileRequest",
     "ProcessFileResponse",
     "PostTrainingMetric",
     "PostTrainingJob",

@@ -20,7 +20,7 @@ from llama_stack_api.vector_io import VectorStoreChunkingStrategy
 from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
 
 from .api import FileProcessors
-from .models import ProcessFileResponse
+from .models import ProcessFileRequest, ProcessFileResponse
 
 
 def create_router(impl: FileProcessors) -> APIRouter:
@@ -66,13 +66,11 @@ def create_router(impl: FileProcessors) -> APIRouter:
             Form(description="Optional chunking strategy for splitting content into chunks."),
         ] = None,
     ) -> ProcessFileResponse:
-        # Pass the parameters directly to the implementation
-        # The protocol method signature expects individual parameters for multipart handling
-        return await impl.process_file(
-            file=file,
+        request = ProcessFileRequest(
             file_id=file_id,
             options=options,
             chunking_strategy=chunking_strategy,
         )
+        return await impl.process_file(request, file)
 
     return router
