@@ -462,107 +462,6 @@ paths:
             schema:
               $ref: '#/components/schemas/RerankRequest'
         required: true
-  /v1alpha/post-training/job/artifacts:
-    get:
-      responses:
-        '200':
-          description: A PostTrainingJobArtifactsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostTrainingJobArtifactsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Post Training
-      summary: Get the artifacts of a training job.
-      description: Get the artifacts of a training job.
-      operationId: get_training_job_artifacts_v1alpha_post_training_job_artifacts_get
-      parameters:
-      - name: job_uuid
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The UUID of the job to get the artifacts of.
-          title: Job Uuid
-        description: The UUID of the job to get the artifacts of.
-  /v1alpha/post-training/job/cancel:
-    post:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: Successfully cancelled the training job.
-      tags:
-      - Post Training
-      summary: Cancel a training job.
-      description: Cancel a training job.
-      operationId: cancel_training_job_v1alpha_post_training_job_cancel_post
-      parameters:
-      - name: job_uuid
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The UUID of the job to cancel.
-          title: Job Uuid
-        description: The UUID of the job to cancel.
-  /v1alpha/post-training/job/status:
-    get:
-      responses:
-        '200':
-          description: A PostTrainingJobStatusResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostTrainingJobStatusResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Post Training
-      summary: Get the status of a training job.
-      description: Get the status of a training job.
-      operationId: get_training_job_status_v1alpha_post_training_job_status_get
-      parameters:
-      - name: job_uuid
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The UUID of the job to get the status of.
-          title: Job Uuid
-        description: The UUID of the job to get the status of.
   /v1alpha/post-training/jobs:
     get:
       responses:
@@ -810,6 +709,107 @@ paths:
       summary: Get service version
       description: Get the version of the service.
       operationId: version_v1alpha_admin_version_get
+  /v1alpha/post-training/jobs/{job_uuid}/status:
+    get:
+      responses:
+        '200':
+          description: A PostTrainingJobStatusResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostTrainingJobStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Post Training
+      summary: Get the status of a training job.
+      description: Get the status of a training job.
+      operationId: get_training_job_status_v1alpha_post_training_jobs__job_uuid__status_get
+      parameters:
+      - name: job_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The UUID of the job to get the status of.
+          title: Job Uuid
+        description: The UUID of the job to get the status of.
+  /v1alpha/post-training/jobs/{job_uuid}/cancel:
+    post:
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+        '204':
+          description: Successfully cancelled the training job.
+      tags:
+      - Post Training
+      summary: Cancel a training job.
+      description: Cancel a training job.
+      operationId: cancel_training_job_v1alpha_post_training_jobs__job_uuid__cancel_post
+      parameters:
+      - name: job_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The UUID of the job to cancel.
+          title: Job Uuid
+        description: The UUID of the job to cancel.
+  /v1alpha/post-training/jobs/{job_uuid}/artifacts:
+    get:
+      responses:
+        '200':
+          description: A PostTrainingJobArtifactsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostTrainingJobArtifactsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Post Training
+      summary: Get the artifacts of a training job.
+      description: Get the artifacts of a training job.
+      operationId: get_training_job_artifacts_v1alpha_post_training_jobs__job_uuid__artifacts_get
+      parameters:
+      - name: job_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The UUID of the job to get the artifacts of.
+          title: Job Uuid
+        description: The UUID of the job to get the artifacts of.
   /v1alpha/connectors:
     get:
       responses:

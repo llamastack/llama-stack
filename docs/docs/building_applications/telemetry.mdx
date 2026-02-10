@@ -22,7 +22,7 @@ export OTEL_SERVICE_NAME="llama-stack-server"
 uv pip install opentelemetry-distro opentelemetry-exporter-otlp
 uv run opentelemetry-bootstrap -a requirements | uv pip install --requirement -
 
-uv run opentelemetry-instrument llama stack run config.yaml
+uv run opentelemetry-instrument llama stack run starter
 ```
 
 

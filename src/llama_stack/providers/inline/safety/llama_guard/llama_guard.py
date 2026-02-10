@@ -10,7 +10,6 @@ from string import Template
 
 from llama_stack.core.datatypes import Api
 from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import Role
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
@@ -278,10 +277,10 @@ class LlamaGuardShield:
     def validate_messages(self, messages: list[OpenAIMessageParam]) -> list[OpenAIMessageParam]:
         if len(messages) == 0:
             raise ValueError("Messages must not be empty")
-        if messages[0].role != Role.user.value:
+        if messages[0].role != "user":
             raise ValueError("Messages must start with user")
 
-        if len(messages) >= 2 and (messages[0].role == Role.user.value and messages[1].role == Role.user.value):
+        if len(messages) >= 2 and (messages[0].role == "user" and messages[1].role == "user"):
             messages = messages[1:]
 
         return messages
@@ -316,7 +315,7 @@ class LlamaGuardShield:
             if isinstance(m.content, str) or isinstance(m.content, TextContentItem):
                 conversation.append(m)
             elif isinstance(m.content, ImageContentItem):
-                if most_recent_img is None and m.role == Role.user.value:
+                if most_recent_img is None and m.role == "user":
                     most_recent_img = m.content
                     conversation.append(m)
             elif isinstance(m.content, list):
@@ -325,7 +324,7 @@ class LlamaGuardShield:
                     if isinstance(c, str) or isinstance(c, TextContentItem):
                         content.append(c)
                     elif isinstance(c, ImageContentItem):
-                        if most_recent_img is None and m.role == Role.user.value:
+                        if most_recent_img is None and m.role == "user":
                             most_recent_img = c
                             content.append(c)
                     else:
