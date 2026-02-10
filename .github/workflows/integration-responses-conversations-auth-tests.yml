@@ -1,6 +1,6 @@
-name: Integration Auth Tests
+name: Integration Responses & Conversations Auth Tests
 
-run-name: Run the integration test suite with Kubernetes authentication
+run-name: Run responses and conversations auth tests with Kubernetes authentication
 
 on:
   push:
@@ -19,8 +19,8 @@ on:
       - 'uv.lock'
       - 'pyproject.toml'
       - 'requirements.txt'
-      - '.github/workflows/integration-auth-tests.yml' # This workflow
-      - 'scripts/integration-auth-tests.sh'
+      - '.github/workflows/integration-responses-conversations-auth-tests.yml' # This workflow
+      - 'scripts/integration-responses-conversations-auth-tests.sh'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
@@ -71,7 +71,7 @@ jobs:
 
       - name: Set Kube Auth Config and run server
         env:
-          INFERENCE_MODEL: "meta-llama/Llama-3.2-3B-Instruct"
+          OPENAI_API_KEY: "dummy-key-for-replay-mode"
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           run_dir=$(mktemp -d)
@@ -82,6 +82,9 @@ jobs:
           apis:
             - files
             - inference
+            - vector_io
+            - tool_runtime
+            - agents
           providers:
             files:
               - provider_id: meta-reference-files
@@ -91,6 +94,35 @@ jobs:
                   metadata_store:
                     table_name: files_metadata
                     backend: sql_default
+            inference:
+              - provider_id: openai
+                provider_type: remote::openai
+                config:
+                  api_key: \${env.OPENAI_API_KEY}
+            vector_io:
+              - provider_id: faiss
+                provider_type: inline::faiss
+                config:
+                  persistence:
+                    namespace: vector_io::faiss
+                    backend: kv_default
+            tool_runtime:
+              - provider_id: rag-runtime
+                provider_type: inline::rag-runtime
+                config: {}
+            agents:
+              - provider_id: meta-reference
+                provider_type: inline::meta-reference
+                config:
+                  persistence:
+                    agent_state:
+                      namespace: agents
+                      backend: kv_default
+                    responses:
+                      table_name: responses
+                      backend: sql_default
+                      max_write_queue_size: 10000
+                      num_writers: 4
           storage:
             backends:
               kv_default:
@@ -112,23 +144,58 @@ jobs:
               prompts:
                 namespace: prompts
                 backend: kv_default
+          models:
+          - model_id: openai/gpt-4o
+            model_type: llm
+            provider_id: openai
           server:
             port: 8321
             auth:
               access_policy:
                 - permit:
+                    actions: [read]
+                    resource: model::*
+                  description: Any authenticated user can use configured models (inference, responses)
+                - permit:
+                    actions: [create]
+                    resource: sql_record::openai_files::*
+                  description: Any authenticated user can create files
+                - permit:
                     actions: [read, delete]
                     resource: sql_record::openai_files::*
                   when:
-                    - user with system:serviceaccount:llama-stack:llama-stack-user1 in roles
-                    - user in owners roles
-                  description: User1 can read and delete their Files
+                    - user is owner
+                  description: Users can read and delete their own files
                 - permit:
-                    actions: [read]
-                    resource: sql_record::openai_files::*
+                    actions: [create]
+                    resource: sql_record::openai_conversations::*
+                  description: Any authenticated user can create conversations
+                - permit:
+                    actions: [read, update, delete]
+                    resource: sql_record::openai_conversations::*
                   when:
-                    - user in owners roles
-                  description: Owners can read their Files
+                    - user is owner
+                  description: Users can access their own conversations
+                - permit:
+                    actions: [create]
+                    resource: sql_record::conversation_items::*
+                  description: Any authenticated user can create conversation items
+                - permit:
+                    actions: [read, update, delete]
+                    resource: sql_record::conversation_items::*
+                  when:
+                    - user is owner
+                  description: Users can access items in their own conversations
+                - permit:
+                    actions: [create]
+                    resource: sql_record::responses::*
+                  description: Any authenticated user can create responses
+                - permit:
+                    actions: [read, update, delete]
+                    resource: sql_record::responses::*
+                  when:
+                    - user is owner
+                  description: Users can access their own responses
           EOF
           yq eval '.server.auth.provider_config.type = "${{ matrix.auth-provider }}"' -i $run_dir/config.yaml
           yq eval '.server.auth.provider_config.tls_cafile = "${{ env.KUBERNETES_CA_CERT_PATH }}"' -i $run_dir/config.yaml
@@ -140,6 +207,7 @@ jobs:
 
           # avoid line breaks in the server log, especially because we grep it below.
           export LLAMA_STACK_LOG_WIDTH=200
+          # OPENAI_API_KEY is set via env at step level
           nohup uv run llama stack run $run_dir/config.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
@@ -166,5 +234,12 @@ jobs:
 
       - name: Test auth
         run: |
+          export INFERENCE_MODEL=openai/gpt-4o
           # Run the auth tests
-          ./scripts/integration-auth-tests.sh
+          ./scripts/integration-responses-conversations-auth-tests.sh
+
+      - name: Server log on failure
+        if: failure()
+        run: |
+          echo "=== Llama Stack server log (last 500 lines) ==="
+          tail -500 server.log
