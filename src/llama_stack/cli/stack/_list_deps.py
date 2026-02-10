@@ -13,6 +13,7 @@ from termcolor import cprint
 
 from llama_stack.core.build import get_provider_dependencies
 from llama_stack.core.datatypes import StackConfig
+from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.stack import run_config_from_dynamic_config_spec
 from llama_stack.log import get_logger
 
@@ -105,48 +106,16 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
         except ValueError as e:
             cprint(str(e), color="red", file=sys.stderr)
             sys.exit(1)
-        provider_list: dict[str, list[Provider]] = dict()
+        # Expand dependent providers (e.g. agents depends on inference, safety, etc.)
         provider_registry = get_provider_registry()
-        for api_provider in args.providers.split(","):
-            if "=" not in api_provider:
-                cprint(
-                    "Could not parse `--providers`. Please ensure the list is in the format api1=provider1,api2=provider2",
-                    color="red",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-            api, provider_type = api_provider.split("=")
-            providers_for_api = provider_registry.get(Api(api), None)
-            if providers_for_api is None:
-                cprint(
-                    f"{api} is not a valid API.",
-                    color="red",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-            if provider_type in providers_for_api:
-                provider = Provider(
-                    provider_type=provider_type,
-                    provider_id=provider_type.split("::")[1],
-                    module=None,
-                )
-                provider_list.setdefault(api, []).append(provider)
-            else:
-                cprint(
-                    f"{provider_type} is not a valid provider for the {api} API.",
-                    color="red",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
-
-        add_dependent_providers(
-            provider_list=provider_list,
-            provider_registry=provider_registry,
-            requested_provider_types=list(
-                {provider.provider_type for providers in provider_list.values() for provider in providers}
-            ),
+        requested_provider_types = list(
+            {provider.provider_type for providers in config.providers.values() for provider in providers}
         )
-        config = StackConfig(providers=provider_list, distro_name="providers-run")
+        add_dependent_providers(
+            provider_list=config.providers,
+            provider_registry=provider_registry,
+            requested_provider_types=requested_provider_types,
+        )
 
     normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(config)
     normal_deps += SERVER_DEPENDENCIES
