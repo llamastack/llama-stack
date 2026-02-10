@@ -12,16 +12,15 @@ from unittest.mock import AsyncMock, MagicMock
 
 import numpy as np
 import pytest
+from tiktoken import get_encoding
 
 from llama_stack.providers.utils.memory.vector_store import (
-    URL,
     VectorStoreWithIndex,
     _validate_embedding,
-    content_from_doc,
     make_overlapped_chunks,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
-from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, RAGDocument
+from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk
 
 DUMMY_PDF_PATH = Path(os.path.abspath(__file__)).parent / "fixtures" / "dummy.pdf"
 # Depending on the machine, this can get parsed a couple of ways
@@ -142,45 +141,6 @@ class TestValidateEmbedding:
 
 
 class TestVectorStore:
-    async def test_returns_content_from_pdf_data_uri(self):
-        data_uri = data_url_from_file(DUMMY_PDF_PATH)
-        doc = RAGDocument(
-            document_id="dummy",
-            content=data_uri,
-            mime_type="application/pdf",
-            metadata={},
-        )
-        content = await content_from_doc(doc)
-        assert content in DUMMY_PDF_TEXT_CHOICES
-
-    @pytest.mark.allow_network
-    async def test_downloads_pdf_and_returns_content(self):
-        # Using GitHub to host the PDF file
-        url = "https://raw.githubusercontent.com/meta-llama/llama-stack/da035d69cfca915318eaf485770a467ca3c2a238/llama_stack/providers/tests/memory/fixtures/dummy.pdf"
-        doc = RAGDocument(
-            document_id="dummy",
-            content=url,
-            mime_type="application/pdf",
-            metadata={},
-        )
-        content = await content_from_doc(doc)
-        assert content in DUMMY_PDF_TEXT_CHOICES
-
-    @pytest.mark.allow_network
-    async def test_downloads_pdf_and_returns_content_with_url_object(self):
-        # Using GitHub to host the PDF file
-        url = "https://raw.githubusercontent.com/meta-llama/llama-stack/da035d69cfca915318eaf485770a467ca3c2a238/llama_stack/providers/tests/memory/fixtures/dummy.pdf"
-        doc = RAGDocument(
-            document_id="dummy",
-            content=URL(
-                uri=url,
-            ),
-            mime_type="application/pdf",
-            metadata={},
-        )
-        content = await content_from_doc(doc)
-        assert content in DUMMY_PDF_TEXT_CHOICES
-
     @pytest.mark.parametrize(
         "window_len, overlap_len, expected_chunks",
         [
@@ -192,8 +152,10 @@ class TestVectorStore:
         document_id = "test_doc_123"
         text = "This is a sample document for testing the chunking behavior"
         original_metadata = {"source": "test", "date": "2023-01-01", "author": "llama"}
-        len_metadata_tokens = 24  # specific to the metadata above
+        encoding = get_encoding("cl100k_base")
+        len_metadata_tokens = len(encoding.encode(str(original_metadata)))
 
+        expected_tokenizer_name = "tiktoken:cl100k_base"
         chunks = make_overlapped_chunks(document_id, text, window_len, overlap_len, original_metadata)
 
         assert len(chunks) == expected_chunks
@@ -211,6 +173,7 @@ class TestVectorStore:
             assert isinstance(chunk.metadata["token_count"], int)
             assert chunk.metadata["token_count"] > 0
             assert chunk.metadata["metadata_token_count"] == len_metadata_tokens
+            assert chunk.chunk_metadata.chunk_tokenizer == expected_tokenizer_name
 
     def test_raise_overlapped_chunks_metadata_serialization_error(self):
         document_id = "test_doc_ex"

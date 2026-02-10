@@ -79,7 +79,7 @@ def create_router(impl: PostTraining) -> APIRouter:
         return await impl.get_training_jobs()
 
     @router.get(
-        "/post-training/job/status",
+        "/post-training/jobs/{job_uuid}/status",
         response_model=PostTrainingJobStatusResponse,
         summary="Get the status of a training job.",
         description="Get the status of a training job.",
@@ -91,7 +91,7 @@ def create_router(impl: PostTraining) -> APIRouter:
         return await impl.get_training_job_status(request)
 
     @router.post(
-        "/post-training/job/cancel",
+        "/post-training/jobs/{job_uuid}/cancel",
         summary="Cancel a training job.",
         description="Cancel a training job.",
         responses={200: {"description": "Successfully cancelled the training job."}},
@@ -102,7 +102,7 @@ def create_router(impl: PostTraining) -> APIRouter:
         return await impl.cancel_training_job(request)
 
     @router.get(
-        "/post-training/job/artifacts",
+        "/post-training/jobs/{job_uuid}/artifacts",
         response_model=PostTrainingJobArtifactsResponse,
         summary="Get the artifacts of a training job.",
         description="Get the artifacts of a training job.",

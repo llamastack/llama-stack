@@ -3760,6 +3760,12 @@ components:
           - type: string
           - type: 'null'
           description: The user to use.
+        safety_identifier:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A stable identifier used for safety monitoring and abuse detection.
         reasoning_effort:
           anyOf:
           - type: string
@@ -6029,6 +6035,10 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        safety_identifier:
+          anyOf:
+          - type: string
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -6486,6 +6496,10 @@ components:
         max_output_tokens:
           anyOf:
           - type: integer
+          - type: 'null'
+        safety_identifier:
+          anyOf:
+          - type: string
           - type: 'null'
         metadata:
           anyOf:
@@ -10933,6 +10947,12 @@ components:
           - type: 'null'
           description: Configuration for reasoning effort in responses.
           title: OpenAIResponseReasoning
+        safety_identifier:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A stable identifier used for safety monitoring and abuse detection.
         metadata:
           anyOf:
           - additionalProperties:
