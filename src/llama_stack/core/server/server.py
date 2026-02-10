@@ -57,6 +57,7 @@ from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
+from llama_stack_api.common.errors import OpenAIErrorResponse
 
 from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
 from .quota import QuotaMiddleware
@@ -96,7 +97,8 @@ async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, ResourceNotFoundError) and request.url.path.startswith("/v1/vector_stores"):
         http_exc = HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
 
-    return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
+    body = OpenAIErrorResponse.from_message(str(http_exc.detail))
+    return JSONResponse(status_code=http_exc.status_code, content=body.model_dump(exclude_none=True))
 
 
 class StackApp(FastAPI):

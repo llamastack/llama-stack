@@ -10,6 +10,36 @@
 #   3. All classes should set a status_code class attribute for HTTP response mapping
 
 import httpx
+from pydantic import BaseModel
+
+
+class OpenAIErrorDetail(BaseModel):
+    """Inner error object matching the OpenAI API error format.
+
+    See: https://platform.openai.com/docs/guides/error-codes
+    """
+
+    message: str
+    type: str | None = None
+    code: str | None = None
+    param: str | None = None
+
+
+class OpenAIErrorResponse(BaseModel):
+    """Top-level error response matching the OpenAI API error format.
+
+    Usage::
+
+        body = OpenAIErrorResponse.from_message("Resource not found")
+        return JSONResponse(status_code=404, content=body.model_dump(exclude_none=True))
+    """
+
+    error: OpenAIErrorDetail
+
+    @classmethod
+    def from_message(cls, message: str, *, type: str | None = None, code: str | None = None) -> "OpenAIErrorResponse":
+        """Convenience factory for the common case of a plain message."""
+        return cls(error=OpenAIErrorDetail(message=message, type=type, code=code))
 
 
 class LlamaStackError(Exception):
