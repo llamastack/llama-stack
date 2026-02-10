@@ -7,7 +7,7 @@
 import pytest
 from pydantic import ValidationError
 
-from llama_stack.core.datatypes import QualifiedModel, RewriteQueryParams, VectorStoresConfig
+from llama_stack.core.datatypes import QualifiedModel, RerankerModel, RewriteQueryParams, VectorStoresConfig
 
 
 class TestVectorStoresConfigValidation:
@@ -79,6 +79,7 @@ class TestVectorStoresConfigValidation:
         config = VectorStoresConfig(
             default_provider_id="test-provider",
             default_embedding_model=QualifiedModel(provider_id="test", model_id="embedding-model"),
+            default_reranker_model=RerankerModel(provider_id="test", model_id="reranker-model"),
             file_search_params=FileSearchParams(
                 header_template="Custom knowledge_search found {num_chunks} items:\nSTART\n", footer_template="END\n"
             ),
