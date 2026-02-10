@@ -236,6 +236,7 @@ class ResponsesStore:
         )
 
         if not existing_row:
+            logger.critical(f"Response with id {response_object.id} not found during update - this should never happen")
             raise ValueError(f"Response with id {response_object.id} not found")
 
         existing_data = existing_row["response_object"]
