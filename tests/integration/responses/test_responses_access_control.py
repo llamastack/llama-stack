@@ -12,6 +12,7 @@ These tests verify that:
 - Users cannot list other users' responses
 """
 
+import json
 import os
 
 import pytest
@@ -44,23 +45,32 @@ class TestResponsesAccessControl:
     """
 
     @pytest.fixture
-    def alice_client(self, openai_client):
+    def alice_client(self, openai_client, request):
         """Create an OpenAI client for Alice."""
         token = get_auth_token("ALICE_TOKEN", "token-alice")
+        # Send test id so server uses correct recordings dir in replay mode
+        default_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps({"__test_id": request.node.nodeid}),
+        }
         return OpenAI(
             base_url=str(openai_client.base_url),
             api_key=token,
+            default_headers=default_headers,
             max_retries=0,
             timeout=60.0,
         )
 
     @pytest.fixture
-    def bob_client(self, openai_client):
+    def bob_client(self, openai_client, request):
         """Create an OpenAI client for Bob."""
         token = get_auth_token("BOB_TOKEN", "token-bob")
+        default_headers = {
+            "X-LlamaStack-Provider-Data": json.dumps({"__test_id": request.node.nodeid}),
+        }
         return OpenAI(
             base_url=str(openai_client.base_url),
             api_key=token,
+            default_headers=default_headers,
             max_retries=0,
             timeout=60.0,
         )

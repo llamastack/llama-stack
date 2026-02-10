@@ -72,9 +72,22 @@ jobs:
           echo "KUBERNETES_AUDIENCE=$(kubectl create token llama-stack-auth -n llama-stack --duration=1h | cut -d. -f2 | base64 -d | jq -r '.aud[0]')" >> $GITHUB_ENV
           echo "TOKEN=$(cat llama-stack-auth-token)" >> $GITHUB_ENV
 
+      - name: List response recordings (replay)
+        if: ${{ matrix.auth-provider == 'oauth2_token' }}
+        run: |
+          echo "Response recordings in checkout:"
+          ls -la tests/integration/responses/recordings/ || true
+
       - name: Set Kube Auth Config and run server
         env:
           OPENAI_API_KEY: "dummy-key-for-replay-mode"
+          # Enable replay so the server uses checked-in recordings instead of calling the API
+          LLAMA_STACK_TEST_INFERENCE_MODE: "replay"
+          # Pin recording dir to workspace so the server finds tests/integration/*/recordings/
+          LLAMA_STACK_TEST_RECORDING_DIR: ${{ github.workspace }}/tests/integration/common
+          # Tell the server to sync test context from client headers so recordings
+          # are looked up in the correct per-test-directory (e.g. responses/recordings/)
+          LLAMA_STACK_TEST_STACK_CONFIG_TYPE: "server"
         if: ${{ matrix.auth-provider == 'oauth2_token' }}
         run: |
           run_dir=$(mktemp -d)
