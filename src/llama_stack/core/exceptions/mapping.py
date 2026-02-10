@@ -21,19 +21,20 @@ from openai import BadRequestError
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import AuthenticationRequiredError
 
-# Maps exception type -> (status_code, detail_template)
-# Use {e} in template to insert the exception message
+# Maps exception type -> (status_code, detail_prefix)
+# The prefix is combined with the exception message as "prefix: message",
+# or returned alone when the message is empty.
 EXCEPTION_MAP: dict[type, tuple[int, str]] = {
-    ValueError: (httpx.codes.BAD_REQUEST, "Invalid value: {e}"),
-    BadRequestError: (httpx.codes.BAD_REQUEST, "{e}"),
-    PermissionError: (httpx.codes.FORBIDDEN, "Permission denied: {e}"),
-    AccessDeniedError: (httpx.codes.FORBIDDEN, "Permission denied: {e}"),
-    ConnectionError: (httpx.codes.BAD_GATEWAY, "{e}"),
-    httpx.ConnectError: (httpx.codes.BAD_GATEWAY, "{e}"),
-    TimeoutError: (httpx.codes.GATEWAY_TIMEOUT, "Operation timed out: {e}"),
-    asyncio.TimeoutError: (httpx.codes.GATEWAY_TIMEOUT, "Operation timed out: {e}"),
-    NotImplementedError: (httpx.codes.NOT_IMPLEMENTED, "Not implemented: {e}"),
-    AuthenticationRequiredError: (httpx.codes.UNAUTHORIZED, "Authentication required: {e}"),
+    ValueError: (httpx.codes.BAD_REQUEST, "Invalid value"),
+    BadRequestError: (httpx.codes.BAD_REQUEST, "Bad request"),
+    PermissionError: (httpx.codes.FORBIDDEN, "Permission denied"),
+    AccessDeniedError: (httpx.codes.FORBIDDEN, "Permission denied"),
+    ConnectionError: (httpx.codes.BAD_GATEWAY, "Connection error"),
+    httpx.ConnectError: (httpx.codes.BAD_GATEWAY, "Connection error"),
+    TimeoutError: (httpx.codes.GATEWAY_TIMEOUT, "Operation timed out"),
+    asyncio.TimeoutError: (httpx.codes.GATEWAY_TIMEOUT, "Operation timed out"),
+    NotImplementedError: (httpx.codes.NOT_IMPLEMENTED, "Not implemented"),
+    AuthenticationRequiredError: (httpx.codes.UNAUTHORIZED, "Authentication required"),
 }
 
 # For deserialization by class name (used by testing/exception_utils.py)
@@ -51,6 +52,8 @@ def translate_exception_to_http(exc: Exception) -> HTTPException | None:
     """
     for cls in type(exc).__mro__:
         if cls in EXCEPTION_MAP:
-            status_code, template = EXCEPTION_MAP[cls]
-            return HTTPException(status_code=status_code, detail=template.format(e=exc))
+            status_code, prefix = EXCEPTION_MAP[cls]
+            msg = str(exc)
+            detail = f"{prefix}: {msg}" if msg else prefix
+            return HTTPException(status_code=status_code, detail=detail)
     return None

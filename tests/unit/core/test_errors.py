@@ -6,13 +6,23 @@
 
 
 import httpx
+from fastapi import HTTPException
+from fastapi.exceptions import RequestValidationError
+from pydantic import BaseModel, ValidationError
 
 from llama_stack.core.exceptions.mapping import translate_exception_to_http
+from llama_stack.core.exceptions.translation import translate_exception
 from llama_stack_api.common.errors import (
+    BatchNotFoundError,
     ClientListCommand,
+    ConflictError,
+    InvalidConversationIdError,
     LlamaStackError,
     ModelNotFoundError,
+    ModelTypeError,
     ResourceNotFoundError,
+    TokenValidationError,
+    UnsupportedModelError,
 )
 
 
@@ -177,3 +187,230 @@ class TestTranslateExceptionToHttp:
 
         exc = BareStackError("teapot")
         assert translate_exception_to_http(exc) is None
+
+    # ── Template formatting ──────────────────────────────────────────
+
+    def test_template_formats_message(self):
+        """The {e} placeholder in the template should be replaced
+        with str(exc)."""
+        exc = ValueError("price must be positive")
+        result = translate_exception_to_http(exc)
+        assert result is not None
+        assert result.detail == "Invalid value: price must be positive"
+
+    def test_empty_message_omits_separator(self):
+        """When the exception message is empty, the ': ' separator
+        should be omitted so we get 'Invalid value' not 'Invalid value: '."""
+        exc = ValueError("")
+        result = translate_exception_to_http(exc)
+        assert result is not None
+        assert result.detail == "Invalid value"
+
+    def test_empty_message_connection_error(self):
+        """All mapped types use _prefixed, so an empty ConnectionError
+        should produce just the prefix with no trailing ': '."""
+        exc = ConnectionError("")
+        result = translate_exception_to_http(exc)
+        assert result is not None
+        assert result.detail == "Connection error"
+
+    def test_permission_error_template(self):
+        exc = PermissionError("read-only resource")
+        result = translate_exception_to_http(exc)
+        assert result is not None
+        assert result.detail == "Permission denied: read-only resource"
+
+    def test_timeout_template(self):
+        exc = TimeoutError("after 30s")
+        result = translate_exception_to_http(exc)
+        assert result is not None
+        assert result.detail == "Operation timed out: after 30s"
+
+
+class TestTranslateException:
+    """Tests for translate_exception, the top-level exception handler
+    registered with FastAPI. Validates that every exception type always
+    produces an HTTPException with a logically correct status code."""
+
+    # ── Always returns HTTPException ─────────────────────────────────
+
+    def test_always_returns_http_exception(self):
+        """No matter what exception goes in, an HTTPException must come out."""
+        exceptions = [
+            ValueError("bad"),
+            RuntimeError("boom"),
+            Exception("generic"),
+            TypeError("wrong type"),
+            KeyError("missing"),
+            PermissionError("denied"),
+            NotImplementedError("todo"),
+            ModelNotFoundError("llama-3"),
+            ConflictError("already exists"),
+        ]
+        for exc in exceptions:
+            result = translate_exception(exc)
+            assert isinstance(result, HTTPException), (
+                f"translate_exception({type(exc).__name__}) did not return HTTPException"
+            )
+
+    # ── LlamaStackError uses its own status_code, NOT EXCEPTION_MAP ──
+
+    def test_resource_not_found_error_uses_404_not_400(self):
+        """ResourceNotFoundError inherits from (ValueError, LlamaStackError).
+        ValueError maps to 400 in EXCEPTION_MAP, but translate_exception
+        must use the LlamaStackError.status_code (404) instead."""
+        exc = ResourceNotFoundError("abc", "Widget")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
+
+    def test_model_not_found_error_uses_404(self):
+        """ModelNotFoundError -> ResourceNotFoundError -> (ValueError, LlamaStackError).
+        Three levels deep, should still get 404 from LlamaStackError."""
+        exc = ModelNotFoundError("gpt-missing")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
+
+    def test_batch_not_found_error_uses_404(self):
+        exc = BatchNotFoundError("batch-123")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
+
+    def test_conflict_error_uses_409_not_400(self):
+        """ConflictError inherits from (ValueError, LlamaStackError).
+        Must get 409 CONFLICT from LlamaStackError, not 400 from ValueError."""
+        exc = ConflictError("resource already exists")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.CONFLICT
+
+    def test_token_validation_error_uses_401_not_400(self):
+        """TokenValidationError inherits from (ValueError, LlamaStackError).
+        Must get 401 UNAUTHORIZED, not 400 from ValueError."""
+        exc = TokenValidationError("expired token")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.UNAUTHORIZED
+
+    def test_invalid_conversation_id_error_uses_400(self):
+        exc = InvalidConversationIdError("bad-id")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.BAD_REQUEST
+
+    def test_model_type_error_uses_400(self):
+        """ModelTypeError inherits from (TypeError, LlamaStackError).
+        TypeError is NOT in EXCEPTION_MAP, so without the LlamaStackError
+        check this would fall through to the 500 catch-all."""
+        exc = ModelTypeError("llama-3", "embedding", "llm")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.BAD_REQUEST
+
+    def test_unsupported_model_error_uses_400(self):
+        exc = UnsupportedModelError("bad-model", ["llama-3", "gpt-4"])
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.BAD_REQUEST
+
+    def test_llama_stack_error_preserves_message(self):
+        exc = ModelNotFoundError("llama-3")
+        result = translate_exception(exc)
+        assert "llama-3" in result.detail
+        assert "not found" in result.detail.lower()
+
+    # ── Mapped exceptions (non-LlamaStackError) ─────────────────────
+
+    def test_plain_value_error_maps_to_400(self):
+        exc = ValueError("invalid input")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.BAD_REQUEST
+
+    def test_permission_error_maps_to_403(self):
+        exc = PermissionError("denied")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.FORBIDDEN
+
+    def test_not_implemented_error_maps_to_501(self):
+        exc = NotImplementedError("coming soon")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_IMPLEMENTED
+
+    def test_timeout_error_maps_to_504(self):
+        exc = TimeoutError("timed out")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.GATEWAY_TIMEOUT
+
+    def test_connection_error_maps_to_502(self):
+        exc = ConnectionError("refused")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.BAD_GATEWAY
+
+    # ── Provider SDK exceptions (duck-typed status_code) ─────────────
+
+    def test_provider_sdk_exception_preserves_status_code(self):
+        """Exceptions with an int status_code attr (like OpenAI SDK errors)
+        should have that status code preserved."""
+
+        class FakeProviderError(Exception):
+            def __init__(self, message, status_code):
+                super().__init__(message)
+                self.status_code = status_code
+
+        exc = FakeProviderError("rate limited", 429)
+        result = translate_exception(exc)
+        assert result.status_code == 429
+
+    def test_provider_sdk_exception_with_401(self):
+        class FakeAuthError(Exception):
+            def __init__(self):
+                super().__init__("invalid api key")
+                self.status_code = 401
+
+        exc = FakeAuthError()
+        result = translate_exception(exc)
+        assert result.status_code == 401
+
+    # ── Completely unknown exceptions → 500 ──────────────────────────
+
+    def test_runtime_error_falls_to_500(self):
+        exc = RuntimeError("unexpected")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.INTERNAL_SERVER_ERROR
+
+    def test_bare_exception_falls_to_500(self):
+        exc = Exception("unknown")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.INTERNAL_SERVER_ERROR
+
+    def test_key_error_falls_to_500(self):
+        exc = KeyError("missing_key")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.INTERNAL_SERVER_ERROR
+
+    def test_unknown_exception_detail_is_generic(self):
+        """Unknown exceptions should NOT leak internal details."""
+        exc = RuntimeError("secret internal state: db_password=hunter2")
+        result = translate_exception(exc)
+        assert "hunter2" not in result.detail
+        assert "internal" in result.detail.lower()
+
+    # ── ValidationError / RequestValidationError → 400 ───────────────
+
+    def test_request_validation_error(self):
+        exc = RequestValidationError(errors=[{"loc": ("body", "name"), "msg": "field required", "type": "missing"}])
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.BAD_REQUEST
+        assert isinstance(result.detail, dict)
+        assert "errors" in result.detail
+
+    def test_pydantic_validation_error(self):
+        """Pydantic ValidationError should be wrapped into
+        RequestValidationError and return 400."""
+
+        class StrictModel(BaseModel):
+            name: str
+            age: int
+
+        try:
+            StrictModel(name=123, age="not_a_number")  # type: ignore[arg-type]
+        except ValidationError as exc:
+            result = translate_exception(exc)
+            assert result.status_code == httpx.codes.BAD_REQUEST
+            assert isinstance(result.detail, dict)
+            assert "errors" in result.detail
+            assert len(result.detail["errors"]) > 0
