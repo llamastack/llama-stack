@@ -753,8 +753,7 @@ class OpenAIResponsesImpl:
                 include=include,
             )
 
-            final_response = None
-            failed_response = None
+            result_response = None
 
             async for stream_chunk in stream_gen:
                 # Check for cancellation periodically
@@ -764,23 +763,15 @@ class OpenAIResponsesImpl:
                     return
 
                 match stream_chunk.type:
-                    case "response.completed" | "response.incomplete":
-                        final_response = stream_chunk.response
-                    case "response.failed":
-                        failed_response = stream_chunk.response
+                    case "response.completed" | "response.incomplete" | "response.failed":
+                        result_response = stream_chunk.response
                     case _:
                         pass
 
-            if failed_response is not None:
-                # Update with failed status
-                failed_response.background = True
-                failed_response.id = response_id  # Ensure we update the correct response
-                await self.responses_store.update_response_object(failed_response)
-            elif final_response is not None:
-                # Update with completed response
-                final_response.background = True
-                final_response.id = response_id  # Ensure we update the correct response
-                await self.responses_store.update_response_object(final_response)
+            if result_response is not None:
+                result_response.background = True
+                result_response.id = response_id  # Ensure we update the correct response
+                await self.responses_store.update_response_object(result_response)
             else:
                 # Something went wrong - mark as failed
                 existing = await self.responses_store.get_response_object(response_id)
