@@ -119,7 +119,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter_type="together",
             provider_type="remote::together",
             pip_packages=[
-                "together",
+                "together>=2",
             ],
             module="llama_stack.providers.remote.inference.together",
             config_class="llama_stack.providers.remote.inference.together.TogetherImplConfig",

@@ -411,7 +411,7 @@ For more details on TLS configuration, refer to the [TLS setup guide](https://mi
 | `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
 | `persistence.namespace` | `str` | No |  | Key prefix for KVStore backends |
 | `persistence.backend` | `str` | No |  | Name of backend from storage.backends |
-| `config` | `dict` | No | `{}` | This configuration allows additional fields to be passed through to the underlying Milvus client. See the [Milvus](https://milvus.io/docs/install-overview.md) documentation for more details about Milvus in general. |
+| `config` | `dict` | No | &#123;&#125; | This configuration allows additional fields to be passed through to the underlying Milvus client. See the [Milvus](https://milvus.io/docs/install-overview.md) documentation for more details about Milvus in general. |
 
 :::note
 This configuration class accepts additional fields beyond those listed above. You can pass any additional configuration options that will be forwarded to the underlying provider.
