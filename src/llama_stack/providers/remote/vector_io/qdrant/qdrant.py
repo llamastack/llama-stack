@@ -16,6 +16,7 @@ from qdrant_client.models import PointStruct
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
@@ -80,11 +81,16 @@ class QdrantIndex(EmbeddingIndex):
         points = []
         for chunk in chunks:
             chunk_id = chunk.chunk_id
+            content_text = interleaved_content_as_str(chunk.content)
             points.append(
                 PointStruct(
                     id=convert_id(chunk_id),
-                    vector=chunk.embedding,  # Already a list[float]
-                    payload={"chunk_content": chunk.model_dump()} | {CHUNK_ID_KEY: chunk_id},
+                    vector=chunk.embedding,
+                    payload={
+                        "chunk_content": chunk.model_dump(),
+                        "content_text": content_text,
+                        CHUNK_ID_KEY: chunk_id,
+                    },
                 )
             )
 
@@ -144,32 +150,32 @@ class QdrantIndex(EmbeddingIndex):
             QueryChunksResponse with chunks and scores matching the keyword query
         """
         try:
-            results = (
-                await self.client.query_points(
-                    collection_name=self.collection_name,
-                    query_filter=models.Filter(
-                        must=[
-                            models.FieldCondition(
-                                key="chunk_content.content", match=models.MatchText(text=query_string)
-                            )
-                        ]
-                    ),
-                    limit=k,
-                    with_payload=True,
-                    with_vectors=False,
-                    score_threshold=score_threshold,
-                )
-            ).points
+            # Use scroll for keyword-only search since query_points requires a query vector
+            # Scroll allows filtering without a query vector
+            query_words = query_string.lower().split()
+            if not query_words:
+                return QueryChunksResponse(chunks=[], scores=[])
+            scroll_result = await self.client.scroll(
+                collection_name=self.collection_name,
+                scroll_filter=models.Filter(
+                    should=[
+                        models.FieldCondition(key="content_text", match=models.MatchText(text=word))
+                        for word in query_words
+                    ]
+                ),
+                limit=k,
+                with_payload=True,
+                with_vectors=False,
+            )
+            results = scroll_result[0]
         except Exception as e:
             log.error(f"Error querying keyword search in Qdrant collection {self.collection_name}: {e}")
             raise
 
         chunks, scores = [], []
         for point in results:
-            if not isinstance(point, models.ScoredPoint):
-                raise RuntimeError(f"Expected ScoredPoint from Qdrant query, got {type(point).__name__}")
             if point.payload is None:
-                raise RuntimeError("Qdrant query returned point with no payload")
+                raise RuntimeError("Qdrant scroll returned point with no payload")
 
             try:
                 chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
@@ -182,8 +188,13 @@ class QdrantIndex(EmbeddingIndex):
                 )
                 continue
 
+            # For keyword search, use a fixed score of 1.0 since we're not doing vector similarity
+            score = 1.0
+            if score < score_threshold:
+                continue
+
             chunks.append(chunk)
-            scores.append(point.score)
+            scores.append(score)
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
@@ -214,22 +225,35 @@ class QdrantIndex(EmbeddingIndex):
             QueryChunksResponse with filtered vector search results
         """
         try:
-            results = (
-                await self.client.query_points(
-                    collection_name=self.collection_name,
-                    query=embedding.tolist(),
-                    query_filter=models.Filter(
-                        must=[
-                            models.FieldCondition(
-                                key="chunk_content.content", match=models.MatchText(text=query_string)
-                            )
-                        ]
-                    ),
-                    limit=k,
-                    with_payload=True,
-                    score_threshold=score_threshold,
-                )
-            ).points
+            query_words = query_string.lower().split()
+            if not query_words:
+                # If no words, just do vector search without keyword filter
+                results = (
+                    await self.client.query_points(
+                        collection_name=self.collection_name,
+                        query=embedding.tolist(),
+                        limit=k,
+                        with_payload=True,
+                        score_threshold=score_threshold,
+                    )
+                ).points
+            else:
+                # Use should to match any of the query words
+                results = (
+                    await self.client.query_points(
+                        collection_name=self.collection_name,
+                        query=embedding.tolist(),
+                        query_filter=models.Filter(
+                            should=[
+                                models.FieldCondition(key="content_text", match=models.MatchText(text=word))
+                                for word in query_words
+                            ]
+                        ),
+                        limit=k,
+                        with_payload=True,
+                        score_threshold=score_threshold,
+                    )
+                ).points
         except Exception as e:
             log.error(f"Error querying hybrid search in Qdrant collection {self.collection_name}: {e}")
             raise

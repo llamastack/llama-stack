@@ -9,7 +9,6 @@ Unit tests for OpenAI compatibility tool conversion.
 Tests convert_tooldef_to_openai_tool with new JSON Schema approach.
 """
 
-from llama_stack.models.llama.datatypes import BuiltinTool, ToolDefinition
 from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 
 
@@ -18,17 +17,17 @@ class TestSimpleSchemaConversion:
 
     def test_simple_tool_conversion(self):
         """Test conversion of simple tool with basic input schema."""
-        tool = ToolDefinition(
+        input_schema = {
+            "type": "object",
+            "properties": {"location": {"type": "string", "description": "City name"}},
+            "required": ["location"],
+        }
+
+        result = convert_tooldef_to_openai_tool(
             tool_name="get_weather",
             description="Get weather information",
-            input_schema={
-                "type": "object",
-                "properties": {"location": {"type": "string", "description": "City name"}},
-                "required": ["location"],
-            },
+            input_schema=input_schema,
         )
-
-        result = convert_tooldef_to_openai_tool(tool)
 
         # Check OpenAI structure
         assert result["type"] == "function"
@@ -40,32 +39,20 @@ class TestSimpleSchemaConversion:
 
         # Check parameters are passed through
         assert "parameters" in function
-        assert function["parameters"] == tool.input_schema
+        assert function["parameters"] == input_schema
         assert function["parameters"]["type"] == "object"
         assert "location" in function["parameters"]["properties"]
 
     def test_tool_without_description(self):
         """Test tool conversion without description."""
-        tool = ToolDefinition(tool_name="test_tool", input_schema={"type": "object", "properties": {}})
-
-        result = convert_tooldef_to_openai_tool(tool)
+        result = convert_tooldef_to_openai_tool(
+            tool_name="test_tool",
+            input_schema={"type": "object", "properties": {}},
+        )
 
         assert result["function"]["name"] == "test_tool"
         assert "description" not in result["function"]
         assert "parameters" in result["function"]
-
-    def test_builtin_tool_conversion(self):
-        """Test conversion of BuiltinTool enum."""
-        tool = ToolDefinition(
-            tool_name=BuiltinTool.code_interpreter,
-            description="Run Python code",
-            input_schema={"type": "object", "properties": {"code": {"type": "string"}}},
-        )
-
-        result = convert_tooldef_to_openai_tool(tool)
-
-        # BuiltinTool should be converted to its value
-        assert result["function"]["name"] == "code_interpreter"
 
 
 class TestComplexSchemaConversion:
@@ -73,7 +60,7 @@ class TestComplexSchemaConversion:
 
     def test_schema_with_refs_and_defs(self):
         """Test that $ref and $defs are passed through to OpenAI."""
-        tool = ToolDefinition(
+        result = convert_tooldef_to_openai_tool(
             tool_name="book_flight",
             description="Book a flight",
             input_schema={
@@ -110,8 +97,6 @@ class TestComplexSchemaConversion:
             },
         )
 
-        result = convert_tooldef_to_openai_tool(tool)
-
         params = result["function"]["parameters"]
 
         # Verify $defs are preserved
@@ -132,7 +117,7 @@ class TestComplexSchemaConversion:
 
     def test_anyof_schema_conversion(self):
         """Test conversion of anyOf schemas."""
-        tool = ToolDefinition(
+        result = convert_tooldef_to_openai_tool(
             tool_name="flexible_input",
             input_schema={
                 "type": "object",
@@ -148,8 +133,6 @@ class TestComplexSchemaConversion:
             },
         )
 
-        result = convert_tooldef_to_openai_tool(tool)
-
         contact_schema = result["function"]["parameters"]["properties"]["contact"]
         assert "anyOf" in contact_schema
         assert len(contact_schema["anyOf"]) == 2
@@ -158,7 +141,7 @@ class TestComplexSchemaConversion:
 
     def test_nested_objects_conversion(self):
         """Test conversion of deeply nested objects."""
-        tool = ToolDefinition(
+        result = convert_tooldef_to_openai_tool(
             tool_name="nested_data",
             input_schema={
                 "type": "object",
@@ -182,8 +165,6 @@ class TestComplexSchemaConversion:
             },
         )
 
-        result = convert_tooldef_to_openai_tool(tool)
-
         # Navigate deep structure
         user_schema = result["function"]["parameters"]["properties"]["user"]
         profile_schema = user_schema["properties"]["profile"]
@@ -194,7 +175,7 @@ class TestComplexSchemaConversion:
 
     def test_array_schemas_with_constraints(self):
         """Test conversion of array schemas with constraints."""
-        tool = ToolDefinition(
+        result = convert_tooldef_to_openai_tool(
             tool_name="list_processor",
             input_schema={
                 "type": "object",
@@ -214,8 +195,6 @@ class TestComplexSchemaConversion:
             },
         )
 
-        result = convert_tooldef_to_openai_tool(tool)
-
         items_schema = result["function"]["parameters"]["properties"]["items"]
         assert items_schema["type"] == "array"
         assert items_schema["minItems"] == 1
@@ -229,14 +208,13 @@ class TestOutputSchemaHandling:
 
     def test_output_schema_is_dropped(self):
         """Test that output_schema is NOT included in OpenAI format (API limitation)."""
-        tool = ToolDefinition(
+        input_schema = {"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number"}}}
+
+        result = convert_tooldef_to_openai_tool(
             tool_name="calculator",
             description="Perform calculation",
-            input_schema={"type": "object", "properties": {"x": {"type": "number"}, "y": {"type": "number"}}},
-            output_schema={"type": "object", "properties": {"result": {"type": "number"}}, "required": ["result"]},
+            input_schema=input_schema,
         )
-
-        result = convert_tooldef_to_openai_tool(tool)
 
         # OpenAI doesn't support output schema
         assert "outputSchema" not in result["function"]
@@ -245,17 +223,14 @@ class TestOutputSchemaHandling:
 
         # But input schema should be present
         assert "parameters" in result["function"]
-        assert result["function"]["parameters"] == tool.input_schema
+        assert result["function"]["parameters"] == input_schema
 
     def test_only_output_schema_no_input(self):
         """Test tool with only output_schema (unusual but valid)."""
-        tool = ToolDefinition(
+        result = convert_tooldef_to_openai_tool(
             tool_name="no_input_tool",
             description="Tool with no inputs",
-            output_schema={"type": "object", "properties": {"timestamp": {"type": "string"}}},
         )
-
-        result = convert_tooldef_to_openai_tool(tool)
 
         # No parameters should be set if input_schema is None
         # (or we might set an empty object schema - implementation detail)
@@ -267,9 +242,10 @@ class TestEdgeCases:
 
     def test_tool_with_no_schemas(self):
         """Test tool with neither input nor output schema."""
-        tool = ToolDefinition(tool_name="schemaless_tool", description="Tool without schemas")
-
-        result = convert_tooldef_to_openai_tool(tool)
+        result = convert_tooldef_to_openai_tool(
+            tool_name="schemaless_tool",
+            description="Tool without schemas",
+        )
 
         assert result["function"]["name"] == "schemaless_tool"
         assert result["function"]["description"] == "Tool without schemas"
@@ -277,16 +253,17 @@ class TestEdgeCases:
 
     def test_empty_input_schema(self):
         """Test tool with empty object schema."""
-        tool = ToolDefinition(tool_name="no_params", input_schema={"type": "object", "properties": {}})
-
-        result = convert_tooldef_to_openai_tool(tool)
+        result = convert_tooldef_to_openai_tool(
+            tool_name="no_params",
+            input_schema={"type": "object", "properties": {}},
+        )
 
         assert result["function"]["parameters"]["type"] == "object"
         assert result["function"]["parameters"]["properties"] == {}
 
     def test_schema_with_additional_properties(self):
         """Test that additionalProperties is preserved."""
-        tool = ToolDefinition(
+        result = convert_tooldef_to_openai_tool(
             tool_name="flexible_tool",
             input_schema={
                 "type": "object",
@@ -295,18 +272,14 @@ class TestEdgeCases:
             },
         )
 
-        result = convert_tooldef_to_openai_tool(tool)
-
         assert result["function"]["parameters"]["additionalProperties"] is True
 
     def test_schema_with_pattern_properties(self):
         """Test that patternProperties is preserved."""
-        tool = ToolDefinition(
+        result = convert_tooldef_to_openai_tool(
             tool_name="pattern_tool",
             input_schema={"type": "object", "patternProperties": {"^[a-z]+$": {"type": "string"}}},
         )
-
-        result = convert_tooldef_to_openai_tool(tool)
 
         assert "patternProperties" in result["function"]["parameters"]
 
@@ -325,9 +298,10 @@ class TestEdgeCases:
             "additionalProperties": False,
         }
 
-        tool = ToolDefinition(tool_name="test", input_schema=original_schema)
-
-        result = convert_tooldef_to_openai_tool(tool)
+        result = convert_tooldef_to_openai_tool(
+            tool_name="test",
+            input_schema=original_schema,
+        )
 
         # Converted parameters should be EXACTLY the same as input
         assert result["function"]["parameters"] == original_schema
@@ -338,7 +312,7 @@ class TestConversionConsistency:
 
     def test_multiple_tools_with_shared_defs(self):
         """Test converting multiple tools that could share definitions."""
-        tool1 = ToolDefinition(
+        result1 = convert_tooldef_to_openai_tool(
             tool_name="tool1",
             input_schema={
                 "type": "object",
@@ -347,7 +321,7 @@ class TestConversionConsistency:
             },
         )
 
-        tool2 = ToolDefinition(
+        result2 = convert_tooldef_to_openai_tool(
             tool_name="tool2",
             input_schema={
                 "type": "object",
@@ -356,26 +330,30 @@ class TestConversionConsistency:
             },
         )
 
-        result1 = convert_tooldef_to_openai_tool(tool1)
-        result2 = convert_tooldef_to_openai_tool(tool2)
-
         # Each tool maintains its own $defs independently
         assert result1["function"]["parameters"]["$defs"]["Data"]["properties"]["x"]["type"] == "number"
         assert result2["function"]["parameters"]["$defs"]["Data"]["properties"]["y"]["type"] == "string"
 
     def test_conversion_is_pure(self):
-        """Test that conversion doesn't modify the original tool."""
+        """Test that conversion doesn't modify the original input."""
         original_schema = {
             "type": "object",
             "properties": {"x": {"type": "string"}},
             "$defs": {"T": {"type": "number"}},
         }
 
-        tool = ToolDefinition(tool_name="test", input_schema=original_schema.copy())
-
         # Convert
-        convert_tooldef_to_openai_tool(tool)
+        result = convert_tooldef_to_openai_tool(
+            tool_name="test",
+            input_schema=original_schema.copy(),
+        )
 
-        # Original tool should be unchanged
-        assert tool.input_schema == original_schema
-        assert "$defs" in tool.input_schema
+        # Original schema should be unchanged
+        assert original_schema == {
+            "type": "object",
+            "properties": {"x": {"type": "string"}},
+            "$defs": {"T": {"type": "number"}},
+        }
+        assert "$defs" in original_schema
+        # Verify result has the expected structure
+        assert result["function"]["parameters"] == original_schema

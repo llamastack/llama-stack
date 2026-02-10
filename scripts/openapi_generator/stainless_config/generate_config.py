@@ -525,9 +525,9 @@ ALL_RESOURCES = {
                 "subresources": {
                     "job": {
                         "methods": {
-                            "artifacts": "get /v1alpha/post-training/job/artifacts",
-                            "cancel": "post /v1alpha/post-training/job/cancel",
-                            "status": "get /v1alpha/post-training/job/status",
+                            "artifacts": "get /v1alpha/post-training/jobs/{job_uuid}/artifacts",
+                            "cancel": "post /v1alpha/post-training/jobs/{job_uuid}/cancel",
+                            "status": "get /v1alpha/post-training/jobs/{job_uuid}/status",
                             "list": {
                                 "paginated": False,
                                 "endpoint": "get /v1alpha/post-training/jobs",

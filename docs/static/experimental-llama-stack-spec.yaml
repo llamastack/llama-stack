@@ -462,107 +462,6 @@ paths:
             schema:
               $ref: '#/components/schemas/RerankRequest'
         required: true
-  /v1alpha/post-training/job/artifacts:
-    get:
-      responses:
-        '200':
-          description: A PostTrainingJobArtifactsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostTrainingJobArtifactsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Post Training
-      summary: Get the artifacts of a training job.
-      description: Get the artifacts of a training job.
-      operationId: get_training_job_artifacts_v1alpha_post_training_job_artifacts_get
-      parameters:
-      - name: job_uuid
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The UUID of the job to get the artifacts of.
-          title: Job Uuid
-        description: The UUID of the job to get the artifacts of.
-  /v1alpha/post-training/job/cancel:
-    post:
-      responses:
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-        '204':
-          description: Successfully cancelled the training job.
-      tags:
-      - Post Training
-      summary: Cancel a training job.
-      description: Cancel a training job.
-      operationId: cancel_training_job_v1alpha_post_training_job_cancel_post
-      parameters:
-      - name: job_uuid
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The UUID of the job to cancel.
-          title: Job Uuid
-        description: The UUID of the job to cancel.
-  /v1alpha/post-training/job/status:
-    get:
-      responses:
-        '200':
-          description: A PostTrainingJobStatusResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PostTrainingJobStatusResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Post Training
-      summary: Get the status of a training job.
-      description: Get the status of a training job.
-      operationId: get_training_job_status_v1alpha_post_training_job_status_get
-      parameters:
-      - name: job_uuid
-        in: path
-        required: true
-        schema:
-          type: string
-          description: The UUID of the job to get the status of.
-          title: Job Uuid
-        description: The UUID of the job to get the status of.
   /v1alpha/post-training/jobs:
     get:
       responses:
@@ -810,6 +709,107 @@ paths:
       summary: Get service version
       description: Get the version of the service.
       operationId: version_v1alpha_admin_version_get
+  /v1alpha/post-training/jobs/{job_uuid}/status:
+    get:
+      responses:
+        '200':
+          description: A PostTrainingJobStatusResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostTrainingJobStatusResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Post Training
+      summary: Get the status of a training job.
+      description: Get the status of a training job.
+      operationId: get_training_job_status_v1alpha_post_training_jobs__job_uuid__status_get
+      parameters:
+      - name: job_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The UUID of the job to get the status of.
+          title: Job Uuid
+        description: The UUID of the job to get the status of.
+  /v1alpha/post-training/jobs/{job_uuid}/cancel:
+    post:
+      responses:
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+        '204':
+          description: Successfully cancelled the training job.
+      tags:
+      - Post Training
+      summary: Cancel a training job.
+      description: Cancel a training job.
+      operationId: cancel_training_job_v1alpha_post_training_jobs__job_uuid__cancel_post
+      parameters:
+      - name: job_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The UUID of the job to cancel.
+          title: Job Uuid
+        description: The UUID of the job to cancel.
+  /v1alpha/post-training/jobs/{job_uuid}/artifacts:
+    get:
+      responses:
+        '200':
+          description: A PostTrainingJobArtifactsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostTrainingJobArtifactsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Post Training
+      summary: Get the artifacts of a training job.
+      description: Get the artifacts of a training job.
+      operationId: get_training_job_artifacts_v1alpha_post_training_jobs__job_uuid__artifacts_get
+      parameters:
+      - name: job_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+          description: The UUID of the job to get the artifacts of.
+          title: Job Uuid
+        description: The UUID of the job to get the artifacts of.
   /v1alpha/connectors:
     get:
       responses:
@@ -1970,6 +1970,12 @@ components:
           - type: string
           - type: 'null'
           description: The user to use.
+        safety_identifier:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A stable identifier used for safety monitoring and abuse detection.
         reasoning_effort:
           anyOf:
           - type: string
@@ -4233,6 +4239,10 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
+        safety_identifier:
+          anyOf:
+          - type: string
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
@@ -4676,6 +4686,10 @@ components:
         max_output_tokens:
           anyOf:
           - type: integer
+          - type: 'null'
+        safety_identifier:
+          anyOf:
+          - type: string
           - type: 'null'
         metadata:
           anyOf:
@@ -9653,9 +9667,52 @@ components:
           - type: number
           - type: 'null'
           default: 0.0
+        alpha:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          description: Weight factor for weighted ranker
+        impact_factor:
+          anyOf:
+          - type: number
+            minimum: 0.0
+          - type: 'null'
+          description: Impact factor for RRF algorithm
+        weights:
+          anyOf:
+          - additionalProperties:
+              type: number
+            type: object
+          - type: 'null'
+          description: "Weights for combining vector, keyword, and neural scores. Keys: 'vector', 'keyword', 'neural'"
+        model:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Model identifier for neural reranker
       type: object
       title: SearchRankingOptions
-      description: Options for ranking and filtering search results.
+      description: |-
+        Options for ranking and filtering search results.
+
+        This class configures how search results are ranked and filtered. You can use algorithm-based
+        rerankers (weighted, RRF) or neural rerankers. Defaults from VectorStoresConfig are
+        used when parameters are not provided.
+
+        Examples:
+            # Weighted ranker with custom alpha
+            SearchRankingOptions(ranker="weighted", alpha=0.7)
+
+            # RRF ranker with custom impact factor
+            SearchRankingOptions(ranker="rrf", impact_factor=50.0)
+
+            # Use config defaults (just specify ranker type)
+            SearchRankingOptions(ranker="weighted")  # Uses alpha from VectorStoresConfig
+
+            # Score threshold filtering
+            SearchRankingOptions(ranker="weighted", score_threshold=0.5)
     SetDefaultVersionBodyRequest:
       properties:
         version:

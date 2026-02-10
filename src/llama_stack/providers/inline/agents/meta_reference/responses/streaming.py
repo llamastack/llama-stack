@@ -13,7 +13,9 @@ from openai.types.chat import ChatCompletionToolParam
 from opentelemetry import trace
 
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
+from llama_stack.providers.utils.tools.mcp import list_mcp_tools
 from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
@@ -88,6 +90,7 @@ from llama_stack_api import (
     OpenAIToolMessageParam,
     ResponseItemInclude,
     Safety,
+    ToolDef,
     WebSearchToolTypes,
 )
 
@@ -112,16 +115,11 @@ def convert_tooldef_to_chat_tool(tool_def):
     Returns:
         ChatCompletionToolParam suitable for OpenAI chat completion
     """
-
-    from llama_stack.models.llama.datatypes import ToolDefinition
-    from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
-
-    internal_tool_def = ToolDefinition(
+    return convert_tooldef_to_openai_tool(
         tool_name=tool_def.name,
         description=tool_def.description,
         input_schema=tool_def.input_schema,
     )
-    return convert_tooldef_to_openai_tool(internal_tool_def)
 
 
 class StreamingResponseOrchestrator:
@@ -143,6 +141,7 @@ class StreamingResponseOrchestrator:
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
@@ -167,6 +166,7 @@ class StreamingResponseOrchestrator:
         self.reasoning = reasoning
         # An upper bound for the number of tokens that can be generated for a response
         self.max_output_tokens = max_output_tokens
+        self.safety_identifier = safety_identifier
         self.metadata = metadata
         self.store = store
         self.include = include
@@ -208,6 +208,7 @@ class StreamingResponseOrchestrator:
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             max_output_tokens=self.max_output_tokens,
+            safety_identifier=self.safety_identifier,
             metadata=self.metadata,
             store=self.store,
         )
@@ -250,6 +251,7 @@ class StreamingResponseOrchestrator:
             max_tool_calls=self.max_tool_calls,
             reasoning=self.reasoning,
             max_output_tokens=self.max_output_tokens,
+            safety_identifier=self.safety_identifier,
             metadata=self.metadata,
             store=self.store,
         )
@@ -370,6 +372,7 @@ class StreamingResponseOrchestrator:
                     logprobs=logprobs,
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
+                    safety_identifier=self.safety_identifier,
                     max_completion_tokens=remaining_output_tokens,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
@@ -1176,19 +1179,13 @@ class StreamingResponseOrchestrator:
         self, tools: list[OpenAIResponseInputTool], output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process all tools and emit appropriate streaming events."""
-        from openai.types.chat import ChatCompletionToolParam
-
-        from llama_stack.models.llama.datatypes import ToolDefinition
-        from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
-        from llama_stack_api import ToolDef
 
         def make_openai_tool(tool_name: str, tool: ToolDef) -> ChatCompletionToolParam:
-            tool_def = ToolDefinition(
+            return convert_tooldef_to_openai_tool(
                 tool_name=tool_name,
                 description=tool.description,
                 input_schema=tool.input_schema,
-            )
-            return convert_tooldef_to_openai_tool(tool_def)  # type: ignore[return-value]  # Returns dict but ChatCompletionToolParam expects TypedDict
+            )  # type: ignore[return-value]  # Returns dict but ChatCompletionToolParam expects TypedDict
 
         # Initialize chat_tools if not already set
         if self.ctx.chat_tools is None:
@@ -1196,7 +1193,9 @@ class StreamingResponseOrchestrator:
 
         for input_tool in tools:
             if input_tool.type == "function":
-                self.ctx.chat_tools.append(ChatCompletionToolParam(type="function", function=input_tool.model_dump()))  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition
+                self.ctx.chat_tools.append(
+                    ChatCompletionToolParam(type="function", function=input_tool.model_dump(exclude_none=True))
+                )  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition
             elif input_tool.type in WebSearchToolTypes:
                 tool_name = "web_search"
                 # Need to access tool_groups_api from tool_executor
@@ -1220,8 +1219,6 @@ class StreamingResponseOrchestrator:
         self, mcp_tool: OpenAIResponseInputToolMCP, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         """Process an MCP tool configuration and emit appropriate streaming events."""
-        from llama_stack.providers.utils.tools.mcp import list_mcp_tools
-
         # Resolve connector_id to server_url if provided
         mcp_tool = await resolve_mcp_connector_id(mcp_tool, self.connectors_api)
 
@@ -1407,17 +1404,11 @@ class StreamingResponseOrchestrator:
         self, original: OpenAIResponseOutputMessageMCPListTools, output_messages: list[OpenAIResponseOutput]
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         for t in original.tools:
-            from llama_stack.models.llama.datatypes import ToolDefinition
-            from llama_stack.providers.utils.inference.openai_compat import convert_tooldef_to_openai_tool
-
-            # convert from input_schema to map of ToolParamDefinitions...
-            tool_def = ToolDefinition(
+            openai_tool = convert_tooldef_to_openai_tool(
                 tool_name=t.name,
                 description=t.description,
                 input_schema=t.input_schema,
             )
-            # ...then can convert that to openai completions tool
-            openai_tool = convert_tooldef_to_openai_tool(tool_def)
             if self.ctx.chat_tools is None:
                 self.ctx.chat_tools = []
             self.ctx.chat_tools.append(openai_tool)  # type: ignore[arg-type]  # Returns dict but ChatCompletionToolParam expects TypedDict

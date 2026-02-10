@@ -9,12 +9,13 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
 from llama_stack.core.utils.model_utils import model_local_dir
 from llama_stack.log import get_logger
-from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
+from llama_stack.providers.utils.inference.prompt_adapter import (
+    interleaved_content_as_str,
+)
+from llama_stack.providers.utils.safety import ShieldToModerationMixin
 from llama_stack_api import (
     GetShieldRequest,
-    ModerationObject,
     OpenAIMessageParam,
-    RunModerationRequest,
     RunShieldRequest,
     RunShieldResponse,
     Safety,
@@ -32,7 +33,7 @@ log = get_logger(name=__name__, category="safety")
 PROMPT_GUARD_MODEL = "Prompt-Guard-86M"
 
 
-class PromptGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
+class PromptGuardSafetyImpl(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate):
     shield_store: ShieldStore
 
     def __init__(self, config: PromptGuardConfig, _deps) -> None:
@@ -58,9 +59,6 @@ class PromptGuardSafetyImpl(Safety, ShieldsProtocolPrivate):
             raise ValueError(f"Unknown shield {request.shield_id}")
 
         return await self.shield.run(request.messages)
-
-    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
-        raise NotImplementedError("run_moderation is not implemented for Prompt Guard")
 
 
 class PromptGuardShield:
