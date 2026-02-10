@@ -145,6 +145,7 @@ class StreamingResponseOrchestrator:
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
+        top_logprobs: int | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -168,6 +169,7 @@ class StreamingResponseOrchestrator:
         self.max_output_tokens = max_output_tokens
         self.safety_identifier = safety_identifier
         self.metadata = metadata
+        self.top_logprobs = top_logprobs
         self.store = store
         self.include = include
         self.store = bool(store) if store is not None else True
@@ -253,6 +255,7 @@ class StreamingResponseOrchestrator:
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
             metadata=self.metadata,
+            top_logprobs=self.top_logprobs,
             store=self.store,
         )
 
@@ -349,7 +352,10 @@ class StreamingResponseOrchestrator:
                 logger.debug(f"calling openai_chat_completion with tools: {effective_tools}")
 
                 logprobs = (
-                    True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
+                    True
+                    if self.top_logprobs is not None
+                    or (self.include and ResponseItemInclude.message_output_text_logprobs in self.include)
+                    else None
                 )
 
                 # In OpenAI, parallel_tool_calls is only allowed when 'tools' are specified.
@@ -374,6 +380,7 @@ class StreamingResponseOrchestrator:
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
                     safety_identifier=self.safety_identifier,
                     max_completion_tokens=remaining_output_tokens,
+                    top_logprobs=self.top_logprobs,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
