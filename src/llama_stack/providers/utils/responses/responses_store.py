@@ -220,13 +220,11 @@ class ResponsesStore:
         self,
         response_object: OpenAIResponseObject,
         input: list[OpenAIResponseInput] | None = None,
-        messages: list[OpenAIMessageParam] | None = None,
     ) -> None:
         """Update an existing response object in storage.
 
         :param response_object: The updated response object.
         :param input: Optional input items (if None, existing input is preserved).
-        :param messages: Optional messages (if None, existing messages are preserved).
         """
         if not self.sql_store:
             raise ValueError("Responses store is not initialized")
@@ -248,11 +246,9 @@ class ResponsesStore:
             data["input"] = [input_item.model_dump() for input_item in input]
         else:
             data["input"] = existing_data.get("input", [])
-        # Preserve existing messages if not provided
-        if messages is not None:
-            data["messages"] = [msg.model_dump() for msg in messages]
-        else:
-            data["messages"] = existing_data.get("messages", [])
+        # Messages are stored in the blob by store/upsert_response_object.
+        # Preserve them here so updating status doesn't clobber them.
+        data["messages"] = existing_data.get("messages", [])
 
         await self.sql_store.update(
             self.reference.table_name,
