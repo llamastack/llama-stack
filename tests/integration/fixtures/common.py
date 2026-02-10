@@ -25,7 +25,7 @@ import yaml
 from llama_stack_client import LlamaStackClient
 from openai import OpenAI
 
-from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
+from llama_stack.core.datatypes import Provider, QualifiedModel, RerankerModel, VectorStoresConfig
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.core.stack import run_config_from_adhoc_config_spec
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
@@ -323,21 +323,48 @@ def instantiate_llama_stack_client(session):
     if "=" in config:
         run_config = run_config_from_adhoc_config_spec(config)
 
-        # --stack-config bypasses template so need this to set default embedding model
+        # --stack-config bypasses template so need this to set default embedding and reranker models
         if "vector_io" in config and "inference" in config:
             if "inline" in session.config.getoption("embedding_model"):
                 provider_id = "inline::sentence-transformers"
             else:
                 provider_id = parse_vector_io_provider(config)
+
+            rerank_model_option = session.config.getoption("rerank_model")
+            if rerank_model_option and "inline" not in rerank_model_option:
+                # Remote reranker provider — parse from config
+                provider_id_of_reranker = parse_vector_io_provider(config)
+            else:
+                # Default: reranker model lives in the transformers inference provider
+                provider_id_of_reranker = "transformers"
+
+                from llama_stack.providers.inline.inference.transformers.config import TransformersInferenceConfig
+
+                existing_provider_types = {p.provider_type for p in run_config.providers.get("inference", [])}
+                if "inline::transformers" not in existing_provider_types:
+                    run_config.providers.setdefault("inference", []).append(
+                        Provider(
+                            provider_id="transformers",
+                            provider_type="inline::transformers",
+                            config=TransformersInferenceConfig.sample_run_config(),
+                        )
+                    )
+
             passed_model = extract_model(session.config.getoption("embedding_model"), "nomic-ai/nomic-embed-text-v1.5")
             passed_emb = session.config.getoption("embedding_dimension")
+
+            passed_reranker_model = extract_model(rerank_model_option, "Qwen/Qwen3-Reranker-0.6B")
 
             run_config.vector_stores = VectorStoresConfig(
                 default_embedding_model=QualifiedModel(
                     provider_id=provider_id,
                     model_id=passed_model,
                     embedding_dimensions=passed_emb,
-                )
+                ),
+                default_reranker_model=RerankerModel(
+                    provider_id=provider_id_of_reranker,
+                    model_id=passed_reranker_model,
+                ),
             )
 
         run_config_file = tempfile.NamedTemporaryFile(delete=False, suffix=".yaml")
