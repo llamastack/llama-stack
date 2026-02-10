@@ -7,6 +7,7 @@ import io
 import re
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
@@ -23,10 +24,10 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
-    Api,
     Chunk,
     ChunkMetadata,
     EmbeddedChunk,
+    Inference,
     InterleavedContent,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksResponse,
@@ -88,30 +89,28 @@ def parse_data_url(data_url: str):
 
 
 def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, encoding: str | None = None) -> str:
-    if isinstance(data, bytes):
-        if not encoding:
-            import chardet
+    if isinstance(data, str):
+        return data
 
-            detected = chardet.detect(data)
-            encoding = detected["encoding"]
+    if not encoding:
+        import chardet
+
+        detected = chardet.detect(data)
+        encoding = detected["encoding"]
 
     mime_category = mime_type.split("/")[0] if mime_type else None
     if mime_category == "text":
         # For text-based files (including CSV, MD)
-        encodings_to_try = [encoding]
-        if encoding != "utf-8":
-            encodings_to_try.append("utf-8")
-        first_exception = None
-        for encoding in encodings_to_try:
-            try:
-                return data.decode(encoding)
-            except UnicodeDecodeError as e:
-                if first_exception is None:
-                    first_exception = e
-                log.warning(f"Decoding failed with {encoding}: {e}")
-        # raise the origional exception, if we got here there was at least 1 exception
-        log.error(f"Could not decode data as any of {encodings_to_try}")
-        raise first_exception
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError as e:
+            log.warning(f"Decoding with encoding {encoding} failed: {e}")
+            if encoding.lower() != "utf-8":
+                try:
+                    return data.decode("utf-8")
+                except UnicodeDecodeError as e_utf8:
+                    log.warning(f"Decoding with UTF-8 fallback also failed: {e_utf8}")
+            raise e
 
     elif mime_type == "application/pdf":
         return parse_pdf(data)
@@ -188,7 +187,10 @@ def make_overlapped_chunks(
     return chunks
 
 
-def _validate_embedding(embedding: NDArray, index: int, expected_dimension: int):
+type EmbeddingSequence = Sequence[float | int | np.number] | NDArray[Any]
+
+
+def _validate_embedding(embedding: EmbeddingSequence, index: int, expected_dimension: int):
     """Helper method to validate embedding format and dimensions"""
     if not isinstance(embedding, (list | np.ndarray)):
         raise ValueError(f"Embedding at index {index} must be a list or numpy array, got {type(embedding)}")
@@ -242,7 +244,7 @@ class EmbeddingIndex(ABC):
 class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
-    inference_api: Api.inference
+    inference_api: Inference
     vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(
@@ -319,14 +321,16 @@ class VectorStoreWithIndex:
             return await self.index.query_keyword(query_string, k, score_threshold)
 
         if "embedding_dimensions" in params:
-            params = OpenAIEmbeddingsRequestWithExtraBody(
+            embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
                 model=self.vector_store.embedding_model,
                 input=[query_string],
                 dimensions=params.get("embedding_dimensions"),
             )
         else:
-            params = OpenAIEmbeddingsRequestWithExtraBody(model=self.vector_store.embedding_model, input=[query_string])
-        embeddings_response = await self.inference_api.openai_embeddings(params)
+            embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
+                model=self.vector_store.embedding_model, input=[query_string]
+            )
+        embeddings_response = await self.inference_api.openai_embeddings(embeddings_request)
         query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
         if mode == "hybrid":
             return await self.index.query_hybrid(

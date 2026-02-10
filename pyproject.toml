@@ -287,7 +287,6 @@ follow_imports = "silent"
 # to exclude the entire directory.
 exclude = [
     # As we fix more and more of these, we should remove them from the list
-    "^src/llama_stack/core/build\\.py$",
     "^src/llama_stack/core/client\\.py$",
     "^src/llama_stack/core/request_headers\\.py$",
     "^src/llama_stack/core/routers/",
@@ -340,12 +339,10 @@ exclude = [
     "^src/llama_stack/providers/utils/inference/embedding_mixin\\.py$",
     "^src/llama_stack/providers/utils/inference/litellm_openai_mixin\\.py$",
     "^src/llama_stack/providers/utils/inference/model_registry\\.py$",
-    "^src/llama_stack/providers/utils/inference/openai_compat\\.py$",
     "^src/llama_stack/providers/utils/inference/prompt_adapter\\.py$",
     "^src/llama_stack/providers/utils/kvstore/kvstore\\.py$",
     "^src/llama_stack/providers/utils/kvstore/postgres/postgres\\.py$",
     "^src/llama_stack/providers/utils/kvstore/redis/redis\\.py$",
-    "^src/llama_stack/providers/utils/memory/vector_store\\.py$",
     "^src/llama_stack/providers/utils/scoring/aggregation_utils\\.py$",
     "^src/llama_stack/providers/utils/scoring/base_scoring_fn\\.py$",
     "^src/llama_stack/providers/utils/telemetry/dataset_mixin\\.py$",
