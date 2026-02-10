@@ -43,7 +43,7 @@ runs:
         free -h
         df -h
 
-    - name: Run Integration Tests
+    - name: Run Integration Tests and Auth Tests
       shell: bash
       run: |
         SCRIPT_ARGS="--stack-config ${{ inputs.stack-config }} --inference-mode ${{ inputs.inference-mode }}"
@@ -62,12 +62,14 @@ runs:
           SCRIPT_ARGS="$SCRIPT_ARGS --pattern ${{ inputs.pattern }}"
         fi
 
-        echo "=== Running command ==="
+        # Run auth tests as post-command so they run while the server is still up (before EXIT trap)
+        export INTEGRATION_TESTS_POST_CMD="uv run --no-sync ./scripts/integration-responses-conversations-auth-tests.sh $SCRIPT_ARGS"
+
+        echo "=== Running integration tests (auth tests will run after, same server) ==="
         echo "uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS"
         echo ""
 
         uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS | tee pytest-${{ inputs.inference-mode }}.log
-
 
     - name: Commit and push recordings
       if: ${{ inputs.inference-mode == 'record' ||  inputs.inference-mode == 'record-if-missing' }}

@@ -604,5 +604,13 @@ if [[ $exit_code -eq 0 && -n "${TS_CLIENT_PATH:-}" && "${LLAMA_STACK_TEST_STACK_
     run_client_ts_tests
 fi
 
+# Optional post-command (e.g. auth tests) while server is still up; runs before EXIT trap
+if [[ $exit_code -eq 0 && -n "${INTEGRATION_TESTS_POST_CMD:-}" ]]; then
+    echo ""
+    echo "=== Running post command (server still up) ==="
+    eval "$INTEGRATION_TESTS_POST_CMD"
+    exit_code=$?
+fi
+
 echo ""
 echo "=== Integration Tests Complete ==="
