@@ -117,6 +117,15 @@ repos:
         pass_filenames: false
         require_serial: true
         files: ^src/llama_stack_api/.*$
+      - id: api-conformance
+        name: Check API spec for breaking changes
+        entry: ./scripts/check-api-conformance.sh
+        language: golang
+        additional_dependencies:
+          - github.com/oasdiff/oasdiff@latest
+        pass_filenames: false
+        require_serial: true
+        files: ^docs/static/(llama-stack-spec|stable-llama-stack-spec|experimental-llama-stack-spec|deprecated-llama-stack-spec)\.yaml$
       - id: openai-coverage
         name: OpenAI API Coverage
         additional_dependencies:
@@ -231,15 +240,6 @@ repos:
               exit 1;
             }
             exit 0
-      - id: api-conformance
-        name: Check API spec for breaking changes
-        entry: ./scripts/check-api-conformance.sh
-        language: golang
-        additional_dependencies:
-          - github.com/oasdiff/oasdiff@latest
-        pass_filenames: false
-        require_serial: true
-        files: ^docs/static/(llama-stack-spec|stable-llama-stack-spec|experimental-llama-stack-spec|deprecated-llama-stack-spec)\.yaml$
 
 ci:
     autofix_commit_msg: 🎨 [pre-commit.ci] Auto format from pre-commit.com hooks
