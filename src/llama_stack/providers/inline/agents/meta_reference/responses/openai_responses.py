@@ -24,7 +24,9 @@ from llama_stack_api import (
     Conversations,
     Files,
     Inference,
+    InternalServerError,
     InvalidConversationIdError,
+    InvalidParameterError,
     ListItemsRequest,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -51,6 +53,7 @@ from llama_stack_api import (
     ResponseGuardrailSpec,
     ResponseItemInclude,
     Safety,
+    ServiceNotEnabledError,
     ToolGroups,
     ToolRuntime,
     VectorIO,
@@ -494,10 +497,9 @@ class OpenAIResponsesImpl:
 
         # Validate that Safety API is available if guardrails are requested
         if guardrail_ids and self.safety_api is None:
-            raise ValueError(
-                "Cannot process guardrails: Safety API is not configured.\n\n"
-                "To use guardrails, ensure the Safety API is configured in your stack, or remove "
-                "the 'guardrails' parameter from your request."
+            raise ServiceNotEnabledError(
+                "Safety API",
+                provider_specific_message="Ensure the Safety API is enabled in your stack, otherwise remove the 'guardrails' parameter from your request.",
             )
 
         if conversation is not None:
@@ -508,6 +510,13 @@ class OpenAIResponsesImpl:
 
             if not conversation.startswith("conv_"):
                 raise InvalidConversationIdError(conversation)
+
+        if max_tool_calls is not None and max_tool_calls < 1:
+            raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
+
+        # Validate temperature per OpenResponses spec: "between 0 and 2"
+        if temperature is not None and (temperature < 0 or temperature > 2):
+            raise InvalidParameterError("temperature", temperature, "Must be between 0 and 2.")
 
         stream_gen = self._create_streaming_response(
             input=input,
@@ -543,24 +552,24 @@ class OpenAIResponsesImpl:
                 match stream_chunk.type:
                     case "response.completed" | "response.incomplete":
                         if final_response is not None:
-                            raise ValueError(
-                                "The response stream produced multiple terminal responses! "
-                                f"Earlier response from {final_event_type}"
+                            logger.error(
+                                "The response stream produced multiple terminal events, when it should produce exactly one. "
+                                f"First event: {final_event_type}; second event: {stream_chunk.type}",
                             )
+                            raise InternalServerError("The response stream produced multiple terminal events.")
                         final_response = stream_chunk.response
                         final_event_type = stream_chunk.type
                     case "response.failed":
                         failed_response = stream_chunk.response
+                        error_message = (
+                            failed_response.error.message
+                            if failed_response.error
+                            else "response failed but no error message was provided"
+                        )
+                        logger.error(f"response creation failed: {error_message}")
+                        raise InternalServerError(error_message)
                     case _:
                         pass  # Other event types don't have .response
-
-            if failed_response is not None:
-                error_message = (
-                    failed_response.error.message
-                    if failed_response and failed_response.error
-                    else "Response stream failed without error details"
-                )
-                raise RuntimeError(f"OpenAI response failed: {error_message}")
 
             if final_response is None:
                 raise ValueError("The response stream never reached a terminal state")
