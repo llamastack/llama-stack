@@ -15,14 +15,17 @@ echo ""
 echo "Running conversations isolation tests..."
 
 # Set tokens for pytest-based access control tests
-export ALICE_TOKEN=$(cat llama-stack-user1-token)
-export BOB_TOKEN=$(cat llama-stack-user2-token)
+export ALICE_TOKEN=$(cat llama-stack-user1-token || echo "alice-token")
+export BOB_TOKEN=$(cat llama-stack-user2-token || echo "bob-token")
+
+# Use same port as server when run as post-command (e.g. from run-and-record-tests)
+LLAMA_STACK_SERVER_URL="http://127.0.0.1:${LLAMA_STACK_PORT:-8321}"
 
 # Run conversations access control tests using pytest
 # These tests verify that users cannot access each other's conversations
 uv run pytest tests/integration/conversations/test_openai_conversations.py \
     -k "TestConversationAccessControl" \
-    --stack-config="http://127.0.0.1:8321" \
+    --stack-config="$LLAMA_STACK_SERVER_URL" \
     -v -s \
     --color=yes || exit 1
 
@@ -39,7 +42,7 @@ if [ -n "${INFERENCE_MODEL:-}" ]; then
 
     uv run pytest tests/integration/responses/test_responses_access_control.py \
         -k "TestResponsesAccessControl" \
-        --stack-config="http://127.0.0.1:8321" \
+        --stack-config="$LLAMA_STACK_SERVER_URL" \
         --text-model="$INFERENCE_MODEL" \
         --inference-mode="${LLAMA_STACK_TEST_INFERENCE_MODE:-replay}" \
         -v -s \
