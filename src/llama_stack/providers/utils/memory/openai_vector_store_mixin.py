@@ -860,7 +860,9 @@ class OpenAIVectorStoreMixin(ABC):
                 return False
         return True
 
-    def _matches_compound_filter(self, metadata: dict[str, Any], filter_type: str, sub_filters: list[dict[str, Any]]) -> bool:
+    def _matches_compound_filter(
+        self, metadata: dict[str, Any], filter_type: str, sub_filters: list[dict[str, Any]]
+    ) -> bool:
         """Handle compound filters (and/or logic).
 
         Args:
