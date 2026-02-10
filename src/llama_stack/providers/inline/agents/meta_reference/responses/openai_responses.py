@@ -787,7 +787,7 @@ class OpenAIResponsesImpl:
                 await self.responses_store.update_response_object(existing)
 
         except Exception as e:
-            logger.exception(f"Error processing background response {response_id}: {e}")
+            logger.exception(f"Error processing background response {response_id}")
             try:
                 existing = await self.responses_store.get_response_object(response_id)
                 existing.status = "failed"
@@ -796,8 +796,11 @@ class OpenAIResponsesImpl:
                     message=str(e),
                 )
                 await self.responses_store.update_response_object(existing)
-            except Exception as update_error:
-                logger.exception(f"Failed to update response {response_id} with error status: {update_error}")
+            except Exception:
+                logger.exception(
+                    f"Failed to update response {response_id} with error status. "
+                    "Client polling this response will not see the failure."
+                )
 
     async def _create_streaming_response(
         self,
