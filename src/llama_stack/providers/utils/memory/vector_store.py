@@ -8,16 +8,19 @@ import io
 import re
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
 from urllib.parse import unquote
 
+import chardet
 import httpx
 import numpy as np
 import tiktoken
 from numpy.typing import NDArray
 from pydantic import BaseModel
+from pypdf import PdfReader
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
@@ -27,10 +30,10 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
     URL,
-    Api,
     Chunk,
     ChunkMetadata,
     EmbeddedChunk,
+    Inference,
     InterleavedContent,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksResponse,
@@ -66,8 +69,6 @@ RERANKER_TYPE_NORMALIZED = "normalized"
 def parse_pdf(data: bytes) -> str:
     # For PDF and DOC/DOCX files, we can't reliably convert to string
     pdf_bytes = io.BytesIO(data)
-    from pypdf import PdfReader  # type: ignore[import-not-found]
-
     pdf_reader = PdfReader(pdf_bytes)
     return "\n".join([page.extract_text() for page in pdf_reader.pages])
 
@@ -92,53 +93,27 @@ def parse_data_url(data_url: str):
     return parts
 
 
-def content_from_data(data_url: str) -> str:
-    parts = parse_data_url(data_url)
-    data = parts["data"]
-
-    if parts["is_base64"]:
-        data = base64.b64decode(data)
-    else:
-        data = unquote(data)
-        encoding = parts["encoding"] or "utf-8"
-        data = data.encode(encoding)
-    return content_from_data_and_mime_type(data, parts["mimetype"], parts.get("encoding", None))
-
-
 def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, encoding: str | None = None) -> str:
-    """Legacy function for backward compatibility. Use async version when possible."""
-    if isinstance(data, bytes):
-        if not encoding:
-            import chardet
-
-            detected = chardet.detect(data)
-            encoding = detected["encoding"]
+    if isinstance(data, str):
+        return data
 
     mime_category = mime_type.split("/")[0] if mime_type else None
     if mime_category == "text":
+        if not encoding:
+            detected = chardet.detect(data)
+            encoding = detected["encoding"] or "utf-8"
+
         # For text-based files (including CSV, MD)
-        encodings_to_try = [encoding]
-        if encoding != "utf-8":
-            encodings_to_try.append("utf-8")
-        first_exception = None
-        for encoding in encodings_to_try:
-            try:
-                return data.decode(encoding)
-            except UnicodeDecodeError as e:
-                if first_exception is None:
-                    first_exception = e
-                log.warning(f"Decoding failed with {encoding}: {e}")
-        # raise the original exception if we have one; otherwise raise a generic error
-        log.error(f"Could not decode data as any of {encodings_to_try}")
-        if first_exception is not None:
-            raise first_exception
-        raise UnicodeDecodeError(
-            encoding or "utf-8",
-            data,
-            0,
-            1,
-            f"Unable to decode data using encodings {encodings_to_try}",
-        )
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError as e:
+            log.warning(f"Decoding with encoding {encoding} failed: {e}")
+            if encoding.lower() != "utf-8":
+                try:
+                    return data.decode("utf-8")
+                except UnicodeDecodeError as e_utf8:
+                    log.warning(f"Decoding with UTF-8 fallback also failed: {e_utf8}")
+            raise e
 
     elif mime_type == "application/pdf":
         return parse_pdf(data)
@@ -146,6 +121,20 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
     else:
         log.error("Could not extract content from data_url properly.")
         return ""
+
+
+def content_from_data(data_url: str) -> str:
+    """Parse a data URL and return its content as a string."""
+    parts = parse_data_url(data_url)
+    data = parts["data"]
+    if parts["is_base64"]:
+        data = base64.b64decode(data)
+    else:
+        data = unquote(data)
+        encoding = parts["encoding"] or "utf-8"
+        data = data.encode(encoding)
+
+    return content_from_data_and_mime_type(data, parts["mimetype"], parts.get("encoding", None))
 
 
 async def content_from_data_and_mime_type_with_processor(
@@ -156,59 +145,45 @@ async def content_from_data_and_mime_type_with_processor(
     filename: str | None = None,
 ) -> str:
     """Enhanced version that uses file processor API for better document processing."""
-    if isinstance(data, bytes):
-        if not encoding:
-            import chardet
+    if isinstance(data, str):
+        return data
 
-            detected = chardet.detect(data)
-            encoding = detected["encoding"]
+    if not encoding:
+        detected = chardet.detect(data)
+        encoding = detected["encoding"] or "utf-8"
 
     mime_category = mime_type.split("/")[0] if mime_type else None
     if mime_category == "text":
         # For text-based files (including CSV, MD)
-        encodings_to_try = [encoding]
-        if encoding != "utf-8":
-            encodings_to_try.append("utf-8")
-        first_exception = None
-        for encoding in encodings_to_try:
-            try:
-                return data.decode(encoding)
-            except UnicodeDecodeError as e:
-                if first_exception is None:
-                    first_exception = e
-                log.warning(f"Decoding failed with {encoding}: {e}")
-        # raise the original exception if we have one; otherwise raise a generic error
-        log.error(f"Could not decode data as any of {encodings_to_try}")
-        if first_exception is not None:
-            raise first_exception
-        raise UnicodeDecodeError(
-            encoding or "utf-8",
-            data,
-            0,
-            1,
-            f"Unable to decode data using encodings {encodings_to_try}",
-        )
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError as e:
+            log.warning(f"Decoding with encoding {encoding} failed: {e}")
+            if encoding.lower() != "utf-8":
+                try:
+                    return data.decode("utf-8")
+                except UnicodeDecodeError as e_utf8:
+                    log.warning(f"Decoding with UTF-8 fallback also failed: {e_utf8}")
+            raise e
 
     elif mime_type == "application/pdf":
         # Use file processor API if available for better PDF processing
         if file_processor_api:
             try:
                 # Create a minimal file-like object that mimics UploadFile interface
-                file_data = data if isinstance(data, bytes) else data.encode()
-
                 class FileUpload:
-                    def __init__(self, content: bytes, filename: str):
+                    def __init__(self, content: bytes, fname: str):
                         self.file = io.BytesIO(content)
-                        self.filename = filename
+                        self.filename = fname
 
                     async def read(self) -> bytes:
                         return self.file.read()
 
-                upload = FileUpload(file_data, filename or "document.pdf")
+                upload = FileUpload(data, filename or "document.pdf")
                 response = await file_processor_api.process_file(file=upload)
 
                 # Extract text from chunks
-                text_parts = []
+                text_parts: list[str] = []
                 for chunk in response.chunks:
                     if hasattr(chunk, "content") and chunk.content:
                         text_parts.append(chunk.content)
@@ -239,7 +214,7 @@ async def content_from_doc(doc: RAGDocument) -> str:
             r = await client.get(uri)
         if doc.mime_type == "application/pdf":
             return parse_pdf(r.content)
-        return r.text
+        return str(r.text)
     elif isinstance(doc.content, str):
         if doc.content.startswith("file://"):
             raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
@@ -251,7 +226,7 @@ async def content_from_doc(doc: RAGDocument) -> str:
                 r = await client.get(doc.content)
             if doc.mime_type == "application/pdf":
                 return parse_pdf(r.content)
-            return r.text
+            return str(r.text)
         return doc.content
     else:
         # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
@@ -272,7 +247,7 @@ async def content_from_doc_with_processor(doc: RAGDocument, file_processor_api) 
             return await content_from_data_and_mime_type_with_processor(
                 r.content, doc.mime_type, file_processor_api, filename=uri.split("/")[-1]
             )
-        return r.text
+        return str(r.text)
     elif isinstance(doc.content, str):
         if doc.content.startswith("file://"):
             raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
@@ -286,7 +261,7 @@ async def content_from_doc_with_processor(doc: RAGDocument, file_processor_api) 
                 return await content_from_data_and_mime_type_with_processor(
                     r.content, doc.mime_type, file_processor_api, filename=doc.content.split("/")[-1]
                 )
-            return r.text
+            return str(r.text)
         return doc.content
     else:
         # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
@@ -391,7 +366,10 @@ def make_overlapped_chunks(
     return chunks
 
 
-def _validate_embedding(embedding: NDArray, index: int, expected_dimension: int):
+type EmbeddingSequence = Sequence[float | int | np.number] | NDArray[Any]
+
+
+def _validate_embedding(embedding: EmbeddingSequence, index: int, expected_dimension: int):
     """Helper method to validate embedding format and dimensions"""
     if not isinstance(embedding, (list | np.ndarray)):
         raise ValueError(f"Embedding at index {index} must be a list or numpy array, got {type(embedding)}")
@@ -445,7 +423,7 @@ class EmbeddingIndex(ABC):
 class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
-    inference_api: Api.inference
+    inference_api: Inference
     file_processor_api: Any = None
     vector_stores_config: VectorStoresConfig | None = None
 
@@ -523,14 +501,16 @@ class VectorStoreWithIndex:
             return await self.index.query_keyword(query_string, k, score_threshold)
 
         if "embedding_dimensions" in params:
-            params = OpenAIEmbeddingsRequestWithExtraBody(
+            embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
                 model=self.vector_store.embedding_model,
                 input=[query_string],
                 dimensions=params.get("embedding_dimensions"),
             )
         else:
-            params = OpenAIEmbeddingsRequestWithExtraBody(model=self.vector_store.embedding_model, input=[query_string])
-        embeddings_response = await self.inference_api.openai_embeddings(params)
+            embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
+                model=self.vector_store.embedding_model, input=[query_string]
+            )
+        embeddings_response = await self.inference_api.openai_embeddings(embeddings_request)
         query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
         if mode == "hybrid":
             return await self.index.query_hybrid(

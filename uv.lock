@@ -2172,6 +2172,7 @@ test = [
 type-checking = [
     { name = "anthropic" },
     { name = "boto3-stubs", extra = ["s3"] },
+    { name = "chardet" },
     { name = "databricks-sdk" },
     { name = "datasets" },
     { name = "fairscale" },
@@ -2185,6 +2186,7 @@ type-checking = [
     { name = "pandas-stubs" },
     { name = "peft" },
     { name = "pymongo" },
+    { name = "pypdf" },
     { name = "sqlite-vec" },
     { name = "streamlit" },
     { name = "streamlit-option-menu" },
@@ -2325,6 +2327,7 @@ test = [
 type-checking = [
     { name = "anthropic" },
     { name = "boto3-stubs", extras = ["s3"] },
+    { name = "chardet" },
     { name = "databricks-sdk" },
     { name = "datasets" },
     { name = "fairscale" },
@@ -2338,6 +2341,7 @@ type-checking = [
     { name = "pandas-stubs" },
     { name = "peft" },
     { name = "pymongo" },
+    { name = "pypdf", specifier = ">=6.1.3" },
     { name = "sqlite-vec" },
     { name = "streamlit" },
     { name = "streamlit-option-menu" },

@@ -25,6 +25,7 @@ from llama_stack.providers.inline.agents.meta_reference.responses.openai_respons
 from llama_stack.providers.inline.agents.meta_reference.responses.tool_executor import ToolExecutor
 from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
 from llama_stack.providers.remote.inference.openai.openai import OpenAIInferenceAdapter
+from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
@@ -2283,6 +2284,81 @@ async def test_params_passed_through_full_chain_to_backend_service(
         call_kwargs = mock_chat_completions.call_args[1]
 
         assert backend_param_name in call_kwargs, f"{backend_param_name} not found in backend call"
+        assert call_kwargs[backend_param_name] == backend_expected_value, (
+            f"Expected {backend_param_name}={backend_expected_value}, got {call_kwargs[backend_param_name]}"
+        )
+
+
+@pytest.mark.parametrize(
+    "param_name,param_value,backend_param_name,backend_expected_value",
+    [
+        ("temperature", 1.5, "temperature", 1.5),
+        ("safety_identifier", "user-123", "safety_identifier", "user-123"),
+        ("max_output_tokens", 500, "max_completion_tokens", 500),
+    ],
+)
+async def test_params_passed_through_full_chain_to_backend_service_litellm(
+    param_name, param_value, backend_param_name, backend_expected_value
+):
+    """Test that parameters flow through the full chain with LiteLLM: create_openai_response -> openai_chat_completion -> litellm backend."""
+    # Create a minimal LiteLLM adapter for testing
+    litellm_adapter = LiteLLMOpenAIMixin(
+        litellm_provider_name="test",
+        api_key_from_config="test-key",
+        provider_data_api_key_field=None,
+    )
+    # Mock get_request_provider_data to return None (no provider data in request)
+    litellm_adapter.get_request_provider_data = MagicMock(return_value=None)
+
+    mock_model_store = AsyncMock()
+    mock_model = MagicMock()
+    mock_model.provider_resource_id = "test-model-id"
+    mock_model_store.get_model = AsyncMock(return_value=mock_model)
+    litellm_adapter.model_store = mock_model_store
+
+    mock_responses_store = AsyncMock(spec=ResponsesStore)
+    openai_responses_impl = OpenAIResponsesImpl(
+        inference_api=litellm_adapter,
+        tool_groups_api=AsyncMock(),
+        tool_runtime_api=AsyncMock(),
+        responses_store=mock_responses_store,
+        vector_io_api=AsyncMock(),
+        safety_api=AsyncMock(),
+        conversations_api=AsyncMock(),
+        prompts_api=AsyncMock(),
+        files_api=AsyncMock(),
+        connectors_api=AsyncMock(),
+    )
+
+    with patch("llama_stack.providers.utils.inference.litellm_openai_mixin.litellm") as mock_litellm:
+        mock_acompletion = AsyncMock()
+        mock_litellm.acompletion = mock_acompletion
+
+        mock_response = MagicMock()
+        mock_response.id = "chatcmpl-123"
+        mock_response.choices = [
+            MagicMock(
+                index=0,
+                message=MagicMock(content="Test response", role="assistant", tool_calls=None),
+                finish_reason="stop",
+            )
+        ]
+        mock_response.model = "test-model-id"
+        mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+        mock_acompletion.return_value = mock_response
+
+        await openai_responses_impl.create_openai_response(
+            **{
+                "input": "Test message",
+                "model": "test-model-id",
+                param_name: param_value,
+            }
+        )
+
+        mock_acompletion.assert_called_once()
+        call_kwargs = mock_acompletion.call_args[1]
+
+        assert backend_param_name in call_kwargs, f"{backend_param_name} not found in litellm backend call"
         assert call_kwargs[backend_param_name] == backend_expected_value, (
             f"Expected {backend_param_name}={backend_expected_value}, got {call_kwargs[backend_param_name]}"
         )
