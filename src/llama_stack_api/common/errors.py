@@ -5,9 +5,9 @@
 # the root directory of this source tree.
 
 # Custom Llama Stack Exception classes should follow the following schema
-#   1. All classes should inherit from an existing Built-In Exception class: https://docs.python.org/3/library/exceptions.html
+#   1. All classes should inherit from LlamaStackError (single inheritance only)
 #   2. All classes should have a custom error message with the goal of informing the Llama Stack user specifically
-#   3. All classes should propogate the inherited __init__ function otherwise via 'super().__init__(message)'
+#   3. All classes should set a status_code class attribute for HTTP response mapping
 
 import httpx
 
@@ -57,16 +57,24 @@ class ClientListCommand:
         return f"Use 'client.{self.command}({args_str})'{resource_name_str}."
 
 
-class ResourceNotFoundError(ValueError, LlamaStackError):
+class ResourceNotFoundError(LlamaStackError):
     """generic exception for a missing Llama Stack resource"""
 
     status_code: httpx.codes = httpx.codes.NOT_FOUND
 
-    def __init__(self, resource_name: str, resource_type: str, client_list: ClientListCommand | None = None) -> None:
+    def __init__(
+        self,
+        resource_name: str,
+        resource_type: str = "Resource",
+        client_command: str | None = None,
+        client_command_args: list[str] | str | None = None,
+        resource_name_plural: str | None = None,
+    ) -> None:
+        resource_name_plural = resource_name_plural or f"{resource_type}s"
+
         message = f"{resource_type} '{resource_name}' not found."
-        if client_list:
-            if not client_list.resource_name_plural:
-                client_list.resource_name_plural = f"{resource_type}s"
+        if client_command:
+            client_list = ClientListCommand(client_command, client_command_args, resource_name_plural)
             message += f" {client_list}"
         super().__init__(message)
 
@@ -75,42 +83,42 @@ class ModelNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced model"""
 
     def __init__(self, model_name: str) -> None:
-        super().__init__(model_name, "Model", ClientListCommand("models.list"))
+        super().__init__(model_name, resource_type="Model", client_command="models.list")
 
 
 class VectorStoreNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced vector store"""
 
     def __init__(self, vector_store_name: str) -> None:
-        super().__init__(vector_store_name, "Vector Store", ClientListCommand("vector_dbs.list"))
+        super().__init__(vector_store_name, resource_type="Vector Store", client_command="vector_dbs.list")
 
 
 class DatasetNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced dataset"""
 
     def __init__(self, dataset_name: str) -> None:
-        super().__init__(dataset_name, "Dataset", ClientListCommand("datasets.list"))
+        super().__init__(dataset_name, resource_type="Dataset", client_command="datasets.list")
 
 
 class ToolGroupNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced tool group"""
 
     def __init__(self, toolgroup_name: str) -> None:
-        super().__init__(toolgroup_name, "Tool Group", ClientListCommand("toolgroups.list"))
+        super().__init__(toolgroup_name, resource_type="Tool Group", client_command="toolgroups.list")
 
 
 class ConversationNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced conversation"""
 
     def __init__(self, conversation_id: str) -> None:
-        super().__init__(conversation_id, "Conversation")
+        super().__init__(conversation_id, resource_type="Conversation")
 
 
 class ConnectorNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced connector"""
 
     def __init__(self, connector_id: str) -> None:
-        super().__init__(connector_id, "Connector", ClientListCommand("connectors.list"))
+        super().__init__(connector_id, resource_type="Connector", client_command="connectors.list")
 
 
 class ConnectorToolNotFoundError(ResourceNotFoundError):
@@ -118,9 +126,10 @@ class ConnectorToolNotFoundError(ResourceNotFoundError):
 
     def __init__(self, connector_id: str, tool_name: str) -> None:
         super().__init__(
-            resource_name=f"{connector_id}.{tool_name}",
+            f"{connector_id}.{tool_name}",
             resource_type="Connector Tool",
-            client_list=ClientListCommand("connectors.list_tools", connector_id),
+            client_command="connectors.list_tools",
+            client_command_args=connector_id,
         )
 
 
@@ -128,18 +137,17 @@ class OpenAIFileObjectNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced file"""
 
     def __init__(self, file_id: str) -> None:
-        super().__init__(file_id, "File", ClientListCommand("files.list"))
+        super().__init__(file_id, resource_type="File", client_command="files.list")
 
 
 class BatchNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced batch"""
 
     def __init__(self, batch_id: str) -> None:
-        self.batch_id = batch_id
-        super().__init__(batch_id, "Batch", ClientListCommand("batches.list", resource_name_plural="batches"))
+        super().__init__(batch_id, resource_type="Batch", client_command="batches.list", resource_name_plural="batches")
 
 
-class UnsupportedModelError(ValueError, LlamaStackError):
+class UnsupportedModelError(LlamaStackError):
     """raised when model is not present in the list of supported models"""
 
     status_code: httpx.codes = httpx.codes.BAD_REQUEST
@@ -149,7 +157,7 @@ class UnsupportedModelError(ValueError, LlamaStackError):
         super().__init__(message)
 
 
-class ModelTypeError(TypeError, LlamaStackError):
+class ModelTypeError(LlamaStackError):
     """raised when a model is present but not the correct type"""
 
     status_code: httpx.codes = httpx.codes.BAD_REQUEST
@@ -161,7 +169,7 @@ class ModelTypeError(TypeError, LlamaStackError):
         super().__init__(message)
 
 
-class ConflictError(ValueError, LlamaStackError):
+class ConflictError(LlamaStackError):
     """raised when an operation cannot be performed due to a conflict with the current state"""
 
     status_code: httpx.codes = httpx.codes.CONFLICT
@@ -170,7 +178,7 @@ class ConflictError(ValueError, LlamaStackError):
         super().__init__(message)
 
 
-class TokenValidationError(ValueError, LlamaStackError):
+class TokenValidationError(LlamaStackError):
     """raised when token validation fails during authentication"""
 
     status_code: httpx.codes = httpx.codes.UNAUTHORIZED
@@ -179,7 +187,7 @@ class TokenValidationError(ValueError, LlamaStackError):
         super().__init__(message)
 
 
-class InvalidConversationIdError(ValueError, LlamaStackError):
+class InvalidConversationIdError(LlamaStackError):
     """raised when a conversation ID has an invalid format"""
 
     status_code: httpx.codes = httpx.codes.BAD_REQUEST
