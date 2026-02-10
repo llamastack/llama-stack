@@ -21,9 +21,9 @@ from openai import BadRequestError
 from llama_stack.core.access_control.access_control import AccessDeniedError
 from llama_stack.core.datatypes import AuthenticationRequiredError
 
-# Maps exception type -> (status_code, detail_prefix)
-# The prefix is combined with the exception message as "prefix: message",
-# or returned alone when the message is empty.
+# Maps exception type -> (status_code, fallback_detail)
+# The exception's own message is used when present. The fallback is only
+# used when the exception has no message.
 EXCEPTION_MAP: dict[type, tuple[int, str]] = {
     ValueError: (httpx.codes.BAD_REQUEST, "Invalid value"),
     BadRequestError: (httpx.codes.BAD_REQUEST, "Bad request"),
@@ -52,8 +52,7 @@ def translate_exception_to_http(exc: Exception) -> HTTPException | None:
     """
     for cls in type(exc).__mro__:
         if cls in EXCEPTION_MAP:
-            status_code, prefix = EXCEPTION_MAP[cls]
-            msg = str(exc)
-            detail = f"{prefix}: {msg}" if msg else prefix
+            status_code, fallback = EXCEPTION_MAP[cls]
+            detail = str(exc) or fallback
             return HTTPException(status_code=status_code, detail=detail)
     return None

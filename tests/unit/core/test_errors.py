@@ -188,43 +188,52 @@ class TestTranslateExceptionToHttp:
         exc = BareStackError("teapot")
         assert translate_exception_to_http(exc) is None
 
-    # ── Template formatting ──────────────────────────────────────────
+    # ── Detail uses exception message, fallback when empty ──────────
 
-    def test_template_formats_message(self):
-        """The {e} placeholder in the template should be replaced
-        with str(exc)."""
+    def test_detail_uses_exception_message(self):
+        """When the exception has a message, it is used as the detail."""
         exc = ValueError("price must be positive")
         result = translate_exception_to_http(exc)
         assert result is not None
-        assert result.detail == "Invalid value: price must be positive"
+        assert result.detail == "price must be positive"
 
-    def test_empty_message_omits_separator(self):
-        """When the exception message is empty, the ': ' separator
-        should be omitted so we get 'Invalid value' not 'Invalid value: '."""
+    def test_empty_message_uses_fallback(self):
+        """When the exception message is empty, the fallback from the
+        map is used instead."""
         exc = ValueError("")
         result = translate_exception_to_http(exc)
         assert result is not None
         assert result.detail == "Invalid value"
 
-    def test_empty_message_connection_error(self):
-        """All mapped types use _prefixed, so an empty ConnectionError
-        should produce just the prefix with no trailing ': '."""
+    def test_connection_error_uses_message(self):
+        exc = ConnectionError("connection refused")
+        result = translate_exception_to_http(exc)
+        assert result is not None
+        assert result.detail == "connection refused"
+
+    def test_connection_error_empty_uses_fallback(self):
         exc = ConnectionError("")
         result = translate_exception_to_http(exc)
         assert result is not None
         assert result.detail == "Connection error"
 
-    def test_permission_error_template(self):
+    def test_permission_error_uses_message(self):
         exc = PermissionError("read-only resource")
         result = translate_exception_to_http(exc)
         assert result is not None
-        assert result.detail == "Permission denied: read-only resource"
+        assert result.detail == "read-only resource"
 
-    def test_timeout_template(self):
+    def test_timeout_uses_message(self):
         exc = TimeoutError("after 30s")
         result = translate_exception_to_http(exc)
         assert result is not None
-        assert result.detail == "Operation timed out: after 30s"
+        assert result.detail == "after 30s"
+
+    def test_timeout_empty_uses_fallback(self):
+        exc = TimeoutError()
+        result = translate_exception_to_http(exc)
+        assert result is not None
+        assert result.detail == "Operation timed out"
 
 
 class TestTranslateException:
