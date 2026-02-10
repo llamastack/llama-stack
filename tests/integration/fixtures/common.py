@@ -25,7 +25,7 @@ import yaml
 from llama_stack_client import LlamaStackClient
 from openai import OpenAI
 
-from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
+from llama_stack.core.datatypes import QualifiedModel, RerankerModel, VectorStoresConfig
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack.core.stack import run_config_from_dynamic_config_spec
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
@@ -328,7 +328,7 @@ def instantiate_llama_stack_client(session):
     if "=" in config:
         run_config = run_config_from_dynamic_config_spec(config)
 
-        # --stack-config bypasses template so need this to set default embedding model
+        # --stack-config bypasses template so need this to set default embedding and reranker models
         if "vector_io" in config and "inference" in config:
             embedding_model_opt = session.config.getoption("embedding_model") or ""
             # Model identifiers are in provider_id/model_id format; extract the provider.
@@ -336,12 +336,23 @@ def instantiate_llama_stack_client(session):
             passed_model = extract_model(session.config.getoption("embedding_model"), "nomic-ai/nomic-embed-text-v1.5")
             passed_emb = session.config.getoption("embedding_dimension")
 
+            rerank_model_opt = session.config.getoption("rerank_model") or ""
+            reranker_model = None
+            if rerank_model_opt:
+                provider_id_of_reranker = rerank_model_opt.split("/")[0] if "/" in rerank_model_opt else "transformers"
+                passed_reranker_model = extract_model(rerank_model_opt, "Qwen/Qwen3-Reranker-0.6B")
+                reranker_model = RerankerModel(
+                    provider_id=provider_id_of_reranker,
+                    model_id=passed_reranker_model,
+                )
+
             run_config.vector_stores = VectorStoresConfig(
                 default_embedding_model=QualifiedModel(
                     provider_id=provider_id,
                     model_id=passed_model,
                     embedding_dimensions=passed_emb,
-                )
+                ),
+                default_reranker_model=reranker_model,
             )
 
         run_config_file = tempfile.NamedTemporaryFile(delete=False, suffix=".yaml")
