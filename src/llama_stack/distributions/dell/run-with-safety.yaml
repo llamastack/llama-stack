@@ -21,6 +21,8 @@ providers:
       url: ${env.DEH_SAFETY_URL}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+  - provider_id: transformers
+    provider_type: inline::transformers
   vector_io:
   - provider_id: chromadb
     provider_type: remote::chromadb
@@ -130,6 +132,10 @@ registered_resources:
     model_id: nomic-embed-text-v1.5
     provider_id: sentence-transformers
     model_type: embedding
+  - metadata: {}
+    model_id: Qwen/Qwen3-Reranker-0.6B
+    provider_id: transformers
+    model_type: rerank
   shields:
   - shield_id: ${env.SAFETY_MODEL}
   vector_dbs: []

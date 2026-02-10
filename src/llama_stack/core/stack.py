@@ -18,7 +18,14 @@ from pydantic import BaseModel
 from llama_stack.core.admin import AdminImpl, AdminImplConfig
 from llama_stack.core.connectors.connectors import ConnectorServiceConfig, ConnectorServiceImpl
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
-from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
+from llama_stack.core.datatypes import (
+    Provider,
+    QualifiedModel,
+    RerankerModel,
+    SafetyConfig,
+    StackConfig,
+    VectorStoresConfig,
+)
 from llama_stack.core.distribution import get_provider_registry
 from llama_stack.core.inspect import DistributionInspectConfig, DistributionInspectImpl
 from llama_stack.core.prompts.prompts import PromptServiceConfig, PromptServiceImpl
@@ -52,6 +59,7 @@ from llama_stack_api import (
     Inference,
     Inspect,
     Models,
+    ModelType,
     PostTraining,
     Prompts,
     Providers,
@@ -285,6 +293,10 @@ async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig
     if vector_stores_config.default_embedding_model is not None:
         await _validate_embedding_model(vector_stores_config.default_embedding_model, impls)
 
+    # Validate default reranker model
+    if vector_stores_config.default_reranker_model is not None:
+        await _validate_reranker_model(vector_stores_config.default_reranker_model, impls)
+
     # Validate rewrite query params
     if vector_stores_config.rewrite_query_params:
         if vector_stores_config.rewrite_query_params.model:
@@ -321,6 +333,28 @@ async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict
         raise ValueError(f"Embedding dimension '{embedding_dimension}' cannot be converted to an integer") from err
 
     logger.debug(f"Validated embedding model: {model_identifier} (dimension: {embedding_dimension})")
+
+
+async def _validate_reranker_model(reranker_model: RerankerModel, impls: dict[Api, Any]) -> None:
+    """Validate that a reranker model exists."""
+    provider_id = reranker_model.provider_id
+    model_id = reranker_model.model_id
+    model_identifier = f"{provider_id}/{model_id}"
+
+    if Api.models not in impls:
+        raise ValueError(f"Models API is not available but vector_stores config requires model '{model_identifier}'")
+
+    models_impl = impls[Api.models]
+    response = await models_impl.list_models()
+    models_list = {m.identifier: m for m in response.data if m.model_type == ModelType.rerank}
+
+    model = models_list.get(model_identifier)
+    if model is None:
+        raise ValueError(
+            f"Reranker model '{model_identifier}' not found. Available reranker models: {list(models_list.keys())}"
+        )
+
+    logger.debug(f"Validated reranker model: {model_identifier}.")
 
 
 async def _validate_rewrite_query_model(rewrite_query_model: QualifiedModel, impls: dict[Api, Any]) -> None:

@@ -724,6 +724,7 @@ class OpenAIVectorStoreMixin(ABC):
                 else 0.0
             )
             params = {
+                "max_num_results": max_num_results,
                 "max_chunks": max_num_results * self.vector_stores_config.chunk_retrieval_params.chunk_multiplier,
                 "score_threshold": score_threshold,
                 "mode": request.search_mode,
@@ -818,7 +819,7 @@ class OpenAIVectorStoreMixin(ABC):
             params["reranker_type"] = reranker_type
             params["reranker_params"] = reranker_params
 
-            # Store model and weights for neural reranking (TODO: implemented in Part II)
+            # Store model and weights for neural reranking
             if ranking_options.model:
                 params["neural_model"] = ranking_options.model
             if ranking_options.weights:
