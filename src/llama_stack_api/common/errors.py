@@ -52,7 +52,7 @@ class ClientListCommand:
             else:
                 args_str = f'"{self.arguments}"'
         if self.resource_name_plural:
-            resource_name_str = f" to list available {self.resource_name_plural.lower()}"
+            resource_name_str = f" to list available {self.resource_name_plural}"
 
         return f"Use 'client.{self.command}({args_str})'{resource_name_str}."
 
