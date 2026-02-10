@@ -4,6 +4,10 @@ title: How to Get Started with Llama Stack
 authors:
   - name: Charlie Doern
   - name: Nathan Weinberg
+  - name: Llama Stack Team
+    title: Core Team
+    url: https://github.com/llamastack
+    image_url: https://llamastack.github.io/img/llama-stack-logo.png
 tags: [introduction, how-to]
 date: 2026-01-30
 ---
