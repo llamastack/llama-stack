@@ -141,6 +141,11 @@ class OpenAIResponsesImpl:
             previous_response: _OpenAIResponseObjectWithInputAndMessages = (
                 await self.responses_store.get_response_object(previous_response_id)
             )
+            if previous_response.status in ("queued", "in_progress"):
+                raise ValueError(
+                    f"Response {previous_response_id} is still {previous_response.status}. "
+                    "Cannot use an incomplete background response as previous_response_id."
+                )
             all_input = await self._prepend_previous_response(input, previous_response)
 
             if previous_response.messages:
