@@ -12,10 +12,12 @@ from dataclasses import dataclass
 from functools import cache
 from typing import Any
 
+import chardet
 import numpy as np
 import tiktoken
 from numpy.typing import NDArray
 from pydantic import BaseModel
+from pypdf import PdfReader
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
@@ -62,7 +64,6 @@ RERANKER_TYPE_NORMALIZED = "normalized"
 def parse_pdf(data: bytes) -> str:
     # For PDF and DOC/DOCX files, we can't reliably convert to string
     pdf_bytes = io.BytesIO(data)
-    from pypdf import PdfReader
 
     pdf_reader = PdfReader(pdf_bytes)
     return "\n".join([page.extract_text() for page in pdf_reader.pages])
@@ -92,14 +93,12 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
     if isinstance(data, str):
         return data
 
-    if not encoding:
-        import chardet
-
-        detected = chardet.detect(data)
-        encoding = detected["encoding"]
-
     mime_category = mime_type.split("/")[0] if mime_type else None
     if mime_category == "text":
+        if not encoding:
+            detected = chardet.detect(data)
+            encoding = detected["encoding"] or "utf-8"
+
         # For text-based files (including CSV, MD)
         try:
             return data.decode(encoding)
