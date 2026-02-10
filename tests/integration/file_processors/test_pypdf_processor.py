@@ -389,7 +389,7 @@ class TestPyPDFFileProcessor:
 
         chunk = response.chunks[0]
         # Verify tokenizer name is set correctly
-        assert chunk.chunk_metadata.chunk_tokenizer == "DEFAULT_TIKTOKEN_TOKENIZER"
+        assert chunk.chunk_metadata.chunk_tokenizer == "tiktoken:cl100k_base"
         assert chunk.chunk_metadata.content_token_count > 0
 
     async def test_processing_time_metadata(self, processor: PyPDFFileProcessor, upload_file: UploadFile):
