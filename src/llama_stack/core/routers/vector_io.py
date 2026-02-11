@@ -6,7 +6,7 @@
 
 import asyncio
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Body
 
@@ -224,9 +224,7 @@ class VectorIORouter(VectorIO):
         # Add the parsed filters back to params for the provider
         params_copy["filters"] = parsed_filters
         modified_request = QueryChunksRequest(
-            vector_store_id=request.vector_store_id,
-            query=request.query,
-            params=params_copy
+            vector_store_id=request.vector_store_id, query=request.query, params=params_copy
         )
 
         return await self.routing_table.query_chunks(modified_request)

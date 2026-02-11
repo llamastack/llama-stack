@@ -21,12 +21,14 @@ from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, Em
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
 from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter, Filter
 from llama_stack_api import (
+    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     HealthResponse,
     HealthStatus,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
@@ -368,29 +370,21 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
         self.cache[vector_store_id] = index
         return index
 
-    async def insert_chunks(
-        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
-    ) -> None:
-        index = self.cache.get(vector_store_id)
+    async def insert_chunks(self, request: InsertChunksRequest) -> None:
+        index = self.cache.get(request.vector_store_id)
         if index is None:
-            raise ValueError(f"Vector DB {vector_store_id} not found. found: {self.cache.keys()}")
+            raise ValueError(f"Vector DB {request.vector_store_id} not found. found: {self.cache.keys()}")
 
-        await index.insert_chunks(chunks)
+        await index.insert_chunks(request)
 
-    async def query_chunks(
-        self,
-        vector_store_id: str,
-        query: InterleavedContent,
-        params: dict[str, Any] | None = None,
-        filters: Filter | None = None,
-    ) -> QueryChunksResponse:
-        index = self.cache.get(vector_store_id)
+    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
+        index = self.cache.get(request.vector_store_id)
         if index is None:
-            raise VectorStoreNotFoundError(vector_store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        return await index.query_chunks(query, params, filters)
+        return await index.query_chunks(request)
 
-    async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
+    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
         """Delete chunks from a faiss index"""
-        faiss_index = self.cache[store_id].index
-        await faiss_index.delete_chunks(chunks_for_deletion)
+        faiss_index = self.cache[request.vector_store_id].index
+        await faiss_index.delete_chunks(request.chunks)

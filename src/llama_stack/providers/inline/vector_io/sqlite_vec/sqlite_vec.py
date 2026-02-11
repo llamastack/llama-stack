@@ -28,9 +28,12 @@ from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backw
 from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter, Filter
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 from llama_stack_api import (
+    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     Inference,
+    InsertChunksRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
@@ -585,31 +588,24 @@ class SQLiteVecVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPro
         await self.cache[vector_store_id].index.delete()
         del self.cache[vector_store_id]
 
-    async def insert_chunks(
-        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
-    ) -> None:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def insert_chunks(self, request: InsertChunksRequest) -> None:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
         # The VectorStoreWithIndex helper validates embeddings and calls the index's add_chunks method
-        await index.insert_chunks(chunks)
+        await index.insert_chunks(request)
 
-    async def query_chunks(
-        self,
-        vector_store_id: str,
-        query: Any,
-        params: dict[str, Any] | None = None,
-        filters: Filter | None = None,
-    ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_store_id)
-        return await index.query_chunks(query, params, filters)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-    async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
+        return await index.query_chunks(request)
+
+    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
         """Delete chunks from a sqlite_vec index."""
-        index = await self._get_and_cache_vector_store_index(store_id)
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        await index.index.delete_chunks(chunks_for_deletion)
+        await index.index.delete_chunks(request.chunks)
