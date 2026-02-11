@@ -3,41 +3,45 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-import base64
 import io
 import re
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
+from functools import cache
 from typing import Any
-from urllib.parse import unquote
 
-import httpx
+import chardet
 import numpy as np
+import tiktoken
 from numpy.typing import NDArray
 from pydantic import BaseModel
+from pypdf import PdfReader
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
-    URL,
-    Api,
     Chunk,
     ChunkMetadata,
     EmbeddedChunk,
+    Inference,
     InterleavedContent,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksResponse,
-    RAGDocument,
     VectorStore,
 )
 
 log = get_logger(name=__name__, category="providers::utils")
+
+
+@cache
+def _get_encoding(name: str) -> tiktoken.Encoding:
+    return tiktoken.get_encoding(name)
 
 
 class ChunkForDeletion(BaseModel):
@@ -60,7 +64,6 @@ RERANKER_TYPE_NORMALIZED = "normalized"
 def parse_pdf(data: bytes) -> str:
     # For PDF and DOC/DOCX files, we can't reliably convert to string
     pdf_bytes = io.BytesIO(data)
-    from pypdf import PdfReader
 
     pdf_reader = PdfReader(pdf_bytes)
     return "\n".join([page.extract_text() for page in pdf_reader.pages])
@@ -86,44 +89,27 @@ def parse_data_url(data_url: str):
     return parts
 
 
-def content_from_data(data_url: str) -> str:
-    parts = parse_data_url(data_url)
-    data = parts["data"]
-
-    if parts["is_base64"]:
-        data = base64.b64decode(data)
-    else:
-        data = unquote(data)
-        encoding = parts["encoding"] or "utf-8"
-        data = data.encode(encoding)
-    return content_from_data_and_mime_type(data, parts["mimetype"], parts.get("encoding", None))
-
-
 def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, encoding: str | None = None) -> str:
-    if isinstance(data, bytes):
-        if not encoding:
-            import chardet
-
-            detected = chardet.detect(data)
-            encoding = detected["encoding"]
+    if isinstance(data, str):
+        return data
 
     mime_category = mime_type.split("/")[0] if mime_type else None
     if mime_category == "text":
+        if not encoding:
+            detected = chardet.detect(data)
+            encoding = detected["encoding"] or "utf-8"
+
         # For text-based files (including CSV, MD)
-        encodings_to_try = [encoding]
-        if encoding != "utf-8":
-            encodings_to_try.append("utf-8")
-        first_exception = None
-        for encoding in encodings_to_try:
-            try:
-                return data.decode(encoding)
-            except UnicodeDecodeError as e:
-                if first_exception is None:
-                    first_exception = e
-                log.warning(f"Decoding failed with {encoding}: {e}")
-        # raise the origional exception, if we got here there was at least 1 exception
-        log.error(f"Could not decode data as any of {encodings_to_try}")
-        raise first_exception
+        try:
+            return data.decode(encoding)
+        except UnicodeDecodeError as e:
+            log.warning(f"Decoding with encoding {encoding} failed: {e}")
+            if encoding.lower() != "utf-8":
+                try:
+                    return data.decode("utf-8")
+                except UnicodeDecodeError as e_utf8:
+                    log.warning(f"Decoding with UTF-8 fallback also failed: {e_utf8}")
+            raise e
 
     elif mime_type == "application/pdf":
         return parse_pdf(data)
@@ -133,57 +119,39 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
         return ""
 
 
-async def content_from_doc(doc: RAGDocument) -> str:
-    if isinstance(doc.content, URL):
-        uri = doc.content.uri
-        if uri.startswith("file://"):
-            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
-        if uri.startswith("data:"):
-            return content_from_data(uri)
-        async with httpx.AsyncClient() as client:
-            r = await client.get(uri)
-        if doc.mime_type == "application/pdf":
-            return parse_pdf(r.content)
-        return r.text
-    elif isinstance(doc.content, str):
-        if doc.content.startswith("file://"):
-            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
-        pattern = re.compile("^(https?://|data:)")
-        if pattern.match(doc.content):
-            if doc.content.startswith("data:"):
-                return content_from_data(doc.content)
-            async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content)
-            if doc.mime_type == "application/pdf":
-                return parse_pdf(r.content)
-            return r.text
-        return doc.content
-    else:
-        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
-        return interleaved_content_as_str(doc.content)
-
-
 def make_overlapped_chunks(
     document_id: str,
     text: str,
     window_len: int,
     overlap_len: int,
     metadata: dict[str, Any],
+    chunk_tokenizer_encoding: str = "cl100k_base",
 ) -> list[Chunk]:
-    default_tokenizer = "DEFAULT_TIKTOKEN_TOKENIZER"
-    tokenizer = Tokenizer.get_instance()
-    tokens = tokenizer.encode(text, bos=False, eos=False)
+    """Split `text` into overlapping windows while tracking the tokenizer used.
+
+    The function converts the document and metadata into tokens via `tiktoken`,
+    defaulting to `cl100k_base` but allowing callers to override the encoding name
+    if they already know the embedding model's tokenizer. Each window advances by
+    `window_len - overlap_len`, decodes for storage, and records the tokenizer name and token
+    counts on both metadata layers so downstream consumers can stay within their limits.
+    Downstream tokenizers may split the decoded text into more tokens than the original
+    encoding, so adjust `window_len` when targeting a model whose tokenizer expands the
+    chunk beyond its token limit."""
+    encoding_name = chunk_tokenizer_encoding
+    encoding = _get_encoding(encoding_name)
+    chunk_tokenizer_name = f"tiktoken:{encoding_name}"
+    tokens = encoding.encode(text)
     try:
         metadata_string = str(metadata)
     except Exception as e:
         raise ValueError("Failed to serialize metadata to string") from e
 
-    metadata_tokens = tokenizer.encode(metadata_string, bos=False, eos=False)
+    metadata_tokens = encoding.encode(metadata_string)
 
     chunks = []
     for i in range(0, len(tokens), window_len - overlap_len):
         toks = tokens[i : i + window_len]
-        chunk = tokenizer.decode(toks)
+        chunk = encoding.decode(toks)
         chunk_window = f"{i}-{i + len(toks)}"
         chunk_id = generate_chunk_id(chunk, text, chunk_window)
         chunk_metadata = metadata.copy()
@@ -191,6 +159,7 @@ def make_overlapped_chunks(
         chunk_metadata["document_id"] = document_id
         chunk_metadata["token_count"] = len(toks)
         chunk_metadata["metadata_token_count"] = len(metadata_tokens)
+        chunk_metadata["chunk_tokenizer"] = chunk_tokenizer_name
 
         backend_chunk_metadata = ChunkMetadata(
             chunk_id=chunk_id,
@@ -199,7 +168,7 @@ def make_overlapped_chunks(
             created_timestamp=metadata.get("created_timestamp", int(time.time())),
             updated_timestamp=int(time.time()),
             chunk_window=chunk_window,
-            chunk_tokenizer=default_tokenizer,
+            chunk_tokenizer=chunk_tokenizer_name,
             content_token_count=len(toks),
             metadata_token_count=len(metadata_tokens),
         )
@@ -217,7 +186,10 @@ def make_overlapped_chunks(
     return chunks
 
 
-def _validate_embedding(embedding: NDArray, index: int, expected_dimension: int):
+type EmbeddingSequence = Sequence[float | int | np.number] | NDArray[Any]
+
+
+def _validate_embedding(embedding: EmbeddingSequence, index: int, expected_dimension: int):
     """Helper method to validate embedding format and dimensions"""
     if not isinstance(embedding, (list | np.ndarray)):
         raise ValueError(f"Embedding at index {index} must be a list or numpy array, got {type(embedding)}")
@@ -271,7 +243,7 @@ class EmbeddingIndex(ABC):
 class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
-    inference_api: Api.inference
+    inference_api: Inference
     vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(
@@ -348,14 +320,16 @@ class VectorStoreWithIndex:
             return await self.index.query_keyword(query_string, k, score_threshold)
 
         if "embedding_dimensions" in params:
-            params = OpenAIEmbeddingsRequestWithExtraBody(
+            embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
                 model=self.vector_store.embedding_model,
                 input=[query_string],
                 dimensions=params.get("embedding_dimensions"),
             )
         else:
-            params = OpenAIEmbeddingsRequestWithExtraBody(model=self.vector_store.embedding_model, input=[query_string])
-        embeddings_response = await self.inference_api.openai_embeddings(params)
+            embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
+                model=self.vector_store.embedding_model, input=[query_string]
+            )
+        embeddings_response = await self.inference_api.openai_embeddings(embeddings_request)
         query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
         if mode == "hybrid":
             return await self.index.query_hybrid(

@@ -42,15 +42,16 @@ def get_provider_dependencies(
     if isinstance(config, DistributionTemplate):
         config = config.build_config()
 
-    providers = config.providers
-
     deps = []
     external_provider_deps = []
     registry = get_provider_registry(config=config, listing=True)
-    for api_str, provider_or_providers in providers.items():
+    for api_str, provider_or_providers in config.providers.items():
         providers_for_api = registry[Api(api_str)]
 
-        providers = provider_or_providers if isinstance(provider_or_providers, list) else [provider_or_providers]
+        if isinstance(provider_or_providers, list):
+            providers = provider_or_providers
+        else:
+            providers = [provider_or_providers]
 
         for provider in providers:
             # Providers from BuildConfig and RunConfig are subtly different - not great

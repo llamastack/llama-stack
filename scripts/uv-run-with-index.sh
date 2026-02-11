@@ -7,6 +7,15 @@
 
 set -euo pipefail
 
+# Add pre-commit golang environment to PATH if it exists
+# This allows Python scripts to access tools installed by golang hooks (e.g., oasdiff)
+if [[ -n "${HOME:-}" ]]; then
+  GOLANG_BIN=$(find "$HOME/.cache/pre-commit" -path "*/golangenv-default/bin" -type d 2>/dev/null | head -1)
+  if [[ -n "$GOLANG_BIN" ]]; then
+    export PATH="$GOLANG_BIN:$PATH"
+  fi
+fi
+
 # Detect current branch and target branch
 # In GitHub Actions, use GITHUB_REF/GITHUB_BASE_REF
 if [[ -n "${GITHUB_REF:-}" ]]; then

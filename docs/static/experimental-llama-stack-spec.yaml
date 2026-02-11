@@ -11335,6 +11335,46 @@ components:
       - metadata
       title: ProcessFileResponse
       type: object
+    ProcessFileRequest:
+      description: |-
+        Request model for file processing operation.
+
+        Wraps the serializable parameters for process_file. The UploadFile parameter
+        is kept separate (not serializable), following the same pattern as
+        UploadFileRequest in the Files API.
+      properties:
+        file_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID of file already uploaded to file storage. Mutually exclusive with file.
+          nullable: true
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Optional processing options. Provider-specific parameters (e.g., OCR settings, output format).
+          nullable: true
+        chunking_strategy:
+          anyOf:
+          - discriminator:
+              mapping:
+                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              title: VectorStoreChunkingStrategyAuto
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              title: VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          - type: 'null'
+          description: Optional chunking strategy for splitting content into chunks.
+          title: Chunking Strategy
+          nullable: true
+      title: ProcessFileRequest
+      type: object
     ListFilesRequest:
       description: Request model for listing files.
       properties:
