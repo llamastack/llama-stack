@@ -14,8 +14,16 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from llama_stack_api.inference import InterleavedContent
+from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema
+
+# OpenAI-compatible chunking defaults
+# See: https://platform.openai.com/docs/api-reference/vector-stores-files/createFile
+DEFAULT_CHUNK_SIZE_TOKENS = 800
+DEFAULT_CHUNK_OVERLAP_TOKENS = 400
+
+# Pagination limits matching OpenAI API constraints
+MAX_PAGINATION_LIMIT = 100
 
 
 @json_schema_type
@@ -325,8 +333,8 @@ class VectorStoreChunkingStrategyStaticConfig(BaseModel):
     :param max_chunk_size_tokens: Maximum number of tokens per chunk, must be between 100 and 4096
     """
 
-    chunk_overlap_tokens: int = 400
-    max_chunk_size_tokens: int = Field(800, ge=100, le=4096)
+    chunk_overlap_tokens: int = DEFAULT_CHUNK_OVERLAP_TOKENS
+    max_chunk_size_tokens: int = Field(DEFAULT_CHUNK_SIZE_TOKENS, ge=100, le=4096)
 
 
 @json_schema_type
@@ -629,12 +637,100 @@ class OpenAICreateVectorStoreFileBatchRequestWithExtraBody(BaseModel, extra="all
     chunking_strategy: VectorStoreChunkingStrategy | None = None
 
 
+@json_schema_type
+class ChunkForDeletion(BaseModel):
+    """Information needed to delete a chunk from a vector store.
+
+    :param chunk_id: The ID of the chunk to delete
+    :param document_id: The ID of the document this chunk belongs to
+    """
+
+    chunk_id: str
+    document_id: str
+
+
+@json_schema_type
+class InsertChunksRequest(BaseModel):
+    """Request body for inserting chunks into a vector store."""
+
+    vector_store_id: str = Field(description="The ID of the vector store to insert chunks into.")
+    chunks: list[EmbeddedChunk] = Field(description="The list of embedded chunks to insert.")
+    ttl_seconds: int | None = Field(default=None, description="Time-to-live in seconds for the inserted chunks.")
+
+
+@json_schema_type
+class DeleteChunksRequest(BaseModel):
+    """Request body for deleting chunks from a vector store."""
+
+    vector_store_id: str = Field(description="The ID of the vector store to delete chunks from.")
+    chunks: list[ChunkForDeletion] = Field(description="The list of chunks to delete.")
+
+
+@json_schema_type
+class QueryChunksRequest(BaseModel):
+    """Request body for querying chunks from a vector store."""
+
+    vector_store_id: str = Field(description="The ID of the vector store to query.")
+    query: InterleavedContent = Field(description="The query content to search for.")
+    params: dict[str, Any] | None = Field(default=None, description="Additional query parameters.")
+
+
+@json_schema_type
+class OpenAIUpdateVectorStoreRequest(BaseModel):
+    """Request body for updating a vector store."""
+
+    name: str | None = Field(default=None, description="The new name for the vector store.")
+    expires_after: dict[str, Any] | None = Field(default=None, description="Expiration policy for the vector store.")
+    metadata: dict[str, Any] | None = Field(default=None, description="Metadata to associate with the vector store.")
+
+
+@json_schema_type
+class OpenAISearchVectorStoreRequest(BaseModel):
+    """Request body for searching a vector store."""
+
+    query: str | list[str] = Field(description="The search query string or list of query strings.")
+    filters: dict[str, Any] | None = Field(default=None, description="Filters to apply to the search.")
+    max_num_results: int | None = Field(default=10, description="Maximum number of results to return.")
+    ranking_options: SearchRankingOptions | None = Field(default=None, description="Options for ranking results.")
+    rewrite_query: bool | None = Field(default=False, description="Whether to rewrite the query for better results.")
+    search_mode: str | None = Field(default="vector", description="The search mode to use (e.g., 'vector', 'keyword').")
+
+
+@json_schema_type
+class OpenAIAttachFileRequest(BaseModel):
+    """Request body for attaching a file to a vector store."""
+
+    file_id: str = Field(description="The ID of the file to attach.")
+    attributes: dict[str, Any] | None = Field(default=None, description="Attributes to associate with the file.")
+    chunking_strategy: VectorStoreChunkingStrategy | None = Field(
+        default=None, description="Strategy for chunking the file content."
+    )
+
+
+@json_schema_type
+class OpenAIUpdateVectorStoreFileRequest(BaseModel):
+    """Request body for updating a vector store file."""
+
+    attributes: dict[str, Any] = Field(description="The new attributes for the file.")
+
+
 __all__ = [
     "Chunk",
+    "ChunkForDeletion",
     "ChunkMetadata",
+    "DEFAULT_CHUNK_OVERLAP_TOKENS",
+    "DEFAULT_CHUNK_SIZE_TOKENS",
+    "DeleteChunksRequest",
     "EmbeddedChunk",
+    "InsertChunksRequest",
+    "MAX_PAGINATION_LIMIT",
+    "OpenAIAttachFileRequest",
     "OpenAICreateVectorStoreFileBatchRequestWithExtraBody",
     "OpenAICreateVectorStoreRequestWithExtraBody",
+    "OpenAISearchVectorStoreRequest",
+    "OpenAIUpdateVectorStoreFileRequest",
+    "OpenAIUpdateVectorStoreRequest",
+    "QueryChunksRequest",
     "QueryChunksResponse",
     "SearchRankingOptions",
     "VectorStoreChunkingStrategy",
