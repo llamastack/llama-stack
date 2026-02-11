@@ -96,7 +96,10 @@ async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, ResourceNotFoundError) and request.url.path.startswith("/v1/vector_stores"):
         http_exc = HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
 
-    return JSONResponse(status_code=http_exc.status_code, content={"error": {"detail": http_exc.detail}})
+    # The OpenAI Python SDK parses error responses as body["error"]["message"].
+    # Using "message" (not "detail") ensures the SDK surfaces the actual error text
+    # in exception messages, which client code and integration tests rely on.
+    return JSONResponse(status_code=http_exc.status_code, content={"error": {"message": http_exc.detail}})
 
 
 class StackApp(FastAPI):
