@@ -570,6 +570,7 @@ class OpenAIResponsesImpl:
         truncation: ResponseTruncation | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ):
         stream = bool(stream)
         background = bool(background)
@@ -646,6 +647,7 @@ class OpenAIResponsesImpl:
                 metadata=metadata,
                 truncation=truncation,
                 presence_penalty=presence_penalty,
+                extra_body=extra_body,
             )
 
         stream_gen = self._create_streaming_response(
@@ -676,6 +678,7 @@ class OpenAIResponsesImpl:
             truncation=truncation,
             top_logprobs=top_logprobs,
             presence_penalty=presence_penalty,
+            extra_body=extra_body,
         )
 
         if stream:
@@ -759,6 +762,7 @@ class OpenAIResponsesImpl:
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
         presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ) -> OpenAIResponseObject:
         """Create a response that processes in the background.
 
@@ -831,6 +835,7 @@ class OpenAIResponsesImpl:
                     metadata=metadata,
                     truncation=truncation,
                     presence_penalty=presence_penalty,
+                    extra_body=extra_body,
                 )
             )
         except asyncio.QueueFull:
@@ -867,6 +872,7 @@ class OpenAIResponsesImpl:
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
         presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ) -> None:
         """Inner loop for background response processing, separated for timeout wrapping."""
         # Check if response was cancelled before starting
@@ -906,6 +912,7 @@ class OpenAIResponsesImpl:
             truncation=truncation,
             response_id=response_id,
             presence_penalty=presence_penalty,
+            extra_body=extra_body,
         )
 
         result_response = None
@@ -967,6 +974,7 @@ class OpenAIResponsesImpl:
         response_id: str | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -998,6 +1006,7 @@ class OpenAIResponsesImpl:
             response_format=response_format,
             tool_context=tool_context,
             inputs=all_input,
+            extra_body=extra_body,
         )
 
         # Create orchestrator and delegate streaming logic
@@ -1042,6 +1051,7 @@ class OpenAIResponsesImpl:
                 truncation=truncation,
                 top_logprobs=top_logprobs,
                 presence_penalty=presence_penalty,
+                extra_body=extra_body,
             )
 
             final_response = None
