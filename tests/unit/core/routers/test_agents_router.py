@@ -84,6 +84,7 @@ async def test_create_response_returns_sse_streaming_response_when_impl_streams(
 def test_create_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError to HTTP 400."""
     app = FastAPI()
+    app.add_exception_handler(Exception, global_exception_handler)
     impl = AsyncMock(spec=Agents)
     impl.create_openai_response.side_effect = ValueError("not found")
 
@@ -277,6 +278,7 @@ async def test_get_response_returns_response_object():
 def test_get_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError on GET to HTTP 400."""
     app = FastAPI()
+    app.add_exception_handler(Exception, global_exception_handler)
     impl = AsyncMock(spec=Agents)
     impl.get_openai_response.side_effect = ValueError("Response not found")
 
@@ -382,6 +384,7 @@ async def test_delete_response_returns_confirmation():
 def test_delete_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError on DELETE to HTTP 400."""
     app = FastAPI()
+    app.add_exception_handler(Exception, global_exception_handler)
     impl = AsyncMock(spec=Agents)
     impl.delete_openai_response.side_effect = ValueError("Response not found")
 
