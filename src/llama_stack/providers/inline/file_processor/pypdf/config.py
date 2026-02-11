@@ -28,6 +28,12 @@ class PyPDFFileProcessorConfig(BaseModel):
         description="Default chunk overlap in tokens when chunking_strategy type is 'auto'",
     )
 
+    max_file_size_bytes: int = Field(
+        default=100 * 1024 * 1024,
+        ge=1,
+        description="Maximum file size in bytes for uploaded files (default 100MB)",
+    )
+
     # PDF-specific options
     extract_metadata: bool = Field(default=True, description="Whether to extract PDF metadata (title, author, etc.)")
 

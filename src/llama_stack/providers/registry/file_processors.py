@@ -19,7 +19,7 @@ def available_providers() -> list[ProviderSpec]:
             pip_packages=["pypdf"],
             module="llama_stack.providers.inline.file_processor.pypdf",
             config_class="llama_stack.providers.inline.file_processor.pypdf.PyPDFFileProcessorConfig",
-            optional_api_dependencies=[Api.files],
+            api_dependencies=[Api.files],
             description="PyPDF-based file processor for extracting text content from documents.",
         ),
     ]

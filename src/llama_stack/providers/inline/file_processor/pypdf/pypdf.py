@@ -10,10 +10,12 @@ import uuid
 from typing import Any
 
 from fastapi import HTTPException, UploadFile
+from pypdf import PdfReader
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.vector_store import make_overlapped_chunks
 from llama_stack_api.file_processors import ProcessFileResponse
+from llama_stack_api.files import RetrieveFileContentRequest, RetrieveFileRequest
 from llama_stack_api.vector_io import (
     Chunk,
     VectorStoreChunkingStrategy,
@@ -56,13 +58,15 @@ class PyPDFFileProcessor:
         if file:
             # Read from uploaded file
             content = await file.read()
+            if len(content) > self.config.max_file_size_bytes:
+                raise ValueError(
+                    f"File size {len(content)} bytes exceeds maximum of {self.config.max_file_size_bytes} bytes"
+                )
             filename = file.filename or f"{uuid.uuid4()}.pdf"
         elif file_id:
             # Get file from file storage using Files API
             if not self.files_api:
                 raise ValueError("Files API not available - cannot process file_id")
-
-            from llama_stack_api.files import RetrieveFileContentRequest, RetrieveFileRequest
 
             # Get file metadata
             file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
@@ -73,13 +77,16 @@ class PyPDFFileProcessor:
                 RetrieveFileContentRequest(file_id=file_id)
             )
             content = content_response.body
-        else:
-            raise ValueError("Neither file nor file_id provided")
 
-        # Note: File size validation is handled by Files API upload limits
+        # Parse PDF once
+        pdf_bytes = io.BytesIO(content)
+        reader = PdfReader(pdf_bytes)
+
+        if reader.is_encrypted:
+            raise HTTPException(status_code=422, detail="Password-protected PDFs are not supported")
 
         # Extract text from PDF
-        text_content = self._extract_pdf_text(content)
+        text_content, failed_pages = self._extract_pdf_text(reader)
 
         # Clean text if configured
         if self.config.clean_text:
@@ -88,10 +95,9 @@ class PyPDFFileProcessor:
         # Extract metadata if configured
         pdf_metadata = {}
         if self.config.extract_metadata:
-            pdf_metadata = self._extract_pdf_metadata(content)
+            pdf_metadata = self._extract_pdf_metadata(reader)
 
-        # Create document ID - prefer file_id for stability, fallback to filename
-        document_id = file_id if file_id else (filename or str(uuid.uuid4()))
+        document_id = str(uuid.uuid4())
 
         # Prepare document metadata (include filename and file_id)
         document_metadata = {
@@ -112,6 +118,8 @@ class PyPDFFileProcessor:
             "file_size_bytes": len(content),
             **pdf_metadata,
         }
+        if failed_pages:
+            response_metadata["failed_pages"] = failed_pages
 
         # Handle empty text - return empty chunks with metadata
         if not text_content or not text_content.strip():
@@ -122,46 +130,24 @@ class PyPDFFileProcessor:
 
         return ProcessFileResponse(chunks=chunks, metadata=response_metadata)
 
-    def _extract_pdf_text(self, pdf_data: bytes) -> str:
-        """Extract text from PDF using PyPDF."""
-        try:
-            from pypdf import PdfReader  # type: ignore[import-not-found]
-        except ImportError as err:
-            raise ImportError("PyPDF is required for PDF processing. Install with: pip install pypdf") from err
-
-        pdf_bytes = io.BytesIO(pdf_data)
-        reader = PdfReader(pdf_bytes)
-
-        if reader.is_encrypted:
-            raise HTTPException(status_code=422, detail="Password-protected PDFs are not supported")
-
+    def _extract_pdf_text(self, reader: PdfReader) -> tuple[str, list[str]]:
+        """Extract text from all pages of a parsed PDF."""
         # Extract text from all pages
         text_parts = []
+        failed_pages = []
         for page_num, page in enumerate(reader.pages):
             try:
                 page_text = page.extract_text()
-                if page_text and page_text.strip():  # Only add non-empty pages
-                    text_parts.append(page_text)
             except Exception as e:
-                # Log warning but continue processing other pages
-                log.warning(f"Failed to extract text from page {page_num + 1}: {e}")
+                failed_pages.append(f"page {page_num + 1}: {e}")
                 continue
+            if page_text and page_text.strip():
+                text_parts.append(page_text)
 
-        return "\n".join(text_parts)
+        return "\n".join(text_parts), failed_pages
 
-    def _extract_pdf_metadata(self, pdf_data: bytes) -> dict[str, Any]:
-        """Extract metadata from PDF."""
-        try:
-            from pypdf import PdfReader  # type: ignore[import-not-found]
-        except ImportError:
-            return {}
-
-        pdf_bytes = io.BytesIO(pdf_data)
-        reader = PdfReader(pdf_bytes)
-
-        if reader.is_encrypted:
-            raise HTTPException(status_code=422, detail="Password-protected PDFs are not supported")
-
+    def _extract_pdf_metadata(self, reader: PdfReader) -> dict[str, Any]:
+        """Extract metadata from a parsed PDF."""
         metadata: dict[str, Any] = {"page_count": len(reader.pages)}
 
         if reader.metadata:

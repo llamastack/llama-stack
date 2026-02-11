@@ -18,7 +18,11 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
 
 from llama_stack_api.router_utils import standard_responses
-from llama_stack_api.vector_io import VectorStoreChunkingStrategy
+from llama_stack_api.vector_io import (
+    VectorStoreChunkingStrategy,
+    VectorStoreChunkingStrategyAuto,
+    VectorStoreChunkingStrategyStatic,
+)
 from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
 
 from .api import FileProcessors
@@ -82,12 +86,6 @@ def create_router(impl: FileProcessors) -> APIRouter:
                         status_code=400,
                         detail="chunking_strategy must be a JSON object, not a list, string, or other type",
                     )
-
-                # Import the specific classes for proper parsing
-                from llama_stack_api.vector_io import (
-                    VectorStoreChunkingStrategyAuto,
-                    VectorStoreChunkingStrategyStatic,
-                )
 
                 if chunking_data.get("type") == "auto":
                     parsed_chunking_strategy = VectorStoreChunkingStrategyAuto.model_validate(chunking_data)

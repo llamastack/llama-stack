@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import io
+import uuid
 from pathlib import Path
 
 import pytest
@@ -173,7 +174,7 @@ class TestPyPDFFileProcessor:
         assert chunk.chunk_id is not None
         assert chunk.chunk_metadata is not None
         assert chunk.chunk_metadata.content_token_count > 0
-        assert chunk.chunk_metadata.document_id == "llama_stack_and_models.pdf"
+        uuid.UUID(chunk.chunk_metadata.document_id)  # Should be a valid UUID
 
     async def test_process_file_with_auto_chunking(self, processor: PyPDFFileProcessor, upload_file: UploadFile):
         """Test file processing with auto chunking strategy."""
@@ -199,12 +200,12 @@ class TestPyPDFFileProcessor:
             # Verify chunk metadata
             assert chunk.chunk_metadata is not None
             assert chunk.chunk_metadata.content_token_count > 0
-            assert chunk.chunk_metadata.document_id == "llama_stack_and_models.pdf"
+            uuid.UUID(chunk.chunk_metadata.document_id)  # Should be a valid UUID
             assert chunk.chunk_metadata.chunk_window is not None  # Should be set by make_overlapped_chunks
 
             # Verify chunk metadata dict
             assert "document_id" in chunk.metadata
-            assert chunk.metadata["document_id"] == "llama_stack_and_models.pdf"
+            uuid.UUID(chunk.metadata["document_id"])  # Should be a valid UUID
             assert chunk.metadata["filename"] == "llama_stack_and_models.pdf"
 
     async def test_process_file_with_static_chunking(self, processor: PyPDFFileProcessor, upload_file: UploadFile):
@@ -233,7 +234,7 @@ class TestPyPDFFileProcessor:
                 chunk.chunk_metadata.content_token_count <= static_config.max_chunk_size_tokens + 50  # Allow tolerance
             )
             assert chunk.chunk_metadata.content_token_count > 0
-            assert chunk.chunk_metadata.document_id == "llama_stack_and_models.pdf"
+            uuid.UUID(chunk.chunk_metadata.document_id)  # Should be a valid UUID
 
     async def test_metadata_extraction(self, processor: PyPDFFileProcessor, upload_file: UploadFile):
         """Test PDF metadata extraction."""
@@ -250,7 +251,7 @@ class TestPyPDFFileProcessor:
         chunk = response.chunks[0]
         assert "filename" in chunk.metadata
         assert chunk.metadata["filename"] == "llama_stack_and_models.pdf"
-        assert chunk.metadata["document_id"] == "llama_stack_and_models.pdf"
+        uuid.UUID(chunk.metadata["document_id"])  # Should be a valid UUID
 
     async def test_text_cleaning(self):
         """Test text cleaning functionality."""
@@ -361,9 +362,9 @@ class TestPyPDFFileProcessor:
         response = await processor.process_file(file=upload_file, chunking_strategy=None)
 
         chunk = response.chunks[0]
-        # Document ID should be filename when file_id is not provided
-        assert chunk.chunk_metadata.document_id == "llama_stack_and_models.pdf"
-        assert chunk.metadata["document_id"] == "llama_stack_and_models.pdf"
+        # Document ID should be a generated UUID
+        uuid.UUID(chunk.chunk_metadata.document_id)  # Should be a valid UUID
+        uuid.UUID(chunk.metadata["document_id"])  # Should be a valid UUID
         assert chunk.metadata["filename"] == "llama_stack_and_models.pdf"
 
     async def test_chunk_id_uniqueness(self, processor: PyPDFFileProcessor, upload_file: UploadFile):
