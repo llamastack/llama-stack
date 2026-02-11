@@ -210,6 +210,14 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
                 record.category = UNCATEGORIZED  # Default to 'uncategorized' if no category found
             return True
 
+    class UvicornCategoryFilter(logging.Filter):
+        """Assign uvicorn logs to 'server' category."""
+
+        def filter(self, record):
+            if not hasattr(record, "category"):
+                record.category = "server"
+            return True
+
     # Determine the root logger's level (default to WARNING if not specified)
     root_level = category_levels.get("root", logging.WARNING)
 
@@ -247,7 +255,10 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
         "filters": {
             "category_filter": {
                 "()": CategoryFilter,
-            }
+            },
+            "uvicorn_category_filter": {
+                "()": UvicornCategoryFilter,
+            },
         },
         "loggers": {
             **{
@@ -263,16 +274,19 @@ def setup_logging(category_levels: dict[str, int] | None = None, log_file: str |
                 "handlers": list(handlers.keys()),
                 "level": logging.INFO,
                 "propagate": False,
+                "filters": ["uvicorn_category_filter"],
             },
             "uvicorn.error": {
                 "handlers": list(handlers.keys()),
                 "level": logging.INFO,
                 "propagate": False,
+                "filters": ["uvicorn_category_filter"],
             },
             "uvicorn.access": {
                 "handlers": list(handlers.keys()),
                 "level": logging.INFO,
                 "propagate": False,
+                "filters": ["uvicorn_category_filter"],
             },
         },
         "root": {

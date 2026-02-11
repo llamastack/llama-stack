@@ -14,23 +14,24 @@ It replaces the legacy @webmethod-driven route discovery for VectorIO.
 
 from __future__ import annotations
 
-from typing import Annotated, Any, NoReturn, cast
+from typing import Annotated, NoReturn, cast
 
 from fastapi import APIRouter, Body, HTTPException, Path, Query, Request, Response, status
-from pydantic import BaseModel, Field
 
-from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.router_utils import standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
 from .api import VectorIO
 from .models import (
-    EmbeddedChunk,
+    InsertChunksRequest,
+    OpenAIAttachFileRequest,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAISearchVectorStoreRequest,
+    OpenAIUpdateVectorStoreFileRequest,
+    OpenAIUpdateVectorStoreRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
-    SearchRankingOptions,
-    VectorStoreChunkingStrategy,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
     VectorStoreFileContentResponse,
@@ -43,57 +44,6 @@ from .models import (
     VectorStoreObject,
     VectorStoreSearchResponsePage,
 )
-
-
-class InsertChunksRequest(BaseModel):
-    """Request body for inserting chunks into a vector store."""
-
-    vector_store_id: str = Field(description="The ID of the vector store to insert chunks into.")
-    chunks: list[EmbeddedChunk] = Field(description="The list of embedded chunks to insert.")
-    ttl_seconds: int | None = Field(default=None, description="Time-to-live in seconds for the inserted chunks.")
-
-
-class QueryChunksRequest(BaseModel):
-    """Request body for querying chunks from a vector store."""
-
-    vector_store_id: str = Field(description="The ID of the vector store to query.")
-    query: InterleavedContent = Field(description="The query content to search for.")
-    params: dict[str, Any] | None = Field(default=None, description="Additional query parameters.")
-
-
-class OpenAIUpdateVectorStoreRequest(BaseModel):
-    """Request body for updating a vector store."""
-
-    name: str | None = Field(default=None, description="The new name for the vector store.")
-    expires_after: dict[str, Any] | None = Field(default=None, description="Expiration policy for the vector store.")
-    metadata: dict[str, Any] | None = Field(default=None, description="Metadata to associate with the vector store.")
-
-
-class OpenAISearchVectorStoreRequest(BaseModel):
-    """Request body for searching a vector store."""
-
-    query: str | list[str] = Field(description="The search query string or list of query strings.")
-    filters: dict[str, Any] | None = Field(default=None, description="Filters to apply to the search.")
-    max_num_results: int | None = Field(default=10, description="Maximum number of results to return.")
-    ranking_options: SearchRankingOptions | None = Field(default=None, description="Options for ranking results.")
-    rewrite_query: bool | None = Field(default=False, description="Whether to rewrite the query for better results.")
-    search_mode: str | None = Field(default="vector", description="The search mode to use (e.g., 'vector', 'keyword').")
-
-
-class OpenAIAttachFileRequest(BaseModel):
-    """Request body for attaching a file to a vector store."""
-
-    file_id: str = Field(description="The ID of the file to attach.")
-    attributes: dict[str, Any] | None = Field(default=None, description="Attributes to associate with the file.")
-    chunking_strategy: VectorStoreChunkingStrategy | None = Field(
-        default=None, description="Strategy for chunking the file content."
-    )
-
-
-class OpenAIUpdateVectorStoreFileRequest(BaseModel):
-    """Request body for updating a vector store file."""
-
-    attributes: dict[str, Any] = Field(description="The new attributes for the file.")
 
 
 def create_router(impl: VectorIO) -> APIRouter:
@@ -112,11 +62,7 @@ def create_router(impl: VectorIO) -> APIRouter:
         responses={204: {"description": "Chunks were inserted."}},
     )
     async def insert_chunks(request: Annotated[InsertChunksRequest, Body(...)]) -> None:
-        await impl.insert_chunks(
-            vector_store_id=request.vector_store_id,
-            chunks=request.chunks,
-            ttl_seconds=request.ttl_seconds,
-        )
+        await impl.insert_chunks(request)
         return None
 
     @router.post(
@@ -127,11 +73,7 @@ def create_router(impl: VectorIO) -> APIRouter:
         responses={200: {"description": "A QueryChunksResponse."}},
     )
     async def query_chunks(request: Annotated[QueryChunksRequest, Body(...)]) -> QueryChunksResponse:
-        return await impl.query_chunks(
-            vector_store_id=request.vector_store_id,
-            query=request.query,
-            params=request.params,
-        )
+        return await impl.query_chunks(request)
 
     @router.post(
         "/vector_stores",
@@ -153,7 +95,9 @@ def create_router(impl: VectorIO) -> APIRouter:
         responses={200: {"description": "A list of vector stores."}},
     )
     async def openai_list_vector_stores(
-        limit: Annotated[int | None, Query(description="Maximum number of vector stores to return.")] = 20,
+        limit: Annotated[
+            int | None, Query(ge=1, le=100, description="Maximum number of vector stores to return.")
+        ] = 20,
         order: Annotated[str | None, Query(description="Sort order by created_at: asc or desc.")] = "desc",
         after: Annotated[
             str | None,
@@ -195,9 +139,7 @@ def create_router(impl: VectorIO) -> APIRouter:
     ) -> VectorStoreObject:
         return await impl.openai_update_vector_store(
             vector_store_id=vector_store_id,
-            name=request.name,
-            expires_after=request.expires_after,
-            metadata=request.metadata,
+            request=request,
         )
 
     @router.delete(
@@ -225,12 +167,7 @@ def create_router(impl: VectorIO) -> APIRouter:
     ) -> VectorStoreSearchResponsePage:
         return await impl.openai_search_vector_store(
             vector_store_id=vector_store_id,
-            query=request.query,
-            filters=request.filters,
-            max_num_results=request.max_num_results,
-            ranking_options=request.ranking_options,
-            rewrite_query=request.rewrite_query,
-            search_mode=request.search_mode,
+            request=request,
         )
 
     @router.post(
@@ -246,9 +183,7 @@ def create_router(impl: VectorIO) -> APIRouter:
     ) -> VectorStoreFileObject:
         return await impl.openai_attach_file_to_vector_store(
             vector_store_id=vector_store_id,
-            file_id=request.file_id,
-            attributes=request.attributes,
-            chunking_strategy=request.chunking_strategy,
+            request=request,
         )
 
     @router.get(
@@ -260,7 +195,7 @@ def create_router(impl: VectorIO) -> APIRouter:
     )
     async def openai_list_files_in_vector_store(
         vector_store_id: Annotated[str, Path(description="The vector store identifier.")],
-        limit: Annotated[int | None, Query(description="Maximum number of files to return.")] = 20,
+        limit: Annotated[int | None, Query(ge=1, le=100, description="Maximum number of files to return.")] = 20,
         order: Annotated[str | None, Query(description="Sort order by created_at: asc or desc.")] = "desc",
         after: Annotated[
             str | None,
@@ -333,7 +268,7 @@ def create_router(impl: VectorIO) -> APIRouter:
         return await impl.openai_update_vector_store_file(
             vector_store_id=vector_store_id,
             file_id=file_id,
-            attributes=request.attributes,
+            request=request,
         )
 
     @router.delete(
@@ -408,7 +343,7 @@ def create_router(impl: VectorIO) -> APIRouter:
             ),
         ] = None,
         filter: Annotated[str | None, Query(description="Filter by file status.")] = None,
-        limit: Annotated[int | None, Query(description="Maximum number of files to return.")] = 20,
+        limit: Annotated[int | None, Query(ge=1, le=100, description="Maximum number of files to return.")] = 20,
         order: Annotated[str | None, Query(description="Sort order by created_at: asc or desc.")] = "desc",
     ) -> VectorStoreFilesListInBatchResponse:
         return await impl.openai_list_files_in_vector_store_file_batch(

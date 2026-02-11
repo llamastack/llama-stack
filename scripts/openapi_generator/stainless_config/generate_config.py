@@ -512,7 +512,6 @@ ALL_RESOURCES = {
     },
     "alpha": {
         "subresources": {
-            "inference": {"methods": {"rerank": "post /v1alpha/inference/rerank"}},
             "post_training": {
                 "models": {
                     "algorithm_config": "AlgorithmConfig",
@@ -526,9 +525,9 @@ ALL_RESOURCES = {
                 "subresources": {
                     "job": {
                         "methods": {
-                            "artifacts": "get /v1alpha/post-training/job/artifacts",
-                            "cancel": "post /v1alpha/post-training/job/cancel",
-                            "status": "get /v1alpha/post-training/job/status",
+                            "artifacts": "get /v1alpha/post-training/jobs/{job_uuid}/artifacts",
+                            "cancel": "post /v1alpha/post-training/jobs/{job_uuid}/cancel",
+                            "status": "get /v1alpha/post-training/jobs/{job_uuid}/status",
                             "list": {
                                 "paginated": False,
                                 "endpoint": "get /v1alpha/post-training/jobs",
@@ -581,6 +580,11 @@ ALL_RESOURCES = {
                     "list_routes": "get /v1alpha/admin/inspect/routes",
                     "health": "get /v1alpha/admin/health",
                     "version": "get /v1alpha/admin/version",
+                },
+            },
+            "inference": {
+                "methods": {
+                    "rerank": "post /v1alpha/inference/rerank",
                 },
             },
         }

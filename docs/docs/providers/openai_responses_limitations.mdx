@@ -108,16 +108,6 @@ Responses has a field `service_tier` that can be used to prioritize access to in
 
 ---
 
-### Max Output Tokens
-
-**Status:** Not Implemented
-
-**Issue:** [#3562](https://github.com/llamastack/llama-stack/issues/3562)
-
-The `max_output_tokens` field limits how many tokens the model is allowed to generate (for both reasoning and output combined).  It is not implemented in Llama Stack.
-
----
-
 ### Incomplete Details
 
 **Status:** Not Implemented
@@ -132,7 +122,7 @@ The return object from a call to Responses includes a field for indicating why a
 
 **Status:** Not Implemented
 
-**Issue:** [#3568](https://github.com/llamastack/llama-stack/issues/3568)
+**Issue:** [#3568](https://github.com/llamastack/llama-stack/issues/4701)
 
 [Background mode](https://platform.openai.com/docs/guides/background) in OpenAI Responses lets you start a response generation job and then check back in on it later.  This is useful if you might lose a connection during a generation and want to reconnect later and get the response back (for example if the client is running in a mobile app).  It is not implemented in Llama Stack.
 
@@ -206,20 +196,6 @@ Align Llama Stack Responses Paralell tool calls behavior with OpenAI and harden 
 
 ---
 
-### Connectors
-
-**Status:** In Progress
-
-**Issue:** [#4061](https://github.com/llamastack/llama-stack/issues/4061)
-
-Connectors are MCP servers maintained and managed by the Responses API provider. OpenAI has documented their connectors at [https://platform.openai.com/docs/guides/tools-connectors-mcp](https://platform.openai.com/docs/guides/tools-connectors-mcp).
-
-**Open Questions:**
-- Should Llama Stack include built-in support for some, all, or none of OpenAI's connectors?
-- Should there be a mechanism for administrators to add custom connectors via `config.yaml` or an API?
-
----
-
 ### Top Logprobs
 
 **Status:** In Progress
@@ -228,17 +204,6 @@ Connectors are MCP servers maintained and managed by the Responses API provider.
 
 The `top_logprobs` parameter from OpenAI's Responses API extends the functionality obtained by including `message.output_text.logprobs` in the `include` parameter list (as discussed in the Include section above).
 It enables users to also get logprobs for alternative tokens.
-
----
-
-### Web Search API Arguments
-
-**Status:** Merged [Planed 0.4.z]
-
-**Issue:** https://github.com/llamastack/llama-stack/issues/4102
-
- Llama Stack supports `web_search`, `web_search_preview`, `web_search_preview_2025_03_1`, and now `web_search_2025_08_26` for
- the built in web search tool.
 
 ---
 
@@ -252,106 +217,3 @@ Support OpenTelemetry as the preferred way to instrument Llama Stack.
 
 **Remaining Issues:**
 - Some data needs to be converted to follow semantic conventions for OTEL genai data
-
----
-
-### Include
-
-**Status:** Merged [Planned 0.4.z]
-
-The `include` parameter allows you to provide a list of flags to include specific categories of additional information in the response payload.
-The API now supportes the same fields as the [OpenAI API](https://platform.openai.com/docs/api-reference/responses/create). Llama stack will no
-longer raise an HTTP error when these fields are passed, however most of them are not yet implemented. Along with this change,
-`message.output_text.logprobs` was implemented fully, allowing you to get logprobs data from your inference server provider.
-
-
----
-
-### Max Tool Calls
-
-**Status:** Merged [Planned 0.4.z]
-
-**Issue:** [#3563](https://github.com/llamastack/llama-stack/issues/3563)
-
-The Responses API can accept a `max_tool_calls` parameter that limits the number of tool calls allowed to be executed for a given response.
-
----
-
-### Metadata
-
-**Status:** Merged [Planned 0.4.z]
-
-**Issue:** [#3564](https://github.com/llamastack/llama-stack/issues/3564)
-
-Metadata allows you to attach additional information to a response for your own reference and tracking.
-
----
-
-### Tool Choice
-
-**Status:** Merged [Planned 0.4.z]
-
-**Issue:** [#3548](https://github.com/llamastack/llama-stack/issues/3548)
-
-In OpenAI's API, the `tool_choice` parameter allows you to set restrictions or requirements for which tools should be used when generating a response.
-
----
-
-## Fixed
-
-The following limitations have been addressed in recent releases:
-
-### MCP and Function Tools with No Arguments
-
-**Status:** ✅ Resolved
-
-MCP and function tools now work correctly even when they have no arguments.
-
----
-
-### `require_approval` Parameter for MCP Tools
-
-**Status:** ✅ Resolved
-
-The `require_approval` parameter for MCP tools in the Responses API now works correctly.
-
----
-
-### MCP Tools with Array-Type Arguments
-
-**Status:** ✅ Resolved
-
-**Fixed in:** [#3003](https://github.com/llamastack/llama-stack/pull/3003) (Agent API), [#3602](https://github.com/llamastack/llama-stack/pull/3602) (Responses API)
-
-MCP tools now correctly handle array-type arguments in both the Agent API and Responses API.
-
----
-
-### Streaming
-
-**Status:** ✅ Resolved
-
-**Issue:** [#2364](https://github.com/llamastack/llama-stack/issues/2364)
-
-Streaming functionality for the Responses API is feature complete and released.
-
----
-
-### Prompt Templates
-
-**Status:** ✅ Resolved
-
-**Issue:** [#3321](https://github.com/llamastack/llama-stack/issues/3321)
-
-OpenAI's platform supports [templated prompts using a structured language](https://platform.openai.com/docs/guides/text?api-mode=responses#reusable-prompts). These templates can be stored server-side for organizational sharing.
-
----
-
-### Instructions
-**Status:**  ✅ Resolved
-
-**Issue:** [#3566](https://github.com/llamastack/llama-stack/issues/3566)
-
-The Responses API request and response object now supports the *instructions* field.
-
----

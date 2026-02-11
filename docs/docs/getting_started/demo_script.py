@@ -4,107 +4,100 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""
-Demo script showing RAG with both Responses API and Chat Completions API.
+from llama_stack_client import Agent, AgentEventLogger, LlamaStackClient
 
-This example demonstrates two approaches to RAG with Llama Stack:
-1. Responses API - Automatic agentic tool calling with file search
-2. Chat Completions API - Manual retrieval with explicit control
+vector_store_id = "my_demo_vector_db"
+client = LlamaStackClient(base_url="http://localhost:8321")
 
-Run this script after starting a Llama Stack server:
-    llama stack run starter
-"""
+models = client.models.list()
 
-import io
-import os
+# Select the first LLM and first embedding models
+# Prefer Ollama models since they don't require API keys
+models_list = list(models)
+llm_models = [m for m in models_list if m.id and not m.id.startswith("sentence-transformers")]
+ollama_models = [m for m in llm_models if "ollama" in m.id.lower()]
+model_id = (ollama_models[0] if ollama_models else llm_models[0]).id
 
+# Get embedding model
+embedding_models = [m for m in models_list if m.id and m.id.startswith("sentence-transformers")]
+em = embedding_models[0] if embedding_models else None
+if not em:
+    raise ValueError("No embedding model found")
+embedding_model_id = em.id
+# Default embedding dimension for nomic-embed-text-v1.5 is 768
+embedding_dimension = 768
+
+print(f"Using model: {model_id}")
+
+# Download the document content
 import requests
-from openai import OpenAI
+source_url = "https://www.paulgraham.com/greatwork.html"
+print(f"Downloading document: {source_url}")
+response = requests.get(source_url)
+content = response.text
 
-# Initialize OpenAI client pointing to Llama Stack server
-client = OpenAI(base_url="http://localhost:8321/v1/", api_key="none")
-
-print("RAG demonstration\n")
-
-url = "https://www.paulgraham.com/greatwork.html"
-print(f"Fetching document from: {url}")
-
-vs = client.vector_stores.create()
-
-response = requests.get(url)
-pseudo_file = io.BytesIO(str(response.content).encode("utf-8"))
-uploaded_file = client.files.create(
-    file=(url, pseudo_file, "text/html"), purpose="assistants"
+# Upload the file
+print("Uploading file to server...")
+file_obj = client.files.create(
+    file=("greatwork.html", content.encode('utf-8'), "text/html"),
+    purpose="assistants",
 )
-client.vector_stores.files.create(vector_store_id=vs.id, file_id=uploaded_file.id)
-print(f"File uploaded and added to vector store: {uploaded_file.id}")
+file_id = file_obj.id
+print(f"File uploaded: {file_id}")
 
-query = "How do you do great work?"
-print(f"Query: {query}\n")
+# Create or retrieve vector store
+print(f"Creating vector store: {vector_store_id}")
+try:
+    # Try to retrieve existing vector store
+    vector_store = client.vector_stores.retrieve(vector_store_id)
+    print(f"Using existing vector store: {vector_store_id}")
+    vector_store_id = vector_store.id
 
-print(
-    """
-RAG using Responses API:
-   - Automatic tool calling (model decides when to search)
-   - Simpler code, less control
-   - Best for: Conversational agents, automatic workflows
-
-"""
-)
-
-print("Reply via Responses API:\n")
-resp = client.responses.create(
-    model=os.getenv("INFERENCE_MODEL", "ollama/llama3.2:3b"),
-    input=query,
-    tools=[{"type": "file_search", "vector_store_ids": [vs.id]}],
-    include=["file_search_call.results"],
-)
-
-print("-" * 80)
-print(resp.output[-1].content[-1].text)
-print("-" * 80)
-
-print(
-    """
-
-RAG using Chat Completions API:
-   - Manual retrieval (you control the search)
-   - More code, more control
-   - Best for: Custom RAG patterns, batch processing, specialized workflows
-"""
-)
-
-print("Searching vector store...")
-search_results = client.vector_stores.search(
-    vector_store_id=vs.id, query=query, max_num_results=3, rewrite_query=False
-)
-
-# Extract context from search results
-context_chunks = []
-for result in search_results.data:
-    # result.content is a list of Content objects, extract the text from each
-    for content_item in result.content:
-        context_chunks.append(content_item.text)
-
-context = "\n\n".join(context_chunks)
-print(f"Found {len(context_chunks)} relevant chunks\n")
-
-print("Reply via Chat Completions API:\n")
-completion = client.chat.completions.create(
-    model=os.getenv("INFERENCE_MODEL", "ollama/llama3.2:3b"),
-    messages=[
+    # Add file to existing vector store
+    client.vector_stores.files.create(
+        vector_store_id=vector_store_id,
+        file_id=file_id,
+    )
+    print(f"Added file to vector store")
+except Exception as e:
+    # Create new vector store with the file
+    print(f"Creating new vector store (error: {e})")
+    vector_store = client.vector_stores.create(
+        name=vector_store_id,
+        file_ids=[file_id],
+    )
+    vector_store_id = vector_store.id
+    print(f"Created new vector store: {vector_store_id}")
+agent = Agent(
+    client,
+    model=model_id,
+    instructions="You are a helpful assistant. Use the knowledge_search tool to find relevant information in the ingested documents.",
+    tools=[
         {
-            "role": "system",
-            "content": "You are a helpful assistant. Use the provided context to answer the user's question.",
-        },
-        {
-            "role": "user",
-            "content": f"Context:\n{context}\n\nQuestion: {query}\n\nPlease provide a comprehensive answer based on the context above.",
-        },
+            "type": "file_search",
+            "vector_store_ids": [vector_store_id],
+        }
     ],
-    temperature=0.7,
 )
 
-print("-" * 80)
-print(completion.choices[0].message.content)
-print("-" * 80)
+prompt = "How do you do great work?"
+print("prompt>", prompt)
+
+use_stream = True
+response = agent.create_turn(
+    messages=[{"role": "user", "content": prompt}],
+    session_id=agent.create_session("rag_session"),
+    stream=use_stream,
+)
+
+# Only call `AgentEventLogger().log(response)` for streaming responses.
+if use_stream:
+    for log in AgentEventLogger().log(response):
+        if hasattr(log, 'print'):
+            log.print()
+        else:
+            # Print text chunks inline without newlines
+            print(log, end='', flush=True)
+    print()  # Final newline at the end
+else:
+    print(response)

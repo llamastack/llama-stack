@@ -255,6 +255,11 @@ class InferenceStoreReference(SqlStoreReference):
 class ResponsesStoreReference(InferenceStoreReference):
     """Responses store configuration with queue tuning."""
 
+    table_name: str = Field(
+        default="openai_responses",
+        description="Name of the table to use for storing OpenAI responses",
+    )
+
 
 class ServerStoresConfig(BaseModel):
     metadata: KVStoreReference | None = Field(

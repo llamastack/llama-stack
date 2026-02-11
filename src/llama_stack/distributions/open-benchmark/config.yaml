@@ -57,6 +57,11 @@ providers:
       db: ${env.PGVECTOR_DB:=}
       user: ${env.PGVECTOR_USER:=}
       password: ${env.PGVECTOR_PASSWORD:=}
+      distance_metric: COSINE
+      vector_index:
+        type: HNSW
+        m: 16
+        ef_construction: 64
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default

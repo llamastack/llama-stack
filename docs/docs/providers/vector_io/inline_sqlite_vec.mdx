@@ -18,6 +18,8 @@ Please refer to the sqlite-vec provider documentation.
 |-------|------|----------|---------|-------------|
 | `db_path` | `str` | No |  | Path to the SQLite database file |
 | `persistence` | `KVStoreReference` | No |  | Config for KV store backend (SQLite only for now) |
+| `persistence.namespace` | `str` | No |  | Key prefix for KVStore backends |
+| `persistence.backend` | `str` | No |  | Name of backend from storage.backends |
 
 ## Sample Configuration
 
