@@ -91,17 +91,17 @@ def extract_text_content(content: str | list[str] | list[dict]):
         return str(content)
 
 
-def langchain_chat(
-    base_url: str, model: str, api_key: str | None = None, use_previous_response_id: bool | None = False
-):
+def langchain_chat(responses_client, text_model_id, use_previous_response_id: bool | None = False):
     """Return a langchain chat instance"""
+    base_url = str(responses_client.base_url)
     url = base_url if base_url.endswith("/v1/") else base_url + "/v1/"
-    api_key = api_key or "fake"
+
+    api_key = responses_client.api_key or "fake"
 
     return ChatOpenAI(
         base_url=url,
         api_key=api_key,
-        model=model,
+        model=text_model_id,
         use_responses_api=True,
         use_previous_response_id=use_previous_response_id,
     )

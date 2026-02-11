@@ -14,9 +14,7 @@ from .helpers import extract_text_content, langchain_chat
 def test_langchain_basic(responses_client, text_model_id):
     """Test langchain basic request compatibility with Responses."""
 
-    chat = langchain_chat(
-        base_url=str(responses_client.base_url), model=text_model_id, api_key=responses_client.api_key
-    )
+    chat = langchain_chat(responses_client, text_model_id)
 
     # Simple question
     messages = [HumanMessage(content="What is the capital of France?")]
@@ -49,9 +47,7 @@ def test_langchain_basic(responses_client, text_model_id):
 def test_langchain_chain(responses_client, text_model_id):
     """Test langchain chaining with Responses"""
 
-    chat = langchain_chat(
-        base_url=str(responses_client.base_url), model=text_model_id, api_key=responses_client.api_key
-    )
+    chat = langchain_chat(responses_client, text_model_id)
 
     # Create a chain with prompt template
     prompt = ChatPromptTemplate.from_messages(
@@ -92,9 +88,7 @@ def test_langchain_chain(responses_client, text_model_id):
 def test_langchain_streaming(responses_client, text_model_id):
     """Test langchain streaming with Responses"""
 
-    chat = langchain_chat(
-        base_url=str(responses_client.base_url), model=text_model_id, api_key=responses_client.api_key
-    )
+    chat = langchain_chat(responses_client, text_model_id)
 
     messages = [HumanMessage(content="Count from 1 to 10.")]
 
@@ -141,12 +135,7 @@ def test_langchain_multi_turn(responses_client, text_model_id):
     includes the latest input and previous_response_id in the Responses API request.
     """
 
-    chat = langchain_chat(
-        base_url=str(responses_client.base_url),
-        model=text_model_id,
-        api_key=responses_client.api_key,
-        use_previous_response_id=True,
-    )
+    chat = langchain_chat(responses_client, text_model_id, use_previous_response_id=True)
 
     # Maintain conversation history
     conversation = []

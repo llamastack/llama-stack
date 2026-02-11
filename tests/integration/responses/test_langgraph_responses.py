@@ -17,9 +17,7 @@ from .helpers import extract_text_content, langchain_chat
 def test_langgraph_basic(responses_client, text_model_id):
     """Test langgraph basic request compatibility with Responses."""
 
-    chat = langchain_chat(
-        base_url=str(responses_client.base_url), model=text_model_id, api_key=responses_client.api_key
-    )
+    chat = langchain_chat(responses_client, text_model_id)
 
     # Define state
     class State(TypedDict):
@@ -71,9 +69,7 @@ def test_langgraph_basic(responses_client, text_model_id):
 def test_langgraph_multi_node(responses_client, text_model_id):
     """Test langgraph multiple nodes with Responses."""
 
-    chat = langchain_chat(
-        base_url=str(responses_client.base_url), model=text_model_id, api_key=responses_client.api_key
-    )
+    chat = langchain_chat(responses_client, text_model_id)
 
     # Define state
     class State(TypedDict):
@@ -129,12 +125,7 @@ def test_langgraph_multi_node(responses_client, text_model_id):
 def test_langgraph_multi_turn(responses_client, text_model_id):
     """Test langgraph multi-turn with Responses."""
 
-    chat = langchain_chat(
-        base_url=str(responses_client.base_url),
-        model=text_model_id,
-        api_key=responses_client.api_key,
-        use_previous_response_id=True,
-    )
+    chat = langchain_chat(responses_client, text_model_id, use_previous_response_id=True)
 
     # Define state
     class State(TypedDict):
