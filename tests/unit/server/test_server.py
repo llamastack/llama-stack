@@ -25,7 +25,7 @@ class TestTranslateException:
 
         assert isinstance(result, HTTPException)
         assert result.status_code == 403
-        assert result.detail == "Permission denied: Insufficient permissions"
+        assert result.detail == "Insufficient permissions"
 
     def test_translate_access_denied_error_with_context(self):
         """Test that AccessDeniedError with context includes detailed information."""
@@ -61,7 +61,7 @@ class TestTranslateException:
 
         assert isinstance(result, HTTPException)
         assert result.status_code == 403
-        assert result.detail == "Permission denied: Permission denied"
+        assert result.detail == "Permission denied"
 
     def test_translate_value_error(self):
         """Test that ValueError is translated to 400 HTTP status."""
@@ -70,7 +70,7 @@ class TestTranslateException:
 
         assert isinstance(result, HTTPException)
         assert result.status_code == 400
-        assert result.detail == "Invalid value: Invalid input"
+        assert result.detail == "Invalid input"
 
     def test_translate_bad_request_error(self):
         """Test that BadRequestError is translated to 400 HTTP status."""
@@ -93,7 +93,7 @@ class TestTranslateException:
 
         assert isinstance(result, HTTPException)
         assert result.status_code == 401
-        assert result.detail == "Authentication required: Authentication required"
+        assert result.detail == "Authentication required"
 
     def test_translate_timeout_error(self):
         """Test that TimeoutError is translated to 504 HTTP status."""
@@ -102,7 +102,7 @@ class TestTranslateException:
 
         assert isinstance(result, HTTPException)
         assert result.status_code == 504
-        assert result.detail == "Operation timed out: Operation timed out"
+        assert result.detail == "Operation timed out"
 
     def test_translate_asyncio_timeout_error(self):
         """Test that asyncio.TimeoutError is translated to 504 HTTP status."""
@@ -111,7 +111,7 @@ class TestTranslateException:
 
         assert isinstance(result, HTTPException)
         assert result.status_code == 504
-        assert result.detail == "Operation timed out: "
+        assert result.detail == "Operation timed out"
 
     def test_translate_connection_error(self):
         """Test that ConnectionError is translated to 502 HTTP status."""
@@ -129,7 +129,7 @@ class TestTranslateException:
 
         assert isinstance(result, HTTPException)
         assert result.status_code == 501
-        assert result.detail == "Not implemented: Not implemented"
+        assert result.detail == "Not implemented"
 
     def test_translate_validation_error(self):
         """Test that ValidationError is translated to 400 HTTP status with proper format."""
@@ -180,20 +180,20 @@ class TestTranslateException:
         result1 = translate_exception(exc1)
         assert isinstance(result1, HTTPException)
         assert result1.status_code == 403
-        assert result1.detail == "Permission denied: Insufficient permissions"
+        assert result1.detail == "Insufficient permissions"
 
         # Test PermissionError (uses generic message)
         exc2 = PermissionError("No permission")
         result2 = translate_exception(exc2)
         assert isinstance(result2, HTTPException)
         assert result2.status_code == 403
-        assert result2.detail == "Permission denied: No permission"
+        assert result2.detail == "No permission"
 
         exc3 = PermissionError("Access denied")
         result3 = translate_exception(exc3)
         assert isinstance(result3, HTTPException)
         assert result3.status_code == 403
-        assert result3.detail == "Permission denied: Access denied"
+        assert result3.detail == "Access denied"
 
 
 class TestRemoveDisabledProviders:

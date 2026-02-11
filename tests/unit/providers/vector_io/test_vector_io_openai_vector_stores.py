@@ -228,7 +228,7 @@ async def test_register_and_unregister_vector_store(vector_io_adapter):
 
 
 async def test_query_unregistered_raises(vector_io_adapter, vector_provider):
-    with pytest.raises(ValueError):
+    with pytest.raises(VectorStoreNotFoundError):
         await vector_io_adapter.query_chunks(QueryChunksRequest(vector_store_id="no_such_db", query="test"))
 
 
@@ -270,7 +270,7 @@ async def test_insert_chunks_calls_underlying_index(vector_io_adapter):
 async def test_insert_chunks_missing_db_raises(vector_io_adapter):
     vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(VectorStoreNotFoundError):
         await vector_io_adapter.insert_chunks(InsertChunksRequest(vector_store_id="db_not_exist", chunks=[]))
 
 
@@ -423,7 +423,7 @@ async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter
 async def test_query_chunks_missing_db_raises(vector_io_adapter):
     vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(VectorStoreNotFoundError):
         await vector_io_adapter.query_chunks(QueryChunksRequest(vector_store_id="db_missing", query="q"))
 
 
