@@ -25,6 +25,20 @@
 #
 #    Note: Token owner must have publish access to llama-stack-client on npm
 #
+# 2. DOCKERHUB_USERNAME - DockerHub username
+#    Purpose: Authenticate with DockerHub to push distribution images
+#
+# 3. DOCKERHUB_TOKEN - DockerHub access token
+#    Purpose: Authenticate with DockerHub to push distribution images
+#
+#    How to create:
+#    - Log in to https://hub.docker.com/
+#    - Account Settings > Security > New Access Token
+#    - Select access permission: Read & Write
+#
+#    Add to repo: Settings > Secrets and variables > Actions > New repository secret
+#    Names: DOCKERHUB_USERNAME, DOCKERHUB_TOKEN
+#
 # =============================================================================
 # WORKFLOW INPUTS (workflow_dispatch)
 # =============================================================================
@@ -45,6 +59,11 @@
 #   - On release-X.Y.x branches or vX.Y.Z tags: uses matching release-X.Y.x
 #   - Otherwise: defaults to main
 #   - Explicit value overrides auto-detection
+#
+# docker_only: Skip package build/test/publish; only build and push Docker
+#   images. Use this to retry Docker publishing after a run where packages
+#   published successfully but image builds failed. Requires "version" to be
+#   set to the already-published version.
 #
 # =============================================================================
 
@@ -96,6 +115,11 @@ on:
         required: false
         type: string
         default: 'main'
+      docker_only:
+        description: 'Skip package build/publish; only build and push Docker images (requires version)'
+        required: false
+        type: boolean
+        default: false
 
 env:
   LC_ALL: en_US.UTF-8
@@ -151,6 +175,7 @@ jobs:
   # Build and validate release artifacts
   build-package:
     name: Build ${{ matrix.package }}
+    if: inputs.docker_only != true
     needs: compute-version
     permissions:
       contents: read
@@ -687,3 +712,111 @@ jobs:
             tar -tzf "$TARBALL" 2>/dev/null | head -20 || true
             echo "... (truncated)"
           fi
+
+  # ==========================================================================
+  # Docker Image Publishing
+  # ==========================================================================
+  # Builds and pushes distribution Docker images to DockerHub after packages
+  # are published to PyPI. CPU distros are built for linux/amd64 and
+  # linux/arm64. GPU distros are built for linux/amd64 only.
+  #
+  # Images are pushed to: llamastack/distribution-<distro>:<tag>
+  #   - Production (release or dry_run=off): tagged with VERSION and "latest"
+  #   - Test (test-pypi or schedule): tagged with "test-VERSION"
+  publish-docker-images:
+    name: Publish Docker ${{ matrix.distro }}
+    if: |
+      always() &&
+      needs.compute-version.result == 'success' &&
+      (needs.publish-packages.result == 'success' || needs.publish-packages.result == 'skipped') &&
+      github.repository_owner == 'llamastack' &&
+      (inputs.dry_run || 'test-pypi') != 'build-only' &&
+      (inputs.packages || 'all') != 'clients-only' && (
+        github.event_name == 'workflow_dispatch' ||
+        github.event.action == 'published' ||
+        github.event_name == 'schedule'
+      )
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    needs: [publish-packages, compute-version]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # CPU distributions — multi-arch (amd64 + arm64)
+          - distro: starter
+            platforms: linux/amd64,linux/arm64
+          - distro: postgres-demo
+            platforms: linux/amd64,linux/arm64
+          - distro: dell
+            platforms: linux/amd64,linux/arm64
+          # GPU distributions — amd64 only
+          - distro: meta-reference-gpu
+            platforms: linux/amd64
+          - distro: starter-gpu
+            platforms: linux/amd64
+
+    steps:
+      - name: Free disk space
+        run: |
+          echo "Disk space before cleanup:"
+          df -h
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          docker system prune -af --volumes
+          echo "Disk space after cleanup:"
+          df -h
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up QEMU for multi-arch builds
+        if: contains(matrix.platforms, 'arm64')
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine image tags and build args
+        id: meta
+        run: |
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          DISTRO="${{ matrix.distro }}"
+          IMAGE="llamastack/distribution-${DISTRO}"
+
+          DRY_RUN="${{ inputs.dry_run }}"
+          EVENT="${{ github.event_name }}"
+
+          if [ "$EVENT" == "release" ] || [ "$DRY_RUN" == "off" ]; then
+            echo "install_mode=pypi" >> $GITHUB_OUTPUT
+            echo "tags=${IMAGE}:${VERSION},${IMAGE}:latest" >> $GITHUB_OUTPUT
+            echo "version_arg=PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            echo "Publishing production image: ${IMAGE}:${VERSION} + latest"
+          else
+            echo "install_mode=test-pypi" >> $GITHUB_OUTPUT
+            echo "tags=${IMAGE}:test-${VERSION}" >> $GITHUB_OUTPUT
+            echo "version_arg=TEST_PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
+            echo "Publishing test image: ${IMAGE}:test-${VERSION}"
+          fi
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+        with:
+          context: .
+          file: containers/Containerfile
+          platforms: ${{ matrix.platforms }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          build-args: |
+            DISTRO_NAME=${{ matrix.distro }}
+            INSTALL_MODE=${{ steps.meta.outputs.install_mode }}
+            ${{ steps.meta.outputs.version_arg }}

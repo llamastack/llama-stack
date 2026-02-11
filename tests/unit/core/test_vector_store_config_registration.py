@@ -291,7 +291,7 @@ class TestOpenAIMetadataCreation:
             async def query_chunks(self, vector_store_id: str, query, **kwargs):
                 pass
 
-            async def delete_chunks(self, vector_store_id: str, chunk_ids):
+            async def delete_chunks(self, request):
                 pass
 
         class MockModelsAPI:

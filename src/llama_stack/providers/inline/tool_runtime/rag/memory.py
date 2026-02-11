@@ -24,7 +24,9 @@ from llama_stack_api import (
     InterleavedContent,
     InterleavedContentItem,
     ListToolDefsResponse,
+    OpenAIAttachFileRequest,
     OpenAIFilePurpose,
+    QueryChunksRequest,
     QueryChunksResponse,
     RAGDocument,
     RAGQueryConfig,
@@ -165,9 +167,11 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
                 try:
                     await self.vector_io_api.openai_attach_file_to_vector_store(
                         vector_store_id=vector_store_id,
-                        file_id=created_file.id,
-                        attributes=doc.metadata,
-                        chunking_strategy=chunking_strategy,
+                        request=OpenAIAttachFileRequest(
+                            file_id=created_file.id,
+                            attributes=doc.metadata,
+                            chunking_strategy=chunking_strategy,
+                        ),
                     )
                 except Exception as e:
                     log.error(
@@ -200,14 +204,16 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         )
         tasks = [
             self.vector_io_api.query_chunks(
-                vector_store_id=vector_store_id,
-                query=query,
-                params={
-                    "mode": query_config.mode,
-                    "max_chunks": query_config.max_chunks,
-                    "score_threshold": 0.0,
-                    "ranker": query_config.ranker,
-                },
+                request=QueryChunksRequest(
+                    vector_store_id=vector_store_id,
+                    query=query,
+                    params={
+                        "mode": query_config.mode,
+                        "max_chunks": query_config.max_chunks,
+                        "score_threshold": 0.0,
+                        "ranker": query_config.ranker,
+                    },
+                )
             )
             for vector_store_id in vector_store_ids
         ]

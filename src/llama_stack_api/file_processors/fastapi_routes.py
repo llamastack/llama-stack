@@ -22,7 +22,7 @@ from llama_stack_api.vector_io import VectorStoreChunkingStrategy
 from llama_stack_api.version import LLAMA_STACK_API_V1ALPHA
 
 from .api import FileProcessors
-from .models import ProcessFileResponse
+from .models import ProcessFileRequest, ProcessFileResponse
 
 
 def create_router(impl: FileProcessors) -> APIRouter:
@@ -102,12 +102,11 @@ def create_router(impl: FileProcessors) -> APIRouter:
             except ValidationError as e:
                 raise HTTPException(status_code=400, detail=f"Invalid chunking strategy: {str(e)}") from e
 
-        # Pass the parameters to the implementation with parsed chunking strategy
-        return await impl.process_file(
-            file=file,
+        request = ProcessFileRequest(
             file_id=file_id,
             options=options,
             chunking_strategy=parsed_chunking_strategy,
         )
+        return await impl.process_file(request, file)
 
     return router
