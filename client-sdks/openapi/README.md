@@ -4,19 +4,50 @@ Alternative SDK generation using [OpenAPI Generator](https://github.com/OpenAPIT
 
 ## Prerequisites
 
+### Java 11+
+openapi-generator-cli requires Java 11 or higher.
+
 ```bash
+# macOS
+brew install openjdk
+
+# Fedora/RHEL/CentOS
+sudo dnf install java-11-openjdk
+# For other Linux distributions, use your package manager (apt, yum, pacman, etc.).
+```
+
+### OpenAPI Generator CLI
+
+For more installation options, see: https://openapi-generator.tech/docs/installation
+
+```bash
+# macOS
+brew install openapi-generator
+
+# Linux (also possible for macOS)
 npm install -g @openapitools/openapi-generator-cli
-pip install ruamel.yaml
+```
+
+### Python Dependencies
+
+```bash
+uv pip install ruamel.yaml
 ```
 
 ## Usage
 
+**From the client-sdks/openapi directory:**
+
 ```bash
+cd client-sdks/openapi
+
 make openapi  # Generate OpenAPI spec from Stainless config
 make sdk      # Generate Python SDK
 make version  # Show version that will be used
 make clean    # Remove generated files
 ```
+
+The `make sdk` target will automatically check for required dependencies (openapi-generator-cli and java) before generating.
 
 ## How it Works
 
