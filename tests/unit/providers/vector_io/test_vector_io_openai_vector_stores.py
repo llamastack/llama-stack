@@ -15,8 +15,10 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_
 from llama_stack_api import (
     Chunk,
     EmbeddedChunk,
+    InsertChunksRequest,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorStore,
     VectorStoreChunkingStrategyAuto,
@@ -235,16 +237,18 @@ async def test_insert_chunks_calls_underlying_index(vector_io_adapter):
     vector_io_adapter.cache["db1"] = fake_index
 
     chunks = ["chunk1", "chunk2"]
-    await vector_io_adapter.insert_chunks("db1", chunks)
+    request = InsertChunksRequest(vector_store_id="db1", chunks=chunks)
+    await vector_io_adapter.insert_chunks(request)
 
-    fake_index.insert_chunks.assert_awaited_once_with(chunks)
+    fake_index.insert_chunks.assert_awaited_once_with(request)
 
 
 async def test_insert_chunks_missing_db_raises(vector_io_adapter):
     vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
+    request = InsertChunksRequest(vector_store_id="db_not_exist", chunks=[])
     with pytest.raises(ValueError):
-        await vector_io_adapter.insert_chunks("db_not_exist", [])
+        await vector_io_adapter.insert_chunks(request)
 
 
 async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
@@ -369,26 +373,20 @@ async def test_query_chunks_calls_underlying_index_and_returns(vector_io_adapter
     fake_index = AsyncMock(query_chunks=AsyncMock(return_value=expected))
     vector_io_adapter.cache["db1"] = fake_index
 
-    response = await vector_io_adapter.query_chunks("db1", "my_query", {"param": 1})
+    request = QueryChunksRequest(vector_store_id="db1", query="my_query", params={"param": 1})
+    response = await vector_io_adapter.query_chunks(request)
 
-    # Verify query_chunks was called with the expected arguments
-    # Handle both 2-parameter and 3-parameter signatures during transition
-    fake_index.query_chunks.assert_awaited_once()
-    call_args = fake_index.query_chunks.await_args[0]
-    assert call_args[0] == "my_query"  # query parameter
-    assert call_args[1] == {"param": 1}  # params parameter
-
-    # Some providers may not have filters parameter yet (transition period)
-    if len(call_args) >= 3:
-        assert call_args[2] is None  # filters parameter (None when not provided)
+    # Verify query_chunks was called with the expected request object
+    fake_index.query_chunks.assert_awaited_once_with(request)
     assert response is expected
 
 
 async def test_query_chunks_missing_db_raises(vector_io_adapter):
     vector_io_adapter._get_and_cache_vector_store_index = AsyncMock(return_value=None)
 
+    request = QueryChunksRequest(vector_store_id="db_missing", query="q", params=None)
     with pytest.raises(ValueError):
-        await vector_io_adapter.query_chunks("db_missing", "q", None)
+        await vector_io_adapter.query_chunks(request)
 
 
 async def test_save_openai_vector_store(vector_io_adapter):
