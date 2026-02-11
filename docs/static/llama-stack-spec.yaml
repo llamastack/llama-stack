@@ -10964,7 +10964,7 @@ components:
           - type: 'null'
           description: Controls how the service truncates input when it exceeds the model context window.
           title: ResponseTruncation
-      additionalProperties: false
+      additionalProperties: true
       type: object
       required:
       - input

@@ -165,6 +165,7 @@ class ChatCompletionContext(BaseModel):
     response_format: OpenAIResponseFormatParam
     tool_context: ToolContext | None
     tool_choice: OpenAIResponseInputToolChoice | None = None
+    extra_body: dict | None = None
     approval_requests: list[OpenAIResponseMCPApprovalRequest] = []
     approval_responses: dict[str, OpenAIResponseMCPApprovalResponse] = {}
 
@@ -178,6 +179,7 @@ class ChatCompletionContext(BaseModel):
         tool_context: ToolContext,
         inputs: list[OpenAIResponseInput] | str,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
+        extra_body: dict | None = None,
     ):
         super().__init__(
             model=model,
@@ -187,6 +189,7 @@ class ChatCompletionContext(BaseModel):
             response_format=response_format,
             tool_context=tool_context,
             tool_choice=tool_choice,
+            extra_body=extra_body,
         )
         if not isinstance(inputs, str):
             self.approval_requests = [input for input in inputs if input.type == "mcp_approval_request"]

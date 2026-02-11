@@ -56,10 +56,11 @@ class ResponseGuardrailSpec(BaseModel):
 ResponseGuardrail = str | ResponseGuardrailSpec
 
 
+# extra_body can be accessed via .model_extra
 class CreateResponseRequest(BaseModel):
     """Request model for creating a response."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="allow")
 
     input: str | list[OpenAIResponseInput] = Field(..., description="Input message(s) to create the response.")
     model: str = Field(..., description="The underlying LLM used for completions.")
