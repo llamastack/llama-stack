@@ -36,7 +36,7 @@
 import pytest
 
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper, ProviderModelEntry
-from llama_stack_api import Model
+from llama_stack_api import Model, UnsupportedModelError
 
 
 @pytest.fixture
@@ -123,7 +123,7 @@ async def test_lookup_unknown_model(helper: ModelRegistryHelper, unknown_model: 
 
 
 async def test_register_unknown_provider_model(helper: ModelRegistryHelper, unknown_model: Model) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(UnsupportedModelError):
         await helper.register_model(unknown_model)
 
 
