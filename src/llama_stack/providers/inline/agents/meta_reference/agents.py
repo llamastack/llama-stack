@@ -130,6 +130,7 @@ class MetaReferenceAgentsImpl(Agents):
             safety_identifier=request.safety_identifier,
             metadata=request.metadata,
             background=request.background,
+            truncation=request.truncation,
         )
         return result
 

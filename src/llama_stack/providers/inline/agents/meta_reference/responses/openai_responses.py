@@ -52,6 +52,7 @@ from llama_stack_api import (
     Prompts,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseTruncation,
     Safety,
     ToolGroups,
     ToolRuntime,
@@ -481,6 +482,7 @@ class OpenAIResponsesImpl:
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
         metadata: dict[str, str] | None = None,
+        truncation: ResponseTruncation | None = None,
     ):
         stream = bool(stream)
         background = bool(background)
@@ -572,6 +574,7 @@ class OpenAIResponsesImpl:
             safety_identifier=safety_identifier,
             metadata=metadata,
             include=include,
+            truncation=truncation,
         )
 
         if stream:
@@ -820,6 +823,7 @@ class OpenAIResponsesImpl:
         safety_identifier: str | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        truncation: ResponseTruncation | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -887,6 +891,7 @@ class OpenAIResponsesImpl:
                 metadata=metadata,
                 include=include,
                 store=store,
+                truncation=truncation,
             )
 
             final_response = None

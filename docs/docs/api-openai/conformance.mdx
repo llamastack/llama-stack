@@ -21,8 +21,8 @@ This documentation is auto-generated from the OpenAI API specification compariso
 | **Overall Conformance Score** | 83.0% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
-| **Schema/Type Issues** | 263 |
-| **Missing Properties** | 178 |
+| **Schema/Type Issues** | 264 |
+| **Missing Properties** | 177 |
 | **Total Issues to Fix** | 441 |
 
 ## Category Scores
@@ -39,7 +39,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
 | Chat | 83.1% | 402 | 18 | 50 |
-| Responses | 83.6% | 225 | 22 | 15 |
+| Responses | 83.6% | 225 | 23 | 14 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
 ## Missing Endpoints
@@ -1060,14 +1060,14 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 83.6% · **Issues:** 22 · **Missing:** 15
+**Score:** 83.6% · **Issues:** 23 · **Missing:** 14
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Missing Properties (15)</summary>
+<summary>Missing Properties (14)</summary>
 
 - `requestBody.content.application/json.properties.frequency_penalty`
 - `requestBody.content.application/json.properties.presence_penalty`
@@ -1076,7 +1076,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 - `requestBody.content.application/json.properties.stream_options`
 - `requestBody.content.application/json.properties.top_logprobs`
 - `requestBody.content.application/json.properties.top_p`
-- `requestBody.content.application/json.properties.truncation`
 - `requestBody.content.application/x-www-form-urlencoded`
 - `responses.200.content.application/json.properties.frequency_penalty`
 - `responses.200.content.application/json.properties.incomplete_details`
@@ -1088,7 +1087,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 </details>
 
 <details>
-<summary>Schema Issues (22)</summary>
+<summary>Schema Issues (23)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -1101,6 +1100,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `requestBody.content.application/json.properties.stream` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> False |
 | `requestBody.content.application/json.properties.text` | Union variants added: 1; Union variants removed: 1 |
 | `requestBody.content.application/json.properties.tool_choice` | Union variants added: 2; Union variants removed: 1 |
+| `requestBody.content.application/json.properties.truncation` | Union variants added: 2 |
 | `responses.200.content.application/json.properties.error` | Union variants added: 1; Union variants removed: 1 |
 | `responses.200.content.application/json.properties.metadata` | Union variants added: 2 |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['response'] |
