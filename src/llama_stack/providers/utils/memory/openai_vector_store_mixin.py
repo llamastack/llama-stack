@@ -1452,6 +1452,16 @@ class OpenAIVectorStoreMixin(ABC):
         if batch_info["vector_store_id"] != vector_store_id:
             raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
 
+        # Check if batch has expired (7 days from creation)
+        import time
+
+        current_time = int(time.time())
+        created_at = batch_info.get("created_at", current_time)
+        expires_at = batch_info.get("expires_at", created_at + (7 * 24 * 60 * 60))  # 7 days default
+
+        if current_time > expires_at:
+            raise ValueError(f"File batch {batch_id} has expired after 7 days from creation")
+
         return VectorStoreFileBatchObject(**batch_info)
 
     async def openai_list_files_in_vector_store_file_batch(
@@ -1546,8 +1556,8 @@ class OpenAIVectorStoreMixin(ABC):
         if batch_info["vector_store_id"] != vector_store_id:
             raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
 
-        if batch_info["status"] == "completed":
-            return VectorStoreFileBatchObject(**batch_info)
+        if batch_info["status"] in ["completed", "failed"]:
+            raise ValueError(f"Cannot cancel batch {batch_id} with status {batch_info['status']}")
 
         # Cancel the background task if running
         if batch_id in self._file_batch_tasks:

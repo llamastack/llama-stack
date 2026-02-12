@@ -227,17 +227,30 @@ async def test_register_and_unregister_vector_store(vector_io_adapter):
 
 
 async def test_query_unregistered_raises(vector_io_adapter, vector_provider):
-    fake_emb = np.zeros(8, dtype=np.float32)
+    request = QueryChunksRequest(vector_store_id="no_such_db", query="test query")
     with pytest.raises(ValueError):
-        await vector_io_adapter.query_chunks("no_such_db", fake_emb)
+        await vector_io_adapter.query_chunks(request)
 
 
-async def test_insert_chunks_calls_underlying_index(vector_io_adapter):
+async def test_insert_chunks_calls_underlying_index(vector_io_adapter, sample_chunks):
+    import numpy as np
+
+    from llama_stack_api import EmbeddedChunk
+
     fake_index = AsyncMock()
     vector_io_adapter.cache["db1"] = fake_index
 
-    chunks = ["chunk1", "chunk2"]
-    request = InsertChunksRequest(vector_store_id="db1", chunks=chunks)
+    # Convert Chunk objects to EmbeddedChunk objects
+    embedded_chunks = [
+        EmbeddedChunk(
+            **chunk.model_dump(),
+            embedding=np.random.rand(768).astype(np.float32).tolist(),  # Add mock embedding
+            embedding_model="test-model",  # Add required field
+            embedding_dimension=768,  # Add required field
+        )
+        for chunk in sample_chunks[:2]  # Take first 2 chunks from fixture
+    ]
+    request = InsertChunksRequest(vector_store_id="db1", chunks=embedded_chunks)
     await vector_io_adapter.insert_chunks(request)
 
     fake_index.insert_chunks.assert_awaited_once_with(request)
@@ -309,8 +322,24 @@ async def test_insert_chunks_with_missing_document_id(vector_io_adapter):
         ),
     ]
 
+    # Convert Chunk objects to EmbeddedChunk objects
+    import numpy as np
+
+    from llama_stack_api import EmbeddedChunk
+
+    embedded_chunks = [
+        EmbeddedChunk(
+            **chunk.model_dump(),
+            embedding=np.random.rand(768).astype(np.float32).tolist(),  # Add mock embedding
+            embedding_model="test-model",  # Add required field
+            embedding_dimension=768,  # Add required field
+        )
+        for chunk in chunks
+    ]
+
     # Should work without KeyError
-    await vector_io_adapter.insert_chunks("db1", chunks)
+    request = InsertChunksRequest(vector_store_id="db1", chunks=embedded_chunks)
+    await vector_io_adapter.insert_chunks(request)
     fake_index.insert_chunks.assert_awaited_once()
 
 
@@ -1154,7 +1183,7 @@ async def test_expired_batch_access_error(vector_io_adapter):
 
     # Try to access expired batch
     with pytest.raises(ValueError, match="File batch batch_expired has expired after 7 days from creation"):
-        vector_io_adapter._get_and_validate_batch("batch_expired", store_id)
+        await vector_io_adapter.openai_retrieve_vector_store_file_batch("batch_expired", store_id)
 
 
 async def test_max_concurrent_files_per_batch(vector_io_adapter):
@@ -1173,7 +1202,7 @@ async def test_max_concurrent_files_per_batch(vector_io_adapter):
 
     active_files = 0
 
-    async def mock_attach_file_with_delay(vector_store_id: str, file_id: str, **kwargs):
+    async def mock_attach_file_with_delay(vector_store_id: str, request, **kwargs):
         """Mock that tracks concurrency and blocks indefinitely to test concurrency limit."""
         nonlocal active_files
         active_files += 1
@@ -1358,11 +1387,16 @@ async def test_search_vector_store_ignores_rewrite_query(vector_io_adapter):
 
     # Test that rewrite_query=True doesn't cause an error (it's ignored at mixin level)
     # The mixin should process the search request without attempting to rewrite the query
+    from llama_stack_api import OpenAISearchVectorStoreRequest
+
+    request = OpenAISearchVectorStoreRequest(
+        query="test query",
+        max_num_results=5,
+        rewrite_query=True,  # This should be ignored at mixin level
+    )
     result = await vector_io_adapter.openai_search_vector_store(
         vector_store_id=vector_store_id,
-        query="test query",
-        rewrite_query=True,  # This should be ignored at mixin level
-        max_num_results=5,
+        request=request,
     )
 
     # Search should succeed - the mixin ignores rewrite_query and just does the search
