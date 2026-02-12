@@ -37,6 +37,13 @@ class ResponseItemInclude(StrEnum):
     reasoning_encrypted_content = "reasoning.encrypted_content"
 
 
+class ResponseTruncation(StrEnum):
+    """Controls how the service truncates input when it exceeds the model context window."""
+
+    auto = "auto"  # Let the service decide how to truncate
+    disabled = "disabled"  # Disable truncation; context over limit results in 400 error
+
+
 class ResponseGuardrailSpec(BaseModel):
     """Specification for a guardrail to apply during response generation."""
 
@@ -133,6 +140,10 @@ class CreateResponseRequest(BaseModel):
     metadata: dict[str, str] | None = Field(
         default=None,
         description="Dictionary of metadata key-value pairs to attach to the response.",
+    )
+    truncation: ResponseTruncation | None = Field(
+        default=None,
+        description="Controls how the service truncates input when it exceeds the model context window.",
     )
 
 

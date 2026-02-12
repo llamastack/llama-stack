@@ -6,8 +6,8 @@
 
 from unittest.mock import AsyncMock
 
-import pytest
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
+from starlette.testclient import TestClient
 
 from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
 from llama_stack_api import Agents, Api
@@ -80,7 +80,8 @@ async def test_create_response_returns_sse_streaming_response_when_impl_streams(
     assert response.media_type == "text/event-stream"
 
 
-async def test_create_response_maps_value_error_to_400_http_exception():
+def test_create_response_maps_value_error_to_400():
+    """_ExceptionTranslatingRoute converts ValueError to HTTP 400."""
     app = FastAPI()
     impl = AsyncMock(spec=Agents)
     impl.create_openai_response.side_effect = ValueError("not found")
@@ -89,19 +90,11 @@ async def test_create_response_maps_value_error_to_400_http_exception():
     assert router is not None
     app.include_router(router)
 
-    create = next(
-        r.endpoint
-        for r in router.routes
-        if getattr(r, "path", None) == "/v1/responses" and "POST" in getattr(r, "methods", set())
-    )
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post("/v1/responses", json={"input": "hi", "model": "test", "stream": False})
 
-    request = CreateResponseRequest(input="hi", model="test", stream=False)
-
-    with pytest.raises(HTTPException) as excinfo:
-        await create(request)
-
-    assert excinfo.value.status_code == 400
-    assert excinfo.value.detail == "not found"
+    assert resp.status_code == 400
+    assert resp.json()["detail"] == "not found"
 
 
 async def test_create_response_returns_json_for_non_streaming():
@@ -280,8 +273,8 @@ async def test_get_response_returns_response_object():
     impl.get_openai_response.assert_awaited_once()
 
 
-async def test_get_response_maps_value_error_to_400():
-    """Test GET /v1/responses/{response_id} maps ValueError to HTTP 400."""
+def test_get_response_maps_value_error_to_400():
+    """_ExceptionTranslatingRoute converts ValueError on GET to HTTP 400."""
     app = FastAPI()
     impl = AsyncMock(spec=Agents)
     impl.get_openai_response.side_effect = ValueError("Response not found")
@@ -290,19 +283,11 @@ async def test_get_response_maps_value_error_to_400():
     assert router is not None
     app.include_router(router)
 
-    get_endpoint = next(
-        r.endpoint
-        for r in router.routes
-        if getattr(r, "path", None) == "/v1/responses/{response_id}" and "GET" in getattr(r, "methods", set())
-    )
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.get("/v1/responses/nonexistent")
 
-    request = RetrieveResponseRequest(response_id="nonexistent")
-
-    with pytest.raises(HTTPException) as excinfo:
-        await get_endpoint(request)
-
-    assert excinfo.value.status_code == 400
-    assert "not found" in excinfo.value.detail.lower()
+    assert resp.status_code == 400
+    assert "not found" in resp.json()["detail"].lower()
 
 
 async def test_list_responses_returns_list():
@@ -393,8 +378,8 @@ async def test_delete_response_returns_confirmation():
     impl.delete_openai_response.assert_awaited_once()
 
 
-async def test_delete_response_maps_value_error_to_400():
-    """Test DELETE /v1/responses/{response_id} maps ValueError to HTTP 400."""
+def test_delete_response_maps_value_error_to_400():
+    """_ExceptionTranslatingRoute converts ValueError on DELETE to HTTP 400."""
     app = FastAPI()
     impl = AsyncMock(spec=Agents)
     impl.delete_openai_response.side_effect = ValueError("Response not found")
@@ -403,15 +388,115 @@ async def test_delete_response_maps_value_error_to_400():
     assert router is not None
     app.include_router(router)
 
-    delete_endpoint = next(
-        r.endpoint
-        for r in router.routes
-        if getattr(r, "path", None) == "/v1/responses/{response_id}" and "DELETE" in getattr(r, "methods", set())
-    )
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.delete("/v1/responses/nonexistent")
 
-    request = DeleteResponseRequest(response_id="nonexistent")
+    assert resp.status_code == 400
 
-    with pytest.raises(HTTPException) as excinfo:
-        await delete_endpoint(request)
 
-    assert excinfo.value.status_code == 400
+def test_request_validation_error_passes_through_route_class():
+    """RequestValidationError must NOT be caught by _ExceptionTranslatingRoute.
+
+    FastAPI has its own handler for RequestValidationError that returns a
+    422 response with detailed validation errors.  The route class must let
+    it pass through so that invalid request bodies (e.g. max_tool_calls=0)
+    get a proper 422 instead of a generic 500.
+    """
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+
+    # max_tool_calls has ge=1 constraint — sending 0 triggers RequestValidationError
+    resp = client.post("/v1/responses", json={"input": "hi", "model": "test", "stream": False, "max_tool_calls": 0})
+
+    assert resp.status_code == 422
+    body = resp.json()
+    assert "detail" in body
+    # FastAPI returns a list of validation errors
+    assert isinstance(body["detail"], list)
+    assert any("max_tool_calls" in str(err) for err in body["detail"])
+
+
+def test_exception_translating_route_converts_value_error_to_400():
+    """_ExceptionTranslatingRoute converts ValueError to HTTP 400.
+
+    ValueError (including pydantic.ValidationError) is translated to a
+    400 response by the route class.  This test exercises the route class
+    via TestClient (full ASGI stack) to verify end-to-end behavior.
+    """
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+    impl.create_openai_response.side_effect = ValueError("bad input value")
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post("/v1/responses", json={"input": "hi", "model": "test", "stream": False})
+
+    assert resp.status_code == 400
+    assert resp.headers["content-type"] == "application/json"
+    assert resp.json()["detail"] == "bad input value"
+
+
+def test_unknown_exception_propagates_to_global_handler():
+    """Unknown exception types (e.g. RuntimeError) propagate past the route class.
+
+    The route class only translates known types (ValueError, LlamaStackError).
+    Unknown exceptions are left for the server's global exception handler,
+    which uses the full translate_exception pipeline from llama_stack.core.
+    """
+    from llama_stack.core.server.server import global_exception_handler
+
+    app = FastAPI()
+    app.add_exception_handler(Exception, global_exception_handler)
+    impl = AsyncMock(spec=Agents)
+    impl.create_openai_response.side_effect = RuntimeError("something broke")
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+    resp = client.post("/v1/responses", json={"input": "hi", "model": "test", "stream": False})
+
+    assert resp.status_code == 500
+    # Global handler returns {"error": {"detail": ...}}
+    assert "error" in resp.json()
+
+
+def test_consecutive_value_errors_keep_connection_alive():
+    """Consecutive ValueError responses must not break the HTTP keep-alive connection.
+
+    The route class converts ValueError to HTTPException at the route level.
+    FastAPI's built-in handler processes HTTPException cleanly — no re-raise,
+    no transport close, no broken connections.
+
+    This test sends two error-producing requests on the **same** TestClient
+    (which reuses the underlying connection) and verifies both get proper
+    JSON error responses.
+    """
+    app = FastAPI()
+    impl = AsyncMock(spec=Agents)
+    impl.create_openai_response.side_effect = ValueError("bad request")
+
+    router = build_fastapi_router(Api.agents, impl)
+    assert router is not None
+    app.include_router(router)
+
+    client = TestClient(app, raise_server_exceptions=False)
+
+    # First request — triggers the error path
+    resp1 = client.post("/v1/responses", json={"input": "hi", "model": "test", "stream": False})
+    assert resp1.status_code == 400
+
+    # Second request on the same connection — must NOT get a connection error
+    resp2 = client.post("/v1/responses", json={"input": "hi", "model": "test", "stream": False})
+    assert resp2.status_code == 400
+    assert resp2.json()["detail"] == "bad request"
