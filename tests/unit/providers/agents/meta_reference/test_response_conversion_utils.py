@@ -80,10 +80,13 @@ class TestConvertChatChoiceToResponseMessage:
             index=0,
         )
 
-        with pytest.raises(ValueError) as exc_info:
-            await convert_chat_choice_to_response_message(choice)
+        result = await convert_chat_choice_to_response_message(choice)
 
-        assert "does not yet support output content type" in str(exc_info.value)
+        assert result.role == "assistant"
+        assert result.status == "completed"
+        assert len(result.content) == 1
+        assert isinstance(result.content[0], OpenAIResponseOutputMessageContentOutputText)
+        assert result.content[0].text == ""
 
 
 class TestConvertResponseContentToChatContent:
