@@ -78,7 +78,6 @@ class PyPDFFileProcessor:
             )
             content = content_response.body
 
-        # Parse PDF once
         pdf_bytes = io.BytesIO(content)
         reader = PdfReader(pdf_bytes)
 
