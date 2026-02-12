@@ -358,9 +358,16 @@ class VectorStoreChunkingStrategyContextualConfig(BaseModel):
         min_length=1,
         description="LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.",
     )
-    context_prompt: str | None = Field(
-        default=None,
-        description="Custom prompt template. Must contain {{WHOLE_DOCUMENT}} and {{CHUNK_CONTENT}} placeholders.",
+    context_prompt: str = Field(
+        default=(
+            "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
+            "Here is the chunk we want to situate within the whole document\n"
+            "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
+            "Please give a short succinct description to situate this chunk within the overall document "
+            "for the purposes of improving search retrieval of the chunk. "
+            "Answer only with the succinct description and nothing else."
+        ),
+        description="Prompt template for contextual retrieval. Must contain {{WHOLE_DOCUMENT}} and {{CHUNK_CONTENT}} placeholders.",
     )
     max_chunk_size_tokens: int = Field(
         default=700,
@@ -375,6 +382,7 @@ class VectorStoreChunkingStrategyContextualConfig(BaseModel):
     )
     timeout_seconds: int | None = Field(
         default=None,
+        ge=1,
         description="Timeout per LLM call in seconds. Falls back to config default if not provided.",
     )
     max_concurrency: int | None = Field(
@@ -388,11 +396,10 @@ class VectorStoreChunkingStrategyContextualConfig(BaseModel):
         if self.chunk_overlap_tokens >= self.max_chunk_size_tokens:
             raise ValueError("chunk_overlap_tokens must be less than max_chunk_size_tokens")
 
-        if self.context_prompt:
-            if "{{WHOLE_DOCUMENT}}" not in self.context_prompt:
-                raise ValueError("context_prompt must contain {{WHOLE_DOCUMENT}} placeholder")
-            if "{{CHUNK_CONTENT}}" not in self.context_prompt:
-                raise ValueError("context_prompt must contain {{CHUNK_CONTENT}} placeholder")
+        if "{{WHOLE_DOCUMENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{WHOLE_DOCUMENT}} placeholder")
+        if "{{CHUNK_CONTENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{CHUNK_CONTENT}} placeholder")
 
         return self
 

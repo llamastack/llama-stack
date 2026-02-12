@@ -87,6 +87,15 @@ def provider_with_model(inference_api):
     return provider
 
 
+@pytest.fixture(autouse=False)
+def fast_retry(monkeypatch):
+    """Eliminate backoff delays in retry tests."""
+    import llama_stack.providers.utils.memory.openai_vector_store_mixin as mod
+
+    monkeypatch.setattr(mod, "_RETRY_BASE_DELAY", 0.0)
+    monkeypatch.setattr(mod.random, "uniform", lambda _a, _b: 0.0)
+
+
 def create_mock_response(content):
     """Create a mock OpenAI chat completion response with the given content."""
     mock_response = MagicMock(spec=OpenAIChatCompletion)
@@ -105,19 +114,19 @@ def create_chunk(content, chunk_id="chunk_1", document_id="doc_1"):
     )
 
 
-async def test_apply_contextual_retrieval_success(inference_api, provider, strategy_config):
+async def test_execute_contextual_chunk_transformation_success(inference_api, provider, strategy_config):
     """Test that contextual retrieval successfully prepends context to chunk content."""
     inference_api.openai_chat_completion.return_value = create_mock_response("Situational context")
 
     chunks = [create_chunk("Original content")]
 
-    await provider._apply_contextual_retrieval(chunks, "Whole document", strategy_config)
+    await provider._execute_contextual_chunk_transformation(chunks, "Whole document", strategy_config)
 
     assert chunks[0].content == "Situational context\n\nOriginal content"
     inference_api.openai_chat_completion.assert_called_once()
 
 
-async def test_apply_contextual_retrieval_list_content(inference_api, provider, strategy_config):
+async def test_execute_contextual_chunk_transformation_list_content(inference_api, provider, strategy_config):
     """Test that list content (TextContentItem) is handled correctly."""
     inference_api.openai_chat_completion.return_value = create_mock_response("Situational context")
 
@@ -129,7 +138,7 @@ async def test_apply_contextual_retrieval_list_content(inference_api, provider, 
         )
     ]
 
-    await provider._apply_contextual_retrieval(chunks, "Whole document", strategy_config)
+    await provider._execute_contextual_chunk_transformation(chunks, "Whole document", strategy_config)
 
     content = chunks[0].content
     assert isinstance(content, list)
@@ -142,7 +151,7 @@ async def test_apply_contextual_retrieval_list_content(inference_api, provider, 
     assert item1.text == "Original content"
 
 
-async def test_apply_contextual_retrieval_partial_failure(inference_api, provider, strategy_config):
+async def test_execute_contextual_chunk_transformation_partial_failure(inference_api, provider, strategy_config):
     """Test that partial failures are handled gracefully (successful chunks are updated)."""
     inference_api.openai_chat_completion.side_effect = [
         create_mock_response("Context 1"),
@@ -154,23 +163,23 @@ async def test_apply_contextual_retrieval_partial_failure(inference_api, provide
         create_chunk("C2", chunk_id="2", document_id="d"),
     ]
 
-    await provider._apply_contextual_retrieval(chunks, "Doc", strategy_config)
+    await provider._execute_contextual_chunk_transformation(chunks, "Doc", strategy_config)
 
     assert chunks[0].content == "Context 1\n\nC1"
     assert chunks[1].content == "C2"  # Unchanged
 
 
-async def test_apply_contextual_retrieval_total_failure(inference_api, provider, strategy_config):
+async def test_execute_contextual_chunk_transformation_total_failure(inference_api, provider, strategy_config):
     """Test that total failure raises RuntimeError."""
     inference_api.openai_chat_completion.side_effect = Exception("Total failure")
 
     chunks = [create_chunk("C1", chunk_id="1", document_id="d")]
 
     with pytest.raises(RuntimeError, match="Failed to contextualize any chunks"):
-        await provider._apply_contextual_retrieval(chunks, "Doc", strategy_config)
+        await provider._execute_contextual_chunk_transformation(chunks, "Doc", strategy_config)
 
 
-async def test_apply_contextual_retrieval_custom_prompt(inference_api, provider):
+async def test_execute_contextual_chunk_transformation_custom_prompt(inference_api, provider):
     """Test that custom prompts are used correctly."""
     inference_api.openai_chat_completion.return_value = create_mock_response("Context")
 
@@ -180,14 +189,14 @@ async def test_apply_contextual_retrieval_custom_prompt(inference_api, provider)
         model_id="llama3.2", context_prompt=custom_prompt, max_chunk_size_tokens=700, chunk_overlap_tokens=400
     )
 
-    await provider._apply_contextual_retrieval(chunks, "DOC_BODY", config)
+    await provider._execute_contextual_chunk_transformation(chunks, "DOC_BODY", config)
 
     args, _ = inference_api.openai_chat_completion.call_args
     prompt = args[0].messages[0].content
     assert prompt == "Custom: DOC_BODY + C1"
 
 
-async def test_apply_contextual_retrieval_empty_response(inference_api, provider, strategy_config):
+async def test_execute_contextual_chunk_transformation_empty_response(inference_api, provider, strategy_config):
     """Test that empty choices are handled gracefully (log error and count as failure)."""
     mock_response = MagicMock(spec=OpenAIChatCompletion)
     mock_response.choices = []
@@ -196,10 +205,10 @@ async def test_apply_contextual_retrieval_empty_response(inference_api, provider
     chunks = [create_chunk("C1", chunk_id="1", document_id="d")]
 
     with pytest.raises(RuntimeError, match="Failed to contextualize any chunks"):
-        await provider._apply_contextual_retrieval(chunks, "Doc", strategy_config)
+        await provider._execute_contextual_chunk_transformation(chunks, "Doc", strategy_config)
 
 
-async def test_apply_contextual_retrieval_timeout(inference_api, provider):
+async def test_execute_contextual_chunk_transformation_timeout(inference_api, provider, fast_retry):
     """Test that timeout errors are handled correctly."""
 
     async def slow_llm(*_args, **_kwargs):
@@ -211,19 +220,39 @@ async def test_apply_contextual_retrieval_timeout(inference_api, provider):
     config = VectorStoreChunkingStrategyContextualConfig(model_id="llama3.2", timeout_seconds=1)
 
     with pytest.raises(RuntimeError, match="Failed to contextualize any chunks"):
-        await provider._apply_contextual_retrieval(chunks, "Doc", config)
+        await provider._execute_contextual_chunk_transformation(chunks, "Doc", config)
 
 
-async def test_apply_contextual_retrieval_empty_context_string(inference_api, provider):
-    """Test that empty context strings are handled (chunk unchanged, warning logged)."""
+async def test_execute_contextual_chunk_transformation_all_empty_context_raises(inference_api, provider):
+    """Test that all chunks returning empty context raises RuntimeError."""
     inference_api.openai_chat_completion.return_value = create_mock_response("")
 
     chunks = [create_chunk("Original", chunk_id="1", document_id="d")]
     config = VectorStoreChunkingStrategyContextualConfig(model_id="llama3.2")
 
-    await provider._apply_contextual_retrieval(chunks, "Doc", config)
+    with pytest.raises(RuntimeError, match="returned empty context for all"):
+        await provider._execute_contextual_chunk_transformation(chunks, "Doc", config)
 
     assert chunks[0].content == "Original"
+
+
+async def test_execute_contextual_chunk_transformation_partial_empty_context(inference_api, provider):
+    """Test that partial empty context logs warning but succeeds."""
+    inference_api.openai_chat_completion.side_effect = [
+        create_mock_response("Context 1"),
+        create_mock_response(""),
+    ]
+
+    chunks = [
+        create_chunk("C1", chunk_id="1", document_id="d"),
+        create_chunk("C2", chunk_id="2", document_id="d"),
+    ]
+    config = VectorStoreChunkingStrategyContextualConfig(model_id="llama3.2")
+
+    await provider._execute_contextual_chunk_transformation(chunks, "Doc", config)
+
+    assert chunks[0].content == "Context 1\n\nC1"
+    assert chunks[1].content == "C2"  # Unchanged
 
 
 def test_contextual_config_validation_model_id_required():
@@ -251,23 +280,74 @@ def test_contextual_config_validation_prompt_placeholders():
         )
 
 
-async def test_apply_contextual_retrieval_document_too_large(provider, strategy_config):
+async def test_execute_contextual_chunk_transformation_document_too_large(provider, strategy_config):
     """Test that documents exceeding max_document_tokens raise a clear error."""
     max_tokens = provider.vector_stores_config.contextual_retrieval_params.max_document_tokens
     huge_content = "x" * (max_tokens * 4 + 100)
     chunks = [create_chunk("Small chunk")]
 
     with pytest.raises(ValueError, match="Document size.*exceeds maximum allowed"):
-        await provider._apply_contextual_retrieval(chunks, huge_content, strategy_config)
+        await provider._execute_contextual_chunk_transformation(chunks, huge_content, strategy_config)
 
 
-async def test_apply_contextual_retrieval_model_fallback(inference_api, provider_with_model):
+async def test_execute_contextual_chunk_transformation_model_fallback(inference_api, provider_with_model):
     """Test that model_id falls back to contextual_retrieval_params.model."""
     inference_api.openai_chat_completion.return_value = create_mock_response("Context")
     chunks = [create_chunk("C1")]
     config = VectorStoreChunkingStrategyContextualConfig()  # No model_id
 
-    await provider_with_model._apply_contextual_retrieval(chunks, "Doc", config)
+    await provider_with_model._execute_contextual_chunk_transformation(chunks, "Doc", config)
 
     args, _ = inference_api.openai_chat_completion.call_args
     assert args[0].model == "meta/llama3.2"
+
+
+async def test_execute_contextual_chunk_transformation_retries_on_retriable_error(inference_api, provider, fast_retry):
+    """Test that retriable errors (e.g. rate limits) are retried with backoff."""
+    rate_limit_error = Exception("Rate limit exceeded")
+    rate_limit_error.response = MagicMock()
+    rate_limit_error.response.status_code = 429
+
+    inference_api.openai_chat_completion.side_effect = [
+        rate_limit_error,
+        create_mock_response("Context after retry"),
+    ]
+
+    chunks = [create_chunk("C1", chunk_id="1", document_id="d")]
+    config = VectorStoreChunkingStrategyContextualConfig(model_id="llama3.2")
+
+    await provider._execute_contextual_chunk_transformation(chunks, "Doc", config)
+
+    assert chunks[0].content == "Context after retry\n\nC1"
+    assert inference_api.openai_chat_completion.call_count == 2
+
+
+async def test_execute_contextual_chunk_transformation_no_retry_on_non_retriable(inference_api, provider):
+    """Test that non-retriable errors fail immediately without retry."""
+    inference_api.openai_chat_completion.side_effect = ValueError("Bad request")
+
+    chunks = [create_chunk("C1", chunk_id="1", document_id="d")]
+    config = VectorStoreChunkingStrategyContextualConfig(model_id="llama3.2")
+
+    with pytest.raises(RuntimeError, match="Failed to contextualize any chunks"):
+        await provider._execute_contextual_chunk_transformation(chunks, "Doc", config)
+
+    assert inference_api.openai_chat_completion.call_count == 1
+
+
+async def test_execute_contextual_chunk_transformation_retry_exhaustion(inference_api, provider, fast_retry):
+    """Test that exhausted retries result in failure."""
+    rate_limit_error = Exception("Rate limit exceeded")
+    rate_limit_error.response = MagicMock()
+    rate_limit_error.response.status_code = 429
+
+    inference_api.openai_chat_completion.side_effect = [rate_limit_error] * 5
+
+    chunks = [create_chunk("C1", chunk_id="1", document_id="d")]
+    config = VectorStoreChunkingStrategyContextualConfig(model_id="llama3.2")
+
+    with pytest.raises(RuntimeError, match="Failed to contextualize any chunks"):
+        await provider._execute_contextual_chunk_transformation(chunks, "Doc", config)
+
+    # 1 initial + 3 retries = 4 attempts
+    assert inference_api.openai_chat_completion.call_count == 4

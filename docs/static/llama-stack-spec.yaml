@@ -12109,10 +12109,18 @@ components:
           - type: 'null'
           description: LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.
         context_prompt:
-          anyOf:
-          - type: string
-          - type: 'null'
-          description: Custom prompt template. Must contain {{WHOLE_DOCUMENT}} and {{CHUNK_CONTENT}} placeholders.
+          type: string
+          title: Context Prompt
+          description: Prompt template for contextual retrieval. Must contain {{WHOLE_DOCUMENT}} and {{CHUNK_CONTENT}} placeholders.
+          default: |-
+            <document>
+            {{WHOLE_DOCUMENT}}
+            </document>
+            Here is the chunk we want to situate within the whole document
+            <chunk>
+            {{CHUNK_CONTENT}}
+            </chunk>
+            Please give a short succinct description to situate this chunk within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct description and nothing else.
         max_chunk_size_tokens:
           type: integer
           maximum: 4096.0
@@ -12129,6 +12137,7 @@ components:
         timeout_seconds:
           anyOf:
           - type: integer
+            minimum: 1.0
           - type: 'null'
           description: Timeout per LLM call in seconds. Falls back to config default if not provided.
         max_concurrency:
