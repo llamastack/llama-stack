@@ -6,6 +6,7 @@
 from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
+import aiohttp
 import httpx
 from pydantic import ConfigDict
 
@@ -14,11 +15,18 @@ from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
     HealthResponse,
     HealthStatus,
+    Model,
+    ModelType,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
+    RerankData,
+    RerankResponse,
     ToolChoice,
 )
+from llama_stack_api.inference import RerankRequest
 
 from .config import VLLMInferenceAdapterConfig
 
@@ -105,3 +113,77 @@ class VLLMInferenceAdapter(OpenAIMixin):
             params.tool_choice = ToolChoice.none.value
 
         return await super().openai_chat_completion(params)
+
+    def construct_model_from_identifier(self, identifier: str) -> Model:
+        if (
+            "rerank" in identifier.lower()
+        ):  # TODO: guessing that any model with "rerank" in its name is a reranking model is pretty hacky
+            return Model(
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=identifier,
+                identifier=identifier,
+                model_type=ModelType.rerank,
+            )
+        return super().construct_model_from_identifier(identifier)
+
+    async def rerank(
+        self,
+        request: RerankRequest,
+    ) -> RerankResponse:
+        def format_item(
+            item: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
+        ) -> str:
+            if isinstance(item, str):
+                return item
+            elif isinstance(item, OpenAIChatCompletionContentPartTextParam):
+                return item.text
+            elif isinstance(item, OpenAIChatCompletionContentPartImageParam):
+                raise ValueError("vLLM rerank API does not support images")
+            else:
+                raise ValueError("Unsupported item type for reranking")
+
+        payload: dict[str, str | int | float | list[str]] = {
+            "model": request.model,
+            "query": format_item(request.query),
+            "documents": [format_item(item) for item in request.items],
+        }
+        if request.max_num_results is not None:
+            payload["top_n"] = request.max_num_results
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                # vLLM does not support /v1/rerank ->
+                #   "To indicate that the rerank API is not part of the standard OpenAI API,
+                #    we have located it at `/rerank`. Please update your client accordingly.
+                #    (Note: Conforms to JinaAI rerank API)" - vLLM 0.15.1
+                endpoint = self.get_base_url().replace("/v1", "") + "/rerank"  # TODO: find a better solution
+                async with session.post(endpoint, headers={}, json=payload) as response:
+                    if response.status != 200:
+                        response_text = await response.text()
+                        raise RuntimeError(
+                            f"vLLM rerank API request failed with status {response.status}: {response_text}"
+                        )
+
+                    def convert_result_item(item: dict) -> RerankData:
+                        if "index" not in item or "relevance_score" not in item:
+                            raise RuntimeError(
+                                "vLLM rerank API response missing required fields 'index' or 'relevance_score'"
+                            )
+
+                        try:
+                            return RerankData(index=int(item["index"]), relevance_score=float(item["relevance_score"]))
+                        except (TypeError, ValueError) as e:
+                            raise RuntimeError(f"Invalid data types in vLLM rerank API response: {e}") from e
+
+                    result = await response.json()
+
+                    if "results" not in result:
+                        raise RuntimeError("vLLM rerank API response missing 'results' field")
+
+                    rerank_data = [convert_result_item(item) for item in result.get("results")]
+                    rerank_data.sort(key=lambda entry: entry.relevance_score, reverse=True)
+
+                    return RerankResponse(data=rerank_data)
+
+        except aiohttp.ClientError as e:
+            raise ConnectionError(f"Failed to connect to vLLM rerank API at {endpoint}: {e}") from e
