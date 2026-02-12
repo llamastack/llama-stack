@@ -129,6 +129,7 @@ class MetaReferenceAgentsImpl(Agents):
             reasoning=request.reasoning,
             safety_identifier=request.safety_identifier,
             metadata=request.metadata,
+            truncation=request.truncation,
         )
         return result
 

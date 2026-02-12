@@ -12601,6 +12601,13 @@ components:
             type: object
           - type: 'null'
           description: Dictionary of metadata key-value pairs to attach to the response.
+        truncation:
+          anyOf:
+          - $ref: '#/components/schemas/ResponseTruncation'
+            title: ResponseTruncation
+          - type: 'null'
+          description: Controls how the service truncates input when it exceeds the model context window.
+          title: ResponseTruncation
       additionalProperties: false
       type: object
       required:
@@ -13631,6 +13638,13 @@ components:
       - reasoning.encrypted_content
       title: ResponseItemInclude
       description: Specify additional output data to include in the model response.
+    ResponseTruncation:
+      type: string
+      enum:
+      - auto
+      - disabled
+      title: ResponseTruncation
+      description: Controls how the service truncates input when it exceeds the model context window.
     RunEvalBodyRequest:
       properties:
         benchmark_config:
