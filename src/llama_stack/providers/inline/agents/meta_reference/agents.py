@@ -113,6 +113,7 @@ class MetaReferenceAgentsImpl(Agents):
             prompt=request.prompt,
             instructions=request.instructions,
             previous_response_id=request.previous_response_id,
+            prompt_cache_key=request.prompt_cache_key,
             conversation=request.conversation,
             store=request.store,
             stream=request.stream,

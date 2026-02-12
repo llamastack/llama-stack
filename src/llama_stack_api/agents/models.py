@@ -75,6 +75,11 @@ class CreateResponseRequest(BaseModel):
         default=None,
         description="Optional ID of a previous response to continue from.",
     )
+    prompt_cache_key: str | None = Field(
+        default=None,
+        max_length=64,
+        description="A key to use when reading from or writing to the prompt cache.",
+    )
     conversation: str | None = Field(
         default=None,
         description="Optional ID of a conversation to add the response to.",
