@@ -710,6 +710,7 @@ class OpenAIResponseObject(BaseModel):
     :param output: List of generated output items (messages, tool calls, etc.)
     :param parallel_tool_calls: (Optional) Whether to allow more than one function tool call generated per turn.
     :param previous_response_id: (Optional) ID of the previous response in a conversation
+    :param prompt_cache_key: (Optional) A key to use when reading from or writing to the prompt cache
     :param prompt: (Optional) Reference to a prompt template and its variables.
     :param status: Current status of the response generation
     :param temperature: (Optional) Sampling temperature used for generation
@@ -734,6 +735,7 @@ class OpenAIResponseObject(BaseModel):
     output: Sequence[OpenAIResponseOutput]
     parallel_tool_calls: bool | None = True
     previous_response_id: str | None = None
+    prompt_cache_key: str | None = None
     prompt: OpenAIResponsePrompt | None = None
     status: str
     temperature: float | None = None
