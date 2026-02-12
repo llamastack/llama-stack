@@ -33,6 +33,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageFileSearchToolCall,
     OpenAIResponseOutputMessageFileSearchToolCallResults,
     OpenAIResponseOutputMessageWebSearchToolCall,
+    OpenAISearchVectorStoreRequest,
     OpenAIToolMessageParam,
     TextContentItem,
     ToolGroups,
@@ -135,11 +136,13 @@ class ToolExecutor:
             try:
                 search_response = await self.vector_io_api.openai_search_vector_store(
                     vector_store_id=vector_store_id,
-                    query=query,
-                    filters=response_file_search_tool.filters,
-                    max_num_results=response_file_search_tool.max_num_results,
-                    ranking_options=response_file_search_tool.ranking_options,
-                    rewrite_query=False,
+                    request=OpenAISearchVectorStoreRequest(
+                        query=query,
+                        filters=response_file_search_tool.filters,
+                        max_num_results=response_file_search_tool.max_num_results,
+                        ranking_options=response_file_search_tool.ranking_options,
+                        rewrite_query=False,
+                    ),
                 )
                 return search_response.data
             except Exception as e:

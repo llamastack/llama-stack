@@ -57,6 +57,7 @@ def test_vector_io_router_search_vector_store_passes_body_fields() -> None:
     impl.openai_search_vector_store.assert_awaited_once()
     _, kwargs = impl.openai_search_vector_store.call_args
     assert kwargs["vector_store_id"] == "vs_123"
-    assert kwargs["query"] == "hello"
-    assert kwargs["rewrite_query"] is True
-    assert kwargs["search_mode"] == "vector"
+    request = kwargs["request"]
+    assert request.query == "hello"
+    assert request.rewrite_query is True
+    assert request.search_mode == "vector"
