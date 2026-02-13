@@ -52,11 +52,6 @@ TARGETS = {
         "publish": {"pypi": True},
         "project_name": "llama_stack_client",
     },
-    "kotlin": {
-        "reverse_domain": "com.llama_stack_client.api",
-        "production_repo": None,
-        "publish": {"maven": False},
-    },
     "go": {
         "package_name": "llama-stack-client",
         "production_repo": "llamastack/llama-stack-client-go",
