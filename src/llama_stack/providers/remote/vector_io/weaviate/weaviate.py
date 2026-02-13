@@ -23,13 +23,14 @@ from llama_stack.providers.utils.memory.vector_store import (
     VectorStoreWithIndex,
 )
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
-from llama_stack.providers.utils.vector_io.filters import Filter as LlamaStackFilter
 from llama_stack.providers.utils.vector_io.vector_utils import sanitize_collection_name
 from llama_stack_api import (
+    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
