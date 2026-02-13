@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 83.0,
-      "issues": 264,
-      "missing_properties": 177,
-      "total_problems": 441,
+      "score": 83.5,
+      "issues": 273,
+      "missing_properties": 156,
+      "total_problems": 429,
       "total_properties": 2598
     }
   },
@@ -706,9 +706,9 @@
       ]
     },
     "Chat": {
-      "score": 83.1,
-      "issues": 18,
-      "missing_properties": 50,
+      "score": 86.1,
+      "issues": 27,
+      "missing_properties": 29,
       "total_properties": 402,
       "endpoints": [
         {
@@ -718,13 +718,6 @@
               "method": "GET",
               "missing_properties": [
                 "GET.parameters.query.metadata",
-                "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.annotations",
-                "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.audio",
-                "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.content",
-                "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call",
-                "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.refusal",
-                "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.role",
-                "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls",
                 "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens",
                 "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details",
                 "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens",
@@ -740,10 +733,33 @@
                   ]
                 },
                 {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message",
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call.properties.arguments",
                   "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 5"
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call.properties.name",
+                  "details": [
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.role",
+                  "details": [
+                    "Enum removed: ['assistant']",
+                    "Default changed: None -> assistant"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls.items",
+                  "details": [
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
                   ]
                 },
                 {
@@ -767,19 +783,12 @@
                   ]
                 }
               ],
-              "missing_count": 13,
-              "issues_count": 5
+              "missing_count": 6,
+              "issues_count": 8
             },
             {
               "method": "POST",
               "missing_properties": [
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.annotations",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.audio",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.content",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.refusal",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.role",
-                "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls",
                 "POST.responses.200.content.application/json.properties.service_tier",
                 "POST.responses.200.content.application/json.properties.system_fingerprint",
                 "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens",
@@ -806,10 +815,33 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message",
+                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.arguments",
                   "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 5"
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.name",
+                  "details": [
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.role",
+                  "details": [
+                    "Enum removed: ['assistant']",
+                    "Default changed: None -> assistant"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items",
+                  "details": [
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
                   ]
                 },
                 {
@@ -865,8 +897,8 @@
                   ]
                 }
               ],
-              "missing_count": 23,
-              "issues_count": 9
+              "missing_count": 16,
+              "issues_count": 12
             }
           ]
         },
@@ -876,13 +908,6 @@
             {
               "method": "GET",
               "missing_properties": [
-                "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.annotations",
-                "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.audio",
-                "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.content",
-                "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call",
-                "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.refusal",
-                "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.role",
-                "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls",
                 "GET.responses.200.content.application/json.properties.service_tier",
                 "GET.responses.200.content.application/json.properties.system_fingerprint",
                 "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens",
@@ -900,10 +925,33 @@
                   ]
                 },
                 {
-                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message",
+                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.arguments",
                   "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 5"
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.name",
+                  "details": [
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.role",
+                  "details": [
+                    "Enum removed: ['assistant']",
+                    "Default changed: None -> assistant"
+                  ]
+                },
+                {
+                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items",
+                  "details": [
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
                   ]
                 },
                 {
@@ -921,8 +969,8 @@
                   ]
                 }
               ],
-              "missing_count": 14,
-              "issues_count": 4
+              "missing_count": 7,
+              "issues_count": 7
             }
           ]
         }

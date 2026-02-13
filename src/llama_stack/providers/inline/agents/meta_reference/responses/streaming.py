@@ -27,6 +27,7 @@ from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolChoice,
     OpenAIChatCompletionToolChoiceAllowedTools,
@@ -436,11 +437,7 @@ class StreamingResponseOrchestrator:
 
                 # Handle choices with no tool calls
                 for choice in current_response.choices:
-                    has_tool_calls = (
-                        isinstance(choice.message, OpenAIAssistantMessageParam)
-                        and choice.message.tool_calls
-                        and self.ctx.response_tools
-                    )
+                    has_tool_calls = choice.message.tool_calls and self.ctx.response_tools
                     if not has_tool_calls:
                         output_messages.append(
                             await convert_chat_choice_to_response_message(
@@ -522,7 +519,13 @@ class StreamingResponseOrchestrator:
         next_turn_messages = messages.copy()
 
         for choice in current_response.choices:
-            next_turn_messages.append(choice.message)
+            # Convert response message to input message format for multi-turn
+            next_turn_messages.append(
+                OpenAIAssistantMessageParam(
+                    content=choice.message.content,
+                    tool_calls=choice.message.tool_calls,
+                )
+            )
             logger.debug(f"Choice message content: {choice.message.content}")
             logger.debug(f"Choice message tool_calls: {choice.message.tool_calls}")
 
@@ -1047,7 +1050,7 @@ class StreamingResponseOrchestrator:
         else:
             tool_calls = None
 
-        assistant_message = OpenAIAssistantMessageParam(
+        assistant_message = OpenAIChatCompletionResponseMessage(
             content=result.content_text,
             tool_calls=tool_calls,
         )

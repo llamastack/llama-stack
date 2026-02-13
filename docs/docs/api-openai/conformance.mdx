@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 83.0% |
+| **Overall Conformance Score** | 83.5% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
-| **Schema/Type Issues** | 264 |
-| **Missing Properties** | 177 |
-| **Total Issues to Fix** | 441 |
+| **Schema/Type Issues** | 273 |
+| **Missing Properties** | 156 |
+| **Total Issues to Fix** | 429 |
 
 ## Category Scores
 
@@ -38,8 +38,8 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
-| Chat | 83.1% | 402 | 18 | 50 |
 | Responses | 83.6% | 225 | 23 | 14 |
+| Chat | 86.1% | 402 | 27 | 29 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
 ## Missing Endpoints
@@ -934,130 +934,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 </details>
 
-### Chat
-
-**Score:** 83.1% · **Issues:** 18 · **Missing:** 50
-
-#### `/chat/completions`
-
-**GET**
-
-<details>
-<summary>Missing Properties (13)</summary>
-
-- `parameters.query.metadata`
-- `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.annotations`
-- `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.audio`
-- `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.content`
-- `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call`
-- `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.refusal`
-- `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.role`
-- `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens_details`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.total_tokens`
-
-</details>
-
-<details>
-<summary>Schema Issues (5)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.logprobs` | Union variants added: 1; Union variants removed: 1 |
-| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message` | Type removed: ['object']; Union variants added: 5 |
-| `responses.200.content.application/json.properties.data.items.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
-| `responses.200.content.application/json.properties.data.items.properties.usage` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['list'] |
-
-</details>
-
-**POST**
-
-<details>
-<summary>Missing Properties (23)</summary>
-
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.annotations`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.audio`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.content`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.refusal`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.role`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls`
-- `responses.200.content.application/json.properties.service_tier`
-- `responses.200.content.application/json.properties.system_fingerprint`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details`
-- `responses.200.content.application/json.properties.usage.properties.total_tokens`
-- `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content`
-- `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal`
-- `responses.200.content.text/event-stream.properties.service_tier`
-- `responses.200.content.text/event-stream.properties.system_fingerprint`
-- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens`
-- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details`
-- `responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens`
-- `responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details`
-- `responses.200.content.text/event-stream.properties.usage.properties.total_tokens`
-
-</details>
-
-<details>
-<summary>Schema Issues (9)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.choices.items.properties.logprobs` | Union variants added: 1; Union variants removed: 1 |
-| `responses.200.content.application/json.properties.choices.items.properties.message` | Type removed: ['object']; Union variants added: 5 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
-| `responses.200.content.application/json.properties.usage` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.role` | Enum removed: ['developer', 'system', 'user', 'assistant', 'tool']; Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
-| `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs` | Type removed: ['object']; Union variants added: 2 |
-| `responses.200.content.text/event-stream.properties.object` | Enum removed: ['chat.completion.chunk']; Default changed: None -> chat.completion.chunk |
-| `responses.200.content.text/event-stream.properties.usage` | Type removed: ['object']; Union variants added: 2 |
-
-</details>
-
-#### `/chat/completions/{completion_id}`
-
-**GET**
-
-<details>
-<summary>Missing Properties (14)</summary>
-
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.annotations`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.audio`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.content`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.refusal`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.role`
-- `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls`
-- `responses.200.content.application/json.properties.service_tier`
-- `responses.200.content.application/json.properties.system_fingerprint`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details`
-- `responses.200.content.application/json.properties.usage.properties.total_tokens`
-
-</details>
-
-<details>
-<summary>Schema Issues (4)</summary>
-
-| Property | Issues |
-|----------|--------|
-| `responses.200.content.application/json.properties.choices.items.properties.logprobs` | Union variants added: 1; Union variants removed: 1 |
-| `responses.200.content.application/json.properties.choices.items.properties.message` | Type removed: ['object']; Union variants added: 5 |
-| `responses.200.content.application/json.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
-| `responses.200.content.application/json.properties.usage` | Type removed: ['object']; Union variants added: 2 |
-
-</details>
-
 ### Responses
 
 **Score:** 83.6% · **Issues:** 23 · **Missing:** 14
@@ -1114,6 +990,118 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.top_p` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.truncation` | Union variants added: 2 |
 | `responses.200.content.application/json.properties.usage` | Union variants added: 1; Union variants removed: 1 |
+
+</details>
+
+### Chat
+
+**Score:** 86.1% · **Issues:** 27 · **Missing:** 29
+
+#### `/chat/completions`
+
+**GET**
+
+<details>
+<summary>Missing Properties (6)</summary>
+
+- `parameters.query.metadata`
+- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens`
+- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details`
+- `responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens`
+- `responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens_details`
+- `responses.200.content.application/json.properties.data.items.properties.usage.properties.total_tokens`
+
+</details>
+
+<details>
+<summary>Schema Issues (8)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.logprobs` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call.properties.arguments` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.role` | Enum removed: ['assistant']; Default changed: None -> assistant |
+| `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls.items` | Type added: ['object']; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.data.items.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
+| `responses.200.content.application/json.properties.data.items.properties.usage` | Type removed: ['object']; Union variants added: 2 |
+| `responses.200.content.application/json.properties.object` | Enum removed: ['list'] |
+
+</details>
+
+**POST**
+
+<details>
+<summary>Missing Properties (16)</summary>
+
+- `responses.200.content.application/json.properties.service_tier`
+- `responses.200.content.application/json.properties.system_fingerprint`
+- `responses.200.content.application/json.properties.usage.properties.completion_tokens`
+- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details`
+- `responses.200.content.application/json.properties.usage.properties.prompt_tokens`
+- `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details`
+- `responses.200.content.application/json.properties.usage.properties.total_tokens`
+- `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content`
+- `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal`
+- `responses.200.content.text/event-stream.properties.service_tier`
+- `responses.200.content.text/event-stream.properties.system_fingerprint`
+- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens`
+- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details`
+- `responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens`
+- `responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details`
+- `responses.200.content.text/event-stream.properties.usage.properties.total_tokens`
+
+</details>
+
+<details>
+<summary>Schema Issues (12)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.choices.items.properties.logprobs` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.arguments` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.role` | Enum removed: ['assistant']; Default changed: None -> assistant |
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items` | Type added: ['object']; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
+| `responses.200.content.application/json.properties.usage` | Type removed: ['object']; Union variants added: 2 |
+| `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.role` | Enum removed: ['developer', 'system', 'user', 'assistant', 'tool']; Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs` | Type removed: ['object']; Union variants added: 2 |
+| `responses.200.content.text/event-stream.properties.object` | Enum removed: ['chat.completion.chunk']; Default changed: None -> chat.completion.chunk |
+| `responses.200.content.text/event-stream.properties.usage` | Type removed: ['object']; Union variants added: 2 |
+
+</details>
+
+#### `/chat/completions/{completion_id}`
+
+**GET**
+
+<details>
+<summary>Missing Properties (7)</summary>
+
+- `responses.200.content.application/json.properties.service_tier`
+- `responses.200.content.application/json.properties.system_fingerprint`
+- `responses.200.content.application/json.properties.usage.properties.completion_tokens`
+- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details`
+- `responses.200.content.application/json.properties.usage.properties.prompt_tokens`
+- `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details`
+- `responses.200.content.application/json.properties.usage.properties.total_tokens`
+
+</details>
+
+<details>
+<summary>Schema Issues (7)</summary>
+
+| Property | Issues |
+|----------|--------|
+| `responses.200.content.application/json.properties.choices.items.properties.logprobs` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.arguments` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.name` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.role` | Enum removed: ['assistant']; Default changed: None -> assistant |
+| `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items` | Type added: ['object']; Union variants removed: 2 |
+| `responses.200.content.application/json.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
+| `responses.200.content.application/json.properties.usage` | Type removed: ['object']; Union variants added: 2 |
 
 </details>
 
