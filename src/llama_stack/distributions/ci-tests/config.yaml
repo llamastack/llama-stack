@@ -5,6 +5,7 @@ apis:
 - batches
 - datasetio
 - eval
+- file_processors
 - files
 - inference
 - post_training
@@ -168,6 +169,9 @@ providers:
       metadata_store:
         table_name: files_metadata
         backend: sql_default
+  file_processors:
+  - provider_id: pypdf
+    provider_type: inline::pypdf
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard

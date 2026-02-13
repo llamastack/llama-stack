@@ -28,6 +28,7 @@ from llama_stack_api import (
     ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -277,8 +278,11 @@ class MilvusVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         config: RemoteMilvusVectorIOConfig | InlineMilvusVectorIOConfig,
         inference_api: Inference,
         files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
     ) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.cache = {}
         self.client = None

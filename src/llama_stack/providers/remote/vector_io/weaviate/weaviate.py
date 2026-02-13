@@ -27,6 +27,7 @@ from llama_stack_api import (
     ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     Inference,
     InsertChunksRequest,
@@ -264,8 +265,16 @@ class WeaviateIndex(EmbeddingIndex):
 
 
 class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProviderData, VectorStoresProtocolPrivate):
-    def __init__(self, config: WeaviateVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+    def __init__(
+        self,
+        config: WeaviateVectorIOConfig,
+        inference_api: Inference,
+        files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
+    ) -> None:
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.client_cache = {}
         self.cache = {}

@@ -87,9 +87,9 @@
               "function_call": null,
               "tool_calls": [
                 {
-                  "id": "call_m5909pw6",
+                  "id": "call_xgsp1dxh",
                   "function": {
-                    "arguments": "{\"flight\":\"{\\\"date\\\": \\\"2024-01-01\\\", \\\"from\\\": \\\"SFO\\\", \\\"to\\\": \\\"JFK\\\"}\",\"passenger\":\"{\\\"age\\\": 30, \\\"name\\\": \\\"John Doe\\\"}\"}",
+                    "arguments": "{\"flight\":\"SFO-JFK\",\"passenger\":\"John Doe\"}",
                     "name": "book_flight"
                   },
                   "type": "function",
@@ -105,9 +105,9 @@
         "service_tier": null,
         "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 59,
-          "prompt_tokens": 227,
-          "total_tokens": 286,
+          "completion_tokens": 28,
+          "prompt_tokens": 169,
+          "total_tokens": 197,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
         }

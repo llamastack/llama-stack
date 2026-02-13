@@ -92,7 +92,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_gltkcao3",
+                    "id": "call_f6s1b0r3",
                     "function": {
                       "arguments": "{\"url\":\"world\"}",
                       "name": "greet_everyone"
@@ -127,7 +127,7 @@
                 "role": "assistant",
                 "tool_calls": null
               },
-              "finish_reason": "tool_calls",
+              "finish_reason": "stop",
               "index": 0,
               "logprobs": null
             }
@@ -152,8 +152,8 @@
           "system_fingerprint": "fp_ollama",
           "usage": {
             "completion_tokens": 19,
-            "prompt_tokens": 267,
-            "total_tokens": 286,
+            "prompt_tokens": 278,
+            "total_tokens": 297,
             "completion_tokens_details": null,
             "prompt_tokens_details": null
           }

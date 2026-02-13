@@ -51,7 +51,7 @@
                 "tool_calls": [
                   {
                     "index": 0,
-                    "id": "call_kzri9mtm",
+                    "id": "call_0ezwgaem",
                     "function": {
                       "arguments": "{\"city\":\"Tokyo\"}",
                       "name": "get_weather"
@@ -86,7 +86,7 @@
                 "role": "assistant",
                 "tool_calls": null
               },
-              "finish_reason": "tool_calls",
+              "finish_reason": "stop",
               "index": 0,
               "logprobs": null
             }

@@ -3,6 +3,7 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+import base64
 import io
 import re
 import time
@@ -11,8 +12,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
+from urllib.parse import unquote
 
 import chardet
+import httpx
 import numpy as np
 import tiktoken
 from numpy.typing import NDArray
@@ -25,6 +28,7 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
+    URL,
     Chunk,
     ChunkForDeletion,
     ChunkMetadata,
@@ -34,6 +38,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksRequest,
     QueryChunksResponse,
+    RAGDocument,
     VectorStore,
 )
 
@@ -54,7 +59,6 @@ RERANKER_TYPE_NORMALIZED = "normalized"
 def parse_pdf(data: bytes) -> str:
     # For PDF and DOC/DOCX files, we can't reliably convert to string
     pdf_bytes = io.BytesIO(data)
-
     pdf_reader = PdfReader(pdf_bytes)
     return "\n".join([page.extract_text() for page in pdf_reader.pages])
 
@@ -107,6 +111,51 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
     else:
         log.error("Could not extract content from data_url properly.")
         return ""
+
+
+def content_from_data(data_url: str) -> str:
+    """Parse a data URL and return its content as a string."""
+    parts = parse_data_url(data_url)
+    data = parts["data"]
+    if parts["is_base64"]:
+        data = base64.b64decode(data)
+    else:
+        data = unquote(data)
+        encoding = parts["encoding"] or "utf-8"
+        data = data.encode(encoding)
+
+    return content_from_data_and_mime_type(data, parts["mimetype"], parts.get("encoding", None))
+
+
+async def content_from_doc(doc: RAGDocument) -> str:
+    """Legacy function for backward compatibility. Use version with file processor when possible."""
+    if isinstance(doc.content, URL):
+        uri = doc.content.uri
+        if uri.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        if uri.startswith("data:"):
+            return content_from_data(uri)
+        async with httpx.AsyncClient() as client:
+            r = await client.get(uri)
+        if doc.mime_type == "application/pdf":
+            return parse_pdf(r.content)
+        return str(r.text)
+    elif isinstance(doc.content, str):
+        if doc.content.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        pattern = re.compile("^(https?://|data:)")
+        if pattern.match(doc.content):
+            if doc.content.startswith("data:"):
+                return content_from_data(doc.content)
+            async with httpx.AsyncClient() as client:
+                r = await client.get(doc.content)
+            if doc.mime_type == "application/pdf":
+                return parse_pdf(r.content)
+            return str(r.text)
+        return doc.content
+    else:
+        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
+        return interleaved_content_as_str(doc.content)
 
 
 def make_overlapped_chunks(
@@ -234,6 +283,7 @@ class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Inference
+    file_processor_api: Any = None
     vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(
@@ -327,3 +377,7 @@ class VectorStoreWithIndex:
             )
         else:
             return await self.index.query_vector(query_vector, k, score_threshold)
+
+    # Note: File processing for vector stores now happens at the
+    # openai_attach_file_to_vector_store level using file_id.
+    # This VectorStoreWithIndex class focuses on chunk operations.
