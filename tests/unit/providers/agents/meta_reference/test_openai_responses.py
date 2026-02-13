@@ -2227,6 +2227,7 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("top_p", 0.9, "top_p", 0.9),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service(
@@ -2718,3 +2719,85 @@ async def test_prompt_cache_key_propagated_to_chat_completions(
     # Verify the prompt_cache_key is propagated to the chat completion params
     assert hasattr(params, "prompt_cache_key"), "params should have prompt_cache_key attribute"
     assert params.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_top_p_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that top_p parameter is properly handled in non-streaming responses."""
+    input_text = "Say hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    top_p_value = 0.9
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        top_p=top_p_value,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the top_p
+    assert result.top_p == top_p_value
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the top_p was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.top_p == top_p_value
+
+    # Verify the top_p was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.top_p == top_p_value
+
+
+async def test_create_openai_response_with_top_p_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that top_p parameter is properly handled in streaming responses."""
+    input_text = "Explain machine learning"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    top_p_value = 0.8
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        top_p=top_p_value,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify top_p is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.top_p == top_p_value
+
+    # Verify top_p is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.top_p == top_p_value
+
+    # Verify the top_p was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.top_p == top_p_value
+
+    # Verify the top_p was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.top_p == top_p_value

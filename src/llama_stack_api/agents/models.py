@@ -98,6 +98,12 @@ class CreateResponseRequest(BaseModel):
         le=2.0,
         description="Sampling temperature.",
     )
+    top_p: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus sampling parameter.",
+    )
     text: OpenAIResponseText | None = Field(
         default=None,
         description="Configuration for text response generation.",

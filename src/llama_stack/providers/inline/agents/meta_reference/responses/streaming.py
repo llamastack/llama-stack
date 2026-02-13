@@ -249,6 +249,7 @@ class StreamingResponseOrchestrator:
             status=status,
             output=self._clone_outputs(outputs),
             text=self.text,
+            top_p=self.ctx.top_p,
             tools=self.ctx.available_tools(),
             tool_choice=self.ctx.tool_choice,
             error=error,
@@ -391,6 +392,7 @@ class StreamingResponseOrchestrator:
                     tool_choice=chat_tool_choice,
                     stream=True,
                     temperature=self.ctx.temperature,
+                    top_p=self.ctx.top_p,
                     response_format=response_format,
                     stream_options={
                         "include_usage": True,

@@ -12422,6 +12422,13 @@ components:
             minimum: 0.0
           - type: 'null'
           description: Sampling temperature.
+        top_p:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          description: Nucleus sampling parameter.
         text:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseText'

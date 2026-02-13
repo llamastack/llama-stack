@@ -118,6 +118,7 @@ class MetaReferenceAgentsImpl(Agents):
             store=request.store,
             stream=request.stream,
             temperature=request.temperature,
+            top_p=request.top_p,
             text=request.text,
             tool_choice=request.tool_choice,
             tools=request.tools,
