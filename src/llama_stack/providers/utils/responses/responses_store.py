@@ -216,6 +216,51 @@ class ResponsesStore:
         await self.sql_store.delete(self.reference.table_name, where={"id": response_id})
         return OpenAIDeleteResponseObject(id=response_id)
 
+    async def update_response_object(
+        self,
+        response_object: OpenAIResponseObject,
+        input: list[OpenAIResponseInput] | None = None,
+    ) -> None:
+        """Update an existing response object in storage.
+
+        :param response_object: The updated response object.
+        :param input: Optional input items (if None, existing input is preserved).
+        """
+        if not self.sql_store:
+            raise ValueError("Responses store is not initialized")
+
+        # Fetch existing data to preserve input/messages if not provided
+        existing_row = await self.sql_store.fetch_one(
+            self.reference.table_name,
+            where={"id": response_object.id},
+        )
+
+        if not existing_row:
+            logger.critical(f"Response with id {response_object.id} not found during update - this should never happen")
+            raise ValueError(f"Response with id {response_object.id} not found")
+
+        existing_data = existing_row["response_object"]
+
+        data = response_object.model_dump()
+        # Preserve existing input if not provided
+        if input is not None:
+            data["input"] = [input_item.model_dump() for input_item in input]
+        else:
+            data["input"] = existing_data.get("input", [])
+        # Messages are stored in the blob by store/upsert_response_object.
+        # Preserve them here so updating status doesn't clobber them.
+        data["messages"] = existing_data.get("messages", [])
+
+        await self.sql_store.update(
+            self.reference.table_name,
+            data={
+                "created_at": data["created_at"],
+                "model": data["model"],
+                "response_object": data,
+            },
+            where={"id": response_object.id},
+        )
+
     async def list_response_input_items(
         self,
         response_id: str,
