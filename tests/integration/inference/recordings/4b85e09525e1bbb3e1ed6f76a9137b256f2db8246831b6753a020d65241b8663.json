@@ -1,0 +1,56 @@
+{
+  "test_id": "tests/integration/inference/test_rerank.py::test_rerank_semantic_correctness[rerank=vllm/Qwen/Qwen3-Reranker-0.6B-What are good learning habits? -items2-Good learning habits include reading daily and taking notes. ]",
+  "request": {
+    "test_id": "tests/integration/inference/test_rerank.py::test_rerank_semantic_correctness[rerank=vllm/Qwen/Qwen3-Reranker-0.6B-What are good learning habits? -items2-Good learning habits include reading daily and taking notes. ]",
+    "url": "http://localhost:8000/rerank",
+    "method": "POST",
+    "payload": {
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "query": "What are good learning habits? ",
+      "documents": [
+        "Cooking pasta is a fun activity. ",
+        "Plants need water and sunlight. ",
+        "Good learning habits include reading daily and taking notes. "
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "id": "rerank-a413a0d220a88682",
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "usage": {
+        "prompt_tokens": 52,
+        "total_tokens": 52
+      },
+      "results": [
+        {
+          "index": 2,
+          "document": {
+            "text": "Good learning habits include reading daily and taking notes. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.9299815893173218
+        },
+        {
+          "index": 0,
+          "document": {
+            "text": "Cooking pasta is a fun activity. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.9156653881072998
+        },
+        {
+          "index": 1,
+          "document": {
+            "text": "Plants need water and sunlight. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.9141358137130737
+        }
+      ]
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
