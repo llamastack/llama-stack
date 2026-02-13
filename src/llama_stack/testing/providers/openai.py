@@ -1,0 +1,44 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
+"""OpenAI provider exception handling for test recording/replay."""
+
+import httpx
+from openai import (
+    APIStatusError,
+    AuthenticationError,
+    BadRequestError,
+    ConflictError,
+    InternalServerError,
+    NotFoundError,
+    PermissionDeniedError,
+    RateLimitError,
+    UnprocessableEntityError,
+)
+
+# Provider configuration
+NAME = "openai"
+MODULE_PREFIX = "openai"
+
+# Map status codes to OpenAI error classes
+_ERROR_BY_STATUS: dict[int, type[APIStatusError]] = {
+    400: BadRequestError,
+    401: AuthenticationError,
+    403: PermissionDeniedError,
+    404: NotFoundError,
+    409: ConflictError,
+    422: UnprocessableEntityError,
+    429: RateLimitError,
+    500: InternalServerError,
+}
+
+
+def create_error(status_code: int, body: dict | None, message: str) -> APIStatusError:
+    """Reconstruct an OpenAI API error from recorded data."""
+    error_class = _ERROR_BY_STATUS.get(status_code, APIStatusError)
+    request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
+    response = httpx.Response(status_code, json=body or {}, request=request)
+    return error_class(message=message, response=response, body=body)
