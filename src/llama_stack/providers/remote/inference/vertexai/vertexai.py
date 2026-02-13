@@ -8,6 +8,7 @@ from collections.abc import Iterable
 
 import google.auth.transport.requests
 from google.auth import default
+from google.auth.exceptions import DefaultCredentialsError, GoogleAuthError, RefreshError, TransportError
 
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
@@ -31,9 +32,29 @@ class VertexAIInferenceAdapter(OpenAIMixin):
             credentials, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
             credentials.refresh(google.auth.transport.requests.Request())
             return str(credentials.token)
-        except Exception:
-            # If we can't get credentials, return empty string to let the env work with ADC directly
-            return ""
+        except DefaultCredentialsError as e:
+            raise ValueError(
+                "Vertex AI authentication failed: No credentials found. "
+                "Please configure Application Default Credentials (ADC) by setting the GOOGLE_APPLICATION_CREDENTIALS "
+                "environment variable to point to a service account JSON file, or run 'gcloud auth application-default login' "
+                "to use your user credentials. See https://cloud.google.com/docs/authentication/application-default-credentials"
+            ) from e
+        except RefreshError as e:
+            raise ValueError(
+                "Vertex AI authentication failed: Token refresh failed. "
+                "This may indicate that your service account credentials are invalid, expired, or lack necessary permissions. "
+                "Please verify that your service account has the 'Vertex AI User' role and that the credentials have not been revoked. "
+                "If using a service account key file, ensure it has not expired."
+            ) from e
+        except TransportError as e:
+            raise ValueError(
+                "Vertex AI authentication failed: Network connectivity issue. "
+                "Unable to reach Google's authentication servers. "
+                "Please check your network connection, firewall settings, and proxy configuration. "
+                "Ensure that your environment can reach https://oauth2.googleapis.com and https://www.googleapis.com"
+            ) from e
+        except GoogleAuthError as e:
+            raise ValueError(f"Vertex AI authentication failed: {e}") from e
 
     def get_base_url(self) -> str:
         """
