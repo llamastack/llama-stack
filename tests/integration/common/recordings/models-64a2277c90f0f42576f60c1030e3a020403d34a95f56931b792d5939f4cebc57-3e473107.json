@@ -1,0 +1,89 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/models",
+    "headers": {},
+    "body": {},
+    "endpoint": "/v1/models",
+    "model": ""
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "llama3.2:3b",
+          "created": 1761785702,
+          "object": "model",
+          "owned_by": "library"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "llama3.2:3b-instruct-fp16",
+          "created": 1741640125,
+          "object": "model",
+          "owned_by": "library"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "instructlab/merlinite-7b-lab:latest",
+          "created": 1716931506,
+          "object": "model",
+          "owned_by": "instructlab"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "instructlab/granite-7b-lab:latest",
+          "created": 1716907581,
+          "object": "model",
+          "owned_by": "instructlab"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "instructlab/granite-7b-lab-gguf:latest",
+          "created": 1716403158,
+          "object": "model",
+          "owned_by": "instructlab"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "instructlab/granite-7b-lab-GGUF:latest",
+          "created": 1716402787,
+          "object": "model",
+          "owned_by": "instructlab"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "llama3:latest",
+          "created": 1716312013,
+          "object": "model",
+          "owned_by": "library"
+        }
+      },
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "mistral:latest",
+          "created": 1716233802,
+          "object": "model",
+          "owned_by": "library"
+        }
+      }
+    ],
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

@@ -12,7 +12,27 @@
     "body": {
       "__type__": "ollama._types.ProcessResponse",
       "__data__": {
-        "models": []
+        "models": [
+          {
+            "model": "llama3.2:3b-instruct-fp16",
+            "name": "llama3.2:3b-instruct-fp16",
+            "digest": "195a8c01d91ec3cb1e0aad4624a51f2602c51fa7d96110f8ab5a20c84081804d",
+            "expires_at": "2026-02-13T16:30:31.652793-05:00",
+            "size": 8044877824,
+            "size_vram": 0,
+            "details": {
+              "parent_model": "",
+              "format": "gguf",
+              "family": "llama",
+              "families": [
+                "llama"
+              ],
+              "parameter_size": "3.2B",
+              "quantization_level": "F16"
+            },
+            "context_length": null
+          }
+        ]
       }
     },
     "is_streaming": false
