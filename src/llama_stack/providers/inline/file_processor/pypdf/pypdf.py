@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import io
+import mimetypes
 import time
 import uuid
 from typing import Any
@@ -31,7 +32,7 @@ SINGLE_CHUNK_WINDOW_TOKENS = 1_000_000
 
 
 class PyPDFFileProcessor:
-    """PyPDF-based file processor for PDF documents."""
+    """File processor that handles PDF documents via PyPDF and plain text files."""
 
     def __init__(self, config: PyPDFFileProcessorConfig, files_api) -> None:
         self.config = config
@@ -44,7 +45,7 @@ class PyPDFFileProcessor:
         options: dict[str, Any] | None = None,
         chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> ProcessFileResponse:
-        """Process a PDF file and return chunks."""
+        """Process a file and return chunks. Supports PDF and plain text files."""
 
         # Validate input
         if not file and not file_id:
@@ -54,7 +55,7 @@ class PyPDFFileProcessor:
 
         start_time = time.time()
 
-        # Get PDF content
+        # Get file content
         if file:
             # Read from uploaded file (TODO: read in chunks to avoid reading more than max_file_size_bytes)
             content = await file.read()
@@ -74,6 +75,22 @@ class PyPDFFileProcessor:
             )
             content = content_response.body
 
+        # Determine file type and process accordingly
+        mime_type, _ = mimetypes.guess_type(filename)
+        if mime_type == "application/pdf" or filename.lower().endswith(".pdf"):
+            return self._process_pdf(content, filename, file_id, chunking_strategy, start_time)
+        else:
+            return self._process_text(content, filename, file_id, chunking_strategy, start_time)
+
+    def _process_pdf(
+        self,
+        content: bytes,
+        filename: str,
+        file_id: str | None,
+        chunking_strategy: VectorStoreChunkingStrategy | None,
+        start_time: float,
+    ) -> ProcessFileResponse:
+        """Process a PDF file."""
         pdf_bytes = io.BytesIO(content)
         reader = PdfReader(pdf_bytes)
 
@@ -121,6 +138,39 @@ class PyPDFFileProcessor:
             return ProcessFileResponse(chunks=[], metadata=response_metadata)
 
         # Create chunks for non-empty text
+        chunks = self._create_chunks(text_content, document_id, chunking_strategy, document_metadata)
+
+        return ProcessFileResponse(chunks=chunks, metadata=response_metadata)
+
+    def _process_text(
+        self,
+        content: bytes,
+        filename: str,
+        file_id: str | None,
+        chunking_strategy: VectorStoreChunkingStrategy | None,
+        start_time: float,
+    ) -> ProcessFileResponse:
+        """Process a plain text file."""
+        text_content = content.decode("utf-8")
+
+        document_id = str(uuid.uuid4())
+
+        document_metadata: dict[str, Any] = {"filename": filename}
+        if file_id:
+            document_metadata["file_id"] = file_id
+
+        processing_time_ms = int((time.time() - start_time) * 1000)
+
+        response_metadata = {
+            "processor": "text",
+            "processing_time_ms": processing_time_ms,
+            "extraction_method": "text",
+            "file_size_bytes": len(content),
+        }
+
+        if not text_content or not text_content.strip():
+            return ProcessFileResponse(chunks=[], metadata=response_metadata)
+
         chunks = self._create_chunks(text_content, document_id, chunking_strategy, document_metadata)
 
         return ProcessFileResponse(chunks=chunks, metadata=response_metadata)
