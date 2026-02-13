@@ -33,7 +33,7 @@ SINGLE_CHUNK_WINDOW_TOKENS = 1_000_000
 class PyPDFFileProcessor:
     """PyPDF-based file processor for PDF documents."""
 
-    def __init__(self, config: PyPDFFileProcessorConfig, files_api=None) -> None:
+    def __init__(self, config: PyPDFFileProcessorConfig, files_api) -> None:
         self.config = config
         self.files_api = files_api
 
@@ -56,7 +56,7 @@ class PyPDFFileProcessor:
 
         # Get PDF content
         if file:
-            # Read from uploaded file
+            # Read from uploaded file (TODO: read in chunks to avoid reading more than max_file_size_bytes)
             content = await file.read()
             if len(content) > self.config.max_file_size_bytes:
                 raise ValueError(
@@ -65,10 +65,6 @@ class PyPDFFileProcessor:
             filename = file.filename or f"{uuid.uuid4()}.pdf"
         elif file_id:
             # Get file from file storage using Files API
-            if not self.files_api:
-                raise ValueError("Files API not available - cannot process file_id")
-
-            # Get file metadata
             file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
             filename = file_info.filename
 
@@ -140,7 +136,7 @@ class PyPDFFileProcessor:
             except Exception as e:
                 failed_pages.append(f"page {page_num + 1}: {e}")
                 continue
-            if page_text and page_text.strip():
+            if page_text:
                 text_parts.append(page_text)
 
         return "\n".join(text_parts), failed_pages

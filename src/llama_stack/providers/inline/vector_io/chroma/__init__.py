@@ -14,6 +14,6 @@ from .config import ChromaVectorIOConfig
 async def get_provider_impl(config: ChromaVectorIOConfig, deps: dict[Api, Any]):
     from llama_stack.providers.remote.vector_io.chroma.chroma import ChromaVectorIOAdapter
 
-    impl = ChromaVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
+    impl = ChromaVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files), deps.get(Api.file_processors))
     await impl.initialize()
     return impl

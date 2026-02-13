@@ -18,7 +18,7 @@ from .pypdf import PyPDFFileProcessor
 class PyPDFFileProcessorAdapter:
     """Adapter for PyPDF file processor."""
 
-    def __init__(self, config: PyPDFFileProcessorConfig, files_api=None) -> None:
+    def __init__(self, config: PyPDFFileProcessorConfig, files_api) -> None:
         self.config = config
         self.files_api = files_api
         self.processor = PyPDFFileProcessor(config, files_api)

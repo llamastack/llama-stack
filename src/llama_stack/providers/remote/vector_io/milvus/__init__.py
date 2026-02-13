@@ -13,6 +13,6 @@ async def get_adapter_impl(config: MilvusVectorIOConfig, deps: dict[Api, Provide
     from .milvus import MilvusVectorIOAdapter
 
     assert isinstance(config, MilvusVectorIOConfig), f"Unexpected config type: {type(config)}"
-    impl = MilvusVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files))
+    impl = MilvusVectorIOAdapter(config, deps[Api.inference], deps.get(Api.files), deps.get(Api.file_processors))
     await impl.initialize()
     return impl

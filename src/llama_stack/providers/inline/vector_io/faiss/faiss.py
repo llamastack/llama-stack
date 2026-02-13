@@ -23,6 +23,7 @@ from llama_stack_api import (
     ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
+    FileProcessors,
     Files,
     HealthResponse,
     HealthStatus,
@@ -197,8 +198,16 @@ class FaissIndex(EmbeddingIndex):
 
 
 class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
-    def __init__(self, config: FaissVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
-        super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
+    def __init__(
+        self,
+        config: FaissVectorIOConfig,
+        inference_api: Inference,
+        files_api: Files | None,
+        file_processor_api: FileProcessors | None = None,
+    ) -> None:
+        super().__init__(
+            inference_api=inference_api, files_api=files_api, kvstore=None, file_processor_api=file_processor_api
+        )
         self.config = config
         self.cache: dict[str, VectorStoreWithIndex] = {}
 

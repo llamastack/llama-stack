@@ -1,0 +1,1233 @@
+INFO     2026-02-11 22:12:38,848 llama_stack.cli.stack.run:147 cli: Using stack configuration:
+         /workspace/src/llama_stack/distributions/ci-tests/config.yaml
+INFO     2026-02-11 22:12:38,882 llama_stack.cli.stack.run:206 cli: HTTPS enabled with certificates:
+           Key: None
+           Cert: None
+INFO     2026-02-11 22:12:38,883 llama_stack.cli.stack.run:208 cli: Listening on ['::', '0.0.0.0']:8322
+INFO     2026-02-11 22:12:38,965 llama_stack.core.server.server:553 core::server: Stack Configuration:
+INFO     2026-02-11 22:12:38,973 llama_stack.core.server.server:556 core::server: apis:
+         - agents
+         - batches
+         - datasetio
+         - eval
+         - file_processors
+         - files
+         - inference
+         - post_training
+         - safety
+         - scoring
+         - tool_runtime
+         - vector_io
+         connectors: []
+         distro_name: ci-tests
+         providers:
+           agents:
+           - config:
+               persistence:
+                 agent_state:
+                   backend: kv_default
+                   namespace: agents
+                 responses:
+                   backend: sql_default
+                   max_write_queue_size: 10000
+                   num_writers: 4
+                   table_name: responses
+             provider_id: meta-reference
+             provider_type: inline::meta-reference
+           batches:
+           - config:
+               kvstore:
+                 backend: kv_default
+                 namespace: batches
+             provider_id: reference
+             provider_type: inline::reference
+           datasetio:
+           - config:
+               kvstore:
+                 backend: kv_default
+                 namespace: datasetio::huggingface
+             provider_id: huggingface
+             provider_type: remote::huggingface
+           - config:
+               kvstore:
+                 backend: kv_default
+                 namespace: datasetio::localfs
+             provider_id: localfs
+             provider_type: inline::localfs
+           eval:
+           - config:
+               kvstore:
+                 backend: kv_default
+                 namespace: eval
+             provider_id: meta-reference
+             provider_type: inline::meta-reference
+           file_processors:
+           - config: {}
+             provider_id: pypdf
+             provider_type: inline::pypdf
+           files:
+           - config:
+               metadata_store:
+                 backend: sql_default
+                 table_name: files_metadata
+               storage_dir: /root/.llama/distributions/ci-tests/files
+             provider_id: meta-reference-files
+             provider_type: inline::localfs
+           inference:
+           - config:
+               api_key: '********'
+               base_url: https://api.fireworks.ai/inference/v1
+             provider_id: fireworks
+             provider_type: remote::fireworks
+           - config:
+               api_key: '********'
+               base_url: https://api.together.xyz/v1
+             provider_id: together
+             provider_type: remote::together
+           - config:
+               api_key: '********'
+               region_name: us-east-2
+             provider_id: bedrock
+             provider_type: remote::bedrock
+           - config:
+               api_key: '********'
+               base_url: https://api.openai.com/v1
+             provider_id: openai
+             provider_type: remote::openai
+           - config:
+               api_key: '********'
+             provider_id: anthropic
+             provider_type: remote::anthropic
+           - config:
+               api_key: '********'
+             provider_id: gemini
+             provider_type: remote::gemini
+           - config:
+               api_key: '********'
+               base_url: https://api.groq.com/openai/v1
+             provider_id: groq
+             provider_type: remote::groq
+           - config:
+               api_key: '********'
+               base_url: https://api.sambanova.ai/v1
+             provider_id: sambanova
+             provider_type: remote::sambanova
+           - config: {}
+             provider_id: sentence-transformers
+             provider_type: inline::sentence-transformers
+           post_training:
+           - config:
+               checkpoint_format: meta
+             provider_id: torchtune-cpu
+             provider_type: inline::torchtune-cpu
+           safety:
+           - config:
+               excluded_categories: []
+             provider_id: llama-guard
+             provider_type: inline::llama-guard
+           - config: {}
+             provider_id: code-scanner
+             provider_type: inline::code-scanner
+           scoring:
+           - config: {}
+             provider_id: basic
+             provider_type: inline::basic
+           - config: {}
+             provider_id: llm-as-judge
+             provider_type: inline::llm-as-judge
+           - config:
+               openai_api_key: '********'
+             provider_id: braintrust
+             provider_type: inline::braintrust
+           tool_runtime:
+           - config:
+               api_key: '********'
+               max_results: 3
+             provider_id: brave-search
+             provider_type: remote::brave-search
+           - config:
+               api_key: '********'
+               max_results: 3
+             provider_id: tavily-search
+             provider_type: remote::tavily-search
+           - config: {}
+             provider_id: rag-runtime
+             provider_type: inline::rag-runtime
+           - config: {}
+             provider_id: model-context-protocol
+             provider_type: remote::model-context-protocol
+           vector_io:
+           - config:
+               persistence:
+                 backend: kv_default
+                 namespace: vector_io::faiss
+             provider_id: faiss
+             provider_type: inline::faiss
+           - config:
+               db_path: /root/.llama/distributions/ci-tests/sqlite_vec.db
+               persistence:
+                 backend: kv_default
+                 namespace: vector_io::sqlite_vec
+             provider_id: sqlite-vec
+             provider_type: inline::sqlite-vec
+         registered_resources:
+           benchmarks: []
+           datasets: []
+           models:
+           - metadata:
+               description: OpenAI GPT-OSS 20B on Bedrock (us-west-2)
+             model_id: openai.gpt-oss-20b-1:0
+             model_type: llm
+             provider_id: bedrock
+             provider_model_id: openai.gpt-oss-20b-1:0
+           scoring_fns: []
+           shields: []
+           tool_groups:
+           - provider_id: tavily-search
+             toolgroup_id: builtin::websearch
+           - provider_id: rag-runtime
+             toolgroup_id: builtin::rag
+           vector_stores: []
+         safety:
+           default_shield_id: llama-guard
+         server:
+           port: 8321
+           workers: 1
+         storage:
+           backends:
+             kv_default:
+               db_path: /root/.llama/distributions/ci-tests/kvstore.db
+               type: kv_sqlite
+             sql_default:
+               db_path: /root/.llama/distributions/ci-tests/sql_store.db
+               type: sql_sqlite
+           stores:
+             connectors:
+               backend: kv_default
+               namespace: connectors
+             conversations:
+               backend: sql_default
+               table_name: openai_conversations
+             inference:
+               backend: sql_default
+               max_write_queue_size: 10000
+               num_writers: 4
+               table_name: inference_store
+             metadata:
+               backend: kv_default
+               namespace: registry
+             prompts:
+               backend: kv_default
+               namespace: prompts
+         vector_stores:
+           annotation_prompt_params:
+             annotation_instruction_template: Cite sources immediately at the end of sentences
+               before punctuation, using `<|file-id|>` format like 'This is a fact <|file-Cn3MSNn72ENTiiq11Qda4A|>.'.
+               Do not add extra punctuation. Use only the file IDs provided, do not invent
+               new ones.
+             chunk_annotation_template: '[{index}] {metadata_text} cite as <|{file_id}|>
+
+               {chunk_text}
+
+               '
+             enable_annotations: true
+           chunk_retrieval_params:
+             chunk_multiplier: 5
+             default_reranker_strategy: rrf
+             max_tokens_in_context: 4000
+             rrf_impact_factor: 60.0
+             weighted_search_alpha: 0.5
+           context_prompt_params:
+             chunk_annotation_template: 'Result {index}
+
+               Content: {chunk.content}
+
+               Metadata: {metadata}
+
+               '
+             context_template: 'The above results were retrieved to help answer the user''s
+               query: "{query}". Use them as supporting information only in answering this
+               query. {annotation_instruction}
+
+               '
+           default_embedding_model:
+             model_id: nomic-ai/nomic-embed-text-v1.5
+             provider_id: sentence-transformers
+           default_provider_id: faiss
+           file_batch_params:
+             cleanup_interval_seconds: 86400
+             file_batch_chunk_size: 10
+             max_concurrent_files_per_batch: 3
+           file_ingestion_params:
+             default_chunk_overlap_tokens: 128
+             default_chunk_size_tokens: 512
+           file_search_params:
+             footer_template: 'END of knowledge_search tool results.
+
+               '
+             header_template: 'knowledge_search tool found {num_chunks} chunks:
+
+               BEGIN of knowledge_search tool results.
+
+               '
+         version: 2
+
+INFO     2026-02-11 22:12:39,110 llama_stack.core.stack:611 core: API recording enabled: mode=record-if-missing
+INFO     2026-02-11 22:12:43,037 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 138 models
+INFO     2026-02-11 22:12:47,421 uvicorn.error:84 server: Started server process [1]
+INFO     2026-02-11 22:12:47,422 uvicorn.error:48 server: Waiting for application startup.
+INFO     2026-02-11 22:12:47,424 llama_stack.core.server.server:175 core::server: Starting up Llama Stack server
+         (version: 0.5.1.dev0)
+INFO     2026-02-11 22:12:47,424 llama_stack.core.stack:712 core: starting registry refresh task
+INFO     2026-02-11 22:12:47,425 uvicorn.error:62 server: Application startup complete.
+INFO     2026-02-11 22:12:47,426 uvicorn.error:216 server: Uvicorn running on http://['::', '0.0.0.0']:8322 (Press
+         CTRL+C to quit)
+INFO     2026-02-11 22:12:47,683 uvicorn.access:480 server: ::1:43736 - "GET /v1/health HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,240 uvicorn.access:480 server: ::1:43738 - "GET /v1/providers HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,252 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 138 models
+INFO     2026-02-11 22:12:49,256 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,507 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,542 uvicorn.access:480 server: ::1:43742 - "GET
+         /v1/responses/resp_ba64a035-550e-4ab5-9731-bd3e037cb961 HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,560 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,564 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,614 uvicorn.access:480 server: ::1:43742 - "GET
+         /v1/responses/resp_59f0d209-ab17-47e7-b88f-246b8aa6a348 HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,618 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,651 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,670 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,690 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,714 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,732 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,742 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 108 models
+INFO     2026-02-11 22:12:49,746 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,757 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 108 models
+INFO     2026-02-11 22:12:49,759 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,766 uvicorn.access:480 server: ::1:43738 - "GET /v1/providers HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,781 uvicorn.access:480 server: ::1:43738 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,809 uvicorn.access:480 server: ::1:43738 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,819 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 108 models
+INFO     2026-02-11 22:12:49,822 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,833 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 108 models
+INFO     2026-02-11 22:12:49,836 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,842 uvicorn.access:480 server: ::1:43738 - "GET /v1/providers HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,848 uvicorn.access:480 server: ::1:43738 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,880 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 108 models
+INFO     2026-02-11 22:12:49,883 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,894 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 108 models
+INFO     2026-02-11 22:12:49,897 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,904 uvicorn.access:480 server: ::1:43738 - "GET /v1/providers HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,936 uvicorn.access:480 server: ::1:43738 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,946 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 123 models
+INFO     2026-02-11 22:12:49,949 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,961 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 123 models
+INFO     2026-02-11 22:12:49,963 uvicorn.access:480 server: ::1:43738 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,972 uvicorn.access:480 server: ::1:43738 - "GET /v1/providers HTTP/1.1" 200
+INFO     2026-02-11 22:12:49,988 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:12:49,991 uvicorn.access:480 server: ::1:43738 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:50,007 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:12:50,012 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:12:50,168 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:12:50,187 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:12:50,199 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:12:51,135 llama_stack.providers.utils.inference.embedding_mixin:93 providers::utils: Loading
+         sentence transformer for nomic-ai/nomic-embed-text-v1.5...
+WARNING  2026-02-11 22:12:57,298 torchao.kernel.intmm:21 uncategorized: Warning: Detected no triton, on systems without
+         Triton certain kernels will not work
+/usr/local/lib/python3.12/site-packages/torchao/quantization/quant_api.py:1825: SyntaxWarning: invalid escape sequence '\.'
+  * regex for parameter names, must start with `re:`, e.g. `re:language\.layers\..+\.q_proj.weight`.
+A new version of the following files was downloaded from https://huggingface.co/nomic-ai/nomic-bert-2048:
+- configuration_hf_nomic_bert.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+A new version of the following files was downloaded from https://huggingface.co/nomic-ai/nomic-bert-2048:
+- modeling_hf_nomic_bert.py
+. Make sure to double-check they do not contain any added malicious code. To avoid downloading new versions of the code file, you can pin a revision.
+WARNING  2026-02-11 22:13:14,055
+         transformers_modules.nomic_hyphen_ai.nomic_hyphen_bert_hyphen_2048.7710840340a098cfb869c4f65e87cf2b1b70caca.mod
+         eling_hf_nomic_bert:466 uncategorized: <All keys matched successfully>
+INFO     2026-02-11 22:13:15,102 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_a3829123-dca5-4532-a270-1affb5f6b65e/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,119 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,132 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,302 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_a3829123-dca5-4532-a270-1affb5f6b65e/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,314 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,326 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,501 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_a3829123-dca5-4532-a270-1affb5f6b65e/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,514 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,525 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:15,697 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_a3829123-dca5-4532-a270-1affb5f6b65e/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:17,636 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:17,767 uvicorn.access:480 server: ::1:43742 - "DELETE
+         /v1/vector_stores/vs_a3829123-dca5-4532-a270-1affb5f6b65e HTTP/1.1" 200
+INFO     2026-02-11 22:13:17,786 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-247992711530 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:17,799 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-247992711531 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:17,808 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-247992711532 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:17,814 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-247992711533 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:17,819 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:17,976 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:17,990 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,001 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,173 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_802ff8c4-011f-4f79-bfdc-b3925178fecc/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,187 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,194 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,369 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_802ff8c4-011f-4f79-bfdc-b3925178fecc/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,382 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,393 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,569 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_802ff8c4-011f-4f79-bfdc-b3925178fecc/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,583 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,593 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:18,758 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_802ff8c4-011f-4f79-bfdc-b3925178fecc/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,419 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,551 uvicorn.access:480 server: ::1:43742 - "DELETE
+         /v1/vector_stores/vs_802ff8c4-011f-4f79-bfdc-b3925178fecc HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,567 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-824569833174 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:20,574 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-824569833175 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:20,581 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-824569833176 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:20,588 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-824569833177 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:20,592 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,743 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,757 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,769 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,941 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_f0a69f27-e1a8-4517-a67a-c8877d6700c8/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,955 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:20,967 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:21,136 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_f0a69f27-e1a8-4517-a67a-c8877d6700c8/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:21,148 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:21,154 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:21,314 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_f0a69f27-e1a8-4517-a67a-c8877d6700c8/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:21,325 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:21,331 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:21,494 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_f0a69f27-e1a8-4517-a67a-c8877d6700c8/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,087 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,218 uvicorn.access:480 server: ::1:43742 - "DELETE
+         /v1/vector_stores/vs_f0a69f27-e1a8-4517-a67a-c8877d6700c8 HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,234 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-151637398235 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:23,247 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-151637398236 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:23,255 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-151637398237 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:23,261 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-151637398238 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:23,266 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,417 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,429 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,440 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,604 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_8eb96e8d-0424-48fc-aedf-508ac4d9cfbd/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,609 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,617 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,790 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_8eb96e8d-0424-48fc-aedf-508ac4d9cfbd/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,803 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,814 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,987 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_8eb96e8d-0424-48fc-aedf-508ac4d9cfbd/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:23,997 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:24,009 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:24,175 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_8eb96e8d-0424-48fc-aedf-508ac4d9cfbd/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,494 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,627 uvicorn.access:480 server: ::1:43742 - "DELETE
+         /v1/vector_stores/vs_8eb96e8d-0424-48fc-aedf-508ac4d9cfbd HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,645 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-90357487491 HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,654 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-90357487492 HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,659 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-90357487493 HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,663 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-90357487494 HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,666 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,824 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,837 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:26,844 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,014 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_2dd3c05e-860d-47e5-92ae-afba883b4a44/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,028 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,035 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,206 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_2dd3c05e-860d-47e5-92ae-afba883b4a44/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,220 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,232 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,414 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_2dd3c05e-860d-47e5-92ae-afba883b4a44/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,427 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,438 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:27,616 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_2dd3c05e-860d-47e5-92ae-afba883b4a44/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:30,523 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:30,657 uvicorn.access:480 server: ::1:43742 - "DELETE
+         /v1/vector_stores/vs_2dd3c05e-860d-47e5-92ae-afba883b4a44 HTTP/1.1" 200
+INFO     2026-02-11 22:13:30,673 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-862946202234 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:30,681 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-862946202235 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:30,688 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-862946202236 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:30,693 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-862946202237 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:30,696 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:30,849 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:30,861 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:30,870 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,029 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_ebdfa466-479a-4c45-ba16-ac69911b4cf4/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,041 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,050 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,206 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_ebdfa466-479a-4c45-ba16-ac69911b4cf4/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,218 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,228 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,385 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_ebdfa466-479a-4c45-ba16-ac69911b4cf4/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,393 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,397 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,563 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_ebdfa466-479a-4c45-ba16-ac69911b4cf4/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:31,572 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:32,745 uvicorn.access:480 server: ::1:43742 - "DELETE
+         /v1/vector_stores/vs_ebdfa466-479a-4c45-ba16-ac69911b4cf4 HTTP/1.1" 200
+INFO     2026-02-11 22:13:32,758 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-284290576316 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:32,767 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-284290576317 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:32,773 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-284290576318 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:32,777 uvicorn.access:480 server: ::1:43742 - "DELETE /v1/files/file-284290576319 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:32,780 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:32,939 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:32,951 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:32,961 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:33,113 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_c2707860-8482-47dc-993f-19c7a9fd4fa4/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:33,124 uvicorn.access:480 server: ::1:43742 - "GET
+         /v1/vector_stores/vs_c2707860-8482-47dc-993f-19c7a9fd4fa4/files/file-861837565219 HTTP/1.1" 200
+INFO     2026-02-11 22:13:33,888 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:33,895 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,024 uvicorn.access:480 server: ::1:43742 - "DELETE
+         /v1/vector_stores/vs_c2707860-8482-47dc-993f-19c7a9fd4fa4 HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,184 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,301 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,307 uvicorn.access:480 server: ::1:43742 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,398 uvicorn.access:480 server: ::1:43742 - "DELETE
+         /v1/vector_stores/vs_455e8731-3d0c-4ab2-a857-1f5a4d1c872e HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,556 uvicorn.access:480 server: ::1:43742 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,570 uvicorn.access:480 server: ::1:43742 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,579 uvicorn.access:480 server: ::1:43742 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,737 uvicorn.access:480 server: ::1:43742 - "POST
+         /v1/vector_stores/vs_881a3e7c-57e9-400f-bbef-cb6116e02d04/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:34,747 uvicorn.access:480 server: ::1:43742 - "GET
+         /v1/vector_stores/vs_881a3e7c-57e9-400f-bbef-cb6116e02d04/files/file-528246887823 HTTP/1.1" 200
+INFO     2026-02-11 22:13:35,398 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:38,678 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:38,879 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:39,496 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 400
+INFO     2026-02-11 22:13:40,180 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:40,697 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 121 models
+INFO     2026-02-11 22:13:40,699 uvicorn.access:480 server: ::1:58028 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:13:40,713 llama_stack.providers.utils.inference.openai_mixin:514 providers::utils:
+         OpenAIInferenceAdapter.list_provider_model_ids() returned 121 models
+INFO     2026-02-11 22:13:40,715 uvicorn.access:480 server: ::1:58028 - "GET /v1/models HTTP/1.1" 200
+INFO     2026-02-11 22:13:40,723 uvicorn.access:480 server: ::1:58028 - "GET /v1/providers HTTP/1.1" 200
+INFO     2026-02-11 22:13:40,769 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:40,952 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+ERROR    2026-02-11 22:13:41,595 llama_stack.providers.inline.agents.meta_reference.responses.streaming:1309
+         agents::meta_reference: Failed to list MCP tools from http://localhost:35869/sse: Client error '401
+         Unauthorized' for url 'http://localhost:35869/sse'
+         For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+         ╭───────────────────────────────────── Traceback (most recent call last) ─────────────────────────────────────╮
+         │ /usr/local/lib/python3.12/site-packages/mcp/client/sse.py:74 in sse_client                                  │
+         │                                                                                                             │
+         │    71 │   │   │   │   │   "GET",                                                                            │
+         │    72 │   │   │   │   │   url,                                                                              │
+         │    73 │   │   │   │   ) as event_source:                                                                    │
+         │ ❱  74 │   │   │   │   │   event_source.response.raise_for_status()                                          │
+         │    75 │   │   │   │   │   logger.debug("SSE connection established")                                        │
+         │    76 │   │   │   │   │                                                                                     │
+         │    77 │   │   │   │   │   async def sse_reader(                                                             │
+         │                                                                                                             │
+         │ /usr/local/lib/python3.12/site-packages/httpx/_models.py:829 in raise_for_status                            │
+         │                                                                                                             │
+         │    826 │   │   }                                                                                            │
+         │    827 │   │   error_type = error_types.get(status_class, "Invalid status code")                            │
+         │    828 │   │   message = message.format(self, error_type=error_type)                                        │
+         │ ❱  829 │   │   raise HTTPStatusError(message, request=request, response=self)                               │
+         │    830 │                                                                                                    │
+         │    831 │   def json(self, **kwargs: typing.Any) -> typing.Any:                                              │
+         │    832 │   │   return jsonlib.loads(self.content, **kwargs)                                                 │
+         ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+         HTTPStatusError: Client error '401 Unauthorized' for url 'http://localhost:35869/sse'
+         For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+
+         The above exception was the direct cause of the following exception:
+
+         ╭───────────────────────────────────── Traceback (most recent call last) ─────────────────────────────────────╮
+         │ /workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py:1256 in            │
+         │ _process_mcp_tool                                                                                           │
+         │                                                                                                             │
+         │   1253 │   │   │   # TODO: follow semantic conventions for Open Telemetry tool spans                        │
+         │   1254 │   │   │   #                                                                                        │
+         │        https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span                   │
+         │   1255 │   │   │   with tracer.start_as_current_span("list_mcp_tools", attributes=attributes):              │
+         │ ❱ 1256 │   │   │   │   tool_defs = await list_mcp_tools(                                                    │
+         │   1257 │   │   │   │   │   endpoint=mcp_tool.server_url,                                                    │
+         │   1258 │   │   │   │   │   headers=mcp_tool.headers,                                                        │
+         │   1259 │   │   │   │   │   authorization=mcp_tool.authorization,                                            │
+         │                                                                                                             │
+         │ /workspace/src/llama_stack/providers/utils/tools/mcp.py:404 in list_mcp_tools                               │
+         │                                                                                                             │
+         │   401 │                                                                                                     │
+         │   402 │   # If a session manager is provided, use it for session reuse (fix for #4452)                      │
+         │   403 │   if session_manager is not None:                                                                   │
+         │ ❱ 404 │   │   session = await session_manager.get_session(endpoint, final_headers)                          │
+         │   405 │   │   await _list_tools_from_session(session)                                                       │
+         │   406 │   else:                                                                                             │
+         │   407 │   │   # Fallback to original behavior: create a new session for this call                           │
+         │                                                                                                             │
+         │ /workspace/src/llama_stack/providers/utils/tools/mcp.py:144 in get_session                                  │
+         │                                                                                                             │
+         │   141 │   │   │   │   return session                                                                        │
+         │   142 │   │   │                                                                                             │
+         │   143 │   │   │   # Create new session                                                                      │
+         │ ❱ 144 │   │   │   session, client_ctx, session_ctx = await self._create_session(endpoint,                   │
+         │       headers)                                                                                              │
+         │   145 │   │   │   self._sessions[key] = (session, client_ctx, session_ctx)                                  │
+         │   146 │   │   │   logger.debug(f"Created new MCP session for {endpoint} (key: {key[:32]}...)")              │
+         │   147 │   │   │   return session                                                                            │
+         │                                                                                                             │
+         │ /workspace/src/llama_stack/providers/utils/tools/mcp.py:194 in _create_session                              │
+         │                                                                                                             │
+         │   191 │   │   │   │   for exc in eg.exceptions:                                                             │
+         │   192 │   │   │   │   │   err = cast(httpx.HTTPStatusError, exc)                                            │
+         │   193 │   │   │   │   │   if err.response.status_code == 401:                                               │
+         │ ❱ 194 │   │   │   │   │   │   raise AuthenticationRequiredError(exc) from exc                               │
+         │   195 │   │   │   │   if i == len(connection_strategies) - 1:                                               │
+         │   196 │   │   │   │   │   raise                                                                             │
+         │   197 │   │   │   │   last_exception = eg                                                                   │
+         ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+         AuthenticationRequiredError: Client error '401 Unauthorized' for url 'http://localhost:35869/sse'
+         For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/mcp/client/sse.py", line 74, in sse_client
+    event_source.response.raise_for_status()
+  File "/usr/local/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 'http://localhost:35869/sse'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 107, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 426, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 314, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack_api/agents/fastapi_routes.py", line 212, in create_openai_response
+    result = await impl.create_openai_response(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/agents.py", line 110, in create_openai_response
+    result = await self.openai_responses_impl.create_openai_response(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py", line 542, in create_openai_response
+    async for stream_chunk in stream_gen:
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py", line 667, in _create_streaming_response
+    async for stream_chunk in orchestrator.create_response():
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py", line 282, in create_response
+    async for stream_event in self._process_tools(output_messages):
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py", line 1323, in _process_tools
+    async for stream_event in self._process_new_tools(
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py", line 1213, in _process_new_tools
+    async for stream_event in self._process_mcp_tool(input_tool, output_messages):
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py", line 1256, in _process_mcp_tool
+    tool_defs = await list_mcp_tools(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/utils/tools/mcp.py", line 404, in list_mcp_tools
+    session = await session_manager.get_session(endpoint, final_headers)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/utils/tools/mcp.py", line 144, in get_session
+    session, client_ctx, session_ctx = await self._create_session(endpoint, headers)
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/utils/tools/mcp.py", line 194, in _create_session
+    raise AuthenticationRequiredError(exc) from exc
+llama_stack.core.datatypes.AuthenticationRequiredError: Client error '401 Unauthorized' for url 'http://localhost:35869/sse'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+INFO     2026-02-11 22:13:41,770 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 401
+INFO     2026-02-11 22:13:41,818 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:42,498 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:42,518 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:43,179 llama_stack.providers.inline.agents.meta_reference.responses.streaming:520
+         agents::meta_reference: Requesting approval for call_988PBvyfdY38pwgrNl5Ibm7Y on get_boiling_point
+INFO     2026-02-11 22:13:43,185 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:43,200 llama_stack.providers.inline.agents.meta_reference.responses.streaming:514
+         agents::meta_reference: Approval granted for call_988PBvyfdY38pwgrNl5Ibm7Y on get_boiling_point
+INFO     2026-02-11 22:13:43,231 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:43,772 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:13:43,777 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:43,795 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:13:43,798 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:43,817 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:43,835 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:13:43,838 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:43,857 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:44,053 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:44,681 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:45,350 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:13:45,353 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 107, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 468, in app
+    raise validation_error
+fastapi.exceptions.RequestValidationError: 1 validation error:
+  {'type': 'greater_than_equal', 'loc': ('body', 'max_tool_calls'), 'msg': 'Input should be greater than or equal to 1', 'input': 0, 'ctx': {'ge': 1}}
+
+  File "/workspace/src/llama_stack_api/agents/fastapi_routes.py", line 192, in create_openai_response
+    POST /v1/responses
+INFO     2026-02-11 22:13:45,359 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 400
+INFO     2026-02-11 22:13:45,533 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:45,585 llama_stack.providers.inline.agents.meta_reference.responses.streaming:1056
+         agents::meta_reference: Ignoring built-in and mcp tool call since reached the limit of self.max_tool_calls=1.
+INFO     2026-02-11 22:13:45,609 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:45,665 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:46,202 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:13:46,205 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:46,271 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:13:46,275 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:46,460 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:46,543 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,067 uvicorn.access:480 server: ::1:43742 - "POST /v1/conversations HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,109 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,118 uvicorn.access:480 server: ::1:43742 - "GET
+         /v1/conversations/conv_61f9f277e42a334f1e89b664569f4ff09d353780734dfc94/items HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,138 uvicorn.access:480 server: ::1:43742 - "POST /v1/conversations HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,175 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,178 uvicorn.access:480 server: ::1:43742 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,217 uvicorn.access:480 server: ::1:60392 - "GET
+         /v1/conversations/conv_06972797401535621fd0b511289b753e196db691a7260980/items HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,227 uvicorn.access:480 server: ::1:60392 - "POST /v1/conversations HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,275 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,280 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 400
+INFO     2026-02-11 22:13:47,285 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 400
+INFO     2026-02-11 22:13:47,306 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,327 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,358 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 107, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 468, in app
+    raise validation_error
+fastapi.exceptions.RequestValidationError: 1 validation error:
+  {'type': 'greater_than_equal', 'loc': ('body', 'max_output_tokens'), 'msg': 'Input should be greater than or equal to 16', 'input': 15, 'ctx': {'ge': 16}}
+
+  File "/workspace/src/llama_stack_api/agents/fastapi_routes.py", line 192, in create_openai_response
+    POST /v1/responses
+INFO     2026-02-11 22:13:47,363 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 400
+INFO     2026-02-11 22:13:47,393 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,398 uvicorn.access:480 server: ::1:60392 - "GET
+         /v1/responses/resp_47d0c2d4-47c0-4536-80aa-785ffb828f41 HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,416 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,420 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,443 uvicorn.access:480 server: ::1:60392 - "GET
+         /v1/responses/resp_9a19234b-4560-4dd7-ae97-d4cfef6ef6ee HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,447 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,488 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,509 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,570 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,590 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,621 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,646 uvicorn.access:480 server: ::1:60392 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,651 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,795 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,800 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,805 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:47,994 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_b011dbe9-e91b-4bb6-972c-3bce63c06ec6/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,003 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,008 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,191 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_b011dbe9-e91b-4bb6-972c-3bce63c06ec6/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,197 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,203 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,390 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_b011dbe9-e91b-4bb6-972c-3bce63c06ec6/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,396 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,400 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:48,844 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_b011dbe9-e91b-4bb6-972c-3bce63c06ec6/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,004 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,124 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_b011dbe9-e91b-4bb6-972c-3bce63c06ec6 HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,131 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-446066738449 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:54,136 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-446066738450 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:54,141 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-446066738451 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:54,148 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-446066738452 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:54,152 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,291 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,297 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,301 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,634 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_b10b97ed-6b71-41d5-88a1-9fa2ea11a4bf/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,639 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,643 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,829 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_b10b97ed-6b71-41d5-88a1-9fa2ea11a4bf/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,834 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:54,840 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:55,183 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_b10b97ed-6b71-41d5-88a1-9fa2ea11a4bf/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:55,189 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:55,193 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:55,381 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_b10b97ed-6b71-41d5-88a1-9fa2ea11a4bf/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:58,693 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:13:58,819 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_b10b97ed-6b71-41d5-88a1-9fa2ea11a4bf HTTP/1.1" 200
+INFO     2026-02-11 22:13:58,825 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-630021438843 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:58,830 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-630021438844 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:58,835 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-630021438845 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:58,840 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-630021438846 HTTP/1.1"
+         200
+INFO     2026-02-11 22:13:58,844 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:58,989 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:13:58,994 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:58,999 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,176 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_7df2b097-896c-47d8-94dd-b8c30971dd2a/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,182 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,188 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,411 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_7df2b097-896c-47d8-94dd-b8c30971dd2a/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,415 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,419 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,641 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_7df2b097-896c-47d8-94dd-b8c30971dd2a/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,647 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,651 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:13:59,851 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_7df2b097-896c-47d8-94dd-b8c30971dd2a/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:01,520 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:01,643 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_7df2b097-896c-47d8-94dd-b8c30971dd2a HTTP/1.1" 200
+INFO     2026-02-11 22:14:01,649 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-664068282482 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:01,654 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-664068282483 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:01,679 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-664068282484 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:01,691 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-664068282485 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:01,694 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:01,838 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:01,844 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:01,848 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,052 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_81a9b8b4-0f28-4f67-9ede-22b9f66e8c2a/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,057 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,061 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,253 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_81a9b8b4-0f28-4f67-9ede-22b9f66e8c2a/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,258 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,263 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,462 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_81a9b8b4-0f28-4f67-9ede-22b9f66e8c2a/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,468 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,472 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:02,669 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_81a9b8b4-0f28-4f67-9ede-22b9f66e8c2a/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:03,634 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:03,757 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_81a9b8b4-0f28-4f67-9ede-22b9f66e8c2a HTTP/1.1" 200
+INFO     2026-02-11 22:14:03,764 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-710505118846 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:03,770 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-710505118847 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:03,774 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-710505118848 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:03,779 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-710505118849 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:03,782 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:03,921 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:03,926 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:03,931 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,128 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_74508178-8e96-451f-82a3-08628aefe5b2/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,133 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,138 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,331 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_74508178-8e96-451f-82a3-08628aefe5b2/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,336 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,342 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,542 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_74508178-8e96-451f-82a3-08628aefe5b2/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,548 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,552 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:04,751 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_74508178-8e96-451f-82a3-08628aefe5b2/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,479 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,601 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_74508178-8e96-451f-82a3-08628aefe5b2 HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,606 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-66545595855 HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,611 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-66545595856 HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,616 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-66545595857 HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,620 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-66545595858 HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,624 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,761 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,766 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,770 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,963 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_254573c8-2ea0-4176-8cff-bd4cfaa00070/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,969 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:07,975 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:08,170 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_254573c8-2ea0-4176-8cff-bd4cfaa00070/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:08,175 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:08,179 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:08,383 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_254573c8-2ea0-4176-8cff-bd4cfaa00070/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:08,388 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:08,393 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:08,578 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_254573c8-2ea0-4176-8cff-bd4cfaa00070/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:08,581 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:10,235 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_254573c8-2ea0-4176-8cff-bd4cfaa00070 HTTP/1.1" 200
+INFO     2026-02-11 22:14:10,241 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-450428750202 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:10,247 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-450428750203 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:10,252 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-450428750204 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:10,256 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-450428750205 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:10,260 uvicorn.access:480 server: ::1:42994 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:10,375 uvicorn.access:480 server: ::1:42994 - "DELETE
+         /v1/vector_stores/vs_881a3e7c-57e9-400f-bbef-cb6116e02d04 HTTP/1.1" 200
+INFO     2026-02-11 22:14:10,516 uvicorn.access:480 server: ::1:42994 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:10,521 uvicorn.access:480 server: ::1:42994 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:10,525 uvicorn.access:480 server: ::1:42994 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:11,193 uvicorn.access:480 server: ::1:42994 - "POST
+         /v1/vector_stores/vs_3ff03300-0004-4265-8407-94e47fc88557/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:11,196 uvicorn.access:480 server: ::1:42994 - "GET
+         /v1/vector_stores/vs_3ff03300-0004-4265-8407-94e47fc88557/files/file-379221123213 HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,292 uvicorn.access:480 server: ::1:42994 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,296 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,418 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_3ff03300-0004-4265-8407-94e47fc88557 HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,559 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,665 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,669 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,754 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_24eb4835-2224-442a-b659-d0ba59b12365 HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,895 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,901 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:12,908 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-528246887823 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:12,912 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:13,110 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_4a0c1415-6fe9-4b03-b260-e664e88d2250/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:13,114 uvicorn.access:480 server: ::1:60408 - "GET
+         /v1/vector_stores/vs_4a0c1415-6fe9-4b03-b260-e664e88d2250/files/file-797509666839 HTTP/1.1" 200
+INFO     2026-02-11 22:14:13,990 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:16,220 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:16,396 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:17,005 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 400
+INFO     2026-02-11 22:14:17,675 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:18,222 uvicorn.access:480 server: ::1:41148 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:18,387 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+ERROR    2026-02-11 22:14:19,011 llama_stack.providers.inline.agents.meta_reference.responses.streaming:1309
+         agents::meta_reference: Failed to list MCP tools from http://localhost:50553/sse: Client error '401
+         Unauthorized' for url 'http://localhost:50553/sse'
+         For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+         ╭───────────────────────────────────── Traceback (most recent call last) ─────────────────────────────────────╮
+         │ /usr/local/lib/python3.12/site-packages/mcp/client/sse.py:74 in sse_client                                  │
+         │                                                                                                             │
+         │    71 │   │   │   │   │   "GET",                                                                            │
+         │    72 │   │   │   │   │   url,                                                                              │
+         │    73 │   │   │   │   ) as event_source:                                                                    │
+         │ ❱  74 │   │   │   │   │   event_source.response.raise_for_status()                                          │
+         │    75 │   │   │   │   │   logger.debug("SSE connection established")                                        │
+         │    76 │   │   │   │   │                                                                                     │
+         │    77 │   │   │   │   │   async def sse_reader(                                                             │
+         │                                                                                                             │
+         │ /usr/local/lib/python3.12/site-packages/httpx/_models.py:829 in raise_for_status                            │
+         │                                                                                                             │
+         │    826 │   │   }                                                                                            │
+         │    827 │   │   error_type = error_types.get(status_class, "Invalid status code")                            │
+         │    828 │   │   message = message.format(self, error_type=error_type)                                        │
+         │ ❱  829 │   │   raise HTTPStatusError(message, request=request, response=self)                               │
+         │    830 │                                                                                                    │
+         │    831 │   def json(self, **kwargs: typing.Any) -> typing.Any:                                              │
+         │    832 │   │   return jsonlib.loads(self.content, **kwargs)                                                 │
+         ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+         HTTPStatusError: Client error '401 Unauthorized' for url 'http://localhost:50553/sse'
+         For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+
+         The above exception was the direct cause of the following exception:
+
+         ╭───────────────────────────────────── Traceback (most recent call last) ─────────────────────────────────────╮
+         │ /workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py:1256 in            │
+         │ _process_mcp_tool                                                                                           │
+         │                                                                                                             │
+         │   1253 │   │   │   # TODO: follow semantic conventions for Open Telemetry tool spans                        │
+         │   1254 │   │   │   #                                                                                        │
+         │        https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span                   │
+         │   1255 │   │   │   with tracer.start_as_current_span("list_mcp_tools", attributes=attributes):              │
+         │ ❱ 1256 │   │   │   │   tool_defs = await list_mcp_tools(                                                    │
+         │   1257 │   │   │   │   │   endpoint=mcp_tool.server_url,                                                    │
+         │   1258 │   │   │   │   │   headers=mcp_tool.headers,                                                        │
+         │   1259 │   │   │   │   │   authorization=mcp_tool.authorization,                                            │
+         │                                                                                                             │
+         │ /workspace/src/llama_stack/providers/utils/tools/mcp.py:404 in list_mcp_tools                               │
+         │                                                                                                             │
+         │   401 │                                                                                                     │
+         │   402 │   # If a session manager is provided, use it for session reuse (fix for #4452)                      │
+         │   403 │   if session_manager is not None:                                                                   │
+         │ ❱ 404 │   │   session = await session_manager.get_session(endpoint, final_headers)                          │
+         │   405 │   │   await _list_tools_from_session(session)                                                       │
+         │   406 │   else:                                                                                             │
+         │   407 │   │   # Fallback to original behavior: create a new session for this call                           │
+         │                                                                                                             │
+         │ /workspace/src/llama_stack/providers/utils/tools/mcp.py:144 in get_session                                  │
+         │                                                                                                             │
+         │   141 │   │   │   │   return session                                                                        │
+         │   142 │   │   │                                                                                             │
+         │   143 │   │   │   # Create new session                                                                      │
+         │ ❱ 144 │   │   │   session, client_ctx, session_ctx = await self._create_session(endpoint,                   │
+         │       headers)                                                                                              │
+         │   145 │   │   │   self._sessions[key] = (session, client_ctx, session_ctx)                                  │
+         │   146 │   │   │   logger.debug(f"Created new MCP session for {endpoint} (key: {key[:32]}...)")              │
+         │   147 │   │   │   return session                                                                            │
+         │                                                                                                             │
+         │ /workspace/src/llama_stack/providers/utils/tools/mcp.py:194 in _create_session                              │
+         │                                                                                                             │
+         │   191 │   │   │   │   for exc in eg.exceptions:                                                             │
+         │   192 │   │   │   │   │   err = cast(httpx.HTTPStatusError, exc)                                            │
+         │   193 │   │   │   │   │   if err.response.status_code == 401:                                               │
+         │ ❱ 194 │   │   │   │   │   │   raise AuthenticationRequiredError(exc) from exc                               │
+         │   195 │   │   │   │   if i == len(connection_strategies) - 1:                                               │
+         │   196 │   │   │   │   │   raise                                                                             │
+         │   197 │   │   │   │   last_exception = eg                                                                   │
+         ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+         AuthenticationRequiredError: Client error '401 Unauthorized' for url 'http://localhost:50553/sse'
+         For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/mcp/client/sse.py", line 74, in sse_client
+    event_source.response.raise_for_status()
+  File "/usr/local/lib/python3.12/site-packages/httpx/_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 'http://localhost:50553/sse'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 107, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 426, in app
+    raw_response = await run_endpoint_function(
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 314, in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack_api/agents/fastapi_routes.py", line 212, in create_openai_response
+    result = await impl.create_openai_response(request)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/agents.py", line 110, in create_openai_response
+    result = await self.openai_responses_impl.create_openai_response(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py", line 542, in create_openai_response
+    async for stream_chunk in stream_gen:
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/openai_responses.py", line 667, in _create_streaming_response
+    async for stream_chunk in orchestrator.create_response():
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py", line 282, in create_response
+    async for stream_event in self._process_tools(output_messages):
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py", line 1323, in _process_tools
+    async for stream_event in self._process_new_tools(
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py", line 1213, in _process_new_tools
+    async for stream_event in self._process_mcp_tool(input_tool, output_messages):
+  File "/workspace/src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py", line 1256, in _process_mcp_tool
+    tool_defs = await list_mcp_tools(
+                ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/utils/tools/mcp.py", line 404, in list_mcp_tools
+    session = await session_manager.get_session(endpoint, final_headers)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/utils/tools/mcp.py", line 144, in get_session
+    session, client_ctx, session_ctx = await self._create_session(endpoint, headers)
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/src/llama_stack/providers/utils/tools/mcp.py", line 194, in _create_session
+    raise AuthenticationRequiredError(exc) from exc
+llama_stack.core.datatypes.AuthenticationRequiredError: Client error '401 Unauthorized' for url 'http://localhost:50553/sse'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+INFO     2026-02-11 22:14:19,479 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 401
+INFO     2026-02-11 22:14:19,543 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:20,210 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:20,232 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:20,876 llama_stack.providers.inline.agents.meta_reference.responses.streaming:520
+         agents::meta_reference: Requesting approval for call_giaayybgGw4kjFpGbbfesoBN on get_boiling_point
+INFO     2026-02-11 22:14:20,894 uvicorn.access:480 server: ::1:41148 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:20,910 llama_stack.providers.inline.agents.meta_reference.responses.streaming:517
+         agents::meta_reference: Approval denied for call_giaayybgGw4kjFpGbbfesoBN on get_boiling_point
+INFO     2026-02-11 22:14:20,921 uvicorn.access:480 server: ::1:41148 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:21,450 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:14:21,452 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:21,473 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:14:21,476 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:21,497 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:21,518 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:14:21,522 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:21,551 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:21,753 uvicorn.access:480 server: ::1:41148 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:22,365 uvicorn.access:480 server: ::1:41148 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:23,220 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:14:23,240 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+    await app(scope, receive, sender)
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 107, in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 468, in app
+    raise validation_error
+fastapi.exceptions.RequestValidationError: 1 validation error:
+  {'type': 'greater_than_equal', 'loc': ('body', 'max_tool_calls'), 'msg': 'Input should be greater than or equal to 1', 'input': 0, 'ctx': {'ge': 1}}
+
+  File "/workspace/src/llama_stack_api/agents/fastapi_routes.py", line 192, in create_openai_response
+    POST /v1/responses
+INFO     2026-02-11 22:14:23,246 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 400
+INFO     2026-02-11 22:14:24,155 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:24,340 llama_stack.providers.inline.agents.meta_reference.responses.streaming:1056
+         agents::meta_reference: Ignoring built-in and mcp tool call since reached the limit of self.max_tool_calls=1.
+INFO     2026-02-11 22:14:24,538 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:25,146 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:26,084 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:14:26,102 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:26,282 llama_stack.providers.inline.agents.meta_reference.responses.streaming:443
+         agents::meta_reference: Exiting inference loop since there is a function (client-side) tool call
+INFO     2026-02-11 22:14:26,295 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:26,952 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:27,664 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:28,243 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:28,254 uvicorn.access:480 server: ::1:60408 - "GET
+         /v1/responses/resp_ab338ff0-35a5-451b-bc2c-37b9553d52ca HTTP/1.1" 200
+INFO     2026-02-11 22:14:28,472 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:28,476 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:28,962 uvicorn.access:480 server: ::1:60408 - "GET
+         /v1/responses/resp_58ef21f8-87b0-4124-b618-189c2776a37e HTTP/1.1" 200
+INFO     2026-02-11 22:14:28,967 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:29,263 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:29,478 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:29,484 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:29,948 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_4a0c1415-6fe9-4b03-b260-e664e88d2250 HTTP/1.1" 200
+INFO     2026-02-11 22:14:30,663 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:30,802 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:30,959 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-861837565219 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:31,060 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:35,939 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_55626215-5fbe-4fd5-82f6-3efb22039db8/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:36,111 uvicorn.access:480 server: ::1:60408 - "GET
+         /v1/vector_stores/vs_55626215-5fbe-4fd5-82f6-3efb22039db8/files/file-864460993305 HTTP/1.1" 200
+INFO     2026-02-11 22:14:38,663 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:39,195 llama_stack.providers.inline.agents.meta_reference.responses.streaming:520
+         agents::meta_reference: Requesting approval for call_Eps4RVKUQK4eJUXk4BST41as on get_boiling_point
+INFO     2026-02-11 22:14:39,237 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:39,296 llama_stack.providers.inline.agents.meta_reference.responses.streaming:514
+         agents::meta_reference: Approval granted for call_Eps4RVKUQK4eJUXk4BST41as on get_boiling_point
+INFO     2026-02-11 22:14:39,613 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:40,631 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:41,243 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:42,436 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:42,529 uvicorn.access:480 server: ::1:60408 - "GET
+         /v1/responses/resp_a75535cd-4ef0-4453-880e-2076c7a13827 HTTP/1.1" 200
+INFO     2026-02-11 22:14:43,272 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:43,276 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:44,100 uvicorn.access:480 server: ::1:60408 - "GET
+         /v1/responses/resp_d103dc71-06b2-4a31-b63c-d007a710c57d HTTP/1.1" 200
+INFO     2026-02-11 22:14:44,104 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:44,808 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:45,319 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:14:45,326 uvicorn.access:480 server: ::1:60408 - "GET /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:46,391 uvicorn.access:480 server: ::1:60408 - "DELETE
+         /v1/vector_stores/vs_55626215-5fbe-4fd5-82f6-3efb22039db8 HTTP/1.1" 200
+INFO     2026-02-11 22:14:47,974 uvicorn.access:480 server: ::1:60408 - "POST /v1/vector_stores HTTP/1.1" 200
+INFO     2026-02-11 22:14:48,216 uvicorn.access:480 server: ::1:60408 - "GET /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:14:49,013 uvicorn.access:480 server: ::1:60408 - "DELETE /v1/files/file-379221123213 HTTP/1.1"
+         200
+INFO     2026-02-11 22:14:49,237 uvicorn.access:480 server: ::1:60408 - "POST /v1/files HTTP/1.1" 200
+INFO     2026-02-11 22:15:04,711 uvicorn.access:480 server: ::1:60408 - "POST
+         /v1/vector_stores/vs_61c59ea6-baa7-4398-b315-2c85f0adcf29/files HTTP/1.1" 200
+INFO     2026-02-11 22:15:05,032 uvicorn.access:480 server: ::1:60408 - "GET
+         /v1/vector_stores/vs_61c59ea6-baa7-4398-b315-2c85f0adcf29/files/file-156847829497 HTTP/1.1" 200
+INFO     2026-02-11 22:15:14,607 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:15:14,876 llama_stack.providers.inline.agents.meta_reference.responses.streaming:520
+         agents::meta_reference: Requesting approval for call_upVpEp6APgdHdCjgOVigifl3 on get_boiling_point
+INFO     2026-02-11 22:15:14,916 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:15:14,985 llama_stack.providers.inline.agents.meta_reference.responses.streaming:517
+         agents::meta_reference: Approval denied for call_upVpEp6APgdHdCjgOVigifl3 on get_boiling_point
+INFO     2026-02-11 22:15:15,016 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:15:15,829 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200
+INFO     2026-02-11 22:15:16,441 uvicorn.access:480 server: ::1:60408 - "POST /v1/responses HTTP/1.1" 200

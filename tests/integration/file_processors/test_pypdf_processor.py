@@ -307,10 +307,16 @@ class TestPyPDFFileProcessor:
         with pytest.raises(ValueError, match="Cannot provide both file and file_id"):
             await processor.process_file(file=upload_file, file_id="test_id")
 
-    async def test_file_id_without_files_api(self, processor: PyPDFFileProcessor):
-        """Test processing file_id without files API."""
-        with pytest.raises(ValueError, match="Files API not available"):
-            await processor.process_file(file_id="test_file_id")
+    async def test_file_id_not_found(self, config: PyPDFFileProcessorConfig):
+        """Test processing with a non-existent file_id raises ValueError."""
+        from unittest.mock import AsyncMock
+
+        mock_files_api = AsyncMock()
+        mock_files_api.openai_retrieve_file.side_effect = ValueError("File not found: nonexistent_file_id")
+
+        processor = PyPDFFileProcessor(config, files_api=mock_files_api)
+        with pytest.raises(ValueError, match="File not found"):
+            await processor.process_file(file_id="nonexistent_file_id")
 
     async def test_minimal_pdf_processing(self, processor: PyPDFFileProcessor):
         """Test processing a minimal PDF with no extractable text."""

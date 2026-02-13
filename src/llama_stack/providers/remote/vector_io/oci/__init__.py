@@ -12,11 +12,12 @@ async def get_adapter_impl(config: OCI26aiVectorIOConfig, deps: dict[Api, Provid
     from typing import cast
 
     from llama_stack.providers.remote.vector_io.oci.oci26ai import OCI26aiVectorIOAdapter
-    from llama_stack_api import Files, Inference
+    from llama_stack_api import FileProcessors, Files, Inference
 
     assert isinstance(config, OCI26aiVectorIOConfig), f"Unexpected config type: {type(config)}"
     inference_api = cast(Inference, deps[Api.inference])
     files_api = cast(Files | None, deps.get(Api.files))
-    impl = OCI26aiVectorIOAdapter(config, inference_api, files_api)
+    file_processor_api = cast(FileProcessors | None, deps.get(Api.file_processors))
+    impl = OCI26aiVectorIOAdapter(config, inference_api, files_api, file_processor_api)
     await impl.initialize()
     return impl
