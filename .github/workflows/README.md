@@ -12,6 +12,7 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | SqlStore Integration Tests | [integration-sql-store-tests.yml](integration-sql-store-tests.yml) | Run the integration test suite with SqlStore |
 | Integration Tests (Replay) | [integration-tests.yml](integration-tests.yml) | Run the integration test suites from tests/integration in replay mode |
 | Vector IO Integration Tests | [integration-vector-io-tests.yml](integration-vector-io-tests.yml) | Run the integration test suite with various VectorIO providers |
+| OpenAPI Generator SDK Validation | [openapi-generator-validation.yml](openapi-generator-validation.yml) | Validate OpenAPI Generator SDK generation |
 | Pre-commit | [pre-commit.yml](pre-commit.yml) | Run pre-commit checks |
 | Test Llama Stack Build | [providers-build.yml](providers-build.yml) | Test llama stack build |
 | Test llama stack list-deps | [providers-list-deps.yml](providers-list-deps.yml) | Test llama stack list-deps |
