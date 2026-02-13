@@ -137,6 +137,7 @@ $CONTAINER_RUNTIME run -d --name grafana \
   -v "$SCRIPT_DIR/grafana-datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:Z" \
   -v "$SCRIPT_DIR/grafana-dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:Z" \
   -v "$SCRIPT_DIR/llama-stack-dashboard.json:/etc/grafana/provisioning/dashboards/llama-stack-dashboard.json:Z" \
+  -v "$SCRIPT_DIR/llama-stack-tool-runtime-metrics.json:/etc/grafana/provisioning/dashboards/llama-stack-tool-runtime-metrics.json:Z" \
   docker.io/grafana/grafana:11.0.0
 
 # Wait for services to start
