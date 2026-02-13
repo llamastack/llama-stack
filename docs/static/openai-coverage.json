@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 83.5,
-      "issues": 273,
-      "missing_properties": 156,
-      "total_problems": 429,
+      "score": 83.6,
+      "issues": 275,
+      "missing_properties": 151,
+      "total_problems": 426,
       "total_properties": 2598
     }
   },
@@ -706,9 +706,9 @@
       ]
     },
     "Chat": {
-      "score": 86.1,
+      "score": 86.8,
       "issues": 27,
-      "missing_properties": 29,
+      "missing_properties": 26,
       "total_properties": 402,
       "endpoints": [
         {
@@ -789,7 +789,6 @@
             {
               "method": "POST",
               "missing_properties": [
-                "POST.responses.200.content.application/json.properties.service_tier",
                 "POST.responses.200.content.application/json.properties.system_fingerprint",
                 "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens",
                 "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens_details",
@@ -798,7 +797,6 @@
                 "POST.responses.200.content.application/json.properties.usage.properties.total_tokens",
                 "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content",
                 "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal",
-                "POST.responses.200.content.text/event-stream.properties.service_tier",
                 "POST.responses.200.content.text/event-stream.properties.system_fingerprint",
                 "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens",
                 "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details",
@@ -897,7 +895,7 @@
                   ]
                 }
               ],
-              "missing_count": 16,
+              "missing_count": 14,
               "issues_count": 12
             }
           ]
@@ -908,7 +906,6 @@
             {
               "method": "GET",
               "missing_properties": [
-                "GET.responses.200.content.application/json.properties.service_tier",
                 "GET.responses.200.content.application/json.properties.system_fingerprint",
                 "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens",
                 "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens_details",
@@ -969,7 +966,7 @@
                   ]
                 }
               ],
-              "missing_count": 7,
+              "missing_count": 6,
               "issues_count": 7
             }
           ]
@@ -1744,8 +1741,8 @@
     },
     "Responses": {
       "score": 83.6,
-      "issues": 23,
-      "missing_properties": 14,
+      "issues": 25,
+      "missing_properties": 12,
       "total_properties": 225,
       "endpoints": [
         {
@@ -1757,7 +1754,6 @@
                 "POST.requestBody.content.application/json.properties.background",
                 "POST.requestBody.content.application/json.properties.frequency_penalty",
                 "POST.requestBody.content.application/json.properties.presence_penalty",
-                "POST.requestBody.content.application/json.properties.service_tier",
                 "POST.requestBody.content.application/json.properties.stream_options",
                 "POST.requestBody.content.application/json.properties.top_logprobs",
                 "POST.requestBody.content.application/json.properties.top_p",
@@ -1766,7 +1762,6 @@
                 "POST.responses.200.content.application/json.properties.frequency_penalty",
                 "POST.responses.200.content.application/json.properties.incomplete_details",
                 "POST.responses.200.content.application/json.properties.presence_penalty",
-                "POST.responses.200.content.application/json.properties.service_tier",
                 "POST.responses.200.content.application/json.properties.top_logprobs"
               ],
               "conformance_issues": [
@@ -1804,6 +1799,12 @@
                   "details": [
                     "Union variants added: 1",
                     "Union variants removed: 1"
+                  ]
+                },
+                {
+                  "property": "POST.requestBody.content.application/json.properties.service_tier",
+                  "details": [
+                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -1887,6 +1888,14 @@
                   ]
                 },
                 {
+                  "property": "POST.responses.200.content.application/json.properties.service_tier",
+                  "details": [
+                    "Type removed: ['string']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
                   "property": "POST.responses.200.content.application/json.properties.temperature",
                   "details": [
                     "Type removed: ['number']",
@@ -1936,8 +1945,8 @@
                   ]
                 }
               ],
-              "missing_count": 14,
-              "issues_count": 23
+              "missing_count": 12,
+              "issues_count": 25
             }
           ]
         }

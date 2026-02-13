@@ -1191,3 +1191,27 @@ class TestOpenAIMixinPromptCacheKey:
             mock_client.chat.completions.create.assert_called_once()
             call_kwargs = mock_client.chat.completions.create.call_args[1]
             assert call_kwargs["prompt_cache_key"] == cache_key
+
+
+class TestOpenAIMixinServiceTier:
+    """Test cases for service_tier parameter in OpenAIMixin"""
+
+    async def test_chat_completion_passes_service_tier_to_openai(self, mixin, mock_client_context):
+        """Test that service_tier parameter is passed to OpenAI client for chat completion"""
+        from llama_stack_api.inference import ServiceTier
+
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    service_tier=ServiceTier.priority,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["service_tier"] == ServiceTier.priority

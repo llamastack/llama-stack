@@ -15,6 +15,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack_api.common.responses import Order
+from llama_stack_api.inference import ServiceTier
 from llama_stack_api.openai_responses import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
@@ -141,6 +142,10 @@ class CreateResponseRequest(BaseModel):
         default=None,
         max_length=64,
         description="A stable identifier used for safety monitoring and abuse detection.",
+    )
+    service_tier: ServiceTier | None = Field(
+        default=None,
+        description="The service tier to use for this request.",
     )
     metadata: dict[str, str] | None = Field(
         default=None,

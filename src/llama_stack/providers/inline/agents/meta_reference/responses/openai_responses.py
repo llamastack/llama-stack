@@ -56,6 +56,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
+from llama_stack_api.inference import ServiceTier
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
@@ -474,6 +475,7 @@ class OpenAIResponsesImpl:
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
     ):
@@ -532,6 +534,7 @@ class OpenAIResponsesImpl:
             reasoning=reasoning,
             max_output_tokens=max_output_tokens,
             safety_identifier=safety_identifier,
+            service_tier=service_tier,
             metadata=metadata,
             include=include,
             truncation=truncation,
@@ -592,6 +595,7 @@ class OpenAIResponsesImpl:
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         truncation: ResponseTruncation | None = None,
@@ -660,6 +664,7 @@ class OpenAIResponsesImpl:
                 reasoning=reasoning,
                 max_output_tokens=max_output_tokens,
                 safety_identifier=safety_identifier,
+                service_tier=service_tier,
                 metadata=metadata,
                 include=include,
                 store=store,
