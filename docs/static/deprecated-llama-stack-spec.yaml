@@ -611,6 +611,14 @@ paths:
       description: List tools with optional tool group.
       operationId: list_tools_v1_tools_get
       parameters:
+      - name: authorization
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Authorization
       - name: toolgroup_id
         in: query
         required: false
@@ -6640,6 +6648,10 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+        mcp_server_instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
       type: object
       required:
       - identifier
@@ -8636,6 +8648,14 @@ components:
           anyOf:
           - additionalProperties: true
             type: object
+          - type: 'null'
+        mcp_server_instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+        authorization:
+          anyOf:
+          - type: string
           - type: 'null'
       type: object
       required:
@@ -10726,6 +10746,11 @@ components:
           - type: 'null'
           nullable: true
           title: URL
+        mcp_server_instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
       required:
       - toolgroup_id
       - provider_id
