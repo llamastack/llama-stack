@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant", "remote::elasticsearch"]
+        vector-io-provider: ["inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::chromadb", "remote::pgvector", "remote::weaviate", "remote::qdrant", "remote::elasticsearch", "remote::infinispan"]
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
       fail-fast: false # we want to run all tests regardless of failure
 
@@ -155,6 +155,31 @@ jobs:
           source elastic-start-local/.env
           echo "ELASTICSEARCH_API_KEY=$ES_LOCAL_API_KEY" >> "$GITHUB_ENV"
 
+      - name: Setup Infinispan
+        if: matrix.vector-io-provider == 'remote::infinispan'
+        run: |
+          docker run --rm -d --pull always \
+            --name infinispan \
+            -p 11222:11222 \
+            -e USER=admin \
+            -e PASS=password \
+            infinispan/server:16.1.0
+
+      - name: Wait for Infinispan to be ready
+        if: matrix.vector-io-provider == 'remote::infinispan'
+        run: |
+          echo "Waiting for Infinispan to be ready..."
+          for i in {1..30}; do
+            if curl -s -u admin:password http://localhost:11222/rest/v2/server | grep -q "version"; then
+              echo "Infinispan is ready!"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Infinispan failed to start"
+          docker logs infinispan
+          exit 1
+
       - name: Build Llama Stack
         run: |
           uv run --no-sync llama stack list-deps ci-tests | xargs -L1 uv pip install
@@ -180,6 +205,10 @@ jobs:
           ENABLE_WEAVIATE: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'true' || '' }}
           WEAVIATE_CLUSTER_URL: ${{ matrix.vector-io-provider == 'remote::weaviate' && 'localhost:8080' || '' }}
           ELASTICSEARCH_URL: ${{ matrix.vector-io-provider == 'remote::elasticsearch' && 'http://localhost:9200' || '' }}
+          ENABLE_INFINISPAN: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'true' || '' }}
+          INFINISPAN_URL: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'http://localhost:11222' || '' }}
+          INFINISPAN_USERNAME: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'admin' || '' }}
+          INFINISPAN_PASSWORD: ${{ matrix.vector-io-provider == 'remote::infinispan' && 'password' || '' }}
         run: |
           uv run --no-sync \
             pytest -sv --stack-config="files=inline::localfs,inference=inline::sentence-transformers,vector_io=${{ matrix.vector-io-provider }}" \
@@ -210,6 +239,11 @@ jobs:
         if: ${{ always() && matrix.vector-io-provider == 'remote::elasticsearch' }}
         run: |
           docker logs es-local-dev > elasticsearch.log
+
+      - name: Write Infinispan logs to file
+        if: ${{ always() && matrix.vector-io-provider == 'remote::infinispan' }}
+        run: |
+          docker logs infinispan > infinispan.log
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}

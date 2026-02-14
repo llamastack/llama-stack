@@ -1,0 +1,37 @@
+syntax = "proto2";
+
+/**
+ * @Indexed
+ */
+message VectorItem{DIMENSION} {
+
+  /**
+   * @Keyword
+   */
+  optional string id = 1;
+
+  /**
+   * @Vector(dimension={DIMENSION}, similarity=COSINE)
+   */
+  repeated float floatVector = 2;
+
+  /**
+   * @Text
+   */
+  optional string text = 3;
+
+  /**
+   * @Basic
+   */
+  optional string metadata = 4;
+
+  /**
+   * @Basic
+   */
+  optional string chunkMetadata = 5;
+
+  /**
+   * @Basic
+   */
+  optional string embeddingModel = 6;
+}

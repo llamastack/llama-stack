@@ -160,6 +160,15 @@ providers:
       persistence:
         namespace: vector_io::elasticsearch
         backend: kv_default
+  - provider_id: ${env.INFINISPAN_URL:+infinispan}
+    provider_type: remote::infinispan
+    config:
+      url: ${env.INFINISPAN_URL:=http://localhost:11222}
+      username: ${env.INFINISPAN_USERNAME:=admin}
+      password: ${env.INFINISPAN_PASSWORD:=password}
+      persistence:
+        namespace: vector_io::infinispan
+        backend: kv_default
   files:
   - provider_id: meta-reference-files
     provider_type: inline::localfs

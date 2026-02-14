@@ -1,0 +1,422 @@
+---
+description: |
+  [Infinispan](https://infinispan.org/) is a remote vector database provider for Llama Stack. It
+  allows you to store and query vectors in a distributed Infinispan cluster via HTTP REST API.
+  Infinispan provides high-performance, scalable data storage with support for both vector similarity
+  search and full-text search capabilities.
+
+  ## Features
+
+  - **Vector Similarity Search** - Store and query embedding vectors with cosine similarity
+  - **Full-text/Keyword Search** - Query documents using Infinispan Query DSL or Ickle queries
+  - **Hybrid Search** - Combine vector and keyword search with configurable reranking (RRF or weighted)
+  - **Authentication** - Supports both Basic and Digest authentication mechanisms
+  - **HTTPS/TLS Support** - Secure connections with SSL certificate verification
+  - **Distributed Storage** - Leverage Infinispan's distributed caching for scalability
+  - **HTTP REST API** - Simple integration using standard HTTP protocol
+
+  ## Search Modes
+
+  **Supported:**
+  - **Vector Search** (`mode="vector"`): Performs vector similarity search using embeddings
+  - **Keyword Search** (`mode="keyword"`): Full-text search using Infinispan Query DSL/Ickle
+  - **Hybrid Search** (`mode="hybrid"`): Combines vector and keyword search with configurable reranking
+
+  ## Installation
+
+  You can install the required dependencies using pip:
+
+  ```bash
+  pip install httpx
+  ```
+
+  ## Configuration
+
+  ### Basic Configuration (HTTP)
+
+  ```yaml
+  vector_io:
+    - provider_id: infinispan
+      provider_type: remote::infinispan
+      config:
+        url: "http://localhost:11222"
+        username: "admin"
+        password: "password"
+        auth_mechanism: "digest"
+        persistence:
+          backend: "kv_default"
+          namespace: "vector_io::infinispan"
+  ```
+
+  ### HTTPS Configuration with TLS
+
+  ```yaml
+  vector_io:
+    - provider_id: infinispan
+      provider_type: remote::infinispan
+      config:
+        url: "https://infinispan.example.com:11222"
+        username: "admin"
+        password: "password"
+        use_https: true
+        auth_mechanism: "basic"
+        verify_ssl: true
+        persistence:
+          backend: "kv_default"
+          namespace: "vector_io::infinispan"
+  ```
+
+  ### Environment Variables
+
+  You can use environment variables for sensitive configuration:
+
+  ```yaml
+  vector_io:
+    - provider_id: infinispan
+      provider_type: remote::infinispan
+      config:
+        url: "${env.INFINISPAN_URL}"
+        username: "${env.INFINISPAN_USERNAME}"
+        password: "${env.INFINISPAN_PASSWORD}"
+        persistence:
+          backend: "kv_default"
+          namespace: "vector_io::infinispan"
+  ```
+
+  ## Usage
+
+  ### Starting Infinispan Server
+
+  The easiest way to get started is using Docker:
+
+  ```bash
+  docker run -it -p 11222:11222 \
+    -e USER="admin" \
+    -e PASS="password" \
+    infinispan/server:latest
+  ```
+
+  ### Vector Store Operations
+
+  Once configured, you can use standard Llama Stack vector store operations:
+
+  ```python
+  # Register a vector store
+  await vector_io.register_vector_store(
+      VectorStore(
+          identifier="my_documents",
+          embedding_model="all-MiniLM-L6-v2",
+          embedding_dimension=384
+      )
+  )
+
+  # Insert chunks with embeddings
+  await vector_io.insert_chunks(
+      vector_store_id="my_documents",
+      chunks=[...]
+  )
+
+  # Query with vector search
+  results = await vector_io.query_chunks(
+      vector_store_id="my_documents",
+      query="What is machine learning?",
+      params={"mode": "vector", "k": 10}
+  )
+
+  # Query with keyword search
+  results = await vector_io.query_chunks(
+      vector_store_id="my_documents",
+      query="machine learning",
+      params={"mode": "keyword", "k": 10}
+  )
+
+  # Query with hybrid search
+  results = await vector_io.query_chunks(
+      vector_store_id="my_documents",
+      query="What is machine learning?",
+      params={
+          "mode": "hybrid",
+          "k": 10,
+          "reranker_type": "rrf",
+          "reranker_params": {"k": 60}
+      }
+  )
+  ```
+
+  ## Hybrid Search Reranking
+
+  Infinispan supports two reranking strategies for hybrid search:
+
+  ### Reciprocal Rank Fusion (RRF)
+
+  ```python
+  params = {
+      "mode": "hybrid",
+      "k": 10,
+      "reranker_type": "rrf",
+      "reranker_params": {"k": 60}  # RRF parameter
+  }
+  ```
+
+  ### Weighted Reranking
+
+  ```python
+  params = {
+      "mode": "hybrid",
+      "k": 10,
+      "reranker_type": "weighted",
+      "reranker_params": {
+          "alpha": 0.7  # 70% vector search, 30% keyword search
+      }
+  }
+  ```
+
+  ## Authentication
+
+  Infinispan supports two authentication mechanisms:
+
+  - **Digest Authentication** (recommended for HTTP): More secure than basic auth over HTTP
+  - **Basic Authentication** (HTTPS only): Simple username/password authentication
+
+  Set the `auth_mechanism` parameter to either `"digest"` or `"basic"`.
+
+  ## Documentation
+
+  - [Infinispan Documentation](https://infinispan.org/documentation/)
+  - [Infinispan REST API Guide](https://infinispan.org/docs/stable/titles/rest/rest.html)
+  - [Infinispan Vector Search](https://infinispan.org/docs/stable/titles/developing/developing.html#vector-search)
+  - [Infinispan Query DSL](https://infinispan.org/docs/stable/titles/query/query.html)
+
+  ## Requirements
+
+  - Infinispan Server 16.0+ (with vector search support)
+  - httpx >= 0.27.0
+sidebar_label: Remote - Infinispan
+title: remote::infinispan
+---
+
+# remote::infinispan
+
+## Description
+
+
+[Infinispan](https://infinispan.org/) is a remote vector database provider for Llama Stack. It
+allows you to store and query vectors in a distributed Infinispan cluster via HTTP REST API.
+Infinispan provides high-performance, scalable data storage with support for both vector similarity
+search and full-text search capabilities.
+
+## Features
+
+- **Vector Similarity Search** - Store and query embedding vectors with cosine similarity
+- **Full-text/Keyword Search** - Query documents using Infinispan Query DSL or Ickle queries
+- **Hybrid Search** - Combine vector and keyword search with configurable reranking (RRF or weighted)
+- **Authentication** - Supports both Basic and Digest authentication mechanisms
+- **HTTPS/TLS Support** - Secure connections with SSL certificate verification
+- **Distributed Storage** - Leverage Infinispan's distributed caching for scalability
+- **HTTP REST API** - Simple integration using standard HTTP protocol
+
+## Search Modes
+
+**Supported:**
+- **Vector Search** (`mode="vector"`): Performs vector similarity search using embeddings
+- **Keyword Search** (`mode="keyword"`): Full-text search using Infinispan Query DSL/Ickle
+- **Hybrid Search** (`mode="hybrid"`): Combines vector and keyword search with configurable reranking
+
+## Installation
+
+You can install the required dependencies using pip:
+
+```bash
+pip install httpx
+```
+
+## Configuration
+
+### Basic Configuration (HTTP)
+
+```yaml
+vector_io:
+  - provider_id: infinispan
+    provider_type: remote::infinispan
+    config:
+      url: "http://localhost:11222"
+      username: "admin"
+      password: "password"
+      auth_mechanism: "digest"
+      persistence:
+        backend: "kv_default"
+        namespace: "vector_io::infinispan"
+```
+
+### HTTPS Configuration with TLS
+
+```yaml
+vector_io:
+  - provider_id: infinispan
+    provider_type: remote::infinispan
+    config:
+      url: "https://infinispan.example.com:11222"
+      username: "admin"
+      password: "password"
+      use_https: true
+      auth_mechanism: "basic"
+      verify_ssl: true
+      persistence:
+        backend: "kv_default"
+        namespace: "vector_io::infinispan"
+```
+
+### Environment Variables
+
+You can use environment variables for sensitive configuration:
+
+```yaml
+vector_io:
+  - provider_id: infinispan
+    provider_type: remote::infinispan
+    config:
+      url: "${env.INFINISPAN_URL}"
+      username: "${env.INFINISPAN_USERNAME}"
+      password: "${env.INFINISPAN_PASSWORD}"
+      persistence:
+        backend: "kv_default"
+        namespace: "vector_io::infinispan"
+```
+
+## Usage
+
+### Starting Infinispan Server
+
+The easiest way to get started is using Docker:
+
+```bash
+docker run -it -p 11222:11222 \
+  -e USER="admin" \
+  -e PASS="password" \
+  infinispan/server:latest
+```
+
+### Vector Store Operations
+
+Once configured, you can use standard Llama Stack vector store operations:
+
+```python
+# Register a vector store
+await vector_io.register_vector_store(
+    VectorStore(
+        identifier="my_documents",
+        embedding_model="all-MiniLM-L6-v2",
+        embedding_dimension=384
+    )
+)
+
+# Insert chunks with embeddings
+await vector_io.insert_chunks(
+    vector_store_id="my_documents",
+    chunks=[...]
+)
+
+# Query with vector search
+results = await vector_io.query_chunks(
+    vector_store_id="my_documents",
+    query="What is machine learning?",
+    params={"mode": "vector", "k": 10}
+)
+
+# Query with keyword search
+results = await vector_io.query_chunks(
+    vector_store_id="my_documents",
+    query="machine learning",
+    params={"mode": "keyword", "k": 10}
+)
+
+# Query with hybrid search
+results = await vector_io.query_chunks(
+    vector_store_id="my_documents",
+    query="What is machine learning?",
+    params={
+        "mode": "hybrid",
+        "k": 10,
+        "reranker_type": "rrf",
+        "reranker_params": {"k": 60}
+    }
+)
+```
+
+## Hybrid Search Reranking
+
+Infinispan supports two reranking strategies for hybrid search:
+
+### Reciprocal Rank Fusion (RRF)
+
+```python
+params = {
+    "mode": "hybrid",
+    "k": 10,
+    "reranker_type": "rrf",
+    "reranker_params": {"k": 60}  # RRF parameter
+}
+```
+
+### Weighted Reranking
+
+```python
+params = {
+    "mode": "hybrid",
+    "k": 10,
+    "reranker_type": "weighted",
+    "reranker_params": {
+        "alpha": 0.7  # 70% vector search, 30% keyword search
+    }
+}
+```
+
+## Authentication
+
+Infinispan supports two authentication mechanisms:
+
+- **Digest Authentication** (recommended for HTTP): More secure than basic auth over HTTP
+- **Basic Authentication** (HTTPS only): Simple username/password authentication
+
+Set the `auth_mechanism` parameter to either `"digest"` or `"basic"`.
+
+## Documentation
+
+- [Infinispan Documentation](https://infinispan.org/documentation/)
+- [Infinispan REST API Guide](https://infinispan.org/docs/stable/titles/rest/rest.html)
+- [Infinispan Vector Search](https://infinispan.org/docs/stable/titles/developing/developing.html#vector-search)
+- [Infinispan Query DSL](https://infinispan.org/docs/stable/titles/query/query.html)
+
+## Requirements
+
+- Infinispan Server 16.0+ (with vector search support)
+- httpx >= 0.27.0
+
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `url` | `str` | No | http://localhost:11222 | Infinispan server URL (e.g., http://localhost:11222) |
+| `username` | `str \| None` | No |  | Authentication username |
+| `password` | `str \| None` | No |  | Authentication password |
+| `use_https` | `bool` | No | False | Enable HTTPS/TLS connection |
+| `auth_mechanism` | `str` | No | digest | Authentication mechanism: 'digest' or 'basic' |
+| `verify_ssl` | `bool` | No | True | Verify SSL certificates for HTTPS connections |
+| `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
+| `persistence.namespace` | `str` | No |  | Key prefix for KVStore backends |
+| `persistence.backend` | `str` | No |  | Name of backend from storage.backends |
+
+## Sample Configuration
+
+```yaml
+url: ${env.INFINISPAN_URL:=http://localhost:11222}
+username: ${env.INFINISPAN_USERNAME:=admin}
+password: ${env.INFINISPAN_PASSWORD:=password}
+use_https: false
+auth_mechanism: digest
+verify_ssl: true
+persistence:
+  namespace: vector_io::infinispan
+  backend: kv_default
+```
