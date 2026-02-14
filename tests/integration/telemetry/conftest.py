@@ -18,6 +18,7 @@ from tests.integration.telemetry.collectors import InMemoryTelemetryManager, Otl
 # TODO: Fix this to work with Automatic Instrumentation
 @pytest.fixture(scope="session")
 def telemetry_test_collector():
+    # Stack mode is set by integration-tests.sh based on STACK_CONFIG
     stack_mode = os.environ.get("LLAMA_STACK_TEST_STACK_CONFIG_TYPE", "library_client")
 
     if stack_mode == "server":

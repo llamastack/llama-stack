@@ -159,9 +159,15 @@ class StackRun(Subcommand):
             except AttributeError as e:
                 self.parser.error(f"failed to parse config file '{config_file}':\n {e}")
 
-        self._uvicorn_run(config_file, args)
+        self._run_server(config_file, args)
 
-    def _uvicorn_run(self, config_file: Path | None, args: argparse.Namespace) -> None:
+    def _run_server(self, config_file: Path | None, args: argparse.Namespace) -> None:
+        """
+        Run the Llama Stack server using either Gunicorn (on Unix systems) or Uvicorn (on Windows or when disabled).
+
+        On Unix systems (Linux/macOS), defaults to Gunicorn with Uvicorn workers for production-grade multi-process
+        performance. Falls back to single-process Uvicorn on Windows or when LLAMA_STACK_ENABLE_GUNICORN=false.
+        """
         if not config_file:
             self.parser.error("Config file is required")
 
@@ -207,19 +213,164 @@ class StackRun(Subcommand):
 
         logger.info(f"Listening on {host}:{port}")
 
-        # We need to catch KeyboardInterrupt because uvicorn's signal handling
-        # re-raises SIGINT signals using signal.raise_signal(), which Python
-        # converts to KeyboardInterrupt. Without this catch, we'd get a confusing
-        # stack trace when using Ctrl+C or kill -2 (SIGINT).
-        # SIGTERM (kill -15) works fine without this because Python doesn't
-        # have a default handler for it.
-        #
-        # Another approach would be to ignore SIGINT entirely - let uvicorn handle it through its own
-        # signal handling but this is quite intrusive and not worth the effort.
+        # We need to catch KeyboardInterrupt because both Uvicorn and Gunicorn's signal handling
+        # can raise SIGINT signals, which Python converts to KeyboardInterrupt. Without this catch,
+        # we'd get a confusing stack trace when using Ctrl+C or kill -2 (SIGINT).
+        # SIGTERM (kill -15) works fine without this because Python doesn't have a default handler for it.
         try:
-            uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
+            # Check if Gunicorn should be enabled
+            # Default to true on Unix systems, can be disabled via environment variable
+            enable_gunicorn = os.getenv("LLAMA_STACK_ENABLE_GUNICORN", "false").lower() == "true" and sys.platform in (
+                "linux",
+                "darwin",
+            )
+
+            if enable_gunicorn:
+                # On Unix-like systems, use Gunicorn with Uvicorn workers for production-grade performance
+                try:
+                    self._run_with_gunicorn(host, port, uvicorn_config, config)
+                    # Note: _run_with_gunicorn uses os.execvp, so this line is only reached on exec failure
+                except (FileNotFoundError, OSError) as e:
+                    # Gunicorn not available or failed to exec - fall back to Uvicorn
+                    logger.warning(f"Gunicorn unavailable or failed to start: {e}")
+                    logger.info("Falling back to single-process Uvicorn server...")
+                    uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
+            else:
+                # Fall back to Uvicorn for:
+                # - Windows systems (Gunicorn not supported)
+                # - Unix systems with LLAMA_STACK_ENABLE_GUNICORN=false (for testing/debugging)
+                if sys.platform not in ("linux", "darwin"):
+                    logger.info("Using single-process Uvicorn server (Gunicorn not supported on this platform)")
+                else:
+                    logger.info(
+                        "Using single-process Uvicorn server (Gunicorn disabled via LLAMA_STACK_ENABLE_GUNICORN=false)"
+                    )
+                uvicorn.run("llama_stack.core.server.server:create_app", **uvicorn_config)  # type: ignore[arg-type]
         except (KeyboardInterrupt, SystemExit):
             logger.info("Received interrupt signal, shutting down gracefully...")
+
+    def _run_with_gunicorn(self, host: str | list[str], port: int, uvicorn_config: dict, config: StackConfig) -> None:
+        """
+        Run the server using Gunicorn with Uvicorn workers.
+
+        This provides production-grade multi-process performance on Unix systems.
+        """
+        import logging  # allow-direct-logging
+        import multiprocessing
+
+        # Worker count priority: env var > config > default formula
+        # Default formula: (2 * CPU cores) + 1
+        config_workers = uvicorn_config.get("workers", 1)
+        default_workers = config_workers if config_workers > 1 else (multiprocessing.cpu_count() * 2) + 1
+        num_workers = int(os.getenv("GUNICORN_WORKERS") or os.getenv("WEB_CONCURRENCY") or default_workers)
+
+        # Handle host configuration - Gunicorn expects a single bind address
+        # Uvicorn can accept a list of hosts, but Gunicorn binds to one address
+        bind_host = host[0] if isinstance(host, list) else host
+
+        # IPv6 addresses need to be wrapped in brackets
+        if ":" in bind_host and not bind_host.startswith("["):
+            bind_address = f"[{bind_host}]:{port}"
+        else:
+            bind_address = f"{bind_host}:{port}"
+
+        # Map Python logging level to Gunicorn log level string (from uvicorn_config)
+        log_level_map = {
+            logging.CRITICAL: "critical",
+            logging.ERROR: "error",
+            logging.WARNING: "warning",
+            logging.INFO: "info",
+            logging.DEBUG: "debug",
+        }
+        log_level = uvicorn_config.get("log_level", logging.INFO)
+        gunicorn_log_level = log_level_map.get(log_level, "info")
+
+        # Worker timeout - longer for async workers, configurable via env var
+        timeout = int(os.getenv("GUNICORN_TIMEOUT", "120"))
+
+        # Worker connections - concurrent connections per worker
+        worker_connections = int(os.getenv("GUNICORN_WORKER_CONNECTIONS", "1000"))
+
+        # Worker recycling to prevent memory leaks
+        max_requests = int(os.getenv("GUNICORN_MAX_REQUESTS", "10000"))
+        max_requests_jitter = int(os.getenv("GUNICORN_MAX_REQUESTS_JITTER", "1000"))
+
+        # Keep-alive for connection reuse
+        keepalive = int(os.getenv("GUNICORN_KEEPALIVE", "5"))
+
+        # Build Gunicorn command
+        gunicorn_command = [
+            "gunicorn",
+            "-k",
+            "uvicorn.workers.UvicornWorker",
+            "--workers",
+            str(num_workers),
+            "--worker-connections",
+            str(worker_connections),
+            "--bind",
+            bind_address,
+            "--timeout",
+            str(timeout),
+            "--keep-alive",
+            str(keepalive),
+            "--max-requests",
+            str(max_requests),
+            "--max-requests-jitter",
+            str(max_requests_jitter),
+            "--log-level",
+            gunicorn_log_level,
+            "--access-logfile",
+            "-",  # Log to stdout
+            "--error-logfile",
+            "-",  # Log to stderr
+        ]
+
+        # Preload app for memory efficiency (disabled by default to avoid import issues)
+        # Enable with GUNICORN_PRELOAD=true for production deployments
+        if os.getenv("GUNICORN_PRELOAD", "true").lower() == "true":
+            gunicorn_command.append("--preload")
+
+        # Add SSL configuration if present (from uvicorn_config)
+        if uvicorn_config.get("ssl_keyfile") and uvicorn_config.get("ssl_certfile"):
+            gunicorn_command.extend(
+                [
+                    "--keyfile",
+                    uvicorn_config["ssl_keyfile"],
+                    "--certfile",
+                    uvicorn_config["ssl_certfile"],
+                ]
+            )
+            if uvicorn_config.get("ssl_ca_certs"):
+                gunicorn_command.extend(["--ca-certs", uvicorn_config["ssl_ca_certs"]])
+
+        # Add the application
+        gunicorn_command.append("llama_stack.core.server.server:create_app")
+
+        # Log comprehensive configuration
+        logger.info(f"Starting Gunicorn server with {num_workers} workers on {bind_address}...")
+        logger.info("Using Uvicorn workers for ASGI application support")
+        logger.info(
+            f"Configuration: {worker_connections} connections/worker, {timeout}s timeout, {keepalive}s keepalive"
+        )
+        logger.info(f"Worker recycling: every {max_requests}±{max_requests_jitter} requests (prevents memory leaks)")
+        logger.info(f"Total concurrent capacity: {num_workers * worker_connections} connections")
+
+        # Warn if using SQLite with multiple workers
+        if num_workers > 1 and self._config_uses_sqlite(config):
+            logger.warning("SQLite detected with multiple GUNICORN workers - writes will be serialized.")
+
+        # Execute Gunicorn by replacing this process (exec)
+        # This ensures proper signal handling - signals go directly to Gunicorn
+        os.execvp("gunicorn", gunicorn_command)
+
+    def _config_uses_sqlite(self, config: StackConfig) -> bool:
+        """Check if any storage backend in the config uses SQLite."""
+        if not config.storage or not config.storage.backends:
+            return False
+        for backend in config.storage.backends.values():
+            if isinstance(backend, SqliteKVStoreConfig | SqliteSqlStoreConfig):
+                return True
+        return False
 
     def _start_ui_development_server(self, stack_server_port: int):
         logger.info("Attempting to start UI development server...")
