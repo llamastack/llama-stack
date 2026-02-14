@@ -235,7 +235,7 @@ def test_openai_completion_guided_choice(llama_stack_client, client_with_models,
         model=text_model_id,
         prompt=prompt,
         stream=False,
-        extra_body={"guided_choice": ["joy", "sadness"]},
+        extra_body={"structured_outputs": {"choice": ["joy", "sadness"]}},
     )
     assert len(response.choices) > 0
     choice = response.choices[0]

@@ -225,6 +225,8 @@ class LiteLLMOpenAIMixin(
             api_base=self.api_base,
             **self._litellm_extra_request_params(params),
         )
+        if extra_body := params.model_extra:
+            request_params["extra_body"] = extra_body
         # LiteLLM returns compatible type but mypy can't verify external library
         result = await litellm.atext_completion(**request_params)
 
@@ -281,6 +283,8 @@ class LiteLLMOpenAIMixin(
             api_base=self.api_base,
             **self._litellm_extra_request_params(params),
         )
+        if extra_body := params.model_extra:
+            request_params["extra_body"] = extra_body
         # LiteLLM returns compatible type but mypy can't verify external library
         result = await litellm.acompletion(**request_params)
 

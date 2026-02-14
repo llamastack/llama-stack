@@ -131,6 +131,7 @@ class MetaReferenceAgentsImpl(Agents):
             safety_identifier=request.safety_identifier,
             metadata=request.metadata,
             truncation=request.truncation,
+            extra_body=request.model_extra,
         )
         return result
 

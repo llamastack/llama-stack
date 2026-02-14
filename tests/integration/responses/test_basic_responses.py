@@ -22,6 +22,14 @@ def provider_from_model(client_with_models, text_model_id):
     return providers[provider_id]
 
 
+def skip_if_provider_isnt_vllm(client_with_models, text_model_id):
+    provider = provider_from_model(client_with_models, text_model_id)
+    if provider.provider_type != "remote::vllm":
+        pytest.skip(
+            f"Model {text_model_id} hosted by {provider.provider_type} doesn't support vllm extra_body parameters."
+        )
+
+
 def skip_if_chat_completions_logprobs_not_supported(client_with_models, text_model_id):
     provider_type = provider_from_model(client_with_models, text_model_id).provider_type
     if provider_type in ("remote::ollama",):
@@ -372,3 +380,18 @@ def test_include_logprobs_with_function_tools(client_with_models, text_model_id)
     assert response.output[0].status == "completed"
     message_outputs = [output for output in response.output if output.type == "message"]
     assert len(message_outputs) == 0, f"Expected no message output, got {len(message_outputs)}"
+
+
+def test_response_extra_body_guided_choice(client_with_models, text_model_id):
+    """Test that extra_body parameters pass through the responses API to the backend (see #3777)."""
+    skip_if_provider_isnt_vllm(client_with_models, text_model_id)
+
+    response = client_with_models.responses.create(
+        model=text_model_id,
+        input="I am feeling really sad today.",
+        stream=False,
+        extra_body={"structured_outputs": {"choice": ["joy", "sadness"]}},
+    )
+    assert len(response.output) > 0
+    output_text = response.output_text.strip()
+    assert output_text in ["joy", "sadness"]

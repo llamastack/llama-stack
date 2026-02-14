@@ -149,6 +149,7 @@ class StreamingResponseOrchestrator:
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
         truncation: ResponseTruncation | None = None,
+        extra_body: dict | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -176,6 +177,7 @@ class StreamingResponseOrchestrator:
         self.truncation = truncation
         self.store = store
         self.include = include
+        self.extra_body = extra_body
         self.store = bool(store) if store is not None else True
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
@@ -401,6 +403,7 @@ class StreamingResponseOrchestrator:
                     safety_identifier=self.safety_identifier,
                     max_completion_tokens=remaining_output_tokens,
                     prompt_cache_key=self.prompt_cache_key,
+                    **(self.extra_body or {}),
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
