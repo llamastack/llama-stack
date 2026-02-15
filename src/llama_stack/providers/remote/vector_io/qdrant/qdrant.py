@@ -26,6 +26,7 @@ from llama_stack_api import (
     Files,
     Inference,
     InsertChunksRequest,
+    OpenAIAttachFileRequest,
     QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
@@ -35,7 +36,6 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
-from llama_stack_api.openai_types import OpenAIAttachFileRequest
 from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 
 from .config import QdrantVectorIOConfig as RemoteQdrantVectorIOConfig
