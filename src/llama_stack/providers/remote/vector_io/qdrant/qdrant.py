@@ -35,6 +35,7 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
+from llama_stack_api.openai_types import OpenAIAttachFileRequest
 from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 
 from .config import QdrantVectorIOConfig as RemoteQdrantVectorIOConfig
@@ -419,15 +420,11 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
-        file_id: str,
-        attributes: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+        request: OpenAIAttachFileRequest,
     ) -> VectorStoreFileObject:
         # Qdrant doesn't allow multiple clients to access the same storage path simultaneously.
         async with self._qdrant_lock:
-            return await super().openai_attach_file_to_vector_store(
-                vector_store_id, file_id, attributes, chunking_strategy
-            )
+            return await super().openai_attach_file_to_vector_store(vector_store_id, request)
 
     async def delete_chunks(self, request: DeleteChunksRequest) -> None:
         """Delete chunks from a Qdrant vector store."""
