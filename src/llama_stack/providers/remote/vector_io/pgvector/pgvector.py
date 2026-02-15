@@ -19,7 +19,6 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
-from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import (
     WeightedInMemoryAggregator,
     load_embedded_chunk_with_backward_compat,
