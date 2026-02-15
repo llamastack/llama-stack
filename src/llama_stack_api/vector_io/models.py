@@ -12,7 +12,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema
@@ -349,8 +349,73 @@ class VectorStoreChunkingStrategyStatic(BaseModel):
     static: VectorStoreChunkingStrategyStaticConfig
 
 
+@json_schema_type
+class VectorStoreChunkingStrategyContextualConfig(BaseModel):
+    """Configuration for contextual chunking strategy."""
+
+    model_id: str | None = Field(
+        default=None,
+        min_length=1,
+        description="LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.",
+    )
+    context_prompt: str = Field(
+        default=(
+            "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
+            "Here is the chunk we want to situate within the whole document\n"
+            "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
+            "Please give a short succinct description to situate this chunk within the overall document "
+            "for the purposes of improving search retrieval of the chunk. "
+            "Answer only with the succinct description and nothing else."
+        ),
+        description="Prompt template for contextual retrieval. Must contain {{WHOLE_DOCUMENT}} and {{CHUNK_CONTENT}} placeholders.",
+    )
+    max_chunk_size_tokens: int = Field(
+        default=700,
+        ge=100,
+        le=4096,
+        description="Maximum tokens per chunk. Suggested ~700 to allow room for prepended context.",
+    )
+    chunk_overlap_tokens: int = Field(
+        default=400,
+        ge=0,
+        description="Tokens to overlap between adjacent chunks. Must be less than max_chunk_size_tokens.",
+    )
+    timeout_seconds: int | None = Field(
+        default=None,
+        ge=1,
+        description="Timeout per LLM call in seconds. Falls back to config default if not provided.",
+    )
+    max_concurrency: int | None = Field(
+        default=None,
+        ge=1,
+        description="Maximum concurrent LLM calls. Falls back to config default if not provided.",
+    )
+
+    @model_validator(mode="after")
+    def validate_config(self) -> "VectorStoreChunkingStrategyContextualConfig":
+        if self.chunk_overlap_tokens >= self.max_chunk_size_tokens:
+            raise ValueError("chunk_overlap_tokens must be less than max_chunk_size_tokens")
+
+        if "{{WHOLE_DOCUMENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{WHOLE_DOCUMENT}} placeholder")
+        if "{{CHUNK_CONTENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{CHUNK_CONTENT}} placeholder")
+
+        return self
+
+
+@json_schema_type
+class VectorStoreChunkingStrategyContextual(BaseModel):
+    """Contextual chunking strategy that uses an LLM to situate chunks within the document."""
+
+    type: Literal["contextual"] = Field(default="contextual", description="Strategy type identifier.")
+    contextual: VectorStoreChunkingStrategyContextualConfig = Field(
+        description="Configuration for contextual chunking."
+    )
+
+
 VectorStoreChunkingStrategy = Annotated[
-    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic,
+    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual,
     Field(discriminator="type"),
 ]
 register_schema(VectorStoreChunkingStrategy, name="VectorStoreChunkingStrategy")
@@ -735,6 +800,8 @@ __all__ = [
     "SearchRankingOptions",
     "VectorStoreChunkingStrategy",
     "VectorStoreChunkingStrategyAuto",
+    "VectorStoreChunkingStrategyContextual",
+    "VectorStoreChunkingStrategyContextualConfig",
     "VectorStoreChunkingStrategyStatic",
     "VectorStoreChunkingStrategyStaticConfig",
     "VectorStoreContent",
