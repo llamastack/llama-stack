@@ -6,7 +6,7 @@
 
 import asyncio
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Body
 
@@ -137,12 +137,97 @@ class VectorIORouter(VectorIO):
         )
         return await self.routing_table.insert_chunks(request)
 
+    def _parse_filter(self, filter_data: Any) -> Any:
+        """Recursively parse filter data into typed Filter objects.
+
+        This method handles the conversion of dictionary-based filter data into proper
+        typed Filter objects (ComparisonFilter or CompoundFilter), supporting arbitrary
+        nesting levels and pre-typed filter objects.
+
+        Args:
+            filter_data: Filter data as dict, ComparisonFilter, or CompoundFilter
+
+        Returns:
+            Typed filter object (ComparisonFilter or CompoundFilter)
+
+        Raises:
+            ValueError: If filter data is invalid or has unsupported structure
+        """
+        from llama_stack_api.filters import (
+            ALL_FILTER_TYPES,
+            COMPARISON_FILTER_TYPES,
+            COMPOUND_FILTER_TYPES,
+            ComparisonFilter,
+            CompoundFilter,
+        )
+
+        # Handle pre-typed filter objects - pass through unchanged
+        if isinstance(filter_data, ComparisonFilter | CompoundFilter):
+            return filter_data
+
+        # Validate that filter_data is a dictionary
+        if not isinstance(filter_data, dict):
+            raise ValueError("Filter must be a dict or typed Filter object")
+
+        filter_type = filter_data.get("type")
+        if not filter_type:
+            raise ValueError("Filter must have a 'type' field")
+
+        # Handle comparison filters
+        if filter_type in COMPARISON_FILTER_TYPES:
+            # Validate required fields for comparison filters
+            if "key" not in filter_data or "value" not in filter_data:
+                raise ValueError(f"Comparison filter '{filter_type}' must have 'key' and 'value' fields")
+            return ComparisonFilter(**filter_data)
+
+        # Handle compound filters
+        elif filter_type in COMPOUND_FILTER_TYPES:
+            sub_filters_data = filter_data.get("filters", [])
+            if not isinstance(sub_filters_data, list):
+                raise ValueError(f"Compound filter '{filter_type}' must have a 'filters' list")
+
+            # Recursively parse all sub-filters
+            parsed_sub_filters = []
+            for sub_filter in sub_filters_data:
+                parsed_sub_filters.append(self._parse_filter(sub_filter))
+
+            return CompoundFilter(type=filter_type, filters=parsed_sub_filters)
+
+        else:
+            # Use the constants in error message for consistency
+            supported_types = ", ".join(sorted(ALL_FILTER_TYPES))
+            raise ValueError(f"Invalid filter type: '{filter_type}'. Supported types: {supported_types}")
+
     async def query_chunks(
         self,
         request: QueryChunksRequest,
     ) -> QueryChunksResponse:
         logger.debug(f"VectorIORouter.query_chunks: {request.vector_store_id}")
-        return await self.routing_table.query_chunks(request)
+
+        # Handle the no-filters case early
+        if not request.params or "filters" not in request.params:
+            return await self.routing_table.query_chunks(request)
+
+        # Extract and parse filters from request params
+        # Create a shallow copy to avoid mutating the caller's request
+        params_copy = dict(request.params)
+        filter_data = params_copy.pop("filters")
+
+        try:
+            # Parse filter data with full recursive support
+            parsed_filters = self._parse_filter(filter_data)
+        except ValueError as e:
+            logger.error(f"Invalid filter data: {e}")
+            raise ValueError(f"Invalid filter: {e}") from e
+
+        # Create a new request with the modified params
+        # Add the parsed filters back to params for the provider
+        params_copy["filters"] = parsed_filters
+        modified_request = QueryChunksRequest(
+            vector_store_id=request.vector_store_id, query=request.query, params=params_copy
+        )
+
+        return await self.routing_table.query_chunks(modified_request)
 
     # OpenAI Vector Stores API endpoints
     async def openai_create_vector_store(

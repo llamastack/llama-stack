@@ -17,10 +17,10 @@ from numpy.typing import NDArray
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
+from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter, Filter
 from llama_stack_api import (
-    ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -162,8 +162,74 @@ class FaissIndex(EmbeddingIndex):
 
         await self._save_index()
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
-        distances, indices = await asyncio.to_thread(self.index.search, embedding.reshape(1, -1).astype(np.float32), k)
+    def _matches_filter(self, metadata: dict[str, Any], filter_obj: Filter) -> bool:
+        """Check if metadata matches the given filter."""
+        if isinstance(filter_obj, ComparisonFilter):
+            return self._matches_comparison_filter(metadata, filter_obj)
+        elif isinstance(filter_obj, CompoundFilter):
+            return self._matches_compound_filter(metadata, filter_obj)
+        else:
+            raise ValueError(f"Unknown filter type: {type(filter_obj)}")
+
+    def _matches_comparison_filter(self, metadata: dict[str, Any], filter_obj: ComparisonFilter) -> bool:
+        """Check if metadata matches a comparison filter."""
+        key = filter_obj.key
+        value = filter_obj.value
+        op_type = filter_obj.type
+
+        if key not in metadata:
+            return False
+
+        metadata_value = metadata[key]
+
+        if op_type == "eq":
+            return bool(metadata_value == value)
+        elif op_type == "ne":
+            return bool(metadata_value != value)
+        elif op_type == "gt":
+            return bool(metadata_value > value)
+        elif op_type == "gte":
+            return bool(metadata_value >= value)
+        elif op_type == "lt":
+            return bool(metadata_value < value)
+        elif op_type == "lte":
+            return bool(metadata_value <= value)
+        elif op_type == "in":
+            if not isinstance(value, list):
+                raise ValueError(f"'in' filter requires a list value, got {type(value)}")
+            return metadata_value in value
+        elif op_type == "nin":
+            if not isinstance(value, list):
+                raise ValueError(f"'nin' filter requires a list value, got {type(value)}")
+            return metadata_value not in value
+        else:
+            raise ValueError(f"Unknown comparison operator: {op_type}")
+
+    def _matches_compound_filter(self, metadata: dict[str, Any], filter_obj: CompoundFilter) -> bool:
+        """Check if metadata matches a compound filter (and/or)."""
+        if not filter_obj.filters:
+            return True
+
+        if filter_obj.type == "and":
+            return all(self._matches_filter(metadata, f) for f in filter_obj.filters)
+        elif filter_obj.type == "or":
+            return any(self._matches_filter(metadata, f) for f in filter_obj.filters)
+        else:
+            raise ValueError(f"Unknown compound filter type: {filter_obj.type}")
+
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
+        """
+        Performs vector-based search using Faiss similarity search.
+        Optionally filters results based on metadata.
+        """
+        # Request more results if filtering, since some may be filtered out
+        search_k = k * 3 if filters else k
+
+        distances, indices = await asyncio.to_thread(
+            self.index.search, embedding.reshape(1, -1).astype(np.float32), search_k
+        )
         chunks: list[EmbeddedChunk] = []
         scores: list[float] = []
         for d, i in zip(distances[0], indices[0], strict=False):
@@ -172,12 +238,25 @@ class FaissIndex(EmbeddingIndex):
             score = 1.0 / float(d) if d != 0 else float("inf")
             if score < score_threshold:
                 continue
-            chunks.append(self.chunk_by_index[int(i)])
+
+            chunk = self.chunk_by_index[int(i)]
+
+            # Apply filter if provided
+            if filters and not self._matches_filter(chunk.metadata, filters):
+                continue
+
+            chunks.append(chunk)
             scores.append(score)
+
+            # Stop once we have enough results
+            if len(chunks) >= k:
+                break
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         raise NotImplementedError(
             "Keyword search is not supported - underlying DB FAISS does not support this search mode"
         )
@@ -190,6 +269,7 @@ class FaissIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         raise NotImplementedError(
             "Hybrid search is not supported - underlying DB FAISS does not support this search mode"
