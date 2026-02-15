@@ -14,7 +14,10 @@ from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIV
 from llama_stack_api import (
     Chunk,
     ChunkMetadata,
+    DeleteChunksRequest,
+    InsertChunksRequest,
     OpenAIChatCompletion,
+    QueryChunksRequest,
     QueryChunksResponse,
     TextContentItem,
     VectorStoreChunkingStrategyContextualConfig,
@@ -39,19 +42,19 @@ class MockVectorStoreProvider(OpenAIVectorStoreMixin):
         super().__init__(inference_api=inference_api)
         self.vector_stores_config = VectorStoresConfig(contextual_retrieval_params=ContextualRetrievalParams())
 
-    async def register_vector_store(self, vector_store):
-        return vector_store
-
-    async def unregister_vector_store(self, vector_store_id):
+    async def register_vector_store(self, vector_store) -> None:
         pass
 
-    async def insert_chunks(self, vector_store_id, chunks, **kwargs):
+    async def unregister_vector_store(self, vector_store_id) -> None:
         pass
 
-    async def query_chunks(self, vector_store_id, query, **kwargs) -> QueryChunksResponse:
+    async def insert_chunks(self, request: InsertChunksRequest) -> None:
+        pass
+
+    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
         return QueryChunksResponse(chunks=[], scores=[])
 
-    async def delete_chunks(self, vector_store_id, chunk_ids):
+    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
         pass
 
 
@@ -105,6 +108,14 @@ def create_mock_response(content):
     mock_choice.message = mock_message
     mock_response.choices = [mock_choice]
     return mock_response
+
+
+class _RetriableError(Exception):
+    """Exception with a response attribute for retry-logic tests."""
+
+    def __init__(self, message: str, status_code: int):
+        super().__init__(message)
+        self.response = MagicMock(status_code=status_code)
 
 
 def create_chunk(content, chunk_id="chunk_1", document_id="doc_1"):
@@ -304,12 +315,8 @@ async def test_execute_contextual_chunk_transformation_model_fallback(inference_
 
 async def test_execute_contextual_chunk_transformation_retries_on_retriable_error(inference_api, provider, fast_retry):
     """Test that retriable errors (e.g. rate limits) are retried with backoff."""
-    rate_limit_error = Exception("Rate limit exceeded")
-    rate_limit_error.response = MagicMock()
-    rate_limit_error.response.status_code = 429
-
     inference_api.openai_chat_completion.side_effect = [
-        rate_limit_error,
+        _RetriableError("Rate limit exceeded", 429),
         create_mock_response("Context after retry"),
     ]
 
@@ -337,11 +344,7 @@ async def test_execute_contextual_chunk_transformation_no_retry_on_non_retriable
 
 async def test_execute_contextual_chunk_transformation_retry_exhaustion(inference_api, provider, fast_retry):
     """Test that exhausted retries result in failure."""
-    rate_limit_error = Exception("Rate limit exceeded")
-    rate_limit_error.response = MagicMock()
-    rate_limit_error.response.status_code = 429
-
-    inference_api.openai_chat_completion.side_effect = [rate_limit_error] * 5
+    inference_api.openai_chat_completion.side_effect = [_RetriableError("Rate limit exceeded", 429)] * 5
 
     chunks = [create_chunk("C1", chunk_id="1", document_id="d")]
     config = VectorStoreChunkingStrategyContextualConfig(model_id="llama3.2")
