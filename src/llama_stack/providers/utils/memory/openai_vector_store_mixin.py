@@ -39,6 +39,7 @@ from llama_stack_api import (
     Inference,
     InsertChunksRequest,
     OpenAIAttachFileRequest,
+    OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
@@ -390,6 +391,11 @@ class OpenAIVectorStoreMixin(ABC):
 
     async def initialize_openai_vector_stores(self) -> None:
         """Load existing OpenAI vector stores and file batches into the in-memory cache."""
+        if not self.files_api:
+            logger.warning(
+                "Files API is not available. File attachment operations on vector stores will fail. "
+                "Ensure a 'files' provider is configured if file operations are needed."
+            )
         self.openai_vector_stores = await self._load_openai_vector_stores()
         self.openai_file_batches = await self._load_openai_vector_store_file_batches()
         self._file_batch_tasks = {}
@@ -965,7 +971,7 @@ class OpenAIVectorStoreMixin(ABC):
             vector_store_id=vector_store_id,
         )
 
-        if not hasattr(self, "files_api") or not self.files_api:
+        if not self.files_api:
             vector_store_file_object.status = "failed"
             vector_store_file_object.last_error = VectorStoreFileLastError(
                 code="server_error",
@@ -1618,15 +1624,25 @@ class OpenAIVectorStoreMixin(ABC):
                         if not response.choices:
                             raise ValueError(f"LLM returned empty choices for chunk {chunk.chunk_id}")
 
-                        context = response.choices[0].message.content
-                        if context:
-                            if isinstance(chunk.content, str):
-                                chunk.content = f"{context}\n\n{chunk.content}"
-                            elif isinstance(chunk.content, list):
-                                chunk.content.insert(0, TextContentItem(text=f"{context}\n\n"))
-                            return _ChunkContextResult.SUCCESS
-                        logger.warning(f"LLM returned empty context for chunk {chunk.chunk_id}")
-                        return _ChunkContextResult.EMPTY
+                        raw_context = response.choices[0].message.content
+                        if raw_context is None:
+                            logger.warning(f"LLM returned None content for chunk {chunk.chunk_id}")
+                            return _ChunkContextResult.EMPTY
+                        context = (
+                            raw_context.strip()
+                            if isinstance(raw_context, str)
+                            else " ".join(
+                                p.text for p in raw_context if isinstance(p, OpenAIChatCompletionContentPartTextParam)
+                            ).strip()
+                        )
+                        if not context:
+                            logger.warning(f"LLM returned empty context for chunk {chunk.chunk_id}")
+                            return _ChunkContextResult.EMPTY
+                        if isinstance(chunk.content, str):
+                            chunk.content = f"{context}\n\n{chunk.content}"
+                        elif isinstance(chunk.content, list):
+                            chunk.content.insert(0, TextContentItem(text=f"{context}\n\n"))
+                        return _ChunkContextResult.SUCCESS
 
                     except asyncio.CancelledError:
                         raise
