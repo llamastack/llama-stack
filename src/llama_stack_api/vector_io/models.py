@@ -363,7 +363,7 @@ class VectorStoreChunkingStrategyContextualConfig(BaseModel):
             "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
             "Here is the chunk we want to situate within the whole document\n"
             "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
-            "Please give a short succinct description to situate this chunk within the overall document "
+            "Please give a short succinct description to situate this chunk of text within the overall document "
             "for the purposes of improving search retrieval of the chunk. "
             "Answer only with the succinct description and nothing else."
         ),

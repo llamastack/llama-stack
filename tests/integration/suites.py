@@ -180,6 +180,14 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "groq/llama-3.3-70b-versatile",
         },
     ),
+    "vllm-qwen3next": Setup(
+        name="vllm-qwen3next",
+        description="Qwen3-Next model for contextual retrieval validation",
+        defaults={
+            "text_model": "Qwen3-Next-80B-A3B-Instruct-FP8",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+        },
+    ),
 }
 
 
