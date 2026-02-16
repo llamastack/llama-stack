@@ -4,13 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
 from google.auth.exceptions import DefaultCredentialsError, GoogleAuthError, RefreshError, TransportError
 
 from llama_stack.providers.remote.inference.vertexai.config import VertexAIConfig
-from llama_stack.providers.remote.inference.vertexai.vertexai import VertexAIInferenceAdapter
+from llama_stack.providers.remote.inference.vertexai.vertexai import (
+    TOKEN_EXPIRY_BUFFER_SECONDS,
+    VertexAIInferenceAdapter,
+)
 
 
 @pytest.fixture
@@ -79,6 +83,27 @@ def test_get_base_url_empty_location():
     assert adapter.get_base_url() == (
         "https://aiplatform.googleapis.com/v1/projects/my-project/locations/global/endpoints/openapi"
     )
+
+
+@pytest.mark.parametrize(
+    "valid,expiry_offset,expected",
+    [
+        pytest.param(None, None, False, id="no-credentials"),
+        pytest.param(False, None, False, id="invalid"),
+        pytest.param(True, None, False, id="no-expiry"),
+        pytest.param(True, TOKEN_EXPIRY_BUFFER_SECONDS - 1, False, id="expiring-soon"),
+        pytest.param(True, TOKEN_EXPIRY_BUFFER_SECONDS + 600, True, id="well-ahead"),
+    ],
+)
+def test_is_token_fresh(vertexai_adapter, valid, expiry_offset, expected):
+    if valid is not None:
+        expiry = None
+        if expiry_offset is not None:
+            expiry = datetime.datetime.now(datetime.UTC).replace(tzinfo=None) + datetime.timedelta(
+                seconds=expiry_offset
+            )
+        vertexai_adapter._credentials = MagicMock(valid=valid, expiry=expiry)
+    assert vertexai_adapter._is_token_fresh() is expected
 
 
 def test_get_base_url_regional():
