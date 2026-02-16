@@ -779,6 +779,7 @@ class OpenAIResponsesImpl:
                 metadata=metadata,
                 include=include,
                 truncation=truncation,
+                response_id=response_id,
             )
 
             result_response = None
@@ -851,6 +852,7 @@ class OpenAIResponsesImpl:
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         truncation: ResponseTruncation | None = None,
+        response_id: str | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -883,7 +885,8 @@ class OpenAIResponsesImpl:
         )
 
         # Create orchestrator and delegate streaming logic
-        response_id = f"resp_{uuid.uuid4()}"
+        if response_id is None:
+            response_id = f"resp_{uuid.uuid4()}"
         created_at = int(time.time())
 
         # Create a per-request MCP session manager for session reuse (fix for #4452)
