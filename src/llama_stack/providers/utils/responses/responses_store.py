@@ -227,7 +227,7 @@ class ResponsesStore:
         :param input: Optional input items (if None, existing input is preserved).
         """
         if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
+            raise RuntimeError("Responses store is not initialized")
 
         # Fetch existing data to preserve input/messages if not provided
         existing_row = await self.sql_store.fetch_one(
@@ -237,7 +237,7 @@ class ResponsesStore:
 
         if not existing_row:
             logger.critical(f"Response with id {response_object.id} not found during update - this should never happen")
-            raise ValueError(f"Response with id {response_object.id} not found")
+            raise RuntimeError(f"Response with id {response_object.id} not found during update")
 
         existing_data = existing_row["response_object"]
 
