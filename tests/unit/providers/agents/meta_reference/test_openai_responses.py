@@ -48,6 +48,7 @@ from llama_stack_api.inference import (
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
+    ServiceTier,
 )
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
@@ -2227,6 +2228,7 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service(
@@ -2298,6 +2300,7 @@ async def test_params_passed_through_full_chain_to_backend_service(
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service_litellm(
@@ -2718,3 +2721,172 @@ async def test_prompt_cache_key_propagated_to_chat_completions(
     # Verify the prompt_cache_key is propagated to the chat completion params
     assert hasattr(params, "prompt_cache_key"), "params should have prompt_cache_key attribute"
     assert params.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_service_tier(openai_responses_impl, mock_inference_api):
+    """Test creating an OpenAI response with service_tier parameter."""
+    # Setup
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    service_tier = ServiceTier.flex
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming to get final response directly
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=service_tier,
+        stream=False,
+    )
+
+    # Verify service_tier is preserved in the response (as string)
+    assert result.service_tier == ServiceTier.default.value
+    assert result.status == "completed"
+
+    # Verify inference call received service_tier
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == service_tier
+
+
+async def test_create_openai_response_with_service_tier_streaming(openai_responses_impl, mock_inference_api):
+    """Test creating a streaming OpenAI response with service_tier parameter."""
+    # Setup
+    input_text = "Tell me a story"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    service_tier = ServiceTier.priority
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - streaming
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=service_tier,
+        stream=True,
+    )
+
+    # For streaming response, collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify service_tier is in all response snapshots (as string)
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.service_tier == service_tier.value
+
+    # Check final response
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.service_tier == ServiceTier.default.value
+
+    # Verify inference call received service_tier
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == service_tier
+
+
+async def test_create_openai_response_service_tier_auto_transformation(openai_responses_impl, mock_inference_api):
+    """Test that service_tier 'auto' is transformed to actual tier from provider response."""
+    # Setup
+    input_text = "Hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock a response that returns actual service tier when "auto" was requested
+    async def fake_stream_with_service_tier():
+        yield ChatCompletionChunk(
+            id="chatcmpl-123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="Hi there!", role="assistant"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            service_tier="default",  # Provider returns actual tier used
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_service_tier()
+
+    # Execute with "auto" service tier
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=ServiceTier.auto,
+        stream=False,
+    )
+
+    # Verify the response has the actual tier from provider, not "auto"
+    assert result.service_tier == "default", "service_tier should be transformed from 'auto' to actual tier"
+    assert result.service_tier != ServiceTier.auto.value, "service_tier should not remain as 'auto'"
+    assert result.status == "completed"
+
+    # Verify inference was called with "auto"
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == "auto"
+
+
+async def test_create_openai_response_service_tier_propagation_streaming(openai_responses_impl, mock_inference_api):
+    """Test that service_tier from chat completion is propagated to response object in streaming mode."""
+    # Setup
+    input_text = "Tell me about AI"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock streaming response with service_tier
+    async def fake_stream_with_service_tier():
+        yield ChatCompletionChunk(
+            id="chatcmpl-456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="AI is", role="assistant"),
+                    finish_reason=None,
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            service_tier="priority",  # First chunk with service_tier
+        )
+        yield ChatCompletionChunk(
+            id="chatcmpl-456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content=" amazing!"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_service_tier()
+
+    # Execute with "auto" but provider returns "priority"
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=ServiceTier.auto,
+        stream=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+    # Verify service_tier is propagated to all events
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    # Initially should have "auto" value
+    assert created_event.response.service_tier == "auto"
+
+    # Check final response has the actual tier from provider
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.service_tier == "priority", "Final response should have actual tier from provider"

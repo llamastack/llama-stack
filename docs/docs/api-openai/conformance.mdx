@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 83.5% |
+| **Overall Conformance Score** | 83.6% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
-| **Schema/Type Issues** | 273 |
-| **Missing Properties** | 156 |
-| **Total Issues to Fix** | 429 |
+| **Schema/Type Issues** | 275 |
+| **Missing Properties** | 151 |
+| **Total Issues to Fix** | 426 |
 
 ## Category Scores
 
@@ -38,8 +38,8 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
-| Responses | 83.6% | 225 | 23 | 14 |
-| Chat | 86.1% | 402 | 27 | 29 |
+| Responses | 83.6% | 225 | 25 | 12 |
+| Chat | 86.8% | 402 | 27 | 26 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
 ## Missing Endpoints
@@ -936,19 +936,18 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 83.6% · **Issues:** 23 · **Missing:** 14
+**Score:** 83.6% · **Issues:** 25 · **Missing:** 12
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Missing Properties (14)</summary>
+<summary>Missing Properties (12)</summary>
 
 - `requestBody.content.application/json.properties.background`
 - `requestBody.content.application/json.properties.frequency_penalty`
 - `requestBody.content.application/json.properties.presence_penalty`
-- `requestBody.content.application/json.properties.service_tier`
 - `requestBody.content.application/json.properties.stream_options`
 - `requestBody.content.application/json.properties.top_logprobs`
 - `requestBody.content.application/json.properties.top_p`
@@ -957,13 +956,12 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 - `responses.200.content.application/json.properties.frequency_penalty`
 - `responses.200.content.application/json.properties.incomplete_details`
 - `responses.200.content.application/json.properties.presence_penalty`
-- `responses.200.content.application/json.properties.service_tier`
 - `responses.200.content.application/json.properties.top_logprobs`
 
 </details>
 
 <details>
-<summary>Schema Issues (23)</summary>
+<summary>Schema Issues (25)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -972,6 +970,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `requestBody.content.application/json.properties.model` | Type added: ['string']; Nullable removed (OpenAI nullable); Union variants removed: 2 |
 | `requestBody.content.application/json.properties.parallel_tool_calls` | Default changed: None -> True |
 | `requestBody.content.application/json.properties.reasoning` | Union variants added: 1; Union variants removed: 1 |
+| `requestBody.content.application/json.properties.service_tier` | Union variants added: 2 |
 | `requestBody.content.application/json.properties.store` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> True |
 | `requestBody.content.application/json.properties.stream` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> False |
 | `requestBody.content.application/json.properties.text` | Union variants added: 1; Union variants removed: 1 |
@@ -983,6 +982,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 7; Union variants removed: 4 |
 | `responses.200.content.application/json.properties.parallel_tool_calls` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> True |
 | `responses.200.content.application/json.properties.reasoning` | Union variants added: 1; Union variants removed: 1 |
+| `responses.200.content.application/json.properties.service_tier` | Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.temperature` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.application/json.properties.text` | Type added: ['object'] |
 | `responses.200.content.application/json.properties.tool_choice` | Union variants added: 3 |
@@ -995,7 +995,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Chat
 
-**Score:** 86.1% · **Issues:** 27 · **Missing:** 29
+**Score:** 86.8% · **Issues:** 27 · **Missing:** 26
 
 #### `/chat/completions`
 
@@ -1032,9 +1032,8 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Missing Properties (16)</summary>
+<summary>Missing Properties (14)</summary>
 
-- `responses.200.content.application/json.properties.service_tier`
 - `responses.200.content.application/json.properties.system_fingerprint`
 - `responses.200.content.application/json.properties.usage.properties.completion_tokens`
 - `responses.200.content.application/json.properties.usage.properties.completion_tokens_details`
@@ -1043,7 +1042,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 - `responses.200.content.application/json.properties.usage.properties.total_tokens`
 - `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content`
 - `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal`
-- `responses.200.content.text/event-stream.properties.service_tier`
 - `responses.200.content.text/event-stream.properties.system_fingerprint`
 - `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens`
 - `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details`
@@ -1078,9 +1076,8 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Missing Properties (7)</summary>
+<summary>Missing Properties (6)</summary>
 
-- `responses.200.content.application/json.properties.service_tier`
 - `responses.200.content.application/json.properties.system_fingerprint`
 - `responses.200.content.application/json.properties.usage.properties.completion_tokens`
 - `responses.200.content.application/json.properties.usage.properties.completion_tokens_details`
