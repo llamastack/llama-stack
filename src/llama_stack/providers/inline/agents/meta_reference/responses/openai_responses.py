@@ -109,6 +109,7 @@ class OpenAIResponsesImpl:
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.connectors_api = connectors_api
+        self._background_tasks: set[asyncio.Task] = set()
 
     async def _prepend_previous_response(
         self,
@@ -686,8 +687,9 @@ class OpenAIResponsesImpl:
             messages=[],
         )
 
-        # Schedule background processing task
-        asyncio.create_task(
+        # Schedule background processing task and hold a strong reference
+        # to prevent GC from collecting it mid-flight.
+        task = asyncio.create_task(
             self._process_background_response(
                 response_id=response_id,
                 input=input,
@@ -714,6 +716,8 @@ class OpenAIResponsesImpl:
                 truncation=truncation,
             )
         )
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
 
         return queued_response
 
