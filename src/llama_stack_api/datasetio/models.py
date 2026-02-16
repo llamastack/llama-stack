@@ -35,7 +35,7 @@ class IterRowsRequest(BaseModel):
 
 @json_schema_type
 class AppendRowsRequest(BaseModel):
-    """Request body for appending rows to a dataset (excludes dataset_id from path)."""
+    """Request body for appending rows to a dataset."""
 
     rows: list[dict[str, Any]] = Field(..., description="The rows to append to the dataset.")
 

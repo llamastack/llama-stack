@@ -7420,7 +7420,7 @@ components:
       required:
       - rows
       title: AppendRowsRequest
-      description: Request body for appending rows to a dataset (excludes dataset_id from path).
+      description: Request body for appending rows to a dataset.
     PaginatedResponse:
       properties:
         data:
