@@ -1278,35 +1278,26 @@ components:
           minimum: 0.0
           title: Prompt Tokens
           description: Number of tokens in the prompt.
+          default: 0
         completion_tokens:
           type: integer
           minimum: 0.0
           title: Completion Tokens
           description: Number of tokens in the completion.
+          default: 0
         total_tokens:
           type: integer
           minimum: 0.0
           title: Total Tokens
           description: Total tokens used (prompt + completion).
+          default: 0
         prompt_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
-            title: OpenAIChatCompletionUsagePromptTokensDetails
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
           description: Detailed breakdown of input token usage.
-          title: OpenAIChatCompletionUsagePromptTokensDetails
         completion_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
-            title: OpenAIChatCompletionUsageCompletionTokensDetails
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
           description: Detailed breakdown of output token usage.
-          title: OpenAIChatCompletionUsageCompletionTokensDetails
       type: object
-      required:
-      - prompt_tokens
-      - completion_tokens
-      - total_tokens
       title: OpenAIChatCompletionUsage
       description: Usage information for OpenAI chat completion.
     OpenAIChoice:
@@ -1944,13 +1935,9 @@ components:
           description: The service tier that was used for this response.
           nullable: true
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -1993,13 +1980,9 @@ components:
           description: The service tier that was used for this response.
           nullable: true
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information (typically included in final chunk with stream_options).
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -2113,12 +2096,8 @@ components:
           - type: 'null'
           description: The service tier that was used for this response.
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
-          title: OpenAIChatCompletionUsage
         input_messages:
           items:
             oneOf:
@@ -9606,22 +9585,22 @@ components:
     OpenAIChatCompletionUsageCompletionTokensDetails:
       properties:
         reasoning_tokens:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
+          type: integer
+          minimum: 0.0
+          title: Reasoning Tokens
           description: Number of tokens used for reasoning (o1/o3 models).
+          default: 0
       type: object
       title: OpenAIChatCompletionUsageCompletionTokensDetails
       description: Token details for output tokens in OpenAI chat completion usage.
     OpenAIChatCompletionUsagePromptTokensDetails:
       properties:
         cached_tokens:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
+          type: integer
+          minimum: 0.0
+          title: Cached Tokens
           description: Number of tokens retrieved from cache.
+          default: 0
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.

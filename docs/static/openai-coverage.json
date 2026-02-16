@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 83.6,
-      "issues": 276,
-      "missing_properties": 150,
-      "total_problems": 426,
+      "score": 84.5,
+      "issues": 272,
+      "missing_properties": 130,
+      "total_problems": 402,
       "total_properties": 2598
     }
   },
@@ -706,9 +706,9 @@
       ]
     },
     "Chat": {
-      "score": 86.8,
-      "issues": 27,
-      "missing_properties": 26,
+      "score": 92.8,
+      "issues": 23,
+      "missing_properties": 6,
       "total_properties": 402,
       "endpoints": [
         {
@@ -717,12 +717,7 @@
             {
               "method": "GET",
               "missing_properties": [
-                "GET.parameters.query.metadata",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens_details",
-                "GET.responses.200.content.application/json.properties.data.items.properties.usage.properties.total_tokens"
+                "GET.parameters.query.metadata"
               ],
               "conformance_issues": [
                 {
@@ -770,39 +765,22 @@
                   ]
                 },
                 {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.usage",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
                   "property": "GET.responses.200.content.application/json.properties.object",
                   "details": [
                     "Enum removed: ['list']"
                   ]
                 }
               ],
-              "missing_count": 6,
-              "issues_count": 8
+              "missing_count": 1,
+              "issues_count": 7
             },
             {
               "method": "POST",
               "missing_properties": [
                 "POST.responses.200.content.application/json.properties.system_fingerprint",
-                "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens",
-                "POST.responses.200.content.application/json.properties.usage.properties.completion_tokens_details",
-                "POST.responses.200.content.application/json.properties.usage.properties.prompt_tokens",
-                "POST.responses.200.content.application/json.properties.usage.properties.prompt_tokens_details",
-                "POST.responses.200.content.application/json.properties.usage.properties.total_tokens",
                 "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content",
                 "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal",
-                "POST.responses.200.content.text/event-stream.properties.system_fingerprint",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details",
-                "POST.responses.200.content.text/event-stream.properties.usage.properties.total_tokens"
+                "POST.responses.200.content.text/event-stream.properties.system_fingerprint"
               ],
               "conformance_issues": [
                 {
@@ -850,13 +828,6 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.application/json.properties.usage",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
                   "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.role",
                   "details": [
                     "Enum removed: ['developer', 'system', 'user', 'assistant', 'tool']",
@@ -886,17 +857,10 @@
                     "Enum removed: ['chat.completion.chunk']",
                     "Default changed: None -> chat.completion.chunk"
                   ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.usage",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 2"
-                  ]
                 }
               ],
-              "missing_count": 14,
-              "issues_count": 12
+              "missing_count": 4,
+              "issues_count": 10
             }
           ]
         },
@@ -906,12 +870,7 @@
             {
               "method": "GET",
               "missing_properties": [
-                "GET.responses.200.content.application/json.properties.system_fingerprint",
-                "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens",
-                "GET.responses.200.content.application/json.properties.usage.properties.completion_tokens_details",
-                "GET.responses.200.content.application/json.properties.usage.properties.prompt_tokens",
-                "GET.responses.200.content.application/json.properties.usage.properties.prompt_tokens_details",
-                "GET.responses.200.content.application/json.properties.usage.properties.total_tokens"
+                "GET.responses.200.content.application/json.properties.system_fingerprint"
               ],
               "conformance_issues": [
                 {
@@ -957,17 +916,10 @@
                     "Enum removed: ['chat.completion']",
                     "Default changed: None -> chat.completion"
                   ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.usage",
-                  "details": [
-                    "Type removed: ['object']",
-                    "Union variants added: 2"
-                  ]
                 }
               ],
-              "missing_count": 6,
-              "issues_count": 7
+              "missing_count": 1,
+              "issues_count": 6
             }
           ]
         }
