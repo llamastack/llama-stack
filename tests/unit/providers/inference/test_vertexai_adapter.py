@@ -23,6 +23,22 @@ def vertexai_adapter():
     return VertexAIInferenceAdapter(config=config)
 
 
+@pytest.fixture
+def cached_credentials(vertexai_adapter):
+    """Adapter with cached credentials from an initial get_api_key() call."""
+    with (
+        patch("llama_stack.providers.remote.inference.vertexai.vertexai.default") as mock_default,
+        patch("llama_stack.providers.remote.inference.vertexai.vertexai.google.auth.transport.requests.Request"),
+    ):
+        mock_credentials = MagicMock()
+        mock_credentials.token = "first-token"
+        mock_default.return_value = (mock_credentials, "test-project")
+
+        vertexai_adapter.get_api_key()
+
+        yield mock_credentials, mock_default
+
+
 @patch("llama_stack.providers.remote.inference.vertexai.vertexai.google.auth.transport.requests.Request")
 @patch("llama_stack.providers.remote.inference.vertexai.vertexai.default")
 def test_get_api_key_success(mock_default, mock_request, vertexai_adapter):
@@ -65,24 +81,30 @@ def test_get_api_key_auth_errors(mock_default, vertexai_adapter, exception_cls, 
     assert exc_info.value.__cause__ is original_error
 
 
-def test_get_base_url_global():
-    """Global location uses the non-regional endpoint."""
-    config = VertexAIConfig(project="my-project", location="global")
+@pytest.mark.parametrize(
+    "location,expected_url",
+    [
+        pytest.param(
+            "global",
+            "https://aiplatform.googleapis.com/v1/projects/my-project/locations/global/endpoints/openapi",
+            id="global",
+        ),
+        pytest.param(
+            "",
+            "https://aiplatform.googleapis.com/v1/projects/my-project/locations/global/endpoints/openapi",
+            id="empty-falls-through-to-global",
+        ),
+        pytest.param(
+            "us-central1",
+            "https://us-central1-aiplatform.googleapis.com/v1/projects/my-project/locations/us-central1/endpoints/openapi",
+            id="regional",
+        ),
+    ],
+)
+def test_get_base_url(location, expected_url):
+    config = VertexAIConfig(project="my-project", location=location)
     adapter = VertexAIInferenceAdapter(config=config)
-
-    assert adapter.get_base_url() == (
-        "https://aiplatform.googleapis.com/v1/projects/my-project/locations/global/endpoints/openapi"
-    )
-
-
-def test_get_base_url_empty_location():
-    """Empty location string falls through to the global endpoint."""
-    config = VertexAIConfig(project="my-project", location="")
-    adapter = VertexAIInferenceAdapter(config=config)
-
-    assert adapter.get_base_url() == (
-        "https://aiplatform.googleapis.com/v1/projects/my-project/locations/global/endpoints/openapi"
-    )
+    assert adapter.get_base_url() == expected_url
 
 
 @pytest.mark.parametrize(
@@ -106,11 +128,26 @@ def test_is_token_fresh(vertexai_adapter, valid, expiry_offset, expected):
     assert vertexai_adapter._is_token_fresh() is expected
 
 
-def test_get_base_url_regional():
-    """Regional location uses the location-prefixed endpoint."""
-    config = VertexAIConfig(project="my-project", location="us-central1")
-    adapter = VertexAIInferenceAdapter(config=config)
+def test_cached_token_reused_when_fresh(vertexai_adapter, cached_credentials):
+    mock_credentials, mock_default = cached_credentials
+    mock_credentials.valid = True
+    mock_credentials.expiry = datetime.datetime.now(datetime.UTC).replace(tzinfo=None) + datetime.timedelta(hours=1)
+    mock_credentials.token = "cached-token"
 
-    assert adapter.get_base_url() == (
-        "https://us-central1-aiplatform.googleapis.com/v1/projects/my-project/locations/us-central1/endpoints/openapi"
-    )
+    token = vertexai_adapter.get_api_key()
+
+    assert token == "cached-token"
+    mock_default.assert_called_once()
+    mock_credentials.refresh.assert_called_once()
+
+
+def test_stale_token_triggers_refresh(vertexai_adapter, cached_credentials):
+    mock_credentials, mock_default = cached_credentials
+    mock_credentials.valid = False
+    mock_credentials.token = "refreshed-token"
+
+    token = vertexai_adapter.get_api_key()
+
+    assert token == "refreshed-token"
+    mock_default.assert_called_once()
+    assert mock_credentials.refresh.call_count == 2
