@@ -1,5 +1,5 @@
 {
-  "test_id": "tests/integration/vector_io/test_openai_vector_stores.py::test_openai_vector_store_contextual_chunking[client_with_models-vector_io=sqlite-vec-txt=ollama/llama3.2:3b-instruct-fp16:emb=sentence-transformers/nomic-ai/nomic-embed-text-v1.5:dim=768]",
+  "test_id": "tests/integration/vector_io/test_openai_vector_stores.py::test_openai_vector_store_contextual_vs_static_chunks[client_with_models-vector_io=faiss-txt=ollama/llama3.2:3b-instruct-fp16:emb=sentence-transformers/nomic-ai/nomic-embed-text-v1.5:dim=768]",
   "request": {
     "method": "POST",
     "url": "http://localhost:11434/v1/v1/chat/completions",
@@ -27,7 +27,7 @@
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-175626551e99",
+        "id": "rec-1e3bdb690b09",
         "choices": [
           {
             "finish_reason": "stop",

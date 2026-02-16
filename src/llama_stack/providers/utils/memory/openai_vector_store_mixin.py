@@ -986,6 +986,14 @@ class OpenAIVectorStoreMixin(ABC):
         elif isinstance(chunking_strategy, VectorStoreChunkingStrategyContextual):
             max_chunk_size_tokens = chunking_strategy.contextual.max_chunk_size_tokens
             chunk_overlap_tokens = chunking_strategy.contextual.chunk_overlap_tokens
+            # Fail fast on missing model_id before entering the file-processing try/except
+            ctx = chunking_strategy.contextual
+            if not ctx.model_id and not self.vector_stores_config.contextual_retrieval_params.model:
+                raise ValueError(
+                    "model_id is required for contextual chunking. Provide model_id in the "
+                    "chunking_strategy.contextual configuration, or configure a default model "
+                    "in contextual_retrieval_params.model on the server."
+                )
         else:
             # Default values from OpenAI API spec
             max_chunk_size_tokens = DEFAULT_CHUNK_SIZE_TOKENS
@@ -1066,8 +1074,6 @@ class OpenAIVectorStoreMixin(ABC):
                     )
                 )
                 vector_store_file_object.status = "completed"
-        except ValueError:
-            raise
         except Exception as e:
             logger.exception("Error attaching file to vector store")
             vector_store_file_object.status = "failed"

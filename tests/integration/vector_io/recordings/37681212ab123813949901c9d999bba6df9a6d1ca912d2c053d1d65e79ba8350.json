@@ -1,11 +1,11 @@
 {
-  "test_id": "tests/integration/vector_io/test_openai_vector_stores.py::test_openai_vector_store_contextual_vs_static_chunks[client_with_models-vector_io=sqlite-vec-txt=Qwen3-Next-80B-A3B-Instruct-FP8:emb=sentence-transformers/nomic-ai/nomic-embed-text-v1.5:dim=768]",
+  "test_id": "tests/integration/vector_io/test_openai_vector_stores.py::test_openai_vector_store_contextual_chunking[client_with_models-vector_io=sqlite-vec-txt=ollama/llama3.2:3b-instruct-fp16:emb=sentence-transformers/nomic-ai/nomic-embed-text-v1.5:dim=768]",
   "request": {
     "method": "POST",
-    "url": "http://localhost:8000/v1/v1/chat/completions",
+    "url": "http://localhost:11434/v1/v1/chat/completions",
     "headers": {},
     "body": {
-      "model": "Qwen3-Next-80B-A3B-Instruct-FP8",
+      "model": "llama3.2:3b-instruct-fp16",
       "messages": [
         {
           "role": "system",
@@ -21,48 +21,41 @@
       "temperature": 0.0
     },
     "endpoint": "/v1/chat/completions",
-    "model": "Qwen3-Next-80B-A3B-Instruct-FP8"
+    "model": "llama3.2:3b-instruct-fp16"
   },
   "response": {
     "body": {
       "__type__": "openai.types.chat.chat_completion.ChatCompletion",
       "__data__": {
-        "id": "rec-e31ec8dd79e4",
+        "id": "rec-37681212ab12",
         "choices": [
           {
             "finish_reason": "stop",
             "index": 0,
             "logprobs": null,
             "message": {
-              "content": "Overview of core machine learning components: neural network structure, gradient descent optimization, and data preprocessing techniques.",
+              "content": "\"Key concepts in neural network architecture, optimization, and data preparation.\"",
               "refusal": null,
               "role": "assistant",
               "annotations": null,
               "audio": null,
               "function_call": null,
-              "tool_calls": [],
-              "reasoning": null,
-              "reasoning_content": null
-            },
-            "stop_reason": null,
-            "token_ids": null
+              "tool_calls": null
+            }
           }
         ],
         "created": 0,
-        "model": "Qwen3-Next-80B-A3B-Instruct-FP8",
+        "model": "llama3.2:3b-instruct-fp16",
         "object": "chat.completion",
         "service_tier": null,
-        "system_fingerprint": null,
+        "system_fingerprint": "fp_ollama",
         "usage": {
-          "completion_tokens": 21,
-          "prompt_tokens": 311,
-          "total_tokens": 332,
+          "completion_tokens": 15,
+          "prompt_tokens": 323,
+          "total_tokens": 338,
           "completion_tokens_details": null,
           "prompt_tokens_details": null
-        },
-        "kv_transfer_params": null,
-        "prompt_logprobs": null,
-        "prompt_token_ids": null
+        }
       }
     },
     "is_streaming": false
