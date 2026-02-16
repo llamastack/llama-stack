@@ -49,7 +49,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AppendRowsRequestBody'
+              $ref: '#/components/schemas/AppendRowsRequest'
   /v1beta/datasetio/iterrows/{dataset_id}:
     get:
       responses:
@@ -7407,6 +7407,20 @@ components:
       - version
       title: VersionInfo
       description: Version information for the service.
+    AppendRowsRequest:
+      properties:
+        rows:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Rows
+          description: The rows to append to the dataset.
+      type: object
+      required:
+      - rows
+      title: AppendRowsRequest
+      description: Request body for appending rows to a dataset (excludes dataset_id from path).
     PaginatedResponse:
       properties:
         data:
@@ -8679,20 +8693,6 @@ components:
       type: object
       title: AllowedToolsFilter
       description: Filter configuration for restricting which MCP tools can be used.
-    AppendRowsRequestBody:
-      properties:
-        rows:
-          items:
-            additionalProperties: true
-            type: object
-          type: array
-          title: Rows
-          description: The rows to append to the dataset.
-      type: object
-      required:
-      - rows
-      title: AppendRowsRequestBody
-      description: Request body for appending rows to a dataset (excludes dataset_id from path).
     ApprovalFilter:
       properties:
         always:

@@ -16,7 +16,7 @@ from typing import Protocol, runtime_checkable
 from llama_stack_api.datasets import Dataset
 
 from .models import (
-    AppendRowsRequest,
+    AppendRowsParams,
     IterRowsRequest,
     PaginatedResponse,
 )
@@ -39,4 +39,4 @@ class DatasetIO(Protocol):
 
     async def iterrows(self, request: IterRowsRequest) -> PaginatedResponse: ...
 
-    async def append_rows(self, request: AppendRowsRequest) -> None: ...
+    async def append_rows(self, params: AppendRowsParams) -> None: ...

@@ -148,8 +148,8 @@ from .conversations import (
     UpdateConversationRequest,
 )
 from .datasetio import (
+    AppendRowsParams,
     AppendRowsRequest,
-    AppendRowsRequestBody,
     DatasetIO,
     DatasetStore,
     IterRowsRequest,
@@ -661,8 +661,8 @@ __all__ = [
     "DatasetNotFoundError",
     "DatasetStore",
     "DatasetType",
+    "AppendRowsParams",
     "AppendRowsRequest",
-    "AppendRowsRequestBody",
     "IterRowsRequest",
     "Datasets",
     "DatasetsProtocolPrivate",

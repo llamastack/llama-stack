@@ -19,8 +19,8 @@ from .api import DatasetIO, DatasetStore
 
 # Import models for re-export
 from .models import (
+    AppendRowsParams,
     AppendRowsRequest,
-    AppendRowsRequestBody,
     IterRowsRequest,
     PaginatedResponse,
 )
@@ -28,8 +28,8 @@ from .models import (
 __all__ = [
     "DatasetIO",
     "DatasetStore",
+    "AppendRowsParams",
     "AppendRowsRequest",
-    "AppendRowsRequestBody",
     "IterRowsRequest",
     "PaginatedResponse",
     "fastapi_routes",

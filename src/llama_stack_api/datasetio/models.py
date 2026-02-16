@@ -34,14 +34,14 @@ class IterRowsRequest(BaseModel):
 
 
 @json_schema_type
-class AppendRowsRequestBody(BaseModel):
+class AppendRowsRequest(BaseModel):
     """Request body for appending rows to a dataset (excludes dataset_id from path)."""
 
     rows: list[dict[str, Any]] = Field(..., description="The rows to append to the dataset.")
 
 
-class AppendRowsRequest(BaseModel):
-    """Internal request model for appending rows to a dataset (includes dataset_id)."""
+class AppendRowsParams(BaseModel):
+    """Internal parameters for appending rows to a dataset (includes dataset_id)."""
 
     dataset_id: str = Field(..., description="The ID of the dataset to append the rows to.")
     rows: list[dict[str, Any]] = Field(..., description="The rows to append to the dataset.")
@@ -49,7 +49,7 @@ class AppendRowsRequest(BaseModel):
 
 __all__ = [
     "AppendRowsRequest",
-    "AppendRowsRequestBody",
+    "AppendRowsParams",
     "IterRowsRequest",
     "PaginatedResponse",
 ]
