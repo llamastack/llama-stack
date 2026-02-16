@@ -553,7 +553,11 @@ class OpenAIResponsesImpl:
                 parallel_tool_calls=parallel_tool_calls,
                 max_tool_calls=max_tool_calls,
                 reasoning=reasoning,
+                max_output_tokens=max_output_tokens,
+                safety_identifier=safety_identifier,
+                service_tier=service_tier,
                 metadata=metadata,
+                truncation=truncation,
             )
 
         stream_gen = self._create_streaming_response(
@@ -637,7 +641,11 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
+        truncation: ResponseTruncation | None = None,
     ) -> OpenAIResponseObject:
         """Create a response that processes in the background.
 
@@ -699,7 +707,11 @@ class OpenAIResponsesImpl:
                 parallel_tool_calls=parallel_tool_calls,
                 max_tool_calls=max_tool_calls,
                 reasoning=reasoning,
+                max_output_tokens=max_output_tokens,
+                safety_identifier=safety_identifier,
+                service_tier=service_tier,
                 metadata=metadata,
+                truncation=truncation,
             )
         )
 
@@ -725,7 +737,11 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
+        truncation: ResponseTruncation | None = None,
     ) -> None:
         """Process a background response asynchronously."""
         try:
@@ -757,8 +773,12 @@ class OpenAIResponsesImpl:
                 parallel_tool_calls=parallel_tool_calls,
                 max_tool_calls=max_tool_calls,
                 reasoning=reasoning,
+                max_output_tokens=max_output_tokens,
+                safety_identifier=safety_identifier,
+                service_tier=service_tier,
                 metadata=metadata,
                 include=include,
+                truncation=truncation,
             )
 
             result_response = None
