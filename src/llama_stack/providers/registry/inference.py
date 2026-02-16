@@ -305,4 +305,13 @@ Provider documentation
 https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
 """,
         ),
+        RemoteProviderSpec(
+            api=Api.inference,
+            adapter_type="llama-cpp-server",
+            provider_type="remote::llama-cpp-server",
+            pip_packages=[],
+            module="llama_stack.providers.remote.inference.llama_cpp_server",
+            config_class="llama_stack.providers.remote.inference.llama_cpp_server.config.LlamaCppServerConfig",
+            description="llama.cpp inference provider for connecting to llama.cpp servers with OpenAI-compatible API.",
+        ),
     ]

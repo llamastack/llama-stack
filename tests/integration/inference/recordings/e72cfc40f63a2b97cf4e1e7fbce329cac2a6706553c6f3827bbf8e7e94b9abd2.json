@@ -1,0 +1,56 @@
+{
+  "test_id": "tests/integration/inference/test_rerank.py::test_rerank_semantic_correctness[rerank=vllm/Qwen/Qwen3-Reranker-0.6B-What is a reranking model? -items0-A reranking model reranks a list of items based on the query. ]",
+  "request": {
+    "test_id": "tests/integration/inference/test_rerank.py::test_rerank_semantic_correctness[rerank=vllm/Qwen/Qwen3-Reranker-0.6B-What is a reranking model? -items0-A reranking model reranks a list of items based on the query. ]",
+    "url": "http://localhost:8000/rerank",
+    "method": "POST",
+    "payload": {
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "query": "What is a reranking model? ",
+      "documents": [
+        "A reranking model reranks a list of items based on the query. ",
+        "Machine learning algorithms learn patterns from data. ",
+        "Python is a programming language. "
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "id": "rerank-bd8f514f4e7b04f0",
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "usage": {
+        "prompt_tokens": 59,
+        "total_tokens": 59
+      },
+      "results": [
+        {
+          "index": 0,
+          "document": {
+            "text": "A reranking model reranks a list of items based on the query. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.9998443388938904
+        },
+        {
+          "index": 2,
+          "document": {
+            "text": "Python is a programming language. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.9329919815063477
+        },
+        {
+          "index": 1,
+          "document": {
+            "text": "Machine learning algorithms learn patterns from data. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.9178389310836792
+        }
+      ]
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

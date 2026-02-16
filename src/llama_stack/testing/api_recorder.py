@@ -192,6 +192,46 @@ def normalize_tool_request(provider_name: str, tool_name: str, kwargs: dict[str,
     return hashlib.sha256(normalized_json.encode()).hexdigest()
 
 
+def normalize_http_request(url: str, method: str, payload: dict[str, Any]) -> str:
+    """Create a normalized hash of an HTTP request for consistent matching.
+
+    This captures the actual request sent to the backend service (e.g., NVIDIA/vLLM rerank endpoint),
+    not the higher-level API parameters. This ensures client-side post-processing (like applying
+    max_num_results) still runs during replay.
+
+    Args:
+        url: The HTTP endpoint URL
+        method: HTTP method (POST, GET, etc.)
+        payload: The JSON payload sent to the backend
+
+    Returns:
+        SHA256 hash of the normalized request
+    """
+    test_id = get_test_context()
+
+    # Normalize the payload for stable hashing
+    normalized_payload = _normalize_body_for_hash(payload)
+
+    normalized = {
+        "test_id": test_id,
+        "url": url,
+        "method": method.upper(),
+        "payload": normalized_payload,
+    }
+
+    normalized_json = json.dumps(normalized, sort_keys=True)
+    request_hash = hashlib.sha256(normalized_json.encode()).hexdigest()
+
+    if is_debug_mode():
+        logger.info("[RECORDING DEBUG] HTTP request hash computation:")
+        logger.info(f"  Test ID: {test_id}")
+        logger.info(f"  URL: {url}")
+        logger.info(f"  Method: {method}")
+        logger.info(f"  Computed hash: {request_hash}")
+
+    return request_hash
+
+
 def patch_httpx_for_test_id():
     """Patch client _prepare_request methods to inject test ID into provider data header.
 
@@ -658,6 +698,109 @@ async def _patched_tool_invoke_method(
         raise AssertionError(f"Invalid mode: {_current_mode}")
 
 
+def _patched_aiohttp_post(original_post, session_self, url: str, **kwargs):
+    """Patched version of aiohttp ClientSession.post for recording/replay of rerank requests.
+
+    This captures HTTP requests at the aiohttp level, allowing client-side post-processing
+    (like applying max_num_results) to run normally during replay.
+
+    Returns a context manager (not a coroutine) to match aiohttp's API.
+    """
+    global _current_mode, _current_storage
+
+    # Only intercept rerank endpoints
+    is_rerank = "/rerank" in url
+
+    if not is_rerank or _current_mode == APIRecordingMode.LIVE or _current_storage is None:
+        return original_post(session_self, url, **kwargs)
+
+    # Extract the JSON payload
+    json_payload = kwargs.get("json", {})
+    request_hash = normalize_http_request(url, "POST", json_payload)
+
+    if _current_mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
+        recording = _current_storage.find_recording(request_hash)
+        if recording:
+            # Return a mock response object that behaves like aiohttp.ClientResponse context manager
+            class MockResponse:
+                def __init__(self, status, body):
+                    self.status = status
+                    self._body = body
+
+                async def json(self):
+                    return self._body
+
+                async def text(self):
+                    return json.dumps(self._body)
+
+                async def __aenter__(self):
+                    return self
+
+                async def __aexit__(self, exc_type, exc_val, exc_tb):
+                    pass
+
+            return MockResponse(recording["response"]["status"], recording["response"]["body"])
+        elif _current_mode == APIRecordingMode.REPLAY:
+            raise RuntimeError(
+                f"Recording not found for rerank request | URL: {url}\n"
+                f"\n"
+                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
+            )
+
+    if _current_mode in (APIRecordingMode.RECORD, APIRecordingMode.RECORD_IF_MISSING):
+        # Wrap the original context manager to capture the response
+        class RecordingResponseWrapper:
+            def __init__(self, original_cm, url, json_payload, request_hash):
+                self._original_cm = original_cm
+                self._url = url
+                self._json_payload = json_payload
+                self._request_hash = request_hash
+                self._response = None
+                self._body = None
+
+            async def __aenter__(self):
+                self._response = await self._original_cm.__aenter__()
+                # Capture the response body
+                self._body = await self._response.json()
+
+                # Store the recording
+                request_data = {
+                    "test_id": get_test_context(),
+                    "url": self._url,
+                    "method": "POST",
+                    "payload": self._json_payload,
+                }
+                response_data = {
+                    "status": self._response.status,
+                    "body": self._body,
+                    "is_streaming": False,
+                }
+                _current_storage.store_recording(self._request_hash, request_data, response_data)
+
+                # Create a mock response that returns the captured body
+                class CapturedResponse:
+                    def __init__(self, status, body):
+                        self.status = status
+                        self._body = body
+
+                    async def json(self):
+                        return self._body
+
+                    async def text(self):
+                        return json.dumps(self._body)
+
+                return CapturedResponse(self._response.status, self._body)
+
+            async def __aexit__(self, exc_type, exc_val, exc_tb):
+                return await self._original_cm.__aexit__(exc_type, exc_val, exc_tb)
+
+        original_cm = original_post(session_self, url, **kwargs)
+        return RecordingResponseWrapper(original_cm, url, json_payload, request_hash)
+
+    else:
+        raise AssertionError(f"Invalid mode: {_current_mode}")
+
+
 async def _patched_inference_method(original_method, self, client_type, endpoint, *args, **kwargs):
     global _current_mode, _current_storage
 
@@ -794,9 +937,10 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
 
 
 def patch_inference_clients():
-    """Install monkey patches for OpenAI client methods, Ollama AsyncClient methods, and tool runtime methods."""
+    """Install monkey patches for OpenAI client methods, Ollama AsyncClient methods, tool runtime methods, and aiohttp for rerank."""
     global _original_methods
 
+    import aiohttp
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
@@ -805,7 +949,7 @@ def patch_inference_clients():
 
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
-    # Store original methods for OpenAI, Ollama clients, and tool runtimes
+    # Store original methods for OpenAI, Ollama clients, tool runtimes, and aiohttp
     _original_methods = {
         "chat_completions_create": AsyncChatCompletions.create,
         "completions_create": AsyncCompletions.create,
@@ -818,6 +962,7 @@ def patch_inference_clients():
         "ollama_pull": OllamaAsyncClient.pull,
         "ollama_list": OllamaAsyncClient.list,
         "tavily_invoke_tool": TavilySearchToolRuntimeImpl.invoke_tool,
+        "aiohttp_post": aiohttp.ClientSession.post,
     }
 
     # Create patched methods for OpenAI client
@@ -901,15 +1046,23 @@ def patch_inference_clients():
     # Apply tool runtime patches
     TavilySearchToolRuntimeImpl.invoke_tool = patched_tavily_invoke_tool
 
+    # Create patched method for aiohttp rerank requests
+    def patched_aiohttp_session_post(self, url, **kwargs):
+        return _patched_aiohttp_post(_original_methods["aiohttp_post"], self, url, **kwargs)
+
+    # Apply aiohttp patch
+    aiohttp.ClientSession.post = patched_aiohttp_session_post
+
 
 def unpatch_inference_clients():
-    """Remove monkey patches and restore original OpenAI, Ollama client, and tool runtime methods."""
+    """Remove monkey patches and restore original OpenAI, Ollama client, tool runtime, and aiohttp methods."""
     global _original_methods
 
     if not _original_methods:
         return
 
     # Import here to avoid circular imports
+    import aiohttp
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
@@ -934,6 +1087,9 @@ def unpatch_inference_clients():
 
     # Restore tool runtime methods
     TavilySearchToolRuntimeImpl.invoke_tool = _original_methods["tavily_invoke_tool"]
+
+    # Restore aiohttp method
+    aiohttp.ClientSession.post = _original_methods["aiohttp_post"]
 
     _original_methods.clear()
 

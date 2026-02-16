@@ -100,6 +100,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "vllm/Qwen/Qwen3-0.6B",
             "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
+            "rerank_model": "vllm/Qwen/Qwen3-Reranker-0.6B",
         },
     ),
     "bedrock": Setup(
@@ -178,6 +179,17 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="Groq models",
         defaults={
             "text_model": "groq/llama-3.3-70b-versatile",
+        },
+    ),
+    "llama-cpp-server": Setup(
+        name="llama-cpp-server",
+        description="llama.cpp server provider with OpenAI-compatible API",
+        env={
+            "LLAMA_CPP_SERVER_URL": "http://localhost:8080",
+        },
+        defaults={
+            "text_model": "llama-cpp-server/qwen2.5",
+            "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
         },
     ),
 }

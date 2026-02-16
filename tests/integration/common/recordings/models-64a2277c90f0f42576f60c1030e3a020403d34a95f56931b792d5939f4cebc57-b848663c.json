@@ -1,0 +1,45 @@
+{
+  "test_id": null,
+  "request": {
+    "method": "POST",
+    "url": "http://localhost:8000/v1/v1/models",
+    "headers": {},
+    "body": {},
+    "endpoint": "/v1/models",
+    "model": ""
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.model.Model",
+        "__data__": {
+          "id": "Qwen/Qwen3-Reranker-0.6B",
+          "created": 1770921745,
+          "object": "model",
+          "owned_by": "vllm",
+          "root": "Qwen/Qwen3-Reranker-0.6B",
+          "parent": null,
+          "max_model_len": 40960,
+          "permission": [
+            {
+              "id": "modelperm-80cf4f0d96946d5d",
+              "object": "model_permission",
+              "created": 1770921745,
+              "allow_create_engine": false,
+              "allow_sampling": true,
+              "allow_logprobs": true,
+              "allow_search_indices": false,
+              "allow_view": true,
+              "allow_fine_tuning": false,
+              "organization": "*",
+              "group": null,
+              "is_blocking": false
+            }
+          ]
+        }
+      }
+    ],
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

@@ -29,10 +29,10 @@ from llama_stack_api import (
     ModelNotFoundError,
     ModelType,
     ModelTypeError,
-    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
@@ -408,7 +408,7 @@ class InferenceRouter(Inference):
                                         ),
                                     )
                                 )
-                    message = OpenAIAssistantMessageParam(
+                    message = OpenAIChatCompletionResponseMessage(
                         role="assistant",
                         content=content_str if content_str else None,
                         tool_calls=assembled_tool_calls if assembled_tool_calls else None,

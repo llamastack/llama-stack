@@ -257,6 +257,7 @@ from .inference import (
     OpenAIChatCompletionUsage,
     OpenAIChatCompletionUsageCompletionTokensDetails,
     OpenAIChatCompletionUsagePromptTokensDetails,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChoice,
     OpenAIChoiceDelta,
     OpenAIChoiceLogprobs,
@@ -336,6 +337,7 @@ from .openai_responses import (
     OpenAIResponseContentPartReasoningText,
     OpenAIResponseContentPartRefusal,
     OpenAIResponseError,
+    OpenAIResponseIncompleteDetails,
     OpenAIResponseInput,
     OpenAIResponseInputFunctionToolCallOutput,
     OpenAIResponseInputMessageContent,
@@ -534,7 +536,6 @@ from .tools import (
     ToolStore,
 )
 from .validators import validate_embeddings_input_is_text
-from .helpers import remove_null_from_anyof
 from .vector_io import (
     Chunk,
     ChunkForDeletion,
@@ -820,6 +821,7 @@ __all__ = [
     "OpenAIChatCompletionToolChoiceFunctionTool",
     "OpenAIChatCompletionToolChoiceCustomTool",
     "OpenAIChatCompletionToolChoice",
+    "OpenAIChatCompletionResponseMessage",
     "OpenAIChoice",
     "OpenAIChoiceDelta",
     "OpenAIChoiceLogprobs",
@@ -864,6 +866,7 @@ __all__ = [
     "OpenAIResponseContentPartReasoningText",
     "OpenAIResponseContentPartRefusal",
     "OpenAIResponseError",
+    "OpenAIResponseIncompleteDetails",
     "OpenAIResponseFormatJSONObject",
     "OpenAIResponseFormatJSONSchema",
     "OpenAIResponseFormatParam",

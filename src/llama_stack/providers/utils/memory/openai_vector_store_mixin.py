@@ -452,20 +452,8 @@ class OpenAIVectorStoreMixin(ABC):
         if embedding_dimension is None:
             raise ValueError("Embedding dimension is required")
 
-        # Register the VectorStore backing this vector store
         if provider_id is None:
             raise ValueError("Provider ID is required but was not provided")
-
-        # call to the provider to create any index, etc.
-        vector_store = VectorStore(
-            identifier=vector_store_id,
-            embedding_dimension=embedding_dimension,
-            embedding_model=embedding_model,
-            provider_id=provider_id,
-            provider_resource_id=vector_store_id,
-            vector_store_name=params.name,
-        )
-        await self.register_vector_store(vector_store)
 
         # Create OpenAI vector store metadata
         status = "completed"
