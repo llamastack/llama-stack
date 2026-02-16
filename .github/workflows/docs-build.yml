@@ -5,6 +5,7 @@ run-name: Build and validate documentation
 on:
   schedule:
     - cron: '0 0 * * *'  # Daily at 12 AM UTC
+  workflow_dispatch:
 
 permissions:
   contents: read
