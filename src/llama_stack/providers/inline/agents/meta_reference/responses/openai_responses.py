@@ -72,6 +72,8 @@ from .utils import (
 
 logger = get_logger(name=__name__, category="openai_responses")
 
+BACKGROUND_RESPONSE_TIMEOUT_SECONDS = 300  # 5 minutes
+
 
 class OpenAIResponsePreviousResponseWithInputItems(BaseModel):
     input_items: ListOpenAIResponseInputItem
@@ -749,71 +751,52 @@ class OpenAIResponsesImpl:
     ) -> None:
         """Process a background response asynchronously."""
         try:
-            # Check if response was cancelled before starting
-            existing = await self.responses_store.get_response_object(response_id)
-            if existing.status == "cancelled":
-                logger.info(f"Background response {response_id} was cancelled before processing started")
-                return
-
-            # Update status to in_progress
-            existing.status = "in_progress"
-            await self.responses_store.update_response_object(existing)
-
-            # Process the response using existing streaming logic
-            stream_gen = self._create_streaming_response(
-                input=input,
-                conversation=conversation,
-                model=model,
-                prompt=prompt,
-                instructions=instructions,
-                previous_response_id=previous_response_id,
-                store=store,
-                temperature=temperature,
-                text=text,
-                tools=tools,
-                tool_choice=tool_choice,
-                max_infer_iters=max_infer_iters,
-                guardrail_ids=guardrail_ids,
-                parallel_tool_calls=parallel_tool_calls,
-                max_tool_calls=max_tool_calls,
-                reasoning=reasoning,
-                max_output_tokens=max_output_tokens,
-                safety_identifier=safety_identifier,
-                service_tier=service_tier,
-                metadata=metadata,
-                include=include,
-                truncation=truncation,
-                response_id=response_id,
+            await asyncio.wait_for(
+                self._run_background_response_loop(
+                    response_id=response_id,
+                    input=input,
+                    model=model,
+                    prompt=prompt,
+                    instructions=instructions,
+                    previous_response_id=previous_response_id,
+                    conversation=conversation,
+                    store=store,
+                    temperature=temperature,
+                    text=text,
+                    tool_choice=tool_choice,
+                    tools=tools,
+                    include=include,
+                    max_infer_iters=max_infer_iters,
+                    guardrail_ids=guardrail_ids,
+                    parallel_tool_calls=parallel_tool_calls,
+                    max_tool_calls=max_tool_calls,
+                    reasoning=reasoning,
+                    max_output_tokens=max_output_tokens,
+                    safety_identifier=safety_identifier,
+                    service_tier=service_tier,
+                    metadata=metadata,
+                    truncation=truncation,
+                ),
+                timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
             )
 
-            result_response = None
-
-            async for stream_chunk in stream_gen:
-                # Check for cancellation periodically
-                current = await self.responses_store.get_response_object(response_id)
-                if current.status == "cancelled":
-                    logger.info(f"Background response {response_id} was cancelled during processing")
-                    return
-
-                match stream_chunk.type:
-                    case "response.completed" | "response.incomplete" | "response.failed":
-                        result_response = stream_chunk.response
-                    case _:
-                        pass
-
-            if result_response is not None:
-                result_response.background = True
-                result_response.id = response_id  # Ensure we update the correct response
-                await self.responses_store.update_response_object(result_response)
-            else:
-                # Something went wrong - mark as failed
+        except TimeoutError:
+            logger.exception(
+                f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
+            )
+            try:
                 existing = await self.responses_store.get_response_object(response_id)
                 existing.status = "failed"
                 existing.error = OpenAIResponseError(
                     code="processing_error",
-                    message="Response stream never reached a terminal state",
+                    message=f"Background response timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s",
                 )
                 await self.responses_store.update_response_object(existing)
+            except Exception:
+                logger.exception(
+                    f"Failed to update response {response_id} with timeout status. "
+                    "Client polling this response will not see the failure."
+                )
 
         except Exception as e:
             logger.exception(f"Error processing background response {response_id}")
@@ -830,6 +813,99 @@ class OpenAIResponsesImpl:
                     f"Failed to update response {response_id} with error status. "
                     "Client polling this response will not see the failure."
                 )
+
+    async def _run_background_response_loop(
+        self,
+        response_id: str,
+        input: str | list[OpenAIResponseInput],
+        model: str,
+        prompt: OpenAIResponsePrompt | None = None,
+        instructions: str | None = None,
+        previous_response_id: str | None = None,
+        conversation: str | None = None,
+        store: bool | None = True,
+        temperature: float | None = None,
+        text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
+        tools: list[OpenAIResponseInputTool] | None = None,
+        include: list[ResponseItemInclude] | None = None,
+        max_infer_iters: int | None = 10,
+        guardrail_ids: list[str] | None = None,
+        parallel_tool_calls: bool | None = None,
+        max_tool_calls: int | None = None,
+        reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
+        metadata: dict[str, str] | None = None,
+        truncation: ResponseTruncation | None = None,
+    ) -> None:
+        """Inner loop for background response processing, separated for timeout wrapping."""
+        # Check if response was cancelled before starting
+        existing = await self.responses_store.get_response_object(response_id)
+        if existing.status == "cancelled":
+            logger.info(f"Background response {response_id} was cancelled before processing started")
+            return
+
+        # Update status to in_progress
+        existing.status = "in_progress"
+        await self.responses_store.update_response_object(existing)
+
+        # Process the response using existing streaming logic
+        stream_gen = self._create_streaming_response(
+            input=input,
+            conversation=conversation,
+            model=model,
+            prompt=prompt,
+            instructions=instructions,
+            previous_response_id=previous_response_id,
+            store=store,
+            temperature=temperature,
+            text=text,
+            tools=tools,
+            tool_choice=tool_choice,
+            max_infer_iters=max_infer_iters,
+            guardrail_ids=guardrail_ids,
+            parallel_tool_calls=parallel_tool_calls,
+            max_tool_calls=max_tool_calls,
+            reasoning=reasoning,
+            max_output_tokens=max_output_tokens,
+            safety_identifier=safety_identifier,
+            service_tier=service_tier,
+            metadata=metadata,
+            include=include,
+            truncation=truncation,
+            response_id=response_id,
+        )
+
+        result_response = None
+
+        async for stream_chunk in stream_gen:
+            # Check for cancellation periodically
+            current = await self.responses_store.get_response_object(response_id)
+            if current.status == "cancelled":
+                logger.info(f"Background response {response_id} was cancelled during processing")
+                return
+
+            match stream_chunk.type:
+                case "response.completed" | "response.incomplete" | "response.failed":
+                    result_response = stream_chunk.response
+                case _:
+                    pass
+
+        if result_response is not None:
+            result_response.background = True
+            result_response.id = response_id  # Ensure we update the correct response
+            await self.responses_store.update_response_object(result_response)
+        else:
+            # Something went wrong - mark as failed
+            existing = await self.responses_store.get_response_object(response_id)
+            existing.status = "failed"
+            existing.error = OpenAIResponseError(
+                code="processing_error",
+                message="Response stream never reached a terminal state",
+            )
+            await self.responses_store.update_response_object(existing)
 
     async def _create_streaming_response(
         self,
