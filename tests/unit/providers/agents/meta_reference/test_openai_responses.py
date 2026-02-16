@@ -48,6 +48,7 @@ from llama_stack_api.inference import (
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
+    ServiceTier,
 )
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
@@ -2227,6 +2228,7 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service(
@@ -2298,6 +2300,7 @@ async def test_params_passed_through_full_chain_to_backend_service(
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service_litellm(
@@ -2718,3 +2721,475 @@ async def test_prompt_cache_key_propagated_to_chat_completions(
     # Verify the prompt_cache_key is propagated to the chat completion params
     assert hasattr(params, "prompt_cache_key"), "params should have prompt_cache_key attribute"
     assert params.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_service_tier(openai_responses_impl, mock_inference_api):
+    """Test creating an OpenAI response with service_tier parameter."""
+    # Setup
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    service_tier = ServiceTier.flex
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming to get final response directly
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=service_tier,
+        stream=False,
+    )
+
+    # Verify service_tier is preserved in the response (as string)
+    assert result.service_tier == ServiceTier.default.value
+    assert result.status == "completed"
+
+    # Verify inference call received service_tier
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == service_tier
+
+
+async def test_create_openai_response_with_service_tier_streaming(openai_responses_impl, mock_inference_api):
+    """Test creating a streaming OpenAI response with service_tier parameter."""
+    # Setup
+    input_text = "Tell me a story"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    service_tier = ServiceTier.priority
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - streaming
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=service_tier,
+        stream=True,
+    )
+
+    # For streaming response, collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify service_tier is in all response snapshots (as string)
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.service_tier == service_tier.value
+
+    # Check final response
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.service_tier == ServiceTier.default.value
+
+    # Verify inference call received service_tier
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == service_tier
+
+
+async def test_create_openai_response_service_tier_auto_transformation(openai_responses_impl, mock_inference_api):
+    """Test that service_tier 'auto' is transformed to actual tier from provider response."""
+    # Setup
+    input_text = "Hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock a response that returns actual service tier when "auto" was requested
+    async def fake_stream_with_service_tier():
+        yield ChatCompletionChunk(
+            id="chatcmpl-123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="Hi there!", role="assistant"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            service_tier="default",  # Provider returns actual tier used
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_service_tier()
+
+    # Execute with "auto" service tier
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=ServiceTier.auto,
+        stream=False,
+    )
+
+    # Verify the response has the actual tier from provider, not "auto"
+    assert result.service_tier == "default", "service_tier should be transformed from 'auto' to actual tier"
+    assert result.service_tier != ServiceTier.auto.value, "service_tier should not remain as 'auto'"
+    assert result.status == "completed"
+
+    # Verify inference was called with "auto"
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == "auto"
+
+
+async def test_create_openai_response_service_tier_propagation_streaming(openai_responses_impl, mock_inference_api):
+    """Test that service_tier from chat completion is propagated to response object in streaming mode."""
+    # Setup
+    input_text = "Tell me about AI"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock streaming response with service_tier
+    async def fake_stream_with_service_tier():
+        yield ChatCompletionChunk(
+            id="chatcmpl-456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="AI is", role="assistant"),
+                    finish_reason=None,
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            service_tier="priority",  # First chunk with service_tier
+        )
+        yield ChatCompletionChunk(
+            id="chatcmpl-456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content=" amazing!"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_service_tier()
+
+    # Execute with "auto" but provider returns "priority"
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=ServiceTier.auto,
+        stream=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+    # Verify service_tier is propagated to all events
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    # Initially should have "auto" value
+    assert created_event.response.service_tier == "auto"
+
+    # Check final response has the actual tier from provider
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.service_tier == "priority", "Final response should have actual tier from provider"
+
+
+def test_response_object_incomplete_details_null_when_completed():
+    """Test that completed response has incomplete_details as null."""
+    from llama_stack_api.openai_responses import OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_123",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="completed",
+        store=False,
+    )
+
+    assert response.incomplete_details is None
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] is None
+
+
+def test_response_object_incomplete_details_with_max_output_tokens_reason():
+    """Test that incomplete response has incomplete_details with max_output_tokens reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_456",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="max_output_tokens"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "max_output_tokens"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "max_output_tokens"}
+
+
+def test_response_object_incomplete_details_with_length_reason():
+    """Test that incomplete response has incomplete_details with length reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_length",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="length"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "length"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "length"}
+
+
+def test_response_object_incomplete_details_with_max_iterations_exceeded_reason():
+    """Test that incomplete response has incomplete_details with max_iterations_exceeded reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_iters",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="max_iterations_exceeded"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "max_iterations_exceeded"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "max_iterations_exceeded"}
+
+
+async def test_agent_loop_incomplete_due_to_max_output_tokens(
+    openai_responses_impl, mock_inference_api, mock_tool_groups_api, mock_tool_runtime_api
+):
+    """Test that agent loop marks response incomplete when max_output_tokens is reached."""
+    from openai.types.completion_usage import CompletionUsage
+
+    model = "gpt-4o"
+    max_output_tokens = 25  # Set low enough to be exceeded by first tool call
+
+    # Setup tool mocks - the tool call will trigger a second iteration
+    mock_tool_groups_api.get_tool.return_value = ToolDef(
+        name="web_search", description="Search the web", input_schema={}
+    )
+    mock_tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(content="Search results")
+
+    # First stream: returns a tool call after consuming 30 tokens (exceeds limit of 25)
+    async def first_stream_with_tool_call():
+        yield ChatCompletionChunk(
+            id="test_123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        role="assistant",
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="call_abc",
+                                function=ChoiceDeltaToolCallFunction(name="web_search", arguments='{"query":"test"}'),
+                            )
+                        ],
+                    ),
+                    finish_reason="tool_calls",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=30, total_tokens=40),
+        )
+
+    # Second stream would consume more tokens, but should be skipped because we already have 30 tokens
+    # and the next iteration check will see we're at/above the limit
+    async def second_stream():
+        yield ChatCompletionChunk(
+            id="test_456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="More content", role="assistant"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=25, total_tokens=35),
+        )
+
+    # Mock returns first stream with tool call, then would return second stream but should be blocked
+    mock_inference_api.openai_chat_completion.side_effect = [first_stream_with_tool_call(), second_stream()]
+
+    # Execute with max_output_tokens that will be exceeded after first tool call
+    result = await openai_responses_impl.create_openai_response(
+        input="Test input",
+        model=model,
+        max_output_tokens=max_output_tokens,
+        tools=[OpenAIResponseInputToolWebSearch(type="web_search")],
+        stream=True,
+    )
+
+    # Collect all events
+    events = [event async for event in result]
+
+    # Find the final event (should be response.incomplete)
+    final_event = events[-1]
+    assert final_event.type == "response.incomplete"
+    assert final_event.response.status == "incomplete"
+    assert final_event.response.incomplete_details is not None
+    assert final_event.response.incomplete_details.reason == "max_output_tokens"
+
+
+async def test_agent_loop_incomplete_due_to_max_iterations(
+    openai_responses_impl, mock_inference_api, mock_tool_groups_api, mock_tool_runtime_api
+):
+    """Test that agent loop marks response incomplete when max iterations is exceeded via tool calls."""
+    from openai.types.completion_usage import CompletionUsage
+
+    model = "gpt-4o"
+
+    # Setup tool mocks
+    mock_tool_groups_api.get_tool.return_value = ToolDef(
+        name="web_search", description="Search the web", input_schema={}
+    )
+    mock_tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(content="Search results")
+
+    # Create a stream generator factory that returns a tool call (to trigger another iteration)
+    call_counter = {"count": 0}
+
+    def fake_stream_factory():
+        async def fake_stream_with_tool_call():
+            call_id = f"call_abc{call_counter['count']}"
+            call_counter["count"] += 1
+            # First chunk with tool call
+            yield ChatCompletionChunk(
+                id="test_123",
+                choices=[
+                    Choice(
+                        index=0,
+                        delta=ChoiceDelta(
+                            role="assistant",
+                            tool_calls=[
+                                ChoiceDeltaToolCall(
+                                    index=0,
+                                    id=call_id,
+                                    function=ChoiceDeltaToolCallFunction(
+                                        name="web_search", arguments='{"query":"test"}'
+                                    ),
+                                )
+                            ],
+                        ),
+                        finish_reason="tool_calls",
+                    )
+                ],
+                created=1234567890,
+                model=model,
+                object="chat.completion.chunk",
+                usage=CompletionUsage(prompt_tokens=10, completion_tokens=5, total_tokens=15),
+            )
+
+        return fake_stream_with_tool_call()
+
+    # Mock the inference to repeatedly return tool calls to exceed max iterations
+    # Default max_infer_iters is 5, so we need to keep returning tool calls
+    mock_inference_api.openai_chat_completion.side_effect = lambda *args, **kwargs: fake_stream_factory()
+
+    # Execute with tool configuration
+    result = await openai_responses_impl.create_openai_response(
+        input="Test input",
+        model=model,
+        tools=[OpenAIResponseInputToolWebSearch(type="web_search")],
+        stream=True,
+    )
+
+    # Collect all events
+    events = [event async for event in result]
+
+    # Find the final event (should be response.incomplete)
+    final_event = events[-1]
+    assert final_event.type == "response.incomplete"
+    assert final_event.response.status == "incomplete"
+    assert final_event.response.incomplete_details is not None
+    assert final_event.response.incomplete_details.reason == "max_iterations_exceeded"
+
+
+async def test_agent_loop_incomplete_due_to_length_finish_reason(openai_responses_impl, mock_inference_api):
+    """Test that agent loop marks response incomplete when model returns finish_reason='length'."""
+    from openai.types.completion_usage import CompletionUsage
+
+    model = "gpt-4o"
+
+    # Create a stream that returns finish_reason="length"
+    async def fake_stream_with_length_finish():
+        yield ChatCompletionChunk(
+            id="test_123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="This is a response that was cut off due to", role="assistant"),
+                    finish_reason=None,
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=20, total_tokens=30),
+        )
+        # Final chunk with finish_reason="length"
+        yield ChatCompletionChunk(
+            id="test_123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content=" length"),
+                    finish_reason="length",  # This indicates the response was truncated
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=25, total_tokens=35),
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_length_finish()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input="Test input",
+        model=model,
+        stream=True,
+    )
+
+    # Collect all events
+    events = [event async for event in result]
+
+    # Find the final event (should be response.incomplete)
+    final_event = events[-1]
+    assert final_event.type == "response.incomplete"
+    assert final_event.response.status == "incomplete"
+    assert final_event.response.incomplete_details is not None
+    assert final_event.response.incomplete_details.reason == "length"

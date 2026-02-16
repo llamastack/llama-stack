@@ -694,6 +694,7 @@ class OpenAIChatCompletion(BaseModel):
     object: Literal["chat.completion"] = Field(default="chat.completion", description="The object type.")
     created: int = Field(..., ge=0, description="The Unix timestamp in seconds when the chat completion was created.")
     model: str = Field(..., description="The model that was used to generate the chat completion.")
+    service_tier: str | None = Field(default=None, description="The service tier that was used for this response.")
     usage: OpenAIChatCompletionUsage | None = Field(
         default=None, description="Token usage information for the completion."
     )
@@ -708,6 +709,7 @@ class OpenAIChatCompletionChunk(BaseModel):
     object: Literal["chat.completion.chunk"] = Field(default="chat.completion.chunk", description="The object type.")
     created: int = Field(..., ge=0, description="The Unix timestamp in seconds when the chat completion was created.")
     model: str = Field(..., description="The model that was used to generate the chat completion.")
+    service_tier: str | None = Field(default=None, description="The service tier that was used for this response.")
     usage: OpenAIChatCompletionUsage | None = Field(
         default=None, description="Token usage information (typically included in final chunk with stream_options)."
     )
@@ -792,6 +794,15 @@ class EmbeddingTaskType(Enum):
 
     query = "query"
     document = "document"
+
+
+class ServiceTier(StrEnum):
+    """The service tier for the request."""
+
+    auto = "auto"
+    default = "default"
+    flex = "flex"
+    priority = "priority"
 
 
 class OpenAICompletionWithInputMessages(OpenAIChatCompletion):
@@ -887,6 +898,7 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
         max_length=64,
         description="A stable identifier used for safety monitoring and abuse detection.",
     )
+    service_tier: ServiceTier | None = Field(default=None, description="The service tier to use for this request.")
     reasoning_effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = Field(
         default=None, description="The effort level for reasoning models."
     )
@@ -1054,6 +1066,7 @@ __all__ = [
     "OpenAIEmbeddingsResponse",
     "TextTruncation",
     "EmbeddingTaskType",
+    "ServiceTier",
     "OpenAICompletionWithInputMessages",
     "ListOpenAIChatCompletionResponse",
     "OpenAICompletionRequestWithExtraBody",
