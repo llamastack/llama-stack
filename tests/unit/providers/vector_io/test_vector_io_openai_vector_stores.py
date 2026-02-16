@@ -1254,8 +1254,6 @@ async def test_max_concurrent_files_per_batch(vector_io_adapter):
 async def test_embedding_config_from_metadata(vector_io_adapter):
     """Test that embedding configuration is correctly extracted from metadata."""
 
-    # Mock register_vector_store to avoid actual registration
-    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
 
@@ -1269,20 +1267,17 @@ async def test_embedding_config_from_metadata(vector_io_adapter):
         model_extra={},
     )
 
-    await vector_io_adapter.openai_create_vector_store(params)
+    result = await vector_io_adapter.openai_create_vector_store(params)
 
-    # Verify VectorStore was registered with correct embedding config from metadata
-    vector_io_adapter.register_vector_store.assert_called_once()
-    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
-    assert call_args.embedding_model == "test-embedding-model"
-    assert call_args.embedding_dimension == 512
+    # Verify the saved metadata contains the correct embedding config
+    vector_store = vector_io_adapter.openai_vector_stores[result.id]
+    assert vector_store["metadata"]["embedding_model"] == "test-embedding-model"
+    assert vector_store["metadata"]["embedding_dimension"] == "512"
 
 
 async def test_embedding_config_from_extra_body(vector_io_adapter):
     """Test that embedding configuration is correctly extracted from extra_body when metadata is empty."""
 
-    # Mock register_vector_store to avoid actual registration
-    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
 
@@ -1296,20 +1291,17 @@ async def test_embedding_config_from_extra_body(vector_io_adapter):
         },
     )
 
-    await vector_io_adapter.openai_create_vector_store(params)
+    result = await vector_io_adapter.openai_create_vector_store(params)
 
-    # Verify VectorStore was registered with correct embedding config from extra_body
-    vector_io_adapter.register_vector_store.assert_called_once()
-    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
-    assert call_args.embedding_model == "extra-body-model"
-    assert call_args.embedding_dimension == 1024
+    # Verify the saved metadata contains the correct embedding config
+    vector_store = vector_io_adapter.openai_vector_stores[result.id]
+    assert vector_store["metadata"]["embedding_model"] == "extra-body-model"
+    assert vector_store["metadata"]["embedding_dimension"] == "1024"
 
 
 async def test_embedding_config_consistency_check_passes(vector_io_adapter):
     """Test that consistent embedding config in both metadata and extra_body passes validation."""
 
-    # Mock register_vector_store to avoid actual registration
-    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
 
@@ -1326,20 +1318,17 @@ async def test_embedding_config_consistency_check_passes(vector_io_adapter):
         },
     )
 
-    await vector_io_adapter.openai_create_vector_store(params)
+    result = await vector_io_adapter.openai_create_vector_store(params)
 
     # Should not raise any error and use metadata config
-    vector_io_adapter.register_vector_store.assert_called_once()
-    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
-    assert call_args.embedding_model == "consistent-model"
-    assert call_args.embedding_dimension == 768
+    vector_store = vector_io_adapter.openai_vector_stores[result.id]
+    assert vector_store["metadata"]["embedding_model"] == "consistent-model"
+    assert vector_store["metadata"]["embedding_dimension"] == "768"
 
 
 async def test_embedding_config_defaults_when_missing(vector_io_adapter):
     """Test that embedding dimension defaults to 768 when not provided."""
 
-    # Mock register_vector_store to avoid actual registration
-    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
 
@@ -1352,20 +1341,17 @@ async def test_embedding_config_defaults_when_missing(vector_io_adapter):
         },
     )
 
-    await vector_io_adapter.openai_create_vector_store(params)
+    result = await vector_io_adapter.openai_create_vector_store(params)
 
     # Should default to 768 dimensions
-    vector_io_adapter.register_vector_store.assert_called_once()
-    call_args = vector_io_adapter.register_vector_store.call_args[0][0]
-    assert call_args.embedding_model == "model-without-dimension"
-    assert call_args.embedding_dimension == 768
+    vector_store = vector_io_adapter.openai_vector_stores[result.id]
+    assert vector_store["metadata"]["embedding_model"] == "model-without-dimension"
+    assert vector_store["metadata"]["embedding_dimension"] == "768"
 
 
 async def test_embedding_config_required_model_missing(vector_io_adapter):
     """Test that missing embedding model raises error."""
 
-    # Mock register_vector_store to avoid actual registration
-    vector_io_adapter.register_vector_store = AsyncMock()
     # Set provider_id attribute for the adapter
     vector_io_adapter.__provider_id__ = "test_provider"
     # Mock the default model lookup to return None (no default model available)
