@@ -49,7 +49,6 @@ class ResponsesStore:
             self.reference = ResponsesStoreReference(**reference.model_dump())
 
         self.policy = policy
-        self.sql_store = None
 
     async def initialize(self):
         """Create the necessary tables if they don't exist."""
@@ -104,8 +103,6 @@ class ResponsesStore:
         :param input: The input items for the response.
         :param messages: The chat completion messages (for conversation continuity).
         """
-        if self.sql_store is None:
-            raise ValueError("Responses store is not initialized")
 
         data = response_object.model_dump()
         data["input"] = [input_item.model_dump() for input_item in input]
@@ -129,9 +126,6 @@ class ResponsesStore:
         input: list[OpenAIResponseInput],
         messages: list[OpenAIMessageParam],
     ) -> None:
-        if self.sql_store is None:
-            raise ValueError("Responses store is not initialized")
-
         data = response_object.model_dump()
         data["input"] = [input_item.model_dump() for input_item in input]
         data["messages"] = [msg.model_dump() for msg in messages]
@@ -161,8 +155,6 @@ class ResponsesStore:
         :param model: The model to filter by.
         :param order: The order to sort the responses by.
         """
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
 
         if not order:
             order = Order.desc
@@ -191,8 +183,6 @@ class ResponsesStore:
         """
         Get a response object with automatic access control checking.
         """
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
 
         row = await self.sql_store.fetch_one(
             self.reference.table_name,
@@ -207,9 +197,6 @@ class ResponsesStore:
         return _OpenAIResponseObjectWithInputAndMessages(**row["response_object"])
 
     async def delete_response_object(self, response_id: str) -> OpenAIDeleteResponseObject:
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
-
         row = await self.sql_store.fetch_one(self.reference.table_name, where={"id": response_id})
         if not row:
             raise ValueError(f"Response with id {response_id} not found")
@@ -226,9 +213,6 @@ class ResponsesStore:
         :param response_object: The updated response object.
         :param input: Optional input items (if None, existing input is preserved).
         """
-        if not self.sql_store:
-            raise RuntimeError("Responses store is not initialized")
-
         # Fetch existing data to preserve input/messages if not provided
         existing_row = await self.sql_store.fetch_one(
             self.reference.table_name,
@@ -322,8 +306,6 @@ class ResponsesStore:
         :param conversation_id: The conversation identifier.
         :param messages: List of OpenAI message parameters to store.
         """
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
 
         # Serialize messages to dict format for JSON storage
         messages_data = [msg.model_dump() for msg in messages]
@@ -343,8 +325,6 @@ class ResponsesStore:
         :param conversation_id: The conversation identifier.
         :returns: List of OpenAI message parameters, or None if no messages stored.
         """
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
 
         record = await self.sql_store.fetch_one(
             table="conversation_messages",

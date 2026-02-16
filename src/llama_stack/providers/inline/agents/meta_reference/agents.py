@@ -72,6 +72,8 @@ class MetaReferenceAgentsImpl(Agents):
         self.persistence_store = await kvstore_impl(self.config.persistence.agent_state)
         self.responses_store = ResponsesStore(self.config.persistence.responses, self.policy)
         await self.responses_store.initialize()
+        if not self.responses_store.sql_store:
+            raise RuntimeError("Responses store is not initialized")
         self.openai_responses_impl = OpenAIResponsesImpl(
             inference_api=self.inference_api,
             tool_groups_api=self.tool_groups_api,
