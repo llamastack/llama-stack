@@ -203,8 +203,13 @@ async def test_execute_contextual_chunk_transformation_custom_prompt(inference_a
     await provider._execute_contextual_chunk_transformation(chunks, "DOC_BODY", config)
 
     args, _ = inference_api.openai_chat_completion.call_args
-    prompt = args[0].messages[0].content
-    assert prompt == "Custom: DOC_BODY + C1"
+    messages = args[0].messages
+    # Document placed in system message for prefix caching, chunk in user message
+    assert len(messages) == 2
+    assert messages[0].role == "system"
+    assert messages[0].content == "Custom: DOC_BODY +"
+    assert messages[1].role == "user"
+    assert messages[1].content == "C1"
 
 
 async def test_execute_contextual_chunk_transformation_empty_response(inference_api, provider, strategy_config):

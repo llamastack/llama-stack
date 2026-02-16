@@ -46,6 +46,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIFileObject,
     OpenAISearchVectorStoreRequest,
+    OpenAISystemMessageParam,
     OpenAIUpdateVectorStoreFileRequest,
     OpenAIUpdateVectorStoreRequest,
     OpenAIUserMessageParam,
@@ -1597,17 +1598,33 @@ class OpenAIVectorStoreMixin(ABC):
 
         logger.info(f"Applying contextual retrieval to {len(chunks)} chunks using model {model_id}")
 
-        prompt_with_doc = context_prompt_template.replace("{{WHOLE_DOCUMENT}}", full_content)
+        # Split prompt into system (document) + user (chunk) messages to enable prefix caching.
+        # All major providers (OpenAI, vLLM, Anthropic) cache shared token prefixes by placing the
+        # document in a system message, the KV-cache is computed once and reused across all chunk requests.
+        chunk_placeholder = "{{CHUNK_CONTENT}}"
+        split_idx = context_prompt_template.find(chunk_placeholder)
+        if split_idx > 0:
+            system_template = context_prompt_template[:split_idx].replace("{{WHOLE_DOCUMENT}}", full_content).rstrip()
+            user_template = context_prompt_template[split_idx:]
+        else:
+            system_template = None
+            user_template = context_prompt_template.replace("{{WHOLE_DOCUMENT}}", full_content)
+
         semaphore = asyncio.Semaphore(max_concurrency)
 
         async def contextualize_chunk(chunk: Chunk) -> _ChunkContextResult:
             async with semaphore:
-                prompt = prompt_with_doc.replace("{{CHUNK_CONTENT}}", interleaved_content_as_str(chunk.content))
+                user_prompt = user_template.replace(chunk_placeholder, interleaved_content_as_str(chunk.content))
+                messages: list = [OpenAIUserMessageParam(role="user", content=user_prompt)]
+                if system_template:
+                    messages.insert(0, OpenAISystemMessageParam(role="system", content=system_template))
 
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=model_id,
-                    messages=[OpenAIUserMessageParam(role="user", content=prompt)],
+                    messages=messages,
                     stream=False,
+                    temperature=0.0,
+                    max_tokens=256,
                 )
                 for attempt in range(_MAX_RETRIES + 1):
                     try:
