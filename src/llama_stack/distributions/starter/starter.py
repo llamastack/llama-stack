@@ -59,6 +59,7 @@ ENABLED_INFERENCE_PROVIDERS = [
     "together",
     "gemini",
     "vertexai",
+    "vertexai_native",
     "groq",
     "sambanova",
     "anthropic",
@@ -76,6 +77,7 @@ INFERENCE_PROVIDER_IDS = {
     "cerebras": "${env.CEREBRAS_API_KEY:+cerebras}",
     "nvidia": "${env.NVIDIA_API_KEY:+nvidia}",
     "vertexai": "${env.VERTEX_AI_PROJECT:+vertexai}",
+    "vertexai_native": "${env.VERTEX_AI_PROJECT:+vertexai_native}",
     "azure": "${env.AZURE_API_KEY:+azure}",
 }
 

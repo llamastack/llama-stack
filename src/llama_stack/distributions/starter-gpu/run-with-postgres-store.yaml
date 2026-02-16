@@ -74,6 +74,11 @@ providers:
     config:
       project: ${env.VERTEX_AI_PROJECT:=}
       location: ${env.VERTEX_AI_LOCATION:=global}
+  - provider_id: ${env.VERTEX_AI_PROJECT:+vertexai_native}
+    provider_type: remote::vertexai_native
+    config:
+      project: ${env.VERTEX_AI_PROJECT:=}
+      location: ${env.VERTEX_AI_LOCATION:=global}
   - provider_id: groq
     provider_type: remote::groq
     config:

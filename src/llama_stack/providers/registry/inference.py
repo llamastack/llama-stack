@@ -229,6 +229,16 @@ Available Models:
         ),
         RemoteProviderSpec(
             api=Api.inference,
+            adapter_type="vertexai_native",
+            provider_type="remote::vertexai_native",
+            pip_packages=["google-genai"],
+            module="llama_stack.providers.remote.inference.vertexai_native",
+            config_class="llama_stack.providers.remote.inference.vertexai_native.config.VertexAINativeConfig",
+            provider_data_validator="llama_stack.providers.remote.inference.vertexai_native.config.VertexAINativeProviderDataValidator",
+            description="Google Vertex AI inference using native google-genai SDK. Supports thinking/reasoning config, context caching, response MIME type control, and other native Gemini features not available via OpenAI-compatible endpoint.",
+        ),
+        RemoteProviderSpec(
+            api=Api.inference,
             adapter_type="groq",
             provider_type="remote::groq",
             pip_packages=[],

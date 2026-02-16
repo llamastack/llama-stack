@@ -3,3 +3,13 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+
+from .config import VertexAINativeConfig
+
+
+async def get_adapter_impl(config: VertexAINativeConfig, _deps):
+    from .vertexai_native import VertexAINativeInferenceAdapter
+
+    impl = VertexAINativeInferenceAdapter(config=config)
+    await impl.initialize()
+    return impl
