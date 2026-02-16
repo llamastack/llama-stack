@@ -22,6 +22,7 @@ from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
@@ -57,7 +58,7 @@ def mock_files_api():
 class TestConvertChatChoiceToResponseMessage:
     async def test_convert_string_content(self):
         choice = OpenAIChoice(
-            message=OpenAIAssistantMessageParam(content="Test message"),
+            message=OpenAIChatCompletionResponseMessage(content="Test message"),
             finish_reason="stop",
             index=0,
         )
@@ -70,19 +71,22 @@ class TestConvertChatChoiceToResponseMessage:
         assert isinstance(result.content[0], OpenAIResponseOutputMessageContentOutputText)
         assert result.content[0].text == "Test message"
 
-    async def test_convert_text_param_content(self):
+    async def test_convert_none_content(self):
         choice = OpenAIChoice(
-            message=OpenAIAssistantMessageParam(
-                content=[OpenAIChatCompletionContentPartTextParam(text="Test text param")]
+            message=OpenAIChatCompletionResponseMessage(
+                content=None,
             ),
             finish_reason="stop",
             index=0,
         )
 
-        with pytest.raises(ValueError) as exc_info:
-            await convert_chat_choice_to_response_message(choice)
+        result = await convert_chat_choice_to_response_message(choice)
 
-        assert "does not yet support output content type" in str(exc_info.value)
+        assert result.role == "assistant"
+        assert result.status == "completed"
+        assert len(result.content) == 1
+        assert isinstance(result.content[0], OpenAIResponseOutputMessageContentOutputText)
+        assert result.content[0].text == ""
 
 
 class TestConvertResponseContentToChatContent:

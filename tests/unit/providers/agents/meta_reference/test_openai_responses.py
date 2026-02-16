@@ -37,6 +37,7 @@ from llama_stack_api import (
     OpenAISystemMessageParam,
     Order,
     Prompt,
+    ResponseTruncation,
 )
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
@@ -47,6 +48,7 @@ from llama_stack_api.inference import (
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
+    ServiceTier,
 )
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
@@ -2225,6 +2227,8 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
         ("temperature", 1.5, "temperature", 1.5),
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
+        ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service(
@@ -2295,6 +2299,8 @@ async def test_params_passed_through_full_chain_to_backend_service(
         ("temperature", 1.5, "temperature", 1.5),
         ("safety_identifier", "user-123", "safety_identifier", "user-123"),
         ("max_output_tokens", 500, "max_completion_tokens", 500),
+        ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service_litellm(
@@ -2483,3 +2489,404 @@ async def test_function_tool_strict_false_included(openai_responses_impl, mock_i
     tool_function = params.tools[0]["function"]
     assert "strict" in tool_function, "strict field should be included when explicitly set to False"
     assert tool_function["strict"] is False, "strict field should be False"
+
+
+async def test_create_openai_response_with_truncation_disabled_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that truncation='disabled' is properly handled in streaming responses."""
+    input_text = "Explain machine learning comprehensively."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        truncation=ResponseTruncation.disabled,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify truncation is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.truncation == ResponseTruncation.disabled
+
+    # Verify truncation is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.truncation == ResponseTruncation.disabled
+
+    mock_inference_api.openai_chat_completion.assert_called()
+
+    # Verify the truncation was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.truncation == ResponseTruncation.disabled
+
+
+async def test_create_openai_response_with_truncation_auto_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that truncation='auto' raises an error since it's not yet supported."""
+    input_text = "Tell me about quantum computing."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        truncation=ResponseTruncation.auto,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify truncation is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.truncation == ResponseTruncation.auto
+
+    # Verify the response failed due to unsupported truncation mode
+    failed_event = chunks[-1]
+    assert failed_event.type == "response.failed"
+    assert failed_event.response.truncation == ResponseTruncation.auto
+    assert failed_event.response.error is not None
+    assert failed_event.response.error.code == "invalid_request_error"
+    assert "Truncation mode 'auto' is not supported" in failed_event.response.error.message
+
+    # Inference API should not be called since error occurs before inference
+    mock_inference_api.openai_chat_completion.assert_not_called()
+
+    # Verify the failed response was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.truncation == ResponseTruncation.auto
+    assert stored_response.status == "failed"
+
+
+async def test_create_openai_response_with_prompt_cache_key_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is properly handled in non-streaming responses."""
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "geography-cache-001"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the cache key
+    assert result.prompt_cache_key == cache_key
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_prompt_cache_key_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is properly handled in streaming responses."""
+    input_text = "What is the capital of Germany?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "geography-cache-002"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify cache key is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.prompt_cache_key == cache_key
+
+    # Verify cache key is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.prompt_cache_key == cache_key
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_prompt_cache_key_and_previous_response(
+    openai_responses_impl, mock_responses_store, mock_inference_api
+):
+    """Test that prompt_cache_key works correctly with previous_response_id."""
+    # Setup previous response
+    previous_response = _OpenAIResponseObjectWithInputAndMessages(
+        id="resp-prev-123",
+        object="response",
+        created_at=1234567890,
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        status="completed",
+        text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
+        input=[OpenAIResponseMessage(id="msg-1", role="user", content="First question")],
+        output=[OpenAIResponseMessage(id="msg-2", role="assistant", content="First answer")],
+        messages=[
+            OpenAIUserMessageParam(content="First question"),
+            OpenAIAssistantMessageParam(content="First answer"),
+        ],
+        prompt_cache_key="conversation-cache-001",
+        store=True,
+    )
+
+    mock_responses_store.get_response_object.return_value = previous_response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Create a new response with the same cache key
+    result = await openai_responses_impl.create_openai_response(
+        input="Second question",
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        previous_response_id="resp-prev-123",
+        prompt_cache_key="conversation-cache-001",
+        store=True,
+    )
+
+    # Verify cache key is preserved
+    assert result.prompt_cache_key == "conversation-cache-001"
+    assert result.status == "completed"
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == "conversation-cache-001"
+
+
+async def test_prompt_cache_key_propagated_to_chat_completions(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is propagated to /v1/chat/completions endpoint."""
+    input_text = "What is 2+2?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "math-cache-key"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute streaming request
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=True,
+        store=True,
+    )
+
+    # Consume the stream
+    _ = [chunk async for chunk in result]
+
+    # Verify that openai_chat_completion was called with prompt_cache_key
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args[0][0]  # First positional argument
+
+    # Verify the prompt_cache_key is propagated to the chat completion params
+    assert hasattr(params, "prompt_cache_key"), "params should have prompt_cache_key attribute"
+    assert params.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_service_tier(openai_responses_impl, mock_inference_api):
+    """Test creating an OpenAI response with service_tier parameter."""
+    # Setup
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    service_tier = ServiceTier.flex
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming to get final response directly
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=service_tier,
+        stream=False,
+    )
+
+    # Verify service_tier is preserved in the response (as string)
+    assert result.service_tier == ServiceTier.default.value
+    assert result.status == "completed"
+
+    # Verify inference call received service_tier
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == service_tier
+
+
+async def test_create_openai_response_with_service_tier_streaming(openai_responses_impl, mock_inference_api):
+    """Test creating a streaming OpenAI response with service_tier parameter."""
+    # Setup
+    input_text = "Tell me a story"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    service_tier = ServiceTier.priority
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - streaming
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=service_tier,
+        stream=True,
+    )
+
+    # For streaming response, collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify service_tier is in all response snapshots (as string)
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.service_tier == service_tier.value
+
+    # Check final response
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.service_tier == ServiceTier.default.value
+
+    # Verify inference call received service_tier
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == service_tier
+
+
+async def test_create_openai_response_service_tier_auto_transformation(openai_responses_impl, mock_inference_api):
+    """Test that service_tier 'auto' is transformed to actual tier from provider response."""
+    # Setup
+    input_text = "Hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock a response that returns actual service tier when "auto" was requested
+    async def fake_stream_with_service_tier():
+        yield ChatCompletionChunk(
+            id="chatcmpl-123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="Hi there!", role="assistant"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            service_tier="default",  # Provider returns actual tier used
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_service_tier()
+
+    # Execute with "auto" service tier
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=ServiceTier.auto,
+        stream=False,
+    )
+
+    # Verify the response has the actual tier from provider, not "auto"
+    assert result.service_tier == "default", "service_tier should be transformed from 'auto' to actual tier"
+    assert result.service_tier != ServiceTier.auto.value, "service_tier should not remain as 'auto'"
+    assert result.status == "completed"
+
+    # Verify inference was called with "auto"
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == "auto"
+
+
+async def test_create_openai_response_service_tier_propagation_streaming(openai_responses_impl, mock_inference_api):
+    """Test that service_tier from chat completion is propagated to response object in streaming mode."""
+    # Setup
+    input_text = "Tell me about AI"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock streaming response with service_tier
+    async def fake_stream_with_service_tier():
+        yield ChatCompletionChunk(
+            id="chatcmpl-456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="AI is", role="assistant"),
+                    finish_reason=None,
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            service_tier="priority",  # First chunk with service_tier
+        )
+        yield ChatCompletionChunk(
+            id="chatcmpl-456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content=" amazing!"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_service_tier()
+
+    # Execute with "auto" but provider returns "priority"
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=ServiceTier.auto,
+        stream=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+    # Verify service_tier is propagated to all events
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    # Initially should have "auto" value
+    assert created_event.response.service_tier == "auto"
+
+    # Check final response has the actual tier from provider
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.service_tier == "priority", "Final response should have actual tier from provider"

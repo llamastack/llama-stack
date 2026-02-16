@@ -60,6 +60,7 @@ from .agents import (
     ResponseGuardrail,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseTruncation,
     RetrieveResponseRequest,
 )
 from .batches import (
@@ -256,6 +257,7 @@ from .inference import (
     OpenAIChatCompletionUsage,
     OpenAIChatCompletionUsageCompletionTokensDetails,
     OpenAIChatCompletionUsagePromptTokensDetails,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChoice,
     OpenAIChoiceDelta,
     OpenAIChoiceLogprobs,
@@ -820,6 +822,7 @@ __all__ = [
     "OpenAIChatCompletionToolChoiceFunctionTool",
     "OpenAIChatCompletionToolChoiceCustomTool",
     "OpenAIChatCompletionToolChoice",
+    "OpenAIChatCompletionResponseMessage",
     "OpenAIChoice",
     "OpenAIChoiceDelta",
     "OpenAIChoiceLogprobs",
@@ -1011,6 +1014,7 @@ __all__ = [
     "ResponseGuardrail",
     "ResponseGuardrailSpec",
     "ResponseItemInclude",
+    "ResponseTruncation",
     "RetrieveFileContentRequest",
     "RetrieveFileRequest",
     "RouteInfo",

@@ -710,6 +710,7 @@ class OpenAIResponseObject(BaseModel):
     :param output: List of generated output items (messages, tool calls, etc.)
     :param parallel_tool_calls: (Optional) Whether to allow more than one function tool call generated per turn.
     :param previous_response_id: (Optional) ID of the previous response in a conversation
+    :param prompt_cache_key: (Optional) A key to use when reading from or writing to the prompt cache
     :param prompt: (Optional) Reference to a prompt template and its variables.
     :param status: Current status of the response generation
     :param temperature: (Optional) Sampling temperature used for generation
@@ -722,6 +723,7 @@ class OpenAIResponseObject(BaseModel):
     :param instructions: (Optional) System message inserted into the model's context
     :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response
     :param max_output_tokens: (Optional) An upper bound for the number of tokens that can be generated for a response, including visible output tokens.
+    :param service_tier: (Optional) The service tier to use for this response.
     :param metadata: (Optional) Dictionary of metadata key-value pairs
     """
 
@@ -734,6 +736,7 @@ class OpenAIResponseObject(BaseModel):
     output: Sequence[OpenAIResponseOutput]
     parallel_tool_calls: bool | None = True
     previous_response_id: str | None = None
+    prompt_cache_key: str | None = None
     prompt: OpenAIResponsePrompt | None = None
     status: str
     temperature: float | None = None
@@ -750,6 +753,7 @@ class OpenAIResponseObject(BaseModel):
     reasoning: OpenAIResponseReasoning | None = None
     max_output_tokens: int | None = None
     safety_identifier: str | None = None
+    service_tier: str | None = None
     metadata: dict[str, str] | None = None
     store: bool
 

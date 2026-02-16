@@ -1393,27 +1393,8 @@ components:
     OpenAIChoice:
       properties:
         message:
-          oneOf:
-          - $ref: '#/components/schemas/OpenAIUserMessageParam-Output'
-            title: OpenAIUserMessageParam-Output
-          - $ref: '#/components/schemas/OpenAISystemMessageParam'
-            title: OpenAISystemMessageParam
-          - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Output'
-            title: OpenAIAssistantMessageParam-Output
-          - $ref: '#/components/schemas/OpenAIToolMessageParam'
-            title: OpenAIToolMessageParam
-          - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-            title: OpenAIDeveloperMessageParam
-          title: OpenAIUserMessageParam-Output | ... (5 variants)
+          $ref: '#/components/schemas/OpenAIChatCompletionResponseMessage'
           description: The message from the model.
-          discriminator:
-            propertyName: role
-            mapping:
-              assistant: '#/components/schemas/OpenAIAssistantMessageParam-Output'
-              developer: '#/components/schemas/OpenAIDeveloperMessageParam'
-              system: '#/components/schemas/OpenAISystemMessageParam'
-              tool: '#/components/schemas/OpenAIToolMessageParam'
-              user: '#/components/schemas/OpenAIUserMessageParam-Output'
         finish_reason:
           type: string
           enum:
@@ -1976,6 +1957,13 @@ components:
             maxLength: 64
           - type: 'null'
           description: A stable identifier used for safety monitoring and abuse detection.
+        service_tier:
+          anyOf:
+          - $ref: '#/components/schemas/ServiceTier'
+            title: ServiceTier
+          - type: 'null'
+          description: The service tier to use for this request.
+          title: ServiceTier
         reasoning_effort:
           anyOf:
           - type: string
@@ -1988,6 +1976,12 @@ components:
             - xhigh
           - type: 'null'
           description: The effort level for reasoning models.
+        prompt_cache_key:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A key to use when reading from or writing to the prompt cache.
       additionalProperties: true
       type: object
       required:
@@ -2024,6 +2018,12 @@ components:
           description: The model that was used to generate the chat completion.
           title: Model
           type: string
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The service tier that was used for this response.
+          nullable: true
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
@@ -2067,6 +2067,12 @@ components:
           description: The model that was used to generate the chat completion.
           title: Model
           type: string
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The service tier that was used for this response.
+          nullable: true
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
@@ -2182,6 +2188,11 @@ components:
           type: string
           title: Model
           description: The model that was used to generate the chat completion.
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The service tier that was used for this response.
         usage:
           anyOf:
           - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
@@ -4132,6 +4143,10 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        prompt_cache_key:
+          anyOf:
+          - type: string
+          - type: 'null'
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -4240,6 +4255,10 @@ components:
           - type: integer
           - type: 'null'
         safety_identifier:
+          anyOf:
+          - type: string
+          - type: 'null'
+        service_tier:
           anyOf:
           - type: string
           - type: 'null'
@@ -4580,6 +4599,10 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        prompt_cache_key:
+          anyOf:
+          - type: string
+          - type: 'null'
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -4688,6 +4711,10 @@ components:
           - type: integer
           - type: 'null'
         safety_identifier:
+          anyOf:
+          - type: string
+          - type: 'null'
+        service_tier:
           anyOf:
           - type: string
           - type: 'null'
@@ -9294,6 +9321,49 @@ components:
       - file_id
       title: OpenAIAttachFileRequest
       description: Request body for attaching a file to a vector store.
+    OpenAIChatCompletionResponseMessage:
+      properties:
+        role:
+          type: string
+          const: assistant
+          title: Role
+          description: The role of the message author, always 'assistant' in responses.
+          default: assistant
+        content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The content of the message.
+        tool_calls:
+          items:
+            $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+          type: array
+          title: Tool Calls
+          description: The tool calls generated by the model.
+        refusal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The refusal message generated by the model.
+        function_call:
+          $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
+          description: 'Deprecated: the name and arguments of a function that should be called.'
+        annotations:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Annotations
+          description: Annotations for the message, when applicable.
+        audio:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Audio response data when using audio output modality.
+      type: object
+      title: OpenAIChatCompletionResponseMessage
+      description: An assistant message returned in a chat completion response.
     OpenAIChatCompletionUsageCompletionTokensDetails:
       properties:
         reasoning_tokens:
@@ -9976,6 +10046,15 @@ components:
 
             # Score threshold filtering
             SearchRankingOptions(ranker="weighted", score_threshold=0.5)
+    ServiceTier:
+      type: string
+      enum:
+      - auto
+      - default
+      - flex
+      - priority
+      title: ServiceTier
+      description: The service tier for the request.
     SetDefaultVersionBodyRequest:
       properties:
         version:

@@ -50,11 +50,13 @@ from llama_stack_api import (
     Prompts,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseTruncation,
     Safety,
     ToolGroups,
     ToolRuntime,
     VectorIO,
 )
+from llama_stack_api.inference import ServiceTier
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
@@ -457,6 +459,7 @@ class OpenAIResponsesImpl:
         prompt: OpenAIResponsePrompt | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
+        prompt_cache_key: str | None = None,
         conversation: str | None = None,
         store: bool | None = True,
         stream: bool | None = False,
@@ -472,7 +475,9 @@ class OpenAIResponsesImpl:
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
+        truncation: ResponseTruncation | None = None,
     ):
         stream = bool(stream)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
@@ -516,6 +521,7 @@ class OpenAIResponsesImpl:
             prompt=prompt,
             instructions=instructions,
             previous_response_id=previous_response_id,
+            prompt_cache_key=prompt_cache_key,
             store=store,
             temperature=temperature,
             text=text,
@@ -528,8 +534,10 @@ class OpenAIResponsesImpl:
             reasoning=reasoning,
             max_output_tokens=max_output_tokens,
             safety_identifier=safety_identifier,
+            service_tier=service_tier,
             metadata=metadata,
             include=include,
+            truncation=truncation,
         )
 
         if stream:
@@ -572,6 +580,7 @@ class OpenAIResponsesImpl:
         model: str,
         instructions: str | None = None,
         previous_response_id: str | None = None,
+        prompt_cache_key: str | None = None,
         conversation: str | None = None,
         prompt: OpenAIResponsePrompt | None = None,
         store: bool | None = True,
@@ -586,8 +595,10 @@ class OpenAIResponsesImpl:
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        truncation: ResponseTruncation | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -640,6 +651,7 @@ class OpenAIResponsesImpl:
                 response_id=response_id,
                 created_at=created_at,
                 prompt=prompt,
+                prompt_cache_key=prompt_cache_key,
                 text=text,
                 max_infer_iters=max_infer_iters,
                 parallel_tool_calls=parallel_tool_calls,
@@ -652,9 +664,11 @@ class OpenAIResponsesImpl:
                 reasoning=reasoning,
                 max_output_tokens=max_output_tokens,
                 safety_identifier=safety_identifier,
+                service_tier=service_tier,
                 metadata=metadata,
                 include=include,
                 store=store,
+                truncation=truncation,
             )
 
             final_response = None

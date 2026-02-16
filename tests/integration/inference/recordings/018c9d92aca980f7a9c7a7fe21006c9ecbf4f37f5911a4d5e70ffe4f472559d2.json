@@ -1,0 +1,48 @@
+{
+  "test_id": "tests/integration/inference/test_rerank.py::test_rerank_max_results_larger_than_items[rerank=vllm/Qwen/Qwen3-Reranker-0.6B]",
+  "request": {
+    "test_id": "tests/integration/inference/test_rerank.py::test_rerank_max_results_larger_than_items[rerank=vllm/Qwen/Qwen3-Reranker-0.6B]",
+    "url": "http://localhost:8000/rerank",
+    "method": "POST",
+    "payload": {
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "query": "string_1",
+      "documents": [
+        "string_1",
+        "string_2"
+      ],
+      "top_n": 10
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "id": "rerank-9ac98e9a1f78402c",
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "usage": {
+        "prompt_tokens": 14,
+        "total_tokens": 14
+      },
+      "results": [
+        {
+          "index": 0,
+          "document": {
+            "text": "string_1",
+            "multi_modal": null
+          },
+          "relevance_score": 1.0000003576278687
+        },
+        {
+          "index": 1,
+          "document": {
+            "text": "string_2",
+            "multi_modal": null
+          },
+          "relevance_score": 0.9298720955848694
+        }
+      ]
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

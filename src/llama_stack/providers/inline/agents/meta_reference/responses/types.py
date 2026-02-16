@@ -58,6 +58,7 @@ class ChatCompletionResult:
     tool_call_item_ids: dict[int, str]  # For streaming events
     content_part_emitted: bool  # Tracking state
     logprobs: list[OpenAITokenLogProb] | None = None
+    service_tier: str | None = None  # The actual service tier used (may differ from input)
 
     @property
     def content_text(self) -> str:

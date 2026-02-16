@@ -27,6 +27,7 @@ from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolChoice,
     OpenAIChatCompletionToolChoiceAllowedTools,
@@ -89,10 +90,12 @@ from llama_stack_api import (
     OpenAIResponseUsageOutputTokensDetails,
     OpenAIToolMessageParam,
     ResponseItemInclude,
+    ResponseTruncation,
     Safety,
     ToolDef,
     WebSearchToolTypes,
 )
+from llama_stack_api.inference import ServiceTier
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
@@ -137,14 +140,17 @@ class StreamingResponseOrchestrator:
         guardrail_ids: list[str] | None = None,
         connectors_api: Connectors | None = None,
         prompt: OpenAIResponsePrompt | None = None,
+        prompt_cache_key: str | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
+        truncation: ResponseTruncation | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -157,6 +163,7 @@ class StreamingResponseOrchestrator:
         self.connectors_api = connectors_api
         self.guardrail_ids = guardrail_ids or []
         self.prompt = prompt
+        self.prompt_cache_key = prompt_cache_key
         # System message that is inserted into the model's context
         self.instructions = instructions
         # Whether to allow more than one function tool call generated per turn.
@@ -167,7 +174,11 @@ class StreamingResponseOrchestrator:
         # An upper bound for the number of tokens that can be generated for a response
         self.max_output_tokens = max_output_tokens
         self.safety_identifier = safety_identifier
+        # Convert ServiceTier enum to string for internal storage
+        # This allows us to update it with the actual tier returned by the provider
+        self.service_tier = service_tier.value if service_tier is not None else None
         self.metadata = metadata
+        self.truncation = truncation
         self.store = store
         self.include = include
         self.store = bool(store) if store is not None else True
@@ -209,8 +220,11 @@ class StreamingResponseOrchestrator:
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
+            service_tier=self.service_tier,
             metadata=self.metadata,
+            truncation=self.truncation,
             store=self.store,
+            prompt_cache_key=self.prompt_cache_key,
         )
 
         return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
@@ -252,8 +266,11 @@ class StreamingResponseOrchestrator:
             reasoning=self.reasoning,
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
+            service_tier=self.service_tier,
             metadata=self.metadata,
+            truncation=self.truncation,
             store=self.store,
+            prompt_cache_key=self.prompt_cache_key,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -278,6 +295,22 @@ class StreamingResponseOrchestrator:
                 logger.info(f"Input guardrail violation: {input_violation_message}")
                 yield await self._create_refusal_response(input_violation_message)
                 return
+
+        # Only 'disabled' truncation is supported for now
+        # TODO: Implement actual truncation logic when 'auto' mode is supported
+        if self.truncation == ResponseTruncation.auto:
+            logger.warning("Truncation mode 'auto' is not yet supported")
+            self.sequence_number += 1
+            error = OpenAIResponseError(
+                code="invalid_request_error",
+                message="Truncation mode 'auto' is not supported. Use 'disabled' to let the inference provider reject oversized contexts.",
+            )
+            failure_response = self._snapshot_response("failed", output_messages, error=error)
+            yield OpenAIResponseObjectStreamResponseFailed(
+                response=failure_response,
+                sequence_number=self.sequence_number,
+            )
+            return
 
         async for stream_event in self._process_tools(output_messages):
             yield stream_event
@@ -373,7 +406,9 @@ class StreamingResponseOrchestrator:
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
                     safety_identifier=self.safety_identifier,
+                    service_tier=self.service_tier,
                     max_completion_tokens=remaining_output_tokens,
+                    prompt_cache_key=self.prompt_cache_key,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -392,6 +427,18 @@ class StreamingResponseOrchestrator:
                 if not completion_result_data:
                     raise ValueError("Streaming chunk processor failed to return completion data")
                 last_completion_result = completion_result_data
+
+                if completion_result_data.service_tier is None:
+                    # Since the default service_tier is "auto" and the returned service_tier is the
+                    # "mode actually used, here we are setting output value for service_tier as "default"
+                    # when service_tier is not supported.
+                    logger.warning("Service tier is None, setting to default")
+                    self.service_tier = "default"
+                else:
+                    # Update service_tier with actual value from provider response
+                    # This is especially important when "auto" was used as input
+                    self.service_tier = completion_result_data.service_tier
+
                 current_response = self._build_chat_completion(completion_result_data)
 
                 (
@@ -410,11 +457,7 @@ class StreamingResponseOrchestrator:
 
                 # Handle choices with no tool calls
                 for choice in current_response.choices:
-                    has_tool_calls = (
-                        isinstance(choice.message, OpenAIAssistantMessageParam)
-                        and choice.message.tool_calls
-                        and self.ctx.response_tools
-                    )
+                    has_tool_calls = choice.message.tool_calls and self.ctx.response_tools
                     if not has_tool_calls:
                         output_messages.append(
                             await convert_chat_choice_to_response_message(
@@ -496,7 +539,13 @@ class StreamingResponseOrchestrator:
         next_turn_messages = messages.copy()
 
         for choice in current_response.choices:
-            next_turn_messages.append(choice.message)
+            # Convert response message to input message format for multi-turn
+            next_turn_messages.append(
+                OpenAIAssistantMessageParam(
+                    content=choice.message.content,
+                    tool_calls=choice.message.tool_calls,
+                )
+            )
             logger.debug(f"Choice message content: {choice.message.content}")
             logger.debug(f"Choice message tool_calls: {choice.message.tool_calls}")
 
@@ -704,6 +753,7 @@ class StreamingResponseOrchestrator:
         chunk_model = ""
         chunk_finish_reason: OpenAIFinishReason = "stop"
         chat_response_logprobs = []
+        chunk_service_tier: str | None = None
 
         # Create a placeholder message item for delta events
         message_item_id = f"msg_{uuid.uuid4()}"
@@ -725,6 +775,9 @@ class StreamingResponseOrchestrator:
             chat_response_id = chunk.id
             chunk_created = chunk.created
             chunk_model = chunk.model
+            # Extract service_tier from chunk if available (may be in final chunk)
+            if chunk.service_tier is not None:
+                chunk_service_tier = chunk.service_tier
 
             # Accumulate usage from chunks (typically in final chunk with stream_options)
             self._accumulate_chunk_usage(chunk)
@@ -1011,6 +1064,7 @@ class StreamingResponseOrchestrator:
             tool_call_item_ids=tool_call_item_ids,
             content_part_emitted=content_part_emitted,
             logprobs=OpenAIChoiceLogprobs(content=chat_response_logprobs) if chat_response_logprobs else None,
+            service_tier=chunk_service_tier,
         )
 
     def _build_chat_completion(self, result: ChatCompletionResult) -> OpenAIChatCompletion:
@@ -1021,7 +1075,7 @@ class StreamingResponseOrchestrator:
         else:
             tool_calls = None
 
-        assistant_message = OpenAIAssistantMessageParam(
+        assistant_message = OpenAIChatCompletionResponseMessage(
             content=result.content_text,
             tool_calls=tool_calls,
         )
