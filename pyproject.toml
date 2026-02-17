@@ -48,6 +48,7 @@ dependencies = [
     "uvicorn>=0.34.0",                                # server
     "opentelemetry-sdk>=1.30.0",                      # server
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
+    "opentelemetry-distro>=0.60b1",                  # optional CLI instrumentation; only pre-releases on PyPI (latest 0.60b1)
     "aiosqlite>=0.21.0",                              # server - for metadata store
     "asyncpg",                                        # for metadata store
     "sqlalchemy[asyncio]>=2.0.41",                    # server - for conversations
