@@ -939,6 +939,7 @@ class OpenAIVectorStoreMixin(ABC):
             embedding_dimension = store_info["metadata"].get("embedding_dimension")
 
             chunk_attributes = attributes.copy()
+            chunk_attributes["document_id"] = file_id
             chunk_attributes["filename"] = file_response.filename
             chunk_attributes["file_id"] = file_id
 

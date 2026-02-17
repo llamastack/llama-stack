@@ -109,7 +109,7 @@ class PyPDFFileProcessor:
         if self.config.extract_metadata:
             pdf_metadata = self._extract_pdf_metadata(reader)
 
-        document_id = str(uuid.uuid4())
+        document_id = file_id or str(uuid.uuid4())
 
         # Prepare document metadata (include filename and file_id)
         document_metadata = {
@@ -153,7 +153,7 @@ class PyPDFFileProcessor:
         """Process a plain text file."""
         text_content = content.decode("utf-8")
 
-        document_id = str(uuid.uuid4())
+        document_id = file_id or str(uuid.uuid4())
 
         document_metadata: dict[str, Any] = {"filename": filename}
         if file_id:
