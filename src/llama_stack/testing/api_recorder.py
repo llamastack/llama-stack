@@ -20,6 +20,7 @@ from openai import NOT_GIVEN, OpenAI
 
 from llama_stack.core.id_generation import reset_id_override, set_id_override
 from llama_stack.log import get_logger
+from llama_stack.testing.exception_utils import deserialize_exception, serialize_exception
 
 logger = get_logger(__name__, category="testing")
 
@@ -856,9 +857,20 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             recording = storage.find_recording(request_hash)
 
         if recording:
-            response_body = recording["response"]["body"]
+            response_data = recording["response"]
 
-            if recording["response"].get("is_streaming", False):
+            # Handle recorded exceptions
+            if response_data.get("is_exception", False):
+                exc_data = response_data.get("exception_data")
+                if exc_data:
+                    raise deserialize_exception(exc_data)
+                else:
+                    # Legacy format or unknown exception
+                    raise Exception(response_data.get("exception_message", "Unknown error"))
+
+            response_body = response_data["body"]
+
+            if response_data.get("is_streaming", False):
 
                 async def replay_stream():
                     for chunk in response_body:
@@ -889,15 +901,6 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             )
 
     if mode == APIRecordingMode.RECORD or (mode == APIRecordingMode.RECORD_IF_MISSING and not recording):
-        if endpoint in ("/v1/models", "/v1/openai/v1/models"):
-            response = original_method(self, *args, **kwargs)
-        else:
-            response = await original_method(self, *args, **kwargs)
-
-        # we want to store the result of the iterator, not the iterator itself
-        if endpoint in ("/v1/models", "/v1/openai/v1/models"):
-            response = [m async for m in response]
-
         request_data = {
             "method": method,
             "url": url,
@@ -907,6 +910,28 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             "model": body.get("model", ""),
         }
 
+        try:
+            if endpoint in ("/v1/models", "/v1/openai/v1/models"):
+                response = original_method(self, *args, **kwargs)
+            else:
+                response = await original_method(self, *args, **kwargs)
+
+            # we want to store the result of the iterator, not the iterator itself
+            if endpoint in ("/v1/models", "/v1/openai/v1/models"):
+                response = [m async for m in response]
+
+        except Exception as exc:
+            # Record the exception
+            response_data = {
+                "body": None,
+                "is_streaming": False,
+                "is_exception": True,
+                "exception_data": serialize_exception(exc),
+                "exception_message": str(exc),
+            }
+            storage.store_recording(request_hash, request_data, response_data)
+            raise  # Re-raise so recording mode still fails as expected
+
         # Determine if this is a streaming request based on request parameters
         is_streaming = body.get("stream", False)
 
@@ -914,8 +939,20 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             # For streaming responses, we need to collect all chunks immediately before yielding
             # This ensures the recording is saved even if the generator isn't fully consumed
             chunks: list[Any] = []
-            async for chunk in response:
-                chunks.append(chunk)
+            try:
+                async for chunk in response:
+                    chunks.append(chunk)
+            except Exception as exc:
+                # Exception during streaming - record what we got plus the exception
+                response_data = {
+                    "body": chunks,
+                    "is_streaming": True,
+                    "is_exception": True,
+                    "exception_data": serialize_exception(exc),
+                    "exception_message": str(exc),
+                }
+                storage.store_recording(request_hash, request_data, response_data)
+                raise
 
             # Store the recording immediately
             response_data = {"body": chunks, "is_streaming": True}
@@ -946,6 +983,7 @@ def patch_inference_clients():
     from openai.resources.completions import AsyncCompletions
     from openai.resources.embeddings import AsyncEmbeddings
     from openai.resources.models import AsyncModels
+    from openai.resources.responses import AsyncResponses
 
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
@@ -955,6 +993,7 @@ def patch_inference_clients():
         "completions_create": AsyncCompletions.create,
         "embeddings_create": AsyncEmbeddings.create,
         "models_list": AsyncModels.list,
+        "responses_create": AsyncResponses.create,
         "ollama_generate": OllamaAsyncClient.generate,
         "ollama_chat": OllamaAsyncClient.chat,
         "ollama_embed": OllamaAsyncClient.embed,
@@ -990,11 +1029,17 @@ def patch_inference_clients():
 
         return _iter()
 
+    async def patched_responses_create(self, *args, **kwargs):
+        return await _patched_inference_method(
+            _original_methods["responses_create"], self, "openai", "/v1/responses", *args, **kwargs
+        )
+
     # Apply OpenAI patches
     AsyncChatCompletions.create = patched_chat_completions_create
     AsyncCompletions.create = patched_completions_create
     AsyncEmbeddings.create = patched_embeddings_create
     AsyncModels.list = patched_models_list
+    AsyncResponses.create = patched_responses_create
 
     # Create patched methods for Ollama client
     async def patched_ollama_generate(self, *args, **kwargs):
@@ -1068,6 +1113,7 @@ def unpatch_inference_clients():
     from openai.resources.completions import AsyncCompletions
     from openai.resources.embeddings import AsyncEmbeddings
     from openai.resources.models import AsyncModels
+    from openai.resources.responses import AsyncResponses
 
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
@@ -1076,6 +1122,7 @@ def unpatch_inference_clients():
     AsyncCompletions.create = _original_methods["completions_create"]
     AsyncEmbeddings.create = _original_methods["embeddings_create"]
     AsyncModels.list = _original_methods["models_list"]
+    AsyncResponses.create = _original_methods["responses_create"]
 
     # Restore Ollama client methods if they were patched
     OllamaAsyncClient.generate = _original_methods["ollama_generate"]
