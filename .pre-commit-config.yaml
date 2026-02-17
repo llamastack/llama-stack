@@ -188,6 +188,7 @@ repos:
       - id: check-log-usage
         name: Ensure 'llama_stack.log' usage for logging
         entry: bash
+        exclude: '^client-sdks/openapi/.*$'
         language: system
         types: [python]
         pass_filenames: true

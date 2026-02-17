@@ -11,6 +11,8 @@ STAINLESS_OPENAPI := $(STAINLESS_DIR)/openapi.yml
 OPENAPI_OUTPUT := openapi.yml
 OPENAPI_CONFIG := openapi-config.json
 SDK_OUTPUT_DIR := sdks/python
+PACKAGE_NAME := $(shell grep '"packageName"' $(OPENAPI_CONFIG) | cut -d'"' -f4)
+TEMPLATE_DIR := ./templates/python
 
 # Extract version from root pyproject.toml
 VERSION := $(shell grep 'fallback_version' ../../pyproject.toml | cut -d'"' -f2)
@@ -72,7 +74,8 @@ sdk: check-generator $(OPENAPI_OUTPUT)
 	@echo "Generating Python SDK (version: $(VERSION))..."
 	@mkdir -p $(SDK_OUTPUT_DIR)
 	$(OPENAPI_GENERATOR) generate -i $(OPENAPI_OUTPUT) -g python -c $(OPENAPI_CONFIG) -o $(SDK_OUTPUT_DIR) \
-		--additional-properties=packageVersion=$(VERSION)
+		--additional-properties=packageVersion=$(VERSION) -t $(TEMPLATE_DIR)
+	@cp -R $(TEMPLATE_DIR)/lib $(SDK_OUTPUT_DIR)/$(PACKAGE_NAME)
 
 clean:
 	@echo "Cleaning generated files..."
