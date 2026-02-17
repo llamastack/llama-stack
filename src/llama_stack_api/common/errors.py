@@ -195,3 +195,46 @@ class InvalidConversationIdError(LlamaStackError):
     def __init__(self, conversation_id: str) -> None:
         message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
         super().__init__(message)
+
+
+class ResponseNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced response"""
+
+    def __init__(self, response_id: str) -> None:
+        super().__init__(response_id, "Response")
+
+
+class InvalidParameterError(ValueError, LlamaStackError):
+    """raised when a request parameter has an invalid value"""
+
+    status_code: httpx.codes = httpx.codes.BAD_REQUEST
+
+    def __init__(self, param_name: str, value: object, constraint: str) -> None:
+        message = f"Invalid value for '{param_name}': {value}. {constraint}"
+        super().__init__(message)
+
+
+class ServiceNotEnabledError(LlamaStackError, ValueError):
+    """raised when a llama stack service is not enabled"""
+
+    status_code: httpx.codes = httpx.codes.SERVICE_UNAVAILABLE
+
+    def __init__(self, service_name: str, *, provider_specific_message: str | None = None) -> None:
+        message = f"Service '{service_name}' is not enabled. Please check your configuration and enable the service before trying again."
+        if provider_specific_message:
+            message += f"\n\n{provider_specific_message}"
+        super().__init__(message)
+
+
+class InternalServerError(LlamaStackError):
+    """
+    A generic server side error that is not caused by the user's request. Sensitive data
+    or details of the internal workings of the server should never be exposed to the user.
+    Instead, sanitized error information should be logged for debugging purposes.
+    """
+
+    status_code: httpx.codes = httpx.codes.INTERNAL_SERVER_ERROR
+
+    def __init__(self, detail: str | None = None) -> None:
+        message = detail or "An internal error occurred while processing your request."
+        super().__init__(message)
