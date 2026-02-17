@@ -58,7 +58,7 @@ def mock_kvstore():
 async def connector_service(mock_kvstore):
     """Create a ConnectorServiceImpl with mocked dependencies."""
     # Create a minimal mock config - we'll inject the kvstore directly
-    mock_config = MagicMock()
+    mock_config = MagicMock(spec=Connector)
 
     with patch(
         "llama_stack.core.connectors.connectors.kvstore_impl",

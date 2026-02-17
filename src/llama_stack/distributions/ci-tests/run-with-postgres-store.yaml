@@ -358,4 +358,7 @@ vector_stores:
     cleanup_interval_seconds: 86400
 safety:
   default_shield_id: llama-guard
-connectors: []
+connectors:
+- connector_type: mcp
+  connector_id: test-mcp-connector
+  url: http://localhost:5199/sse

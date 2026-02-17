@@ -31,6 +31,7 @@ from llama_stack.providers.utils.responses.responses_store import (
     _OpenAIResponseObjectWithInputAndMessages,
 )
 from llama_stack_api import (
+    Connectors,
     GetConnectorRequest,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIFile,
@@ -140,7 +141,7 @@ def mock_files_api():
 
 @pytest.fixture
 def mock_connectors_api():
-    connectors_api = AsyncMock()
+    connectors_api = AsyncMock(spec=Connectors)
     return connectors_api
 
 

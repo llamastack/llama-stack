@@ -307,6 +307,59 @@ def test_response_sequential_mcp_tool(responses_client, text_model_id, case):
         assert "boiling point" in text_content.lower()
 
 
+# Port must match the connector URL configured in ci-tests/config.yaml
+CONNECTOR_MCP_PORT = 5199
+
+
+def test_response_connector_resolution_mcp_tool(responses_client, text_model_id):
+    """Test that connector_id is resolved to the server_url from the registered connector
+    and the MCP tool call goes through correctly.
+
+    The 'test-mcp-connector' connector is pre-registered in the ci-tests config with
+    url http://localhost:5199/sse. This test starts an MCP server on that port and
+    references the connector by connector_id instead of server_url.
+    """
+    with make_mcp_server(port=CONNECTOR_MCP_PORT) as _mcp_server_info:
+        tools = [
+            {
+                "type": "mcp",
+                "server_label": "localmcp",
+                "connector_id": "test-mcp-connector",
+            }
+        ]
+
+        response = responses_client.responses.create(
+            model=text_model_id,
+            input="What is the boiling point of myawesomeliquid in Celsius?",
+            tools=tools,
+            stream=False,
+        )
+
+        assert len(response.output) >= 3
+
+        list_tools = response.output[0]
+        assert list_tools.type == "mcp_list_tools"
+        assert list_tools.server_label == "localmcp"
+        assert len(list_tools.tools) == 2
+        assert {t.name for t in list_tools.tools} == {
+            "get_boiling_point",
+            "greet_everyone",
+        }
+
+        call = response.output[1]
+        assert call.type == "mcp_call"
+        assert call.name == "get_boiling_point"
+        args = json.loads(call.arguments)
+        assert args["liquid_name"] == "myawesomeliquid"
+        assert args.get("celsius", True) is True
+        assert call.error is None
+        assert "-100" in call.output
+
+        message = response.output[-1]
+        text_content = message.content[0].text
+        assert "boiling point" in text_content.lower()
+
+
 @pytest.mark.parametrize("case", mcp_tool_test_cases)
 @pytest.mark.parametrize("approve", [True, False])
 def test_response_mcp_tool_approval(responses_client, text_model_id, case, approve):
