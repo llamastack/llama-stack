@@ -699,12 +699,24 @@ class OpenAIResponseUsage(BaseModel):
 
 
 @json_schema_type
+class OpenAIResponseIncompleteDetails(BaseModel):
+    """Details explaining why a response was incomplete.
+
+    :param reason: The reason the response could not be completed
+    """
+
+    reason: str
+
+
+@json_schema_type
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
 
     :param created_at: Unix timestamp when the response was created
+    :param completed_at: (Optional) Unix timestamp when the response was completed
     :param error: (Optional) Error details if the response generation failed
     :param id: Unique identifier for this response
+    :param incomplete_details: (Optional) Details about why the response was incomplete
     :param model: Model identifier used for generation
     :param object: Object type identifier, always "response"
     :param output: List of generated output items (messages, tool calls, etc.)
@@ -731,6 +743,7 @@ class OpenAIResponseObject(BaseModel):
     completed_at: int | None = None
     error: OpenAIResponseError | None = None
     id: str
+    incomplete_details: OpenAIResponseIncompleteDetails | None = None
     model: str
     object: Literal["response"] = "response"
     output: Sequence[OpenAIResponseOutput]

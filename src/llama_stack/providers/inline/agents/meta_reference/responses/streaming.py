@@ -41,6 +41,7 @@ from llama_stack_api import (
     OpenAIResponseContentPartReasoningText,
     OpenAIResponseContentPartRefusal,
     OpenAIResponseError,
+    OpenAIResponseIncompleteDetails,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolChoice,
     OpenAIResponseInputToolChoiceAllowedTools,
@@ -244,6 +245,7 @@ class StreamingResponseOrchestrator:
         outputs: list[OpenAIResponseOutput],
         *,
         error: OpenAIResponseError | None = None,
+        incomplete_details: OpenAIResponseIncompleteDetails | None = None,
     ) -> OpenAIResponseObject:
         completed_at = int(time.time()) if status == "completed" else None
         return OpenAIResponseObject(
@@ -258,6 +260,7 @@ class StreamingResponseOrchestrator:
             tools=self.ctx.available_tools(),
             tool_choice=self.ctx.tool_choice,
             error=error,
+            incomplete_details=incomplete_details,
             usage=self.accumulated_usage,
             instructions=self.instructions,
             prompt=self.prompt,
@@ -346,6 +349,7 @@ class StreamingResponseOrchestrator:
         n_iter = 0
         messages = self.ctx.messages.copy()
         final_status = "completed"
+        incomplete_reason: str | None = None
         last_completion_result: ChatCompletionResult | None = None
 
         try:
@@ -359,6 +363,7 @@ class StreamingResponseOrchestrator:
                         f"{self.accumulated_builtin_output_tokens}/{self.max_output_tokens}"
                     )
                     final_status = "incomplete"
+                    incomplete_reason = "max_output_tokens"
                     break
 
                 remaining_output_tokens = (
@@ -500,10 +505,12 @@ class StreamingResponseOrchestrator:
                         f"Exiting inference loop since iteration count({n_iter}) exceeds {self.max_infer_iters=}"
                     )
                     final_status = "incomplete"
+                    incomplete_reason = "max_iterations_exceeded"
                     break
 
             if last_completion_result and last_completion_result.finish_reason == "length":
                 final_status = "incomplete"
+                incomplete_reason = "length"
 
         except ModelNotFoundError:
             raise
@@ -522,7 +529,12 @@ class StreamingResponseOrchestrator:
 
         if final_status == "incomplete":
             self.sequence_number += 1
-            final_response = self._snapshot_response("incomplete", output_messages)
+            incomplete_details = (
+                OpenAIResponseIncompleteDetails(reason=incomplete_reason) if incomplete_reason else None
+            )
+            final_response = self._snapshot_response(
+                "incomplete", output_messages, incomplete_details=incomplete_details
+            )
             yield OpenAIResponseObjectStreamResponseIncomplete(
                 response=final_response,
                 sequence_number=self.sequence_number,
