@@ -46,7 +46,7 @@ class BingSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsReq
             raise ValueError(
                 'Pass Bing Search API Key in the header X-LlamaStack-Provider-Data as { "bing_search_api_key": <your api key>}'
             )
-        return provider_data.bing_search_api_key
+        return provider_data.bing_search_api_key.get_secret_value()
 
     async def list_runtime_tools(
         self,
