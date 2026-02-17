@@ -7,7 +7,9 @@ on:
     paths:
       # OpenAPI Generator files
       - 'client-sdks/openapi/Makefile'
-      - 'client-sdks/openapi/merge_stainless_to_openapi.py'
+      - 'client-sdks/openapi/merge_stainless_config.py'
+      - 'client-sdks/openapi/build_hierarchy.py'
+      - 'client-sdks/openapi/patch_hierarchy.py'
       - 'client-sdks/openapi/patches.yml'
       - 'client-sdks/openapi/openapi-config.json'
       - 'client-sdks/openapi/openapitools.json'
@@ -56,7 +58,9 @@ jobs:
           filters: |
             critical:
               - 'client-sdks/openapi/Makefile'
-              - 'client-sdks/openapi/merge_stainless_to_openapi.py'
+              - 'client-sdks/openapi/merge_stainless_config.py'
+              - 'client-sdks/openapi/build_hierarchy.py'
+              - 'client-sdks/openapi/patch_hierarchy.py'
               - 'client-sdks/openapi/patches.yml'
               - 'client-sdks/openapi/openapitools.json'
               - 'client-sdks/stainless/openapi.yml'

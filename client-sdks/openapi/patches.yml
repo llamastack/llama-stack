@@ -1,14 +1,7 @@
-# Patch file to modify OpenAPI spec after merging with Stainless config
+# Patches applied to the OpenAPI spec after merging with Stainless config.
 #
-# This applies the following changes:
-# 1. Add discriminator mapping to OpenAIResponseInput
-# 2. Remove finish_reason from required fields in OpenAIChoice and OpenAIChunkChoice
-# 3. Make finish_reason nullable in OpenAIChoice and OpenAIChunkChoice
-# 4. Remove finish_reason and text from required fields in OpenAICompletionChoice (for streaming)
-# 5. Make finish_reason and text nullable in OpenAICompletionChoice
-# 6. Simplify ToolConfig.tool_choice to avoid oneOf validation issues
-# 7. Make aggregated_results optional and nullable in ScoringResult
-# 8. Simplify ScoreRequest.input_rows to avoid additionalProperties oneOf issues
+# These fix schema issues that cause problems with openapi-generator code generation.
+# Each patch targets a specific dotted path in the spec and applies an action.
 
 operations:
   # Add discriminator mapping to OpenAIResponseInput
@@ -94,3 +87,21 @@ operations:
         type: object
         additionalProperties: true
       description: "The rows to score."
+
+  # Make Error model fields optional and flexible for better error handling.
+  # Servers may omit status/title or return structured objects in detail.
+  - path: "components.schemas.Error.required"
+    action: "remove_item"
+    value: "status"
+
+  - path: "components.schemas.Error.required"
+    action: "remove_item"
+    value: "title"
+
+  - path: "components.schemas.Error.properties.detail"
+    action: "set"
+    value:
+      description: "Error detail - can be a string or structured error object"
+      oneOf:
+        - type: string
+        - type: object
