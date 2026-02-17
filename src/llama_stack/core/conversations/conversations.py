@@ -14,6 +14,7 @@ from llama_stack.core.datatypes import AccessRule, StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
+from llama_stack_api import ConversationNotFoundError
 from llama_stack_api.conversations import (
     AddItemsRequest,
     Conversation,
@@ -140,7 +141,7 @@ class ConversationServiceImpl(Conversations):
         record = await self.sql_store.fetch_one(table="openai_conversations", where={"id": request.conversation_id})
 
         if record is None:
-            raise ValueError(f"Conversation {request.conversation_id} not found")
+            raise ConversationNotFoundError(request.conversation_id)
 
         return Conversation(
             id=record["id"], created_at=record["created_at"], metadata=record.get("metadata"), object="conversation"
