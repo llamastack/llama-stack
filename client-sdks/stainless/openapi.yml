@@ -13827,16 +13827,7 @@ components:
         context_prompt:
           type: string
           title: Context Prompt
-          description: Prompt template for contextual retrieval. Must contain {{WHOLE_DOCUMENT}} and {{CHUNK_CONTENT}} placeholders.
-          default: |-
-            <document>
-            {{WHOLE_DOCUMENT}}
-            </document>
-            Here is the chunk we want to situate within the whole document
-            <chunk>
-            {{CHUNK_CONTENT}}
-            </chunk>
-            Please give a short succinct description to situate this chunk of text within the overall document for the purposes of improving search retrieval of the chunk. Answer only with the succinct description and nothing else.
+          description: Prompt template for contextual retrieval. Uses WHOLE_DOCUMENT and CHUNK_CONTENT placeholders wrapped in double curly braces.
         max_chunk_size_tokens:
           type: integer
           maximum: 4096.0

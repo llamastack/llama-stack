@@ -12,7 +12,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema
@@ -349,9 +349,29 @@ class VectorStoreChunkingStrategyStatic(BaseModel):
     static: VectorStoreChunkingStrategyStaticConfig
 
 
+DEFAULT_CONTEXT_PROMPT = (
+    "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
+    "Here is the chunk we want to situate within the whole document\n"
+    "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
+    "Please give a short succinct description to situate this chunk of text within the overall document "
+    "for the purposes of improving search retrieval of the chunk. "
+    "Answer only with the succinct description and nothing else."
+)
+
+
+def _strip_context_prompt_default(schema: dict) -> None:
+    """Strip context_prompt default from JSON schema to prevent double-curly-brace
+    template placeholders from breaking Stainless SDK code generation."""
+    if props := schema.get("properties", {}):
+        if cp := props.get("context_prompt"):
+            cp.pop("default", None)
+
+
 @json_schema_type
 class VectorStoreChunkingStrategyContextualConfig(BaseModel):
     """Configuration for contextual chunking strategy."""
+
+    model_config = ConfigDict(json_schema_extra=_strip_context_prompt_default)
 
     model_id: str | None = Field(
         default=None,
@@ -359,15 +379,8 @@ class VectorStoreChunkingStrategyContextualConfig(BaseModel):
         description="LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.",
     )
     context_prompt: str = Field(
-        default=(
-            "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
-            "Here is the chunk we want to situate within the whole document\n"
-            "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
-            "Please give a short succinct description to situate this chunk of text within the overall document "
-            "for the purposes of improving search retrieval of the chunk. "
-            "Answer only with the succinct description and nothing else."
-        ),
-        description="Prompt template for contextual retrieval. Must contain {{WHOLE_DOCUMENT}} and {{CHUNK_CONTENT}} placeholders.",
+        default=DEFAULT_CONTEXT_PROMPT,
+        description="Prompt template for contextual retrieval. Uses WHOLE_DOCUMENT and CHUNK_CONTENT placeholders wrapped in double curly braces.",
     )
     max_chunk_size_tokens: int = Field(
         default=700,
