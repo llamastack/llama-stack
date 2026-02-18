@@ -369,8 +369,6 @@ def _strip_context_prompt_default(schema: dict) -> None:
 
 @json_schema_type
 class VectorStoreChunkingStrategyContextualConfig(BaseModel):
-    """Configuration for contextual chunking strategy."""
-
     model_config = ConfigDict(json_schema_extra=_strip_context_prompt_default)
 
     model_id: str | None = Field(

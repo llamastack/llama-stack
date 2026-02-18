@@ -246,7 +246,7 @@ async def test_execute_contextual_chunk_transformation_all_empty_context_raises(
     chunks = [create_chunk("Original", chunk_id="1", document_id="d")]
     config = VectorStoreChunkingStrategyContextualConfig(model_id="llama3.2")
 
-    with pytest.raises(RuntimeError, match="returned empty context for all"):
+    with pytest.raises(RuntimeError, match="Failed to generate context using model"):
         await provider._execute_contextual_chunk_transformation(chunks, "Doc", config)
 
     assert chunks[0].content == "Original"
@@ -302,7 +302,7 @@ async def test_execute_contextual_chunk_transformation_document_too_large(provid
     huge_content = "x" * (max_tokens * 4 + 100)
     chunks = [create_chunk("Small chunk")]
 
-    with pytest.raises(ValueError, match="Document size.*exceeds maximum allowed"):
+    with pytest.raises(ValueError, match="Failed to process document for contextual retrieval"):
         await provider._execute_contextual_chunk_transformation(chunks, huge_content, strategy_config)
 
 

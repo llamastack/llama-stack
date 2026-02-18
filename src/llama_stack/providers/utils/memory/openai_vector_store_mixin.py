@@ -104,8 +104,7 @@ _RETRY_BASE_DELAY = 1.0
 
 
 def _is_retriable_error(exc: Exception) -> bool:
-    """Check if an exception is transient and should be retried."""
-    if isinstance(exc, TimeoutError | ConnectionError | OSError):
+    if isinstance(exc, TimeoutError | ConnectionError):
         return True
     status = getattr(getattr(exc, "response", None), "status_code", None) or getattr(exc, "status_code", None)
     return status in _RETRIABLE_STATUS_CODES if status else False
@@ -978,12 +977,11 @@ class OpenAIVectorStoreMixin(ABC):
             ctx = chunking_strategy.contextual
             if not ctx.model_id and not self.vector_stores_config.contextual_retrieval_params.model:
                 raise ValueError(
-                    "model_id is required for contextual chunking. Provide model_id in the "
-                    "chunking_strategy.contextual configuration, or configure a default model "
+                    "Failed to initialize contextual chunking: model_id is required. "
+                    "Provide it in chunking_strategy.contextual or configure a default "
                     "in contextual_retrieval_params.model on the server."
                 )
         else:
-            # Default values from OpenAI API spec
             max_chunk_size_tokens = DEFAULT_CHUNK_SIZE_TOKENS
             chunk_overlap_tokens = DEFAULT_CHUNK_OVERLAP_TOKENS
 
@@ -1575,8 +1573,8 @@ class OpenAIVectorStoreMixin(ABC):
                 model_id = f"{ctx_config.model.provider_id}/{ctx_config.model.model_id}"
             else:
                 raise ValueError(
-                    "model_id is required for contextual chunking. Provide model_id in the "
-                    "chunking_strategy.contextual configuration, or configure a default model "
+                    "Failed to initialize contextual chunking: model_id is required. "
+                    "Provide it in chunking_strategy.contextual or configure a default "
                     "in contextual_retrieval_params.model on the server."
                 )
 
@@ -1586,8 +1584,8 @@ class OpenAIVectorStoreMixin(ABC):
         doc_token_estimate = len(full_content) // 4
         if doc_token_estimate > ctx_config.max_document_tokens:
             raise ValueError(
-                f"Document size (~{doc_token_estimate} tokens) exceeds maximum allowed "
-                f"({ctx_config.max_document_tokens} tokens) for contextual retrieval"
+                f"Failed to process document for contextual retrieval: size (~{doc_token_estimate} tokens) "
+                f"exceeds maximum allowed ({ctx_config.max_document_tokens} tokens)"
             )
 
         context_prompt_template = strategy_config.context_prompt
@@ -1630,12 +1628,14 @@ class OpenAIVectorStoreMixin(ABC):
 
                         if isinstance(response, AsyncIterator):
                             raise TypeError(
-                                f"Unexpected streaming response for chunk {chunk.chunk_id}. "
-                                "Contextual retrieval requires non-streaming inference."
+                                f"Failed to contextualize chunk {chunk.chunk_id}: "
+                                "received streaming response, contextual retrieval requires non-streaming inference."
                             )
 
                         if not response.choices:
-                            raise ValueError(f"LLM returned empty choices for chunk {chunk.chunk_id}")
+                            raise ValueError(
+                                f"Failed to contextualize chunk {chunk.chunk_id}: LLM returned empty choices"
+                            )
 
                         raw_context = response.choices[0].message.content
                         if raw_context is None:
@@ -1695,7 +1695,7 @@ class OpenAIVectorStoreMixin(ABC):
         if empty_count > 0:
             if empty_count == total and fail_count == 0:
                 raise RuntimeError(
-                    f"LLM model {model_id} returned empty context for all {total} chunks. "
+                    f"Failed to generate context using model {model_id}: empty context for all {total} chunks. "
                     "Verify the model supports instruction-following and the prompt template is appropriate."
                 )
             logger.warning(f"Contextual retrieval: {empty_count}/{total} chunks received empty context")
