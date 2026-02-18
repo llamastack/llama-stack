@@ -132,6 +132,7 @@ class MetaReferenceAgentsImpl(Agents):
             service_tier=request.service_tier,
             metadata=request.metadata,
             truncation=request.truncation,
+            top_logprobs=request.top_logprobs,
         )
         return result
 
