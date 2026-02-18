@@ -47,8 +47,8 @@ def translate_exception(exc: Exception) -> HTTPException:
         status_code = getattr(exc, "status_code", httpx.codes.INTERNAL_SERVER_ERROR)
         detail = str(exc)
         return HTTPException(status_code=status_code, detail=detail)
-    else:
-        return HTTPException(
-            status_code=httpx.codes.INTERNAL_SERVER_ERROR,
-            detail="Internal server error: An unexpected error occurred.",
-        )
+
+    return HTTPException(
+        status_code=httpx.codes.INTERNAL_SERVER_ERROR,
+        detail="Internal server error: An unexpected error occurred.",
+    )

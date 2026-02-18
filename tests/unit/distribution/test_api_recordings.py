@@ -4,12 +4,14 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import json
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
+import httpx
 import pytest
-from openai import AsyncOpenAI
+from openai import AsyncOpenAI, NotFoundError
 
 from llama_stack.testing.api_recorder import (
     APIRecordingMode,
@@ -317,3 +319,144 @@ class TestInferenceRecording:
 
                 # Verify the response was returned
                 assert response.choices[0].message.content == "Hello! I'm doing well, thank you for asking."
+
+
+class TestExceptionRecordingReplay:
+    """Test that exception recording and replay preserves error behavior for integration tests."""
+
+    async def test_record_exception_stores_serialized_error_and_reraises(self, temp_storage_dir):
+        """Record mode captures provider exceptions, stores them, and re-raises for test to catch."""
+        request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
+        response = httpx.Response(404, json={"error": {"code": "not_found"}}, request=request)
+        exc_to_raise = NotFoundError(
+            message="Batch batch-xyz not found",
+            response=response,
+            body={"error": {"code": "not_found"}},
+        )
+
+        async def mock_create_raises(*args, **kwargs):
+            raise exc_to_raise
+
+        temp_storage_dir = temp_storage_dir / "test_exception_record"
+        with patch(
+            "openai.resources.chat.completions.AsyncCompletions.create",
+            side_effect=mock_create_raises,
+        ):
+            with api_recording(mode=APIRecordingMode.RECORD, storage_dir=str(temp_storage_dir)):
+                client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
+
+                with pytest.raises(NotFoundError) as exc_info:
+                    await client.chat.completions.create(
+                        model="llama3.2:3b",
+                        messages=[{"role": "user", "content": "Hello"}],
+                    )
+
+                assert exc_info.value.status_code == 404
+                assert "not found" in str(exc_info.value).lower()
+
+        # Verify recording was stored with exception data
+        storage = ResponseStorage(temp_storage_dir)
+        recordings_dir = storage.base_dir / "recordings"
+        assert recordings_dir.exists()
+        recording_files = list(recordings_dir.glob("*.json"))
+        assert len(recording_files) >= 1
+        with open(recording_files[0]) as f:
+            data = json.load(f)
+        assert data["response"]["is_exception"] is True
+        assert "exception_data" in data["response"]
+        assert data["response"]["exception_data"]["category"] == "provider_sdk"
+        assert data["response"]["exception_data"]["provider"] == "openai"
+        assert data["response"]["exception_data"]["status_code"] == 404
+
+    async def test_replay_recorded_exception_raises_same_type(self, temp_storage_dir):
+        """Replay mode reconstructs and raises the recorded exception."""
+        request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
+        response = httpx.Response(404, json={"error": {"code": "not_found"}}, request=request)
+        exc_to_raise = NotFoundError(
+            message="Batch batch-xyz not found",
+            response=response,
+            body={"error": {"code": "not_found"}},
+        )
+
+        async def mock_create_raises(*args, **kwargs):
+            raise exc_to_raise
+
+        temp_storage_dir = temp_storage_dir / "test_exception_replay"
+        # Record first
+        with patch(
+            "openai.resources.chat.completions.AsyncCompletions.create",
+            side_effect=mock_create_raises,
+        ):
+            with api_recording(mode=APIRecordingMode.RECORD, storage_dir=str(temp_storage_dir)):
+                client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
+                with pytest.raises(NotFoundError):
+                    await client.chat.completions.create(
+                        model="llama3.2:3b",
+                        messages=[{"role": "user", "content": "Hello"}],
+                    )
+
+        # Replay - should raise same exception type without calling original
+        with patch("openai.resources.chat.completions.AsyncCompletions.create") as mock_create:
+            with api_recording(mode=APIRecordingMode.REPLAY, storage_dir=str(temp_storage_dir)):
+                client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
+
+                with pytest.raises(NotFoundError) as exc_info:
+                    await client.chat.completions.create(
+                        model="llama3.2:3b",
+                        messages=[{"role": "user", "content": "Hello"}],
+                    )
+
+                mock_create.assert_not_called()
+                assert exc_info.value.status_code == 404
+                assert "not found" in str(exc_info.value).lower()
+
+    async def test_replay_legacy_exception_format_raises_generic(self, temp_storage_dir):
+        """Recordings with exception_message but no exception_data still replay as Exception."""
+        from llama_stack.testing.api_recorder import normalize_inference_request
+
+        temp_storage_dir = temp_storage_dir / "test_legacy_exception"
+        recordings_dir = temp_storage_dir / "recordings"
+        recordings_dir.mkdir(parents=True, exist_ok=True)
+
+        # URL must match what AsyncOpenAI(base_url="http://localhost:11434/v1") produces
+        # for /v1/chat/completions -> base_url + endpoint = .../v1/v1/chat/completions
+        base_url = "http://localhost:11434/v1"
+        endpoint = "/v1/chat/completions"
+        url = base_url.rstrip("/") + endpoint
+
+        request_hash = normalize_inference_request(
+            "POST",
+            url,
+            {},
+            {"model": "llama3.2:3b", "messages": [{"role": "user", "content": "Legacy error test"}]},
+        )
+        legacy_recording = {
+            "test_id": None,
+            "request": {
+                "method": "POST",
+                "url": url,
+                "endpoint": endpoint,
+                "body": {"model": "llama3.2:3b", "messages": [{"role": "user", "content": "Legacy error test"}]},
+            },
+            "response": {
+                "body": None,
+                "is_streaming": False,
+                "is_exception": True,
+                "exception_message": "Legacy formatted error",
+            },
+            "id_normalization_mapping": {},
+        }
+        with open(recordings_dir / f"{request_hash}.json", "w") as f:
+            json.dump(legacy_recording, f, indent=2)
+
+        with patch("openai.resources.chat.completions.AsyncCompletions.create"):
+            with api_recording(mode=APIRecordingMode.REPLAY, storage_dir=str(temp_storage_dir)):
+                client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
+
+                with pytest.raises(Exception) as exc_info:
+                    await client.chat.completions.create(
+                        model="llama3.2:3b",
+                        messages=[{"role": "user", "content": "Legacy error test"}],
+                    )
+
+                assert str(exc_info.value) == "Legacy formatted error"

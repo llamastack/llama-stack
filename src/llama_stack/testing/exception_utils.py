@@ -8,7 +8,7 @@
 
 This module provides utilities for serializing and deserializing exceptions
 during API recording/replay. The exception types handled here use the shared
-mapping from exception_mappings.py, ensuring consistency between runtime
+mapping from mapping.py, ensuring consistency between runtime
 exception handling and test replay.
 """
 
