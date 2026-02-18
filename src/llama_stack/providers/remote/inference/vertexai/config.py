@@ -21,11 +21,16 @@ class VertexAIProviderDataValidator(BaseModel):
         default=None,
         description="Google Cloud location for Vertex AI (e.g., global)",
     )
+    vertex_access_token: str | None = None
 
 
 @json_schema_type
 class VertexAIConfig(RemoteInferenceProviderConfig):
-    auth_credential: SecretStr | None = Field(default=None, exclude=True)
+    auth_credential: SecretStr | None = Field(
+        default=None,
+        exclude=True,
+        description="Deprecated: has no effect. Use access_token or ADC instead.",
+    )
 
     project: str = Field(
         description="Google Cloud project ID for Vertex AI",
@@ -33,6 +38,11 @@ class VertexAIConfig(RemoteInferenceProviderConfig):
     location: str = Field(
         default="global",
         description="Google Cloud location for Vertex AI",
+    )
+    access_token: SecretStr | None = Field(
+        default=None,
+        description="Optional access token for Vertex AI authentication. When set, this is used instead of Application Default Credentials (ADC).",
+        json_schema_extra={"env": "VERTEX_AI_ACCESS_TOKEN"},
     )
 
     @classmethod
