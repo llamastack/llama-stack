@@ -117,8 +117,17 @@ class OpenAIResponsesImpl:
         self._background_worker_tasks: set[asyncio.Task] = set()
 
     async def initialize(self) -> None:
-        """Start background worker pool."""
-        for _ in range(BACKGROUND_NUM_WORKERS):
+        """No-op: background workers are started lazily on first use.
+
+        Workers must be started in the event loop that handles requests, not the
+        temporary loop used during provider initialization (which is destroyed after
+        init completes, cancelling any tasks created there).
+        """
+        pass
+
+    async def _ensure_workers_started(self) -> None:
+        """Start background workers in the current event loop if not already running."""
+        for _ in range(BACKGROUND_NUM_WORKERS - len(self._background_worker_tasks)):
             task = asyncio.create_task(self._background_worker())
             self._background_worker_tasks.add(task)
             task.add_done_callback(self._background_worker_tasks.discard)
@@ -716,6 +725,9 @@ class OpenAIResponsesImpl:
 
         Returns immediately with a queued response object.
         """
+        # Start workers in the current (request-handling) event loop if not already running.
+        await self._ensure_workers_started()
+
         response_id = f"resp_{uuid.uuid4()}"
         created_at = int(time.time())
 
