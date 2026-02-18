@@ -30,9 +30,6 @@ class BedrockInferenceAdapter(OpenAIMixin):
     Adapter for AWS Bedrock's OpenAI-compatible API endpoints.
 
     Supports Llama models across regions and GPT-OSS models (us-west-2 only).
-
-    Note: Bedrock's OpenAI-compatible endpoint does not support /v1/models
-    for dynamic model discovery. Models must be pre-registered in the config.
     """
 
     config: BedrockConfig
@@ -40,21 +37,20 @@ class BedrockInferenceAdapter(OpenAIMixin):
 
     def get_base_url(self) -> str:
         """Get base URL for OpenAI client."""
-        return f"https://bedrock-runtime.{self.config.region_name}.amazonaws.com/openai/v1"
+        return f"https://bedrock-mantle.{self.config.region_name}.api.aws/v1"
 
     async def list_provider_model_ids(self) -> Iterable[str]:
         """
-        Bedrock's OpenAI-compatible endpoint does not support the /v1/models endpoint.
-        Returns empty list since models must be pre-registered in the config.
-        """
-        return []
+        List available models from Bedrock's OpenAI-compatible endpoint.
 
-    async def check_model_availability(self, model: str) -> bool:
+        Attempts to fetch models dynamically via /v1/models endpoint.
+        If the endpoint is not supported or fails, returns an empty list.
         """
-        Bedrock doesn't support dynamic model listing via /v1/models.
-        Always return True to accept all models registered in the config.
-        """
-        return True
+        try:
+            return await super().list_provider_model_ids()
+        except Exception as e:
+            logger.debug(f"Failed to list Bedrock models dynamically: {e}")
+            return []
 
     async def openai_embeddings(
         self,
