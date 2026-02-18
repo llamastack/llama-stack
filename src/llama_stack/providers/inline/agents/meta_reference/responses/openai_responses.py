@@ -25,7 +25,8 @@ from llama_stack_api import (
     Conversations,
     Files,
     Inference,
-    InvalidConversationIdError,
+    InternalServerError,
+    InvalidParameterError,
     ListItemsRequest,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -54,6 +55,7 @@ from llama_stack_api import (
     ResponseItemInclude,
     ResponseTruncation,
     Safety,
+    ServiceNotEnabledError,
     ToolGroups,
     ToolRuntime,
     VectorIO,
@@ -304,7 +306,11 @@ class OpenAIResponsesImpl:
         # Validate that all provided variables exist in the prompt
         for name in openai_response_prompt.variables.keys():
             if name not in cur_prompt_variables:
-                raise ValueError(f"Variable {name} not found in prompt {openai_response_prompt.id}")
+                raise InvalidParameterError(
+                    "prompt.variables",
+                    name,
+                    f"Variable not defined in prompt '{openai_response_prompt.id}'.",
+                )
 
         # Separate text and media variables
         text_substitutions = {}
@@ -580,29 +586,35 @@ class OpenAIResponsesImpl:
                 if isinstance(tool, OpenAIResponseInputToolMCP) and tool.headers:
                     for key in tool.headers.keys():
                         if key.lower() == "authorization":
-                            raise ValueError(
-                                "Authorization header cannot be passed via 'headers'. "
-                                "Please use the 'authorization' parameter instead."
+                            raise InvalidParameterError(
+                                f"tools[server_label={tool.server_label!r}].headers",
+                                key,
+                                "Authorization credentials must be passed via the 'authorization' parameter, not 'headers'.",
                             )
 
         guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
 
         # Validate that Safety API is available if guardrails are requested
         if guardrail_ids and self.safety_api is None:
-            raise ValueError(
-                "Cannot process guardrails: Safety API is not configured.\n\n"
-                "To use guardrails, ensure the Safety API is configured in your stack, or remove "
-                "the 'guardrails' parameter from your request."
+            raise ServiceNotEnabledError(
+                "Safety API",
+                provider_specific_message="Ensure the Safety API is enabled in your stack, otherwise remove the 'guardrails' parameter from your request.",
             )
 
         if conversation is not None:
             if previous_response_id is not None:
-                raise ValueError(
-                    "Mutually exclusive parameters: 'previous_response_id' and 'conversation'. Ensure you are only providing one of these parameters."
+                raise InvalidParameterError(
+                    "previous_response_id, conversation",
+                    "previous_response_id and conversation are both provided",
+                    "Provide only one of these parameters.",
                 )
 
             if not conversation.startswith("conv_"):
-                raise InvalidConversationIdError(conversation)
+                raise InvalidParameterError("conversation", conversation, "Expected an ID that begins with 'conv_'.")
+
+        # Validate temperature per OpenResponses spec: "between 0 and 2"
+        if temperature is not None and (temperature < 0 or temperature > 2):
+            raise InvalidParameterError("temperature", temperature, "Must be between 0 and 2.")
 
         if max_tool_calls is not None and max_tool_calls < 1:
             raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
@@ -666,32 +678,51 @@ class OpenAIResponsesImpl:
             final_response = None
             final_event_type = None
             failed_response = None
-
             async for stream_chunk in stream_gen:
                 match stream_chunk.type:
                     case "response.completed" | "response.incomplete":
                         if final_response is not None:
-                            raise ValueError(
-                                "The response stream produced multiple terminal responses! "
-                                f"Earlier response from {final_event_type}"
+                            logger.error(
+                                "The response stream produced multiple terminal events, when it should produce exactly one.",
+                                extra={
+                                    "response_id": stream_chunk.response.id,
+                                    "first_terminal_event": final_event_type,
+                                    "second_terminal_event": stream_chunk.type,
+                                    "model": model,
+                                    "conversation": conversation,
+                                    "previous_response_id": previous_response_id,
+                                },
                             )
+                            raise InternalServerError()
                         final_response = stream_chunk.response
                         final_event_type = stream_chunk.type
                     case "response.failed":
                         failed_response = stream_chunk.response
+                        error_message = (
+                            failed_response.error.message
+                            if failed_response.error
+                            else "response failed but no error message was provided"
+                        )
+                        logger.error(
+                            "response creation failed",
+                            extra={
+                                "error_message": error_message,
+                                "response_id": failed_response.id,
+                                "model": model,
+                            },
+                        )
+                        # Surface the provider message — it may be actionable (e.g. context window exceeded)
+                        # and is already visible to callers in streaming mode via the response.failed event.
+                        raise InternalServerError(error_message)
                     case _:
                         pass  # Other event types don't have .response
 
-            if failed_response is not None:
-                error_message = (
-                    failed_response.error.message
-                    if failed_response and failed_response.error
-                    else "Response stream failed without error details"
-                )
-                raise RuntimeError(f"OpenAI response failed: {error_message}")
-
             if final_response is None:
-                raise ValueError("The response stream never reached a terminal state")
+                logger.error(
+                    "The response stream never reached a terminal state",
+                    extra={"model": model, "conversation": conversation, "previous_response_id": previous_response_id},
+                )
+                raise InternalServerError()
             # Set background=False for non-background responses
             final_response.background = False
             return final_response

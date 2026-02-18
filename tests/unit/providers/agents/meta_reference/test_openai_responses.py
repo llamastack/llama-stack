@@ -33,6 +33,8 @@ from llama_stack.providers.utils.responses.responses_store import (
 from llama_stack_api import (
     Connectors,
     GetConnectorRequest,
+    InternalServerError,
+    InvalidParameterError,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIFile,
     OpenAIFileObject,
@@ -323,6 +325,59 @@ async def test_failed_stream_persists_non_system_messages(openai_responses_impl,
     assert messages, "Expected non-system messages to be persisted on failure"
     assert all(not isinstance(m, OpenAISystemMessageParam) for m in messages)
     assert any(getattr(m, "role", None) == "user" for m in messages)
+
+
+async def test_failed_stream_raises_internal_server_error_in_non_streaming_mode(openai_responses_impl):
+    """Test that a response.failed event in non-streaming mode raises InternalServerError.
+
+    When stream=False, the caller expects a fully resolved response object, not a stream.
+    If the underlying stream emits a response.failed event, the implementation must raise
+    InternalServerError so the caller gets a typed, predictable error rather than a raw
+    RuntimeError or ValueError.
+
+    Unlike other InternalServerError sites in this file (which guard against internal bugs),
+    response.failed carries a structured, curated message from the inference backend that
+    may be directly actionable by the caller (e.g. context window exceeded, invalid prompt).
+    The message is surfaced to maintain consistency with streaming mode, where the same
+    response.failed event is returned directly to the caller with the error message visible.
+    """
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    provider_error_message = "This model's maximum context length is 4096 tokens"
+
+    failed_response = OpenAIResponseObject(
+        created_at=1,
+        id="resp_failed_nonstream",
+        model=model,
+        output=[],
+        status="failed",
+        error=OpenAIResponseError(code="server_error", message=provider_error_message),
+        store=False,
+    )
+
+    class FakeOrchestrator:
+        def __init__(self, *, ctx, **_kwargs):
+            self.ctx = ctx
+            self.final_messages = None
+
+        async def create_response(self):
+            yield OpenAIResponseObjectStreamResponseFailed(response=failed_response, sequence_number=0)
+
+    with patch(
+        "llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.StreamingResponseOrchestrator",
+        FakeOrchestrator,
+    ):
+        with pytest.raises(InternalServerError) as exc_info:
+            await openai_responses_impl.create_openai_response(
+                input="Hello",
+                model=model,
+                stream=False,
+                store=False,
+            )
+
+    # The provider message is surfaced to the caller: response.failed errors are
+    # structured and may be actionable (e.g. context window, invalid prompt).
+    # This is consistent with streaming mode where the same message is visible.
+    assert provider_error_message in str(exc_info.value)
 
 
 async def test_create_openai_response_with_string_input_with_tools(openai_responses_impl, mock_inference_api):
@@ -1471,9 +1526,11 @@ async def test_prepend_prompt_invalid_variable(openai_responses_impl, mock_promp
     # Initial messages
     messages = [OpenAIUserMessageParam(content="Test prompt")]
 
-    # Execute - should raise ValueError for invalid variable
-    with pytest.raises(ValueError, match="Variable company not found in prompt"):
+    # Execute - should raise InvalidParameterError for invalid variable
+    with pytest.raises(InvalidParameterError) as exc_info:
         await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
+    assert "Invalid value for 'prompt.variables': company" in str(exc_info.value)
+    assert f"Variable not defined in prompt '{prompt_id}'" in str(exc_info.value)
 
     # Verify
     mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)

@@ -162,7 +162,8 @@ class TestGuardrailsFunctionality:
                     model="test-model",
                     guardrails=["llama-guard"],
                 )
-            assert "Cannot process guardrails: Safety API is not configured" in str(exc_info.value)
+            assert "Safety API" in str(exc_info.value)
+            assert "not enabled" in str(exc_info.value)
 
             # Test with ResponseGuardrailSpec
             with pytest.raises(ValueError) as exc_info:
@@ -171,7 +172,8 @@ class TestGuardrailsFunctionality:
                     model="test-model",
                     guardrails=[ResponseGuardrailSpec(type="llama-guard")],
                 )
-            assert "Cannot process guardrails: Safety API is not configured" in str(exc_info.value)
+            assert "Safety API" in str(exc_info.value)
+            assert "not enabled" in str(exc_info.value)
 
     async def test_create_response_succeeds_without_guardrails_and_no_safety_api(
         self, mock_persistence_config, mock_deps
@@ -215,4 +217,4 @@ class TestGuardrailsFunctionality:
                 )
             except Exception as e:
                 # Ensure the error is NOT about missing Safety API
-                assert "Cannot process guardrails: Safety API is not configured" not in str(e)
+                assert "not enabled" not in str(e) or "Safety API" not in str(e)

@@ -193,7 +193,7 @@ class ResponsesStore:
         if not row:
             # SecureSqlStore will return None if record doesn't exist OR access is denied
             # This provides security by not revealing whether the record exists
-            raise ResponseNotFoundError(response_id)
+            raise ResponseNotFoundError(response_id) from None
 
         return _OpenAIResponseObjectWithInputAndMessages(**row["response_object"])
 
