@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from starlette.testclient import TestClient
 
 from llama_stack.core.server.fastapi_router_registry import build_fastapi_router
+from llama_stack.core.server.server import global_exception_handler
 from llama_stack_api import Agents, Api
 from llama_stack_api.agents.models import (
     CreateResponseRequest,
@@ -83,6 +84,7 @@ async def test_create_response_returns_sse_streaming_response_when_impl_streams(
 def test_create_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError to HTTP 400."""
     app = FastAPI()
+    app.add_exception_handler(Exception, global_exception_handler)
     impl = AsyncMock(spec=Agents)
     impl.create_openai_response.side_effect = ValueError("not found")
 
@@ -276,6 +278,7 @@ async def test_get_response_returns_response_object():
 def test_get_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError on GET to HTTP 400."""
     app = FastAPI()
+    app.add_exception_handler(Exception, global_exception_handler)
     impl = AsyncMock(spec=Agents)
     impl.get_openai_response.side_effect = ValueError("Response not found")
 
@@ -381,6 +384,7 @@ async def test_delete_response_returns_confirmation():
 def test_delete_response_maps_value_error_to_400():
     """_ExceptionTranslatingRoute converts ValueError on DELETE to HTTP 400."""
     app = FastAPI()
+    app.add_exception_handler(Exception, global_exception_handler)
     impl = AsyncMock(spec=Agents)
     impl.delete_openai_response.side_effect = ValueError("Response not found")
 
@@ -392,6 +396,7 @@ def test_delete_response_maps_value_error_to_400():
     resp = client.delete("/v1/responses/nonexistent")
 
     assert resp.status_code == 400
+    assert "not found" in resp.json()["detail"].lower()
 
 
 def test_request_validation_error_passes_through_route_class():
@@ -452,8 +457,6 @@ def test_unknown_exception_propagates_to_global_handler():
     Unknown exceptions are left for the server's global exception handler,
     which uses the full translate_exception pipeline from llama_stack.core.
     """
-    from llama_stack.core.server.server import global_exception_handler
-
     app = FastAPI()
     app.add_exception_handler(Exception, global_exception_handler)
     impl = AsyncMock(spec=Agents)
@@ -467,20 +470,15 @@ def test_unknown_exception_propagates_to_global_handler():
     resp = client.post("/v1/responses", json={"input": "hi", "model": "test", "stream": False})
 
     assert resp.status_code == 500
-    # Global handler returns {"error": {"detail": ...}}
+    # Global handler returns {"error": {"message": ...}}
     assert "error" in resp.json()
 
 
 def test_consecutive_value_errors_keep_connection_alive():
-    """Consecutive ValueError responses must not break the HTTP keep-alive connection.
-
-    The route class converts ValueError to HTTPException at the route level.
-    FastAPI's built-in handler processes HTTPException cleanly — no re-raise,
-    no transport close, no broken connections.
-
-    This test sends two error-producing requests on the **same** TestClient
-    (which reuses the underlying connection) and verifies both get proper
-    JSON error responses.
+    """The route-level try/except converts exceptions to HTTPException before
+    they reach ServerErrorMiddleware, which would otherwise re-raise and
+    cause uvicorn to close the transport (TCP RST on Linux).  Two requests
+    on the same TestClient verify the connection stays alive.
     """
     app = FastAPI()
     impl = AsyncMock(spec=Agents)

@@ -699,12 +699,24 @@ class OpenAIResponseUsage(BaseModel):
 
 
 @json_schema_type
+class OpenAIResponseIncompleteDetails(BaseModel):
+    """Details explaining why a response was incomplete.
+
+    :param reason: The reason the response could not be completed
+    """
+
+    reason: str
+
+
+@json_schema_type
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
 
     :param created_at: Unix timestamp when the response was created
+    :param completed_at: (Optional) Unix timestamp when the response was completed
     :param error: (Optional) Error details if the response generation failed
     :param id: Unique identifier for this response
+    :param incomplete_details: (Optional) Details about why the response was incomplete
     :param model: Model identifier used for generation
     :param object: Object type identifier, always "response"
     :param output: List of generated output items (messages, tool calls, etc.)
@@ -723,6 +735,7 @@ class OpenAIResponseObject(BaseModel):
     :param instructions: (Optional) System message inserted into the model's context
     :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response
     :param max_output_tokens: (Optional) An upper bound for the number of tokens that can be generated for a response, including visible output tokens.
+    :param service_tier: (Optional) The service tier to use for this response.
     :param metadata: (Optional) Dictionary of metadata key-value pairs
     """
 
@@ -730,6 +743,7 @@ class OpenAIResponseObject(BaseModel):
     completed_at: int | None = None
     error: OpenAIResponseError | None = None
     id: str
+    incomplete_details: OpenAIResponseIncompleteDetails | None = None
     model: str
     object: Literal["response"] = "response"
     output: Sequence[OpenAIResponseOutput]
@@ -752,6 +766,7 @@ class OpenAIResponseObject(BaseModel):
     reasoning: OpenAIResponseReasoning | None = None
     max_output_tokens: int | None = None
     safety_identifier: str | None = None
+    service_tier: str | None = None
     metadata: dict[str, str] | None = None
     store: bool
 

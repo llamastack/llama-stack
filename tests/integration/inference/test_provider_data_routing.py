@@ -19,8 +19,8 @@ import pytest
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from llama_stack_api import (
     Api,
-    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionUsage,
     OpenAIChoice,
 )
@@ -75,7 +75,7 @@ def test_unregistered_model_routing_with_provider_data(client_with_models):
             OpenAIChoice(
                 index=0,
                 finish_reason="stop",
-                message=OpenAIAssistantMessageParam(
+                message=OpenAIChatCompletionResponseMessage(
                     content="Mocked response to test routing",
                 ),
             )

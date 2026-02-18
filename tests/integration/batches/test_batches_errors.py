@@ -109,16 +109,15 @@ class TestBatchesErrorHandling:
             # Expected -
             #  Error code: 400 - {
             #    'error': {
-            #      'message': "Invalid value: '/v1/invalid/endpoint'. Supported values are: '/v1/chat/completions', '/v1/completions', '/v1/embeddings', and '/v1/responses'.",
-            #      'type': 'invalid_request_error',
-            #      'param': 'endpoint',
-            #      'code': 'invalid_value'
+            #      'detail': "Invalid endpoint: /v1/invalid/endpoint. Supported values: ...",
+            #      'code': 'invalid_value',
+            #      'param': 'endpoint'
             #    }
             #  }
 
             error_msg = str(exc_info.value).lower()
             assert exc_info.value.status_code == 400
-            assert "invalid value" in error_msg
+            assert "invalid" in error_msg
             assert "/v1/invalid/endpoint" in error_msg
             assert "supported values" in error_msg
             assert "endpoint" in error_msg
