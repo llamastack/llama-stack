@@ -13,6 +13,7 @@ from llama_stack.providers.remote.inference.nvidia.config import NVIDIAConfig
 from llama_stack.providers.remote.inference.nvidia.nvidia import NVIDIAInferenceAdapter
 from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import ModelType
+from llama_stack_api.inference import RerankRequest
 
 
 class MockResponse:
@@ -80,7 +81,8 @@ async def test_rerank_basic_functionality():
     mock_session = MockSession(mock_response)
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
-        result = await adapter.rerank(model="test-model", query="test query", items=["item1", "item2"])
+        request = RerankRequest(model="test-model", query="test query", items=["item1", "item2"])
+        result = await adapter.rerank(request)
 
     assert len(result.data) == 1
     assert result.data[0].index == 0
@@ -98,7 +100,8 @@ async def test_missing_rankings_key():
     mock_session = MockSession(MockResponse(json_data={}))
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
-        result = await adapter.rerank(model="test-model", query="q", items=["a"])
+        request = RerankRequest(model="test-model", query="q", items=["a"])
+        result = await adapter.rerank(request)
 
     assert len(result.data) == 0
 
@@ -110,7 +113,8 @@ async def test_hosted_with_endpoint():
     mock_session = MockSession(MockResponse())
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
-        await adapter.rerank(model="test-model", query="q", items=["a"])
+        request = RerankRequest(model="test-model", query="q", items=["a"])
+        await adapter.rerank(request)
 
     url, _ = mock_session.post_calls[0]
     assert url == "https://model.endpoint/rerank"
@@ -124,7 +128,8 @@ async def test_hosted_without_endpoint():
     mock_session = MockSession(MockResponse())
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
-        await adapter.rerank(model="test-model", query="q", items=["a"])
+        request = RerankRequest(model="test-model", query="q", items=["a"])
+        await adapter.rerank(request)
 
     url, _ = mock_session.post_calls[0]
     assert "https://integrate.api.nvidia.com" in url
@@ -137,7 +142,8 @@ async def test_hosted_model_not_in_endpoint_mapping():
     mock_session = MockSession(MockResponse())
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
-        await adapter.rerank(model="test-model", query="q", items=["a"])
+        request = RerankRequest(model="test-model", query="q", items=["a"])
+        await adapter.rerank(request)
 
     url, _ = mock_session.post_calls[0]
     assert "https://integrate.api.nvidia.com" in url
@@ -152,7 +158,8 @@ async def test_self_hosted_ignores_endpoint():
     mock_session = MockSession(MockResponse())
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
-        await adapter.rerank(model="test-model", query="q", items=["a"])
+        request = RerankRequest(model="test-model", query="q", items=["a"])
+        await adapter.rerank(request)
 
     url, _ = mock_session.post_calls[0]
     assert "http://localhost:8000" in url
@@ -165,7 +172,8 @@ async def test_max_num_results():
     mock_session = MockSession(MockResponse(json_data={"rankings": rankings}))
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
-        result = await adapter.rerank(model="test-model", query="q", items=["a", "b"], max_num_results=1)
+        request = RerankRequest(model="test-model", query="q", items=["a", "b"], max_num_results=1)
+        result = await adapter.rerank(request)
 
     assert len(result.data) == 1
     assert result.data[0].index == 0
@@ -178,7 +186,8 @@ async def test_http_error():
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
         with pytest.raises(ConnectionError, match="status 500.*Server Error"):
-            await adapter.rerank(model="test-model", query="q", items=["a"])
+            request = RerankRequest(model="test-model", query="q", items=["a"])
+            await adapter.rerank(request)
 
 
 async def test_client_error():
@@ -188,7 +197,8 @@ async def test_client_error():
 
     with patch("aiohttp.ClientSession", return_value=mock_session):
         with pytest.raises(ConnectionError, match="Failed to connect.*Network error"):
-            await adapter.rerank(model="test-model", query="q", items=["a"])
+            request = RerankRequest(model="test-model", query="q", items=["a"])
+            await adapter.rerank(request)
 
 
 async def test_list_models_includes_configured_rerank_models():

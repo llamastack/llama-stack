@@ -1,0 +1,181 @@
+# Observability Test for Llama Stack
+
+This directory contains configuration files and a setup script to deploy a full observability stack for testing Llama Stack telemetry. It uses OpenTelemetry, Jaeger, Prometheus, and Grafana to collect traces, metrics, and visualize them.
+
+## Architecture
+
+```
+┌──────────────┐
+│  Llama Stack │──┐
+│  Server      │  │  OTLP     ┌───────────────────┐   scrape    ┌──────────────┐
+└──────────────┘  ├─────────►│  OTel Collector     │◄───────────│  Prometheus  │
+┌──────────────┐  │  :4318   │  :4317 (gRPC)       │   :9464    │  :9090       │
+│  Llama Stack │──┘          │  :4318 (HTTP)       │            └──────────────┘
+│  Client      │             └────────┬────────────┘                   ▲
+└──────────────┘                      │ OTLP                           │
+                                      ▼                           datasource
+                             ┌────────────────┐                        │
+                             │  Jaeger         │              ┌──────────────┐
+                             │  :16686 (UI)    │◄────────────│  Grafana     │
+                             └────────────────┘  datasource   │  :3000 (UI)  │
+                                                              └──────────────┘
+```
+
+| Component | Purpose | Port(s) |
+|---|---|---|
+| **OTel Collector** | Receives OTLP telemetry, exports traces to Jaeger and metrics to Prometheus | 4317 (gRPC), 4318 (HTTP), 9464 (Prometheus metrics) |
+| **Jaeger** | Distributed tracing UI | 16686 |
+| **Prometheus** | Metrics storage and querying | 9090 |
+| **Grafana** | Dashboards and visualization | 3000 |
+
+## Pre-requisites
+
+- **Docker** or **Podman** installed and running
+- **Llama Stack** development environment set up
+- **OpenTelemetry Python packages** (installed in step 2 below)
+
+## Files
+
+| File | Description |
+|---|---|
+| `setup_telemetry.sh` | Main script to start all telemetry services |
+| `otel-collector-config.yaml` | OpenTelemetry Collector configuration (OTLP receiver, Prometheus exporter, Jaeger exporter) |
+| `prometheus.yml` | Prometheus scrape configuration (scrapes OTel Collector on port 9464) |
+| `grafana-datasources.yaml` | Grafana datasource provisioning (Prometheus + Jaeger) |
+| `grafana-dashboards.yaml` | Grafana dashboard provisioning configuration |
+| `llama-stack-dashboard.json` | Pre-built Grafana dashboard for Llama Stack (token usage, operation duration, HTTP metrics) |
+
+## Steps
+
+### Start the telemetry stack
+
+Run the setup script to start Jaeger, OTel Collector, Prometheus, and Grafana:
+
+```bash
+# Auto-detect container runtime (podman or docker)
+./scripts/telemetry/setup_telemetry.sh
+
+# Or specify a container runtime explicitly
+./scripts/telemetry/setup_telemetry.sh --container docker
+./scripts/telemetry/setup_telemetry.sh --container podman
+```
+
+This will:
+- Create a `llama-telemetry` container network
+- Start Jaeger, OTel Collector, Prometheus, and Grafana containers
+- Provision Grafana with a pre-built Llama Stack dashboard
+
+### Install OpenTelemetry instrumentation For Llama Stack Server and Client
+
+```bash
+uv pip install opentelemetry-distro opentelemetry-exporter-otlp
+uv run opentelemetry-bootstrap -a requirements | uv pip install --requirement -
+```
+
+### Set environment variables and start Llama Stack Server
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export OTEL_SERVICE_NAME=llama-stack-server
+
+uv run opentelemetry-instrument llama stack run starter
+```
+
+> **Note:** The `opentelemetry-instrument` wrapper automatically instruments the application and sends traces/metrics to the OTel Collector.
+
+### Set environment variables and start Llama Stack Client
+
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+export OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+export OTEL_SERVICE_NAME=my-llama-stack-app
+
+opentelemetry-instrument python llama-stack-client.py
+```
+
+An example `llama-stack-client.py`
+
+```python
+from openai import OpenAI
+
+
+def main():
+    client = OpenAI(
+        api_key="fake",
+        base_url="http://localhost:8321/v1/",
+    )
+    print("hello")
+    response = client.chat.completions.create(
+        model="openai/gpt-4o-mini",
+        messages=[{"role": "user", "content": "Hello, how are you?"}],
+    )
+    print("Sync response: ", response.choices[0].message.content)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Explore the telemetry data
+
+Open the following UIs in your browser:
+
+| Service | URL | Credentials |
+|---|---|---|
+| **Jaeger** (traces) | [http://localhost:16686](http://localhost:16686) | N/A |
+| **Prometheus** (metrics) | [http://localhost:9090](http://localhost:9090) | N/A |
+| **Grafana** (dashboards) | [http://localhost:3000](http://localhost:3000) | admin / admin |
+
+#### Prometheus metrics to try
+
+The following metrics are automatically generated by OpenTelemetry auto-instrumentation:
+
+```promql
+# Total input token usage by model
+sum by(gen_ai_request_model) (llama_stack_gen_ai_client_token_usage_sum{gen_ai_token_type="input"})
+
+# Total output token usage by model
+sum by(gen_ai_request_model) (llama_stack_gen_ai_client_token_usage_sum{gen_ai_token_type="output"})
+
+# P95 HTTP server latency
+histogram_quantile(0.95, rate(llama_stack_http_server_duration_milliseconds_bucket[5m]))
+
+# Total HTTP request count
+sum(llama_stack_http_server_duration_milliseconds_count)
+```
+
+#### Grafana dashboard
+
+A pre-provisioned **Llama Stack** dashboard is available in Grafana with panels for:
+- Prompt Tokens (input token usage by model)
+- Completion Tokens (output token usage by model)
+- P95 / P99 HTTP Server Duration
+- Total HTTP Requests
+
+## Cleanup
+
+Stop and remove all telemetry containers:
+
+```bash
+# Replace "docker" with "podman" if applicable
+docker stop jaeger otel-collector prometheus grafana
+docker rm jaeger otel-collector prometheus grafana
+docker network rm llama-telemetry
+```
+
+## Known Issues
+
+Some database instrumentation libraries have a known bug where spans get wrapped twice or do not get connected to a trace. To prevent this, disable database-specific tracing:
+
+```bash
+export OTEL_PYTHON_DISABLED_INSTRUMENTATIONS="sqlite3"
+```
+
+## References
+
+- [OpenTelemetry Documentation](https://opentelemetry.io/)
+- [OpenTelemetry GenAI Semantic Conventions](https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-metrics/)
+- [Jaeger Documentation](https://www.jaegertracing.io/)
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)

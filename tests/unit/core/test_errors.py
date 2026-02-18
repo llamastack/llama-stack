@@ -105,20 +105,28 @@ class TestTranslateExceptionToHttp:
         assert "custom" in result.detail
 
     def test_subclass_two_levels_deep(self):
-        """ResourceNotFoundError(ValueError, LlamaStackError) should
-        match ValueError via MRO since LlamaStackError is not mapped."""
-        exc = ResourceNotFoundError("abc", "Widget")
+        """A two-level deep subclass of a mapped type should still match."""
+
+        class SpecificValueError(ValueError):
+            pass
+
+        class VerySpecificValueError(SpecificValueError):
+            pass
+
+        exc = VerySpecificValueError("deep")
         result = translate_exception_to_http(exc)
         assert result is not None
         assert result.status_code == httpx.codes.BAD_REQUEST
 
-    def test_subclass_three_levels_deep(self):
-        """ModelNotFoundError -> ResourceNotFoundError -> ValueError
-        should still resolve to ValueError in the map."""
-        exc = ModelNotFoundError("llama-3")
-        result = translate_exception_to_http(exc)
-        assert result is not None
-        assert result.status_code == httpx.codes.BAD_REQUEST
+    def test_llama_stack_error_not_in_map(self):
+        """LlamaStackError subclasses (single inheritance) are not in
+        EXCEPTION_MAP and should return None from translate_exception_to_http.
+        They are handled separately by translate_exception."""
+        exc = ResourceNotFoundError("abc", "Widget")
+        assert translate_exception_to_http(exc) is None
+
+        exc2 = ModelNotFoundError("llama-3")
+        assert translate_exception_to_http(exc2) is None
 
     # ── Multiple mapped parents: MRO order determines winner ─────────
 
@@ -264,17 +272,15 @@ class TestTranslateException:
 
     # ── LlamaStackError uses its own status_code, NOT EXCEPTION_MAP ──
 
-    def test_resource_not_found_error_uses_404_not_400(self):
-        """ResourceNotFoundError inherits from (ValueError, LlamaStackError).
-        ValueError maps to 400 in EXCEPTION_MAP, but translate_exception
-        must use the LlamaStackError.status_code (404) instead."""
+    def test_resource_not_found_error_uses_404(self):
+        """ResourceNotFoundError(LlamaStackError) has status_code 404."""
         exc = ResourceNotFoundError("abc", "Widget")
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.NOT_FOUND
 
     def test_model_not_found_error_uses_404(self):
-        """ModelNotFoundError -> ResourceNotFoundError -> (ValueError, LlamaStackError).
-        Three levels deep, should still get 404 from LlamaStackError."""
+        """ModelNotFoundError -> ResourceNotFoundError -> LlamaStackError.
+        Three levels deep, should still get 404."""
         exc = ModelNotFoundError("gpt-missing")
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.NOT_FOUND
@@ -284,16 +290,14 @@ class TestTranslateException:
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.NOT_FOUND
 
-    def test_conflict_error_uses_409_not_400(self):
-        """ConflictError inherits from (ValueError, LlamaStackError).
-        Must get 409 CONFLICT from LlamaStackError, not 400 from ValueError."""
+    def test_conflict_error_uses_409(self):
+        """ConflictError(LlamaStackError) has status_code 409 CONFLICT."""
         exc = ConflictError("resource already exists")
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.CONFLICT
 
-    def test_token_validation_error_uses_401_not_400(self):
-        """TokenValidationError inherits from (ValueError, LlamaStackError).
-        Must get 401 UNAUTHORIZED, not 400 from ValueError."""
+    def test_token_validation_error_uses_401(self):
+        """TokenValidationError(LlamaStackError) has status_code 401 UNAUTHORIZED."""
         exc = TokenValidationError("expired token")
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.UNAUTHORIZED
@@ -304,9 +308,7 @@ class TestTranslateException:
         assert result.status_code == httpx.codes.BAD_REQUEST
 
     def test_model_type_error_uses_400(self):
-        """ModelTypeError inherits from (TypeError, LlamaStackError).
-        TypeError is NOT in EXCEPTION_MAP, so without the LlamaStackError
-        check this would fall through to the 500 catch-all."""
+        """ModelTypeError(LlamaStackError) has status_code 400 BAD_REQUEST."""
         exc = ModelTypeError("llama-3", "embedding", "llm")
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.BAD_REQUEST

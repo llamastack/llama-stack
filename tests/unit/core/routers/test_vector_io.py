@@ -14,6 +14,8 @@ from llama_stack_api import (
     ModelType,
     ModelTypeError,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAISearchVectorStoreRequest,
+    OpenAIUpdateVectorStoreRequest,
 )
 
 
@@ -84,8 +86,10 @@ async def test_update_vector_store_provider_id_change_fails():
     with pytest.raises(ValueError, match="provider_id cannot be changed after vector store creation"):
         await router.openai_update_vector_store(
             vector_store_id="vs_123",
-            name="updated_name",
-            metadata={"provider_id": "inline::sqlite"},  # Different provider_id
+            request=OpenAIUpdateVectorStoreRequest(
+                name="updated_name",
+                metadata={"provider_id": "inline::sqlite"},  # Different provider_id
+            ),
         )
 
     # Verify the existing store was looked up to check provider_id
@@ -110,16 +114,40 @@ async def test_update_vector_store_same_provider_id_succeeds():
     router = VectorIORouter(mock_routing_table)
 
     # Update with same provider_id should succeed
+    request = OpenAIUpdateVectorStoreRequest(name="updated_name", metadata={"provider_id": "inline::faiss"})
     await router.openai_update_vector_store(
         vector_store_id="vs_123",
-        name="updated_name",
-        metadata={"provider_id": "inline::faiss"},  # Same provider_id
+        request=request,  # Same provider_id
     )
 
     # Verify the routing table method was called
-    mock_routing_table.openai_update_vector_store.assert_called_once_with(
-        vector_store_id="vs_123", name="updated_name", expires_after=None, metadata={"provider_id": "inline::faiss"}
+    mock_routing_table.openai_update_vector_store.assert_called_once_with(vector_store_id="vs_123", request=request)
+
+
+async def test_register_vector_store_only_once():
+    mock_provider = Mock()
+    mock_provider.register_vector_store = AsyncMock()
+    mock_provider.openai_create_vector_store = AsyncMock(return_value=Mock(id="vs_123"))
+
+    mock_routing_table = Mock()
+    mock_routing_table.impls_by_provider_id = {"inline::faiss": mock_provider}
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=Mock(model_type=ModelType.embedding))
+    mock_routing_table.register_vector_store = AsyncMock(
+        return_value=Mock(identifier="vs_123", provider_id="inline::faiss", provider_resource_id="vs_123")
     )
+    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+
+    router = VectorIORouter(mock_routing_table)
+    request = OpenAICreateVectorStoreRequestWithExtraBody.model_validate(
+        {"name": "test_store", "embedding_model": "nomic-ai/nomic-embed-text-v1.5", "embedding_dimension": 768}
+    )
+
+    result = await router.openai_create_vector_store(request)
+    assert result.id == "vs_123"
+
+    mock_routing_table.register_vector_store.assert_called_once()
+    mock_provider.openai_create_vector_store.assert_called_once()
+    mock_provider.register_vector_store.assert_not_called()
 
 
 async def test_create_vector_store_with_unknown_embedding_model_raises_error():
@@ -182,11 +210,14 @@ async def test_query_rewrite_functionality():
     router = VectorIORouter(mock_routing_table, vector_stores_config, mock_inference_api)
 
     # Test query rewrite with rewrite_query=True
-    result = await router.openai_search_vector_store(
-        vector_store_id="vs_123",
+    request = OpenAISearchVectorStoreRequest(
         query="test query",
         rewrite_query=True,
         max_num_results=5,
+    )
+    result = await router.openai_search_vector_store(
+        vector_store_id="vs_123",
+        request=request,
     )
 
     # Verify chat completion was called for query rewriting
@@ -202,8 +233,10 @@ async def test_query_rewrite_functionality():
     # Verify routing table was called with rewritten query and rewrite_query=False
     mock_routing_table.openai_search_vector_store.assert_called_once()
     call_kwargs = mock_routing_table.openai_search_vector_store.call_args.kwargs
-    assert call_kwargs["query"] == "rewritten test query"
-    assert call_kwargs["rewrite_query"] is False  # Should be False since router handled it
+    assert call_kwargs["vector_store_id"] == "vs_123"
+    forward_request = call_kwargs["request"]
+    assert forward_request.query == "rewritten test query"
+    assert forward_request.rewrite_query is False  # Should be False since router handled it
 
     assert result is not None
 
@@ -220,9 +253,11 @@ async def test_query_rewrite_error_when_not_configured():
     with pytest.raises(ValueError, match="Query rewriting is not available"):
         await router.openai_search_vector_store(
             vector_store_id="vs_123",
-            query="test query",
-            rewrite_query=True,
-            max_num_results=5,
+            request=OpenAISearchVectorStoreRequest(
+                query="test query",
+                rewrite_query=True,
+                max_num_results=5,
+            ),
         )
 
 
@@ -256,9 +291,11 @@ async def test_query_rewrite_with_custom_prompt():
 
     await router.openai_search_vector_store(
         vector_store_id="vs_123",
-        query="test query",
-        rewrite_query=True,
-        max_num_results=5,
+        request=OpenAISearchVectorStoreRequest(
+            query="test query",
+            rewrite_query=True,
+            max_num_results=5,
+        ),
     )
 
     # Verify custom prompt was used
@@ -284,14 +321,19 @@ async def test_search_without_rewrite():
 
     await router.openai_search_vector_store(
         vector_store_id="vs_123",
-        query="test query",
-        rewrite_query=False,
-        max_num_results=5,
+        request=OpenAISearchVectorStoreRequest(
+            query="test query",
+            rewrite_query=False,
+            max_num_results=5,
+        ),
     )
 
     # Verify inference API was NOT called
     assert not mock_inference_api.openai_chat_completion.called
 
     # Verify routing table was called with original query
+    mock_routing_table.openai_search_vector_store.assert_called_once()
     call_kwargs = mock_routing_table.openai_search_vector_store.call_args.kwargs
-    assert call_kwargs["query"] == "test query"
+    assert call_kwargs["vector_store_id"] == "vs_123"
+    forward_request = call_kwargs["request"]
+    assert forward_request.query == "test query"

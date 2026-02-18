@@ -18,9 +18,15 @@ import pytest
 from llama_stack.core.routers.vector_io import VectorIORouter
 from llama_stack.core.routing_tables.vector_stores import VectorStoresRoutingTable
 from llama_stack_api import (
-    Chunk,
     ChunkMetadata,
+    EmbeddedChunk,
+    InsertChunksRequest,
+    OpenAIAttachFileRequest,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
+    OpenAISearchVectorStoreRequest,
+    OpenAIUpdateVectorStoreFileRequest,
+    OpenAIUpdateVectorStoreRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
@@ -71,7 +77,9 @@ def mock_provider():
     provider.openai_attach_file_to_vector_store = AsyncMock(
         return_value=VectorStoreFileObject(
             id="file_123",
-            chunking_strategy=VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig()),
+            chunking_strategy=VectorStoreChunkingStrategyStatic(
+                static=VectorStoreChunkingStrategyStaticConfig(max_chunk_size_tokens=800, chunk_overlap_tokens=400)
+            ),
             created_at=1234567890,
             status="completed",
             vector_store_id="vs_123",
@@ -83,7 +91,9 @@ def mock_provider():
     provider.openai_retrieve_vector_store_file = AsyncMock(
         return_value=VectorStoreFileObject(
             id="file_123",
-            chunking_strategy=VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig()),
+            chunking_strategy=VectorStoreChunkingStrategyStatic(
+                static=VectorStoreChunkingStrategyStaticConfig(max_chunk_size_tokens=800, chunk_overlap_tokens=400)
+            ),
             created_at=1234567890,
             status="completed",
             vector_store_id="vs_123",
@@ -92,7 +102,9 @@ def mock_provider():
     provider.openai_update_vector_store_file = AsyncMock(
         return_value=VectorStoreFileObject(
             id="file_123",
-            chunking_strategy=VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig()),
+            chunking_strategy=VectorStoreChunkingStrategyStatic(
+                static=VectorStoreChunkingStrategyStaticConfig(max_chunk_size_tokens=800, chunk_overlap_tokens=400)
+            ),
             created_at=1234567890,
             status="completed",
             vector_store_id="vs_123",
@@ -181,30 +193,41 @@ def router_with_real_routing_table(mock_provider):
             "insert_chunks",
             "update",
             lambda r: r.insert_chunks(
-                "vs_123",
-                [
-                    Chunk(
-                        content="test",
-                        chunk_id="c1",
-                        embedding=[],
-                        chunk_metadata=ChunkMetadata(
-                            document_id="test_doc",
+                InsertChunksRequest(
+                    vector_store_id="vs_123",
+                    chunks=[
+                        EmbeddedChunk(
+                            content="test",
                             chunk_id="c1",
-                            created_timestamp=1234567890,
-                            updated_timestamp=1234567890,
-                            chunk_embedding_model="test-model",
-                            chunk_embedding_dimension=768,
-                            content_token_count=1,
-                        ),
-                    )
-                ],
+                            metadata=dict(
+                                document_id="test_doc",
+                                chunk_id="c1",
+                                created_timestamp=1234567890,
+                                updated_timestamp=1234567890,
+                                chunk_embedding_model="test-model",
+                                chunk_embedding_dimension=768,
+                                content_token_count=1,
+                            ),
+                            chunk_metadata=ChunkMetadata(
+                                document_id="test_doc",
+                                chunk_id="c1",
+                                created_timestamp=1234567890,
+                                updated_timestamp=1234567890,
+                                content_token_count=1,
+                            ),
+                            embedding=[0.1] * 768,
+                            embedding_model="test-model",
+                            embedding_dimension=768,
+                        )
+                    ],
+                )
             ),
             "insert_chunks",
         ),
         (
             "query_chunks",
             "read",
-            lambda r: r.query_chunks("vs_123", "test"),
+            lambda r: r.query_chunks(QueryChunksRequest(vector_store_id="vs_123", query="test")),
             "query_chunks",
         ),
         (
@@ -216,7 +239,7 @@ def router_with_real_routing_table(mock_provider):
         (
             "openai_update_vector_store",
             "update",
-            lambda r: r.openai_update_vector_store("vs_123", name="test"),
+            lambda r: r.openai_update_vector_store("vs_123", request=OpenAIUpdateVectorStoreRequest(name="test")),
             "openai_update_vector_store",
         ),
         (
@@ -228,13 +251,15 @@ def router_with_real_routing_table(mock_provider):
         (
             "openai_search_vector_store",
             "read",
-            lambda r: r.openai_search_vector_store("vs_123", query="test"),
+            lambda r: r.openai_search_vector_store("vs_123", request=OpenAISearchVectorStoreRequest(query="test")),
             "openai_search_vector_store",
         ),
         (
             "openai_attach_file_to_vector_store",
             "update",
-            lambda r: r.openai_attach_file_to_vector_store("vs_123", "file_123"),
+            lambda r: r.openai_attach_file_to_vector_store(
+                "vs_123", request=OpenAIAttachFileRequest(file_id="file_123")
+            ),
             "openai_attach_file_to_vector_store",
         ),
         (
@@ -252,7 +277,11 @@ def router_with_real_routing_table(mock_provider):
         (
             "openai_update_vector_store_file",
             "update",
-            lambda r: r.openai_update_vector_store_file("vs_123", "file_123", {}),
+            lambda r: r.openai_update_vector_store_file(
+                "vs_123",
+                "file_123",
+                request=OpenAIUpdateVectorStoreFileRequest(attributes={}),
+            ),
             "openai_update_vector_store_file",
         ),
         (
@@ -324,31 +353,53 @@ async def test_operations_fail_before_provider_when_unauthorized(router_with_rea
         (
             "insert_chunks",
             lambda: router.insert_chunks(
-                "vs_123",
-                [
-                    Chunk(
-                        content="test",
-                        chunk_id="c1",
-                        embedding=[],
-                        chunk_metadata=ChunkMetadata(
-                            document_id="test_doc",
+                InsertChunksRequest(
+                    vector_store_id="vs_123",
+                    chunks=[
+                        EmbeddedChunk(
+                            content="test",
                             chunk_id="c1",
-                            created_timestamp=1234567890,
-                            updated_timestamp=1234567890,
-                            chunk_embedding_model="test-model",
-                            chunk_embedding_dimension=768,
-                            content_token_count=1,
-                        ),
-                    )
-                ],
+                            metadata=dict(
+                                document_id="test_doc",
+                                chunk_id="c1",
+                                created_timestamp=1234567890,
+                                updated_timestamp=1234567890,
+                                chunk_embedding_model="test-model",
+                                chunk_embedding_dimension=768,
+                                content_token_count=1,
+                            ),
+                            chunk_metadata=ChunkMetadata(
+                                document_id="test_doc",
+                                chunk_id="c1",
+                                created_timestamp=1234567890,
+                                updated_timestamp=1234567890,
+                                content_token_count=1,
+                            ),
+                            embedding=[0.1] * 768,
+                            embedding_model="test-model",
+                            embedding_dimension=768,
+                        )
+                    ],
+                )
             ),
         ),
-        ("query_chunks", lambda: router.query_chunks("vs_123", "test")),
+        ("query_chunks", lambda: router.query_chunks(QueryChunksRequest(vector_store_id="vs_123", query="test"))),
         ("openai_retrieve_vector_store", lambda: router.openai_retrieve_vector_store("vs_123")),
-        ("openai_update_vector_store", lambda: router.openai_update_vector_store("vs_123", name="test")),
+        (
+            "openai_update_vector_store",
+            lambda: router.openai_update_vector_store("vs_123", request=OpenAIUpdateVectorStoreRequest(name="test")),
+        ),
         ("openai_delete_vector_store", lambda: router.openai_delete_vector_store("vs_123")),
-        ("openai_search_vector_store", lambda: router.openai_search_vector_store("vs_123", query="test")),
-        ("openai_attach_file_to_vector_store", lambda: router.openai_attach_file_to_vector_store("vs_123", "file_123")),
+        (
+            "openai_search_vector_store",
+            lambda: router.openai_search_vector_store("vs_123", request=OpenAISearchVectorStoreRequest(query="test")),
+        ),
+        (
+            "openai_attach_file_to_vector_store",
+            lambda: router.openai_attach_file_to_vector_store(
+                "vs_123", request=OpenAIAttachFileRequest(file_id="file_123")
+            ),
+        ),
         ("openai_list_files_in_vector_store", lambda: router.openai_list_files_in_vector_store("vs_123")),
         (
             "openai_retrieve_vector_store_file",
@@ -356,7 +407,9 @@ async def test_operations_fail_before_provider_when_unauthorized(router_with_rea
         ),
         (
             "openai_update_vector_store_file",
-            lambda: router.openai_update_vector_store_file("vs_123", "file_123", {}),
+            lambda: router.openai_update_vector_store_file(
+                "vs_123", "file_123", request=OpenAIUpdateVectorStoreFileRequest(attributes={})
+            ),
         ),
         (
             "openai_delete_vector_store_file",

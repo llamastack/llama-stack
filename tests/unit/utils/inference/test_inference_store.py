@@ -12,8 +12,8 @@ from llama_stack.core.storage.datatypes import InferenceStoreReference, SqliteSq
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import (
-    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChoice,
     OpenAIUserMessageParam,
     Order,
@@ -39,7 +39,7 @@ def create_test_chat_completion(
         choices=[
             OpenAIChoice(
                 index=0,
-                message=OpenAIAssistantMessageParam(
+                message=OpenAIChatCompletionResponseMessage(
                     role="assistant",
                     content=f"Response for {completion_id}",
                 ),

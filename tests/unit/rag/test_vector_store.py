@@ -20,7 +20,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     make_overlapped_chunks,
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
-from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk
+from llama_stack_api import Chunk, ChunkMetadata, EmbeddedChunk, InsertChunksRequest
 
 DUMMY_PDF_PATH = Path(os.path.abspath(__file__)).parent / "fixtures" / "dummy.pdf"
 # Depending on the machine, this can get parsed a couple of ways
@@ -233,7 +233,12 @@ class TestVectorStoreWithIndex:
             )
         ]
 
-        await vector_store_with_index.insert_chunks(embedded_chunks)
+        await vector_store_with_index.insert_chunks(
+            InsertChunksRequest(
+                vector_store_id="mock_vs_id",
+                chunks=embedded_chunks,
+            )
+        )
 
         # Verify inference API was NOT called since we already have embeddings
         mock_inference_api.openai_embeddings.assert_not_called()
@@ -300,7 +305,12 @@ class TestVectorStoreWithIndex:
             ),
         ]
 
-        await vector_store_with_index.insert_chunks(embedded_chunks)
+        await vector_store_with_index.insert_chunks(
+            InsertChunksRequest(
+                vector_store_id="mock_vs_id",
+                chunks=embedded_chunks,
+            )
+        )
 
         # Verify inference API was NOT called since we already have embeddings
         mock_inference_api.openai_embeddings.assert_not_called()
