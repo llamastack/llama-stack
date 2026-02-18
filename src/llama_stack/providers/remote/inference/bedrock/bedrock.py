@@ -52,6 +52,20 @@ class BedrockInferenceAdapter(OpenAIMixin):
             logger.debug(f"Failed to list Bedrock models dynamically: {e}")
             return []
 
+    async def check_model_availability(self, model: str) -> bool:
+        """
+        Check if a model is available in Bedrock.
+
+        Ensures the cache is populated even when models are found in model_store,
+        so that the cache is available for subsequent operations.
+        """
+        # Ensure cache is populated from /v1/models endpoint
+        if not self._model_cache:
+            await self.list_models()
+
+        # Then use parent's check which looks in both model_store and cache
+        return await super().check_model_availability(model)
+
     async def openai_embeddings(
         self,
         params: OpenAIEmbeddingsRequestWithExtraBody,

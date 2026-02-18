@@ -107,7 +107,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="bedrock",
         description="AWS Bedrock provider with OpenAI GPT-OSS model (us-west-2)",
         defaults={
-            "text_model": "bedrock/openai.gpt-oss-20b-1:0",
+            "text_model": "bedrock/openai.gpt-oss-20b",
         },
     ),
     "gpt": Setup(

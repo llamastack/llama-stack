@@ -20,9 +20,9 @@ def get_distribution_template() -> DistributionTemplate:
     # /v1/models for dynamic model discovery (see bedrock.py:list_provider_model_ids).
     # Models must be registered in config to be available.
     bedrock_model = ModelInput(
-        model_id="openai.gpt-oss-20b-1:0",
+        model_id="openai.gpt-oss-20b",
         provider_id="bedrock",
-        provider_model_id="openai.gpt-oss-20b-1:0",
+        provider_model_id="openai.gpt-oss-20b",
         model_type=ModelType.llm,
         metadata={"description": "OpenAI GPT-OSS 20B on Bedrock (us-west-2)"},
     )
