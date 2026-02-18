@@ -103,7 +103,7 @@ repos:
         name: Provider Codegen
         additional_dependencies:
           - *uv-dependency
-        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py
+        entry: sh -c 'env -i PATH="$PATH" ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py'
         language: python
         pass_filenames: false
         require_serial: true
@@ -117,6 +117,24 @@ repos:
         pass_filenames: false
         require_serial: true
         files: ^src/llama_stack_api/.*$
+      - id: api-conformance
+        name: Check API spec for breaking changes
+        entry: ./scripts/check-api-conformance.sh
+        language: golang
+        additional_dependencies:
+          - github.com/oasdiff/oasdiff@latest
+        pass_filenames: false
+        require_serial: true
+        files: ^docs/static/(llama-stack-spec|stable-llama-stack-spec|experimental-llama-stack-spec|deprecated-llama-stack-spec)\.yaml$
+      - id: openai-coverage
+        name: OpenAI API Coverage
+        additional_dependencies:
+          - *uv-dependency
+        entry: ./scripts/uv-run-with-index.sh run python scripts/openai_coverage.py --check-regression --update --generate-docs --quiet
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^docs/static/(llama-stack-spec\.yaml|openai-spec.*\.yml|openresponses-spec\.json|openai-coverage\.json)$|^docs/docs/api-openai/conformance\.mdx$|^scripts/(openai_coverage|generate_openai_coverage_docs)\.py$
       - id: check-workflows-use-hashes
         name: Check GitHub Actions use SHA-pinned actions
         entry: ./scripts/check-workflows-use-hashes.sh
@@ -229,5 +247,5 @@ ci:
     autofix_prs: true
     autoupdate_branch: ''
     autoupdate_schedule: weekly
-    skip: []
+    skip: [api-conformance]  # requires git history; covered by pre-commit.yml workflow
     submodules: false

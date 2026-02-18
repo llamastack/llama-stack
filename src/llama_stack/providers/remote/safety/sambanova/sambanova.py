@@ -4,15 +4,15 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Any
-
 import litellm
 import requests
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.safety import ShieldToModerationMixin
 from llama_stack_api import (
-    OpenAIMessageParam,
+    GetShieldRequest,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
@@ -28,7 +28,7 @@ logger = get_logger(name=__name__, category="safety::sambanova")
 CANNED_RESPONSE_TEXT = "I can't answer that. Can I help with something else?"
 
 
-class SambaNovaSafetyAdapter(Safety, ShieldsProtocolPrivate, NeedsRequestProviderData):
+class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate, NeedsRequestProviderData):
     def __init__(self, config: SambaNovaSafetyConfig) -> None:
         self.config = config
         self.environment_available_models = []
@@ -69,17 +69,19 @@ class SambaNovaSafetyAdapter(Safety, ShieldsProtocolPrivate, NeedsRequestProvide
     async def unregister_shield(self, identifier: str) -> None:
         pass
 
-    async def run_shield(
-        self, shield_id: str, messages: list[OpenAIMessageParam], params: dict[str, Any] | None = None
-    ) -> RunShieldResponse:
-        shield = await self.shield_store.get_shield(shield_id)
+    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
         if not shield:
-            raise ValueError(f"Shield {shield_id} not found")
+            raise ValueError(f"Shield {request.shield_id} not found")
 
         shield_params = shield.params
-        logger.debug(f"run_shield::{shield_params}::messages={messages}")
+        logger.debug(f"run_shield::{shield_params}::messages={request.messages}")
 
-        response = litellm.completion(model=shield.provider_resource_id, messages=messages, api_key=self._get_api_key())
+        response = litellm.completion(
+            model=shield.provider_resource_id,
+            messages=request.messages,
+            api_key=self._get_api_key(),
+        )
         shield_message = response.choices[0].message.content
 
         if "unsafe" in shield_message.lower():

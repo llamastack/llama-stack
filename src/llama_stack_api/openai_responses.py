@@ -405,6 +405,19 @@ class OpenAIResponseText(BaseModel):
     format: OpenAIResponseTextFormat | None = None
 
 
+@json_schema_type
+class OpenAIResponseReasoning(BaseModel):
+    """Configuration for reasoning effort in OpenAI responses.
+
+    Controls how much reasoning the model performs before generating a response.
+
+    :param effort: The effort level for reasoning. "low" favors speed and economical token usage,
+                   "high" favors more complete reasoning, "medium" is a balance between the two.
+    """
+
+    effort: Literal["none", "minimal", "low", "medium", "high", "xhigh"] | None = None
+
+
 # Must match type Literals of OpenAIResponseInputToolWebSearch below
 WebSearchToolTypes = ["web_search", "web_search_preview", "web_search_preview_2025_03_11", "web_search_2025_08_26"]
 
@@ -491,7 +504,8 @@ class OpenAIResponseInputToolMCP(BaseModel):
 
     :param type: Tool type identifier, always "mcp"
     :param server_label: Label to identify this MCP server
-    :param server_url: URL endpoint of the MCP server
+    :param connector_id: (Optional) ID of the connector to use for this MCP server
+    :param server_url: (Optional) URL endpoint of the MCP server
     :param headers: (Optional) HTTP headers to include when connecting to the server
     :param authorization: (Optional) OAuth access token for authenticating with the MCP server
     :param require_approval: Approval requirement for tool calls ("always", "never", or filter)
@@ -500,12 +514,19 @@ class OpenAIResponseInputToolMCP(BaseModel):
 
     type: Literal["mcp"] = "mcp"
     server_label: str
-    server_url: str
+    connector_id: str | None = None
+    server_url: str | None = None
     headers: dict[str, Any] | None = None
     authorization: str | None = Field(default=None, exclude=True)
 
     require_approval: Literal["always"] | Literal["never"] | ApprovalFilter = "never"
     allowed_tools: list[str] | AllowedToolsFilter | None = None
+
+    @model_validator(mode="after")
+    def validate_server_or_connector(self) -> "OpenAIResponseInputToolMCP":
+        if not self.server_url and not self.connector_id:
+            raise ValueError("Either 'server_url' or 'connector_id' must be provided for MCP tool")
+        return self
 
 
 OpenAIResponseInputTool = Annotated[
@@ -647,7 +668,7 @@ class OpenAIResponseUsageOutputTokensDetails(BaseModel):
     :param reasoning_tokens: Number of tokens used for reasoning (o1/o3 models)
     """
 
-    reasoning_tokens: int | None = None
+    reasoning_tokens: int
 
 
 class OpenAIResponseUsageInputTokensDetails(BaseModel):
@@ -656,7 +677,7 @@ class OpenAIResponseUsageInputTokensDetails(BaseModel):
     :param cached_tokens: Number of tokens retrieved from cache
     """
 
-    cached_tokens: int | None = None
+    cached_tokens: int
 
 
 @json_schema_type
@@ -673,8 +694,18 @@ class OpenAIResponseUsage(BaseModel):
     input_tokens: int
     output_tokens: int
     total_tokens: int
-    input_tokens_details: OpenAIResponseUsageInputTokensDetails | None = None
-    output_tokens_details: OpenAIResponseUsageOutputTokensDetails | None = None
+    input_tokens_details: OpenAIResponseUsageInputTokensDetails
+    output_tokens_details: OpenAIResponseUsageOutputTokensDetails
+
+
+@json_schema_type
+class OpenAIResponseIncompleteDetails(BaseModel):
+    """Details explaining why a response was incomplete.
+
+    :param reason: The reason the response could not be completed
+    """
+
+    reason: str
 
 
 @json_schema_type
@@ -682,13 +713,16 @@ class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
 
     :param created_at: Unix timestamp when the response was created
+    :param completed_at: (Optional) Unix timestamp when the response was completed
     :param error: (Optional) Error details if the response generation failed
     :param id: Unique identifier for this response
+    :param incomplete_details: (Optional) Details about why the response was incomplete
     :param model: Model identifier used for generation
     :param object: Object type identifier, always "response"
     :param output: List of generated output items (messages, tool calls, etc.)
     :param parallel_tool_calls: (Optional) Whether to allow more than one function tool call generated per turn.
     :param previous_response_id: (Optional) ID of the previous response in a conversation
+    :param prompt_cache_key: (Optional) A key to use when reading from or writing to the prompt cache
     :param prompt: (Optional) Reference to a prompt template and its variables.
     :param status: Current status of the response generation
     :param temperature: (Optional) Sampling temperature used for generation
@@ -700,17 +734,22 @@ class OpenAIResponseObject(BaseModel):
     :param usage: (Optional) Token usage information for the response
     :param instructions: (Optional) System message inserted into the model's context
     :param max_tool_calls: (Optional) Max number of total calls to built-in tools that can be processed in a response
+    :param max_output_tokens: (Optional) An upper bound for the number of tokens that can be generated for a response, including visible output tokens.
+    :param service_tier: (Optional) The service tier to use for this response.
     :param metadata: (Optional) Dictionary of metadata key-value pairs
     """
 
     created_at: int
+    completed_at: int | None = None
     error: OpenAIResponseError | None = None
     id: str
+    incomplete_details: OpenAIResponseIncompleteDetails | None = None
     model: str
     object: Literal["response"] = "response"
     output: Sequence[OpenAIResponseOutput]
     parallel_tool_calls: bool | None = True
     previous_response_id: str | None = None
+    prompt_cache_key: str | None = None
     prompt: OpenAIResponsePrompt | None = None
     status: str
     temperature: float | None = None
@@ -724,7 +763,12 @@ class OpenAIResponseObject(BaseModel):
     usage: OpenAIResponseUsage | None = None
     instructions: str | None = None
     max_tool_calls: int | None = None
+    reasoning: OpenAIResponseReasoning | None = None
+    max_output_tokens: int | None = None
+    safety_identifier: str | None = None
+    service_tier: str | None = None
     metadata: dict[str, str] | None = None
+    store: bool
 
 
 @json_schema_type

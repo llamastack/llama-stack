@@ -10,11 +10,16 @@ from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
+import httpx
 from openai import AsyncOpenAI
 from pydantic import BaseModel, ConfigDict
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.inference.http_client import (
+    _build_network_client_kwargs,
+    _merge_network_config_into_client,
+)
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack.providers.utils.inference.openai_compat import (
     get_stream_options_for_telemetry,
@@ -34,6 +39,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
     OpenAIMessageParam,
+    validate_embeddings_input_is_text,
 )
 
 logger = get_logger(name=__name__, category="providers::utils")
@@ -82,6 +88,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     # Set to False for providers that don't support stream_options (e.g., Ollama, vLLM)
     supports_stream_options: bool = True
 
+    # Allow subclasses to control whether the provider supports tokenized embeddings input
+    # Set to True for providers that support pre-tokenized input (list[int] and list[list[int]])
+    supports_tokenized_embeddings_input: bool = False
+
     # Embedding model metadata for this provider
     # Can be set by subclasses or instances to provide embedding models
     # Format: {"model_id": {"embedding_dimension": 1536, "context_length": 8192}}
@@ -121,7 +131,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         Get any extra parameters to pass to the AsyncOpenAI client.
 
         Child classes can override this method to provide additional parameters
-        such as timeout settings, proxies, etc.
+        such as custom http_client, timeout settings, proxies, etc.
+
+        Note: Network configuration from config.network is automatically applied
+        in the client property. This method is for provider-specific customizations.
 
         :return: A dictionary of extra parameters
         """
@@ -194,6 +207,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         Uses the abstract methods get_api_key() and get_base_url() which must be
         implemented by child classes.
 
+        Network configuration from config.network is automatically applied.
         Users can also provide the API key via the provider data header, which
         is used instead of any config API key.
         """
@@ -205,10 +219,30 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                 message += f' Please provide a valid API key in the provider data header, e.g. x-llamastack-provider-data: {{"{self.provider_data_api_key_field}": "<API_KEY>"}}.'
             raise ValueError(message)
 
+        extra_params = self.get_extra_client_params()
+        network_kwargs = _build_network_client_kwargs(self.config.network)
+
+        # Handle http_client creation/merging:
+        # - If get_extra_client_params() provides an http_client (e.g., OCI with custom auth),
+        #   merge network config into it. The merge behavior:
+        #   * Preserves auth from get_extra_client_params() (provider-specific auth like OCI signer)
+        #   * Preserves headers from get_extra_client_params() as base
+        #   * Applies network config (TLS, proxy, timeout, headers) on top
+        #   * Network config headers take precedence over provider headers (allows override)
+        # - Otherwise, if network config exists, create http_client from it
+        # This allows providers with custom auth to still use standard network settings
+        if "http_client" in extra_params:
+            if network_kwargs:
+                extra_params["http_client"] = _merge_network_config_into_client(
+                    extra_params["http_client"], self.config.network
+                )
+        elif network_kwargs:
+            extra_params["http_client"] = httpx.AsyncClient(**network_kwargs)
+
         return AsyncOpenAI(
             api_key=api_key,
             base_url=self.get_base_url(),
-            **self.get_extra_client_params(),
+            **extra_params,
         )
 
     def _get_api_key_from_config_or_provider_data(self) -> str | None:
@@ -371,6 +405,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             top_logprobs=params.top_logprobs,
             top_p=params.top_p,
             user=params.user,
+            safety_identifier=params.safety_identifier,
+            service_tier=params.service_tier,
+            reasoning_effort=params.reasoning_effort,
+            prompt_cache_key=params.prompt_cache_key,
         )
 
         if extra_body := params.model_extra:
@@ -386,6 +424,10 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         """
         Direct OpenAI embeddings API call.
         """
+        # Validate token array support if provider doesn't support it
+        if not self.supports_tokenized_embeddings_input:
+            validate_embeddings_input_is_text(params)
+
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
 

@@ -20,19 +20,19 @@ from llama_stack.core.request_headers import get_authenticated_user
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.inference_store import InferenceStore
 from llama_stack_api import (
+    GetChatCompletionRequest,
     HealthResponse,
     HealthStatus,
     Inference,
+    ListChatCompletionsRequest,
     ListOpenAIChatCompletionResponse,
     ModelNotFoundError,
     ModelType,
     ModelTypeError,
-    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
-    OpenAIChatCompletionContentPartImageParam,
-    OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
@@ -45,11 +45,11 @@ from llama_stack_api import (
     OpenAIMessageParam,
     OpenAITokenLogProb,
     OpenAITopLogProb,
-    Order,
     RegisterModelRequest,
     RerankResponse,
     RoutingTable,
 )
+from llama_stack_api.inference.models import RerankRequest
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -145,14 +145,11 @@ class InferenceRouter(Inference):
 
     async def rerank(
         self,
-        model: str,
-        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
-        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
-        max_num_results: int | None = None,
+        params: RerankRequest,
     ) -> RerankResponse:
-        logger.debug(f"InferenceRouter.rerank: {model}")
-        provider, provider_resource_id = await self._get_model_provider(model, ModelType.rerank)
-        return await provider.rerank(provider_resource_id, query, items, max_num_results)
+        provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.rerank)
+        params.model = provider_resource_id
+        return await provider.rerank(params)
 
     async def openai_completion(
         self,
@@ -237,18 +234,20 @@ class InferenceRouter(Inference):
 
     async def list_chat_completions(
         self,
-        after: str | None = None,
-        limit: int | None = 20,
-        model: str | None = None,
-        order: Order | None = Order.desc,
+        request: ListChatCompletionsRequest,
     ) -> ListOpenAIChatCompletionResponse:
         if self.store:
-            return await self.store.list_chat_completions(after, limit, model, order)
+            return await self.store.list_chat_completions(
+                after=request.after,
+                limit=request.limit,
+                model=request.model,
+                order=request.order,
+            )
         raise NotImplementedError("List chat completions is not supported: inference store is not configured.")
 
-    async def get_chat_completion(self, completion_id: str) -> OpenAICompletionWithInputMessages:
+    async def get_chat_completion(self, request: GetChatCompletionRequest) -> OpenAICompletionWithInputMessages:
         if self.store:
-            return await self.store.get_chat_completion(completion_id)
+            return await self.store.get_chat_completion(request.completion_id)
         raise NotImplementedError("Get chat completion is not supported: inference store is not configured.")
 
     async def _nonstream_openai_chat_completion(
@@ -409,7 +408,7 @@ class InferenceRouter(Inference):
                                         ),
                                     )
                                 )
-                    message = OpenAIAssistantMessageParam(
+                    message = OpenAIChatCompletionResponseMessage(
                         role="assistant",
                         content=content_str if content_str else None,
                         tool_calls=assembled_tool_calls if assembled_tool_calls else None,

@@ -419,6 +419,7 @@ There are three implementations of search for PGVectoIndex available:
   - Semantic understanding - finds documents similar in meaning even if they don't share keywords
   - Works with high-dimensional vector embeddings (typically 768, 1024, or higher dimensions)
   - Best for: Finding conceptually related content, handling synonyms, cross-language search
+  - By default, Llama Stack creates a HNSW (Hierarchical Navigable Small Worlds) index on a column "embedding" in a vector store table enabling production-ready, performant and scalable vector search for large datasets out of the box.
 
 2. Keyword Search
 - How it works:
@@ -448,6 +449,7 @@ There are three implementations of search for PGVectoIndex available:
   - Best for: General-purpose search where you want both precision and recall
 
 4. Database Schema
+
 The PGVector implementation stores data optimized for all three search types:
 CREATE TABLE vector_store_xxx (
     id TEXT PRIMARY KEY,
@@ -457,9 +459,6 @@ CREATE TABLE vector_store_xxx (
     tokenized_content TSVECTOR          -- For keyword search
 );
 
--- Indexes for performance
-CREATE INDEX content_gin_idx ON table USING GIN(tokenized_content);  -- Keyword search
--- Vector index created automatically by pgvector
 
 ## Usage
 
@@ -469,32 +468,55 @@ To use PGVector in your Llama Stack project, follow these steps:
 2. Configure your Llama Stack project to use pgvector. (e.g. remote::pgvector).
 3. Start storing and querying vectors.
 
-## This is an example how you can set up your environment for using PGVector
+## This is an example how you can set up your environment for using PGVector (you can use either Podman or Docker)
 
-1. Export env vars:
+1. Export PGVector environment variables:
 ```bash
-export ENABLE_PGVECTOR=true
+export PGVECTOR_DB=testvectordb
 export PGVECTOR_HOST=localhost
 export PGVECTOR_PORT=5432
-export PGVECTOR_DB=llamastack
-export PGVECTOR_USER=llamastack
-export PGVECTOR_PASSWORD=llamastack
+export PGVECTOR_USER=user
+export PGVECTOR_PASSWORD=password
 ```
 
-2. Create DB:
+2. Pull pgvector image with that tag you want:
+
+Via Podman:
 ```bash
-psql -h localhost -U postgres -c "CREATE ROLE llamastack LOGIN PASSWORD 'llamastack';"
-psql -h localhost -U postgres -c "CREATE DATABASE llamastack OWNER llamastack;"
-psql -h localhost -U llamastack -d llamastack -c "CREATE EXTENSION IF NOT EXISTS vector;"
+podman pull pgvector/pgvector:0.8.1-pg18-trixie
 ```
 
-## Installation
-
-You can install PGVector using docker:
-
+Via Docker:
 ```bash
-docker pull pgvector/pgvector:pg17
+docker pull pgvector/pgvector:0.8.1-pg18-trixie
 ```
+
+3. Run container with PGVector:
+
+Via Podman
+```bash
+podman run -d \
+  --name pgvector \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_USER=user \
+  -e POSTGRES_DB=testvectordb \
+  -p 5432:5432 \
+  -v pgvector_data:/var/lib/postgresql \
+  pgvector/pgvector:0.8.1-pg18-trixie
+```
+
+Via Docker
+```bash
+docker run -d \
+  --name pgvector \
+  -e POSTGRES_PASSWORD=password \
+  -e POSTGRES_USER=user \
+  -e POSTGRES_DB=testvectordb \
+  -p 5432:5432 \
+  -v pgvector_data:/var/lib/postgresql \
+  pgvector/pgvector:0.8.1-pg18-trixie
+```
+
 ## Documentation
 See [PGVector's documentation](https://github.com/pgvector/pgvector) for more details about PGVector in general.
 """,
@@ -506,7 +528,6 @@ See [PGVector's documentation](https://github.com/pgvector/pgvector) for more de
             pip_packages=["weaviate-client>=4.16.5"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.weaviate",
             config_class="llama_stack.providers.remote.vector_io.weaviate.WeaviateVectorIOConfig",
-            provider_data_validator="llama_stack.providers.remote.vector_io.weaviate.WeaviateRequestProviderData",
             api_dependencies=[Api.inference],
             optional_api_dependencies=[Api.files, Api.models],
             description="""
@@ -823,6 +844,104 @@ For more details on TLS configuration, refer to the [TLS setup guide](https://mi
             optional_api_dependencies=[Api.files, Api.models],
             description="""
 Please refer to the remote provider documentation.
+""",
+        ),
+        RemoteProviderSpec(
+            api=Api.vector_io,
+            adapter_type="elasticsearch",
+            provider_type="remote::elasticsearch",
+            pip_packages=["elasticsearch>=8.16.0,<9.0.0"] + DEFAULT_VECTOR_IO_DEPS,
+            module="llama_stack.providers.remote.vector_io.elasticsearch",
+            config_class="llama_stack.providers.remote.vector_io.elasticsearch.ElasticsearchVectorIOConfig",
+            api_dependencies=[Api.inference],
+            optional_api_dependencies=[Api.files, Api.models],
+            description="""
+[Elasticsearch](https://www.elastic.co/) is a vector database provider for Llama Stack.
+It allows you to store and query vectors directly within an Elasticsearch database.
+That means you're not limited to storing vectors in memory or in a separate service.
+
+## Features
+Elasticsearch supports:
+- Store embeddings and their metadata
+- Vector search
+- Full-text search
+- Fuzzy search
+- Hybrid search
+- Document storage
+- Metadata filtering
+- Inference service
+- Machine Learning integrations
+
+## Usage
+
+To use Elasticsearch in your Llama Stack project, follow these steps:
+
+1. Install the necessary dependencies.
+2. Configure your Llama Stack project to use Elasticsearch.
+3. Start storing and querying vectors.
+
+## Installation
+
+You can test Elasticsearch locally by running this script in the terminal:
+
+```bash
+curl -fsSL https://elastic.co/start-local | sh
+```
+
+Or you can [start a free trial](https://www.elastic.co/cloud/cloud-trial-overview?utm_campaign=llama-stack-integration) on Elastic Cloud.
+For more information on how to deploy Elasticsearch, see the [official documentation](https://www.elastic.co/docs/deploy-manage/deploy).
+
+## Documentation
+See [Elasticsearch's documentation](https://www.elastic.co/docs/solutions/search) for more details about Elasticsearch in general.
+""",
+        ),
+        RemoteProviderSpec(
+            api=Api.vector_io,
+            adapter_type="oci",
+            provider_type="remote::oci",
+            pip_packages=["oracledb", "numpy"] + DEFAULT_VECTOR_IO_DEPS,
+            module="llama_stack.providers.remote.vector_io.oci",
+            config_class="llama_stack.providers.remote.vector_io.oci.OCI26aiVectorIOConfig",
+            api_dependencies=[Api.inference],
+            optional_api_dependencies=[Api.files, Api.models],
+            description="""
+[Oracle 26ai](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
+is a remote vector database provider for Llama Stack. It allows you to store and query vectors directly
+in an Oracle 26ai database.
+## Features
+- Easy to use
+- Fully integrated with Llama Stack
+- Supports vector search, keyword search, and hybrid search
+## Usage
+To use Oracle 26ai in your Llama Stack project, follow these steps:
+1. Install the necessary dependencies.
+2. Configure your Llama Stack project to use Oracle 26ai.
+3. Start storing and querying vectors.
+## Installation
+You can install the Oracle 26ai client using pip:
+```bash
+pip install oracledb
+```
+## Configuration
+```yaml
+vector_io:
+- provider_id: oci
+  provider_type: remote::oci
+  config:
+    conn_str: "${env.OCI26AI_CONNECTION_STRING}"
+    user: "${env.OCI26AI_USER}"
+    password: "${env.OCI26AI_PASSWORD}"
+    tnsnames_loc: "${env.OCI26AI_TNSNAMES_LOC}"
+    ewallet_pem_loc: "${env.OCI26AI_EWALLET_PEM_LOC}"
+    ewallet_password: "${env.OCI26AI_EWALLET_PWD}"
+    vector_datatype: "${env.OCI26AI_VECTOR_DATATYPE:=FLOAT32}"
+    persistence:
+      namespace: vector_id::oci26ai
+      backend: kv_default
+```
+## Documentation
+See the [Oracle 26ai documentation](https://docs.oracle.com/en/database/oracle/oracle-database/26/index.html)
+for more details about Oracle 26ai in general.
 """,
         ),
     ]

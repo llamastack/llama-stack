@@ -11,9 +11,11 @@ import httpx
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
+from llama_stack.providers.utils.safety import ShieldToModerationMixin
 from llama_stack_api import (
-    ModerationObject,
+    GetShieldRequest,
     OpenAIMessageParam,
+    RunShieldRequest,
     RunShieldResponse,
     Safety,
     SafetyViolation,
@@ -28,7 +30,7 @@ from .config import GuardrailsApiMode, NVIDIASafetyConfig
 logger = get_logger(name=__name__, category="safety::nvidia")
 
 
-class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
+class NVIDIASafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivate):
     shield_store: ShieldStore
 
     def __init__(self, config: NVIDIASafetyConfig) -> None:
@@ -53,39 +55,22 @@ class NVIDIASafetyAdapter(Safety, ShieldsProtocolPrivate):
     async def unregister_shield(self, identifier: str) -> None:
         pass
 
-    async def run_shield(
-        self, shield_id: str, messages: list[OpenAIMessageParam], params: dict[str, Any] | None = None
-    ) -> RunShieldResponse:
-        """
-        Run a safety shield check against the provided messages.
-
-        Args:
-            shield_id (str): The unique identifier for the shield to be used.
-            messages (List[Message]): A list of Message objects representing the conversation history.
-            params (Optional[dict[str, Any]]): Additional parameters for the shield check.
-
-        Returns:
-            RunShieldResponse: The response containing safety violation details if any.
-
-        Raises:
-            ValueError: If the shield with the provided shield_id is not found.
-        """
-        shield = await self.shield_store.get_shield(shield_id)
+    async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
+        """Run a safety shield check against the provided messages."""
+        shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
         if not shield:
-            raise ValueError(f"Shield {shield_id} not found")
+            raise ValueError(f"Shield {request.shield_id} not found")
 
         shield_params = shield.params or {}
         model = shield_params.get("model") or shield.provider_resource_id
         if not model:
             raise ValueError(
-                f"Shield {shield_id} does not have a model configured. Set 'model' in params or provider_resource_id."
+                f"Failed to run shield {request.shield_id}: no model configured. "
+                "Set 'model' in params or provider_resource_id."
             )
 
         guardrails = NeMoGuardrails(self.config, model)
-        return await guardrails.run(messages)
-
-    async def run_moderation(self, input: str | list[str], model: str | None = None) -> ModerationObject:
-        raise NotImplementedError("NVIDIA safety provider currently does not implement run_moderation")
+        return await guardrails.run(request.messages)
 
 
 class NeMoGuardrails:

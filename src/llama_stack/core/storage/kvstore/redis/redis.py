@@ -99,3 +99,8 @@ class RedisKVStoreImpl(KVStore):
             if cursor == 0:
                 break
         return result
+
+    async def shutdown(self) -> None:
+        if self._redis:
+            await self._redis.close()
+            self._redis = None

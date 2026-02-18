@@ -16,6 +16,7 @@ import yaml
 from pydantic import BaseModel
 
 from llama_stack.core.admin import AdminImpl, AdminImplConfig
+from llama_stack.core.connectors.connectors import ConnectorServiceConfig, ConnectorServiceImpl
 from llama_stack.core.conversations.conversations import ConversationServiceConfig, ConversationServiceImpl
 from llama_stack.core.datatypes import Provider, QualifiedModel, SafetyConfig, StackConfig, VectorStoresConfig
 from llama_stack.core.distribution import get_provider_registry
@@ -42,6 +43,7 @@ from llama_stack_api import (
     Api,
     Batches,
     Benchmarks,
+    Connectors,
     Conversations,
     DatasetIO,
     Datasets,
@@ -53,6 +55,10 @@ from llama_stack_api import (
     PostTraining,
     Prompts,
     Providers,
+    RegisterBenchmarkRequest,
+    RegisterModelRequest,
+    RegisterScoringFunctionRequest,
+    RegisterShieldRequest,
     Safety,
     Scoring,
     ScoringFunctions,
@@ -61,6 +67,7 @@ from llama_stack_api import (
     ToolRuntime,
     VectorIO,
 )
+from llama_stack_api.datasets import RegisterDatasetRequest
 
 logger = get_logger(name=__name__, category="core")
 
@@ -87,22 +94,27 @@ class LlamaStack(
     Files,
     Prompts,
     Conversations,
+    Connectors,
 ):
     pass
 
 
+# Resources to register based on configuration.
+# If a request class is specified, the configuration object will be converted to this class before invoking the registration method.
 RESOURCES = [
-    ("models", Api.models, "register_model", "list_models"),
-    ("shields", Api.shields, "register_shield", "list_shields"),
-    ("datasets", Api.datasets, "register_dataset", "list_datasets"),
+    ("models", Api.models, "register_model", "list_models", RegisterModelRequest),
+    ("shields", Api.shields, "register_shield", "list_shields", RegisterShieldRequest),
+    ("datasets", Api.datasets, "register_dataset", "list_datasets", RegisterDatasetRequest),
     (
         "scoring_fns",
         Api.scoring_functions,
         "register_scoring_function",
         "list_scoring_functions",
+        RegisterScoringFunctionRequest,
     ),
-    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks"),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups"),
+    ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
+    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
+    ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
 
@@ -199,7 +211,7 @@ async def invoke_with_optional_request(method: Any) -> Any:
 
 
 async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
-    for rsrc, api, register_method, list_method in RESOURCES:
+    for rsrc, api, register_method, list_method, request_class in RESOURCES:
         objects = getattr(run_config.registered_resources, rsrc)
         if api not in impls:
             continue
@@ -213,10 +225,17 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
                     continue
                 logger.debug(f"registering {rsrc.capitalize()} {obj} for provider {obj.provider_id}")
 
-            # we want to maintain the type information in arguments to method.
-            # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
-            # we use model_dump() to find all the attrs and then getattr to get the still typed value.
-            await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
+            # TODO: Once all register methods are migrated to accept request objects,
+            # remove this conditional and always use the request_class pattern.
+            if request_class is not None:
+                request = request_class(**obj.model_dump())
+                await method(request)
+            else:
+                # we want to maintain the type information in arguments to method.
+                # instead of method(**obj.model_dump()), which may convert a typed attr to a dict,
+                # we use model_dump() to find all the attrs and then getattr to get the still typed
+                # value.
+                await method(**{k: getattr(obj, k) for k in obj.model_dump().keys()})
 
         method = getattr(impls[api], list_method)
         response = await invoke_with_optional_request(method)
@@ -227,6 +246,34 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             logger.debug(
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
+
+
+async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
+    """Register connectors from config"""
+    if Api.connectors not in impls:
+        return
+
+    connectors_impl = impls[Api.connectors]
+
+    # Get connector IDs from config
+    config_connector_ids = {c.connector_id for c in run_config.connectors}
+
+    # Register/Update config connectors
+    for connector in run_config.connectors:
+        logger.debug(f"Registering connector: {connector.connector_id}")
+        await connectors_impl.register_connector(
+            connector_id=connector.connector_id,
+            connector_type=connector.connector_type,
+            url=connector.url,
+            server_label=connector.server_label,
+        )
+
+    # Remove connectors not in config (orphan cleanup)
+    existing_connectors = await connectors_impl.list_connectors()
+    for connector in existing_connectors.data:
+        if connector.connector_id not in config_connector_ids:
+            logger.info(f"Removing orphaned connector: {connector.connector_id}")
+            await connectors_impl.unregister_connector(connector.connector_id)
 
 
 async def validate_vector_stores_config(vector_stores_config: VectorStoresConfig | None, impls: dict[Api, Any]):
@@ -263,7 +310,8 @@ async def _validate_embedding_model(embedding_model: QualifiedModel, impls: dict
             f"Embedding model '{model_identifier}' not found. Available embedding models: {list(models_list.keys())}"
         )
 
-    embedding_dimension = model.metadata.get("embedding_dimension")
+    # if not in metadata, fetch from config default
+    embedding_dimension = model.metadata.get("embedding_dimension", embedding_model.embedding_dimensions)
     if embedding_dimension is None:
         raise ValueError(f"Embedding model '{model_identifier}' is missing 'embedding_dimension' in metadata")
 
@@ -519,6 +567,11 @@ def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> 
     )
     impls[Api.conversations] = conversations_impl
 
+    connectors_impl = ConnectorServiceImpl(
+        ConnectorServiceConfig(config=config),
+    )
+    impls[Api.connectors] = connectors_impl
+
 
 def _initialize_storage(run_config: StackConfig):
     kv_backends: dict[str, StorageBackendConfig] = {}
@@ -579,8 +632,11 @@ class Stack:
             await impls[Api.prompts].initialize()
         if Api.conversations in impls:
             await impls[Api.conversations].initialize()
+        if Api.connectors in impls:
+            await impls[Api.connectors].initialize()
 
         await register_resources(self.run_config, impls)
+        await register_connectors(self.run_config, impls)
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
         await validate_safety_config(self.run_config.safety, impls)
@@ -608,7 +664,7 @@ class Stack:
     async def shutdown(self):
         for impl in self.impls.values():
             impl_name = impl.__class__.__name__
-            logger.info(f"Shutting down {impl_name}")
+            logger.debug(f"Shutting down {impl_name}")
             try:
                 if hasattr(impl, "shutdown"):
                     await asyncio.wait_for(impl.shutdown(), timeout=5)
@@ -629,6 +685,20 @@ class Stack:
         global REGISTRY_REFRESH_TASK
         if REGISTRY_REFRESH_TASK:
             REGISTRY_REFRESH_TASK.cancel()
+
+        # Shutdown storage backends
+        from llama_stack.core.storage.kvstore.kvstore import shutdown_kvstore_backends
+        from llama_stack.core.storage.sqlstore.sqlstore import shutdown_sqlstore_backends
+
+        try:
+            await shutdown_kvstore_backends()
+        except Exception as e:
+            logger.exception(f"Failed to shutdown KV store backends: {e}")
+
+        try:
+            await shutdown_sqlstore_backends()
+        except Exception as e:
+            logger.exception(f"Failed to shutdown SQL store backends: {e}")
 
 
 async def refresh_registry_once(impls: dict[Api, Any]):
@@ -713,6 +783,7 @@ def run_config_from_adhoc_config_spec(
                 inference=InferenceStoreReference(backend="sql_default", table_name="inference_store"),
                 conversations=SqlStoreReference(backend="sql_default", table_name="openai_conversations"),
                 prompts=KVStoreReference(backend="kv_default", namespace="prompts"),
+                connectors=KVStoreReference(backend="kv_default", namespace="connectors"),
             ),
         ),
     )

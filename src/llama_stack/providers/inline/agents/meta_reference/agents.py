@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+from collections.abc import AsyncIterator
 
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.kvstore import InmemoryKVStoreImpl, kvstore_impl
@@ -11,21 +12,21 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
 from llama_stack_api import (
     Agents,
+    Connectors,
     Conversations,
+    CreateResponseRequest,
+    DeleteResponseRequest,
     Files,
     Inference,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
+    ListResponseInputItemsRequest,
+    ListResponsesRequest,
     OpenAIDeleteResponseObject,
-    OpenAIResponseInput,
-    OpenAIResponseInputTool,
-    OpenAIResponseInputToolChoice,
     OpenAIResponseObject,
-    OpenAIResponsePrompt,
-    OpenAIResponseText,
-    Order,
+    OpenAIResponseObjectStream,
     Prompts,
-    ResponseGuardrail,
+    RetrieveResponseRequest,
     Safety,
     ToolGroups,
     ToolRuntime,
@@ -50,6 +51,7 @@ class MetaReferenceAgentsImpl(Agents):
         conversations_api: Conversations,
         prompts_api: Prompts,
         files_api: Files,
+        connectors_api: Connectors,
         policy: list[AccessRule],
     ):
         self.config = config
@@ -64,6 +66,7 @@ class MetaReferenceAgentsImpl(Agents):
         self.in_memory_store = InmemoryKVStoreImpl()
         self.openai_responses_impl: OpenAIResponsesImpl | None = None
         self.policy = policy
+        self.connectors_api = connectors_api
 
     async def initialize(self) -> None:
         self.persistence_store = await kvstore_impl(self.config.persistence.agent_state)
@@ -80,6 +83,7 @@ class MetaReferenceAgentsImpl(Agents):
             prompts_api=self.prompts_api,
             files_api=self.files_api,
             vector_stores_config=self.config.vector_stores_config,
+            connectors_api=self.connectors_api,
         )
 
     async def shutdown(self) -> None:
@@ -88,79 +92,75 @@ class MetaReferenceAgentsImpl(Agents):
     # OpenAI responses
     async def get_openai_response(
         self,
-        response_id: str,
+        request: RetrieveResponseRequest,
     ) -> OpenAIResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
-        return await self.openai_responses_impl.get_openai_response(response_id)
+        return await self.openai_responses_impl.get_openai_response(request.response_id)
 
     async def create_openai_response(
         self,
-        input: str | list[OpenAIResponseInput],
-        model: str,
-        prompt: OpenAIResponsePrompt | None = None,
-        instructions: str | None = None,
-        parallel_tool_calls: bool | None = True,
-        previous_response_id: str | None = None,
-        conversation: str | None = None,
-        store: bool | None = True,
-        stream: bool | None = False,
-        temperature: float | None = None,
-        text: OpenAIResponseText | None = None,
-        tool_choice: OpenAIResponseInputToolChoice | None = None,
-        tools: list[OpenAIResponseInputTool] | None = None,
-        include: list[str] | None = None,
-        max_infer_iters: int | None = 10,
-        guardrails: list[ResponseGuardrail] | None = None,
-        max_tool_calls: int | None = None,
-        metadata: dict[str, str] | None = None,
-    ) -> OpenAIResponseObject:
+        request: CreateResponseRequest,
+    ) -> OpenAIResponseObject | AsyncIterator[OpenAIResponseObjectStream]:
+        """Create an OpenAI response.
+
+        Returns either a single response object (non-streaming) or an async iterator
+        yielding response stream events (streaming).
+        """
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         result = await self.openai_responses_impl.create_openai_response(
-            input,
-            model,
-            prompt,
-            instructions,
-            previous_response_id,
-            conversation,
-            store,
-            stream,
-            temperature,
-            text,
-            tool_choice,
-            tools,
-            include,
-            max_infer_iters,
-            guardrails,
-            parallel_tool_calls,
-            max_tool_calls,
-            metadata,
+            input=request.input,
+            model=request.model,
+            prompt=request.prompt,
+            instructions=request.instructions,
+            previous_response_id=request.previous_response_id,
+            prompt_cache_key=request.prompt_cache_key,
+            conversation=request.conversation,
+            store=request.store,
+            stream=request.stream,
+            temperature=request.temperature,
+            text=request.text,
+            tool_choice=request.tool_choice,
+            tools=request.tools,
+            include=request.include,
+            max_infer_iters=request.max_infer_iters,
+            guardrails=request.guardrails,
+            parallel_tool_calls=request.parallel_tool_calls,
+            max_tool_calls=request.max_tool_calls,
+            max_output_tokens=request.max_output_tokens,
+            reasoning=request.reasoning,
+            safety_identifier=request.safety_identifier,
+            service_tier=request.service_tier,
+            metadata=request.metadata,
+            truncation=request.truncation,
         )
-        return result  # type: ignore[no-any-return]
+        return result
 
     async def list_openai_responses(
         self,
-        after: str | None = None,
-        limit: int | None = 50,
-        model: str | None = None,
-        order: Order | None = Order.desc,
+        request: ListResponsesRequest,
     ) -> ListOpenAIResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
-        return await self.openai_responses_impl.list_openai_responses(after, limit, model, order)
+        return await self.openai_responses_impl.list_openai_responses(
+            request.after, request.limit, request.model, request.order
+        )
 
     async def list_openai_response_input_items(
         self,
-        response_id: str,
-        after: str | None = None,
-        before: str | None = None,
-        include: list[str] | None = None,
-        limit: int | None = 20,
-        order: Order | None = Order.desc,
+        request: ListResponseInputItemsRequest,
     ) -> ListOpenAIResponseInputItem:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
         return await self.openai_responses_impl.list_openai_response_input_items(
-            response_id, after, before, include, limit, order
+            request.response_id,
+            request.after,
+            request.before,
+            request.include,
+            request.limit,
+            request.order,
         )
 
-    async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
+    async def delete_openai_response(
+        self,
+        request: DeleteResponseRequest,
+    ) -> OpenAIDeleteResponseObject:
         assert self.openai_responses_impl is not None, "OpenAI responses not initialized"
-        return await self.openai_responses_impl.delete_openai_response(response_id)
+        return await self.openai_responses_impl.delete_openai_response(request.response_id)

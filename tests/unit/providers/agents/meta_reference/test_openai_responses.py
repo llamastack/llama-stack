@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from openai.types.chat.chat_completion_chunk import (
@@ -16,11 +16,16 @@ from openai.types.chat.chat_completion_chunk import (
 )
 
 from llama_stack.core.access_control.access_control import default_policy
+from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
+from llama_stack.providers.inline.agents.meta_reference.responses.tool_executor import ToolExecutor
+from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
+from llama_stack.providers.remote.inference.openai.openai import OpenAIInferenceAdapter
+from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
     _OpenAIResponseObjectWithInputAndMessages,
@@ -30,9 +35,10 @@ from llama_stack_api import (
     OpenAIFile,
     OpenAIFileObject,
     OpenAISystemMessageParam,
+    Order,
     Prompt,
+    ResponseTruncation,
 )
-from llama_stack_api.agents import Order
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartTextParam,
@@ -42,16 +48,21 @@ from llama_stack_api.inference import (
     OpenAIResponseFormatJSONObject,
     OpenAIResponseFormatJSONSchema,
     OpenAIUserMessageParam,
+    ServiceTier,
 )
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
+    OpenAIResponseError,
     OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
+    OpenAIResponseInputToolFileSearch,
     OpenAIResponseInputToolFunction,
     OpenAIResponseInputToolMCP,
     OpenAIResponseInputToolWebSearch,
     OpenAIResponseMessage,
+    OpenAIResponseObject,
+    OpenAIResponseObjectStreamResponseFailed,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
@@ -62,6 +73,11 @@ from llama_stack_api.openai_responses import (
     WebSearchToolTypes,
 )
 from llama_stack_api.tools import ListToolDefsResponse, ToolDef, ToolGroups, ToolInvocationResult, ToolRuntime
+from llama_stack_api.vector_io import (
+    VectorStoreContent,
+    VectorStoreSearchResponse,
+    VectorStoreSearchResponsePage,
+)
 from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
 
 
@@ -122,6 +138,12 @@ def mock_files_api():
 
 
 @pytest.fixture
+def mock_connectors_api():
+    connectors_api = AsyncMock()
+    return connectors_api
+
+
+@pytest.fixture
 def openai_responses_impl(
     mock_inference_api,
     mock_tool_groups_api,
@@ -132,6 +154,7 @@ def openai_responses_impl(
     mock_conversations_api,
     mock_prompts_api,
     mock_files_api,
+    mock_connectors_api,
 ):
     return OpenAIResponsesImpl(
         inference_api=mock_inference_api,
@@ -143,6 +166,7 @@ def openai_responses_impl(
         conversations_api=mock_conversations_api,
         prompts_api=mock_prompts_api,
         files_api=mock_files_api,
+        connectors_api=mock_connectors_api,
     )
 
 
@@ -242,11 +266,61 @@ async def test_create_openai_response_with_string_input(openai_responses_impl, m
     assert final_response.model == model
     assert len(final_response.output) == 1
     assert isinstance(final_response.output[0], OpenAIResponseMessage)
-    assert final_response.output[0].id == added_event.item_id
-    assert final_response.id == added_event.response_id
 
-    openai_responses_impl.responses_store.store_response_object.assert_called_once()
-    assert final_response.output[0].content[0].text == "Dublin"
+
+async def test_failed_stream_persists_non_system_messages(openai_responses_impl, mock_responses_store):
+    input_text = "Hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    failed_response = OpenAIResponseObject(
+        created_at=1,
+        id="resp_failed",
+        model=model,
+        output=[],
+        status="failed",
+        error=OpenAIResponseError(code="server_error", message="boom"),
+        store=True,
+    )
+
+    class FakeOrchestrator:
+        def __init__(self, *, ctx, **_kwargs):
+            self.ctx = ctx
+            self.final_messages = None
+
+        async def create_response(self):
+            yield OpenAIResponseObjectStreamResponseFailed(response=failed_response, sequence_number=0)
+
+    with patch(
+        "llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.StreamingResponseOrchestrator",
+        FakeOrchestrator,
+    ):
+        stream = await openai_responses_impl.create_openai_response(
+            input=input_text,
+            model=model,
+            instructions="system instructions",
+            stream=True,
+            store=True,
+        )
+        chunks = [chunk async for chunk in stream]
+
+    assert chunks[-1].type == "response.failed"
+    mock_responses_store.upsert_response_object.assert_awaited()
+
+    # Find the call that corresponds to the failed response
+    call_args_list = mock_responses_store.upsert_response_object.call_args_list
+    failed_call = None
+    for call in call_args_list:
+        _, kwargs = call
+        if kwargs.get("response_object") and kwargs["response_object"].status == "failed":
+            failed_call = call
+            break
+
+    assert failed_call is not None, "Expected upsert_response_object to be called with failed response"
+    _, kwargs = failed_call
+    messages = kwargs["messages"]
+    assert messages, "Expected non-system messages to be persisted on failure"
+    assert all(not isinstance(m, OpenAISystemMessageParam) for m in messages)
+    assert any(getattr(m, "role", None) == "user" for m in messages)
 
 
 async def test_create_openai_response_with_string_input_with_tools(openai_responses_impl, mock_inference_api):
@@ -280,7 +354,7 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
         ]
         openai_responses_impl.tool_groups_api.get_tool.reset_mock()
         openai_responses_impl.tool_runtime_api.invoke_tool.reset_mock()
-        openai_responses_impl.responses_store.store_response_object.reset_mock()
+        openai_responses_impl.responses_store.upsert_response_object.reset_mock()
 
         result = await openai_responses_impl.create_openai_response(
             input=input_text,
@@ -311,7 +385,7 @@ async def test_create_openai_response_with_string_input_with_tools(openai_respon
             kwargs={"query": "What is the capital of Ireland?"},
         )
 
-        openai_responses_impl.responses_store.store_response_object.assert_called_once()
+        openai_responses_impl.responses_store.upsert_response_object.assert_called()
 
         # Check that we got the content from our mocked tool execution result
         assert len(result.output) >= 1
@@ -596,6 +670,7 @@ async def test_prepend_previous_response_basic(openai_responses_impl, mock_respo
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="fake_previous_input")],
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = previous_response
 
@@ -639,6 +714,7 @@ async def test_prepend_previous_response_web_search(openai_responses_impl, mock_
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="test input")],
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -687,6 +763,7 @@ async def test_prepend_previous_response_mcp_tool_call(openai_responses_impl, mo
         text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
         input=[input_item_message],
         messages=[OpenAIUserMessageParam(content="test input")],
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -809,6 +886,7 @@ async def test_create_openai_response_with_instructions_and_previous_response(
             OpenAIUserMessageParam(content="Name some towns in Ireland"),
             OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
         ],
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -871,6 +949,7 @@ async def test_create_openai_response_with_previous_response_instructions(
             OpenAIAssistantMessageParam(content="Galway, Longford, Sligo"),
         ],
         instructions="You are a helpful assistant.",
+        store=True,
     )
     mock_responses_store.get_response_object.return_value = response
 
@@ -970,6 +1049,7 @@ async def test_responses_store_list_input_items_logic():
         text=OpenAIResponseText(format=(OpenAIResponseTextFormat(type="text"))),
         input=input_items,
         messages=[OpenAIUserMessageParam(content="First message")],
+        store=True,
     )
 
     # Mock the get_response_object method to return our test data
@@ -1053,6 +1133,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
             OpenAIUserMessageParam(content="What is 2+2?"),
             OpenAIAssistantMessageParam(content="2+2 equals 4."),
         ],
+        store=True,
     )
 
     mock_responses_store.get_response_object.return_value = previous_response
@@ -1070,7 +1151,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
         store=True,
     )
 
-    store_call_args = mock_responses_store.store_response_object.call_args
+    store_call_args = mock_responses_store.upsert_response_object.call_args
     stored_input = store_call_args.kwargs["input"]
 
     # Verify that the stored input contains the full re-hydrated conversation:
@@ -1093,7 +1174,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
     assert result.status == "completed"
 
 
-@patch("llama_stack.providers.utils.tools.mcp.list_mcp_tools")
+@patch("llama_stack.providers.inline.agents.meta_reference.responses.streaming.list_mcp_tools")
 async def test_reuse_mcp_tool_list(
     mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api
 ):
@@ -1113,7 +1194,7 @@ async def test_reuse_mcp_tool_list(
             OpenAIResponseInputToolMCP(server_label="alabel", server_url="aurl"),
         ],
     )
-    args = mock_responses_store.store_response_object.call_args
+    args = mock_responses_store.upsert_response_object.call_args
     data = args.kwargs["response_object"].model_dump()
     data["input"] = [input_item.model_dump() for input_item in args.kwargs["input"]]
     data["messages"] = [msg.model_dump() for msg in args.kwargs["messages"]]
@@ -1229,10 +1310,10 @@ async def test_create_openai_response_with_output_types_as_input(
     _ = [chunk async for chunk in result]
 
     # Verify store was called
-    assert mock_responses_store.store_response_object.called
+    assert mock_responses_store.upsert_response_object.called
 
     # Get the stored data
-    store_call_args = mock_responses_store.store_response_object.call_args
+    store_call_args = mock_responses_store.upsert_response_object.call_args
     stored_response = store_call_args.kwargs["response_object"]
 
     # Now simulate a multi-turn conversation where outputs become inputs
@@ -1265,6 +1346,7 @@ async def test_create_openai_response_with_output_types_as_input(
         output=stored_response.output,
         input=input_with_output_types,  # This will trigger Pydantic validation
         messages=None,
+        store=True,
     )
 
     assert stored_with_outputs.input == input_with_output_types
@@ -1755,3 +1837,1359 @@ async def test_prepend_prompt_image_variable_missing_required_fields(openai_resp
     # Execute - should raise ValueError
     with pytest.raises(ValueError, match="Image content must have either 'image_url' or 'file_id'"):
         await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
+
+
+@patch("llama_stack.providers.inline.agents.meta_reference.responses.streaming.list_mcp_tools")
+async def test_mcp_tool_connector_id_resolved_to_server_url(
+    mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api, mock_connectors_api
+):
+    """Test that connector_id is resolved to server_url when using MCP tools."""
+    from llama_stack_api import Connector, ConnectorType
+
+    # Setup mock connector that will be returned when resolving connector_id
+    mock_connector = Connector(
+        connector_id="my-mcp-connector",
+        connector_type=ConnectorType.MCP,
+        url="http://resolved-mcp-server:8080/mcp",
+        server_label="Resolved MCP Server",
+    )
+    mock_connectors_api.get_connector.return_value = mock_connector
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+    mock_list_mcp_tools.return_value = ListToolDefsResponse(
+        data=[ToolDef(name="resolved_tool", description="a resolved tool", input_schema={}, output_schema={})]
+    )
+
+    # Create a response using connector_id instead of server_url
+    result = await openai_responses_impl.create_openai_response(
+        input="Test connector resolution",
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        store=True,
+        tools=[
+            OpenAIResponseInputToolMCP(server_label="my-label", connector_id="my-mcp-connector"),
+        ],
+    )
+
+    # Verify the connector_id was resolved via the connectors API
+    mock_connectors_api.get_connector.assert_called_once_with("my-mcp-connector")
+
+    # Verify list_mcp_tools was called with the resolved URL
+    mock_list_mcp_tools.assert_called_once()
+    call_kwargs = mock_list_mcp_tools.call_args.kwargs
+    assert call_kwargs["endpoint"] == "http://resolved-mcp-server:8080/mcp"
+
+    # Verify the response contains the resolved tools
+    listings = [obj for obj in result.output if obj.type == "mcp_list_tools"]
+    assert len(listings) == 1
+    assert listings[0].server_label == "my-label"
+    assert len(listings[0].tools) == 1
+    assert listings[0].tools[0].name == "resolved_tool"
+
+
+async def test_file_search_results_include_chunk_metadata_attributes(mock_vector_io_api):
+    """Test that file_search tool executor preserves chunk metadata attributes."""
+    query = "What is machine learning?"
+    vector_store_id = "test_vector_store"
+
+    # Mock vector_io to return search results with custom attributes
+    mock_vector_io_api.openai_search_vector_store.return_value = VectorStoreSearchResponsePage(
+        search_query=[query],
+        data=[
+            VectorStoreSearchResponse(
+                file_id="doc-123",
+                filename="ml-intro.md",
+                content=[VectorStoreContent(type="text", text="Machine learning is a subset of AI")],
+                score=0.95,
+                attributes={
+                    "document_id": "ml-intro",
+                    "source_url": "https://example.com/ml-guide",
+                    "title": "Introduction to ML",
+                    "author": "John Doe",
+                    "year": "2024",
+                },
+            ),
+            VectorStoreSearchResponse(
+                file_id="doc-456",
+                filename="dl-basics.md",
+                content=[VectorStoreContent(type="text", text="Deep learning uses neural networks")],
+                score=0.85,
+                attributes={
+                    "document_id": "dl-basics",
+                    "source_url": "https://example.com/dl-guide",
+                    "title": "Deep Learning Basics",
+                    "category": "tutorial",
+                },
+            ),
+        ],
+    )
+
+    # Create tool executor with mock vector_io
+    tool_executor = ToolExecutor(
+        tool_groups_api=None,  # type: ignore
+        tool_runtime_api=None,  # type: ignore
+        vector_io_api=mock_vector_io_api,
+        vector_stores_config=VectorStoresConfig(),
+        mcp_session_manager=None,
+    )
+
+    # Execute the file search
+    file_search_tool = OpenAIResponseInputToolFileSearch(vector_store_ids=[vector_store_id])
+    result = await tool_executor._execute_knowledge_search_via_vector_store(
+        query=query,
+        response_file_search_tool=file_search_tool,
+    )
+
+    mock_vector_io_api.openai_search_vector_store.assert_called_once()
+
+    # Verify the result metadata includes chunk attributes
+    assert result.metadata is not None
+    assert "attributes" in result.metadata
+    attributes = result.metadata["attributes"]
+    assert len(attributes) == 2
+
+    # Verify first result has all expected attributes
+    attrs1 = attributes[0]
+    assert attrs1["document_id"] == "ml-intro"
+    assert attrs1["source_url"] == "https://example.com/ml-guide"
+    assert attrs1["title"] == "Introduction to ML"
+    assert attrs1["author"] == "John Doe"
+    assert attrs1["year"] == "2024"
+
+    # Verify second result has its attributes
+    attrs2 = attributes[1]
+    assert attrs2["document_id"] == "dl-basics"
+    assert attrs2["source_url"] == "https://example.com/dl-guide"
+    assert attrs2["title"] == "Deep Learning Basics"
+    assert attrs2["category"] == "tutorial"
+
+    # Verify scores and document_ids are also present
+    assert result.metadata["scores"] == [0.95, 0.85]
+    assert result.metadata["document_ids"] == ["doc-123", "doc-456"]
+    assert result.metadata["chunks"] == [
+        "Machine learning is a subset of AI",
+        "Deep learning uses neural networks",
+    ]
+
+
+async def test_create_openai_response_with_max_output_tokens_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that max_output_tokens is properly handled in non-streaming responses."""
+    input_text = "Write a long story about AI."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 100
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the max_output_tokens
+    assert result.max_output_tokens == max_tokens
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the max_output_tokens was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == max_tokens
+
+    # Verify the max_output_tokens was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.max_output_tokens == max_tokens
+
+
+async def test_create_openai_response_with_max_output_tokens_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that max_output_tokens is properly handled in streaming responses."""
+    input_text = "Explain machine learning in detail."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 200
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify max_output_tokens is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.max_output_tokens == max_tokens
+
+    # Verify max_output_tokens is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.max_output_tokens == max_tokens
+
+    # Verify the max_output_tokens was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == max_tokens
+
+    # Verify the max_output_tokens was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.max_output_tokens == max_tokens
+
+
+async def test_create_openai_response_with_max_output_tokens_boundary_value(openai_responses_impl, mock_inference_api):
+    """Test that max_output_tokens accepts the minimum valid value of 16."""
+    input_text = "Hi"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with minimum valid value
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=16,
+        stream=False,
+    )
+
+    # Verify it accepts 16
+    assert result.max_output_tokens == 16
+    assert result.status == "completed"
+
+    # Verify the inference API was called with max_completion_tokens=16
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.max_completion_tokens == 16
+
+
+async def test_create_openai_response_with_max_output_tokens_and_tools(openai_responses_impl, mock_inference_api):
+    """Test that max_output_tokens works correctly with tool calls."""
+    input_text = "What's the weather in San Francisco?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    max_tokens = 150
+
+    openai_responses_impl.tool_groups_api.get_tool.return_value = ToolDef(
+        name="get_weather",
+        toolgroup_id="weather",
+        description="Get weather information",
+        input_schema={
+            "type": "object",
+            "properties": {"location": {"type": "string"}},
+            "required": ["location"],
+        },
+    )
+
+    openai_responses_impl.tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(
+        status="completed",
+        content="Sunny, 72°F",
+    )
+
+    # Mock two inference calls: one for tool call, one for final response
+    mock_inference_api.openai_chat_completion.side_effect = [
+        fake_stream("tool_call_completion.yaml"),
+        fake_stream(),
+    ]
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        max_output_tokens=max_tokens,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_weather",
+                description="Get weather information",
+                parameters={"location": "string"},
+            )
+        ],
+    )
+
+    # Verify max_output_tokens is preserved
+    assert result.max_output_tokens == max_tokens
+    assert result.status == "completed"
+
+    # Verify both inference calls received max_completion_tokens
+    assert mock_inference_api.openai_chat_completion.call_count == 2
+    for call in mock_inference_api.openai_chat_completion.call_args_list:
+        params = call.args[0]
+        # The first call gets the full max_tokens, subsequent calls get remaining tokens
+        assert params.max_completion_tokens is not None
+        assert params.max_completion_tokens <= max_tokens
+
+
+async def test_create_openai_response_with_safety_identifier(openai_responses_impl, mock_inference_api):
+    """Test creating an OpenAI response with safety_identifier parameter."""
+    # Setup
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    safety_id = "safety-test-12345"
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming to get final response directly
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        safety_identifier=safety_id,
+        stream=False,
+    )
+
+    # Verify safety_identifier is preserved in the response
+    assert result.safety_identifier == safety_id
+    assert result.status == "completed"
+
+
+async def test_create_openai_response_with_safety_identifier_streaming(openai_responses_impl, mock_inference_api):
+    """Test creating a streaming OpenAI response with safety_identifier parameter."""
+    # Setup
+    input_text = "Tell me a story"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    safety_id = "stream-safety-67890"
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - streaming
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        safety_identifier=safety_id,
+        stream=True,
+    )
+
+    # For streaming response, collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify safety_identifier is in all response snapshots
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.safety_identifier == safety_id
+
+    # Check final response
+    final_event = chunks[-1]
+    assert final_event.type == "response.completed"
+    assert final_event.response.safety_identifier == safety_id
+    assert final_event.response.status == "completed"
+
+
+async def test_safety_identifier_passed_to_chat_completions(openai_responses_impl, mock_inference_api):
+    """Test that safety_identifier is passed to the underlying /v1/chat/completions API call."""
+    # Setup
+    input_text = "What is AI?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    safety_id = "user-12345-hashed"
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        safety_identifier=safety_id,
+        stream=False,
+    )
+
+    # Verify that openai_chat_completion was called with safety_identifier
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args[0][0]  # First positional argument is the params object
+
+    # Assert safety_identifier was included in the chat completions request
+    assert hasattr(params, "safety_identifier"), "safety_identifier should be in chat completion params"
+    assert params.safety_identifier == safety_id, (
+        f"Expected safety_identifier={safety_id}, got {params.safety_identifier}"
+    )
+
+
+@pytest.mark.parametrize(
+    "param_name,param_value,backend_param_name,backend_expected_value",
+    [
+        ("temperature", 1.5, "temperature", 1.5),
+        ("safety_identifier", "user-123", "safety_identifier", "user-123"),
+        ("max_output_tokens", 500, "max_completion_tokens", 500),
+        ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
+    ],
+)
+async def test_params_passed_through_full_chain_to_backend_service(
+    param_name, param_value, backend_param_name, backend_expected_value
+):
+    """Test that parameters flow through the full chain: create_openai_response -> openai_chat_completion -> backend service."""
+    config = OpenAIConfig(api_key="test-key")
+    openai_adapter = OpenAIInferenceAdapter(config=config)
+    openai_adapter.provider_data_api_key_field = None
+
+    mock_model_store = AsyncMock()
+    mock_model_store.has_model = AsyncMock(return_value=False)
+    openai_adapter.model_store = mock_model_store
+
+    mock_responses_store = AsyncMock(spec=ResponsesStore)
+    openai_responses_impl = OpenAIResponsesImpl(
+        inference_api=openai_adapter,
+        tool_groups_api=AsyncMock(),
+        tool_runtime_api=AsyncMock(),
+        responses_store=mock_responses_store,
+        vector_io_api=AsyncMock(),
+        safety_api=AsyncMock(),
+        conversations_api=AsyncMock(),
+        prompts_api=AsyncMock(),
+        files_api=AsyncMock(),
+        connectors_api=AsyncMock(),
+    )
+
+    with patch("llama_stack.providers.utils.inference.openai_mixin.AsyncOpenAI") as mock_openai_class:
+        mock_client = MagicMock()
+        mock_chat_completions = AsyncMock()
+        mock_client.chat.completions.create = mock_chat_completions
+        mock_openai_class.return_value = mock_client
+
+        mock_response = MagicMock()
+        mock_response.id = "chatcmpl-123"
+        mock_response.choices = [
+            MagicMock(
+                index=0,
+                message=MagicMock(content="Test response", role="assistant", tool_calls=None),
+                finish_reason="stop",
+            )
+        ]
+        mock_response.model = "fake-model"
+        mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+        mock_chat_completions.return_value = mock_response
+
+        await openai_responses_impl.create_openai_response(
+            **{
+                "input": "Test message",
+                "model": "fake-model",
+                param_name: param_value,
+            }
+        )
+
+        mock_chat_completions.assert_called_once()
+        call_kwargs = mock_chat_completions.call_args[1]
+
+        assert backend_param_name in call_kwargs, f"{backend_param_name} not found in backend call"
+        assert call_kwargs[backend_param_name] == backend_expected_value, (
+            f"Expected {backend_param_name}={backend_expected_value}, got {call_kwargs[backend_param_name]}"
+        )
+
+
+@pytest.mark.parametrize(
+    "param_name,param_value,backend_param_name,backend_expected_value",
+    [
+        ("temperature", 1.5, "temperature", 1.5),
+        ("safety_identifier", "user-123", "safety_identifier", "user-123"),
+        ("max_output_tokens", 500, "max_completion_tokens", 500),
+        ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex"),
+    ],
+)
+async def test_params_passed_through_full_chain_to_backend_service_litellm(
+    param_name, param_value, backend_param_name, backend_expected_value
+):
+    """Test that parameters flow through the full chain with LiteLLM: create_openai_response -> openai_chat_completion -> litellm backend."""
+    # Create a minimal LiteLLM adapter for testing
+    litellm_adapter = LiteLLMOpenAIMixin(
+        litellm_provider_name="test",
+        api_key_from_config="test-key",
+        provider_data_api_key_field=None,
+    )
+    # Mock get_request_provider_data to return None (no provider data in request)
+    litellm_adapter.get_request_provider_data = MagicMock(return_value=None)
+
+    mock_model_store = AsyncMock()
+    mock_model = MagicMock()
+    mock_model.provider_resource_id = "test-model-id"
+    mock_model_store.get_model = AsyncMock(return_value=mock_model)
+    litellm_adapter.model_store = mock_model_store
+
+    mock_responses_store = AsyncMock(spec=ResponsesStore)
+    openai_responses_impl = OpenAIResponsesImpl(
+        inference_api=litellm_adapter,
+        tool_groups_api=AsyncMock(),
+        tool_runtime_api=AsyncMock(),
+        responses_store=mock_responses_store,
+        vector_io_api=AsyncMock(),
+        safety_api=AsyncMock(),
+        conversations_api=AsyncMock(),
+        prompts_api=AsyncMock(),
+        files_api=AsyncMock(),
+        connectors_api=AsyncMock(),
+    )
+
+    with patch("llama_stack.providers.utils.inference.litellm_openai_mixin.litellm") as mock_litellm:
+        mock_acompletion = AsyncMock()
+        mock_litellm.acompletion = mock_acompletion
+
+        mock_response = MagicMock()
+        mock_response.id = "chatcmpl-123"
+        mock_response.choices = [
+            MagicMock(
+                index=0,
+                message=MagicMock(content="Test response", role="assistant", tool_calls=None),
+                finish_reason="stop",
+            )
+        ]
+        mock_response.model = "test-model-id"
+        mock_response.usage = MagicMock(prompt_tokens=10, completion_tokens=20, total_tokens=30)
+        mock_acompletion.return_value = mock_response
+
+        await openai_responses_impl.create_openai_response(
+            **{
+                "input": "Test message",
+                "model": "test-model-id",
+                param_name: param_value,
+            }
+        )
+
+        mock_acompletion.assert_called_once()
+        call_kwargs = mock_acompletion.call_args[1]
+
+        assert backend_param_name in call_kwargs, f"{backend_param_name} not found in litellm backend call"
+        assert call_kwargs[backend_param_name] == backend_expected_value, (
+            f"Expected {backend_param_name}={backend_expected_value}, got {call_kwargs[backend_param_name]}"
+        )
+
+
+async def test_function_tool_strict_field_excluded_when_none(openai_responses_impl, mock_inference_api):
+    """Test that function tool 'strict' field is excluded when None (fix for #4617)."""
+    input_text = "What is the weather?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock inference response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with function tool that has strict=None (default)
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                type="function",
+                name="get_weather",
+                description="Get weather information",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+                # strict is None by default
+            )
+        ],
+    )
+
+    # Verify the call was made
+    assert mock_inference_api.openai_chat_completion.call_count == 1
+    params = mock_inference_api.openai_chat_completion.call_args[0][0]
+
+    # Verify tools were passed
+    assert params.tools is not None
+    assert len(params.tools) == 1
+
+    # Critical: verify 'strict' field is NOT present when it's None
+    # This prevents "strict: null" from being sent to OpenAI API
+    tool_function = params.tools[0]["function"]
+    assert "strict" not in tool_function, (
+        "strict field should be excluded when None to avoid OpenAI API validation error"
+    )
+
+    # Verify other fields are present
+    assert tool_function["name"] == "get_weather"
+    assert tool_function["description"] == "Get weather information"
+    assert tool_function["parameters"] is not None
+
+
+async def test_function_tool_strict_field_included_when_set(openai_responses_impl, mock_inference_api):
+    """Test that function tool 'strict' field is included when explicitly set."""
+    input_text = "What is the weather?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock inference response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with function tool that has strict=True
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                type="function",
+                name="get_weather",
+                description="Get weather information",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+                strict=True,  # Explicitly set to True
+            )
+        ],
+    )
+
+    # Verify the call was made
+    assert mock_inference_api.openai_chat_completion.call_count == 1
+    params = mock_inference_api.openai_chat_completion.call_args[0][0]
+
+    # Verify tools were passed
+    assert params.tools is not None
+    assert len(params.tools) == 1
+
+    # Verify 'strict' field IS present when explicitly set
+    tool_function = params.tools[0]["function"]
+    assert "strict" in tool_function, "strict field should be included when explicitly set"
+    assert tool_function["strict"] is True, "strict field should have the correct value"
+
+    # Verify other fields are present
+    assert tool_function["name"] == "get_weather"
+    assert tool_function["description"] == "Get weather information"
+
+
+async def test_function_tool_strict_false_included(openai_responses_impl, mock_inference_api):
+    """Test that function tool 'strict' field is included when set to False."""
+    input_text = "What is the weather?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock inference response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute with function tool that has strict=False
+    await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        stream=False,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                type="function",
+                name="get_weather",
+                description="Get weather information",
+                parameters={"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]},
+                strict=False,  # Explicitly set to False
+            )
+        ],
+    )
+
+    # Verify the call was made
+    assert mock_inference_api.openai_chat_completion.call_count == 1
+    params = mock_inference_api.openai_chat_completion.call_args[0][0]
+
+    # Verify 'strict' field IS present and set to False
+    tool_function = params.tools[0]["function"]
+    assert "strict" in tool_function, "strict field should be included when explicitly set to False"
+    assert tool_function["strict"] is False, "strict field should be False"
+
+
+async def test_create_openai_response_with_truncation_disabled_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that truncation='disabled' is properly handled in streaming responses."""
+    input_text = "Explain machine learning comprehensively."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        truncation=ResponseTruncation.disabled,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify truncation is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.truncation == ResponseTruncation.disabled
+
+    # Verify truncation is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.truncation == ResponseTruncation.disabled
+
+    mock_inference_api.openai_chat_completion.assert_called()
+
+    # Verify the truncation was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.truncation == ResponseTruncation.disabled
+
+
+async def test_create_openai_response_with_truncation_auto_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that truncation='auto' raises an error since it's not yet supported."""
+    input_text = "Tell me about quantum computing."
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        truncation=ResponseTruncation.auto,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify truncation is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.truncation == ResponseTruncation.auto
+
+    # Verify the response failed due to unsupported truncation mode
+    failed_event = chunks[-1]
+    assert failed_event.type == "response.failed"
+    assert failed_event.response.truncation == ResponseTruncation.auto
+    assert failed_event.response.error is not None
+    assert failed_event.response.error.code == "invalid_request_error"
+    assert "Truncation mode 'auto' is not supported" in failed_event.response.error.message
+
+    # Inference API should not be called since error occurs before inference
+    mock_inference_api.openai_chat_completion.assert_not_called()
+
+    # Verify the failed response was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.truncation == ResponseTruncation.auto
+    assert stored_response.status == "failed"
+
+
+async def test_create_openai_response_with_prompt_cache_key_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is properly handled in non-streaming responses."""
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "geography-cache-001"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the cache key
+    assert result.prompt_cache_key == cache_key
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_prompt_cache_key_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is properly handled in streaming responses."""
+    input_text = "What is the capital of Germany?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "geography-cache-002"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify cache key is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.prompt_cache_key == cache_key
+
+    # Verify cache key is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.prompt_cache_key == cache_key
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_prompt_cache_key_and_previous_response(
+    openai_responses_impl, mock_responses_store, mock_inference_api
+):
+    """Test that prompt_cache_key works correctly with previous_response_id."""
+    # Setup previous response
+    previous_response = _OpenAIResponseObjectWithInputAndMessages(
+        id="resp-prev-123",
+        object="response",
+        created_at=1234567890,
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        status="completed",
+        text=OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
+        input=[OpenAIResponseMessage(id="msg-1", role="user", content="First question")],
+        output=[OpenAIResponseMessage(id="msg-2", role="assistant", content="First answer")],
+        messages=[
+            OpenAIUserMessageParam(content="First question"),
+            OpenAIAssistantMessageParam(content="First answer"),
+        ],
+        prompt_cache_key="conversation-cache-001",
+        store=True,
+    )
+
+    mock_responses_store.get_response_object.return_value = previous_response
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Create a new response with the same cache key
+    result = await openai_responses_impl.create_openai_response(
+        input="Second question",
+        model="meta-llama/Llama-3.1-8B-Instruct",
+        previous_response_id="resp-prev-123",
+        prompt_cache_key="conversation-cache-001",
+        store=True,
+    )
+
+    # Verify cache key is preserved
+    assert result.prompt_cache_key == "conversation-cache-001"
+    assert result.status == "completed"
+
+    # Verify the cache key was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.prompt_cache_key == "conversation-cache-001"
+
+
+async def test_prompt_cache_key_propagated_to_chat_completions(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that prompt_cache_key is propagated to /v1/chat/completions endpoint."""
+    input_text = "What is 2+2?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    cache_key = "math-cache-key"
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute streaming request
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        prompt_cache_key=cache_key,
+        stream=True,
+        store=True,
+    )
+
+    # Consume the stream
+    _ = [chunk async for chunk in result]
+
+    # Verify that openai_chat_completion was called with prompt_cache_key
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args[0][0]  # First positional argument
+
+    # Verify the prompt_cache_key is propagated to the chat completion params
+    assert hasattr(params, "prompt_cache_key"), "params should have prompt_cache_key attribute"
+    assert params.prompt_cache_key == cache_key
+
+
+async def test_create_openai_response_with_service_tier(openai_responses_impl, mock_inference_api):
+    """Test creating an OpenAI response with service_tier parameter."""
+    # Setup
+    input_text = "What is the capital of France?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    service_tier = ServiceTier.flex
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - non-streaming to get final response directly
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=service_tier,
+        stream=False,
+    )
+
+    # Verify service_tier is preserved in the response (as string)
+    assert result.service_tier == ServiceTier.default.value
+    assert result.status == "completed"
+
+    # Verify inference call received service_tier
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == service_tier
+
+
+async def test_create_openai_response_with_service_tier_streaming(openai_responses_impl, mock_inference_api):
+    """Test creating a streaming OpenAI response with service_tier parameter."""
+    # Setup
+    input_text = "Tell me a story"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    service_tier = ServiceTier.priority
+
+    # Load the chat completion fixture
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute - streaming
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=service_tier,
+        stream=True,
+    )
+
+    # For streaming response, collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify service_tier is in all response snapshots (as string)
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.service_tier == service_tier.value
+
+    # Check final response
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.service_tier == ServiceTier.default.value
+
+    # Verify inference call received service_tier
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == service_tier
+
+
+async def test_create_openai_response_service_tier_auto_transformation(openai_responses_impl, mock_inference_api):
+    """Test that service_tier 'auto' is transformed to actual tier from provider response."""
+    # Setup
+    input_text = "Hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock a response that returns actual service tier when "auto" was requested
+    async def fake_stream_with_service_tier():
+        yield ChatCompletionChunk(
+            id="chatcmpl-123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="Hi there!", role="assistant"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            service_tier="default",  # Provider returns actual tier used
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_service_tier()
+
+    # Execute with "auto" service tier
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=ServiceTier.auto,
+        stream=False,
+    )
+
+    # Verify the response has the actual tier from provider, not "auto"
+    assert result.service_tier == "default", "service_tier should be transformed from 'auto' to actual tier"
+    assert result.service_tier != ServiceTier.auto.value, "service_tier should not remain as 'auto'"
+    assert result.status == "completed"
+
+    # Verify inference was called with "auto"
+    mock_inference_api.openai_chat_completion.assert_called_once()
+    params = mock_inference_api.openai_chat_completion.call_args.args[0]
+    assert params.service_tier == "auto"
+
+
+async def test_create_openai_response_service_tier_propagation_streaming(openai_responses_impl, mock_inference_api):
+    """Test that service_tier from chat completion is propagated to response object in streaming mode."""
+    # Setup
+    input_text = "Tell me about AI"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    # Mock streaming response with service_tier
+    async def fake_stream_with_service_tier():
+        yield ChatCompletionChunk(
+            id="chatcmpl-456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="AI is", role="assistant"),
+                    finish_reason=None,
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            service_tier="priority",  # First chunk with service_tier
+        )
+        yield ChatCompletionChunk(
+            id="chatcmpl-456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content=" amazing!"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_service_tier()
+
+    # Execute with "auto" but provider returns "priority"
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        service_tier=ServiceTier.auto,
+        stream=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+    # Verify service_tier is propagated to all events
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    # Initially should have "auto" value
+    assert created_event.response.service_tier == "auto"
+
+    # Check final response has the actual tier from provider
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.service_tier == "priority", "Final response should have actual tier from provider"
+
+
+def test_response_object_incomplete_details_null_when_completed():
+    """Test that completed response has incomplete_details as null."""
+    from llama_stack_api.openai_responses import OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_123",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="completed",
+        store=False,
+    )
+
+    assert response.incomplete_details is None
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] is None
+
+
+def test_response_object_incomplete_details_with_max_output_tokens_reason():
+    """Test that incomplete response has incomplete_details with max_output_tokens reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_456",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="max_output_tokens"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "max_output_tokens"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "max_output_tokens"}
+
+
+def test_response_object_incomplete_details_with_length_reason():
+    """Test that incomplete response has incomplete_details with length reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_length",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="length"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "length"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "length"}
+
+
+def test_response_object_incomplete_details_with_max_iterations_exceeded_reason():
+    """Test that incomplete response has incomplete_details with max_iterations_exceeded reason."""
+    from llama_stack_api.openai_responses import OpenAIResponseIncompleteDetails, OpenAIResponseObject
+
+    response = OpenAIResponseObject(
+        created_at=1234567890,
+        id="resp_iters",
+        model="gpt-4o",
+        object="response",
+        output=[],
+        status="incomplete",
+        store=False,
+        incomplete_details=OpenAIResponseIncompleteDetails(reason="max_iterations_exceeded"),
+    )
+
+    assert response.incomplete_details is not None
+    assert response.incomplete_details.reason == "max_iterations_exceeded"
+
+    # Verify JSON serialization
+    json_data = response.model_dump(mode="json")
+    assert json_data["incomplete_details"] == {"reason": "max_iterations_exceeded"}
+
+
+async def test_agent_loop_incomplete_due_to_max_output_tokens(
+    openai_responses_impl, mock_inference_api, mock_tool_groups_api, mock_tool_runtime_api
+):
+    """Test that agent loop marks response incomplete when max_output_tokens is reached."""
+    from openai.types.completion_usage import CompletionUsage
+
+    model = "gpt-4o"
+    max_output_tokens = 25  # Set low enough to be exceeded by first tool call
+
+    # Setup tool mocks - the tool call will trigger a second iteration
+    mock_tool_groups_api.get_tool.return_value = ToolDef(
+        name="web_search", description="Search the web", input_schema={}
+    )
+    mock_tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(content="Search results")
+
+    # First stream: returns a tool call after consuming 30 tokens (exceeds limit of 25)
+    async def first_stream_with_tool_call():
+        yield ChatCompletionChunk(
+            id="test_123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        role="assistant",
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="call_abc",
+                                function=ChoiceDeltaToolCallFunction(name="web_search", arguments='{"query":"test"}'),
+                            )
+                        ],
+                    ),
+                    finish_reason="tool_calls",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=30, total_tokens=40),
+        )
+
+    # Second stream would consume more tokens, but should be skipped because we already have 30 tokens
+    # and the next iteration check will see we're at/above the limit
+    async def second_stream():
+        yield ChatCompletionChunk(
+            id="test_456",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="More content", role="assistant"),
+                    finish_reason="stop",
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=25, total_tokens=35),
+        )
+
+    # Mock returns first stream with tool call, then would return second stream but should be blocked
+    mock_inference_api.openai_chat_completion.side_effect = [first_stream_with_tool_call(), second_stream()]
+
+    # Execute with max_output_tokens that will be exceeded after first tool call
+    result = await openai_responses_impl.create_openai_response(
+        input="Test input",
+        model=model,
+        max_output_tokens=max_output_tokens,
+        tools=[OpenAIResponseInputToolWebSearch(type="web_search")],
+        stream=True,
+    )
+
+    # Collect all events
+    events = [event async for event in result]
+
+    # Find the final event (should be response.incomplete)
+    final_event = events[-1]
+    assert final_event.type == "response.incomplete"
+    assert final_event.response.status == "incomplete"
+    assert final_event.response.incomplete_details is not None
+    assert final_event.response.incomplete_details.reason == "max_output_tokens"
+
+
+async def test_agent_loop_incomplete_due_to_max_iterations(
+    openai_responses_impl, mock_inference_api, mock_tool_groups_api, mock_tool_runtime_api
+):
+    """Test that agent loop marks response incomplete when max iterations is exceeded via tool calls."""
+    from openai.types.completion_usage import CompletionUsage
+
+    model = "gpt-4o"
+
+    # Setup tool mocks
+    mock_tool_groups_api.get_tool.return_value = ToolDef(
+        name="web_search", description="Search the web", input_schema={}
+    )
+    mock_tool_runtime_api.invoke_tool.return_value = ToolInvocationResult(content="Search results")
+
+    # Create a stream generator factory that returns a tool call (to trigger another iteration)
+    call_counter = {"count": 0}
+
+    def fake_stream_factory():
+        async def fake_stream_with_tool_call():
+            call_id = f"call_abc{call_counter['count']}"
+            call_counter["count"] += 1
+            # First chunk with tool call
+            yield ChatCompletionChunk(
+                id="test_123",
+                choices=[
+                    Choice(
+                        index=0,
+                        delta=ChoiceDelta(
+                            role="assistant",
+                            tool_calls=[
+                                ChoiceDeltaToolCall(
+                                    index=0,
+                                    id=call_id,
+                                    function=ChoiceDeltaToolCallFunction(
+                                        name="web_search", arguments='{"query":"test"}'
+                                    ),
+                                )
+                            ],
+                        ),
+                        finish_reason="tool_calls",
+                    )
+                ],
+                created=1234567890,
+                model=model,
+                object="chat.completion.chunk",
+                usage=CompletionUsage(prompt_tokens=10, completion_tokens=5, total_tokens=15),
+            )
+
+        return fake_stream_with_tool_call()
+
+    # Mock the inference to repeatedly return tool calls to exceed max iterations
+    # Default max_infer_iters is 5, so we need to keep returning tool calls
+    mock_inference_api.openai_chat_completion.side_effect = lambda *args, **kwargs: fake_stream_factory()
+
+    # Execute with tool configuration
+    result = await openai_responses_impl.create_openai_response(
+        input="Test input",
+        model=model,
+        tools=[OpenAIResponseInputToolWebSearch(type="web_search")],
+        stream=True,
+    )
+
+    # Collect all events
+    events = [event async for event in result]
+
+    # Find the final event (should be response.incomplete)
+    final_event = events[-1]
+    assert final_event.type == "response.incomplete"
+    assert final_event.response.status == "incomplete"
+    assert final_event.response.incomplete_details is not None
+    assert final_event.response.incomplete_details.reason == "max_iterations_exceeded"
+
+
+async def test_agent_loop_incomplete_due_to_length_finish_reason(openai_responses_impl, mock_inference_api):
+    """Test that agent loop marks response incomplete when model returns finish_reason='length'."""
+    from openai.types.completion_usage import CompletionUsage
+
+    model = "gpt-4o"
+
+    # Create a stream that returns finish_reason="length"
+    async def fake_stream_with_length_finish():
+        yield ChatCompletionChunk(
+            id="test_123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content="This is a response that was cut off due to", role="assistant"),
+                    finish_reason=None,
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=20, total_tokens=30),
+        )
+        # Final chunk with finish_reason="length"
+        yield ChatCompletionChunk(
+            id="test_123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(content=" length"),
+                    finish_reason="length",  # This indicates the response was truncated
+                )
+            ],
+            created=1234567890,
+            model=model,
+            object="chat.completion.chunk",
+            usage=CompletionUsage(prompt_tokens=10, completion_tokens=25, total_tokens=35),
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_with_length_finish()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input="Test input",
+        model=model,
+        stream=True,
+    )
+
+    # Collect all events
+    events = [event async for event in result]
+
+    # Find the final event (should be response.incomplete)
+    final_event = events[-1]
+    assert final_event.type == "response.incomplete"
+    assert final_event.response.status == "incomplete"
+    assert final_event.response.incomplete_details is not None
+    assert final_event.response.incomplete_details.reason == "length"

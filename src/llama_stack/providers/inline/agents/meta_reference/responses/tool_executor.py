@@ -33,6 +33,7 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageFileSearchToolCall,
     OpenAIResponseOutputMessageFileSearchToolCallResults,
     OpenAIResponseOutputMessageWebSearchToolCall,
+    OpenAISearchVectorStoreRequest,
     OpenAIToolMessageParam,
     TextContentItem,
     ToolGroups,
@@ -54,11 +55,14 @@ class ToolExecutor:
         tool_runtime_api: ToolRuntime,
         vector_io_api: VectorIO,
         vector_stores_config=None,
+        mcp_session_manager=None,
     ):
         self.tool_groups_api = tool_groups_api
         self.tool_runtime_api = tool_runtime_api
         self.vector_io_api = vector_io_api
         self.vector_stores_config = vector_stores_config
+        # Optional MCPSessionManager for session reuse within a request (fix for #4452)
+        self.mcp_session_manager = mcp_session_manager
 
     async def execute_tool_call(
         self,
@@ -132,11 +136,13 @@ class ToolExecutor:
             try:
                 search_response = await self.vector_io_api.openai_search_vector_store(
                     vector_store_id=vector_store_id,
-                    query=query,
-                    filters=response_file_search_tool.filters,
-                    max_num_results=response_file_search_tool.max_num_results,
-                    ranking_options=response_file_search_tool.ranking_options,
-                    rewrite_query=False,
+                    request=OpenAISearchVectorStoreRequest(
+                        query=query,
+                        filters=response_file_search_tool.filters,
+                        max_num_results=response_file_search_tool.max_num_results,
+                        ranking_options=response_file_search_tool.ranking_options,
+                        rewrite_query=False,
+                    ),
                 )
                 return search_response.data
             except Exception as e:
@@ -233,6 +239,7 @@ class ToolExecutor:
                 "document_ids": [r.file_id for r in search_results],
                 "chunks": [r.content[0].text if r.content else "" for r in search_results],
                 "scores": [r.score for r in search_results],
+                "attributes": [r.attributes or {} for r in search_results],
                 "citation_files": citation_files,
             },
         )
@@ -327,12 +334,14 @@ class ToolExecutor:
                 # TODO: follow semantic conventions for Open Telemetry tool spans
                 # https://opentelemetry.io/docs/specs/semconv/gen-ai/gen-ai-spans/#execute-tool-span
                 with tracer.start_as_current_span("invoke_mcp_tool", attributes=attributes):
+                    # Pass session_manager for session reuse within request (fix for #4452)
                     result = await invoke_mcp_tool(
                         endpoint=mcp_tool.server_url,
                         tool_name=function_name,
                         kwargs=tool_kwargs,
                         headers=mcp_tool.headers,
                         authorization=mcp_tool.authorization,
+                        session_manager=self.mcp_session_manager,
                     )
             elif function_name == "knowledge_search":
                 response_file_search_tool = (
@@ -464,16 +473,18 @@ class ToolExecutor:
                 )
                 if result and (metadata := getattr(result, "metadata", None)) and "document_ids" in metadata:
                     message.results = []
+                    attributes_list = metadata.get("attributes", [])
                     for i, doc_id in enumerate(metadata["document_ids"]):
                         text = metadata["chunks"][i] if "chunks" in metadata else None
                         score = metadata["scores"][i] if "scores" in metadata else None
+                        attrs = attributes_list[i] if i < len(attributes_list) else {}
                         message.results.append(
                             OpenAIResponseOutputMessageFileSearchToolCallResults(
                                 file_id=doc_id,
                                 filename=doc_id,
                                 text=text if text is not None else "",
                                 score=score if score is not None else 0.0,
-                                attributes={},
+                                attributes=attrs,
                             )
                         )
                 if has_error:

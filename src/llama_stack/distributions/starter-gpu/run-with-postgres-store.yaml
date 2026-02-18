@@ -29,7 +29,9 @@ providers:
       base_url: ${env.VLLM_URL:=}
       max_tokens: ${env.VLLM_MAX_TOKENS:=4096}
       api_token: ${env.VLLM_API_TOKEN:=fake}
-      tls_verify: ${env.VLLM_TLS_VERIFY:=true}
+      network:
+        tls:
+          verify: ${env.VLLM_TLS_VERIFY:=true}
   - provider_id: ${env.TGI_URL:+tgi}
     provider_type: remote::tgi
     config:
@@ -71,7 +73,7 @@ providers:
     provider_type: remote::vertexai
     config:
       project: ${env.VERTEX_AI_PROJECT:=}
-      location: ${env.VERTEX_AI_LOCATION:=us-central1}
+      location: ${env.VERTEX_AI_LOCATION:=global}
   - provider_id: groq
     provider_type: remote::groq
     config:
@@ -127,6 +129,11 @@ providers:
       db: ${env.PGVECTOR_DB:=}
       user: ${env.PGVECTOR_USER:=}
       password: ${env.PGVECTOR_PASSWORD:=}
+      distance_metric: COSINE
+      vector_index:
+        type: HNSW
+        m: 16
+        ef_construction: 64
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default
@@ -144,6 +151,14 @@ providers:
       weaviate_cluster_url: ${env.WEAVIATE_CLUSTER_URL:=localhost:8080}
       persistence:
         namespace: vector_io::weaviate
+        backend: kv_default
+  - provider_id: ${env.ELASTICSEARCH_URL:+elasticsearch}
+    provider_type: remote::elasticsearch
+    config:
+      elasticsearch_url: ${env.ELASTICSEARCH_URL:=localhost:9200}
+      elasticsearch_api_key: ${env.ELASTICSEARCH_API_KEY:=}
+      persistence:
+        namespace: vector_io::elasticsearch
         backend: kv_default
   files:
   - provider_id: meta-reference-files
@@ -264,6 +279,9 @@ storage:
     prompts:
       namespace: prompts
       backend: kv_default
+    connectors:
+      namespace: connectors
+      backend: kv_default
 registered_resources:
   models: []
   shields:
@@ -337,3 +355,4 @@ vector_stores:
     cleanup_interval_seconds: 86400
 safety:
   default_shield_id: llama-guard
+connectors: []

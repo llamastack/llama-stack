@@ -24,7 +24,9 @@ from llama_stack_api import (
     InterleavedContent,
     InterleavedContentItem,
     ListToolDefsResponse,
+    OpenAIAttachFileRequest,
     OpenAIFilePurpose,
+    QueryChunksRequest,
     QueryChunksResponse,
     RAGDocument,
     RAGQueryConfig,
@@ -50,8 +52,11 @@ log = get_logger(name=__name__, category="tool_runtime")
 async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
     """Get raw binary data and mime type from a RAGDocument for file upload."""
     if isinstance(doc.content, URL):
-        if doc.content.uri.startswith("data:"):
-            parts = parse_data_url(doc.content.uri)
+        uri = doc.content.uri
+        if uri.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
+        if uri.startswith("data:"):
+            parts = parse_data_url(uri)
             mime_type = parts["mimetype"]
             data = parts["data"]
 
@@ -63,7 +68,7 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
             return file_data, mime_type
         else:
             async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content.uri)
+                r = await client.get(uri)
                 r.raise_for_status()
                 mime_type = r.headers.get("content-type", "application/octet-stream")
                 return r.content, mime_type
@@ -73,6 +78,8 @@ async def raw_data_from_doc(doc: RAGDocument) -> tuple[bytes, str]:
         else:
             content_str = interleaved_content_as_str(doc.content)
 
+        if content_str.startswith("file://"):
+            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
         if content_str.startswith("data:"):
             parts = parse_data_url(content_str)
             mime_type = parts["mimetype"]
@@ -160,9 +167,11 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
                 try:
                     await self.vector_io_api.openai_attach_file_to_vector_store(
                         vector_store_id=vector_store_id,
-                        file_id=created_file.id,
-                        attributes=doc.metadata,
-                        chunking_strategy=chunking_strategy,
+                        request=OpenAIAttachFileRequest(
+                            file_id=created_file.id,
+                            attributes=doc.metadata,
+                            chunking_strategy=chunking_strategy,
+                        ),
                     )
                 except Exception as e:
                     log.error(
@@ -195,14 +204,16 @@ class MemoryToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime):
         )
         tasks = [
             self.vector_io_api.query_chunks(
-                vector_store_id=vector_store_id,
-                query=query,
-                params={
-                    "mode": query_config.mode,
-                    "max_chunks": query_config.max_chunks,
-                    "score_threshold": 0.0,
-                    "ranker": query_config.ranker,
-                },
+                request=QueryChunksRequest(
+                    vector_store_id=vector_store_id,
+                    query=query,
+                    params={
+                        "mode": query_config.mode,
+                        "max_chunks": query_config.max_chunks,
+                        "score_threshold": 0.0,
+                        "ranker": query_config.ranker,
+                    },
+                )
             )
             for vector_store_id in vector_store_ids
         ]

@@ -17,9 +17,9 @@ from llama_stack.providers.remote.inference.vllm.vllm import VLLMInferenceAdapte
 from llama_stack_api import (
     HealthStatus,
     Model,
-    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChoice,
     OpenAICompletion,
     OpenAICompletionChoice,
@@ -168,7 +168,7 @@ async def test_openai_chat_completion_is_async(vllm_inference_adapter):
             model="mock-model",
             choices=[
                 OpenAIChoice(
-                    message=OpenAIAssistantMessageParam(
+                    message=OpenAIChatCompletionResponseMessage(
                         content="nothing interesting",
                     ),
                     finish_reason="stop",
@@ -315,7 +315,7 @@ async def test_vllm_chat_completion_extra_body():
                 model="mock-model",
                 choices=[
                     OpenAIChoice(
-                        message=OpenAIAssistantMessageParam(
+                        message=OpenAIChatCompletionResponseMessage(
                             content="test response",
                         ),
                         finish_reason="stop",

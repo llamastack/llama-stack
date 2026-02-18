@@ -30,14 +30,6 @@ def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.inference,
-            provider_type="inline::meta-reference",
-            pip_packages=META_REFERENCE_DEPS,
-            module="llama_stack.providers.inline.inference.meta_reference",
-            config_class="llama_stack.providers.inline.inference.meta_reference.MetaReferenceInferenceConfig",
-            description="Meta's reference implementation of inference with support for various model formats and optimization techniques.",
-        ),
-        InlineProviderSpec(
-            api=Api.inference,
             provider_type="inline::sentence-transformers",
             # CrossEncoder depends on torchao.quantization
             pip_packages=[
@@ -127,7 +119,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter_type="together",
             provider_type="remote::together",
             pip_packages=[
-                "together",
+                "together>=2",
             ],
             module="llama_stack.providers.remote.inference.together",
             config_class="llama_stack.providers.remote.inference.together.TogetherImplConfig",
@@ -223,7 +215,7 @@ def available_providers() -> list[ProviderSpec]:
 
 Configuration:
 - Set VERTEX_AI_PROJECT environment variable (required)
-- Set VERTEX_AI_LOCATION environment variable (optional, defaults to us-central1)
+- Set VERTEX_AI_LOCATION environment variable (optional, defaults to global)
 - Use Google Cloud Application Default Credentials or service account key
 
 Authentication Setup:
@@ -312,5 +304,14 @@ Oracle Cloud Infrastructure (OCI) Generative AI inference provider for accessing
 Provider documentation
 https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
 """,
+        ),
+        RemoteProviderSpec(
+            api=Api.inference,
+            adapter_type="llama-cpp-server",
+            provider_type="remote::llama-cpp-server",
+            pip_packages=[],
+            module="llama_stack.providers.remote.inference.llama_cpp_server",
+            config_class="llama_stack.providers.remote.inference.llama_cpp_server.config.LlamaCppServerConfig",
+            description="llama.cpp inference provider for connecting to llama.cpp servers with OpenAI-compatible API.",
         ),
     ]

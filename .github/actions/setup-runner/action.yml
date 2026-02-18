@@ -13,6 +13,10 @@ inputs:
     description: 'URL to install Python SDK from (for testing preview builds). If provided, overrides client-version.'
     required: false
     default: ""
+  branch:
+    description: 'Explicit branch override (used by scheduled CI to pass the matrix branch)'
+    required: false
+    default: ""
 runs:
   using: "composite"
   steps:
@@ -20,6 +24,7 @@ runs:
       uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
       with:
         python-version: ${{ inputs.python-version }}
+        enable-cache: ${{ env.UV_NO_CACHE != 'true' }}
 
     - name: Configure client installation
       id: client-config
@@ -27,6 +32,7 @@ runs:
       with:
         client-version: ${{ inputs.client-version }}
         sdk_install_url: ${{ inputs.sdk_install_url }}
+        branch: ${{ inputs.branch }}
 
     - name: Install dependencies
       shell: bash

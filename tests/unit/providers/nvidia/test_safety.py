@@ -12,9 +12,11 @@ import pytest
 from llama_stack.providers.remote.safety.nvidia.config import GuardrailsApiMode, NVIDIASafetyConfig
 from llama_stack.providers.remote.safety.nvidia.nvidia import NVIDIASafetyAdapter
 from llama_stack_api import (
+    GetShieldRequest,
     OpenAIAssistantMessageParam,
     OpenAIUserMessageParam,
     ResourceType,
+    RunShieldRequest,
     RunShieldResponse,
     Shield,
     ViolationLevel,
@@ -116,9 +118,10 @@ async def test_run_shield_allowed(nvidia_adapter, mock_guardrails_post):
             tool_calls=[],
         ),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
+    result = await adapter.run_shield(request)
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
     mock_guardrails_post.assert_called_once_with(
         path="/v1/guardrail/chat/completions",
         data={
@@ -168,9 +171,9 @@ async def test_run_shield_blocked_with_error_object(nvidia_adapter, mock_guardra
             tool_calls=[],
         ),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
 
     mock_guardrails_post.assert_called_once_with(
         path="/v1/guardrail/chat/completions",
@@ -223,7 +226,7 @@ async def test_run_shield_unknown_error_raises(nvidia_adapter, mock_guardrails_p
     messages = [OpenAIUserMessageParam(content="Hello")]
 
     with pytest.raises(RuntimeError, match="Rate limit exceeded"):
-        await adapter.run_shield(shield_id, messages)
+        await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
 
 async def test_run_shield_blocked_with_status(nvidia_adapter, mock_guardrails_post):
@@ -249,9 +252,10 @@ async def test_run_shield_blocked_with_status(nvidia_adapter, mock_guardrails_po
             tool_calls=[],
         ),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
+    result = await adapter.run_shield(request)
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
     mock_guardrails_post.assert_called_once_with(
         path="/v1/guardrail/chat/completions",
         data={
@@ -302,9 +306,9 @@ async def test_run_shield_blocked_by_message_match(nvidia_adapter, mock_guardrai
     messages = [
         OpenAIUserMessageParam(content="Tell me something harmful"),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
 
     mock_guardrails_post.assert_called_once_with(
         path="/v1/guardrail/chat/completions",
@@ -338,10 +342,11 @@ async def test_run_shield_not_found(nvidia_adapter, mock_guardrails_post):
         OpenAIUserMessageParam(content="Hello, how are you?"),
     ]
 
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
     with pytest.raises(ValueError):
-        await adapter.run_shield(shield_id, messages)
+        await adapter.run_shield(request)
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
     mock_guardrails_post.assert_not_called()
 
 
@@ -367,10 +372,11 @@ async def test_run_shield_http_error(nvidia_adapter, mock_guardrails_post):
             tool_calls=[],
         ),
     ]
+    request = RunShieldRequest(shield_id=shield_id, messages=messages)
     with pytest.raises(Exception) as exc_info:
-        await adapter.run_shield(shield_id, messages)
+        await adapter.run_shield(request)
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
     mock_guardrails_post.assert_called_once_with(
         path="/v1/guardrail/chat/completions",
         data={
@@ -441,9 +447,9 @@ async def test_run_shield_microservice_allowed(nvidia_adapter_microservice, mock
         OpenAIUserMessageParam(content="Hello, how are you?"),
         OpenAIAssistantMessageParam(content="I'm doing well!", tool_calls=[]),
     ]
-    result = await adapter.run_shield(shield_id, messages)
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
 
     mock_guardrails_post.assert_called_once_with(
         path="/v1/guardrail/checks",
@@ -486,9 +492,9 @@ async def test_run_shield_microservice_blocked(nvidia_adapter_microservice, mock
     }
 
     messages = [OpenAIUserMessageParam(content="Something harmful")]
-    result = await adapter.run_shield(shield_id, messages)
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
 
     mock_guardrails_post.assert_called_once_with(
         path="/v1/guardrail/checks",
@@ -531,9 +537,9 @@ async def test_run_shield_microservice_http_error(nvidia_adapter_microservice, m
     messages = [OpenAIUserMessageParam(content="Hello")]
 
     with pytest.raises(RuntimeError, match="Failed to call guardrails service"):
-        await adapter.run_shield(shield_id, messages)
+        await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
-    adapter.shield_store.get_shield.assert_called_once_with(shield_id)
+    adapter.shield_store.get_shield.assert_called_once_with(GetShieldRequest(identifier=shield_id))
     mock_guardrails_post.assert_called_once()
 
 
@@ -554,7 +560,7 @@ async def test_run_shield_params_model_override(nvidia_adapter, mock_guardrails_
     mock_guardrails_post.return_value = {"status": "allowed"}
 
     messages = [OpenAIUserMessageParam(content="Hello")]
-    await adapter.run_shield(shield_id, messages)
+    await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
     # Verify the request uses the override model, not the default
     call_args = mock_guardrails_post.call_args
@@ -579,7 +585,7 @@ async def test_run_shield_nemo_exception_message(nvidia_adapter, mock_guardrails
     }
 
     messages = [OpenAIUserMessageParam(content="Trigger exception")]
-    result = await adapter.run_shield(shield_id, messages)
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
     assert result.violation is not None
     assert result.violation.user_message == "Rail exception occurred"
@@ -638,7 +644,7 @@ async def test_run_shield_custom_blocked_message(mock_guardrails_post):
     mock_guardrails_post.return_value = {"choices": [{"message": {"role": "assistant", "content": custom_message}}]}
 
     messages = [OpenAIUserMessageParam(content="Test")]
-    result = await adapter.run_shield(shield_id, messages)
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
 
     assert result.violation is not None
     assert result.violation.user_message == custom_message

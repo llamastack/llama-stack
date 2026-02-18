@@ -52,11 +52,6 @@ TARGETS = {
         "publish": {"pypi": True},
         "project_name": "llama_stack_client",
     },
-    "kotlin": {
-        "reverse_domain": "com.llama_stack_client.api",
-        "production_repo": None,
-        "publish": {"maven": False},
-    },
     "go": {
         "package_name": "llama-stack-client",
         "production_repo": "llamastack/llama-stack-client-go",
@@ -288,9 +283,9 @@ ALL_RESOURCES = {
             "create": "post /v1/prompts",
             "list": {"paginated": False, "endpoint": "get /v1/prompts"},
             "retrieve": "get /v1/prompts/{prompt_id}",
-            "update": "post /v1/prompts/{prompt_id}",
+            "update": "put /v1/prompts/{prompt_id}",
             "delete": "delete /v1/prompts/{prompt_id}",
-            "set_default_version": "post /v1/prompts/{prompt_id}/set-default-version",
+            "set_default_version": "put /v1/prompts/{prompt_id}/set-default-version",
         },
         "subresources": {
             "versions": {
@@ -512,7 +507,6 @@ ALL_RESOURCES = {
     },
     "alpha": {
         "subresources": {
-            "inference": {"methods": {"rerank": "post /v1alpha/inference/rerank"}},
             "post_training": {
                 "models": {
                     "algorithm_config": "AlgorithmConfig",
@@ -526,9 +520,9 @@ ALL_RESOURCES = {
                 "subresources": {
                     "job": {
                         "methods": {
-                            "artifacts": "get /v1alpha/post-training/job/artifacts",
-                            "cancel": "post /v1alpha/post-training/job/cancel",
-                            "status": "get /v1alpha/post-training/job/status",
+                            "artifacts": "get /v1alpha/post-training/jobs/{job_uuid}/artifacts",
+                            "cancel": "post /v1alpha/post-training/jobs/{job_uuid}/cancel",
+                            "status": "get /v1alpha/post-training/jobs/{job_uuid}/status",
                             "list": {
                                 "paginated": False,
                                 "endpoint": "get /v1alpha/post-training/jobs",
@@ -581,6 +575,11 @@ ALL_RESOURCES = {
                     "list_routes": "get /v1alpha/admin/inspect/routes",
                     "health": "get /v1alpha/admin/health",
                     "version": "get /v1alpha/admin/version",
+                },
+            },
+            "inference": {
+                "methods": {
+                    "rerank": "post /v1alpha/inference/rerank",
                 },
             },
         }

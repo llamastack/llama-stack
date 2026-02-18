@@ -10,6 +10,7 @@ from typing import Any
 import psycopg2
 from numpy.typing import NDArray
 from psycopg2 import sql
+from psycopg2.extensions import cursor
 from psycopg2.extras import Json, execute_values
 from pydantic import BaseModel, TypeAdapter
 
@@ -17,17 +18,20 @@ from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import (
     WeightedInMemoryAggregator,
     load_embedded_chunk_with_backward_compat,
     sanitize_collection_name,
 )
 from llama_stack_api import (
+    ChunkForDeletion,
+    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
@@ -36,7 +40,7 @@ from llama_stack_api import (
 )
 from llama_stack_api.internal.kvstore import KVStore
 
-from .config import PGVectorVectorIOConfig
+from .config import PGVectorIndexConfig, PGVectorIndexType, PGVectorVectorIOConfig
 
 log = get_logger(name=__name__, category="vector_io::pgvector")
 
@@ -54,6 +58,17 @@ def check_extension_version(cur):
     return result[0] if result else None
 
 
+def create_vector_extension(cur: cursor) -> None:
+    try:
+        log.info("Vector extension not found, creating...")
+        cur.execute("CREATE EXTENSION vector;")
+        log.info("Vector extension created successfully")
+        log.info(f"Vector extension version: {check_extension_version(cur)}")
+
+    except psycopg2.Error as e:
+        raise RuntimeError(f"Failed to create vector extension for PGVector: {e}") from e
+
+
 def upsert_models(conn, keys_models: list[tuple[str, BaseModel]]):
     with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         query = sql.SQL(
@@ -69,6 +84,26 @@ def upsert_models(conn, keys_models: list[tuple[str, BaseModel]]):
         execute_values(cur, query, values, template="(%s, %s)")
 
 
+def remove_vector_store_metadata(conn: psycopg2.extensions.connection, vector_store_id: str) -> None:
+    """
+    Performs removal of vector store metadata from PGVector metadata_store table when vector store is unregistered
+
+    Args:
+        conn: active PostgreSQL connection
+        vector_store_id: identifier of VectorStore resource
+    """
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM metadata_store WHERE key = %s", (vector_store_id,))
+            if cur.rowcount > 0:
+                log.info(f"Removed metadata for vector store '{vector_store_id}' from PGVector metadata_store table.")
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Error removing metadata from PGVector metadata_store for vector_store: {vector_store_id}"
+        ) from e
+
+
 def load_models(cur, cls):
     cur.execute("SELECT key, data FROM metadata_store")
     rows = cur.fetchall()
@@ -77,22 +112,35 @@ def load_models(cur, cls):
 
 class PGVectorIndex(EmbeddingIndex):
     # reference: https://github.com/pgvector/pgvector?tab=readme-ov-file#querying
+    # Llama Stack supports only search functions that are applied for embeddings with vector type
     PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION: dict[str, str] = {
         "L2": "<->",
         "L1": "<+>",
         "COSINE": "<=>",
         "INNER_PRODUCT": "<#>",
-        "HAMMING": "<~>",
-        "JACCARD": "<%>",
     }
+
+    # reference: https://github.com/pgvector/pgvector?tab=readme-ov-file#hnsw
+    # Llama Stack supports only index operator classes that are applied for embeddings with vector type
+    PGVECTOR_DISTANCE_METRIC_TO_INDEX_OPERATOR_CLASS: dict[str, str] = {
+        "L2": "vector_l2_ops",
+        "L1": "vector_l1_ops",
+        "COSINE": "vector_cosine_ops",
+        "INNER_PRODUCT": "vector_ip_ops",
+    }
+
+    # pgvector's maximum embedding dimension for HNSW/IVFFlat indexes on column with type vector
+    # references: https://github.com/pgvector/pgvector?tab=readme-ov-file#hnsw and https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat
+    MAX_EMBEDDING_DIMENSION_FOR_HNSW_AND_IVFFLAT_INDEX = 2000
 
     def __init__(
         self,
         vector_store: VectorStore,
         dimension: int,
         conn: psycopg2.extensions.connection,
+        distance_metric: str,
+        vector_index: PGVectorIndexConfig,
         kvstore: KVStore | None = None,
-        distance_metric: str = "COSINE",
     ):
         self.vector_store = vector_store
         self.dimension = dimension
@@ -100,6 +148,7 @@ class PGVectorIndex(EmbeddingIndex):
         self.kvstore = kvstore
         self.check_distance_metric_availability(distance_metric)
         self.distance_metric = distance_metric
+        self.vector_index = vector_index
         self.table_name = None
 
     async def initialize(self) -> None:
@@ -122,6 +171,28 @@ class PGVectorIndex(EmbeddingIndex):
                     )
                 """
                 )
+
+                # pgvector's embedding dimensions requirement to create an index for Approximate Nearest Neighbor (ANN) search is up to 2,000 dimensions for column with type vector
+                if self.dimension <= self.MAX_EMBEDDING_DIMENSION_FOR_HNSW_AND_IVFFLAT_INDEX:
+                    if self.vector_index.type == PGVectorIndexType.HNSW:
+                        await self.create_hnsw_vector_index(cur)
+
+                    # Create the index only after the table has some data (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
+                    elif (
+                        self.vector_index.type == PGVectorIndexType.IVFFlat
+                        and not await self.check_conflicting_vector_index_exists(cur)
+                    ):
+                        log.info(
+                            f"Creation of {PGVectorIndexType.IVFFlat} vector index in vector_store: {self.vector_store.identifier} was deferred. It will be created when the table has some data."
+                        )
+
+                else:
+                    log.info(
+                        f"Skip creation of {self.vector_index.type} vector index for embedding in PGVector for vector_store: {self.vector_store.identifier}"
+                    )
+                    log.info(
+                        "PGVector requires embedding dimensions are up to 2,000 to successfully create a vector index."
+                    )
 
                 # Create GIN index for full-text search performance
                 cur.execute(
@@ -165,6 +236,13 @@ class PGVectorIndex(EmbeddingIndex):
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             execute_values(cur, query, values, template="(%s, %s, %s::vector, %s, to_tsvector('english', %s))")
 
+            # Create the IVFFlat index only after the table has some data (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
+            if (
+                self.vector_index.type == PGVectorIndexType.IVFFlat
+                and self.dimension <= self.MAX_EMBEDDING_DIMENSION_FOR_HNSW_AND_IVFFLAT_INDEX
+            ):
+                await self.create_ivfflat_vector_index(cur)
+
     async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
         """
         Performs vector similarity search using PostgreSQL's search function. Default distance metric is COSINE.
@@ -180,6 +258,14 @@ class PGVectorIndex(EmbeddingIndex):
         pgvector_search_function = self.get_pgvector_search_function()
 
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
+            # Specify the number of probes to allow PGVector to use Index Scan using IVFFlat index if it was configured (https://github.com/pgvector/pgvector?tab=readme-ov-file#query-options-1)
+            if self.vector_index.type == PGVectorIndexType.IVFFlat:
+                cur.execute(
+                    f"""
+                    SET ivfflat.probes = {self.vector_index.probes};
+                """
+                )
+
             cur.execute(
                 f"""
             SELECT document, embedding {pgvector_search_function} %s::vector AS distance
@@ -312,6 +398,14 @@ class PGVectorIndex(EmbeddingIndex):
             # Fix: Use proper tuple parameter binding with explicit array cast
             cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s::text[])", (chunk_ids,))
 
+    def get_pgvector_index_operator_class(self) -> str:
+        """Get the pgvector index operator class for the current distance metric.
+
+        Returns:
+            The operator class name.
+        """
+        return self.PGVECTOR_DISTANCE_METRIC_TO_INDEX_OPERATOR_CLASS[self.distance_metric]
+
     def get_pgvector_search_function(self) -> str:
         return self.PGVECTOR_DISTANCE_METRIC_TO_SEARCH_FUNCTION[self.distance_metric]
 
@@ -330,6 +424,160 @@ class PGVectorIndex(EmbeddingIndex):
                 f"Distance metric '{distance_metric}' is not supported by PGVector. "
                 f"Supported metrics are: {', '.join(supported_metrics)}"
             )
+
+    async def create_hnsw_vector_index(self, cur: cursor) -> None:
+        """Create PGVector HNSW vector index for Approximate Nearest Neighbor (ANN) search
+
+        Args:
+            cur: PostgreSQL cursor
+
+        Raises:
+            RuntimeError: If the error occurred when creating vector index in PGVector
+        """
+
+        # prevents from creating index for the table that already has conflicting index (HNSW or IVFFlat)
+        if await self.check_conflicting_vector_index_exists(cur):
+            return
+
+        try:
+            index_operator_class = self.get_pgvector_index_operator_class()
+
+            # Create HNSW (Hierarchical Navigable Small Worlds) index on embedding column to allow efficient and performant vector search in pgvector
+            # HNSW finds the approximate nearest neighbors by only calculating distance metric for vectors it visits during graph traversal instead of processing all vectors
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS {self.table_name}_hnsw_idx
+                ON {self.table_name} USING hnsw(embedding {index_operator_class}) WITH (m = {self.vector_index.m}, ef_construction = {self.vector_index.ef_construction});
+            """
+            )
+            log.info(
+                f"{PGVectorIndexType.HNSW} vector index was created with parameters m = {self.vector_index.m}, ef_construction = {self.vector_index.ef_construction} for vector_store: {self.vector_store.identifier}."
+            )
+
+        except psycopg2.Error as e:
+            raise RuntimeError(
+                f"Failed to create {PGVectorIndexType.HNSW} vector index for vector_store: {self.vector_store.identifier}: {e}"
+            ) from e
+
+    async def create_ivfflat_vector_index(self, cur: cursor) -> None:
+        """Create PGVector IVFFlat vector index for Approximate Nearest Neighbor (ANN) search
+
+        Args:
+            cur: PostgreSQL cursor
+
+        Raises:
+            RuntimeError: If the error occurred when creating vector index in PGVector
+        """
+
+        # prevents from creating index for the table that already has conflicting index (HNSW or IVFFlat)
+        if await self.check_conflicting_vector_index_exists(cur):
+            return
+
+        # don't create index too early as it decreases a performance (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
+        # create IVFFLAT index only if vector store has rows >= lists * 1000
+        if await self.fetch_number_of_records(cur) < self.vector_index.lists * 1000:
+            log.info(
+                f"IVFFlat index wasn't created for vector_store {self.vector_store.identifier} because table doesn't have enough records."
+            )
+            return
+
+        try:
+            index_operator_class = self.get_pgvector_index_operator_class()
+
+            # Create Inverted File with Flat Compression (IVFFlat) index on embedding column to allow efficient and performant vector search in pgvector
+            # IVFFlat index divides vectors into lists, and then searches a subset of those lists that are closest to the query vector
+            # Index should be created only after the table has some data (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS {self.table_name}_ivfflat_idx
+                ON {self.table_name} USING ivfflat(embedding {index_operator_class}) WITH (lists = {self.vector_index.lists});
+            """
+            )
+            log.info(
+                f"{PGVectorIndexType.IVFFlat} vector index was created with parameter lists = {self.vector_index.lists} for vector_store: {self.vector_store.identifier}."
+            )
+
+        except psycopg2.Error as e:
+            raise RuntimeError(
+                f"Failed to create {PGVectorIndexType.IVFFlat} vector index for vector_store: {self.vector_store.identifier}: {e}"
+            ) from e
+
+    async def check_conflicting_vector_index_exists(self, cur: cursor) -> bool:
+        """Check if vector index of any type has already been created for the table to prevent the conflict
+
+        Args:
+            cur: PostgreSQL cursor
+
+        Returns:
+            True if exists, otherwise False
+
+        Raises:
+            RuntimeError: If the error occurred when checking vector index exists in PGVector
+        """
+        try:
+            log.info(
+                f"Checking vector_store: {self.vector_store.identifier} for conflicting vector index in PGVector..."
+            )
+            cur.execute(
+                """
+                SELECT indexname FROM pg_indexes
+                WHERE (indexname LIKE %s OR indexname LIKE %s) AND tablename = %s;
+                """,
+                (
+                    "%hnsw%",
+                    "%ivfflat%",
+                    self.table_name,
+                ),
+            )
+            result = cur.fetchone()
+
+            if result:
+                log.warning(
+                    f"Conflicting vector index {result[0]} already exists in vector_store: {self.vector_store.identifier}"
+                )
+                log.warning(
+                    f"vector_store: {self.vector_store.identifier} will continue to use vector index {result[0]} to preserve performance."
+                )
+                return True
+
+            log.info(f"vector_store: {self.vector_store.identifier} currently doesn't have conflicting vector index")
+            log.info(f"Proceeding with creation of vector index for {self.vector_store.identifier}")
+            return False
+
+        except psycopg2.Error as e:
+            raise RuntimeError(f"Failed to check if vector index exists in PGVector: {e}") from e
+
+    async def fetch_number_of_records(self, cur: cursor) -> int:
+        """Returns number of records in a vector store
+
+        Args:
+            cur: PostgreSQL cursor
+
+        Returns:
+            number of records in a vector store
+
+        Raises:
+            RuntimeError: If the error occurred when fetching a number of records in a vector store in PGVector
+        """
+        try:
+            log.info(f"Fetching number of records in vector_store: {self.vector_store.identifier}...")
+            cur.execute(
+                f"""
+                SELECT COUNT(DISTINCT id)
+                FROM {self.table_name};
+                """
+            )
+            result = cur.fetchone()
+
+            if result:
+                log.info(f"vector_store: {self.vector_store.identifier} has {result[0]} records.")
+                return result[0]
+
+            log.info(f"vector_store: {self.vector_store.identifier} currently doesn't have any records.")
+            return 0
+
+        except psycopg2.Error as e:
+            raise RuntimeError(f"Failed to check if vector store has records in PGVector: {e}") from e
 
 
 class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
@@ -364,7 +612,7 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 if version:
                     log.info(f"Vector extension version: {version}")
                 else:
-                    raise RuntimeError("Vector extension is not installed.")
+                    create_vector_extension(cur)
 
                 cur.execute(
                     """
@@ -389,6 +637,8 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
                 dimension=vector_store.embedding_dimension,
                 conn=self.conn,
                 kvstore=self.kvstore,
+                distance_metric=self.config.distance_metric,
+                vector_index=self.config.vector_index,
             )
             await pgvector_index.initialize()
             index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
@@ -415,7 +665,12 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
 
         # Create and cache the PGVector index table for the vector DB
         pgvector_index = PGVectorIndex(
-            vector_store=vector_store, dimension=vector_store.embedding_dimension, conn=self.conn, kvstore=self.kvstore
+            vector_store=vector_store,
+            dimension=vector_store.embedding_dimension,
+            conn=self.conn,
+            kvstore=self.kvstore,
+            distance_metric=self.config.distance_metric,
+            vector_index=self.config.vector_index,
         )
         await pgvector_index.initialize()
         index = VectorStoreWithIndex(vector_store, index=pgvector_index, inference_api=self.inference_api)
@@ -432,17 +687,16 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
         await self.kvstore.delete(key=f"{VECTOR_DBS_PREFIX}{vector_store_id}")
 
-    async def insert_chunks(
-        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
-    ) -> None:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
-        await index.insert_chunks(chunks)
+        # Delete vector store metadata from PGVector metadata_store table
+        remove_vector_store_metadata(self.conn, vector_store_id)
 
-    async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
-    ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
-        return await index.query_chunks(query, params)
+    async def insert_chunks(self, request: InsertChunksRequest) -> None:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+        await index.insert_chunks(request)
+
+    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
+        return await index.query_chunks(request)
 
     async def _get_and_cache_vector_store_index(self, vector_store_id: str) -> VectorStoreWithIndex:
         if vector_store_id in self.cache:
@@ -458,15 +712,21 @@ class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProt
             raise VectorStoreNotFoundError(vector_store_id)
 
         vector_store = VectorStore.model_validate_json(vector_store_data)
-        index = PGVectorIndex(vector_store, vector_store.embedding_dimension, self.conn)
+        index = PGVectorIndex(
+            vector_store,
+            vector_store.embedding_dimension,
+            self.conn,
+            distance_metric=self.config.distance_metric,
+            vector_index=self.config.vector_index,
+        )
         await index.initialize()
         self.cache[vector_store_id] = VectorStoreWithIndex(vector_store, index, self.inference_api)
         return self.cache[vector_store_id]
 
-    async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
+    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
         """Delete a chunk from a PostgreSQL vector store."""
-        index = await self._get_and_cache_vector_store_index(store_id)
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        await index.index.delete_chunks(chunks_for_deletion)
+        await index.index.delete_chunks(request.chunks)

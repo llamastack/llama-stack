@@ -6,23 +6,23 @@
 
 import os
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 
 
 class BedrockBaseConfig(RemoteInferenceProviderConfig):
     auth_credential: None = Field(default=None, exclude=True)
-    aws_access_key_id: str | None = Field(
-        default_factory=lambda: os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_access_key_id: SecretStr | None = Field(
+        default_factory=lambda: SecretStr(val) if (val := os.getenv("AWS_ACCESS_KEY_ID")) else None,
         description="The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID",
     )
-    aws_secret_access_key: str | None = Field(
-        default_factory=lambda: os.getenv("AWS_SECRET_ACCESS_KEY"),
+    aws_secret_access_key: SecretStr | None = Field(
+        default_factory=lambda: SecretStr(val) if (val := os.getenv("AWS_SECRET_ACCESS_KEY")) else None,
         description="The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY",
     )
-    aws_session_token: str | None = Field(
-        default_factory=lambda: os.getenv("AWS_SESSION_TOKEN"),
+    aws_session_token: SecretStr | None = Field(
+        default_factory=lambda: SecretStr(val) if (val := os.getenv("AWS_SESSION_TOKEN")) else None,
         description="The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN",
     )
     region_name: str | None = Field(

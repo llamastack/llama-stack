@@ -53,6 +53,7 @@ from llama_stack_api import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
     ResponseGuardrailSpec,
+    RunModerationRequest,
     Safety,
 )
 
@@ -104,15 +105,7 @@ async def convert_chat_choice_to_response_message(
     message_id: str | None = None,
 ) -> OpenAIResponseMessage:
     """Convert an OpenAI Chat Completion choice into an OpenAI Response output message."""
-    output_content = ""
-    if isinstance(choice.message.content, str):
-        output_content = choice.message.content
-    elif isinstance(choice.message.content, OpenAIChatCompletionContentPartTextParam):
-        output_content = choice.message.content.text
-    else:
-        raise ValueError(
-            f"Llama Stack OpenAI Responses does not yet support output content type: {type(choice.message.content)}"
-        )
+    output_content = choice.message.content or ""
 
     annotations, clean_text = _extract_citations_from_text(output_content, citation_files or {})
     logprobs = choice.logprobs.content if choice.logprobs and choice.logprobs.content else None
@@ -468,7 +461,9 @@ async def run_guardrails(safety_api: Safety | None, messages: str, guardrail_ids
         else:
             raise ValueError(f"No shield found with identifier '{guardrail_id}'")
 
-    guardrail_tasks = [safety_api.run_moderation(messages, model=model_id) for model_id in model_ids]
+    guardrail_tasks = [
+        safety_api.run_moderation(RunModerationRequest(input=messages, model=model_id)) for model_id in model_ids
+    ]
     responses = await asyncio.gather(*guardrail_tasks)
 
     for response in responses:

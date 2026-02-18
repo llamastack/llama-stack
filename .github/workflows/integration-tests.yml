@@ -48,6 +48,10 @@ on:
         type: string
         default: 'default'
         description: 'Matrix configuration key from ci_matrix.json (e.g., "default", "stainless")'
+      matrix_json:
+        required: false
+        type: string
+        description: 'Pre-defined matrix JSON. If provided, skips generate_ci_matrix.py execution.'
       pr_head_sha:
         required: false
         type: string
@@ -61,6 +65,11 @@ on:
         type: boolean
         default: false
         description: 'Whether this is a fork PR (cannot push recordings to forks)'
+      disable_cache:
+        required: false
+        type: boolean
+        default: false
+        description: 'Disable caching (for security in pull_request_target contexts)'
       test-all-client-versions:
         required: false
         type: boolean
@@ -72,14 +81,23 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref == 'refs/heads/main' && github.run_id || github.ref }}
   cancel-in-progress: true
 
+# Limit permissions of the GITHUB_TOKEN to the minimum required.
+# Default mode is 'replay' which only needs read access.
+# When called via workflow_call (e.g., from stainless-builds.yml with record-if-missing),
+# the caller's permissions apply.
+permissions:
+  contents: read
+
 jobs:
   generate-matrix:
+    # Skip matrix generation if matrix_json is provided (e.g., from pull_request_target callers)
+    if: ${{ inputs.matrix_json == '' }}
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ inputs.pr_head_sha || github.event.pull_request.head.sha || github.sha }}
 
@@ -97,7 +115,13 @@ jobs:
 
   run-replay-mode-tests:
     needs: generate-matrix
+    # Always run even if generate-matrix was skipped (when matrix_json is provided)
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    # When disable_cache is true, set UV_NO_CACHE to prevent uv from using cached packages.
+    # This is a security measure for pull_request_target contexts to prevent cache poisoning.
+    env:
+      UV_NO_CACHE: ${{ inputs.disable_cache == true }}
     name: ${{ format('Integration Tests ({0}, {1}, {2}, client={3}, {4})', matrix.client, matrix.config.setup, matrix.python-version, matrix.client-version, matrix.config.suite) }}
 
     strategy:
@@ -108,19 +132,21 @@ jobs:
         python-version: ${{ github.event.schedule == '0 0 * * *' && fromJSON('["3.12", "3.13"]') || fromJSON('["3.12"]') }}
         node-version: [22]
         client-version: ${{ (github.event.schedule == '0 0 * * *' || github.event.inputs.test-all-client-versions == 'true' || inputs.test-all-client-versions == true) && fromJSON('["published", "latest"]') || fromJSON('["latest"]') }}
-        # Test configurations: Generated from CI_MATRIX in tests/integration/ci_matrix.json
-        # See scripts/generate_ci_matrix.py for generation logic
-        config: ${{ fromJSON(needs.generate-matrix.outputs.matrix).include }}
+        # Test configurations: Either from matrix_json input or generated from ci_matrix.json
+        config: ${{ fromJSON(inputs.matrix_json || needs.generate-matrix.outputs.matrix).include }}
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ inputs.pr_head_sha || github.event.pull_request.head.sha || github.sha }}
 
+      # Note: Using full repo path with pinned SHA ensures actions are loaded from
+      # a trusted commit, not from PR checkout. This is critical for security when
+      # called from pull_request_target workflows.
       - name: Setup test environment
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: ./.github/actions/setup-test-environment
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@4c1b03b55000cc5dca52b0458543815f3837b5b7
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
@@ -131,24 +157,27 @@ jobs:
 
       - name: Setup Node.js for TypeScript client tests
         if: ${{ matrix.client == 'server' }}
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
         with:
           node-version: ${{matrix.node-version}}
-          cache: 'npm'
+          cache: ${{ inputs.disable_cache && '' || 'npm' }}
           cache-dependency-path: tests/integration/client-typescript/package-lock.json
+          package-manager-cache: ${{ !inputs.disable_cache }}
 
       - name: Setup TypeScript client
         if: ${{ matrix.client == 'server' }}
         id: setup-ts-client
-        uses: ./.github/actions/setup-typescript-client
+        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@4c1b03b55000cc5dca52b0458543815f3837b5b7
         with:
           client-version: ${{ matrix.client-version }}
 
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: ./.github/actions/run-and-record-tests
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@4c1b03b55000cc5dca52b0458543815f3837b5b7
         env:
           OPENAI_API_KEY: dummy
+          AWS_BEARER_TOKEN_BEDROCK: replay-mode-dummy-key
+          AWS_DEFAULT_REGION: us-west-2
           TS_CLIENT_PATH: ${{ steps.setup-ts-client.outputs.ts-client-path || '' }}
         with:
           stack-config: >-

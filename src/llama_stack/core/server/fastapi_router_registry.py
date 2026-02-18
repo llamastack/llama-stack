@@ -16,22 +16,55 @@ from typing import Any, cast
 from fastapi import APIRouter
 from fastapi.routing import APIRoute
 
-from llama_stack_api import admin, batches, benchmarks, conversations, datasets, files, inspect_api, models, providers
+from llama_stack_api import (
+    admin,
+    agents,
+    batches,
+    benchmarks,
+    connectors,
+    conversations,
+    datasetio,
+    datasets,
+    eval,
+    files,
+    inference,
+    inspect_api,
+    models,
+    post_training,
+    prompts,
+    providers,
+    safety,
+    scoring,
+    scoring_functions,
+    shields,
+    vector_io,
+)
+from llama_stack_api.datatypes import Api
 
 # Router factories for APIs that have FastAPI routers
 # Add new APIs here as they are migrated to the router system
-from llama_stack_api.datatypes import Api
-
 _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "admin": admin.fastapi_routes.create_router,
+    "agents": agents.fastapi_routes.create_router,
     "batches": batches.fastapi_routes.create_router,
     "benchmarks": benchmarks.fastapi_routes.create_router,
-    "datasets": datasets.fastapi_routes.create_router,
-    "models": models.fastapi_routes.create_router,
-    "providers": providers.fastapi_routes.create_router,
-    "inspect": inspect_api.fastapi_routes.create_router,
-    "files": files.fastapi_routes.create_router,
+    "connectors": connectors.fastapi_routes.create_router,
     "conversations": conversations.fastapi_routes.create_router,
+    "datasetio": datasetio.fastapi_routes.create_router,
+    "datasets": datasets.fastapi_routes.create_router,
+    "eval": eval.fastapi_routes.create_router,
+    "files": files.fastapi_routes.create_router,
+    "inference": inference.fastapi_routes.create_router,
+    "inspect": inspect_api.fastapi_routes.create_router,
+    "models": models.fastapi_routes.create_router,
+    "post_training": post_training.fastapi_routes.create_router,
+    "prompts": prompts.fastapi_routes.create_router,
+    "providers": providers.fastapi_routes.create_router,
+    "safety": safety.fastapi_routes.create_router,
+    "scoring": scoring.fastapi_routes.create_router,
+    "scoring_functions": scoring_functions.fastapi_routes.create_router,
+    "shields": shields.fastapi_routes.create_router,
+    "vector_io": vector_io.fastapi_routes.create_router,
 }
 
 

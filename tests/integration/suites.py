@@ -100,6 +100,14 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "vllm/Qwen/Qwen3-0.6B",
             "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
+            "rerank_model": "vllm/Qwen/Qwen3-Reranker-0.6B",
+        },
+    ),
+    "bedrock": Setup(
+        name="bedrock",
+        description="AWS Bedrock provider with OpenAI GPT-OSS model (us-west-2)",
+        defaults={
+            "text_model": "bedrock/openai.gpt-oss-20b-1:0",
         },
     ),
     "gpt": Setup(
@@ -173,6 +181,17 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "groq/llama-3.3-70b-versatile",
         },
     ),
+    "llama-cpp-server": Setup(
+        name="llama-cpp-server",
+        description="llama.cpp server provider with OpenAI-compatible API",
+        env={
+            "LLAMA_CPP_SERVER_URL": "http://localhost:8080",
+        },
+        defaults={
+            "text_model": "llama-cpp-server/qwen2.5",
+            "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
+        },
+    ),
 }
 
 
@@ -208,5 +227,19 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         name="eval",
         roots=["tests/integration/eval"],
         default_setup="ollama",
+    ),
+    "reasoning": Suite(
+        name="reasoning",
+        roots=["tests/integration/responses/test_reasoning.py"],
+        default_setup="vllm",
+    ),
+    "bedrock": Suite(
+        name="bedrock",
+        roots=[
+            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming",
+            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming",
+            "tests/integration/inference/test_openai_completion.py::test_inference_store",
+        ],
+        default_setup="bedrock",
     ),
 }

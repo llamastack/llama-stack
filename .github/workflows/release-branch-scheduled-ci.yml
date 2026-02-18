@@ -1,0 +1,233 @@
+name: Release Branch Scheduled CI
+
+run-name: Scheduled CI checks for active release branches
+
+on:
+  schedule:
+    # Run twice weekly (Monday and Thursday) at 2 AM UTC
+    - cron: '0 2 * * 1,4'
+  workflow_dispatch:
+    inputs:
+      branches:
+        description: 'Comma-separated list of release branches to test (leave empty for auto-discovery)'
+        required: false
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  discover-branches:
+    name: Discover active release branches
+    runs-on: ubuntu-latest
+    outputs:
+      branches: ${{ steps.set-branches.outputs.branches }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0  # Fetch all branches
+
+      - name: Discover release branches
+        id: set-branches
+        run: |
+          if [ -n "${{ github.event.inputs.branches }}" ]; then
+            # Manual input: use provided branches
+            branches=$(echo "${{ github.event.inputs.branches }}" | tr ',' '\n' | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          else
+            # Auto-discovery: find active release branches (*.x pattern)
+            # These are the long-lived release branches that should be tested regularly
+            branches=$(git branch -r | \
+              grep 'origin/release-[0-9]' | \
+              grep '\.x$' | \
+              sed 's|^[[:space:]]*origin/||' | \
+              sort -V | \
+              tail -2 | \
+              jq -R -s -c 'split("\n") | map(select(length > 0) | ltrimstr(" ") | rtrimstr(" "))')
+          fi
+
+          echo "branches=$branches" >> $GITHUB_OUTPUT
+          echo "Testing branches: $branches"
+
+  unit-tests:
+    name: Unit tests on ${{ matrix.branch }}
+    needs: discover-branches
+    if: needs.discover-branches.outputs.branches != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.discover-branches.outputs.branches) }}
+        python: ["3.12", "3.13"]
+    steps:
+      - name: Checkout ${{ matrix.branch }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Install dependencies
+        uses: ./.github/actions/setup-runner
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Run unit tests
+        run: |
+          PYTHON_VERSION=${{ matrix.python }} ./scripts/unit-tests.sh --junitxml=pytest-report-${{ matrix.python }}.xml
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: unit-test-results-${{ matrix.branch }}-${{ matrix.python }}
+          path: |
+            .pytest_cache/
+            pytest-report-${{ matrix.python }}.xml
+            htmlcov-${{ matrix.python }}/
+          retention-days: 7
+
+  integration-tests:
+    name: Integration tests on ${{ matrix.branch }}
+    needs: discover-branches
+    if: needs.discover-branches.outputs.branches != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.discover-branches.outputs.branches) }}
+        client: [library, docker, server]
+        python-version: ["3.12"]
+        node-version: [22]
+        client-version: ["latest"]
+    steps:
+      - name: Checkout ${{ matrix.branch }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Setup test environment
+        uses: ./.github/actions/setup-test-environment
+        with:
+          python-version: ${{ matrix.python-version }}
+          client-version: ${{ matrix.client-version }}
+          setup: 'ollama'
+          suite: 'base'
+          inference-mode: 'replay'
+          branch: ${{ matrix.branch }}
+
+      - name: Check for TypeScript client tests
+        id: check-ts-client
+        run: |
+          if [ -d "tests/integration/client-typescript" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Node.js for TypeScript client tests
+        if: matrix.client == 'server' && steps.check-ts-client.outputs.exists == 'true'
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: tests/integration/client-typescript/package-lock.json
+
+      - name: Setup TypeScript client
+        if: matrix.client == 'server' && steps.check-ts-client.outputs.exists == 'true'
+        id: setup-ts-client
+        uses: ./.github/actions/setup-typescript-client
+        with:
+          client-version: ${{ matrix.client-version }}
+
+      - name: Run tests
+        uses: ./.github/actions/run-and-record-tests
+        env:
+          OPENAI_API_KEY: dummy
+          TS_CLIENT_PATH: ${{ steps.setup-ts-client.outputs.ts-client-path || '' }}
+        with:
+          stack-config: >-
+            ${{ matrix.client == 'library' && 'ci-tests'
+                || (matrix.client == 'server' && 'server:ci-tests')
+                || 'docker:ci-tests' }}
+          setup: 'ollama'
+          inference-mode: 'replay'
+          suite: 'base'
+
+  build-verification:
+    name: Build verification on ${{ matrix.branch }}
+    needs: discover-branches
+    if: needs.discover-branches.outputs.branches != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        branch: ${{ fromJSON(needs.discover-branches.outputs.branches) }}
+        python-version: ['3.12', '3.13']
+    steps:
+      - name: Checkout ${{ matrix.branch }}
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ matrix.branch }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          activate-environment: true
+
+      - name: Build Llama Stack API package
+        if: hashFiles('src/llama_stack_api/pyproject.toml') != ''
+        working-directory: src/llama_stack_api
+        run: uv build
+
+      - name: Build Llama Stack package
+        run: uv build
+
+      - name: Install Llama Stack package (with api stubs from local build)
+        run: |
+          if [ -d "src/llama_stack_api/dist" ]; then
+            uv pip install --find-links src/llama_stack_api/dist dist/*.whl
+          else
+            uv pip install dist/*.whl
+          fi
+
+      - name: Verify Llama Stack package
+        run: |
+          uv pip list
+          uv pip show llama-stack
+          command -v llama
+          llama stack list-apis
+          llama stack list-providers inference
+          llama stack list-deps starter
+
+  summary:
+    name: Scheduled CI Summary
+    runs-on: ubuntu-latest
+    needs: [discover-branches, unit-tests, integration-tests, build-verification]
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          branches="${{ needs.discover-branches.outputs.branches }}"
+
+          if [ "$branches" = "[]" ] || [ -z "$branches" ]; then
+            echo "::warning::No release branches found to test"
+            exit 0
+          fi
+
+          if [ "${{ needs.unit-tests.result }}" != "success" ]; then
+            echo "::error::Unit tests failed on one or more branches"
+            exit 1
+          fi
+
+          if [ "${{ needs.integration-tests.result }}" != "success" ]; then
+            echo "::error::Integration tests failed on one or more branches"
+            exit 1
+          fi
+
+          if [ "${{ needs.build-verification.result }}" != "success" ]; then
+            echo "::error::Build verification failed on one or more branches"
+            exit 1
+          fi
+
+          echo "✅ All scheduled CI checks passed for release branches!"
