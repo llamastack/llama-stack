@@ -31,7 +31,7 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack_api import OpenAIResponseInputMessageContentText, OpenAIResponseMessage
+from llama_stack_api import InvalidParameterError, OpenAIResponseInputMessageContentText, OpenAIResponseMessage
 from llama_stack_api.conversations import (
     AddItemsRequest,
     CreateConversationRequest,
@@ -102,12 +102,12 @@ async def test_conversation_items(service):
 
 
 async def test_invalid_conversation_id(service):
-    with pytest.raises(ValueError, match="Expected an ID that begins with 'conv_'"):
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
         await service._get_validated_conversation("invalid_id")
 
 
 async def test_empty_parameter_validation(service):
-    with pytest.raises(ValueError, match="Expected a non-empty value"):
+    with pytest.raises(InvalidParameterError, match="Must be a non-empty string"):
         await service.retrieve(RetrieveItemRequest(conversation_id="", item_id="item_123"))
 
 

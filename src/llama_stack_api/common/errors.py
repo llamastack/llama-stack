@@ -58,7 +58,22 @@ class ClientListCommand:
 
 
 class ResourceNotFoundError(LlamaStackError):
-    """generic exception for a missing Llama Stack resource"""
+    """Raised when a requested Llama Stack resource does not exist.
+
+    Maps to HTTP 404 Not Found. Subclasses (ModelNotFoundError, ResponseNotFoundError,
+    etc.) specialize this for specific resource types and often add a client_command
+    hint to guide users on how to list available resources.
+
+    :param resource_name: The identifier or name that was not found.
+    :param resource_type: Human-readable type label (e.g., "Model", "Response").
+    :param client_command: Optional API method to suggest for listing resources (e.g., "files.list").
+    :param client_command_args: Optional arguments for the list command. When provided (str or list),
+        they are included in the hint, e.g., ``client.connectors.list_tools("conn_123")``. Defaults to
+        none (empty parens).
+    :param resource_name_plural: Plural label for the "list available X" hint suffix. Defaults to
+        ``{resource_type}s`` (e.g., "Models" from "Model"). Override when irregular, e.g., "Batches"
+        instead of "Batchs".
+    """
 
     status_code: httpx.codes = httpx.codes.NOT_FOUND
 
@@ -112,6 +127,15 @@ class ConversationNotFoundError(ResourceNotFoundError):
 
     def __init__(self, conversation_id: str) -> None:
         super().__init__(conversation_id, resource_type="Conversation")
+
+
+class ConversationItemNotFoundError(LlamaStackError):
+    """raised when Llama Stack cannot find a referenced item within a conversation"""
+
+    status_code: httpx.codes = httpx.codes.NOT_FOUND
+
+    def __init__(self, item_id: str, conversation_id: str) -> None:
+        super().__init__(f"Conversation item '{item_id}' not found in conversation '{conversation_id}'.")
 
 
 class ConnectorNotFoundError(ResourceNotFoundError):
@@ -187,13 +211,63 @@ class TokenValidationError(LlamaStackError):
         super().__init__(message)
 
 
-class InvalidConversationIdError(LlamaStackError):
-    """raised when a conversation ID has an invalid format"""
+class ResponseNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced response"""
+
+    def __init__(self, response_id: str) -> None:
+        super().__init__(response_id, "Response")
+
+
+class InvalidParameterError(ValueError, LlamaStackError):
+    """Raised when a request parameter violates validation constraints.
+
+    Maps to HTTP 400 Bad Request. Use this for client-supplied parameter errors
+    such as out-of-range values, invalid formats, or mutually exclusive params.
+
+    :param param_name: Name of the parameter (or comma-separated names for mutually exclusive params).
+    :param value: The invalid value that was provided.
+    :param constraint: Human-readable description of the constraint (e.g., "Must be >= 1.").
+    """
 
     status_code: httpx.codes = httpx.codes.BAD_REQUEST
 
-    def __init__(self, conversation_id: str) -> None:
-        message = f"Invalid conversation ID '{conversation_id}'. Expected an ID that begins with 'conv_'."
+    def __init__(self, param_name: str, value: object, constraint: str) -> None:
+        message = f"Invalid value for '{param_name}': {value}. {constraint}"
+        super().__init__(message)
+
+
+class ServiceNotEnabledError(LlamaStackError, ValueError):
+    """Raised when a required Llama Stack service is not configured or available.
+
+    Maps to HTTP 503 Service Unavailable. Use this when a request depends on a service
+    (e.g., Safety API) that has not been enabled in the stack configuration.
+
+    :param service_name: The name of the service that is not enabled (e.g., "Safety API").
+    :param provider_specific_message: Optional additional context appended to the message,
+        intended for operators or users to understand provider-specific setup steps.
+        Separated from the base message by a blank line.
+    """
+
+    status_code: httpx.codes = httpx.codes.SERVICE_UNAVAILABLE
+
+    def __init__(self, service_name: str, *, provider_specific_message: str | None = None) -> None:
+        message = f"Service '{service_name}' is not enabled. Please check your configuration and enable the service before trying again."
+        if provider_specific_message:
+            message += f"\n\n{provider_specific_message}"
+        super().__init__(message)
+
+
+class InternalServerError(LlamaStackError):
+    """
+    A generic server side error that is not caused by the user's request. Sensitive data
+    or details of the internal workings of the server should never be exposed to the user.
+    Instead, sanitized error information should be logged for debugging purposes.
+    """
+
+    status_code: httpx.codes = httpx.codes.INTERNAL_SERVER_ERROR
+
+    def __init__(self, detail: str | None = None) -> None:
+        message = detail or "An internal error occurred while processing your request."
         super().__init__(message)
 
 
