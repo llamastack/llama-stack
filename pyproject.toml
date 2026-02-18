@@ -162,7 +162,10 @@ test = [
     "pymilvus>=2.6.1",
     "milvus-lite>=2.5.0",
     "weaviate-client>=4.16.4",
-    "elasticsearch>=8.16.0, <9.0.0"
+    "elasticsearch>=8.16.0, <9.0.0",
+    "langchain-openai",
+    "langchain-core",
+    "langgraph",
 ]
 docs = [
     "setuptools",
