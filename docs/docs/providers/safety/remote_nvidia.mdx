@@ -19,7 +19,7 @@ NVIDIA's safety provider for content moderation and safety filtering.
 | `blocked_message` | `str` | No | I'm sorry, I can't respond to that. | The message NeMo Guardrails returns when input is blocked |
 | `temperature` | `float` | No | 1.0 | Sampling temperature for the guardrails model, between 0 and 2 |
 | `timeout` | `int` | No | 60 | Timeout in seconds for HTTP requests to the guardrails service |
-| `api_mode` | `GuardrailsApiMode` | No | GuardrailsApiMode.MICROSERVICE | API mode: 'microservice' for enterprise NIM (/v1/guardrail/checks), 'openai' for open-source toolkit (/v1/guardrail/chat/completions) |
+| `api_mode` | `GuardrailsApiMode` | No | GuardrailsApiMode.GUARDRAIL_CHECKS | API mode: 'guardrail_checks' for /v1/guardrail/checks, 'guardrail_chat_completions' for /v1/guardrail/chat/completions |
 
 ## Sample Configuration
 
@@ -30,5 +30,5 @@ blocked_message: ${env.NVIDIA_GUARDRAILS_BLOCKED_MESSAGE:=I'm sorry, I can't res
   to that.}
 temperature: 1.0
 timeout: 60
-api_mode: ${env.NVIDIA_GUARDRAILS_API_MODE:=microservice}
+api_mode: ${env.NVIDIA_GUARDRAILS_API_MODE:=guardrail_checks}
 ```

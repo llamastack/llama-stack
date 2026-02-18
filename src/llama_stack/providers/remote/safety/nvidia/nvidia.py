@@ -34,12 +34,6 @@ class NVIDIASafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivat
     shield_store: ShieldStore
 
     def __init__(self, config: NVIDIASafetyConfig) -> None:
-        """
-        Initialize the NVIDIASafetyAdapter with a given safety configuration.
-
-        Args:
-            config (NVIDIASafetyConfig): The configuration containing the guardrails service URL and config ID.
-        """
         self.config = config
 
     async def initialize(self) -> None:
@@ -56,7 +50,6 @@ class NVIDIASafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivat
         pass
 
     async def run_shield(self, request: RunShieldRequest) -> RunShieldResponse:
-        """Run a safety shield check against the provided messages."""
         shield = await self.shield_store.get_shield(GetShieldRequest(identifier=request.shield_id))
         if not shield:
             raise ValueError(f"Shield {request.shield_id} not found")
@@ -74,21 +67,7 @@ class NVIDIASafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPrivat
 
 
 class NeMoGuardrails:
-    """
-    A class that encapsulates NVIDIA's guardrails safety logic.
-
-    Sends messages to the guardrails service and interprets the response to determine
-    if a safety violation has occurred.
-    """
-
     def __init__(self, config: NVIDIASafetyConfig, model: str):
-        """
-        Initialize a NeMoGuardrails instance with the provided parameters.
-
-        Args:
-            config (NVIDIASafetyConfig): The safety configuration containing the config ID and guardrails URL.
-            model (str): The identifier or name of the model to be used for safety checks.
-        """
         self.config_id = config.config_id
         self.model = model
         self.blocked_message = config.blocked_message
@@ -98,7 +77,6 @@ class NeMoGuardrails:
         self.api_mode = config.api_mode
 
     async def _guardrails_post(self, path: str, data: Any | None) -> dict[str, Any]:
-        """Make a POST request to the guardrails service."""
         headers = {"Accept": "application/json", "Content-Type": "application/json"}
         url = urljoin(self.guardrails_service_url, path)
         try:
@@ -117,24 +95,11 @@ class NeMoGuardrails:
             raise RuntimeError(f"Failed to connect to guardrails service at {url}: {e}") from e
 
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
-        """
-        Run safety check against the NeMo Guardrails API.
+        if self.api_mode == GuardrailsApiMode.GUARDRAIL_CHECKS:
+            return await self._run_guardrail_checks(messages)
+        return await self._run_guardrail_chat_completions(messages)
 
-        Args:
-            messages (List[Message]): A list of Message objects to be checked for safety violations.
-
-        Returns:
-            RunShieldResponse: Response with SafetyViolation if content is blocked, None otherwise.
-
-        Raises:
-            httpx.HTTPStatusError: If the POST request fails.
-        """
-        if self.api_mode == GuardrailsApiMode.MICROSERVICE:
-            return await self._run_microservice(messages)
-        return await self._run_openai(messages)
-
-    async def _run_microservice(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
-        """Enterprise NIM endpoint: /v1/guardrail/checks"""
+    async def _run_guardrail_checks(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         request_data = {
             "model": self.model,
             "messages": [
@@ -149,12 +114,27 @@ class NeMoGuardrails:
             "guardrails": {"config_id": self.config_id},
         }
         logger.debug(
-            f"Guardrails request (microservice) to {self.guardrails_service_url}: config_id={self.config_id}, model={self.model}"
+            f"Guardrails request (guardrail_checks) to {self.guardrails_service_url}: config_id={self.config_id}, model={self.model}"
         )
         response = await self._guardrails_post(path="/v1/guardrail/checks", data=request_data)
 
+        # Primary: check guardrails_data.log.activated_rails for any rail with stop=true
+        activated_rails = response.get("guardrails_data", {}).get("log", {}).get("activated_rails", [])
+        blocking_rails = [r for r in activated_rails if r.get("stop")]
+        if blocking_rails:
+            rail_names = [r.get("name", "unknown") for r in blocking_rails]
+            logger.info(f"Guardrails blocked by rails: {rail_names}")
+            return RunShieldResponse(
+                violation=SafetyViolation(
+                    user_message=self.blocked_message,
+                    violation_level=ViolationLevel.ERROR,
+                    metadata={"blocking_rails": rail_names},
+                )
+            )
+
+        # Fallback: legacy status field
         if response.get("status") == "blocked":
-            logger.info(f"Guardrails blocked: {response.get('rails_status', {})}")
+            logger.info(f"Guardrails blocked (legacy): {response.get('rails_status', {})}")
             return RunShieldResponse(
                 violation=SafetyViolation(
                     user_message=self.blocked_message,
@@ -164,8 +144,7 @@ class NeMoGuardrails:
             )
         return RunShieldResponse(violation=None)
 
-    async def _run_openai(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
-        """Open-source toolkit endpoint: /v1/guardrail/chat/completions"""
+    async def _run_guardrail_chat_completions(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         request_data = {
             "model": self.model,
             "messages": [
@@ -175,13 +154,12 @@ class NeMoGuardrails:
             "temperature": self.temperature,
         }
         logger.debug(
-            f"Guardrails request (openai) to {self.guardrails_service_url}: config_id={self.config_id}, model={self.model}"
+            f"Guardrails request (guardrail_chat_completions) to {self.guardrails_service_url}: config_id={self.config_id}, model={self.model}"
         )
         response = await self._guardrails_post(path="/v1/guardrail/chat/completions", data=request_data)
         return self._parse_guardrails_response(response)
 
     def _parse_guardrails_response(self, response: dict[str, Any]) -> RunShieldResponse:
-        """Parse guardrails API response and return appropriate RunShieldResponse."""
         error = response.get("error")
         if error:
             return self._handle_error_response(error)
@@ -200,7 +178,6 @@ class NeMoGuardrails:
         return self._parse_response_content(response)
 
     def _handle_error_response(self, error: dict[str, Any]) -> RunShieldResponse:
-        """Handle error object in guardrails response."""
         error_type = error.get("type", "")
         error_code = error.get("code", "")
 
@@ -226,7 +203,6 @@ class NeMoGuardrails:
         raise RuntimeError(f"Failed to run guardrails check: {error.get('message', 'Unknown error')}")
 
     def _parse_response_content(self, response: dict[str, Any]) -> RunShieldResponse:
-        """Extract content from response and check for blocked message pattern."""
         content = ""
         choices = response.get("choices", [])
 

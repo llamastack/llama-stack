@@ -33,12 +33,12 @@ class FakeNVIDIASafetyAdapter(NVIDIASafetyAdapter):
 
 @pytest.fixture
 def nvidia_adapter():
-    """Set up the NVIDIASafetyAdapter for testing with OpenAI API mode."""
+    """Set up the NVIDIASafetyAdapter for testing with guardrail_chat_completions API mode."""
     os.environ["NVIDIA_GUARDRAILS_URL"] = "http://nemo.test"
 
     config = NVIDIASafetyConfig(
         guardrails_service_url=os.environ["NVIDIA_GUARDRAILS_URL"],
-        api_mode=GuardrailsApiMode.OPENAI,
+        api_mode=GuardrailsApiMode.GUARDRAIL_CHAT_COMPLETIONS,
     )
 
     shield_store = AsyncMock()
@@ -48,13 +48,13 @@ def nvidia_adapter():
 
 
 @pytest.fixture
-def nvidia_adapter_microservice():
-    """Set up the NVIDIASafetyAdapter for testing with Microservice API mode."""
+def nvidia_adapter_guardrail_checks():
+    """Set up the NVIDIASafetyAdapter for testing with guardrail_checks API mode."""
     os.environ["NVIDIA_GUARDRAILS_URL"] = "http://nemo.test"
 
     config = NVIDIASafetyConfig(
         guardrails_service_url=os.environ["NVIDIA_GUARDRAILS_URL"],
-        api_mode=GuardrailsApiMode.MICROSERVICE,
+        api_mode=GuardrailsApiMode.GUARDRAIL_CHECKS,
     )
 
     shield_store = AsyncMock()
@@ -425,12 +425,12 @@ def test_config_requires_config_id():
         )
 
 
-# Microservice API mode tests
+# Guardrail checks API mode tests
 
 
-async def test_run_shield_microservice_allowed(nvidia_adapter_microservice, mock_guardrails_post):
-    """Test microservice mode with allowed response."""
-    adapter = nvidia_adapter_microservice
+async def test_run_shield_guardrail_checks_allowed(nvidia_adapter_guardrail_checks, mock_guardrails_post):
+    """Test guardrail_checks mode with allowed response."""
+    adapter = nvidia_adapter_guardrail_checks
 
     shield_id = "test-shield"
     shield = Shield(
@@ -473,9 +473,9 @@ async def test_run_shield_microservice_allowed(nvidia_adapter_microservice, mock
     assert result.violation is None
 
 
-async def test_run_shield_microservice_blocked(nvidia_adapter_microservice, mock_guardrails_post):
-    """Test microservice mode with blocked response."""
-    adapter = nvidia_adapter_microservice
+async def test_run_shield_guardrail_checks_blocked(nvidia_adapter_guardrail_checks, mock_guardrails_post):
+    """Test guardrail_checks mode with blocked response (legacy status field)."""
+    adapter = nvidia_adapter_guardrail_checks
 
     shield_id = "test-shield"
     shield = Shield(
@@ -518,9 +518,9 @@ async def test_run_shield_microservice_blocked(nvidia_adapter_microservice, mock
     assert result.violation.metadata == {"self check input": "blocked"}
 
 
-async def test_run_shield_microservice_http_error(nvidia_adapter_microservice, mock_guardrails_post):
-    """Test HTTP error handling for microservice mode."""
-    adapter = nvidia_adapter_microservice
+async def test_run_shield_guardrail_checks_http_error(nvidia_adapter_guardrail_checks, mock_guardrails_post):
+    """Test HTTP error handling for guardrail_checks mode."""
+    adapter = nvidia_adapter_guardrail_checks
 
     shield_id = "test-shield"
     shield = Shield(
@@ -593,10 +593,10 @@ async def test_run_shield_nemo_exception_message(nvidia_adapter, mock_guardrails
     assert result.violation.metadata == {"exception_type": "RailException"}
 
 
-def test_default_api_mode_is_microservice():
-    """Test that default api_mode is MICROSERVICE when not specified."""
+def test_default_api_mode_is_guardrail_checks():
+    """Test that default api_mode is GUARDRAIL_CHECKS when not specified."""
     config = NVIDIASafetyConfig(guardrails_service_url="http://test")
-    assert config.api_mode == GuardrailsApiMode.MICROSERVICE
+    assert config.api_mode == GuardrailsApiMode.GUARDRAIL_CHECKS
 
 
 def test_temperature_validation():
@@ -624,7 +624,7 @@ async def test_run_shield_custom_blocked_message(mock_guardrails_post):
     custom_message = "Custom block response"
     config = NVIDIASafetyConfig(
         guardrails_service_url=os.environ["NVIDIA_GUARDRAILS_URL"],
-        api_mode=GuardrailsApiMode.OPENAI,
+        api_mode=GuardrailsApiMode.GUARDRAIL_CHAT_COMPLETIONS,
         blocked_message=custom_message,
     )
 
@@ -649,3 +649,129 @@ async def test_run_shield_custom_blocked_message(mock_guardrails_post):
     assert result.violation is not None
     assert result.violation.user_message == custom_message
     assert result.violation.metadata == {"matched_pattern": custom_message}
+
+
+# guardrails_data parsing tests
+
+
+async def test_guardrails_data_blocked(nvidia_adapter_guardrail_checks, mock_guardrails_post):
+    """Test guardrail_checks mode with guardrails_data containing blocking rails."""
+    adapter = nvidia_adapter_guardrail_checks
+
+    shield_id = "test-shield"
+    shield = Shield(
+        provider_id="nvidia",
+        type=ResourceType.shield,
+        identifier=shield_id,
+        provider_resource_id="test-model",
+    )
+    adapter.shield_store.get_shield.return_value = shield
+
+    mock_guardrails_post.return_value = {
+        "status": "allowed",
+        "guardrails_data": {
+            "log": {
+                "activated_rails": [
+                    {"name": "content-safety", "stop": True},
+                    {"name": "toxicity", "stop": False},
+                ]
+            }
+        },
+    }
+
+    messages = [OpenAIUserMessageParam(content="Something harmful")]
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
+
+    assert result.violation is not None
+    assert result.violation.violation_level == ViolationLevel.ERROR
+    assert result.violation.metadata == {"blocking_rails": ["content-safety"]}
+
+
+async def test_guardrails_data_allowed(nvidia_adapter_guardrail_checks, mock_guardrails_post):
+    """Test guardrail_checks mode with guardrails_data but no blocking rails."""
+    adapter = nvidia_adapter_guardrail_checks
+
+    shield_id = "test-shield"
+    shield = Shield(
+        provider_id="nvidia",
+        type=ResourceType.shield,
+        identifier=shield_id,
+        provider_resource_id="test-model",
+    )
+    adapter.shield_store.get_shield.return_value = shield
+
+    mock_guardrails_post.return_value = {
+        "status": "allowed",
+        "guardrails_data": {
+            "log": {
+                "activated_rails": [
+                    {"name": "content-safety", "stop": False},
+                    {"name": "toxicity", "stop": False},
+                ]
+            }
+        },
+    }
+
+    messages = [OpenAIUserMessageParam(content="Hello")]
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
+
+    assert result.violation is None
+
+
+async def test_guardrails_data_empty_rails(nvidia_adapter_guardrail_checks, mock_guardrails_post):
+    """Test guardrail_checks mode with empty activated_rails list."""
+    adapter = nvidia_adapter_guardrail_checks
+
+    shield_id = "test-shield"
+    shield = Shield(
+        provider_id="nvidia",
+        type=ResourceType.shield,
+        identifier=shield_id,
+        provider_resource_id="test-model",
+    )
+    adapter.shield_store.get_shield.return_value = shield
+
+    mock_guardrails_post.return_value = {
+        "status": "allowed",
+        "guardrails_data": {"log": {"activated_rails": []}},
+    }
+
+    messages = [OpenAIUserMessageParam(content="Hello")]
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
+
+    assert result.violation is None
+
+
+async def test_guardrails_data_legacy_fallback(nvidia_adapter_guardrail_checks, mock_guardrails_post):
+    """Test guardrail_checks mode falls back to status field when guardrails_data is absent."""
+    adapter = nvidia_adapter_guardrail_checks
+
+    shield_id = "test-shield"
+    shield = Shield(
+        provider_id="nvidia",
+        type=ResourceType.shield,
+        identifier=shield_id,
+        provider_resource_id="test-model",
+    )
+    adapter.shield_store.get_shield.return_value = shield
+
+    mock_guardrails_post.return_value = {
+        "status": "blocked",
+        "rails_status": {"self check input": "blocked"},
+    }
+
+    messages = [OpenAIUserMessageParam(content="Something harmful")]
+    result = await adapter.run_shield(RunShieldRequest(shield_id=shield_id, messages=messages))
+
+    assert result.violation is not None
+    assert result.violation.violation_level == ViolationLevel.ERROR
+    assert result.violation.metadata == {"self check input": "blocked"}
+
+
+def test_backward_compat_enum_values():
+    """Test that legacy api_mode values 'microservice' and 'openai' still resolve correctly."""
+    config_ms = NVIDIASafetyConfig(guardrails_service_url="http://test", api_mode="microservice")
+    assert config_ms.api_mode == GuardrailsApiMode.GUARDRAIL_CHECKS
+
+    config_oai = NVIDIASafetyConfig(guardrails_service_url="http://test", api_mode="openai")
+    assert config_oai.api_mode == GuardrailsApiMode.GUARDRAIL_CHAT_COMPLETIONS
