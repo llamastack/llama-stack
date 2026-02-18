@@ -18,6 +18,7 @@ from llama_stack_api import (
     OpenAIResponseObject,
     OpenAIResponseObjectWithInput,
     Order,
+    ResponseNotFoundError,
 )
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
@@ -192,14 +193,14 @@ class ResponsesStore:
         if not row:
             # SecureSqlStore will return None if record doesn't exist OR access is denied
             # This provides security by not revealing whether the record exists
-            raise ValueError(f"Response with id {response_id} not found") from None
+            raise ResponseNotFoundError(response_id)
 
         return _OpenAIResponseObjectWithInputAndMessages(**row["response_object"])
 
     async def delete_response_object(self, response_id: str) -> OpenAIDeleteResponseObject:
         row = await self.sql_store.fetch_one(self.reference.table_name, where={"id": response_id})
         if not row:
-            raise ValueError(f"Response with id {response_id} not found")
+            raise ResponseNotFoundError(response_id)
         await self.sql_store.delete(self.reference.table_name, where={"id": response_id})
         return OpenAIDeleteResponseObject(id=response_id)
 

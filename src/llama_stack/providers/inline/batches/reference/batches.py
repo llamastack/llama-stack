@@ -20,6 +20,7 @@ from llama_stack.core.storage.kvstore import KVStore
 from llama_stack.log import get_logger
 from llama_stack_api import (
     Batches,
+    BatchNotFoundError,
     BatchObject,
     ConflictError,
     Files,
@@ -37,7 +38,6 @@ from llama_stack_api import (
     OpenAISystemMessageParam,
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
-    ResourceNotFoundError,
 )
 from llama_stack_api.batches.models import (
     CancelBatchRequest,
@@ -229,7 +229,7 @@ class ReferenceBatchesImpl(Batches):
 
                 logger.info(f"Returning existing batch with ID: {batch_id}")
                 return existing_batch
-            except ResourceNotFoundError:
+            except BatchNotFoundError:
                 # Batch doesn't exist, continue with creation
                 pass
 
@@ -315,7 +315,7 @@ class ReferenceBatchesImpl(Batches):
         """Retrieve information about a specific batch."""
         batch_data = await self.kvstore.get(f"batch:{request.batch_id}")
         if not batch_data:
-            raise ResourceNotFoundError(request.batch_id, "Batch", "batches.list()")
+            raise BatchNotFoundError(request.batch_id)
 
         return BatchObject.model_validate_json(batch_data)
 
