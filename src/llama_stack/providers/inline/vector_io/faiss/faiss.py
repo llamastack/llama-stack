@@ -293,7 +293,7 @@ class FaissVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoco
     async def insert_chunks(self, request: InsertChunksRequest) -> None:
         index = self.cache.get(request.vector_store_id)
         if index is None:
-            raise ValueError(f"Vector DB {request.vector_store_id} not found. found: {self.cache.keys()}")
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
         await index.insert_chunks(request)
 
