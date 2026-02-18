@@ -558,10 +558,7 @@ class OpenAIResponsesImpl:
 
         # Validate that stream and background are mutually exclusive
         if stream and background:
-            raise ValueError(
-                "Cannot use 'stream' and 'background' together. "
-                "Background mode returns immediately with a queued response."
-            )
+            raise ValueError("Llama Stack does not yet support 'stream' and 'background' together.")
 
         if background and store is False:
             raise ValueError("Cannot use 'background' with 'store=False'. Background responses must be stored.")
