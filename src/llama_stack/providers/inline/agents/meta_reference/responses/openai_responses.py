@@ -73,6 +73,8 @@ from .utils import (
 logger = get_logger(name=__name__, category="openai_responses")
 
 BACKGROUND_RESPONSE_TIMEOUT_SECONDS = 300  # 5 minutes
+BACKGROUND_QUEUE_MAX_SIZE = 100
+BACKGROUND_NUM_WORKERS = 10
 
 
 class OpenAIResponsePreviousResponseWithInputItems(BaseModel):
@@ -111,7 +113,67 @@ class OpenAIResponsesImpl:
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.connectors_api = connectors_api
-        self._background_tasks: set[asyncio.Task] = set()
+        self._background_queue: asyncio.Queue = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
+        self._background_worker_tasks: set[asyncio.Task] = set()
+
+    async def initialize(self) -> None:
+        """Start background worker pool."""
+        for _ in range(BACKGROUND_NUM_WORKERS):
+            task = asyncio.create_task(self._background_worker())
+            self._background_worker_tasks.add(task)
+            task.add_done_callback(self._background_worker_tasks.discard)
+
+    async def shutdown(self) -> None:
+        """Stop background worker pool."""
+        for task in self._background_worker_tasks:
+            task.cancel()
+        await asyncio.gather(*self._background_worker_tasks, return_exceptions=True)
+
+    async def _background_worker(self) -> None:
+        """Worker coroutine that pulls items from the queue and processes them."""
+        while True:
+            kwargs = await self._background_queue.get()
+            try:
+                await asyncio.wait_for(
+                    self._run_background_response_loop(**kwargs),
+                    timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
+                )
+            except TimeoutError:
+                response_id = kwargs["response_id"]
+                logger.exception(
+                    f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
+                )
+                try:
+                    existing = await self.responses_store.get_response_object(response_id)
+                    existing.status = "failed"
+                    existing.error = OpenAIResponseError(
+                        code="processing_error",
+                        message=f"Background response timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s",
+                    )
+                    await self.responses_store.update_response_object(existing)
+                except Exception:
+                    logger.exception(
+                        f"Failed to update response {response_id} with timeout status. "
+                        "Client polling this response will not see the failure."
+                    )
+            except Exception as e:
+                response_id = kwargs["response_id"]
+                logger.exception(f"Error processing background response {response_id}")
+                try:
+                    existing = await self.responses_store.get_response_object(response_id)
+                    existing.status = "failed"
+                    existing.error = OpenAIResponseError(
+                        code="processing_error",
+                        message=str(e),
+                    )
+                    await self.responses_store.update_response_object(existing)
+                except Exception:
+                    logger.exception(
+                        f"Failed to update response {response_id} with error status. "
+                        "Client polling this response will not see the failure."
+                    )
+            finally:
+                self._background_queue.task_done()
 
     async def _prepend_previous_response(
         self,
@@ -689,70 +751,10 @@ class OpenAIResponsesImpl:
             messages=[],
         )
 
-        # Schedule background processing task and hold a strong reference
-        # to prevent GC from collecting it mid-flight.
-        task = asyncio.create_task(
-            self._process_background_response(
-                response_id=response_id,
-                input=input,
-                model=model,
-                prompt=prompt,
-                instructions=instructions,
-                previous_response_id=previous_response_id,
-                conversation=conversation,
-                store=store,
-                temperature=temperature,
-                text=text,
-                tool_choice=tool_choice,
-                tools=tools,
-                include=include,
-                max_infer_iters=max_infer_iters,
-                guardrail_ids=guardrail_ids,
-                parallel_tool_calls=parallel_tool_calls,
-                max_tool_calls=max_tool_calls,
-                reasoning=reasoning,
-                max_output_tokens=max_output_tokens,
-                safety_identifier=safety_identifier,
-                service_tier=service_tier,
-                metadata=metadata,
-                truncation=truncation,
-            )
-        )
-        self._background_tasks.add(task)
-        task.add_done_callback(self._background_tasks.discard)
-
-        return queued_response
-
-    async def _process_background_response(
-        self,
-        response_id: str,
-        input: str | list[OpenAIResponseInput],
-        model: str,
-        prompt: OpenAIResponsePrompt | None = None,
-        instructions: str | None = None,
-        previous_response_id: str | None = None,
-        conversation: str | None = None,
-        store: bool | None = True,
-        temperature: float | None = None,
-        text: OpenAIResponseText | None = None,
-        tool_choice: OpenAIResponseInputToolChoice | None = None,
-        tools: list[OpenAIResponseInputTool] | None = None,
-        include: list[ResponseItemInclude] | None = None,
-        max_infer_iters: int | None = 10,
-        guardrail_ids: list[str] | None = None,
-        parallel_tool_calls: bool | None = None,
-        max_tool_calls: int | None = None,
-        reasoning: OpenAIResponseReasoning | None = None,
-        max_output_tokens: int | None = None,
-        safety_identifier: str | None = None,
-        service_tier: ServiceTier | None = None,
-        metadata: dict[str, str] | None = None,
-        truncation: ResponseTruncation | None = None,
-    ) -> None:
-        """Process a background response asynchronously."""
+        # Enqueue work item for background workers. Raises QueueFull if at capacity.
         try:
-            await asyncio.wait_for(
-                self._run_background_response_loop(
+            self._background_queue.put_nowait(
+                dict(
                     response_id=response_id,
                     input=input,
                     model=model,
@@ -776,43 +778,14 @@ class OpenAIResponsesImpl:
                     service_tier=service_tier,
                     metadata=metadata,
                     truncation=truncation,
-                ),
-                timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
+                )
             )
+        except asyncio.QueueFull:
+            raise ValueError(
+                f"Background response queue is full (max {BACKGROUND_QUEUE_MAX_SIZE}). Try again later."
+            ) from None
 
-        except TimeoutError:
-            logger.exception(
-                f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
-            )
-            try:
-                existing = await self.responses_store.get_response_object(response_id)
-                existing.status = "failed"
-                existing.error = OpenAIResponseError(
-                    code="processing_error",
-                    message=f"Background response timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s",
-                )
-                await self.responses_store.update_response_object(existing)
-            except Exception:
-                logger.exception(
-                    f"Failed to update response {response_id} with timeout status. "
-                    "Client polling this response will not see the failure."
-                )
-
-        except Exception as e:
-            logger.exception(f"Error processing background response {response_id}")
-            try:
-                existing = await self.responses_store.get_response_object(response_id)
-                existing.status = "failed"
-                existing.error = OpenAIResponseError(
-                    code="processing_error",
-                    message=str(e),
-                )
-                await self.responses_store.update_response_object(existing)
-            except Exception:
-                logger.exception(
-                    f"Failed to update response {response_id} with error status. "
-                    "Client polling this response will not see the failure."
-                )
+        return queued_response
 
     async def _run_background_response_loop(
         self,

@@ -87,9 +87,11 @@ class MetaReferenceAgentsImpl(Agents):
             vector_stores_config=self.config.vector_stores_config,
             connectors_api=self.connectors_api,
         )
+        await self.openai_responses_impl.initialize()
 
     async def shutdown(self) -> None:
-        pass
+        if self.openai_responses_impl is not None:
+            await self.openai_responses_impl.shutdown()
 
     # OpenAI responses
     async def get_openai_response(
