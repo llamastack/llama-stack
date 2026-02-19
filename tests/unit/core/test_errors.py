@@ -17,12 +17,14 @@ from llama_stack_api.common.errors import (
     ClientListCommand,
     ConflictError,
     ConversationItemNotFoundError,
+    ConversationNotFoundError,
     InternalServerError,
     InvalidParameterError,
     LlamaStackError,
     ModelNotFoundError,
     ModelTypeError,
     ResourceNotFoundError,
+    ResponseInputItemNotFoundError,
     ResponseNotFoundError,
     ServiceNotEnabledError,
     TokenValidationError,
@@ -334,6 +336,16 @@ class TestTranslateException:
 
     def test_response_not_found_error_uses_404(self):
         exc = ResponseNotFoundError("resp_abc123")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
+
+    def test_response_input_item_not_found_error_uses_404(self):
+        exc = ResponseInputItemNotFoundError("input_abc", "resp_xyz")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
+
+    def test_conversation_not_found_error_uses_404(self):
+        exc = ConversationNotFoundError("conv_nonexistent")
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.NOT_FOUND
 
