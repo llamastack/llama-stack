@@ -14,7 +14,12 @@ from llama_stack.core.datatypes import AccessRule, StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
-from llama_stack_api import ConversationItemNotFoundError, ConversationNotFoundError, InvalidParameterError
+from llama_stack_api import (
+    ConversationItemNotFoundError,
+    ConversationNotFoundError,
+    InvalidParameterError,
+    ServiceNotEnabledError,
+)
 from llama_stack_api.conversations import (
     AddItemsRequest,
     Conversation,
@@ -65,7 +70,7 @@ class ConversationServiceImpl(Conversations):
         # Use conversations store reference from run config
         conversations_ref = config.config.storage.stores.conversations
         if not conversations_ref:
-            raise ValueError("storage.stores.conversations must be configured in run config")
+            raise ServiceNotEnabledError("storage.stores.conversations")
 
         base_sql_store = sqlstore_impl(conversations_ref)
         self.sql_store = AuthorizedSqlStore(base_sql_store, self.policy)
