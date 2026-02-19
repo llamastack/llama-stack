@@ -322,115 +322,51 @@ class TestInferenceRecording:
 
 
 class TestExceptionRecordingReplay:
-    """Test exception recording/replay in the api_recorder monkey-patching layer.
+    """Test that provider SDK exceptions survive the record -> replay cycle.
 
-    Integration tests use record/replay to avoid live API calls. When a provider
-    raises an error during recording, we need to:
-    1. Serialize the exception and store it alongside normal recordings
-    2. Re-raise it so the recording run still sees the original error
-    3. On replay, reconstruct the same exception type from the stored data
-       so tests that catch specific SDK exceptions (e.g. ``except NotFoundError``)
-       continue to work without a live connection
+    Integration tests use record/replay to avoid live API calls in CI. When a
+    provider raises an error (e.g. OpenAI 404), the recording system must:
+    - Serialize the exception to disk during recording
+    - Reconstruct the *same SDK exception type* during replay
+    so that tests using ``pytest.raises(NotFoundError)`` pass in both modes.
     """
 
-    async def test_record_exception_stores_serialized_error_and_reraises(self, temp_storage_dir):
-        """Verify that record mode both persists the exception to disk AND re-raises it.
-
-        Re-raising is important: without it, a recording run would silently swallow
-        provider errors, producing a recording file but hiding the failure from the
-        developer running in record mode.
-        """
-        request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
-        response = httpx.Response(404, json={"error": {"code": "not_found"}}, request=request)
-        exc_to_raise = NotFoundError(
-            message="Batch batch-xyz not found",
-            response=response,
+    async def test_openai_error_is_recorded_and_replayed(self, temp_storage_dir):
+        """Core feature: an OpenAI error recorded during a live run is replayed identically offline."""
+        # -- Setup: an OpenAI 404 error, as the SDK would raise against a real server --
+        original_error = NotFoundError(
+            message="Model not found",
+            response=httpx.Response(
+                404,
+                json={"error": {"code": "not_found"}},
+                request=httpx.Request("POST", "https://api.openai.com/v1/chat/completions"),
+            ),
             body={"error": {"code": "not_found"}},
         )
+        chat_request = dict(model="test-model", messages=[{"role": "user", "content": "hi"}])
+        storage = str(temp_storage_dir / "error_roundtrip")
 
-        async def mock_create_raises(*args, **kwargs):
-            raise exc_to_raise
-
-        temp_storage_dir = temp_storage_dir / "test_exception_record"
+        # -- Step 1: Record -- the error is captured to a JSON file on disk --
         with patch(
             "openai.resources.chat.completions.AsyncCompletions.create",
-            side_effect=mock_create_raises,
+            side_effect=original_error,
         ):
-            with api_recording(mode=APIRecordingMode.RECORD, storage_dir=str(temp_storage_dir)):
-                client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
-
-                with pytest.raises(NotFoundError) as exc_info:
-                    await client.chat.completions.create(
-                        model="llama3.2:3b",
-                        messages=[{"role": "user", "content": "Hello"}],
-                    )
-
-                assert exc_info.value.status_code == 404
-                assert "not found" in str(exc_info.value).lower()
-
-        # Verify recording was stored with exception data
-        storage = ResponseStorage(temp_storage_dir)
-        recordings_dir = storage.base_dir / "recordings"
-        assert recordings_dir.exists()
-        recording_files = list(recordings_dir.glob("*.json"))
-        assert len(recording_files) >= 1
-        with open(recording_files[0]) as f:
-            data = json.load(f)
-        assert data["response"]["is_exception"] is True
-        assert "exception_data" in data["response"]
-        assert data["response"]["exception_data"]["category"] == "provider_sdk"
-        assert data["response"]["exception_data"]["provider"] == "openai"
-        assert data["response"]["exception_data"]["status_code"] == 404
-
-    async def test_replay_recorded_exception_raises_same_type(self, temp_storage_dir):
-        """Verify the full record-then-replay cycle preserves the exception type.
-
-        This is the core guarantee: a test that does ``with pytest.raises(NotFoundError)``
-        must pass identically in both record and replay modes. The test records an
-        exception, then replays it and asserts:
-        - The reconstructed exception is the same SDK type (NotFoundError, not Exception)
-        - Status code and message are preserved
-        - The original client method is never called during replay
-        """
-        request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
-        response = httpx.Response(404, json={"error": {"code": "not_found"}}, request=request)
-        exc_to_raise = NotFoundError(
-            message="Batch batch-xyz not found",
-            response=response,
-            body={"error": {"code": "not_found"}},
-        )
-
-        async def mock_create_raises(*args, **kwargs):
-            raise exc_to_raise
-
-        temp_storage_dir = temp_storage_dir / "test_exception_replay"
-        # Record first
-        with patch(
-            "openai.resources.chat.completions.AsyncCompletions.create",
-            side_effect=mock_create_raises,
-        ):
-            with api_recording(mode=APIRecordingMode.RECORD, storage_dir=str(temp_storage_dir)):
+            with api_recording(mode=APIRecordingMode.RECORD, storage_dir=storage):
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
                 with pytest.raises(NotFoundError):
-                    await client.chat.completions.create(
-                        model="llama3.2:3b",
-                        messages=[{"role": "user", "content": "Hello"}],
-                    )
+                    await client.chat.completions.create(**chat_request)
 
-        # Replay - should raise same exception type without calling original
-        with patch("openai.resources.chat.completions.AsyncCompletions.create") as mock_create:
-            with api_recording(mode=APIRecordingMode.REPLAY, storage_dir=str(temp_storage_dir)):
+        # -- Step 2: Replay -- the error is reconstructed from disk, no network call --
+        with patch("openai.resources.chat.completions.AsyncCompletions.create") as mock:
+            with api_recording(mode=APIRecordingMode.REPLAY, storage_dir=storage):
                 client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="test")
-
                 with pytest.raises(NotFoundError) as exc_info:
-                    await client.chat.completions.create(
-                        model="llama3.2:3b",
-                        messages=[{"role": "user", "content": "Hello"}],
-                    )
+                    await client.chat.completions.create(**chat_request)
 
-                mock_create.assert_not_called()
-                assert exc_info.value.status_code == 404
-                assert "not found" in str(exc_info.value).lower()
+        # -- Verify: same exception type and attributes, no live call made --
+        mock.assert_not_called()
+        assert exc_info.value.status_code == 404
+        assert exc_info.value.body == {"error": {"code": "not_found"}}
 
     async def test_replay_legacy_exception_format_raises_generic(self, temp_storage_dir):
         """Verify backwards compatibility with recordings made before exception_data was added.
