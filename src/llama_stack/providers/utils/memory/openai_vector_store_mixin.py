@@ -1674,9 +1674,10 @@ class OpenAIVectorStoreMixin(ABC):
         async def contextualize_chunk(chunk: Chunk) -> _ChunkContextResult:
             async with semaphore:
                 user_prompt = user_template.replace(chunk_placeholder, interleaved_content_as_str(chunk.content))
-                messages: list = [OpenAIUserMessageParam(role="user", content=user_prompt)]
-                if system_template:
-                    messages.insert(0, OpenAISystemMessageParam(role="system", content=system_template))
+                messages: list = [
+                    OpenAISystemMessageParam(role="system", content=system_template),
+                    OpenAIUserMessageParam(role="user", content=user_prompt),
+                ]
 
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=model_id,
