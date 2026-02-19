@@ -322,10 +322,24 @@ class TestInferenceRecording:
 
 
 class TestExceptionRecordingReplay:
-    """Test that exception recording and replay preserves error behavior for integration tests."""
+    """Test exception recording/replay in the api_recorder monkey-patching layer.
+
+    Integration tests use record/replay to avoid live API calls. When a provider
+    raises an error during recording, we need to:
+    1. Serialize the exception and store it alongside normal recordings
+    2. Re-raise it so the recording run still sees the original error
+    3. On replay, reconstruct the same exception type from the stored data
+       so tests that catch specific SDK exceptions (e.g. ``except NotFoundError``)
+       continue to work without a live connection
+    """
 
     async def test_record_exception_stores_serialized_error_and_reraises(self, temp_storage_dir):
-        """Record mode captures provider exceptions, stores them, and re-raises for test to catch."""
+        """Verify that record mode both persists the exception to disk AND re-raises it.
+
+        Re-raising is important: without it, a recording run would silently swallow
+        provider errors, producing a recording file but hiding the failure from the
+        developer running in record mode.
+        """
         request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
         response = httpx.Response(404, json={"error": {"code": "not_found"}}, request=request)
         exc_to_raise = NotFoundError(
@@ -369,7 +383,15 @@ class TestExceptionRecordingReplay:
         assert data["response"]["exception_data"]["status_code"] == 404
 
     async def test_replay_recorded_exception_raises_same_type(self, temp_storage_dir):
-        """Replay mode reconstructs and raises the recorded exception."""
+        """Verify the full record-then-replay cycle preserves the exception type.
+
+        This is the core guarantee: a test that does ``with pytest.raises(NotFoundError)``
+        must pass identically in both record and replay modes. The test records an
+        exception, then replays it and asserts:
+        - The reconstructed exception is the same SDK type (NotFoundError, not Exception)
+        - Status code and message are preserved
+        - The original client method is never called during replay
+        """
         request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
         response = httpx.Response(404, json={"error": {"code": "not_found"}}, request=request)
         exc_to_raise = NotFoundError(
@@ -411,7 +433,13 @@ class TestExceptionRecordingReplay:
                 assert "not found" in str(exc_info.value).lower()
 
     async def test_replay_legacy_exception_format_raises_generic(self, temp_storage_dir):
-        """Recordings with exception_message but no exception_data still replay as Exception."""
+        """Verify backwards compatibility with recordings made before exception_data was added.
+
+        Older recordings store only ``exception_message`` (a plain string) without the
+        structured ``exception_data`` dict. The replay path must handle this gracefully
+        by raising a generic ``Exception`` with the original message, rather than
+        crashing on a missing key.
+        """
         temp_storage_dir = temp_storage_dir / "test_legacy_exception"
         recordings_dir = temp_storage_dir / "recordings"
         recordings_dir.mkdir(parents=True, exist_ok=True)
