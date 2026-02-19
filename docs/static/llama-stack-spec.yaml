@@ -3155,35 +3155,26 @@ components:
           minimum: 0.0
           title: Prompt Tokens
           description: Number of tokens in the prompt.
+          default: 0
         completion_tokens:
           type: integer
           minimum: 0.0
           title: Completion Tokens
           description: Number of tokens in the completion.
+          default: 0
         total_tokens:
           type: integer
           minimum: 0.0
           title: Total Tokens
           description: Total tokens used (prompt + completion).
+          default: 0
         prompt_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
-            title: OpenAIChatCompletionUsagePromptTokensDetails
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
           description: Detailed breakdown of input token usage.
-          title: OpenAIChatCompletionUsagePromptTokensDetails
         completion_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
-            title: OpenAIChatCompletionUsageCompletionTokensDetails
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
           description: Detailed breakdown of output token usage.
-          title: OpenAIChatCompletionUsageCompletionTokensDetails
       type: object
-      required:
-      - prompt_tokens
-      - completion_tokens
-      - total_tokens
       title: OpenAIChatCompletionUsage
       description: Usage information for OpenAI chat completion.
     OpenAIChoice:
@@ -3821,13 +3812,9 @@ components:
           description: The service tier that was used for this response.
           nullable: true
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -3870,13 +3857,9 @@ components:
           description: The service tier that was used for this response.
           nullable: true
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information (typically included in final chunk with stream_options).
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -3990,12 +3973,8 @@ components:
           - type: 'null'
           description: The service tier that was used for this response.
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
-          title: OpenAIChatCompletionUsage
         input_messages:
           items:
             oneOf:
@@ -8562,52 +8541,52 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
           - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+              title: ImageContentItem-Output
             - $ref: '#/components/schemas/TextContentItem'
               title: TextContentItem
-            title: ImageContentItem | TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Output | TextContentItem
           - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+                title: ImageContentItem-Output
               - $ref: '#/components/schemas/TextContentItem'
                 title: TextContentItem
-              title: ImageContentItem | TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Output | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+            title: list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem-Output | TextContentItem]
         chunk_id:
-          title: Chunk Id
           type: string
+          title: Chunk Id
         metadata:
           additionalProperties: true
-          title: Metadata
           type: object
+          title: Metadata
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
+      type: object
       required:
       - content
       - chunk_id
       - chunk_metadata
       title: Chunk
-      type: object
+      description: A chunk of content from file processing.
     ChunkMetadata:
       properties:
         chunk_id:
@@ -11441,22 +11420,22 @@ components:
     OpenAIChatCompletionUsageCompletionTokensDetails:
       properties:
         reasoning_tokens:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
+          type: integer
+          minimum: 0.0
+          title: Reasoning Tokens
           description: Number of tokens used for reasoning (o1/o3 models).
+          default: 0
       type: object
       title: OpenAIChatCompletionUsageCompletionTokensDetails
       description: Token details for output tokens in OpenAI chat completion usage.
     OpenAIChatCompletionUsagePromptTokensDetails:
       properties:
         cached_tokens:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
+          type: integer
+          minimum: 0.0
+          title: Cached Tokens
           description: Number of tokens retrieved from cache.
+          default: 0
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
@@ -12063,6 +12042,29 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ProcessFileResponse:
+      properties:
+        chunks:
+          items:
+            $ref: '#/components/schemas/Chunk'
+          type: array
+          title: Chunks
+          description: Processed chunks from the file. Always returns at least one chunk.
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+      type: object
+      required:
+      - chunks
+      - metadata
+      title: ProcessFileResponse
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
     ResponseItemInclude:
       type: string
       enum:
@@ -13788,29 +13790,6 @@ components:
       - benchmark_id
       - job_id
       title: JobResultRequest
-      type: object
-    ProcessFileResponse:
-      description: |-
-        Response model for file processing operation.
-
-        Returns a list of chunks ready for storage in vector databases.
-        Each chunk contains the content and metadata.
-      properties:
-        chunks:
-          description: Processed chunks from the file. Always returns at least one chunk.
-          items:
-            $ref: '#/components/schemas/Chunk'
-          title: Chunks
-          type: array
-        metadata:
-          additionalProperties: true
-          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
-          title: Metadata
-          type: object
-      required:
-      - chunks
-      - metadata
-      title: ProcessFileResponse
       type: object
     ProcessFileRequest:
       description: |-
