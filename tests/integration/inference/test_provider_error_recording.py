@@ -41,6 +41,9 @@ class TestProviderErrorRecording:
         rejects the invalid image data. The recording system captures this
         provider exception so that replay mode reproduces the exact same error.
         """
+        if "llama3.2:3b-instruct-fp16" not in text_model_id:
+            pytest.skip("Error recording only available for ollama/llama3.2:3b-instruct-fp16")
+
         with pytest.raises(BadRequestError) as exc_info:
             openai_client.chat.completions.create(
                 model=text_model_id,
