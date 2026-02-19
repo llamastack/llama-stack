@@ -73,6 +73,8 @@ class ResourceNotFoundError(LlamaStackError):
     :param resource_name_plural: Plural label for the "list available X" hint suffix. Defaults to
         ``{resource_type}s`` (e.g., "Models" from "Model"). Override when irregular, e.g., "Batches"
         instead of "Batchs".
+    :param parent_resource: Optional context for child resources (e.g., "response 'resp_xyz'").
+        When provided, message format is: ``{resource_type} '{resource_name}' not found in {parent_resource}.``
     """
 
     status_code: httpx.codes = httpx.codes.NOT_FOUND
@@ -84,10 +86,14 @@ class ResourceNotFoundError(LlamaStackError):
         client_command: str | None = None,
         client_command_args: list[str] | str | None = None,
         resource_name_plural: str | None = None,
+        parent_resource: str | None = None,
     ) -> None:
         resource_name_plural = resource_name_plural or f"{resource_type}s"
 
-        message = f"{resource_type} '{resource_name}' not found."
+        if parent_resource:
+            message = f"{resource_type} '{resource_name}' not found in {parent_resource}."
+        else:
+            message = f"{resource_type} '{resource_name}' not found."
         if client_command:
             client_list = ClientListCommand(client_command, client_command_args, resource_name_plural)
             message += f" {client_list}"
@@ -129,13 +135,18 @@ class ConversationNotFoundError(ResourceNotFoundError):
         super().__init__(conversation_id, resource_type="Conversation")
 
 
-class ConversationItemNotFoundError(LlamaStackError):
+class ConversationItemNotFoundError(ResourceNotFoundError):
     """raised when Llama Stack cannot find a referenced item within a conversation"""
 
-    status_code: httpx.codes = httpx.codes.NOT_FOUND
-
     def __init__(self, item_id: str, conversation_id: str) -> None:
-        super().__init__(f"Conversation item '{item_id}' not found in conversation '{conversation_id}'.")
+        super().__init__(
+            item_id,
+            resource_type="Conversation item",
+            client_command="conversations.items.list",
+            client_command_args=conversation_id,
+            resource_name_plural="conversation items",
+            parent_resource=f"conversation '{conversation_id}'",
+        )
 
 
 class ConnectorNotFoundError(ResourceNotFoundError):
@@ -276,3 +287,17 @@ class ResponseNotFoundError(ResourceNotFoundError):
 
     def __init__(self, response_id: str) -> None:
         super().__init__(response_id, resource_type="Response", client_command="responses.list")
+
+
+class ResponseInputItemNotFoundError(ResourceNotFoundError):
+    """raised when Llama Stack cannot find a referenced input item within a response"""
+
+    def __init__(self, item_id: str, response_id: str) -> None:
+        super().__init__(
+            item_id,
+            resource_type="Input item",
+            client_command="responses.input_items.list",
+            client_command_args=response_id,
+            resource_name_plural="input items",
+            parent_resource=f"response '{response_id}'",
+        )

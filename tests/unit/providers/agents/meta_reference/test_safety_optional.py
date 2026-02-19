@@ -138,7 +138,7 @@ class TestGuardrailsFunctionality:
         from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
             OpenAIResponsesImpl,
         )
-        from llama_stack_api import ResponseGuardrailSpec
+        from llama_stack_api import ResponseGuardrailSpec, ServiceNotEnabledError
 
         # Create OpenAIResponsesImpl with no safety API
         with patch("llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.ResponsesStore"):
@@ -156,7 +156,7 @@ class TestGuardrailsFunctionality:
             )
 
             # Test with string guardrail
-            with pytest.raises(ValueError) as exc_info:
+            with pytest.raises(ServiceNotEnabledError) as exc_info:
                 await impl.create_openai_response(
                     input="test input",
                     model="test-model",
@@ -166,7 +166,7 @@ class TestGuardrailsFunctionality:
             assert "not enabled" in str(exc_info.value)
 
             # Test with ResponseGuardrailSpec
-            with pytest.raises(ValueError) as exc_info:
+            with pytest.raises(ServiceNotEnabledError) as exc_info:
                 await impl.create_openai_response(
                     input="test input",
                     model="test-model",
