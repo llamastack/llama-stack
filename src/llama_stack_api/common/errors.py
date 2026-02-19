@@ -222,13 +222,6 @@ class TokenValidationError(LlamaStackError):
         super().__init__(message)
 
 
-class ResponseNotFoundError(ResourceNotFoundError):
-    """raised when Llama Stack cannot find a referenced response"""
-
-    def __init__(self, response_id: str) -> None:
-        super().__init__(response_id, "Response")
-
-
 class InvalidParameterError(ValueError, LlamaStackError):
     """Raised when a request parameter violates validation constraints.
 
