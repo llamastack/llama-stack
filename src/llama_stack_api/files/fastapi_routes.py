@@ -10,6 +10,11 @@ from fastapi import APIRouter, Depends, UploadFile
 from fastapi.param_functions import File, Form
 from fastapi.responses import Response
 
+from llama_stack_api.common.upload_safety import (
+    DEFAULT_MAX_UPLOAD_SIZE_BYTES,
+    PreReadUploadFile,
+    read_upload_with_size_limit,
+)
 from llama_stack_api.router_utils import create_path_dependency, create_query_dependency, standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
@@ -35,7 +40,7 @@ get_delete_files_request = create_path_dependency(DeleteFileRequest)
 get_retrieve_file_content_request = create_path_dependency(RetrieveFileContentRequest)
 
 
-def create_router(impl: Files) -> APIRouter:
+def create_router(impl: Files, max_upload_size_bytes: int = DEFAULT_MAX_UPLOAD_SIZE_BYTES) -> APIRouter:
     router = APIRouter(
         prefix=f"/{LLAMA_STACK_API_V1}",
         tags=["Files"],
@@ -115,10 +120,12 @@ def create_router(impl: Files) -> APIRouter:
         purpose: Annotated[OpenAIFilePurpose, Form(description="The intended purpose of the uploaded file.")],
         expires_after: Annotated[ExpiresAfter | None, Form(description="Optional expiration settings.")] = None,
     ) -> OpenAIFileObject:
+        content = await read_upload_with_size_limit(file, max_upload_size_bytes)
+        safe_file = PreReadUploadFile(content, filename=file.filename, content_type=file.content_type)
         request = UploadFileRequest(
             purpose=purpose,
             expires_after=expires_after,
         )
-        return await impl.openai_upload_file(request, file)
+        return await impl.openai_upload_file(request, safe_file)
 
     return router
