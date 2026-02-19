@@ -13,7 +13,14 @@ import pytest
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
-from llama_stack_api import OpenAIMessageParam, OpenAIResponseInput, OpenAIResponseObject, OpenAIUserMessageParam, Order
+from llama_stack_api import (
+    OpenAIMessageParam,
+    OpenAIResponseInput,
+    OpenAIResponseObject,
+    OpenAIUserMessageParam,
+    Order,
+    ResponseNotFoundError,
+)
 
 
 def build_store(db_path: str, policy: list | None = None) -> ResponsesStore:
@@ -253,7 +260,7 @@ async def test_responses_store_get_response_object():
         assert retrieved.input[0].content == "Test input content"
 
         # Test error for non-existent response
-        with pytest.raises(ValueError, match="Response with id non-existent not found"):
+        with pytest.raises(ResponseNotFoundError, match="Response 'non-existent' not found."):
             await store.get_response_object("non-existent")
 
 
