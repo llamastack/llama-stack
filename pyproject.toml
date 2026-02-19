@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "setuptools-scm>=8.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
-fallback_version = "0.5.0.dev0"
+fallback_version = "0.5.1"
 
 [tool.uv]
 required-version = ">=0.7.0"
@@ -65,7 +65,7 @@ dependencies = [
 
 [project.optional-dependencies]
 client = [
-    "llama-stack-client==0.5.0", # Optional for library-only usage
+    "llama-stack-client==0.5.1", # Optional for library-only usage
 ]
 
 [dependency-groups]
@@ -114,7 +114,7 @@ type_checking = [
     "lm-format-enforcer",
     "mcp>=1.23.0",
     "ollama",
-    "llama-stack-client==0.5.0",
+    "llama-stack-client==0.5.1",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
