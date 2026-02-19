@@ -13,7 +13,8 @@
   ],
   "schedules": {
     "1 0 * * 0": [
-      {"suite": "base", "setup": "vllm"}
+      {"suite": "base", "setup": "vllm"},
+      {"suite": "base", "setup": "vllm-qwen3next"}
     ]
   }
 }

@@ -6976,6 +6976,7 @@ components:
       discriminator:
         mapping:
           auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+          contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
           static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         propertyName: type
       oneOf:
@@ -6983,7 +6984,9 @@ components:
         title: VectorStoreChunkingStrategyAuto
       - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         title: VectorStoreChunkingStrategyStatic
-      title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+      - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+        title: VectorStoreChunkingStrategyContextual
+      title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
     VectorStoreChunkingStrategyAuto:
       properties:
         type:
@@ -7047,12 +7050,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
         metadata:
@@ -7101,12 +7107,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
       additionalProperties: true
@@ -7207,11 +7216,14 @@ components:
             title: VectorStoreChunkingStrategyAuto
           - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
             title: VectorStoreChunkingStrategyStatic
-          title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+            title: VectorStoreChunkingStrategyContextual
+          title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           discriminator:
             propertyName: type
             mapping:
               auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
               static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         created_at:
           type: integer
@@ -9561,12 +9573,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
           description: Strategy for chunking the file content.
@@ -10400,6 +10415,61 @@ components:
       - version
       title: UpdatePromptBodyRequest
       description: Request body model for updating a prompt.
+    VectorStoreChunkingStrategyContextual:
+      properties:
+        type:
+          type: string
+          const: contextual
+          title: Type
+          description: Strategy type identifier.
+          default: contextual
+        contextual:
+          $ref: '#/components/schemas/VectorStoreChunkingStrategyContextualConfig'
+          description: Configuration for contextual chunking.
+      type: object
+      required:
+      - contextual
+      title: VectorStoreChunkingStrategyContextual
+      description: Contextual chunking strategy that uses an LLM to situate chunks within the document.
+    VectorStoreChunkingStrategyContextualConfig:
+      properties:
+        model_id:
+          anyOf:
+          - type: string
+            minLength: 1
+          - type: 'null'
+          description: LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.
+        context_prompt:
+          type: string
+          title: Context Prompt
+          description: Prompt template for contextual retrieval. Uses WHOLE_DOCUMENT and CHUNK_CONTENT placeholders wrapped in double curly braces.
+        max_chunk_size_tokens:
+          type: integer
+          maximum: 4096.0
+          minimum: 100.0
+          title: Max Chunk Size Tokens
+          description: Maximum tokens per chunk. Suggested ~700 to allow room for prepended context.
+          default: 700
+        chunk_overlap_tokens:
+          type: integer
+          minimum: 0.0
+          title: Chunk Overlap Tokens
+          description: Tokens to overlap between adjacent chunks. Must be less than max_chunk_size_tokens.
+          default: 400
+        timeout_seconds:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Timeout per LLM call in seconds. Falls back to config default if not provided.
+        max_concurrency:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Maximum concurrent LLM calls. Falls back to config default if not provided.
+      type: object
+      title: VectorStoreChunkingStrategyContextualConfig
     _URLOrData:
       properties:
         url:
@@ -12018,6 +12088,7 @@ components:
           - discriminator:
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               propertyName: type
             oneOf:
@@ -12025,7 +12096,9 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           description: Optional chunking strategy for splitting content into chunks.
           title: Chunking Strategy
