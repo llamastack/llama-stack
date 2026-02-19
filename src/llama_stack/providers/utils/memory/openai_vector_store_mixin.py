@@ -1596,13 +1596,9 @@ class OpenAIVectorStoreMixin(ABC):
         # All major providers (OpenAI, vLLM, Anthropic) cache shared token prefixes by placing the
         # document in a system message, the KV-cache is computed once and reused across all chunk requests.
         chunk_placeholder = "{{CHUNK_CONTENT}}"
-        split_idx = context_prompt_template.find(chunk_placeholder)
-        if split_idx > 0:
-            system_template = context_prompt_template[:split_idx].replace("{{WHOLE_DOCUMENT}}", full_content).rstrip()
-            user_template = context_prompt_template[split_idx:]
-        else:
-            system_template = None
-            user_template = context_prompt_template.replace("{{WHOLE_DOCUMENT}}", full_content)
+        split_idx = context_prompt_template.index(chunk_placeholder)
+        system_template = context_prompt_template[:split_idx].replace("{{WHOLE_DOCUMENT}}", full_content).rstrip()
+        user_template = context_prompt_template[split_idx:]
 
         semaphore = asyncio.Semaphore(max_concurrency)
 

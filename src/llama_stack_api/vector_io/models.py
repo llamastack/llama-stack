@@ -411,6 +411,10 @@ class VectorStoreChunkingStrategyContextualConfig(BaseModel):
             raise ValueError("context_prompt must contain {{WHOLE_DOCUMENT}} placeholder")
         if "{{CHUNK_CONTENT}}" not in self.context_prompt:
             raise ValueError("context_prompt must contain {{CHUNK_CONTENT}} placeholder")
+        if self.context_prompt.index("{{WHOLE_DOCUMENT}}") >= self.context_prompt.index("{{CHUNK_CONTENT}}"):
+            raise ValueError(
+                "context_prompt must have {{WHOLE_DOCUMENT}} before {{CHUNK_CONTENT}} to enable prefix caching"
+            )
 
         return self
 

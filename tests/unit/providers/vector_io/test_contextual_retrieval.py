@@ -296,6 +296,15 @@ def test_contextual_config_validation_prompt_placeholders():
         )
 
 
+def test_contextual_config_validation_prompt_ordering():
+    """Test that {{WHOLE_DOCUMENT}} must appear before {{CHUNK_CONTENT}} in context_prompt."""
+    with pytest.raises(ValueError, match="must have.*WHOLE_DOCUMENT.*before.*CHUNK_CONTENT"):
+        VectorStoreChunkingStrategyContextualConfig(
+            model_id="llama3.2",
+            context_prompt="{{CHUNK_CONTENT}} then {{WHOLE_DOCUMENT}}",
+        )
+
+
 async def test_execute_contextual_chunk_transformation_document_too_large(provider, strategy_config):
     """Test that documents exceeding max_document_tokens raise a clear error."""
     max_tokens = provider.vector_stores_config.contextual_retrieval_params.max_document_tokens
