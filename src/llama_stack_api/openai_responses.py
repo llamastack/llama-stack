@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, model_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.inference import OpenAITokenLogProb
-from llama_stack_api.schema_utils import json_schema_type, register_schema
+from llama_stack_api.schema_utils import json_schema_type, register_schema, remove_null_from_anyof
 from llama_stack_api.vector_io import SearchRankingOptions as FileSearchRankingOptions
 
 # NOTE(ashwin): this file is literally a copy of the OpenAI responses API schema. We should probably
@@ -712,6 +712,7 @@ class OpenAIResponseIncompleteDetails(BaseModel):
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
 
+    :param background: Whether this response was run in background mode
     :param created_at: Unix timestamp when the response was created
     :param completed_at: (Optional) Unix timestamp when the response was completed
     :param error: (Optional) Error details if the response generation failed
@@ -724,7 +725,7 @@ class OpenAIResponseObject(BaseModel):
     :param previous_response_id: (Optional) ID of the previous response in a conversation
     :param prompt_cache_key: (Optional) A key to use when reading from or writing to the prompt cache
     :param prompt: (Optional) Reference to a prompt template and its variables.
-    :param status: Current status of the response generation
+    :param status: Current status of the response generation (queued, in_progress, completed, failed, cancelled, incomplete)
     :param temperature: (Optional) Sampling temperature used for generation
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
@@ -739,6 +740,7 @@ class OpenAIResponseObject(BaseModel):
     :param metadata: (Optional) Dictionary of metadata key-value pairs
     """
 
+    background: bool | None = Field(default=None, json_schema_extra=remove_null_from_anyof)
     created_at: int
     completed_at: int | None = None
     error: OpenAIResponseError | None = None

@@ -1134,4 +1134,6 @@ __all__ = [
     "WeightedRanker",
     # Validators
     "validate_embeddings_input_is_text",
+    # helpers
+    "remove_null_from_anyof",
 ]

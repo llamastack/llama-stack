@@ -810,6 +810,37 @@ paths:
           description: The UUID of the job to get the artifacts of.
           title: Job Uuid
         description: The UUID of the job to get the artifacts of.
+  /v1alpha/file-processors/process:
+    post:
+      responses:
+        '200':
+          description: The processed file chunks.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProcessFileResponse'
+        '400':
+          description: Bad Request
+          $ref: '#/components/responses/BadRequest400'
+        '429':
+          description: Too Many Requests
+          $ref: '#/components/responses/TooManyRequests429'
+        '500':
+          description: Internal Server Error
+          $ref: '#/components/responses/InternalServerError500'
+        default:
+          description: Default Response
+          $ref: '#/components/responses/DefaultError'
+      tags:
+      - File Processors
+      summary: Process a file into chunks ready for vector database storage.
+      description: Process a file into chunks ready for vector database storage. Supports direct upload via multipart form or processing files already uploaded to file storage via file_id. Exactly one of file or file_id must be provided.
+      operationId: process_file_v1alpha_file_processors_process_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_process_file_v1alpha_file_processors_process_post'
   /v1alpha/connectors:
     get:
       responses:
@@ -4059,6 +4090,9 @@ components:
       description: Web search tool configuration for OpenAI response inputs.
     OpenAIResponseObjectWithInput:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -4521,6 +4555,9 @@ components:
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseObject:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -6731,52 +6768,52 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
           - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+              title: ImageContentItem-Output
             - $ref: '#/components/schemas/TextContentItem'
               title: TextContentItem
-            title: ImageContentItem | TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Output | TextContentItem
           - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+                title: ImageContentItem-Output
               - $ref: '#/components/schemas/TextContentItem'
                 title: TextContentItem
-              title: ImageContentItem | TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Output | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+            title: list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem-Output | TextContentItem]
         chunk_id:
-          title: Chunk Id
           type: string
+          title: Chunk Id
         metadata:
           additionalProperties: true
-          title: Metadata
           type: object
+          title: Metadata
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
+      type: object
       required:
       - content
       - chunk_id
       - chunk_metadata
       title: Chunk
-      type: object
+      description: A chunk of content from file processing.
     ChunkMetadata:
       properties:
         chunk_id:
@@ -8867,6 +8904,32 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
+    Body_process_file_v1alpha_file_processors_process_post:
+      properties:
+        file:
+          anyOf:
+          - type: string
+            format: binary
+          - type: 'null'
+          description: The File object to be uploaded and processed. Mutually exclusive with file_id.
+        file_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID of file already uploaded to file storage. Mutually exclusive with file.
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Optional processing options. Provider-specific parameters (e.g., OCR settings, output format).
+        chunking_strategy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional chunking strategy for splitting content into chunks. Must be valid JSON string.
+      type: object
+      title: Body_process_file_v1alpha_file_processors_process_post
     Connector:
       properties:
         connector_type:
@@ -9965,6 +10028,29 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ProcessFileResponse:
+      properties:
+        chunks:
+          items:
+            $ref: '#/components/schemas/Chunk'
+          type: array
+          title: Chunks
+          description: Processed chunks from the file. Always returns at least one chunk.
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+      type: object
+      required:
+      - chunks
+      - metadata
+      title: ProcessFileResponse
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
     RunEvalBodyRequest:
       properties:
         benchmark_config:
@@ -11671,29 +11757,6 @@ components:
       - benchmark_id
       - job_id
       title: JobResultRequest
-      type: object
-    ProcessFileResponse:
-      description: |-
-        Response model for file processing operation.
-
-        Returns a list of chunks ready for storage in vector databases.
-        Each chunk contains the content and metadata.
-      properties:
-        chunks:
-          description: Processed chunks from the file. Always returns at least one chunk.
-          items:
-            $ref: '#/components/schemas/Chunk'
-          title: Chunks
-          type: array
-        metadata:
-          additionalProperties: true
-          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
-          title: Metadata
-          type: object
-      required:
-      - chunks
-      - metadata
-      title: ProcessFileResponse
       type: object
     ProcessFileRequest:
       description: |-

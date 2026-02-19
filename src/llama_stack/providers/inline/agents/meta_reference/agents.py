@@ -72,6 +72,8 @@ class MetaReferenceAgentsImpl(Agents):
         self.persistence_store = await kvstore_impl(self.config.persistence.agent_state)
         self.responses_store = ResponsesStore(self.config.persistence.responses, self.policy)
         await self.responses_store.initialize()
+        if not self.responses_store.sql_store:
+            raise RuntimeError("Responses store is not initialized")
         self.openai_responses_impl = OpenAIResponsesImpl(
             inference_api=self.inference_api,
             tool_groups_api=self.tool_groups_api,
@@ -85,9 +87,11 @@ class MetaReferenceAgentsImpl(Agents):
             vector_stores_config=self.config.vector_stores_config,
             connectors_api=self.connectors_api,
         )
+        await self.openai_responses_impl.initialize()
 
     async def shutdown(self) -> None:
-        pass
+        if self.openai_responses_impl is not None:
+            await self.openai_responses_impl.shutdown()
 
     # OpenAI responses
     async def get_openai_response(
@@ -131,6 +135,7 @@ class MetaReferenceAgentsImpl(Agents):
             safety_identifier=request.safety_identifier,
             service_tier=request.service_tier,
             metadata=request.metadata,
+            background=request.background,
             truncation=request.truncation,
         )
         return result

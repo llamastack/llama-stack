@@ -5858,6 +5858,9 @@ components:
       description: Web search tool configuration for OpenAI response inputs.
     OpenAIResponseObjectWithInput:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -6331,6 +6334,9 @@ components:
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseObject:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -8541,52 +8547,52 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
           - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+              title: ImageContentItem-Output
             - $ref: '#/components/schemas/TextContentItem'
               title: TextContentItem
-            title: ImageContentItem | TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Output | TextContentItem
           - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+                title: ImageContentItem-Output
               - $ref: '#/components/schemas/TextContentItem'
                 title: TextContentItem
-              title: ImageContentItem | TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Output | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+            title: list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem-Output | TextContentItem]
         chunk_id:
-          title: Chunk Id
           type: string
+          title: Chunk Id
         metadata:
           additionalProperties: true
-          title: Metadata
           type: object
+          title: Metadata
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
+      type: object
       required:
       - content
       - chunk_id
       - chunk_metadata
       title: Chunk
-      type: object
+      description: A chunk of content from file processing.
     ChunkMetadata:
       properties:
         chunk_id:
@@ -10804,6 +10810,10 @@ components:
           type: string
           title: Model
           description: The underlying LLM used for completions.
+        background:
+          type: boolean
+          title: Background
+          description: Whether to run the model response in the background. When true, returns immediately with status 'queued'.
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -12042,6 +12052,29 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ProcessFileResponse:
+      properties:
+        chunks:
+          items:
+            $ref: '#/components/schemas/Chunk'
+          type: array
+          title: Chunks
+          description: Processed chunks from the file. Always returns at least one chunk.
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+      type: object
+      required:
+      - chunks
+      - metadata
+      title: ProcessFileResponse
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
     ResponseItemInclude:
       type: string
       enum:
@@ -13767,29 +13800,6 @@ components:
       - benchmark_id
       - job_id
       title: JobResultRequest
-      type: object
-    ProcessFileResponse:
-      description: |-
-        Response model for file processing operation.
-
-        Returns a list of chunks ready for storage in vector databases.
-        Each chunk contains the content and metadata.
-      properties:
-        chunks:
-          description: Processed chunks from the file. Always returns at least one chunk.
-          items:
-            $ref: '#/components/schemas/Chunk'
-          title: Chunks
-          type: array
-        metadata:
-          additionalProperties: true
-          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
-          title: Metadata
-          type: object
-      required:
-      - chunks
-      - metadata
-      title: ProcessFileResponse
       type: object
     ProcessFileRequest:
       description: |-
