@@ -1,0 +1,24 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[openai_client-txt=openai/gpt-4o]",
+  "request": {
+    "test_id": "tests/integration/responses/test_tool_responses.py::test_response_multi_turn_streaming_web_search[openai_client-txt=openai/gpt-4o]",
+    "provider": "tavily",
+    "tool_name": "web_search",
+    "kwargs": {
+      "query": "latest Python version October 2023"
+    }
+  },
+  "response": {
+    "body": {
+      "__type__": "llama_stack_api.tools.ToolInvocationResult",
+      "__data__": {
+        "content": "{\"query\": \"latest Python version October 2023\", \"top_k\": [{\"url\": \"https://www.python.org/downloads/release/python-3120/\", \"title\": \"Python Release Python 3.12.0\", \"content\": \"Release date: Oct. 2, 2023. This is the stable release of Python 3.12.0. Python 3.12.0 is the newest major release of the Python programming language,\", \"score\": 0.8724455, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/source/\", \"title\": \"Python Source Releases\", \"content\": \"Python Source Releases. Latest Python 3 Release - Python 3.14.3. Stable ... Python 3.12.0 - Oct. 2, 2023. Download Gzipped source tarball; Download XZ\", \"score\": 0.8559598, \"raw_content\": null}, {\"url\": \"https://www.python.org/downloads/\", \"title\": \"Download Python - Python.org\", \"content\": \"Download the latest version of Python. Download Python 3.14.3. Looking for ... Python 3.12.0 Oct. 2, 2023 Download Release notes \\u00b7 Python 3.11.14 Oct. 9\", \"score\": 0.8479807, \"raw_content\": null}, {\"url\": \"https://www.python.org/doc/versions/\", \"title\": \"Python documentation by version\", \"content\": \"Python 3.11.7, released on 4 December 2023; Python 3.11.6, released on 2 October 2023; Python 3.11.5, released on 24 August 2023; Python 3.11.4, released on 6\", \"score\": 0.8003337, \"raw_content\": null}, {\"url\": \"https://www.nicholashairs.com/posts/major-changes-between-python-versions/\", \"title\": \"Summary of Major Changes Between Python Versions\", \"content\": \"Python 3.7 and earlier (EOL Jun 2023) \\u00b7 Python 3.8 (EOL Oct 2024) \\u00b7 Python 3.9 (EOL Oct 2025) \\u00b7 Python 3.10 (EOL Oct 2026) \\u00b7 Python 3.11 (EOL Oct\", \"score\": 0.72675586, \"raw_content\": null}]}",
+        "error_message": null,
+        "error_code": null,
+        "metadata": null
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
