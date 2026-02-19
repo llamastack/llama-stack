@@ -11,15 +11,19 @@ Most Ollama inference errors go through OpenAIMixin and are already
 handled as OpenAI errors.
 """
 
+import ollama as ollama_sdk
 from ollama import ResponseError
 
-# Provider configuration
-NAME = "ollama"
-MODULE_PREFIX = "ollama"
+from llama_stack.testing.providers._config import ProviderConfig
 
 
 def create_error(status_code: int, body: dict | None, message: str) -> ResponseError:
     """Reconstruct an Ollama ResponseError from recorded data."""
-    # Ollama's ResponseError only takes error message and status_code
-    # It doesn't have a body attribute like OpenAI errors
     return ResponseError(error=message, status_code=status_code)
+
+
+PROVIDER = ProviderConfig(
+    name="ollama",
+    sdk_module=ollama_sdk,
+    create_error=create_error,
+)

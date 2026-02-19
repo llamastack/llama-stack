@@ -6,70 +6,55 @@
 
 """Provider-specific exception handling for test recording/replay.
 
-This module enables accurate exception replay during integration tests. When tests
-run in "record" mode, exceptions from provider SDKs are serialized. In "replay"
-mode, they are reconstructed to match the original exception type.
+Serializes provider SDK exceptions in record mode and reconstructs them in replay
+mode so integration tests see the original exception types.
 
-WHEN TO ADD A NEW PROVIDER:
-Add a new provider module when:
-1. You have a provider that raises SDK-specific exceptions (with status_code attribute)
-2. These exceptions need to be caught and handled differently than generic exceptions
-3. The provider's exception module prefix differs from existing providers
-4. The provider raises exceptions that do not get translated to OpenAI exceptions by OpenAIMixin
-
-HOW TO ADD A NEW PROVIDER:
-1. Create a new file: providers/<provider_name>.py
-2. Define these required exports:
-   - NAME: str - The provider name (e.g., "anthropic")
-   - MODULE_PREFIX: str - The exception's module prefix (e.g., "anthropic" for anthropic.*)
-   - create_error(status_code: int, body: dict | None, message: str) -> Exception
-3. Import and add to _PROVIDER_MODULES list below
-
-Example provider module (providers/example.py):
-    from example_sdk import APIError
-
-    def _create_error(status_code: int, body: dict | None, message: str) -> Exception:
-        return APIError(message=message, status_code=status_code)
-
-    NAME = "example"
-    MODULE_PREFIX = "example_sdk"
-    create_error = _create_error
+To add a provider:
+1. Create providers/<name>.py
+2. Define PROVIDER = ProviderConfig(
+       name="mycloud",           # Registry key stored in recordings
+       sdk_module=mycloud_sdk,   # The SDK module (``import mycloud_sdk``)
+       create_error=create_error,  # (status_code, body, message) -> Exception
+   )
+3. Import the module below and add its PROVIDER to the build_providers call
 """
 
-from collections.abc import Callable
-from dataclasses import dataclass
-from types import ModuleType
-
 from . import ollama, openai
-
-# List of provider modules - add new providers here
-_PROVIDER_MODULES: list[ModuleType] = [openai, ollama]
+from ._config import ProviderConfig, _validate_provider
 
 
-@dataclass
-class ProviderConfig:
-    """Configuration for a provider's exception handling."""
+def build_providers(*configs: ProviderConfig) -> dict[str, ProviderConfig]:
+    """Build PROVIDERS dict from registered provider configs. Validates on load."""
+    result: dict[str, ProviderConfig] = {}
+    for config in configs:
+        _validate_provider(config)
+        if config.name in result:
+            raise ValueError(f"Duplicate provider name: {config.name}") from None
+        result[config.name] = config
+    return result
 
-    module_prefix: str
-    create_error: Callable[[int, dict | None, str], Exception]
+
+class GenericProviderError(Exception):
+    """Generic provider error for replay when provider-specific type can't be reconstructed."""
+
+    def __init__(self, status_code: int, body: dict | None = None, message: str = ""):
+        super().__init__(message)
+        self.status_code = status_code
+        self.body = body
 
 
-# Build registry from provider modules
-PROVIDERS: dict[str, ProviderConfig] = {
-    module.NAME: ProviderConfig(
-        module_prefix=module.MODULE_PREFIX,
-        create_error=module.create_error,
-    )
-    for module in _PROVIDER_MODULES
-}
+PROVIDERS: dict[str, ProviderConfig] = build_providers(
+    openai.PROVIDER,
+    ollama.PROVIDER,
+)
 
 
 def detect_provider(exc: object) -> str:
     """Detect the provider from an exception's module."""
     module = type(exc).__module__
-    for name, config in PROVIDERS.items():
-        if module.startswith(config.module_prefix):
-            return name
+    for config in PROVIDERS.values():
+        if module.startswith(config._module_prefix):
+            return config.name
     return "unknown"
 
 
@@ -77,8 +62,5 @@ def create_provider_error(provider: str, status_code: int, body: dict | None, me
     """Reconstruct a provider-specific error from recorded data."""
     if provider in PROVIDERS:
         return PROVIDERS[provider].create_error(status_code, body, message)
-
-    # Fallback for unknown providers
-    from llama_stack.testing.exception_utils import GenericProviderError
 
     return GenericProviderError(status_code, body, message)

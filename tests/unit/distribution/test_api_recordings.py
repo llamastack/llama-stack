@@ -412,8 +412,6 @@ class TestExceptionRecordingReplay:
 
     async def test_replay_legacy_exception_format_raises_generic(self, temp_storage_dir):
         """Recordings with exception_message but no exception_data still replay as Exception."""
-        from llama_stack.testing.api_recorder import normalize_inference_request
-
         temp_storage_dir = temp_storage_dir / "test_legacy_exception"
         recordings_dir = temp_storage_dir / "recordings"
         recordings_dir.mkdir(parents=True, exist_ok=True)

@@ -7,6 +7,7 @@
 """OpenAI provider exception handling for test recording/replay."""
 
 import httpx
+import openai as openai_sdk
 from openai import (
     APIStatusError,
     AuthenticationError,
@@ -19,11 +20,8 @@ from openai import (
     UnprocessableEntityError,
 )
 
-# Provider configuration
-NAME = "openai"
-MODULE_PREFIX = "openai"
+from llama_stack.testing.providers._config import ProviderConfig
 
-# Map status codes to OpenAI error classes
 _ERROR_BY_STATUS: dict[int, type[APIStatusError]] = {
     400: BadRequestError,
     401: AuthenticationError,
@@ -42,3 +40,10 @@ def create_error(status_code: int, body: dict | None, message: str) -> APIStatus
     request = httpx.Request("POST", "https://api.openai.com/v1/chat/completions")
     response = httpx.Response(status_code, json=body or {}, request=request)
     return error_class(message=message, response=response, body=body)
+
+
+PROVIDER = ProviderConfig(
+    name="openai",
+    sdk_module=openai_sdk,
+    create_error=create_error,
+)

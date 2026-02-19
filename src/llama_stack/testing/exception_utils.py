@@ -17,8 +17,17 @@ from typing import Any, Protocol, TypeGuard
 import httpx
 
 from llama_stack.core.exceptions.mapping import EXCEPTION_TYPES_BY_NAME
-from llama_stack.testing.providers import create_provider_error, detect_provider
+from llama_stack.testing.providers import GenericProviderError, create_provider_error, detect_provider
 from llama_stack_api.common.errors import LlamaStackError
+
+__all__ = [
+    "GenericProviderError",
+    "GenericLlamaStackError",
+    "ProviderSDKException",
+    "deserialize_exception",
+    "is_provider_sdk_exception",
+    "serialize_exception",
+]
 
 
 class ProviderSDKException(Protocol):
@@ -26,15 +35,6 @@ class ProviderSDKException(Protocol):
 
     status_code: int
     body: dict | None
-
-
-class GenericProviderError(Exception):
-    """Generic provider error for replay when provider-specific type can't be reconstructed."""
-
-    def __init__(self, status_code: int, body: dict | None = None, message: str = ""):
-        super().__init__(message)
-        self.status_code = status_code
-        self.body = body
 
 
 class GenericLlamaStackError(LlamaStackError):
@@ -77,11 +77,12 @@ def serialize_exception(exc: Exception) -> dict[str, Any]:
             "status_code": int(exc.status_code),
         }
     elif is_provider_sdk_exception(exc):
+        error_message = getattr(exc, "error", message)
         return {
             "category": "provider_sdk",
             "provider": detect_provider(exc),
             "type": exc_type,
-            "message": message,
+            "message": error_message,
             "status_code": exc.status_code,
             "body": getattr(exc, "body", None),
         }

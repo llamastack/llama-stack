@@ -6,12 +6,22 @@
 
 """Tests for provider registry and exception reconstruction dispatch."""
 
+import types
+from unittest.mock import patch
+
 import httpx
+import pytest
 from ollama import ResponseError
 from openai import NotFoundError
 
 from llama_stack.testing.exception_utils import GenericProviderError
-from llama_stack.testing.providers import create_provider_error, detect_provider
+from llama_stack.testing.providers import (
+    PROVIDERS,
+    ProviderConfig,
+    create_provider_error,
+    detect_provider,
+)
+from llama_stack.testing.providers._config import _validate_provider
 
 
 class TestDetectProvider:
@@ -61,3 +71,90 @@ class TestCreateProviderError:
         assert exc.status_code == 503
         assert exc.body == {"retry_after": 60}
         assert "unavailable" in str(exc).lower()
+
+
+class TestProviderRegistration:
+    """Verify adding a provider to the registry makes it work for detect and create."""
+
+    @staticmethod
+    def _fake_sdk_module(name: str = "example_sdk") -> types.ModuleType:
+        """Create a minimal fake SDK module for testing."""
+        return types.ModuleType(name)
+
+    def test_detect_provider_uses_registered_providers(self):
+        """Exception from a registered SDK module is detected."""
+        exc_cls = type("APIError", (Exception,), {"__module__": "example_sdk.errors"})
+
+        fake_config = ProviderConfig(
+            name="example",
+            sdk_module=self._fake_sdk_module("example_sdk"),
+            create_error=lambda s, b, m: exc_cls(m),
+        )
+        with patch.dict(PROVIDERS, {"example": fake_config}, clear=False):
+            exc = exc_cls("test")
+            assert detect_provider(exc) == "example"
+
+    def test_create_provider_error_uses_registered_providers(self):
+        """Registered provider's create_error is called."""
+
+        class CustomError(Exception):
+            status_code = 0
+            body = None
+
+        def create_error(status_code: int, body, message: str):
+            exc = CustomError(message)
+            exc.status_code = status_code
+            exc.body = body
+            return exc
+
+        fake_config = ProviderConfig(
+            name="example",
+            sdk_module=self._fake_sdk_module("example_sdk"),
+            create_error=create_error,
+        )
+        with patch.dict(PROVIDERS, {"example": fake_config}, clear=False):
+            exc = create_provider_error("example", 503, {"retry": 60}, "Down")
+            assert isinstance(exc, CustomError)
+            assert exc.status_code == 503
+            assert exc.body == {"retry": 60}
+
+
+class TestProviderValidation:
+    """Verify ProviderConfig validation fails fast with clear errors."""
+
+    @staticmethod
+    def _fake_sdk_module(name: str = "example_sdk") -> types.ModuleType:
+        return types.ModuleType(name)
+
+    def test_valid_config_passes(self):
+        """Valid ProviderConfig does not raise."""
+        config = ProviderConfig(
+            name="example",
+            sdk_module=self._fake_sdk_module(),
+            create_error=lambda s, b, m: Exception(m),
+        )
+        _validate_provider(config)
+
+    def test_empty_name_raises(self):
+        """Empty name raises with clear message."""
+        config = ProviderConfig(name="", sdk_module=self._fake_sdk_module(), create_error=lambda *a: Exception())
+        with pytest.raises(ValueError, match="name must be a non-empty str"):
+            _validate_provider(config)
+
+    def test_invalid_name_type_raises(self):
+        """Non-str name raises."""
+        config = ProviderConfig(name=123, sdk_module=self._fake_sdk_module(), create_error=lambda *a: Exception())
+        with pytest.raises(ValueError, match="name"):
+            _validate_provider(config)
+
+    def test_sdk_module_must_be_a_module(self):
+        """sdk_module must be an actual module, not a class or string."""
+        config = ProviderConfig(name="x", sdk_module="not_a_module", create_error=lambda *a: Exception())
+        with pytest.raises(ValueError, match="sdk_module must be a module"):
+            _validate_provider(config)
+
+    def test_non_callable_create_error_raises(self):
+        """create_error must be callable."""
+        config = ProviderConfig(name="x", sdk_module=self._fake_sdk_module(), create_error="not a function")
+        with pytest.raises(ValueError, match="create_error must be callable"):
+            _validate_provider(config)
