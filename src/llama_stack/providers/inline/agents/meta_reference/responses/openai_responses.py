@@ -24,6 +24,7 @@ from llama_stack_api import (
     ConversationItem,
     Conversations,
     Files,
+    GetPromptRequest,
     Inference,
     InvalidConversationIdError,
     ListItemsRequest,
@@ -289,7 +290,9 @@ class OpenAIResponsesImpl:
             return
 
         prompt_version = int(openai_response_prompt.version) if openai_response_prompt.version else None
-        cur_prompt = await self.prompts_api.get_prompt(openai_response_prompt.id, prompt_version)
+        cur_prompt = await self.prompts_api.get_prompt(
+            GetPromptRequest(prompt_id=openai_response_prompt.id, version=prompt_version)
+        )
 
         if not cur_prompt or not cur_prompt.prompt:
             return
