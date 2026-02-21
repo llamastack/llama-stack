@@ -17,6 +17,8 @@ from llama_stack.core.distribution import get_provider_registry
 from llama_stack.log import get_logger
 from llama_stack_api import Api
 
+from .utils import add_dependent_providers
+
 TEMPLATES_PATH = Path(__file__).parent.parent.parent / "templates"
 
 logger = get_logger(name=__name__, category="cli")
@@ -92,6 +94,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                     sys.exit(1)
     elif args.providers:
         provider_list: dict[str, list[Provider]] = dict()
+        provider_registry = get_provider_registry()
         for api_provider in args.providers.split(","):
             if "=" not in api_provider:
                 cprint(
@@ -101,7 +104,7 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                 )
                 sys.exit(1)
             api, provider_type = api_provider.split("=")
-            providers_for_api = get_provider_registry().get(Api(api), None)
+            providers_for_api = provider_registry.get(Api(api), None)
             if providers_for_api is None:
                 cprint(
                     f"{api} is not a valid API.",
@@ -123,6 +126,14 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
                     file=sys.stderr,
                 )
                 sys.exit(1)
+
+        add_dependent_providers(
+            provider_list=provider_list,
+            provider_registry=provider_registry,
+            requested_provider_types=list(
+                {provider.provider_type for providers in provider_list.values() for provider in providers}
+            ),
+        )
         config = StackConfig(providers=provider_list, distro_name="providers-run")
 
     normal_deps, special_deps, external_provider_dependencies = get_provider_dependencies(config)
