@@ -202,3 +202,16 @@ class ResponseNotFoundError(ResourceNotFoundError):
 
     def __init__(self, response_id: str) -> None:
         super().__init__(response_id, resource_type="Response", client_command="responses.list")
+
+
+class FileTooLargeError(LlamaStackError):
+    """raised when an uploaded file exceeds the maximum allowed size"""
+
+    status_code: httpx.codes = httpx.codes.REQUEST_ENTITY_TOO_LARGE
+
+    def __init__(self, file_size: int, max_size: int) -> None:
+        message = (
+            f"File size {file_size} bytes exceeds the maximum allowed upload size of {max_size} bytes "
+            f"({max_size / (1024 * 1024):.0f} MB)"
+        )
+        super().__init__(message)
