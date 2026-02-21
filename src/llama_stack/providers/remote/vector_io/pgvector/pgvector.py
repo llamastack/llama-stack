@@ -266,6 +266,14 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
 
+            # Specify the max size of max heap that holds best candidates when traversing the graph (https://github.com/pgvector/pgvector?tab=readme-ov-file#query-options)
+            elif self.vector_index.type == PGVectorIndexType.HNSW:
+                cur.execute(
+                    f"""
+                    SET hnsw.ef_search = {self.vector_index.ef_search};
+                """
+                )
+
             cur.execute(
                 f"""
             SELECT document, embedding {pgvector_search_function} %s::vector AS distance

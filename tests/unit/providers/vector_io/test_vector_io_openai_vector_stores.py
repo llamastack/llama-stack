@@ -1401,3 +1401,100 @@ async def test_search_vector_store_ignores_rewrite_query(vector_io_adapter):
     # Search should succeed - the mixin ignores rewrite_query and just does the search
     assert result is not None
     assert result.search_query == ["test query"]  # Original query preserved
+
+
+async def test_pgvector_sets_hnsw_ef_search_in_query_vector(mock_psycopg2_connection, embedding_dimension):
+    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+
+    connection, cursor = mock_psycopg2_connection
+    cursor.fetchall.return_value = []
+
+    index = PGVectorIndex(
+        vector_store=VectorStore(
+            identifier="test-vector-db",
+            embedding_model="test-model",
+            embedding_dimension=embedding_dimension,
+            provider_id="pgvector",
+        ),
+        dimension=embedding_dimension,
+        conn=connection,
+        distance_metric="COSINE",
+        vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64, ef_search=50),
+    )
+    index.table_name = "test_table"
+
+    embedding = np.random.rand(embedding_dimension).astype(np.float32)
+    await index.query_vector(embedding, k=5, score_threshold=0.5)
+
+    calls = cursor.execute.call_args_list
+    set_call_sql = str(calls[0])
+    assert f"SET hnsw.ef_search = {index.vector_index.ef_search}" in set_call_sql, (
+        f"Expected 'SET hnsw.ef_search = {index.vector_index.ef_search}' in cursor.execute calls, got: {set_call_sql}"
+    )
+
+
+async def test_set_ef_search_called_before_select_in_query_vector(mock_psycopg2_connection, embedding_dimension):
+    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+
+    connection, cursor = mock_psycopg2_connection
+    cursor.fetchall.return_value = []
+
+    index = PGVectorIndex(
+        vector_store=VectorStore(
+            identifier="test-vector-db",
+            embedding_model="test-model",
+            embedding_dimension=embedding_dimension,
+            provider_id="pgvector",
+        ),
+        dimension=embedding_dimension,
+        conn=connection,
+        distance_metric="COSINE",
+        vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64, ef_search=50),
+    )
+    index.table_name = "test_table"
+
+    embedding = np.random.rand(embedding_dimension).astype(np.float32)
+    await index.query_vector(embedding, k=5, score_threshold=0.5)
+
+    calls = cursor.execute.call_args_list
+    assert len(calls) == 2, f"Expected exactly 2 execute calls (SET + SELECT), got {len(calls)}"
+
+    set_call_sql = str(calls[0])
+    select_call_sql = str(calls[1])
+    assert f"SET hnsw.ef_search = {index.vector_index.ef_search}" in set_call_sql, (
+        f"First call should be SET, got: {set_call_sql}"
+    )
+    assert "SELECT document" in select_call_sql, f"Second call should be SELECT, got: {select_call_sql}"
+
+
+async def test_apply_default_ef_search_for_query_vector(mock_psycopg2_connection, embedding_dimension):
+    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+
+    connection, cursor = mock_psycopg2_connection
+    cursor.fetchall.return_value = []
+
+    index = PGVectorIndex(
+        vector_store=VectorStore(
+            identifier="test-vector-db",
+            embedding_model="test-model",
+            embedding_dimension=embedding_dimension,
+            provider_id="pgvector",
+        ),
+        dimension=embedding_dimension,
+        conn=connection,
+        distance_metric="COSINE",
+        vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
+    )
+    index.table_name = "test_table"
+
+    embedding = np.random.rand(embedding_dimension).astype(np.float32)
+    await index.query_vector(embedding, k=5, score_threshold=0.5)
+
+    calls = cursor.execute.call_args_list
+    set_call_sql = str(calls[0])
+    assert f"SET hnsw.ef_search = {PGVectorHNSWVectorIndex().ef_search}" in set_call_sql, (
+        f"Expected default 'SET hnsw.ef_search = {PGVectorHNSWVectorIndex().ef_search}' when ef_search is not explicitly configured, got: {set_call_sql}"
+    )
