@@ -19,6 +19,7 @@ from .api import DatasetIO, DatasetStore
 
 # Import models for re-export
 from .models import (
+    AppendRowsParams,
     AppendRowsRequest,
     IterRowsRequest,
     PaginatedResponse,
@@ -27,6 +28,7 @@ from .models import (
 __all__ = [
     "DatasetIO",
     "DatasetStore",
+    "AppendRowsParams",
     "AppendRowsRequest",
     "IterRowsRequest",
     "PaginatedResponse",

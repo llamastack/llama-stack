@@ -7547,10 +7547,6 @@ components:
       description: Version information for the service.
     AppendRowsRequest:
       properties:
-        dataset_id:
-          type: string
-          title: Dataset Id
-          description: The ID of the dataset to append the rows to.
         rows:
           items:
             additionalProperties: true
@@ -7560,10 +7556,9 @@ components:
           description: The rows to append to the dataset.
       type: object
       required:
-      - dataset_id
       - rows
       title: AppendRowsRequest
-      description: Request model for appending rows to a dataset.
+      description: Request body for appending rows to a dataset.
     PaginatedResponse:
       properties:
         data:
