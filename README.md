@@ -77,6 +77,7 @@ Please checkout for [full list](https://llamastack.github.io/docs/providers)
 |      TorchTune       | Single Node | | | | | ✅ | | |
 |     NVIDIA NEMO      | Hosted | | ✅ | ✅ | | ✅ | ✅ | ✅ |
 |        NVIDIA        | Hosted | | | | | ✅ | ✅ | ✅ |
+|      Infinispan      | Single Node | | | ✅ | | | | |
 
 > **Note**: Additional providers are available through external packages. See [External Providers](https://llamastack.github.io/docs/providers/external) documentation.
 
