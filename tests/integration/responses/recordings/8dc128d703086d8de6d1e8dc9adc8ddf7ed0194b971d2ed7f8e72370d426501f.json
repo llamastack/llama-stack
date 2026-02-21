@@ -1,0 +1,505 @@
+{
+  "test_id": "tests/integration/responses/test_tool_responses.py::test_response_streaming_web_search[openai_client-txt=openai/gpt-4o-llama_experts]",
+  "request": {
+    "method": "POST",
+    "url": "https://api.openai.com/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "gpt-4o",
+      "messages": [
+        {
+          "role": "user",
+          "content": "How many experts does the Llama 4 Maverick model have?"
+        },
+        {
+          "role": "assistant",
+          "content": "",
+          "tool_calls": [
+            {
+              "index": 0,
+              "id": "call_Ze1AFanG7P92deQHJohsmP99",
+              "type": "function",
+              "function": {
+                "name": "web_search",
+                "arguments": "{\"query\":\"Llama 4 Maverick model number of experts\"}"
+              }
+            }
+          ]
+        },
+        {
+          "role": "tool",
+          "tool_call_id": "call_Ze1AFanG7P92deQHJohsmP99",
+          "content": "{\"query\": \"Llama 4 Maverick model number of experts\", \"top_k\": [{\"url\": \"https://openrouter.ai/meta-llama/llama-4-maverick\", \"title\": \"Llama 4 Maverick - API, Providers, Stats\", \"content\": \"# Meta: Llama 4 Maverick. ### meta-llama/llama-4-maverick. Llama 4 Maverick 17B Instruct (128E) is a high-capacity multimodal language model from Meta, built on a mixture-of-experts (MoE) architecture with 128 experts and 17 billion active parameters per forward pass (400B total). Maverick features early fusion for native multimodality and a 1 million token context window. Released on April 5, 2025 under the Llama 4 Community License, Maverick is suited for research and commercial applications requiring advanced multimodal understanding and high model throughput. ## Providers for Llama 4 Maverick. ### OpenRouter routes requests to the best providers that are able to handle your prompt size and parameters, with fallbacks to maximize uptime. ## Performance for Llama 4 Maverick. ## Apps using Llama 4 Maverick. ## Recent activity on Llama 4 Maverick. ## Uptime stats for Llama 4 Maverick. ### Uptime stats for Llama 4 Maverickacross all providers. ## Sample code and API for Llama 4 Maverick. ### OpenRouter normalizes requests and responses across providers for you.\", \"score\": 0.99988496, \"raw_content\": null}, {\"url\": \"https://build.nvidia.com/meta/llama-4-maverick-17b-128e-instruct/modelcard\", \"title\": \"llama-4-maverick-17b-128e-instruct Model by Meta\", \"content\": \"This model has been developed and built to Meta's requirements for this application and use case; see link to Non-NVIDIA Llama 4 Maverick. Developers may fine-tune Llama 4 models for languages beyond the 12 supported languages provided they comply with the Llama 4 Community License and the Acceptable Use Policy. Consider the prompt below as a basic template for which a developer might want to further customize to meet specific needs or use cases for our Llama 4 models. We provide the community with system level protections - like Llama Guard, Prompt Guard and Code Shield - that developers should deploy with Llama models or other LLMs. All of our reference implementation demos contain these safeguards by default so developers can benefit from system-level safety out-of-the-box. We evaluated Llama models for common use cases as well as specific capabilities. Therefore, before deploying any applications of Llama 4 models, developers should perform safety testing and tuning tailored to their specific applications of the model.\", \"score\": 0.9997131, \"raw_content\": null}, {\"url\": \"https://www.facebook.com/yann.lecun/posts/boom-the-llama-4-brood-is-out-scout-16-experts-17b-each-109b-total-parameters-10/10160517491542143/\", \"title\": \"BOOM! The Llama-4 brood is out. - Scout: 16 experts, 17B each ...\", \"content\": \"## Yann LeCun's Post. - Scout: 16 experts, 17B each, 109B total parameters, 10M+ context window, can run on a single GPU. - Maverick: multimodal, 128 experts, 17B each, 400B total parameters, 1M context window. - preview of Behemoth: 16 experts, 288B each, 2T total parameters. Multimodal intelligence that is best in class for each size. Llama 4 Scout: 17B active, 16 experts, 109B total params. This can fit on a single GPU and is better than all our previous Llama 3 models. Llama 4 Maverick: 17B active, 128 experts, 400B total params. Our \\\"workhorse\\\" model that powers Meta AI assistant. And with state-of-the-art native multimodality support, we hope the community can power applications efficiently with best in class intelligence. Llama 4 Behemoth: 288B active, 16 experts, 2T total params. This teacher model was pre-trained on 32K GPUs and is still post-training - but has already been instrumental in enabling the above models. Check out the blog for more details: https://ai.meta.com/blog/llama-4-multimodal-intelligence/. https://www.reddit.com/r/LocalLLaMA/comments/1jt8yug/serious\\\\_issues\\\\_in\\\\_llama\\\\_4\\\\_training\\\\_i\\\\_have/.\", \"score\": 0.99939287, \"raw_content\": null}, {\"url\": \"https://huggingface.co/meta-llama/Llama-4-Maverick-17B-128E-Original\", \"title\": \"meta-llama/Llama-4-Maverick-17B-128E-Original\", \"content\": \"\\\"**Llama 4**\\\" means the foundational large language models and software and algorithms, including machine-learning model code, trained model weights, inference-enabling code, training-enabling code, fine-tuning enabling code and other elements of the foregoing distributed by Meta at . i. If you distribute or make available the Llama Materials (or any derivative works thereof), or a product or service (including another AI model) that contains any of them, you shall (A) provide a copy of this Agreement with any such Llama Materials; and (B) prominently display \\\"Built with Llama\\\" on a related website, user interface, blogpost, about page, or product documentation. If you use the Llama Materials or any outputs or results of the Llama Materials to create, train, fine tune, or otherwise improve an AI model, which is distributed or made available, you shall also include \\\"Llama\\\" at the beginning of any such AI model name. Developers may fine-tune Llama 4 models for languages beyond the 12 supported languages provided they comply with the Llama 4 Community License and the Acceptable Use Policy.\", \"score\": 0.9967775, \"raw_content\": null}, {\"url\": \"https://www.theregister.com/2025/04/07/llama_4_debuts/\", \"title\": \"Meta debuts first models from the Llama 4 herd\", \"content\": \"# Meta debuts its first 'mixture of experts' models from the Llama 4 herd. Meta has debuted the first two models in its Llama 4 family, its first to use mixture of experts tech. That, or so Meta claims, has made it possible for Llama 4 to enable \\\"open source fine-tuning efforts by pre-training on 200 languages, including over 100 with over 1 billion tokens each, and overall 10x more multilingual tokens than Llama 3.\\\". Meta's post doesn't detail the corpus used to train the Llama 4 models, an important issue given the company is accused of using pirated content to train its models. \\\"It's well-known that all leading LLMs have had issues with bias \\u2014 specifically, they historically have leaned left when it comes to debated political and social topics,\\\" Meta's launch post states, before attributing that to \\\"the types of training data available on the internet.\\\".\", \"score\": 0.9885804, \"raw_content\": null}]}"
+        }
+      ],
+      "parallel_tool_calls": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "web_search",
+            "description": "Search the web for information",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "The query to search for"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            }
+          }
+        }
+      ],
+      "service_tier": "default"
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "gpt-4o"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "ZeBsPMrw951PyI"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": "The",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "UkR01XGU0ToJH"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": " L",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "e95B5bsE9L4o9F"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": "lama",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "ewmvdZPAZved"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": " ",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "vsOQ4tfNiPGRzzI"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": "4",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "s0EI6HWvFBn5Y9k"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": " Maver",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "F1elm22JmK"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": "ick",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "cbdhbFnDh1ZJR"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": " model",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "NNmrd48itZ"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": " has",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "NhW87TgmjfSx"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": " ",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "KycjnEVJkYKtrJC"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": "128",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "Sp9T9rkyOYjVd"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": " experts",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "1lwEVLhQ"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "M5R0iMrTMor8XH8"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": null,
+          "obfuscation": "D8YTWHdsb4"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-8dc128d70308",
+          "choices": [],
+          "created": 0,
+          "model": "gpt-4o-2024-08-06",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": "fp_07646f167f",
+          "usage": {
+            "completion_tokens": 14,
+            "prompt_tokens": 1702,
+            "total_tokens": 1716,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 0
+            }
+          },
+          "obfuscation": "CYyXoaegVk9"
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}
