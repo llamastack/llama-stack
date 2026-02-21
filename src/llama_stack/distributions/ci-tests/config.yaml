@@ -357,4 +357,7 @@ vector_stores:
     max_document_tokens: 100000
 safety:
   default_shield_id: llama-guard
-connectors: []
+connectors:
+- connector_type: mcp
+  connector_id: test-mcp-connector
+  url: http://localhost:5199/sse

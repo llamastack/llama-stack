@@ -149,12 +149,17 @@ def dependency_tools():
 
 
 @contextmanager
-def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Callable] | None = None):
+def make_mcp_server(
+    required_auth_token: str | None = None,
+    tools: dict[str, Callable] | None = None,
+    port: int | None = None,
+):
     """
     Create an MCP server with the specified tools.
 
     :param required_auth_token: Optional auth token required for access
     :param tools: Dictionary of tool_name -> tool_function. If None, uses default tools.
+    :param port: Optional fixed port to listen on. If None, an available port is chosen automatically.
     """
     import threading
     import time
@@ -216,7 +221,8 @@ def make_mcp_server(required_auth_token: str | None = None, tools: dict[str, Cal
             sock.bind(("", 0))
             return sock.getsockname()[1]
 
-    port = get_open_port()
+    if port is None:
+        port = get_open_port()
     logger = get_logger(__name__, category="tests::mcp")
 
     # make uvicorn logs be less verbose
