@@ -16,11 +16,17 @@ from llama_stack_api.common.errors import (
     BatchNotFoundError,
     ClientListCommand,
     ConflictError,
-    InvalidConversationIdError,
+    ConversationItemNotFoundError,
+    ConversationNotFoundError,
+    InternalServerError,
+    InvalidParameterError,
     LlamaStackError,
     ModelNotFoundError,
     ModelTypeError,
     ResourceNotFoundError,
+    ResponseInputItemNotFoundError,
+    ResponseNotFoundError,
+    ServiceNotEnabledError,
     TokenValidationError,
     UnsupportedModelError,
 )
@@ -302,11 +308,6 @@ class TestTranslateException:
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.UNAUTHORIZED
 
-    def test_invalid_conversation_id_error_uses_400(self):
-        exc = InvalidConversationIdError("bad-id")
-        result = translate_exception(exc)
-        assert result.status_code == httpx.codes.BAD_REQUEST
-
     def test_model_type_error_uses_400(self):
         """ModelTypeError(LlamaStackError) has status_code 400 BAD_REQUEST."""
         exc = ModelTypeError("llama-3", "embedding", "llm")
@@ -317,6 +318,41 @@ class TestTranslateException:
         exc = UnsupportedModelError("bad-model", ["llama-3", "gpt-4"])
         result = translate_exception(exc)
         assert result.status_code == httpx.codes.BAD_REQUEST
+
+    def test_invalid_parameter_error_uses_400(self):
+        exc = InvalidParameterError("max_tool_calls", 0, "Must be >= 1.")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.BAD_REQUEST
+
+    def test_service_not_enabled_error_uses_503(self):
+        exc = ServiceNotEnabledError("Safety API")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.SERVICE_UNAVAILABLE
+
+    def test_internal_server_error_uses_500(self):
+        exc = InternalServerError()
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.INTERNAL_SERVER_ERROR
+
+    def test_response_not_found_error_uses_404(self):
+        exc = ResponseNotFoundError("resp_abc123")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
+
+    def test_response_input_item_not_found_error_uses_404(self):
+        exc = ResponseInputItemNotFoundError("input_abc", "resp_xyz")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
+
+    def test_conversation_not_found_error_uses_404(self):
+        exc = ConversationNotFoundError("conv_nonexistent")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
+
+    def test_conversation_item_not_found_error_uses_404(self):
+        exc = ConversationItemNotFoundError("msg_abc123", "conv_xyz789")
+        result = translate_exception(exc)
+        assert result.status_code == httpx.codes.NOT_FOUND
 
     def test_llama_stack_error_preserves_message(self):
         exc = ModelNotFoundError("llama-3")

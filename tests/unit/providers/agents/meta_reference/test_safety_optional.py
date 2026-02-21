@@ -138,7 +138,7 @@ class TestGuardrailsFunctionality:
         from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
             OpenAIResponsesImpl,
         )
-        from llama_stack_api import ResponseGuardrailSpec
+        from llama_stack_api import ResponseGuardrailSpec, ServiceNotEnabledError
 
         # Create OpenAIResponsesImpl with no safety API
         with patch("llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.ResponsesStore"):
@@ -156,22 +156,24 @@ class TestGuardrailsFunctionality:
             )
 
             # Test with string guardrail
-            with pytest.raises(ValueError) as exc_info:
+            with pytest.raises(ServiceNotEnabledError) as exc_info:
                 await impl.create_openai_response(
                     input="test input",
                     model="test-model",
                     guardrails=["llama-guard"],
                 )
-            assert "Cannot process guardrails: Safety API is not configured" in str(exc_info.value)
+            assert "Safety API" in str(exc_info.value)
+            assert "not enabled" in str(exc_info.value)
 
             # Test with ResponseGuardrailSpec
-            with pytest.raises(ValueError) as exc_info:
+            with pytest.raises(ServiceNotEnabledError) as exc_info:
                 await impl.create_openai_response(
                     input="test input",
                     model="test-model",
                     guardrails=[ResponseGuardrailSpec(type="llama-guard")],
                 )
-            assert "Cannot process guardrails: Safety API is not configured" in str(exc_info.value)
+            assert "Safety API" in str(exc_info.value)
+            assert "not enabled" in str(exc_info.value)
 
     async def test_create_response_succeeds_without_guardrails_and_no_safety_api(
         self, mock_persistence_config, mock_deps
@@ -215,4 +217,4 @@ class TestGuardrailsFunctionality:
                 )
             except Exception as e:
                 # Ensure the error is NOT about missing Safety API
-                assert "Cannot process guardrails: Safety API is not configured" not in str(e)
+                assert "not enabled" not in str(e) or "Safety API" not in str(e)
