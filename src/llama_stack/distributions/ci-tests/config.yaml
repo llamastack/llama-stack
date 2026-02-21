@@ -278,9 +278,9 @@ registered_resources:
   models:
   - metadata:
       description: OpenAI GPT-OSS 20B on Bedrock (us-west-2)
-    model_id: openai.gpt-oss-20b-1:0
+    model_id: openai.gpt-oss-20b
     provider_id: bedrock
-    provider_model_id: openai.gpt-oss-20b-1:0
+    provider_model_id: openai.gpt-oss-20b
     model_type: llm
   shields:
   - shield_id: llama-guard
