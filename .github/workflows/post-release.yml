@@ -1,0 +1,220 @@
+# =============================================================================
+# Post-Release Automation
+# =============================================================================
+#
+# Triggered after the pypi.yml workflow succeeds for a release event. Automates:
+#   A) Tagging main with the next dev tag (e.g., v0.5.1-dev after v0.5.0)
+#   B) Bumping fallback_version on main and opening a PR
+#   C) Updating npm lockfile on the release branch and opening a PR
+#
+# =============================================================================
+
+name: Post-release automation
+
+on:
+  workflow_run:
+    workflows: ["Build, test, and publish packages"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to simulate (e.g., v0.5.0). For testing only.'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  post-release:
+    name: Post-release housekeeping
+    # Only run when:
+    # - workflow_dispatch (manual testing), OR
+    # - the pypi.yml workflow completed successfully AND was triggered by a release
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'release'
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Parse release version
+        id: parse
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            # The triggering workflow was a release event — find the tag from the
+            # commit SHA that the workflow ran on, or fall back to the latest release.
+            HEAD_SHA="${{ github.event.workflow_run.head_sha }}"
+            TAG=$(git tag --points-at "$HEAD_SHA" 2>/dev/null | grep '^v' | head -1)
+            if [ -z "$TAG" ]; then
+              # Fallback: query the latest published release via GitHub API
+              TAG=$(gh api repos/${{ github.repository }}/releases/latest --jq '.tag_name')
+            fi
+            if [ -z "$TAG" ]; then
+              echo "::error::Could not determine release tag"
+              exit 1
+            fi
+          fi
+
+          # Strip 'v' prefix
+          VERSION="${TAG#v}"
+
+          # Split into components
+          MAJOR="${VERSION%%.*}"
+          REST="${VERSION#*.}"
+          MINOR="${REST%%.*}"
+          PATCH="${REST#*.}"
+          # Strip any pre-release suffix from patch (e.g., rc1)
+          PATCH="${PATCH%%[a-zA-Z-]*}"
+
+          NEXT_PATCH=$((PATCH + 1))
+          NEXT_DEV_TAG="v${MAJOR}.${MINOR}.${NEXT_PATCH}-dev"
+          NEXT_FALLBACK="${MAJOR}.${MINOR}.${NEXT_PATCH}.dev0"
+          RELEASE_BRANCH="release-${MAJOR}.${MINOR}.x"
+
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "major=${MAJOR}" >> $GITHUB_OUTPUT
+          echo "minor=${MINOR}" >> $GITHUB_OUTPUT
+          echo "patch=${PATCH}" >> $GITHUB_OUTPUT
+          echo "next_patch=${NEXT_PATCH}" >> $GITHUB_OUTPUT
+          echo "next_dev_tag=${NEXT_DEV_TAG}" >> $GITHUB_OUTPUT
+          echo "next_fallback=${NEXT_FALLBACK}" >> $GITHUB_OUTPUT
+          echo "release_branch=${RELEASE_BRANCH}" >> $GITHUB_OUTPUT
+
+          echo "Release version: ${VERSION}"
+          echo "Next dev tag: ${NEXT_DEV_TAG}"
+          echo "Next fallback: ${NEXT_FALLBACK}"
+          echo "Release branch: ${RELEASE_BRANCH}"
+
+      # -----------------------------------------------------------------------
+      # Step A: Tag main with the next dev tag
+      # -----------------------------------------------------------------------
+      - name: Push dev tag to main
+        run: |
+          DEV_TAG="${{ steps.parse.outputs.next_dev_tag }}"
+
+          # Check if tag already exists
+          if git rev-parse "$DEV_TAG" >/dev/null 2>&1; then
+            echo "Tag $DEV_TAG already exists, skipping"
+            exit 0
+          fi
+
+          # Tag the HEAD of main
+          MAIN_SHA=$(git rev-parse origin/main)
+          git tag "$DEV_TAG" "$MAIN_SHA"
+          git push origin "$DEV_TAG"
+          echo "Pushed tag $DEV_TAG to main ($MAIN_SHA)"
+
+      # -----------------------------------------------------------------------
+      # Step B: Bump fallback_version on main and open PR
+      # -----------------------------------------------------------------------
+      - name: Create fallback_version bump PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NEXT_FALLBACK="${{ steps.parse.outputs.next_fallback }}"
+          VERSION="${{ steps.parse.outputs.version }}"
+          BRANCH="post-release/bump-fallback-${VERSION}"
+
+          # Create branch from main
+          git checkout -b "$BRANCH" origin/main
+
+          # Update fallback_version in root pyproject.toml
+          sed -i "s/^fallback_version = .*/fallback_version = \"${NEXT_FALLBACK}\"/" pyproject.toml
+
+          # Update fallback_version in src/llama_stack_api/pyproject.toml
+          sed -i "s/^fallback_version = .*/fallback_version = \"${NEXT_FALLBACK}\"/" src/llama_stack_api/pyproject.toml
+
+          # Check if there are changes
+          if git diff --quiet; then
+            echo "No changes to fallback_version, skipping PR"
+            exit 0
+          fi
+
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml src/llama_stack_api/pyproject.toml
+          git commit -s -m "chore: bump fallback_version to ${NEXT_FALLBACK} after ${VERSION} release"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --base main \
+            --head "$BRANCH" \
+            --title "chore: bump fallback_version to ${NEXT_FALLBACK}" \
+            --body "$(cat <<EOF
+          Automated post-release version bump after \`v${VERSION}\`.
+
+          Updates \`fallback_version\` in both \`pyproject.toml\` files to \`${NEXT_FALLBACK}\`.
+
+          This PR was created automatically by the post-release workflow.
+          EOF
+          )"
+
+      # -----------------------------------------------------------------------
+      # Step C: Update npm lockfile on release branch and open PR
+      # -----------------------------------------------------------------------
+      - name: Set up Node.js
+        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Create npm lockfile update PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.parse.outputs.version }}"
+          RELEASE_BRANCH="${{ steps.parse.outputs.release_branch }}"
+          MAJOR="${{ steps.parse.outputs.major }}"
+          MINOR="${{ steps.parse.outputs.minor }}"
+          BRANCH="post-release/npm-lockfile-${VERSION}"
+
+          # Check if release branch exists
+          if ! git rev-parse "origin/${RELEASE_BRANCH}" >/dev/null 2>&1; then
+            echo "Release branch ${RELEASE_BRANCH} does not exist, skipping npm update"
+            exit 0
+          fi
+
+          git checkout -b "$BRANCH" "origin/${RELEASE_BRANCH}"
+
+          # Update npm lockfile
+          cd src/llama_stack_ui
+          npm install "llama-stack-client@^${VERSION}"
+          cd ../..
+
+          # Check if there are changes
+          if git diff --quiet; then
+            echo "No npm lockfile changes, skipping PR"
+            exit 0
+          fi
+
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/llama_stack_ui/package.json src/llama_stack_ui/package-lock.json
+          git commit -s -m "chore: update llama-stack-client to ^${VERSION} in UI lockfile"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --base "$RELEASE_BRANCH" \
+            --head "$BRANCH" \
+            --title "chore: update llama-stack-client npm lockfile for v${VERSION}" \
+            --body "$(cat <<EOF
+          Automated post-release npm lockfile update after \`v${VERSION}\`.
+
+          Runs \`npm install llama-stack-client@^${VERSION}\` in \`src/llama_stack_ui/\` to update
+          \`package.json\` and \`package-lock.json\`.
+
+          This PR was created automatically by the post-release workflow.
+          EOF
+          )"

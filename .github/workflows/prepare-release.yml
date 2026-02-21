@@ -1,0 +1,121 @@
+# =============================================================================
+# Pre-Release Preparation
+# =============================================================================
+#
+# Triggered via workflow_dispatch to prepare a release branch for publishing.
+# Takes a version (e.g., "0.5.1") and target release branch as input.
+#
+# Automates:
+#   - Updating fallback_version to the release version in both pyproject.toml files
+#   - Updating llama-stack-client pins to the release version
+#   - Opening a PR to the release branch with all changes
+#
+# =============================================================================
+
+name: Prepare release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., "0.5.1")'
+        required: true
+        type: string
+      release_branch:
+        description: 'Target release branch (e.g., "release-0.5.x")'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare-release:
+    name: Prepare release v${{ inputs.version }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.release_branch }}
+          fetch-depth: 0
+
+      - name: Validate inputs
+        run: |
+          VERSION="${{ inputs.version }}"
+          BRANCH="${{ inputs.release_branch }}"
+
+          # Validate version format (X.Y.Z)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Invalid version format: ${VERSION}. Expected X.Y.Z (e.g., 0.5.1)"
+            exit 1
+          fi
+
+          # Validate branch exists
+          if ! git rev-parse "origin/${BRANCH}" >/dev/null 2>&1; then
+            echo "::error::Branch ${BRANCH} does not exist"
+            exit 1
+          fi
+
+          echo "Preparing release v${VERSION} on ${BRANCH}"
+
+      - name: Update version files and create PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          RELEASE_BRANCH="${{ inputs.release_branch }}"
+          BRANCH="prepare-release/v${VERSION}"
+
+          git checkout -b "$BRANCH"
+
+          # --- Update fallback_version in both pyproject.toml files ---
+          sed -i "s/^fallback_version = .*/fallback_version = \"${VERSION}\"/" pyproject.toml
+          sed -i "s/^fallback_version = .*/fallback_version = \"${VERSION}\"/" src/llama_stack_api/pyproject.toml
+
+          # --- Update llama-stack-client pins in pyproject.toml ---
+          # Update the pin in [project.optional-dependencies] and [dependency-groups]
+          # Match patterns like: "llama-stack-client>=X.Y.Z" or "llama-stack-client==X.Y.Z"
+          sed -i -E "s/\"llama-stack-client[><=!]+[0-9]+\.[0-9]+\.[0-9]+[^\"]*\"/\"llama-stack-client==${VERSION}\"/" pyproject.toml
+
+          # Show what changed
+          echo "=== Changes ==="
+          git diff
+
+          # Check if there are changes
+          if git diff --quiet; then
+            echo "::warning::No changes detected. Version may already be set to ${VERSION}."
+            exit 0
+          fi
+
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml src/llama_stack_api/pyproject.toml
+          git commit -s -m "chore: prepare release v${VERSION}"
+          git push origin "$BRANCH"
+
+          gh pr create \
+            --base "$RELEASE_BRANCH" \
+            --head "$BRANCH" \
+            --title "chore: prepare release v${VERSION}" \
+            --body "$(cat <<EOF
+          ## Release preparation for v${VERSION}
+
+          This PR updates version references for the upcoming release:
+
+          - \`fallback_version\` → \`"${VERSION}"\` in both \`pyproject.toml\` files
+          - \`llama-stack-client\` pin → \`==${VERSION}\` in \`pyproject.toml\`
+
+          ### Next steps
+          1. Merge this PR
+          2. Create a GitHub release with tag \`v${VERSION}\` targeting \`${RELEASE_BRANCH}\`
+          3. The release workflow will build and publish all packages
+          4. Post-release automation will handle dev tag + fallback bump on main
+
+          > **Note:** CI may fail on the client pin until the client package is published
+          > as part of the release. This is expected.
+
+          This PR was created automatically by the prepare-release workflow.
+          EOF
+          )"
