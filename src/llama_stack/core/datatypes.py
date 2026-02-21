@@ -355,6 +355,13 @@ class QualifiedModel(BaseModel):
     embedding_dimensions: int | None = None
 
 
+class RerankerModel(BaseModel):
+    """A model identifier of a reranker model, consisting of a provider ID and a model ID."""
+
+    provider_id: str
+    model_id: str
+
+
 class RewriteQueryParams(BaseModel):
     """Parameters for query rewriting/expansion."""
 
@@ -588,6 +595,10 @@ class VectorStoresConfig(BaseModel):
     default_embedding_model: QualifiedModel | None = Field(
         default=None,
         description="Default embedding model configuration for vector stores.",
+    )
+    default_reranker_model: RerankerModel | None = Field(
+        default=None,
+        description="Default reranker model configuration for vector stores.",
     )
     rewrite_query_params: RewriteQueryParams | None = Field(
         default=None,
