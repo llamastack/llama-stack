@@ -231,12 +231,16 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         roots=["tests/integration/inference/test_vision_inference.py"],
         default_setup="ollama-vision",
     ),
+    "eval": Suite(
+        name="eval",
+        roots=["tests/integration/eval"],
+        default_setup="ollama",
+    ),
     "reasoning": Suite(
         name="reasoning",
         roots=["tests/integration/responses/test_reasoning.py"],
         default_setup="vllm",
     ),
-    # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
     "bedrock": Suite(
         name="bedrock",
         roots=[
