@@ -17,6 +17,7 @@ from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig a
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
     RERANKER_TYPE_WEIGHTED,
+    ChunkForDeletion,
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
@@ -25,7 +26,6 @@ from llama_stack.providers.utils.vector_io.vector_utils import (
     sanitize_collection_name,
 )
 from llama_stack_api import (
-    ChunkForDeletion,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -38,6 +38,7 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
+from llama_stack_api.filters import ComparisonFilter, CompoundFilter, Filter
 from llama_stack_api.internal.kvstore import KVStore
 
 from .config import MilvusVectorIOConfig as RemoteMilvusVectorIOConfig
@@ -131,39 +132,160 @@ class MilvusIndex(EmbeddingIndex):
             logger.error(f"Error inserting chunks into Milvus collection {self.collection_name}: {e}")
             raise e
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
-        search_res = await asyncio.to_thread(
-            self.client.search,
-            collection_name=self.collection_name,
-            data=[embedding],
-            anns_field="vector",
-            limit=k,
-            output_fields=["*"],
-            search_params={"params": {"radius": score_threshold}},
-        )
+    def _translate_filters(self, filters: Filter | None) -> str | None:
+        """Translate OpenAI-compatible filters to Milvus expression format.
+
+        Args:
+            filters: The filter to translate (ComparisonFilter or CompoundFilter)
+
+        Returns:
+            A Milvus expression string or None if no filters
+        """
+        if filters is None:
+            return None
+
+        return self._translate_single_filter(filters)
+
+    def _translate_single_filter(self, filter_obj: Filter) -> str:
+        """Translate a single filter to Milvus expression."""
+        if isinstance(filter_obj, ComparisonFilter):
+            return self._translate_comparison_filter(filter_obj)
+        elif isinstance(filter_obj, CompoundFilter):
+            return self._translate_compound_filter(filter_obj)
+        else:
+            raise ValueError(f"Unknown filter type: {type(filter_obj)}")
+
+    def _translate_comparison_filter(self, filter_obj: ComparisonFilter) -> str:
+        """Translate a comparison filter to Milvus expression.
+
+        Milvus uses JSONPath-like expressions to access metadata fields.
+        The metadata is stored in the chunk_content JSON field.
+        """
+        key = filter_obj.key
+        value = filter_obj.value
+        op_type = filter_obj.type
+
+        # Milvus uses JSONPath syntax to access nested fields in JSON
+        # The metadata is stored in chunk_content["metadata"][key]
+        json_path = f"chunk_content['metadata']['{key}']"
+
+        if op_type == "eq":
+            if isinstance(value, str):
+                return f'{json_path} == "{value}"'
+            else:
+                return f"{json_path} == {value}"
+        elif op_type == "ne":
+            if isinstance(value, str):
+                return f'{json_path} != "{value}"'
+            else:
+                return f"{json_path} != {value}"
+        elif op_type == "gt":
+            return f"{json_path} > {value}"
+        elif op_type == "gte":
+            return f"{json_path} >= {value}"
+        elif op_type == "lt":
+            return f"{json_path} < {value}"
+        elif op_type == "lte":
+            return f"{json_path} <= {value}"
+        elif op_type == "in":
+            # For "in" operations, value should be a list
+            if isinstance(value, list):
+                formatted_values = []
+                for v in value:
+                    if isinstance(v, str):
+                        formatted_values.append(f'"{v}"')
+                    else:
+                        formatted_values.append(str(v))
+                return f"{json_path} in [{', '.join(formatted_values)}]"
+            else:
+                raise ValueError(f"'in' filter requires a list value, got {type(value)}")
+        elif op_type == "nin":
+            # For "not in" operations, value should be a list
+            if isinstance(value, list):
+                formatted_values = []
+                for v in value:
+                    if isinstance(v, str):
+                        formatted_values.append(f'"{v}"')
+                    else:
+                        formatted_values.append(str(v))
+                return f"{json_path} not in [{', '.join(formatted_values)}]"
+            else:
+                raise ValueError(f"'nin' filter requires a list value, got {type(value)}")
+        else:
+            raise ValueError(f"Unsupported comparison operator: {op_type}")
+
+    def _translate_compound_filter(self, filter_obj: CompoundFilter) -> str:
+        """Translate a compound filter (and/or) to Milvus expression."""
+        if not filter_obj.filters:
+            return ""
+
+        clauses = []
+        for sub_filter in filter_obj.filters:
+            clause = self._translate_single_filter(sub_filter)
+            if clause:
+                clauses.append(f"({clause})")
+
+        if not clauses:
+            return ""
+
+        operator = " and " if filter_obj.type == "and" else " or "
+        return operator.join(clauses)
+
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
+        # Translate filters to Milvus expression format
+        filter_expr = self._translate_filters(filters) if filters else None
+
+        search_kwargs = {
+            "collection_name": self.collection_name,
+            "data": [embedding],
+            "anns_field": "vector",
+            "limit": k,
+            "output_fields": ["*"],
+        }
+
+        # Only apply radius threshold if score_threshold is meaningful
+        # For cosine similarity, distance ranges from 0 (identical) to 2 (opposite)
+        if score_threshold > 0:
+            search_kwargs["search_params"] = {"params": {"radius": score_threshold}}
+
+        if filter_expr:
+            search_kwargs["filter"] = filter_expr
+
+        search_res = await asyncio.to_thread(self.client.search, **search_kwargs)
         chunks = [load_embedded_chunk_with_backward_compat(res["entity"]["chunk_content"]) for res in search_res[0]]
         scores = [res["distance"] for res in search_res[0]]
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         """
         Perform BM25-based keyword search using Milvus's built-in full-text search.
         """
         try:
-            # Use Milvus's built-in BM25 search
-            search_res = await asyncio.to_thread(
-                self.client.search,
-                collection_name=self.collection_name,
-                data=[query_string],  # Raw text query
-                anns_field="sparse",  # Use sparse field for BM25
-                output_fields=["chunk_content"],  # Output the chunk content
-                limit=k,
-                search_params={
+            # Translate filters to Milvus expression format
+            filter_expr = self._translate_filters(filters) if filters else None
+
+            search_kwargs = {
+                "collection_name": self.collection_name,
+                "data": [query_string],  # Raw text query
+                "anns_field": "sparse",  # Use sparse field for BM25
+                "output_fields": ["chunk_content"],  # Output the chunk content
+                "limit": k,
+                "search_params": {
                     "params": {
                         "drop_ratio_search": 0.2,  # Ignore low-importance terms
                     }
                 },
-            )
+            }
+
+            if filter_expr:
+                search_kwargs["expr"] = filter_expr
+
+            # Use Milvus's built-in BM25 search
+            search_res = await asyncio.to_thread(self.client.search, **search_kwargs)
 
             chunks = []
             scores = []
@@ -208,6 +330,7 @@ class MilvusIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search using Milvus's native hybrid search capabilities.
@@ -236,14 +359,21 @@ class MilvusIndex(EmbeddingIndex):
             impact_factor = (reranker_params or {}).get("impact_factor", 60.0)
             rerank = RRFRanker(impact_factor)
 
-        search_res = await asyncio.to_thread(
-            self.client.hybrid_search,
-            collection_name=self.collection_name,
-            reqs=search_requests,
-            ranker=rerank,
-            limit=k,
-            output_fields=["chunk_content"],
-        )
+        # Translate filters to Milvus expression format
+        filter_expr = self._translate_filters(filters) if filters else None
+
+        search_kwargs = {
+            "collection_name": self.collection_name,
+            "reqs": search_requests,
+            "ranker": rerank,
+            "limit": k,
+            "output_fields": ["chunk_content"],
+        }
+
+        if filter_expr:
+            search_kwargs["filter"] = filter_expr
+
+        search_res = await asyncio.to_thread(self.client.hybrid_search, **search_kwargs)
 
         chunks = []
         scores = []
