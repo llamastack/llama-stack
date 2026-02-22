@@ -16,7 +16,7 @@ repos:
     -   id: check-added-large-files
         args: ['--maxkb=1000']
     -   id: end-of-file-fixer
-        exclude: '^(.*\.svg|.*\.md)$'
+        exclude: '^(.*\.svg|.*\.md|.*\.mustache)$'
     -   id: no-commit-to-branch
     -   id: check-yaml
         args: ["--unsafe"]
@@ -27,6 +27,7 @@ repos:
     -   id: check-executables-have-shebangs
     -   id: check-json
     -   id: check-shebang-scripts-are-executable
+        exclude: '^.*\.mustache$'  # these are not executables, only templates of
     -   id: check-symlinks
     -   id: check-toml
 
@@ -187,6 +188,7 @@ repos:
       - id: check-log-usage
         name: Ensure 'llama_stack.log' usage for logging
         entry: bash
+        exclude: '^client-sdks/openapi/.*$'
         language: system
         types: [python]
         pass_filenames: true
