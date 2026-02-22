@@ -23,6 +23,43 @@ Another simple way to start interacting with Llama Stack is to just spin up a co
 If you have built a container image and want to deploy it in a Kubernetes cluster instead of starting the Llama Stack server locally. See [Kubernetes Deployment Guide](../deploying/kubernetes_deployment) for more details.
 
 
+## Production Server Configuration (Unix/Linux/macOS)
+
+On Unix-based systems (Linux, macOS), Llama Stack can optionally use **Gunicorn with Uvicorn workers** for production-grade multi-process performance. Enable it by setting `LLAMA_STACK_ENABLE_GUNICORN=true`. This provides:
+
+- **Multi-process concurrency**: Scales to `(2 × CPU cores) + 1` workers by default, or uses `server.workers` from config
+- **Worker recycling**: Prevents memory leaks by restarting workers periodically
+- **Graceful fallback**: Falls back to single-process Uvicorn if Gunicorn is unavailable
+
+### Configuration
+
+Enable Gunicorn and configure its behavior using environment variables:
+
+- `LLAMA_STACK_ENABLE_GUNICORN`: Set to `true` to enable Gunicorn (default: `false`)
+- `GUNICORN_WORKERS` or `WEB_CONCURRENCY`: Number of worker processes (default: `server.workers` from config, or `(2 * CPU cores) + 1`)
+- `GUNICORN_WORKER_CONNECTIONS`: Max concurrent connections per worker (default: `1000`)
+- `GUNICORN_TIMEOUT`: Worker timeout in seconds (default: `120`)
+- `GUNICORN_KEEPALIVE`: Connection keepalive in seconds (default: `5`)
+- `GUNICORN_MAX_REQUESTS`: Restart workers after N requests to prevent memory leaks (default: `10000`)
+- `GUNICORN_MAX_REQUESTS_JITTER`: Randomize worker restart timing (default: `1000`)
+- `GUNICORN_PRELOAD`: Preload app before forking workers for memory efficiency (default: `true`)
+
+**Important Notes**:
+- When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions. To avoid this, set `GUNICORN_PRELOAD=true`.
+- **SQLite with Multiple Workers**: SQLite works with Gunicorn's multi-process mode for development and low-to-moderate traffic scenarios. However, **SQLite only allows one writer at a time** - write operations from multiple workers are serialized. **For production deployments with high traffic, we recommend using PostgreSQL**.
+- **Timeout for Long-Running Inference**: The default `GUNICORN_TIMEOUT=120` (seconds) may be insufficient for long-running LLM workloads such as document summarization, long-form generation, or streaming responses with slow time-to-first-token. Increase this value (e.g., `GUNICORN_TIMEOUT=300` or higher) to prevent workers from being killed mid-request.
+
+**Example production configuration:**
+```bash
+export LLAMA_STACK_ENABLE_GUNICORN=true # Enable Gunicorn
+export GUNICORN_WORKERS=8               # 8 worker processes
+export GUNICORN_WORKER_CONNECTIONS=1500 # 12,000 total concurrent capacity
+export GUNICORN_PRELOAD=true            # Enable for production
+llama stack run starter
+```
+
+For more details on distribution-specific configuration, see the [Starter Distribution](./self_hosted_distro/starter) or [NVIDIA Distribution](./self_hosted_distro/nvidia) documentation.
+
 ## Configure logging
 
 Control log output via environment variables before starting the server.
