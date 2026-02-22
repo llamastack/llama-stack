@@ -45,7 +45,7 @@ class TavilySearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsR
             raise ValueError(
                 'Pass Search provider\'s API Key in the header X-LlamaStack-Provider-Data as { "tavily_search_api_key": <your api key>}'
             )
-        return provider_data.tavily_search_api_key
+        return provider_data.tavily_search_api_key.get_secret_value()
 
     async def list_runtime_tools(
         self,

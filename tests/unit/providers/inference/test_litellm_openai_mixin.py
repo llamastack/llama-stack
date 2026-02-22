@@ -8,7 +8,7 @@ import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
@@ -25,7 +25,7 @@ class FakeConfig(BaseModel):
 
 
 class FakeProviderDataValidator(BaseModel):
-    test_api_key: str | None = Field(default=None)
+    test_api_key: SecretStr | None = Field(default=None)
 
 
 class FakeLiteLLMAdapter(LiteLLMOpenAIMixin):

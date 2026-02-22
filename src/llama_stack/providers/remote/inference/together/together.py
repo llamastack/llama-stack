@@ -55,7 +55,7 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
                 raise ValueError(
                     'Pass Together API Key in the header X-LlamaStack-Provider-Data as { "together_api_key": <your api key>}'
                 )
-            together_api_key = provider_data.together_api_key
+            together_api_key = provider_data.together_api_key.get_secret_value()
         return AsyncTogether(api_key=together_api_key)
 
     async def list_provider_model_ids(self) -> Iterable[str]:

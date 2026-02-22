@@ -116,15 +116,6 @@ Responses has a field `service_tier` that can be used to prioritize access to in
 
 The return object from a call to Responses includes a field for indicating why a response is incomplete if it is.  For example, if the model stops generating because it has reached the specified max output tokens (see above), this field should be set to "IncompleteDetails(reason='max_output_tokens')".  This is not implemented in Llama Stack.
 
----
-
-### Background
-
-**Status:** Not Implemented
-
-**Issue:** [#3568](https://github.com/llamastack/llama-stack/issues/4701)
-
-[Background mode](https://platform.openai.com/docs/guides/background) in OpenAI Responses lets you start a response generation job and then check back in on it later.  This is useful if you might lose a connection during a generation and want to reconnect later and get the response back (for example if the client is running in a mobile app).  It is not implemented in Llama Stack.
 
 ---
 

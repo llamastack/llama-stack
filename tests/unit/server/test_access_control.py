@@ -75,7 +75,7 @@ async def test_access_control_with_cache(mock_get_authenticated_user, test_setup
     assert model.identifier == "model-public"
     model = await routing_table.get_model("model-admin")
     assert model.identifier == "model-admin"
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("model-data-scientist")
 
     mock_get_authenticated_user.return_value = User("test-user", {"roles": ["user"], "teams": ["other-team"]})
@@ -84,9 +84,9 @@ async def test_access_control_with_cache(mock_get_authenticated_user, test_setup
     assert all_models.data[0].identifier == "model-public"
     model = await routing_table.get_model("model-public")
     assert model.identifier == "model-public"
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("model-admin")
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("model-data-scientist")
 
     mock_get_authenticated_user.return_value = User("test-user", {"roles": ["data-scientist"], "teams": ["ml-team"]})
@@ -100,7 +100,7 @@ async def test_access_control_with_cache(mock_get_authenticated_user, test_setup
     assert model.identifier == "model-public"
     model = await routing_table.get_model("model-data-scientist")
     assert model.identifier == "model-data-scientist"
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("model-admin")
 
 
@@ -130,7 +130,7 @@ async def test_access_control_and_updates(mock_get_authenticated_user, test_setu
             "roles": ["user"],
         },
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("model-updates")
     mock_get_authenticated_user.return_value = User(
         "test-user",
@@ -159,7 +159,7 @@ async def test_access_control_empty_attributes(mock_get_authenticated_user, test
             "roles": [],
         },
     )
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("model-empty-attrs")
     all_models = await routing_table.list_models()
     model_ids = [m.identifier for m in all_models.data]
@@ -188,7 +188,7 @@ async def test_no_user_attributes(mock_get_authenticated_user, test_setup):
     model = await routing_table.get_model("model-public-2")
     assert model.identifier == "model-public-2"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("model-restricted")
 
     all_models = await routing_table.list_models()
@@ -224,7 +224,7 @@ async def test_automatic_access_attributes(mock_get_authenticated_user, test_set
 
     # Verify another user without matching attributes can't access it
     mock_get_authenticated_user.return_value = User("test-user2", {"roles": ["engineer"], "teams": ["infra-team"]})
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("auto-access-model")
 
     # But a user with matching attributes can
@@ -304,9 +304,9 @@ async def test_access_policy(mock_get_authenticated_user, test_setup_with_access
     )
     model = await routing_table.get_model("test_provider/model-1")
     assert model.identifier == "test_provider/model-1"
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("test_provider/model-2")
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("test_provider/model-3")
     with pytest.raises(AccessDeniedError):
         await routing_table.register_model("model-4", provider_id="test_provider")
@@ -322,9 +322,9 @@ async def test_access_policy(mock_get_authenticated_user, test_setup_with_access
     )
     model = await routing_table.get_model("test_provider/model-2")
     assert model.identifier == "test_provider/model-2"
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("test_provider/model-1")
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("test_provider/model-3")
     with pytest.raises(AccessDeniedError):
         await routing_table.register_model("model-5", provider_id="test_provider")
@@ -339,7 +339,7 @@ async def test_access_policy(mock_get_authenticated_user, test_setup_with_access
         },
     )
     await routing_table.unregister_model("test_provider/model-3")
-    with pytest.raises(ValueError):
+    with pytest.raises(ModelNotFoundError):
         await routing_table.get_model("test_provider/model-3")
 
 

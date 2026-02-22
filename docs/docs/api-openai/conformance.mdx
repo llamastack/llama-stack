@@ -18,12 +18,12 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 | Metric | Value |
 |--------|-------|
-| **Overall Conformance Score** | 83.6% |
+| **Overall Conformance Score** | 84.6% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
-| **Schema/Type Issues** | 276 |
-| **Missing Properties** | 150 |
-| **Total Issues to Fix** | 426 |
+| **Schema/Type Issues** | 272 |
+| **Missing Properties** | 128 |
+| **Total Issues to Fix** | 400 |
 
 ## Category Scores
 
@@ -38,8 +38,8 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
-| Responses | 83.6% | 225 | 26 | 11 |
-| Chat | 86.8% | 402 | 27 | 26 |
+| Responses | 84.4% | 225 | 26 | 9 |
+| Chat | 92.8% | 402 | 23 | 6 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
 ## Missing Endpoints
@@ -936,23 +936,21 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 83.6% · **Issues:** 26 · **Missing:** 11
+**Score:** 84.4% · **Issues:** 26 · **Missing:** 9
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Missing Properties (11)</summary>
+<summary>Missing Properties (9)</summary>
 
-- `requestBody.content.application/json.properties.background`
 - `requestBody.content.application/json.properties.frequency_penalty`
 - `requestBody.content.application/json.properties.presence_penalty`
 - `requestBody.content.application/json.properties.stream_options`
 - `requestBody.content.application/json.properties.top_logprobs`
 - `requestBody.content.application/json.properties.top_p`
 - `requestBody.content.application/x-www-form-urlencoded`
-- `responses.200.content.application/json.properties.background`
 - `responses.200.content.application/json.properties.frequency_penalty`
 - `responses.200.content.application/json.properties.presence_penalty`
 - `responses.200.content.application/json.properties.top_logprobs`
@@ -995,26 +993,21 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Chat
 
-**Score:** 86.8% · **Issues:** 27 · **Missing:** 26
+**Score:** 92.8% · **Issues:** 23 · **Missing:** 6
 
 #### `/chat/completions`
 
 **GET**
 
 <details>
-<summary>Missing Properties (6)</summary>
+<summary>Missing Properties (1)</summary>
 
 - `parameters.query.metadata`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.completion_tokens_details`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.prompt_tokens_details`
-- `responses.200.content.application/json.properties.data.items.properties.usage.properties.total_tokens`
 
 </details>
 
 <details>
-<summary>Schema Issues (8)</summary>
+<summary>Schema Issues (7)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -1024,7 +1017,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.role` | Enum removed: ['assistant']; Default changed: None -> assistant |
 | `responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.tool_calls.items` | Type added: ['object']; Union variants removed: 2 |
 | `responses.200.content.application/json.properties.data.items.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
-| `responses.200.content.application/json.properties.data.items.properties.usage` | Type removed: ['object']; Union variants added: 2 |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['list'] |
 
 </details>
@@ -1032,27 +1024,17 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **POST**
 
 <details>
-<summary>Missing Properties (14)</summary>
+<summary>Missing Properties (4)</summary>
 
 - `responses.200.content.application/json.properties.system_fingerprint`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details`
-- `responses.200.content.application/json.properties.usage.properties.total_tokens`
 - `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content`
 - `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal`
 - `responses.200.content.text/event-stream.properties.system_fingerprint`
-- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens`
-- `responses.200.content.text/event-stream.properties.usage.properties.completion_tokens_details`
-- `responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens`
-- `responses.200.content.text/event-stream.properties.usage.properties.prompt_tokens_details`
-- `responses.200.content.text/event-stream.properties.usage.properties.total_tokens`
 
 </details>
 
 <details>
-<summary>Schema Issues (12)</summary>
+<summary>Schema Issues (10)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -1062,12 +1044,10 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.choices.items.properties.message.properties.role` | Enum removed: ['assistant']; Default changed: None -> assistant |
 | `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items` | Type added: ['object']; Union variants removed: 2 |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
-| `responses.200.content.application/json.properties.usage` | Type removed: ['object']; Union variants added: 2 |
 | `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.role` | Enum removed: ['developer', 'system', 'user', 'assistant', 'tool']; Type removed: ['string']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 |
 | `responses.200.content.text/event-stream.properties.choices.items.properties.logprobs` | Type removed: ['object']; Union variants added: 2 |
 | `responses.200.content.text/event-stream.properties.object` | Enum removed: ['chat.completion.chunk']; Default changed: None -> chat.completion.chunk |
-| `responses.200.content.text/event-stream.properties.usage` | Type removed: ['object']; Union variants added: 2 |
 
 </details>
 
@@ -1076,19 +1056,14 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 **GET**
 
 <details>
-<summary>Missing Properties (6)</summary>
+<summary>Missing Properties (1)</summary>
 
 - `responses.200.content.application/json.properties.system_fingerprint`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens`
-- `responses.200.content.application/json.properties.usage.properties.completion_tokens_details`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens`
-- `responses.200.content.application/json.properties.usage.properties.prompt_tokens_details`
-- `responses.200.content.application/json.properties.usage.properties.total_tokens`
 
 </details>
 
 <details>
-<summary>Schema Issues (7)</summary>
+<summary>Schema Issues (6)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -1098,7 +1073,6 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.choices.items.properties.message.properties.role` | Enum removed: ['assistant']; Default changed: None -> assistant |
 | `responses.200.content.application/json.properties.choices.items.properties.message.properties.tool_calls.items` | Type added: ['object']; Union variants removed: 2 |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['chat.completion']; Default changed: None -> chat.completion |
-| `responses.200.content.application/json.properties.usage` | Type removed: ['object']; Union variants added: 2 |
 
 </details>
 

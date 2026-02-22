@@ -124,6 +124,32 @@ async def test_update_vector_store_same_provider_id_succeeds():
     mock_routing_table.openai_update_vector_store.assert_called_once_with(vector_store_id="vs_123", request=request)
 
 
+async def test_register_vector_store_only_once():
+    mock_provider = Mock()
+    mock_provider.register_vector_store = AsyncMock()
+    mock_provider.openai_create_vector_store = AsyncMock(return_value=Mock(id="vs_123"))
+
+    mock_routing_table = Mock()
+    mock_routing_table.impls_by_provider_id = {"inline::faiss": mock_provider}
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=Mock(model_type=ModelType.embedding))
+    mock_routing_table.register_vector_store = AsyncMock(
+        return_value=Mock(identifier="vs_123", provider_id="inline::faiss", provider_resource_id="vs_123")
+    )
+    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+
+    router = VectorIORouter(mock_routing_table)
+    request = OpenAICreateVectorStoreRequestWithExtraBody.model_validate(
+        {"name": "test_store", "embedding_model": "nomic-ai/nomic-embed-text-v1.5", "embedding_dimension": 768}
+    )
+
+    result = await router.openai_create_vector_store(request)
+    assert result.id == "vs_123"
+
+    mock_routing_table.register_vector_store.assert_called_once()
+    mock_provider.openai_create_vector_store.assert_called_once()
+    mock_provider.register_vector_store.assert_not_called()
+
+
 async def test_create_vector_store_with_unknown_embedding_model_raises_error():
     """Test that creating a vector store with an unknown embedding model raises
     FoundError."""
