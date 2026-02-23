@@ -126,21 +126,19 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
     )
     assert await cached_disk_dist_registry.register(original_vector_store)
 
-    duplicate_vector_store = VectorStore(
+    updated_vector_store = VectorStore(
         identifier="test_vector_store_2",
         embedding_model="different-model",
         embedding_dimension=768,
         provider_resource_id="test_vector_store_2",
         provider_id="baz",  # Same provider_id
     )
-    with pytest.raises(
-        ValueError, match="Object of type 'vector_store' and identifier 'test_vector_store_2' already exists"
-    ):
-        await cached_disk_dist_registry.register(duplicate_vector_store)
+    # Re-registration with changed fields should succeed (upsert semantics)
+    assert await cached_disk_dist_registry.register(updated_vector_store)
 
     result = await cached_disk_dist_registry.get("vector_store", "test_vector_store_2")
     assert result is not None
-    assert result.embedding_model == original_vector_store.embedding_model  # Original values preserved
+    assert result.embedding_model == updated_vector_store.embedding_model  # Updated value
 
 
 async def test_get_all_objects(cached_disk_dist_registry):
@@ -268,7 +266,7 @@ async def test_double_registration_identical_objects(disk_dist_registry):
 
 
 async def test_double_registration_different_objects(disk_dist_registry):
-    """Test that registering different objects with same identifier fails."""
+    """Test that re-registering with changed fields updates the stored object."""
     vector_store1 = VectorStoreWithOwner(
         identifier="test_vector_store",
         embedding_model="all-MiniLM-L6-v2",
@@ -289,20 +287,55 @@ async def test_double_registration_different_objects(disk_dist_registry):
     result1 = await disk_dist_registry.register(vector_store1)
     assert result1 is True
 
-    # Second registration with different data should fail
-    with pytest.raises(
-        ValueError, match="Object of type 'vector_store' and identifier 'test_vector_store' already exists"
-    ):
-        await disk_dist_registry.register(vector_store2)
+    # Second registration with different data should succeed (upsert)
+    result2 = await disk_dist_registry.register(vector_store2)
+    assert result2 is True
 
-    # Verify original object is unchanged
+    # Verify object was updated
     retrieved = await disk_dist_registry.get("vector_store", "test_vector_store")
     assert retrieved is not None
-    assert retrieved.embedding_model == "all-MiniLM-L6-v2"  # Original value
+    assert retrieved.embedding_model == "different-model"  # Updated value
+
+
+async def test_restart_registration_with_owner_mismatch(disk_dist_registry):
+    """Test that re-registration succeeds when persisted object has owner set.
+
+    Simulates a server restart: first registration sets an owner field,
+    but on restart the config-provided object has no owner. The registry
+    must not reject the re-registration.
+    """
+    from llama_stack.core.datatypes import User
+
+    # First registration with owner (as if set during initial startup)
+    vector_store_with_owner = VectorStoreWithOwner(
+        identifier="restart_test_vs",
+        embedding_model="all-MiniLM-L6-v2",
+        embedding_dimension=384,
+        provider_resource_id="restart_test_vs",
+        provider_id="test-provider",
+        owner=User(principal="admin", attributes=None),
+    )
+    result1 = await disk_dist_registry.register(vector_store_with_owner)
+    assert result1 is True
+
+    # Simulated restart: config-provided object without owner
+    vector_store_no_owner = VectorStoreWithOwner(
+        identifier="restart_test_vs",
+        embedding_model="all-MiniLM-L6-v2",
+        embedding_dimension=384,
+        provider_resource_id="restart_test_vs",
+        provider_id="test-provider",
+    )
+    result2 = await disk_dist_registry.register(vector_store_no_owner)
+    assert result2 is True
+
+    retrieved = await disk_dist_registry.get("vector_store", "restart_test_vs")
+    assert retrieved is not None
+    assert retrieved.identifier == "restart_test_vs"
 
 
 async def test_double_registration_with_cache(cached_disk_dist_registry):
-    """Test double registration behavior with caching enabled."""
+    """Test that re-registration with changed fields updates both store and cache."""
     from llama_stack.core.datatypes import ModelWithOwner
     from llama_stack_api import ModelType
 
@@ -329,11 +362,11 @@ async def test_double_registration_with_cache(cached_disk_dist_registry):
     assert cached_model is not None
     assert cached_model.model_type == ModelType.llm
 
-    # Second registration with different data should fail
-    with pytest.raises(ValueError, match="Object of type 'model' and identifier 'test_model' already exists"):
-        await cached_disk_dist_registry.register(model2)
+    # Second registration with different data should succeed (upsert)
+    result2 = await cached_disk_dist_registry.register(model2)
+    assert result2 is True
 
-    # Cache should still contain original model
+    # Cache should contain updated model
     cached_model_after = cached_disk_dist_registry.get_cached("model", "test_model")
     assert cached_model_after is not None
-    assert cached_model_after.model_type == ModelType.llm
+    assert cached_model_after.model_type == ModelType.embedding

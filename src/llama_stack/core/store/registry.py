@@ -95,10 +95,13 @@ class DiskDistributionRegistry(DistributionRegistry):
 
     async def register(self, obj: RoutableObjectWithProvider) -> bool:
         existing_obj = await self.get(obj.type, obj.identifier)
-        if existing_obj and existing_obj != obj:
-            raise ValueError(
-                f"Object of type '{obj.type}' and identifier '{obj.identifier}' already exists. "
-                "Unregister it first if you want to replace it."
+        if existing_obj:
+            if existing_obj == obj:
+                return True
+            # Update in place so restarts and config-driven re-registrations
+            # succeed even when mutable fields (e.g. owner) differ.
+            logger.debug(
+                f"Updating existing {obj.type} '{obj.identifier}' in registry"
             )
 
         await self.kvstore.set(
