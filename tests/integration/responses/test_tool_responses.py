@@ -640,6 +640,8 @@ def test_function_call_output_list_image(responses_client, vision_model_id):
     """Test that function_call_output.output accepts a list containing an input_image block."""
     if vision_model_id is None:
         pytest.skip("No vision model configured")
+    if "llama3.2-vision:11b" in vision_model_id:
+        pytest.skip("registry.ollama.ai/library/llama3.2-vision:11b does not support tools")
 
     tools = [
         {
