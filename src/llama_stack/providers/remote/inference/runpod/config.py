@@ -13,7 +13,7 @@ from llama_stack_api import json_schema_type
 
 
 class RunpodProviderDataValidator(BaseModel):
-    runpod_api_token: str | None = Field(
+    runpod_api_token: SecretStr | None = Field(
         default=None,
         description="API token for RunPod models",
     )

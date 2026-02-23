@@ -3,7 +3,6 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
-import base64
 import io
 import re
 import time
@@ -12,10 +11,8 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
 from typing import Any
-from urllib.parse import unquote
 
 import chardet
-import httpx
 import numpy as np
 import tiktoken
 from numpy.typing import NDArray
@@ -28,7 +25,6 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 )
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
-    URL,
     Chunk,
     ChunkForDeletion,
     ChunkMetadata,
@@ -38,7 +34,6 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksRequest,
     QueryChunksResponse,
-    RAGDocument,
     VectorStore,
 )
 
@@ -111,182 +106,6 @@ def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, en
     else:
         log.error("Could not extract content from data_url properly.")
         return ""
-
-
-def content_from_data(data_url: str) -> str:
-    """Parse a data URL and return its content as a string."""
-    parts = parse_data_url(data_url)
-    data = parts["data"]
-    if parts["is_base64"]:
-        data = base64.b64decode(data)
-    else:
-        data = unquote(data)
-        encoding = parts["encoding"] or "utf-8"
-        data = data.encode(encoding)
-
-    return content_from_data_and_mime_type(data, parts["mimetype"], parts.get("encoding", None))
-
-
-async def content_from_data_and_mime_type_with_processor(
-    data: bytes | str,
-    mime_type: str | None,
-    file_processor_api,
-    encoding: str | None = None,
-    filename: str | None = None,
-) -> str:
-    """Enhanced version that uses file processor API for better document processing."""
-    if isinstance(data, str):
-        return data
-
-    if not encoding:
-        detected = chardet.detect(data)
-        encoding = detected["encoding"] or "utf-8"
-
-    mime_category = mime_type.split("/")[0] if mime_type else None
-    if mime_category == "text":
-        # For text-based files (including CSV, MD)
-        try:
-            return data.decode(encoding)
-        except UnicodeDecodeError as e:
-            log.warning(f"Decoding with encoding {encoding} failed: {e}")
-            if encoding.lower() != "utf-8":
-                try:
-                    return data.decode("utf-8")
-                except UnicodeDecodeError as e_utf8:
-                    log.warning(f"Decoding with UTF-8 fallback also failed: {e_utf8}")
-            raise e
-
-    elif mime_type == "application/pdf":
-        # Use file processor API if available for better PDF processing
-        if file_processor_api:
-            try:
-                # Create a minimal file-like object that mimics UploadFile interface
-                class FileUpload:
-                    def __init__(self, content: bytes, fname: str):
-                        self.file = io.BytesIO(content)
-                        self.filename = fname
-
-                    async def read(self) -> bytes:
-                        return self.file.read()
-
-                upload = FileUpload(data, filename or "document.pdf")
-                response = await file_processor_api.process_file(file=upload)
-
-                # Extract text from chunks
-                text_parts: list[str] = []
-                for chunk in response.chunks:
-                    if hasattr(chunk, "content") and chunk.content:
-                        text_parts.append(chunk.content)
-
-                return "\n".join(text_parts) if text_parts else ""
-            except Exception as e:
-                log.warning(f"File processor API failed for PDF processing: {e}, falling back to legacy parser")
-                # Fall back to legacy parser
-                return parse_pdf(data)
-        else:
-            # Fall back to legacy parser when no file processor API available
-            return parse_pdf(data)
-
-    else:
-        log.error("Could not extract content from data_url properly.")
-        return ""
-
-
-async def content_from_doc(doc: RAGDocument) -> str:
-    """Legacy function for backward compatibility. Use version with file processor when possible."""
-    if isinstance(doc.content, URL):
-        uri = doc.content.uri
-        if uri.startswith("file://"):
-            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
-        if uri.startswith("data:"):
-            return content_from_data(uri)
-        async with httpx.AsyncClient() as client:
-            r = await client.get(uri)
-        if doc.mime_type == "application/pdf":
-            return parse_pdf(r.content)
-        return str(r.text)
-    elif isinstance(doc.content, str):
-        if doc.content.startswith("file://"):
-            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
-        pattern = re.compile("^(https?://|data:)")
-        if pattern.match(doc.content):
-            if doc.content.startswith("data:"):
-                return content_from_data(doc.content)
-            async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content)
-            if doc.mime_type == "application/pdf":
-                return parse_pdf(r.content)
-            return str(r.text)
-        return doc.content
-    else:
-        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
-        return interleaved_content_as_str(doc.content)
-
-
-async def content_from_doc_with_processor(doc: RAGDocument, file_processor_api) -> str:
-    """Enhanced version that uses file processor API for better document processing."""
-    if isinstance(doc.content, URL):
-        uri = doc.content.uri
-        if uri.startswith("file://"):
-            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
-        if uri.startswith("data:"):
-            return await content_from_data_with_processor(uri, file_processor_api)
-        async with httpx.AsyncClient() as client:
-            r = await client.get(uri)
-        if doc.mime_type == "application/pdf":
-            return await content_from_data_and_mime_type_with_processor(
-                r.content, doc.mime_type, file_processor_api, filename=uri.split("/")[-1]
-            )
-        return str(r.text)
-    elif isinstance(doc.content, str):
-        if doc.content.startswith("file://"):
-            raise ValueError("file:// URIs are not supported. Please use the Files API (/v1/files) to upload files.")
-        pattern = re.compile("^(https?://|data:)")
-        if pattern.match(doc.content):
-            if doc.content.startswith("data:"):
-                return await content_from_data_with_processor(doc.content, file_processor_api)
-            async with httpx.AsyncClient() as client:
-                r = await client.get(doc.content)
-            if doc.mime_type == "application/pdf":
-                return await content_from_data_and_mime_type_with_processor(
-                    r.content, doc.mime_type, file_processor_api, filename=doc.content.split("/")[-1]
-                )
-            return str(r.text)
-        return doc.content
-    else:
-        # will raise ValueError if the content is not List[InterleavedContent] or InterleavedContent
-        return interleaved_content_as_str(doc.content)
-
-
-async def content_from_data_with_processor(data_url: str, file_processor_api) -> str:
-    """Enhanced version of content_from_data that uses file processor API."""
-    data_url_pattern = re.compile(
-        r"^"
-        r"data:"
-        r"(?P<mimetype>[\w/\-+.]+)"
-        r"(?P<charset>;charset=(?P<encoding>[\w-]+))?"
-        r"(?P<base64>;base64)?"
-        r",(?P<data>.*)"
-        r"$",
-        re.DOTALL,
-    )
-    match = data_url_pattern.match(data_url)
-    if not match:
-        raise ValueError("Invalid Data URL format")
-
-    parts = match.groupdict()
-
-    data = parts["data"]
-    if parts["base64"]:
-        data = base64.b64decode(data)
-    else:
-        data = unquote(data)
-        encoding = parts["encoding"] or "utf-8"
-        data = data.encode(encoding)
-
-    return await content_from_data_and_mime_type_with_processor(
-        data, parts["mimetype"], file_processor_api, parts.get("encoding", None)
-    )
 
 
 def make_overlapped_chunks(
