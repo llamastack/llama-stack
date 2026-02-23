@@ -70,6 +70,11 @@ Metadata: &#123;metadata&#125;
 | `vector_stores_config.file_batch_params.max_concurrent_files_per_batch` | `int` | No | 3 | Maximum files processed concurrently in file batches |
 | `vector_stores_config.file_batch_params.file_batch_chunk_size` | `int` | No | 10 | Number of files to process in each batch chunk |
 | `vector_stores_config.file_batch_params.cleanup_interval_seconds` | `int` | No | 86400 | Interval for cleaning up expired file batches (seconds) |
+| `vector_stores_config.contextual_retrieval_params` | `ContextualRetrievalParams` | No | model=None default_timeout_seconds=120 default_max_concurrency=3 max_document_tokens=100000 | Configuration for contextual retrieval during file ingestion. |
+| `vector_stores_config.contextual_retrieval_params.model` | `QualifiedModel \| None` | No |  | Default LLM model for contextual retrieval. Used when model_id is not specified in chunking strategy. |
+| `vector_stores_config.contextual_retrieval_params.default_timeout_seconds` | `int` | No | 120 | Default timeout in seconds for each LLM contextualization call. |
+| `vector_stores_config.contextual_retrieval_params.default_max_concurrency` | `int` | No | 3 | Default maximum concurrent LLM calls for contextualization. |
+| `vector_stores_config.contextual_retrieval_params.max_document_tokens` | `int` | No | 100000 | Maximum document size in tokens. Documents exceeding this are rejected for contextual retrieval. |
 
 ## Sample Configuration
 

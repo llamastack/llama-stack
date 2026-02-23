@@ -659,29 +659,27 @@ class OpenAIChoice(BaseModel):
 class OpenAIChatCompletionUsageCompletionTokensDetails(BaseModel):
     """Token details for output tokens in OpenAI chat completion usage."""
 
-    reasoning_tokens: int | None = Field(
-        default=None, ge=0, description="Number of tokens used for reasoning (o1/o3 models)."
-    )
+    reasoning_tokens: int = Field(default=0, ge=0, description="Number of tokens used for reasoning (o1/o3 models).")
 
 
 class OpenAIChatCompletionUsagePromptTokensDetails(BaseModel):
     """Token details for prompt tokens in OpenAI chat completion usage."""
 
-    cached_tokens: int | None = Field(default=None, ge=0, description="Number of tokens retrieved from cache.")
+    cached_tokens: int = Field(default=0, ge=0, description="Number of tokens retrieved from cache.")
 
 
 @json_schema_type
 class OpenAIChatCompletionUsage(BaseModel):
     """Usage information for OpenAI chat completion."""
 
-    prompt_tokens: int = Field(..., ge=0, description="Number of tokens in the prompt.")
-    completion_tokens: int = Field(..., ge=0, description="Number of tokens in the completion.")
-    total_tokens: int = Field(..., ge=0, description="Total tokens used (prompt + completion).")
+    prompt_tokens: int = Field(default=0, ge=0, description="Number of tokens in the prompt.")
+    completion_tokens: int = Field(default=0, ge=0, description="Number of tokens in the completion.")
+    total_tokens: int = Field(default=0, ge=0, description="Total tokens used (prompt + completion).")
     prompt_tokens_details: OpenAIChatCompletionUsagePromptTokensDetails | None = Field(
-        default=None, description="Detailed breakdown of input token usage."
+        default=None, json_schema_extra=remove_null_from_anyof, description="Detailed breakdown of input token usage."
     )
     completion_tokens_details: OpenAIChatCompletionUsageCompletionTokensDetails | None = Field(
-        default=None, description="Detailed breakdown of output token usage."
+        default=None, json_schema_extra=remove_null_from_anyof, description="Detailed breakdown of output token usage."
     )
 
 
@@ -696,7 +694,9 @@ class OpenAIChatCompletion(BaseModel):
     model: str = Field(..., description="The model that was used to generate the chat completion.")
     service_tier: str | None = Field(default=None, description="The service tier that was used for this response.")
     usage: OpenAIChatCompletionUsage | None = Field(
-        default=None, description="Token usage information for the completion."
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="Token usage information for the completion.",
     )
 
 
@@ -711,7 +711,9 @@ class OpenAIChatCompletionChunk(BaseModel):
     model: str = Field(..., description="The model that was used to generate the chat completion.")
     service_tier: str | None = Field(default=None, description="The service tier that was used for this response.")
     usage: OpenAIChatCompletionUsage | None = Field(
-        default=None, description="Token usage information (typically included in final chunk with stream_options)."
+        default=None,
+        json_schema_extra=remove_null_from_anyof,
+        description="Token usage information (typically included in final chunk with stream_options).",
     )
 
 

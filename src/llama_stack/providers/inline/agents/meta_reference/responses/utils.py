@@ -53,6 +53,8 @@ from llama_stack_api import (
     OpenAIToolMessageParam,
     OpenAIUserMessageParam,
     ResponseGuardrailSpec,
+    RetrieveFileContentRequest,
+    RetrieveFileRequest,
     RunModerationRequest,
     Safety,
 )
@@ -68,7 +70,7 @@ async def extract_bytes_from_file(file_id: str, files_api: Files) -> bytes:
     :raises: ValueError if file cannot be retrieved
     """
     try:
-        response = await files_api.openai_retrieve_file_content(file_id)
+        response = await files_api.openai_retrieve_file_content(RetrieveFileContentRequest(file_id=file_id))
         return bytes(response.body)
     except Exception as e:
         raise ValueError(f"Failed to retrieve file content for file_id '{file_id}': {str(e)}") from e
@@ -155,7 +157,9 @@ async def convert_response_content_to_chat_content(
             elif content_part.file_id:
                 if files_api is None:
                     raise ValueError("file_ids are not supported by this implementation of the Stack")
-                image_file_response = await files_api.openai_retrieve_file(content_part.file_id)
+                image_file_response = await files_api.openai_retrieve_file(
+                    RetrieveFileRequest(file_id=content_part.file_id)
+                )
                 if image_file_response.filename:
                     image_mime_type, _ = mimetypes.guess_type(image_file_response.filename)
                 raw_image_bytes = await extract_bytes_from_file(content_part.file_id, files_api)
@@ -184,7 +188,7 @@ async def convert_response_content_to_chat_content(
                 if files_api is None:
                     raise ValueError("file_ids are not supported by this implementation of the Stack")
 
-                file_response = await files_api.openai_retrieve_file(file_id)
+                file_response = await files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
                 if not filename:
                     filename = file_response.filename
                 file_mime_type, _ = mimetypes.guess_type(file_response.filename)

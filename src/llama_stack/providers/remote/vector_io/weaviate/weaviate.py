@@ -12,7 +12,6 @@ from numpy.typing import NDArray
 from weaviate.classes.init import Auth
 from weaviate.classes.query import Filter, HybridFusion
 
-from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
@@ -263,7 +262,7 @@ class WeaviateIndex(EmbeddingIndex):
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
 
-class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, NeedsRequestProviderData, VectorStoresProtocolPrivate):
+class WeaviateVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):
     def __init__(self, config: WeaviateVectorIOConfig, inference_api: Inference, files_api: Files | None) -> None:
         super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         self.config = config

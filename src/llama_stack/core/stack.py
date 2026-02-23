@@ -531,11 +531,12 @@ def cast_distro_name_to_string(config_dict: dict[str, Any]) -> dict[str, Any]:
     return config_dict
 
 
-def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> None:
+def add_internal_implementations(impls: dict[Api, Any], config: StackConfig, policy: list) -> None:
     """Add internal implementations (inspect, providers, and admin) to the implementations dictionary.
     Args:
         impls: Dictionary of API implementations
-        run_config: Stack run configuration
+        config: Stack run configuration
+        policy: Access control policy rules
     """
     inspect_impl = DistributionInspectImpl(
         DistributionInspectConfig(config=config),
@@ -562,7 +563,7 @@ def add_internal_implementations(impls: dict[Api, Any], config: StackConfig) -> 
     impls[Api.prompts] = prompts_impl
 
     conversations_impl = ConversationServiceImpl(
-        ConversationServiceConfig(config=config),
+        ConversationServiceConfig(config=config, policy=policy),
         deps=impls,
     )
     impls[Api.conversations] = conversations_impl
@@ -618,7 +619,7 @@ class Stack:
         policy = self.run_config.server.auth.access_policy if self.run_config.server.auth else []
 
         internal_impls = {}
-        add_internal_implementations(internal_impls, self.run_config)
+        add_internal_implementations(internal_impls, self.run_config, policy)
 
         impls = await resolve_impls(
             self.run_config,

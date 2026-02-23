@@ -10,7 +10,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
@@ -639,7 +639,7 @@ class TestOpenAIMixinModelRegistration:
 class ProviderDataValidator(BaseModel):
     """Validator for provider data in tests"""
 
-    test_api_key: str | None = Field(default=None)
+    test_api_key: SecretStr | None = Field(default=None)
 
 
 class OpenAIMixinWithProviderData(OpenAIMixinImpl):

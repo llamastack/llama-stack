@@ -6,13 +6,13 @@
 
 import os
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 
 
 class BedrockProviderDataValidator(BaseModel):
-    aws_bearer_token_bedrock: str | None = Field(
+    aws_bearer_token_bedrock: SecretStr | None = Field(
         default=None,
         description="API Key (Bearer token) for Amazon Bedrock",
     )

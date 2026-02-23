@@ -6,14 +6,14 @@
 
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
 from llama_stack_api import json_schema_type
 
 
 class GeminiProviderDataValidator(BaseModel):
-    gemini_api_key: str | None = Field(
+    gemini_api_key: SecretStr | None = Field(
         default=None,
         description="API key for Gemini models",
     )

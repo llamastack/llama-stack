@@ -31,6 +31,8 @@ from llama_stack.providers.utils.responses.responses_store import (
     _OpenAIResponseObjectWithInputAndMessages,
 )
 from llama_stack_api import (
+    Connectors,
+    GetConnectorRequest,
     GetPromptRequest,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIFile,
@@ -140,7 +142,7 @@ def mock_files_api():
 
 @pytest.fixture
 def mock_connectors_api():
-    connectors_api = AsyncMock()
+    connectors_api = AsyncMock(spec=Connectors)
     return connectors_api
 
 
@@ -1686,7 +1688,8 @@ async def test_prepend_prompt_with_mixed_variables(openai_responses_impl, mock_p
     mock_image_content = b"fake_image_data"
     mock_file_content = b"fake_doc_content"
 
-    async def mock_retrieve_file_content(file_id):
+    async def mock_retrieve_file_content(request):
+        file_id = request.file_id
         if file_id == "file-photo-123":
             return type("obj", (object,), {"body": mock_image_content})()
         elif file_id == "file-doc-456":
@@ -1694,7 +1697,8 @@ async def test_prepend_prompt_with_mixed_variables(openai_responses_impl, mock_p
 
     mock_files_api.openai_retrieve_file_content.side_effect = mock_retrieve_file_content
 
-    def mock_retrieve_file(file_id):
+    def mock_retrieve_file(request):
+        file_id = request.file_id
         if file_id == "file-photo-123":
             return OpenAIFileObject(
                 object="file",
@@ -1872,7 +1876,7 @@ async def test_mcp_tool_connector_id_resolved_to_server_url(
     )
 
     # Verify the connector_id was resolved via the connectors API
-    mock_connectors_api.get_connector.assert_called_once_with("my-mcp-connector")
+    mock_connectors_api.get_connector.assert_called_once_with(GetConnectorRequest(connector_id="my-mcp-connector"))
 
     # Verify list_mcp_tools was called with the resolved URL
     mock_list_mcp_tools.assert_called_once()
