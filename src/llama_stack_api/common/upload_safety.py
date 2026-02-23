@@ -18,10 +18,10 @@ from starlette.datastructures import Headers
 
 from llama_stack_api.common.errors import FileTooLargeError
 
-# Default maximum upload size: 100 MB
+# Default maximum upload size: 100 MiB
 DEFAULT_MAX_UPLOAD_SIZE_BYTES: int = 100 * 1024 * 1024
 
-# Chunk size for incremental reads (1 MB)
+# Chunk size for incremental reads (1 MiB)
 _READ_CHUNK_SIZE: int = 1 * 1024 * 1024
 
 
