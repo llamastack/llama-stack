@@ -562,6 +562,8 @@ from .vector_io import (
     VectorIO,
     VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyAuto,
+    VectorStoreChunkingStrategyContextual,
+    VectorStoreChunkingStrategyContextualConfig,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
     VectorStoreContent,
@@ -1102,6 +1104,8 @@ __all__ = [
     "VectorStore",
     "VectorStoreChunkingStrategy",
     "VectorStoreChunkingStrategyAuto",
+    "VectorStoreChunkingStrategyContextual",
+    "VectorStoreChunkingStrategyContextualConfig",
     "VectorStoreChunkingStrategyStatic",
     "VectorStoreChunkingStrategyStaticConfig",
     "VectorStoreContent",
@@ -1134,4 +1138,6 @@ __all__ = [
     "WeightedRanker",
     # Validators
     "validate_embeddings_input_is_text",
+    # helpers
+    "remove_null_from_anyof",
 ]

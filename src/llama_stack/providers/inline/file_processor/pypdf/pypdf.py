@@ -206,10 +206,12 @@ class PyPDFFileProcessor:
             # Use configured defaults for auto chunking
             chunk_size = self.config.default_chunk_size_tokens
             overlap_size = self.config.default_chunk_overlap_tokens
-        else:
-            # Use provided static configuration
+        elif chunking_strategy.type == "static":
             chunk_size = chunking_strategy.static.max_chunk_size_tokens
             overlap_size = chunking_strategy.static.chunk_overlap_tokens
+        else:
+            chunk_size = self.config.default_chunk_size_tokens
+            overlap_size = self.config.default_chunk_overlap_tokens
 
         # Prepare metadata for chunks (include filename and file_id)
         chunks_metadata_dict: dict[str, Any] = {

@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 84.5,
+      "score": 84.6,
       "issues": 272,
-      "missing_properties": 130,
-      "total_problems": 402,
+      "missing_properties": 128,
+      "total_problems": 400,
       "total_properties": 2598
     }
   },
@@ -1692,9 +1692,9 @@
       ]
     },
     "Responses": {
-      "score": 83.6,
+      "score": 84.4,
       "issues": 26,
-      "missing_properties": 11,
+      "missing_properties": 9,
       "total_properties": 225,
       "endpoints": [
         {
@@ -1703,14 +1703,12 @@
             {
               "method": "POST",
               "missing_properties": [
-                "POST.requestBody.content.application/json.properties.background",
                 "POST.requestBody.content.application/json.properties.frequency_penalty",
                 "POST.requestBody.content.application/json.properties.presence_penalty",
                 "POST.requestBody.content.application/json.properties.stream_options",
                 "POST.requestBody.content.application/json.properties.top_logprobs",
                 "POST.requestBody.content.application/json.properties.top_p",
                 "POST.requestBody.content.application/x-www-form-urlencoded",
-                "POST.responses.200.content.application/json.properties.background",
                 "POST.responses.200.content.application/json.properties.frequency_penalty",
                 "POST.responses.200.content.application/json.properties.presence_penalty",
                 "POST.responses.200.content.application/json.properties.top_logprobs"
@@ -1903,7 +1901,7 @@
                   ]
                 }
               ],
-              "missing_count": 11,
+              "missing_count": 9,
               "issues_count": 26
             }
           ]
