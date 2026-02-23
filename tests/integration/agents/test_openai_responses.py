@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import pytest
-from openai import BadRequestError, OpenAI
+from openai import NotFoundError, OpenAI
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
 
@@ -83,7 +83,7 @@ def test_responses_store(compat_client, text_model_id, stream, tools):
     delete_response = compat_client.responses.delete(response_id)
     assert delete_response is None
 
-    with pytest.raises(BadRequestError):
+    with pytest.raises(NotFoundError):
         compat_client.responses.retrieve(response_id)
 
 

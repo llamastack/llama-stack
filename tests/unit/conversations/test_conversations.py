@@ -4,6 +4,13 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+"""Tests for conversation service lifecycle, compatibility, and validation.
+
+0. Purpose: validate conversation service behavior and OpenAI compatibility.
+1. Categories: lifecycle CRUD, validation errors, provider compatibility, regression.
+2. Tests: lifecycle create/read/delete; item add/list/retrieve; ID validation; empty params; OpenAI adapters; deprecated fields; policy config; regression for missing message type.
+"""
+
 import tempfile
 from pathlib import Path
 
@@ -189,3 +196,29 @@ async def test_policy_configuration():
         assert service.policy == restrictive_policy
         assert len(service.policy) == 1
         assert service.policy[0].forbid is not None
+
+
+async def test_add_items_defaults_message_type(service):
+    items = [
+        {"role": "user", "content": [{"type": "input_text", "text": "Hello"}]},
+    ]
+
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    added = await service.add_items(conversation.id, AddItemsRequest(items=items))
+
+    assert len(added.data) == 1
+    assert added.data[0].type == "message"
+
+
+async def test_create_conversation_defaults_message_type(service):
+    items = [
+        {"role": "assistant", "content": [{"type": "output_text", "text": "Hi"}]},
+    ]
+
+    conversation = await service.create_conversation(CreateConversationRequest(items=items))
+
+    listed = await service.list_items(ListItemsRequest(conversation_id=conversation.id))
+
+    assert len(listed.data) == 1
+    assert listed.data[0].type == "message"

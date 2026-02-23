@@ -20,6 +20,7 @@ from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
     Connectors,
+    GetConnectorRequest,
     Inference,
     MCPListToolsTool,
     ModelNotFoundError,
@@ -1615,6 +1616,6 @@ async def resolve_mcp_connector_id(
         The mcp_tool with server_url populated (may be same instance if already set)
     """
     if mcp_tool.connector_id and not mcp_tool.server_url:
-        connector = await connectors_api.get_connector(mcp_tool.connector_id)
+        connector = await connectors_api.get_connector(GetConnectorRequest(connector_id=mcp_tool.connector_id))
         return mcp_tool.model_copy(update={"server_url": connector.url})
     return mcp_tool

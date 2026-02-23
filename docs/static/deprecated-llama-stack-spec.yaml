@@ -1278,35 +1278,26 @@ components:
           minimum: 0.0
           title: Prompt Tokens
           description: Number of tokens in the prompt.
+          default: 0
         completion_tokens:
           type: integer
           minimum: 0.0
           title: Completion Tokens
           description: Number of tokens in the completion.
+          default: 0
         total_tokens:
           type: integer
           minimum: 0.0
           title: Total Tokens
           description: Total tokens used (prompt + completion).
+          default: 0
         prompt_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
-            title: OpenAIChatCompletionUsagePromptTokensDetails
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
           description: Detailed breakdown of input token usage.
-          title: OpenAIChatCompletionUsagePromptTokensDetails
         completion_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
-            title: OpenAIChatCompletionUsageCompletionTokensDetails
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
           description: Detailed breakdown of output token usage.
-          title: OpenAIChatCompletionUsageCompletionTokensDetails
       type: object
-      required:
-      - prompt_tokens
-      - completion_tokens
-      - total_tokens
       title: OpenAIChatCompletionUsage
       description: Usage information for OpenAI chat completion.
     OpenAIChoice:
@@ -1944,13 +1935,9 @@ components:
           description: The service tier that was used for this response.
           nullable: true
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -1993,13 +1980,9 @@ components:
           description: The service tier that was used for this response.
           nullable: true
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information (typically included in final chunk with stream_options).
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -2113,12 +2096,8 @@ components:
           - type: 'null'
           description: The service tier that was used for this response.
         usage:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
-          title: OpenAIChatCompletionUsage
         input_messages:
           items:
             oneOf:
@@ -4002,6 +3981,9 @@ components:
       description: Web search tool configuration for OpenAI response inputs.
     OpenAIResponseObjectWithInput:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -4475,6 +4457,9 @@ components:
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseObject:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -6703,52 +6688,52 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
           - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+              title: ImageContentItem-Output
             - $ref: '#/components/schemas/TextContentItem'
               title: TextContentItem
-            title: ImageContentItem | TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Output | TextContentItem
           - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+                title: ImageContentItem-Output
               - $ref: '#/components/schemas/TextContentItem'
                 title: TextContentItem
-              title: ImageContentItem | TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Output | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+            title: list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem-Output | TextContentItem]
         chunk_id:
-          title: Chunk Id
           type: string
+          title: Chunk Id
         metadata:
           additionalProperties: true
-          title: Metadata
           type: object
+          title: Metadata
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
+      type: object
       required:
       - content
       - chunk_id
       - chunk_metadata
       title: Chunk
-      type: object
+      description: A chunk of content from file processing.
     ChunkMetadata:
       properties:
         chunk_id:
@@ -6991,6 +6976,7 @@ components:
       discriminator:
         mapping:
           auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+          contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
           static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         propertyName: type
       oneOf:
@@ -6998,7 +6984,9 @@ components:
         title: VectorStoreChunkingStrategyAuto
       - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         title: VectorStoreChunkingStrategyStatic
-      title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+      - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+        title: VectorStoreChunkingStrategyContextual
+      title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
     VectorStoreChunkingStrategyAuto:
       properties:
         type:
@@ -7062,12 +7050,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
         metadata:
@@ -7116,12 +7107,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
       additionalProperties: true
@@ -7222,11 +7216,14 @@ components:
             title: VectorStoreChunkingStrategyAuto
           - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
             title: VectorStoreChunkingStrategyStatic
-          title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+            title: VectorStoreChunkingStrategyContextual
+          title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           discriminator:
             propertyName: type
             mapping:
               auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
               static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         created_at:
           type: integer
@@ -8863,6 +8860,32 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
+    Body_process_file_v1alpha_file_processors_process_post:
+      properties:
+        file:
+          anyOf:
+          - type: string
+            format: binary
+          - type: 'null'
+          description: The File object to be uploaded and processed. Mutually exclusive with file_id.
+        file_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID of file already uploaded to file storage. Mutually exclusive with file.
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Optional processing options. Provider-specific parameters (e.g., OCR settings, output format).
+        chunking_strategy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional chunking strategy for splitting content into chunks. Must be valid JSON string.
+      type: object
+      title: Body_process_file_v1alpha_file_processors_process_post
     Body_upload_file_v1_files_post:
       properties:
         file:
@@ -8990,6 +9013,10 @@ components:
           type: string
           title: Model
           description: The underlying LLM used for completions.
+        background:
+          type: boolean
+          title: Background
+          description: Whether to run the model response in the background. When true, returns immediately with status 'queued'.
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -9546,12 +9573,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
           description: Strategy for chunking the file content.
@@ -9606,22 +9636,22 @@ components:
     OpenAIChatCompletionUsageCompletionTokensDetails:
       properties:
         reasoning_tokens:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
+          type: integer
+          minimum: 0.0
+          title: Reasoning Tokens
           description: Number of tokens used for reasoning (o1/o3 models).
+          default: 0
       type: object
       title: OpenAIChatCompletionUsageCompletionTokensDetails
       description: Token details for output tokens in OpenAI chat completion usage.
     OpenAIChatCompletionUsagePromptTokensDetails:
       properties:
         cached_tokens:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
+          type: integer
+          minimum: 0.0
+          title: Cached Tokens
           description: Number of tokens retrieved from cache.
+          default: 0
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
@@ -10228,6 +10258,29 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ProcessFileResponse:
+      properties:
+        chunks:
+          items:
+            $ref: '#/components/schemas/Chunk'
+          type: array
+          title: Chunks
+          description: Processed chunks from the file. Always returns at least one chunk.
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+      type: object
+      required:
+      - chunks
+      - metadata
+      title: ProcessFileResponse
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
     ResponseItemInclude:
       type: string
       enum:
@@ -10362,6 +10415,61 @@ components:
       - version
       title: UpdatePromptBodyRequest
       description: Request body model for updating a prompt.
+    VectorStoreChunkingStrategyContextual:
+      properties:
+        type:
+          type: string
+          const: contextual
+          title: Type
+          description: Strategy type identifier.
+          default: contextual
+        contextual:
+          $ref: '#/components/schemas/VectorStoreChunkingStrategyContextualConfig'
+          description: Configuration for contextual chunking.
+      type: object
+      required:
+      - contextual
+      title: VectorStoreChunkingStrategyContextual
+      description: Contextual chunking strategy that uses an LLM to situate chunks within the document.
+    VectorStoreChunkingStrategyContextualConfig:
+      properties:
+        model_id:
+          anyOf:
+          - type: string
+            minLength: 1
+          - type: 'null'
+          description: LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.
+        context_prompt:
+          type: string
+          title: Context Prompt
+          description: Prompt template for contextual retrieval. Uses WHOLE_DOCUMENT and CHUNK_CONTENT placeholders wrapped in double curly braces.
+        max_chunk_size_tokens:
+          type: integer
+          maximum: 4096.0
+          minimum: 100.0
+          title: Max Chunk Size Tokens
+          description: Maximum tokens per chunk. Suggested ~700 to allow room for prepended context.
+          default: 700
+        chunk_overlap_tokens:
+          type: integer
+          minimum: 0.0
+          title: Chunk Overlap Tokens
+          description: Tokens to overlap between adjacent chunks. Must be less than max_chunk_size_tokens.
+          default: 400
+        timeout_seconds:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Timeout per LLM call in seconds. Falls back to config default if not provided.
+        max_concurrency:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Maximum concurrent LLM calls. Falls back to config default if not provided.
+      type: object
+      title: VectorStoreChunkingStrategyContextualConfig
     _URLOrData:
       properties:
         url:
@@ -11954,29 +12062,6 @@ components:
       - job_id
       title: JobResultRequest
       type: object
-    ProcessFileResponse:
-      description: |-
-        Response model for file processing operation.
-
-        Returns a list of chunks ready for storage in vector databases.
-        Each chunk contains the content and metadata.
-      properties:
-        chunks:
-          description: Processed chunks from the file. Always returns at least one chunk.
-          items:
-            $ref: '#/components/schemas/Chunk'
-          title: Chunks
-          type: array
-        metadata:
-          additionalProperties: true
-          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
-          title: Metadata
-          type: object
-      required:
-      - chunks
-      - metadata
-      title: ProcessFileResponse
-      type: object
     ProcessFileRequest:
       description: |-
         Request model for file processing operation.
@@ -12003,6 +12088,7 @@ components:
           - discriminator:
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               propertyName: type
             oneOf:
@@ -12010,7 +12096,9 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           description: Optional chunking strategy for splitting content into chunks.
           title: Chunking Strategy

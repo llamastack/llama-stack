@@ -115,9 +115,16 @@ class VLLMInferenceAdapter(OpenAIMixin):
         return await super().openai_chat_completion(params)
 
     def construct_model_from_identifier(self, identifier: str) -> Model:
-        if (
-            "rerank" in identifier.lower()
-        ):  # TODO: guessing that any model with "rerank" in its name is a reranking model is pretty hacky
+        # vLLM's /v1/models response does not expose a model task/type field, so classify by name.
+        if "embed" in identifier.lower():
+            return Model(
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=identifier,
+                identifier=identifier,
+                model_type=ModelType.embedding,
+                metadata={},
+            )
+        if "rerank" in identifier.lower():
             return Model(
                 provider_id=self.__provider_id__,  # type: ignore[attr-defined]
                 provider_resource_id=identifier,

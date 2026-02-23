@@ -11,9 +11,9 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 """
 
 from enum import StrEnum
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputFunctionToolCallOutput,
@@ -81,6 +81,12 @@ ConversationItem = Annotated[
 register_schema(ConversationItem, name="ConversationItem")
 
 
+def _ensure_item_type(item: Any) -> Any:
+    if isinstance(item, dict) and "type" not in item and "role" in item:
+        return {**item, "type": "message"}
+    return item
+
+
 @json_schema_type
 class ConversationDeletedResource(BaseModel):
     """Response for deleted conversation."""
@@ -99,6 +105,13 @@ class ConversationItemCreateRequest(BaseModel):
         description="Items to include in the conversation context. You may add up to 20 items at a time.",
         max_length=20,
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def default_message_type(cls, value: Any) -> Any:
+        if isinstance(value, dict) and "items" in value:
+            value["items"] = [_ensure_item_type(item) for item in value["items"]]
+        return value
 
 
 class ConversationItemInclude(StrEnum):
@@ -149,6 +162,13 @@ class CreateConversationRequest(BaseModel):
         description="Set of key-value pairs that can be attached to an object.",
     )
 
+    @model_validator(mode="before")
+    @classmethod
+    def default_message_type(cls, value: Any) -> Any:
+        if isinstance(value, dict) and value.get("items") is not None:
+            value["items"] = [_ensure_item_type(item) for item in value["items"]]
+        return value
+
 
 @json_schema_type
 class GetConversationRequest(BaseModel):
@@ -183,6 +203,13 @@ class AddItemsRequest(BaseModel):
         description="Items to include in the conversation context. You may add up to 20 items at a time.",
         max_length=20,
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def default_message_type(cls, value: Any) -> Any:
+        if isinstance(value, dict):
+            value["items"] = [_ensure_item_type(item) for item in value.get("items", [])]
+        return value
 
 
 @json_schema_type
