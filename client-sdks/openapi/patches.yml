@@ -1,0 +1,96 @@
+# Patch file to modify OpenAPI spec after merging with Stainless config
+#
+# This applies the following changes:
+# 1. Add discriminator mapping to OpenAIResponseInput
+# 2. Remove finish_reason from required fields in OpenAIChoice and OpenAIChunkChoice
+# 3. Make finish_reason nullable in OpenAIChoice and OpenAIChunkChoice
+# 4. Remove finish_reason and text from required fields in OpenAICompletionChoice (for streaming)
+# 5. Make finish_reason and text nullable in OpenAICompletionChoice
+# 6. Simplify ToolConfig.tool_choice to avoid oneOf validation issues
+# 7. Make aggregated_results optional and nullable in ScoringResult
+# 8. Simplify ScoreRequest.input_rows to avoid additionalProperties oneOf issues
+
+operations:
+  # Add discriminator mapping to OpenAIResponseInput
+  - path: "components.schemas.OpenAIResponseInput.discriminator"
+    action: "set"
+    value:
+      propertyName: type
+      mapping:
+        message: '#/components/schemas/OpenAIResponseMessage'
+        function_call_output: '#/components/schemas/OpenAIResponseInputFunctionToolCallOutput'
+        mcp_approval_response: '#/components/schemas/OpenAIResponseMCPApprovalResponse'
+        file_search_call: '#/components/schemas/OpenAIResponseOutput'
+        function_call: '#/components/schemas/OpenAIResponseOutput'
+        mcp_approval_request: '#/components/schemas/OpenAIResponseOutput'
+        mcp_call: '#/components/schemas/OpenAIResponseOutput'
+        mcp_list_tools: '#/components/schemas/OpenAIResponseOutput'
+        web_search_call: '#/components/schemas/OpenAIResponseOutput'
+
+  # Remove finish_reason from required in OpenAIChoice
+  - path: "components.schemas.OpenAIChoice.required"
+    action: "remove_item"
+    value: "finish_reason"
+
+  # Make finish_reason nullable in OpenAIChoice
+  - path: "components.schemas.OpenAIChoice.properties.finish_reason.nullable"
+    action: "set"
+    value: true
+
+  # Remove finish_reason from required in OpenAIChunkChoice
+  - path: "components.schemas.OpenAIChunkChoice.required"
+    action: "remove_item"
+    value: "finish_reason"
+
+  # Make finish_reason nullable in OpenAIChunkChoice
+  - path: "components.schemas.OpenAIChunkChoice.properties.finish_reason.nullable"
+    action: "set"
+    value: true
+
+  # Remove finish_reason from required in OpenAICompletionChoice
+  - path: "components.schemas.OpenAICompletionChoice.required"
+    action: "remove_item"
+    value: "finish_reason"
+
+  # Remove text from required in OpenAICompletionChoice
+  - path: "components.schemas.OpenAICompletionChoice.required"
+    action: "remove_item"
+    value: "text"
+
+  # Make finish_reason nullable in OpenAICompletionChoice
+  - path: "components.schemas.OpenAICompletionChoice.properties.finish_reason.nullable"
+    action: "set"
+    value: true
+
+  # Make text nullable in OpenAICompletionChoice
+  - path: "components.schemas.OpenAICompletionChoice.properties.text.nullable"
+    action: "set"
+    value: true
+
+  # Simplify ToolConfig.tool_choice to avoid confusing oneOf with overlapping string types
+  - path: "components.schemas.ToolConfig.properties.tool_choice"
+    action: "set"
+    value:
+      type: string
+      description: "(Optional) Whether tool use is automatic, required, or none. Can also specify a tool name to use a specific tool. Defaults to auto."
+      default: "auto"
+
+  # Make aggregated_results optional in ScoringResult (server may not always return it)
+  - path: "components.schemas.ScoringResult.required"
+    action: "remove_item"
+    value: "aggregated_results"
+
+  # Make aggregated_results nullable in ScoringResult
+  - path: "components.schemas.ScoringResult.properties.aggregated_results.nullable"
+    action: "set"
+    value: true
+
+  # Simplify input_rows in ScoreRequest to avoid additionalProperties oneOf issues
+  - path: "components.schemas.ScoreRequest.properties.input_rows"
+    action: "set"
+    value:
+      type: array
+      items:
+        type: object
+        additionalProperties: true
+      description: "The rows to score."

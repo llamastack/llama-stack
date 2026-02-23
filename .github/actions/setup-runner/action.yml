@@ -24,6 +24,7 @@ runs:
       uses: astral-sh/setup-uv@1e862dfacbd1d6d858c55d9b792c756523627244 # v7.1.4
       with:
         python-version: ${{ inputs.python-version }}
+        enable-cache: ${{ env.UV_NO_CACHE != 'true' }}
 
     - name: Configure client installation
       id: client-config

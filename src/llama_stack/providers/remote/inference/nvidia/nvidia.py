@@ -14,11 +14,11 @@ from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 from llama_stack_api import (
     Model,
     ModelType,
-    OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
     RerankData,
     RerankResponse,
 )
+from llama_stack_api.inference import RerankRequest
 
 from . import NVIDIAConfig
 from .utils import _is_nvidia_hosted
@@ -103,12 +103,9 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
 
     async def rerank(
         self,
-        model: str,
-        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
-        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
-        max_num_results: int | None = None,
+        request: RerankRequest,
     ) -> RerankResponse:
-        provider_model_id = await self._get_provider_model_id(model)
+        provider_model_id = request.model
 
         ranking_url = self.get_base_url()
 
@@ -118,16 +115,16 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
         logger.debug(f"Using rerank endpoint: {ranking_url} for model: {provider_model_id}")
 
         # Convert query to text format
-        if isinstance(query, str):
-            query_text = query
-        elif isinstance(query, OpenAIChatCompletionContentPartTextParam):
-            query_text = query.text
+        if isinstance(request.query, str):
+            query_text = request.query
+        elif isinstance(request.query, OpenAIChatCompletionContentPartTextParam):
+            query_text = request.query.text
         else:
             raise ValueError("Query must be a string or text content part")
 
         # Convert items to text format
         passages = []
-        for item in items:
+        for item in request.items:
             if isinstance(item, str):
                 passages.append({"text": item})
             elif isinstance(item, OpenAIChatCompletionContentPartTextParam):
@@ -164,8 +161,8 @@ class NVIDIAInferenceAdapter(OpenAIMixin):
                         rerank_data.append(RerankData(index=ranking["index"], relevance_score=ranking["logit"]))
 
                     # Apply max_num_results limit
-                    if max_num_results is not None:
-                        rerank_data = rerank_data[:max_num_results]
+                    if request.max_num_results is not None:
+                        rerank_data = rerank_data[: request.max_num_results]
 
                     return RerankResponse(data=rerank_data)
 

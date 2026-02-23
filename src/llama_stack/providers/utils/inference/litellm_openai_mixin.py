@@ -132,7 +132,7 @@ class LiteLLMOpenAIMixin(
         provider_data = self.get_request_provider_data()
         key_field = self.provider_data_api_key_field
         if provider_data and key_field and (api_key := getattr(provider_data, key_field, None)):
-            return str(api_key)  # type: ignore[no-any-return]  # getattr returns Any, can't narrow without runtime type inspection
+            return api_key.get_secret_value()
 
         api_key = self.api_key_from_config
         if not api_key:
@@ -275,7 +275,9 @@ class LiteLLMOpenAIMixin(
             top_p=params.top_p,
             user=params.user,
             safety_identifier=params.safety_identifier,
+            service_tier=params.service_tier,
             reasoning_effort=params.reasoning_effort,
+            prompt_cache_key=params.prompt_cache_key,
             api_key=self.get_api_key(),
             api_base=self.api_base,
             **self._litellm_extra_request_params(params),

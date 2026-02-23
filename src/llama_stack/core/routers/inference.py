@@ -29,12 +29,10 @@ from llama_stack_api import (
     ModelNotFoundError,
     ModelType,
     ModelTypeError,
-    OpenAIAssistantMessageParam,
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
-    OpenAIChatCompletionContentPartImageParam,
-    OpenAIChatCompletionContentPartTextParam,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
@@ -51,6 +49,7 @@ from llama_stack_api import (
     RerankResponse,
     RoutingTable,
 )
+from llama_stack_api.inference.models import RerankRequest
 
 logger = get_logger(name=__name__, category="core::routers")
 
@@ -146,14 +145,11 @@ class InferenceRouter(Inference):
 
     async def rerank(
         self,
-        model: str,
-        query: str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam,
-        items: list[str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam],
-        max_num_results: int | None = None,
+        params: RerankRequest,
     ) -> RerankResponse:
-        logger.debug(f"InferenceRouter.rerank: {model}")
-        provider, provider_resource_id = await self._get_model_provider(model, ModelType.rerank)
-        return await provider.rerank(provider_resource_id, query, items, max_num_results)
+        provider, provider_resource_id = await self._get_model_provider(params.model, ModelType.rerank)
+        params.model = provider_resource_id
+        return await provider.rerank(params)
 
     async def openai_completion(
         self,
@@ -412,7 +408,7 @@ class InferenceRouter(Inference):
                                         ),
                                     )
                                 )
-                    message = OpenAIAssistantMessageParam(
+                    message = OpenAIChatCompletionResponseMessage(
                         role="assistant",
                         content=content_str if content_str else None,
                         tool_calls=assembled_tool_calls if assembled_tool_calls else None,
