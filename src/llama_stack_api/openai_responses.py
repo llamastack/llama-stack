@@ -1453,7 +1453,7 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
     """
 
     call_id: str
-    output: str
+    output: str | list[OpenAIResponseInputMessageContent]
     type: Literal["function_call_output"] = "function_call_output"
     id: str | None = None
     status: str | None = None
