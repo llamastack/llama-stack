@@ -31,6 +31,7 @@ from llama_stack.providers.utils.responses.responses_store import (
     _OpenAIResponseObjectWithInputAndMessages,
 )
 from llama_stack_api import (
+    GetPromptRequest,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIFile,
     OpenAIFileObject,
@@ -1384,7 +1385,7 @@ async def test_create_openai_response_with_prompt(openai_responses_impl, mock_in
         prompt=openai_response_prompt,
     )
 
-    mock_prompts_api.get_prompt.assert_called_with(prompt_id, 1)
+    mock_prompts_api.get_prompt.assert_called_with(GetPromptRequest(prompt_id=prompt_id, version=1))
     mock_inference_api.openai_chat_completion.assert_called()
     call_args = mock_inference_api.openai_chat_completion.call_args
     sent_messages = call_args.args[0].messages
@@ -1433,7 +1434,7 @@ async def test_prepend_prompt_successful_without_variables(openai_responses_impl
         prompt=openai_response_prompt,
     )
 
-    mock_prompts_api.get_prompt.assert_called_with(prompt_id, 1)
+    mock_prompts_api.get_prompt.assert_called_with(GetPromptRequest(prompt_id=prompt_id, version=1))
     mock_inference_api.openai_chat_completion.assert_called()
     call_args = mock_inference_api.openai_chat_completion.call_args
     sent_messages = call_args.args[0].messages
@@ -1474,7 +1475,7 @@ async def test_prepend_prompt_invalid_variable(openai_responses_impl, mock_promp
         await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
 
     # Verify
-    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+    mock_prompts_api.get_prompt.assert_called_once_with(GetPromptRequest(prompt_id=prompt_id, version=1))
 
 
 async def test_prepend_prompt_not_found(openai_responses_impl, mock_prompts_api):
@@ -1492,7 +1493,7 @@ async def test_prepend_prompt_not_found(openai_responses_impl, mock_prompts_api)
     result = await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
 
     # Verify
-    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+    mock_prompts_api.get_prompt.assert_called_once_with(GetPromptRequest(prompt_id=prompt_id, version=1))
 
     # Should return None when prompt not found
     assert result is None
