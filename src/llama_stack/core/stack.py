@@ -765,7 +765,7 @@ def run_config_from_adhoc_config_spec(
 
         provider_configs_by_api[api_str] = [
             Provider(
-                provider_id=provider,
+                provider_id=provider_spec.provider_type.split("::")[-1],
                 provider_type=provider_spec.provider_type,
                 config=provider_config,
             )
