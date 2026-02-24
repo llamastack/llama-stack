@@ -14,6 +14,7 @@ from llama_stack.core.datatypes import AccessRule, StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
+from llama_stack_api.common.errors import ConversationNotFoundError
 from llama_stack_api.conversations import (
     AddItemsRequest,
     Conversation,
@@ -140,7 +141,7 @@ class ConversationServiceImpl(Conversations):
         record = await self.sql_store.fetch_one(table="openai_conversations", where={"id": request.conversation_id})
 
         if record is None:
-            raise ValueError(f"Conversation {request.conversation_id} not found")
+            raise ConversationNotFoundError(request.conversation_id)
 
         return Conversation(
             id=record["id"], created_at=record["created_at"], metadata=record.get("metadata"), object="conversation"
@@ -148,6 +149,12 @@ class ConversationServiceImpl(Conversations):
 
     async def update_conversation(self, conversation_id: str, request: UpdateConversationRequest) -> Conversation:
         """Update a conversation's metadata with the given ID"""
+
+        # verify conversation exists and trigger ABAC check before updating
+        record = await self.sql_store.fetch_one(table="openai_conversations", where={"id": conversation_id})
+        if record is None:
+            raise ConversationNotFoundError(conversation_id)
+
         await self.sql_store.update(
             table="openai_conversations", data={"metadata": request.metadata}, where={"id": conversation_id}
         )
@@ -156,6 +163,11 @@ class ConversationServiceImpl(Conversations):
 
     async def openai_delete_conversation(self, request: DeleteConversationRequest) -> ConversationDeletedResource:
         """Delete a conversation with the given ID."""
+
+        record = await self.sql_store.fetch_one(table="openai_conversations", where={"id": request.conversation_id})
+        if record is None:
+            raise ConversationNotFoundError(request.conversation_id)
+
         await self.sql_store.delete(table="openai_conversations", where={"id": request.conversation_id})
 
         logger.debug(f"Deleted conversation {request.conversation_id}")

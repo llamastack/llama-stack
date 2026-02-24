@@ -16,7 +16,6 @@ import chardet
 import numpy as np
 import tiktoken
 from numpy.typing import NDArray
-from pydantic import BaseModel
 from pypdf import PdfReader
 
 from llama_stack.core.datatypes import VectorStoresConfig
@@ -27,11 +26,13 @@ from llama_stack.providers.utils.inference.prompt_adapter import (
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
     Chunk,
+    ChunkForDeletion,
     ChunkMetadata,
     EmbeddedChunk,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
     OpenAIEmbeddingsRequestWithExtraBody,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorStore,
 )
@@ -44,17 +45,6 @@ def _get_encoding(name: str) -> tiktoken.Encoding:
     return tiktoken.get_encoding(name)
 
 
-class ChunkForDeletion(BaseModel):
-    """Information needed to delete a chunk from a vector store.
-
-    :param chunk_id: The ID of the chunk to delete
-    :param document_id: The ID of the document this chunk belongs to
-    """
-
-    chunk_id: str
-    document_id: str
-
-
 # Constants for reranker types
 RERANKER_TYPE_RRF = "rrf"
 RERANKER_TYPE_WEIGHTED = "weighted"
@@ -64,7 +54,6 @@ RERANKER_TYPE_NORMALIZED = "normalized"
 def parse_pdf(data: bytes) -> str:
     # For PDF and DOC/DOCX files, we can't reliably convert to string
     pdf_bytes = io.BytesIO(data)
-
     pdf_reader = PdfReader(pdf_bytes)
     return "\n".join([page.extract_text() for page in pdf_reader.pages])
 
@@ -244,25 +233,26 @@ class VectorStoreWithIndex:
     vector_store: VectorStore
     index: EmbeddingIndex
     inference_api: Inference
+    file_processor_api: Any = None
     vector_stores_config: VectorStoresConfig | None = None
 
     async def insert_chunks(
         self,
-        chunks: list[EmbeddedChunk],
+        request: InsertChunksRequest,
     ) -> None:
         # Validate embedding dimensions match the vector store
-        for i, embedded_chunk in enumerate(chunks):
+        for i, embedded_chunk in enumerate(request.chunks):
             _validate_embedding(embedded_chunk.embedding, i, self.vector_store.embedding_dimension)
 
-        await self.index.add_chunks(chunks)
+        await self.index.add_chunks(request.chunks)
 
     async def query_chunks(
         self,
-        query: InterleavedContent,
-        params: dict[str, Any] | None = None,
+        request: QueryChunksRequest,
     ) -> QueryChunksResponse:
         config = self.vector_stores_config or VectorStoresConfig()
 
+        params = request.params
         if params is None:
             params = {}
         k = params.get("max_chunks", 3)
@@ -315,7 +305,7 @@ class VectorStoreWithIndex:
         if "neural_weights" in params:
             reranker_params["neural_weights"] = params["neural_weights"]
 
-        query_string = interleaved_content_as_str(query)
+        query_string = interleaved_content_as_str(request.query)
         if mode == "keyword":
             return await self.index.query_keyword(query_string, k, score_threshold)
 
@@ -337,3 +327,7 @@ class VectorStoreWithIndex:
             )
         else:
             return await self.index.query_vector(query_vector, k, score_threshold)
+
+    # Note: File processing for vector stores now happens at the
+    # openai_attach_file_to_vector_store level using file_id.
+    # This VectorStoreWithIndex class focuses on chunk operations.

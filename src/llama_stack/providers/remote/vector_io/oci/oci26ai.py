@@ -28,10 +28,12 @@ from llama_stack.providers.utils.vector_io.vector_utils import (
     sanitize_collection_name,
 )
 from llama_stack_api import (
+    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
@@ -563,33 +565,31 @@ class OCI26aiVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProto
             raise RuntimeError("KVStore not initialized. Call initialize() before unregistering vector stores.")
         await self.kvstore.delete(key=f"{OPENAI_VECTOR_STORES_PREFIX}{vector_store_id}")
 
-    async def insert_chunks(
-        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
-    ) -> None:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def insert_chunks(self, request: InsertChunksRequest) -> None:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        await index.insert_chunks(chunks)
+        await index.insert_chunks(request)
 
-    async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
-    ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        if params is None:
-            params = {}
+        # Ensure embedding_dimensions is set in params
+        params = request.params.copy() if request.params else {}
         if "embedding_dimensions" not in params:
             params["embedding_dimensions"] = index.vector_store.embedding_dimension
 
-        return await index.query_chunks(query, params)
+        # Create updated request with modified params
+        updated_request = request.model_copy(update={"params": params})
+        return await index.query_chunks(updated_request)
 
-    async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
-        """Delete a chunk from a milvus vector store."""
-        index = await self._get_and_cache_vector_store_index(store_id)
+    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
+        """Delete chunks from an OCI 26AI vector store."""
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        await index.index.delete_chunks(chunks_for_deletion)
+        await index.index.delete_chunks(request.chunks)
