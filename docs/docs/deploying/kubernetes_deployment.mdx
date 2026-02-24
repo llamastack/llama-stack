@@ -201,10 +201,10 @@ Wait for the Llama Stack server pod to be ready:
 kubectl get llamastackdistribution llamastack-vllm
 
 # Check the pods created by the operator
-kubectl get pods -l app.kubernetes.io/name=llama-stack
+kubectl get pods -l app.kubernetes.io/instance=llamastack-vllm
 
 # Wait for the pod to be ready
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=llama-stack --timeout=300s
+kubectl wait --for=condition=ready pod -l app.kubernetes.io/instance=llamastack-vllm --timeout=300s
 ```
 
 Get the service name created by the operator (it typically follows the pattern `<llamastackdistribution-name>-service`):

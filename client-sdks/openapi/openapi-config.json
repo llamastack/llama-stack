@@ -4,5 +4,19 @@
   "packageVersion": "0.5.0.dev0",
   "removeOperationIdPrefix": true,
   "removeOperationIdPrefixDelimiter": "_",
-  "useOneOfDiscriminatorLookup": true
+  "useOneOfDiscriminatorLookup": true,
+  "files": {
+    "_types.mustache": {
+      "templateType": "SupportingFiles",
+      "destinationFilename": "llama_stack_open_client/_types.py"
+    },
+    "_exceptions.mustache": {
+      "templateType": "SupportingFiles",
+      "destinationFilename": "llama_stack_open_client/_exceptions.py"
+    },
+    "_version.mustache": {
+      "templateType": "SupportingFiles",
+      "destinationFilename": "llama_stack_open_client/_version.py"
+    }
+  }
 }
