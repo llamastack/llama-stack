@@ -21,3 +21,16 @@ pull_request_rules:
     label:
       remove:
         - needs-rebase
+
+- name: auto-merge on stable release branches
+  conditions:
+      - base~=^release-[0-9]+\.[0-9]+\.x$
+      - check-success=ci-status
+      - "#approved-reviews-by>=1"
+      - "#changes-requested-reviews-by=0"
+      - -conflict
+      - -draft
+      - -closed
+  actions:
+    merge:
+      method: merge
