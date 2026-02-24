@@ -4,6 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import re
+
 import httpx
 from aiohttp import hdrs
 
@@ -269,6 +271,7 @@ class RouteAuthorizationMiddleware:
         - Exact match: "/v1/chat/completions"
         - Prefix wildcard: "/v1/files*" matches "/v1/files", "/v1/files/upload", "/v1/files/list", etc.
         - Full wildcard: "*" matches all routes
+        - Regex pattern: "regex:/v1/(chat|inference)/.*" matches routes using regular expressions
         """
         patterns = [rule_patterns] if isinstance(rule_patterns, str) else rule_patterns
 
@@ -276,6 +279,11 @@ class RouteAuthorizationMiddleware:
             if pattern == "*":
                 # Full wildcard matches everything
                 return True
+            elif pattern.startswith("regex:"):
+                # Regex pattern: extract pattern after "regex:" prefix
+                regex_pattern = pattern[6:]
+                if re.match(regex_pattern, request_route):
+                    return True
             elif pattern.endswith("*"):
                 # Prefix wildcard: check if request route starts with the prefix
                 prefix = pattern[:-1]  # Remove "*"
