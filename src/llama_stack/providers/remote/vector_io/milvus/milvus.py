@@ -282,7 +282,7 @@ class MilvusIndex(EmbeddingIndex):
             }
 
             if filter_expr:
-                search_kwargs["expr"] = filter_expr
+                search_kwargs["filter"] = filter_expr
 
             # Use Milvus's built-in BM25 search
             search_res = await asyncio.to_thread(self.client.search, **search_kwargs)
