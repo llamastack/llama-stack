@@ -160,7 +160,7 @@ async def convert_response_content_to_chat_content(
                 image_file_response = await files_api.openai_retrieve_file(
                     RetrieveFileRequest(file_id=content_part.file_id)
                 )
-                if image_file_response and image_file_response.filename:
+                if image_file_response.filename:
                     image_mime_type, _ = mimetypes.guess_type(image_file_response.filename)
                 raw_image_bytes = await extract_bytes_from_file(content_part.file_id, files_api)
                 ascii_text = generate_base64_ascii_text_from_bytes(raw_image_bytes)
@@ -189,8 +189,6 @@ async def convert_response_content_to_chat_content(
                     raise ValueError("file_ids are not supported by this implementation of the Stack")
 
                 file_response = await files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
-                if file_response is None:
-                    raise ValueError(f"Failed to retrieve file metadata for file_id '{file_id}'")
                 if not filename:
                     filename = file_response.filename
                 file_mime_type, _ = mimetypes.guess_type(file_response.filename)

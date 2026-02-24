@@ -612,10 +612,6 @@ class OpenAIResponsesImpl:
             if not conversation.startswith("conv_"):
                 raise InvalidParameterError("conversation", conversation, "Expected an ID that begins with 'conv_'.")
 
-        # Validate temperature per OpenResponses spec: "between 0 and 2"
-        if temperature is not None and (temperature < 0 or temperature > 2):
-            raise InvalidParameterError("temperature", temperature, "Must be between 0 and 2.")
-
         if max_tool_calls is not None and max_tool_calls < 1:
             raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
 
