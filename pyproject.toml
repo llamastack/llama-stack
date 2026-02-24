@@ -116,6 +116,9 @@ type_checking = [
     "mcp>=1.23.0",
     "ollama",
     "llama-stack-client>=0.3.0",
+    "langchain-openai",
+    "langchain-core",
+    "langgraph",
 ]
 # These are the dependencies required for running unit tests.
 unit = [
