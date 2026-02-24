@@ -13,7 +13,7 @@ from llama_stack_api import json_schema_type
 
 
 class DatabricksProviderDataValidator(BaseModel):
-    databricks_api_token: str | None = Field(
+    databricks_api_token: SecretStr | None = Field(
         default=None,
         description="API token for Databricks models",
     )

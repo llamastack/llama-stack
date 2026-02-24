@@ -31,6 +31,8 @@ from llama_stack.providers.utils.responses.responses_store import (
     _OpenAIResponseObjectWithInputAndMessages,
 )
 from llama_stack_api import (
+    Connectors,
+    GetConnectorRequest,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIFile,
     OpenAIFileObject,
@@ -139,7 +141,7 @@ def mock_files_api():
 
 @pytest.fixture
 def mock_connectors_api():
-    connectors_api = AsyncMock()
+    connectors_api = AsyncMock(spec=Connectors)
     return connectors_api
 
 
@@ -1685,7 +1687,8 @@ async def test_prepend_prompt_with_mixed_variables(openai_responses_impl, mock_p
     mock_image_content = b"fake_image_data"
     mock_file_content = b"fake_doc_content"
 
-    async def mock_retrieve_file_content(file_id):
+    async def mock_retrieve_file_content(request):
+        file_id = request.file_id
         if file_id == "file-photo-123":
             return type("obj", (object,), {"body": mock_image_content})()
         elif file_id == "file-doc-456":
@@ -1693,7 +1696,8 @@ async def test_prepend_prompt_with_mixed_variables(openai_responses_impl, mock_p
 
     mock_files_api.openai_retrieve_file_content.side_effect = mock_retrieve_file_content
 
-    def mock_retrieve_file(file_id):
+    def mock_retrieve_file(request):
+        file_id = request.file_id
         if file_id == "file-photo-123":
             return OpenAIFileObject(
                 object="file",
@@ -1871,7 +1875,7 @@ async def test_mcp_tool_connector_id_resolved_to_server_url(
     )
 
     # Verify the connector_id was resolved via the connectors API
-    mock_connectors_api.get_connector.assert_called_once_with("my-mcp-connector")
+    mock_connectors_api.get_connector.assert_called_once_with(GetConnectorRequest(connector_id="my-mcp-connector"))
 
     # Verify list_mcp_tools was called with the resolved URL
     mock_list_mcp_tools.assert_called_once()
@@ -2229,6 +2233,7 @@ async def test_safety_identifier_passed_to_chat_completions(openai_responses_imp
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
         ("service_tier", ServiceTier.flex, "service_tier", "flex"),
+        ("top_p", 0.9, "top_p", 0.9),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service(
@@ -2301,6 +2306,7 @@ async def test_params_passed_through_full_chain_to_backend_service(
         ("max_output_tokens", 500, "max_completion_tokens", 500),
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
         ("service_tier", ServiceTier.flex, "service_tier", "flex"),
+        ("top_p", 0.9, "top_p", 0.9),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service_litellm(
@@ -3193,3 +3199,85 @@ async def test_agent_loop_incomplete_due_to_length_finish_reason(openai_response
     assert final_event.response.status == "incomplete"
     assert final_event.response.incomplete_details is not None
     assert final_event.response.incomplete_details.reason == "length"
+
+
+async def test_create_openai_response_with_top_p_non_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that top_p parameter is properly handled in non-streaming responses."""
+    input_text = "Say hello"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    top_p_value = 0.9
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        top_p=top_p_value,
+        stream=False,
+        store=True,
+    )
+
+    # Verify response includes the top_p
+    assert result.top_p == top_p_value
+    assert result.model == model
+    assert result.status == "completed"
+
+    # Verify the top_p was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.top_p == top_p_value
+
+    # Verify the top_p was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.top_p == top_p_value
+
+
+async def test_create_openai_response_with_top_p_streaming(
+    openai_responses_impl, mock_inference_api, mock_responses_store
+):
+    """Test that top_p parameter is properly handled in streaming responses."""
+    input_text = "Explain machine learning"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+    top_p_value = 0.8
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream()
+
+    # Execute
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        top_p=top_p_value,
+        stream=True,
+        store=True,
+    )
+
+    # Collect all chunks
+    chunks = [chunk async for chunk in result]
+
+    # Verify top_p is in the created event
+    created_event = chunks[0]
+    assert created_event.type == "response.created"
+    assert created_event.response.top_p == top_p_value
+
+    # Verify top_p is in the completed event
+    completed_event = chunks[-1]
+    assert completed_event.type == "response.completed"
+    assert completed_event.response.top_p == top_p_value
+
+    # Verify the top_p was passed to inference API
+    mock_inference_api.openai_chat_completion.assert_called()
+    call_args = mock_inference_api.openai_chat_completion.call_args
+    params = call_args.args[0]
+    assert params.top_p == top_p_value
+
+    # Verify the top_p was stored
+    mock_responses_store.upsert_response_object.assert_called()
+    store_call_args = mock_responses_store.upsert_response_object.call_args
+    stored_response = store_call_args.kwargs["response_object"]
+    assert stored_response.top_p == top_p_value

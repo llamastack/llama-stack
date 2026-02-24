@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -18,6 +18,7 @@ from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
     get_message_type_by_role,
     is_function_tool_call,
 )
+from llama_stack_api import RetrieveFileContentRequest, RetrieveFileRequest
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
@@ -37,6 +38,7 @@ from llama_stack_api.inference import (
 from llama_stack_api.openai_responses import (
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInputFunctionToolCallOutput,
+    OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputToolFunction,
@@ -117,6 +119,30 @@ class TestConvertResponseContentToChatContent:
         assert isinstance(result[0], OpenAIChatCompletionContentPartImageParam)
         assert result[0].image_url.url == "https://example.com/image.jpg"
         assert result[0].image_url.detail == "high"
+
+    async def test_convert_image_content_with_file_id_calls_retrieve_with_request_objects(self, mock_files_api):
+        mock_files_api.openai_retrieve_file.return_value = Mock(filename="photo.png")
+        mock_files_api.openai_retrieve_file_content.return_value = Mock(body=b"\x89PNG\r\n")
+
+        content = [OpenAIResponseInputMessageContentImage(file_id="file-abc123")]
+        await convert_response_content_to_chat_content(content, mock_files_api)
+
+        mock_files_api.openai_retrieve_file.assert_called_once_with(RetrieveFileRequest(file_id="file-abc123"))
+        mock_files_api.openai_retrieve_file_content.assert_called_once_with(
+            RetrieveFileContentRequest(file_id="file-abc123")
+        )
+
+    async def test_convert_file_content_with_file_id_calls_retrieve_with_request_objects(self, mock_files_api):
+        mock_files_api.openai_retrieve_file.return_value = Mock(filename="report.txt")
+        mock_files_api.openai_retrieve_file_content.return_value = Mock(body=b"report content")
+
+        content = [OpenAIResponseInputMessageContentFile(file_id="file-def456")]
+        await convert_response_content_to_chat_content(content, mock_files_api)
+
+        mock_files_api.openai_retrieve_file.assert_called_once_with(RetrieveFileRequest(file_id="file-def456"))
+        mock_files_api.openai_retrieve_file_content.assert_called_once_with(
+            RetrieveFileContentRequest(file_id="file-def456")
+        )
 
 
 class TestConvertResponseInputToChatMessages:

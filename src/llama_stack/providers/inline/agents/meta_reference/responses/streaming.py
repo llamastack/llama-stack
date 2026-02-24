@@ -20,6 +20,7 @@ from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
     Connectors,
+    GetConnectorRequest,
     Inference,
     MCPListToolsTool,
     ModelNotFoundError,
@@ -257,6 +258,7 @@ class StreamingResponseOrchestrator:
             status=status,
             output=self._clone_outputs(outputs),
             text=self.text,
+            top_p=self.ctx.top_p,
             tools=self.ctx.available_tools(),
             tool_choice=self.ctx.tool_choice,
             error=error,
@@ -403,6 +405,7 @@ class StreamingResponseOrchestrator:
                     tool_choice=chat_tool_choice,
                     stream=True,
                     temperature=self.ctx.temperature,
+                    top_p=self.ctx.top_p,
                     response_format=response_format,
                     stream_options={
                         "include_usage": True,
@@ -1615,6 +1618,6 @@ async def resolve_mcp_connector_id(
         The mcp_tool with server_url populated (may be same instance if already set)
     """
     if mcp_tool.connector_id and not mcp_tool.server_url:
-        connector = await connectors_api.get_connector(mcp_tool.connector_id)
+        connector = await connectors_api.get_connector(GetConnectorRequest(connector_id=mcp_tool.connector_id))
         return mcp_tool.model_copy(update={"server_url": connector.url})
     return mcp_tool

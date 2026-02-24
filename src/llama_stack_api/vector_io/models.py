@@ -12,7 +12,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema
@@ -349,8 +349,88 @@ class VectorStoreChunkingStrategyStatic(BaseModel):
     static: VectorStoreChunkingStrategyStaticConfig
 
 
+DEFAULT_CONTEXT_PROMPT = (
+    "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
+    "Here is the chunk we want to situate within the whole document\n"
+    "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
+    "Please give a short succinct description to situate this chunk of text within the overall document "
+    "for the purposes of improving search retrieval of the chunk. "
+    "Answer only with the succinct description and nothing else."
+)
+
+
+def _strip_context_prompt_default(schema: dict) -> None:
+    """Strip context_prompt default from JSON schema to prevent double-curly-brace
+    template placeholders from breaking Stainless SDK code generation."""
+    if props := schema.get("properties", {}):
+        if cp := props.get("context_prompt"):
+            cp.pop("default", None)
+
+
+@json_schema_type
+class VectorStoreChunkingStrategyContextualConfig(BaseModel):
+    model_config = ConfigDict(json_schema_extra=_strip_context_prompt_default)
+
+    model_id: str | None = Field(
+        default=None,
+        min_length=1,
+        description="LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.",
+    )
+    context_prompt: str = Field(
+        default=DEFAULT_CONTEXT_PROMPT,
+        description="Prompt template for contextual retrieval. Uses WHOLE_DOCUMENT and CHUNK_CONTENT placeholders wrapped in double curly braces.",
+    )
+    max_chunk_size_tokens: int = Field(
+        default=700,
+        ge=100,
+        le=4096,
+        description="Maximum tokens per chunk. Suggested ~700 to allow room for prepended context.",
+    )
+    chunk_overlap_tokens: int = Field(
+        default=400,
+        ge=0,
+        description="Tokens to overlap between adjacent chunks. Must be less than max_chunk_size_tokens.",
+    )
+    timeout_seconds: int | None = Field(
+        default=None,
+        ge=1,
+        description="Timeout per LLM call in seconds. Falls back to config default if not provided.",
+    )
+    max_concurrency: int | None = Field(
+        default=None,
+        ge=1,
+        description="Maximum concurrent LLM calls. Falls back to config default if not provided.",
+    )
+
+    @model_validator(mode="after")
+    def validate_config(self) -> "VectorStoreChunkingStrategyContextualConfig":
+        if self.chunk_overlap_tokens >= self.max_chunk_size_tokens:
+            raise ValueError("chunk_overlap_tokens must be less than max_chunk_size_tokens")
+
+        if "{{WHOLE_DOCUMENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{WHOLE_DOCUMENT}} placeholder")
+        if "{{CHUNK_CONTENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{CHUNK_CONTENT}} placeholder")
+        if self.context_prompt.index("{{WHOLE_DOCUMENT}}") >= self.context_prompt.index("{{CHUNK_CONTENT}}"):
+            raise ValueError(
+                "context_prompt must have {{WHOLE_DOCUMENT}} before {{CHUNK_CONTENT}} to enable prefix caching"
+            )
+
+        return self
+
+
+@json_schema_type
+class VectorStoreChunkingStrategyContextual(BaseModel):
+    """Contextual chunking strategy that uses an LLM to situate chunks within the document."""
+
+    type: Literal["contextual"] = Field(default="contextual", description="Strategy type identifier.")
+    contextual: VectorStoreChunkingStrategyContextualConfig = Field(
+        description="Configuration for contextual chunking."
+    )
+
+
 VectorStoreChunkingStrategy = Annotated[
-    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic,
+    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual,
     Field(discriminator="type"),
 ]
 register_schema(VectorStoreChunkingStrategy, name="VectorStoreChunkingStrategy")
@@ -735,6 +815,8 @@ __all__ = [
     "SearchRankingOptions",
     "VectorStoreChunkingStrategy",
     "VectorStoreChunkingStrategyAuto",
+    "VectorStoreChunkingStrategyContextual",
+    "VectorStoreChunkingStrategyContextualConfig",
     "VectorStoreChunkingStrategyStatic",
     "VectorStoreChunkingStrategyStaticConfig",
     "VectorStoreContent",
