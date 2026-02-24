@@ -243,7 +243,7 @@ def test_include_logprobs_non_streaming(client_with_models, text_model_id):
     assert len(response_w_o_logprobs.output) == 1
     message_outputs = [output for output in response_w_o_logprobs.output if output.type == "message"]
     assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
-    assert message_outputs[0].content[0].logprobs is None, "Expected no logprobs in the returned response"
+    assert message_outputs[0].content[0].logprobs == [], "Expected no logprobs in the returned response"
 
     # Create a response with include["message.output_text.logprobs"]
     response_with_logprobs = client_with_models.responses.create(

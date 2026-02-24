@@ -110,7 +110,7 @@ async def convert_chat_choice_to_response_message(
     output_content = choice.message.content or ""
 
     annotations, clean_text = _extract_citations_from_text(output_content, citation_files or {})
-    logprobs = choice.logprobs.content if choice.logprobs and choice.logprobs.content else None
+    logprobs = choice.logprobs.content if choice.logprobs and choice.logprobs.content else []
 
     return OpenAIResponseMessage(
         id=message_id or f"msg_{uuid.uuid4()}",

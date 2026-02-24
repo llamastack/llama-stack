@@ -215,16 +215,21 @@ class StreamingResponseOrchestrator:
 
         # Create a completed refusal response
         refusal_response = OpenAIResponseObject(
+            background=False,
             id=self.response_id,
             created_at=self.created_at,
             model=self.ctx.model,
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
+            temperature=self.ctx.temperature if self.ctx.temperature is not None else 1.0,
+            top_p=self.ctx.top_p if self.ctx.top_p is not None else 1.0,
+            tools=self.ctx.available_tools(),
+            tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
+            truncation=self.truncation or "disabled",
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
-            service_tier=self.service_tier,
+            service_tier=self.service_tier or "default",
             metadata=self.metadata,
-            truncation=self.truncation,
             store=self.store,
             prompt_cache_key=self.prompt_cache_key,
         )
@@ -250,6 +255,7 @@ class StreamingResponseOrchestrator:
     ) -> OpenAIResponseObject:
         completed_at = int(time.time()) if status == "completed" else None
         return OpenAIResponseObject(
+            background=False,
             created_at=self.created_at,
             completed_at=completed_at,
             id=self.response_id,
@@ -258,9 +264,10 @@ class StreamingResponseOrchestrator:
             status=status,
             output=self._clone_outputs(outputs),
             text=self.text,
-            top_p=self.ctx.top_p,
+            temperature=self.ctx.temperature if self.ctx.temperature is not None else 1.0,
+            top_p=self.ctx.top_p if self.ctx.top_p is not None else 1.0,
             tools=self.ctx.available_tools(),
-            tool_choice=self.ctx.tool_choice,
+            tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
             error=error,
             incomplete_details=incomplete_details,
             usage=self.accumulated_usage,
@@ -271,9 +278,9 @@ class StreamingResponseOrchestrator:
             reasoning=self.reasoning,
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
-            service_tier=self.service_tier,
+            service_tier=self.service_tier or "default",
             metadata=self.metadata,
-            truncation=self.truncation,
+            truncation=self.truncation or "disabled",
             store=self.store,
             prompt_cache_key=self.prompt_cache_key,
         )
@@ -1050,7 +1057,7 @@ class StreamingResponseOrchestrator:
                     OpenAIResponseOutputMessageContentOutputText(
                         text=final_text,
                         annotations=[],
-                        logprobs=chat_response_logprobs if chat_response_logprobs else None,
+                        logprobs=chat_response_logprobs if chat_response_logprobs else [],
                     )
                 )
 
