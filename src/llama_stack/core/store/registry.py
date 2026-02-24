@@ -100,9 +100,7 @@ class DiskDistributionRegistry(DistributionRegistry):
                 return True
             # Update in place so restarts and config-driven re-registrations
             # succeed even when mutable fields (e.g. owner) differ.
-            logger.debug(
-                f"Updating existing {obj.type} '{obj.identifier}' in registry"
-            )
+            logger.debug(f"Updating existing {obj.type} '{obj.identifier}' in registry")
 
         await self.kvstore.set(
             KEY_FORMAT.format(type=obj.type, identifier=obj.identifier),
