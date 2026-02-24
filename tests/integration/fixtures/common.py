@@ -325,10 +325,9 @@ def instantiate_llama_stack_client(session):
 
         # --stack-config bypasses template so need this to set default embedding model
         if "vector_io" in config and "inference" in config:
-            if "inline" in session.config.getoption("embedding_model"):
-                provider_id = "inline::sentence-transformers"
-            else:
-                provider_id = parse_vector_io_provider(config)
+            embedding_model_opt = session.config.getoption("embedding_model") or ""
+            # Model identifiers are in provider_id/model_id format; extract the provider.
+            provider_id = embedding_model_opt.split("/")[0] if "/" in embedding_model_opt else "sentence-transformers"
             passed_model = extract_model(session.config.getoption("embedding_model"), "nomic-ai/nomic-embed-text-v1.5")
             passed_emb = session.config.getoption("embedding_dimension")
 

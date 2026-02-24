@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 from dotenv import load_dotenv
 
+from llama_stack.core.stack import run_config_from_adhoc_config_spec
 from llama_stack.log import get_logger
 from llama_stack.testing.api_recorder import patch_httpx_for_test_id
 
@@ -146,9 +147,11 @@ def pytest_configure(config):
     # Apply global fallback for embedding_model when using stack configs with embedding models
     if getattr(config.option, "embedding_model", None) is None:
         stack_config = config.getoption("--stack-config", default=None)
-        if stack_config and "inference=inline::sentence-transformers" in stack_config:
-            # Use the full qualified model ID that matches what's actually registered
-            config.option.embedding_model = "inline::sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
+        if stack_config and "=" in stack_config:
+            run_config = run_config_from_adhoc_config_spec(stack_config)
+            inference_providers = run_config.providers.get("inference", [])
+            if any("sentence-transformers" in p.provider_type for p in inference_providers):
+                config.option.embedding_model = "sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
 
 
 def pytest_addoption(parser):
@@ -241,28 +244,6 @@ def get_short_id(value):
     return MODEL_SHORT_IDS.get(value, value)
 
 
-def parse_vector_io_providers_from_config(config):
-    """Parse stack config to extract vector_io provider from command line."""
-    config_str = config.getoption("--stack-config", default=None) or os.environ.get("LLAMA_STACK_CONFIG")
-
-    if not config_str:
-        return None
-
-    try:
-        # Handle stack-config format: "files=inline::localfs,inference=inline::sentence-transformers,vector_io=inline::milvus"
-        for part in config_str.replace(";", ",").split(","):
-            part = part.strip()
-            if part.startswith("vector_io="):
-                provider_spec = part.split("=", 1)[1].strip()
-                # Return the full provider specification (e.g. "inline::milvus")
-                # The runtime system expects full provider IDs
-                return [provider_spec]
-    except Exception as e:
-        logger.debug(f"Failed to parse vector_io provider from config: {e}")
-
-    return None
-
-
 def pytest_generate_tests(metafunc):
     """
     This is the main function which processes CLI arguments and generates various combinations of parameters.
@@ -272,22 +253,19 @@ def pytest_generate_tests(metafunc):
     """
     # Handle vector_io_provider_id dynamically
     if "vector_io_provider_id" in metafunc.fixturenames:
-        providers = parse_vector_io_providers_from_config(metafunc.config)
-        if providers:
-            # Use the configured provider instead of letting decorator handle it
-            # Use short names in test IDs for readability
-            test_ids = [f"vector_io={p.split('::')[-1] if '::' in p else p}" for p in providers]
-            metafunc.parametrize("vector_io_provider_id", providers, ids=test_ids)
-        else:
-            # No stack config found, apply fallback parametrization here
+        config_str = metafunc.config.getoption("--stack-config", default=None) or os.environ.get("LLAMA_STACK_CONFIG")
+        providers = None
+        if config_str and "=" in config_str:
+            run_config = run_config_from_adhoc_config_spec(config_str)
+            providers = [p.provider_id for p in run_config.providers.get("vector_io", [])]
+        if providers is None:
             inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")
-            if inference_mode == "live":
-                all_providers = ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant"]
-            else:
-                all_providers = ["faiss", "sqlite-vec"]
-
-            test_ids = [f"vector_io={p.split('::')[-1] if '::' in p else p}" for p in all_providers]
-            metafunc.parametrize("vector_io_provider_id", all_providers, ids=test_ids)
+            providers = (
+                ["faiss", "sqlite-vec", "milvus", "chromadb", "pgvector", "weaviate", "qdrant"]
+                if inference_mode == "live"
+                else ["faiss", "sqlite-vec"]
+            )
+        metafunc.parametrize("vector_io_provider_id", providers, ids=[f"vector_io={p}" for p in providers])
 
     params = []
     param_values = {}
