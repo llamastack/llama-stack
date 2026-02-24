@@ -27,7 +27,7 @@ from openai import OpenAI
 
 from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
-from llama_stack.core.stack import run_config_from_adhoc_config_spec
+from llama_stack.core.stack import run_config_from_dynamic_config_spec
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.env import get_env_or_fail
 
@@ -321,7 +321,7 @@ def instantiate_llama_stack_client(session):
         pass
 
     if "=" in config:
-        run_config = run_config_from_adhoc_config_spec(config)
+        run_config = run_config_from_dynamic_config_spec(config)
 
         # --stack-config bypasses template so need this to set default embedding model
         if "vector_io" in config and "inference" in config:

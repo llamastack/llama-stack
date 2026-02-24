@@ -10,6 +10,7 @@ import inspect
 import os
 import re
 import tempfile
+from pathlib import Path
 from typing import Any, get_type_hints
 
 import yaml
@@ -728,26 +729,38 @@ def get_stack_run_config_from_distro(distro: str) -> StackConfig:
     return StackConfig(**replace_env_vars(run_config))
 
 
-def run_config_from_adhoc_config_spec(
-    adhoc_config_spec: str, provider_registry: ProviderRegistry | None = None
+def run_config_from_dynamic_config_spec(
+    dynamic_config_spec: str,
+    provider_registry: ProviderRegistry | None = None,
+    distro_dir: Path | None = None,
+    distro_name: str = "dynamic-distro",
 ) -> StackConfig:
     """
-    Create an adhoc distribution from a list of API providers.
+    Create a dynamic distribution from a list of API providers.
 
     The list should be of the form "api=provider", e.g. "inference=fireworks". If you have
     multiple pairs, separate them with commas or semicolons, e.g. "inference=fireworks,safety=llama-guard,agents=meta-reference"
     """
 
-    api_providers = adhoc_config_spec.replace(";", ",").split(",")
-    provider_registry = provider_registry or get_provider_registry()
+    api_providers = dynamic_config_spec.replace(";", ",").split(",")
+    provider_registry = get_provider_registry() if provider_registry is None else provider_registry
 
-    distro_dir = tempfile.mkdtemp()
+    distro_dir = distro_dir or Path(tempfile.mkdtemp())
     provider_configs_by_api = {}
     for api_provider in api_providers:
+        if "=" not in api_provider:
+            raise ValueError(
+                f"Failed to parse provider spec '{api_provider}'. Expected format: api=provider (e.g. inference=fireworks)"
+            )
         api_str, provider = api_provider.split("=")
-        api = Api(api_str)
+        try:
+            api = Api(api_str)
+        except ValueError:
+            raise ValueError(f"Failed to parse provider spec: '{api_str}' is not a valid API") from None
 
-        providers_by_type = provider_registry[api]
+        providers_by_type = provider_registry.get(api)
+        if providers_by_type is None:
+            raise ValueError(f"Failed to find providers for API '{api_str}'")
         provider_spec = providers_by_type.get(provider)
         if not provider_spec:
             provider_spec = providers_by_type.get(f"inline::{provider}")
@@ -761,23 +774,27 @@ def run_config_from_adhoc_config_spec(
 
         # call method "sample_run_config" on the provider spec config class
         provider_config_type = instantiate_class_type(provider_spec.config_class)
-        provider_config = replace_env_vars(provider_config_type.sample_run_config(__distro_dir__=distro_dir))
+        provider_config = replace_env_vars(provider_config_type.sample_run_config(__distro_dir__=str(distro_dir)))
 
-        provider_configs_by_api[api_str] = [
+        provider_configs_by_api.setdefault(api_str, []).append(
             Provider(
                 provider_id=provider_spec.provider_type.split("::")[-1],
                 provider_type=provider_spec.provider_type,
                 config=provider_config,
             )
-        ]
+        )
     config = StackConfig(
-        distro_name="distro-test",
+        distro_name=distro_name,
         apis=list(provider_configs_by_api.keys()),
         providers=provider_configs_by_api,
         storage=StorageConfig(
             backends={
-                "kv_default": SqliteKVStoreConfig(db_path=f"{distro_dir}/kvstore.db"),
-                "sql_default": SqliteSqlStoreConfig(db_path=f"{distro_dir}/sql_store.db"),
+                "kv_default": SqliteKVStoreConfig(
+                    db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/kvstore.db",
+                ),
+                "sql_default": SqliteSqlStoreConfig(
+                    db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/sql_store.db",
+                ),
             },
             stores=ServerStoresConfig(
                 metadata=KVStoreReference(backend="kv_default", namespace="registry"),
