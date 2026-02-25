@@ -381,279 +381,6 @@ paths:
           title: Identifier
         description: The identifier of the shield to unregister.
       deprecated: true
-  /v1/tool-runtime/invoke:
-    post:
-      responses:
-        '200':
-          description: A ToolInvocationResult.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ToolInvocationResult'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Tool Runtime
-      summary: Invoke Tool
-      description: Run a tool with the given arguments.
-      operationId: invoke_tool_v1_tool_runtime_invoke_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/InvokeToolRequest'
-        required: true
-      deprecated: true
-  /v1/tool-runtime/list-tools:
-    get:
-      responses:
-        '200':
-          description: A ListToolDefsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListToolDefsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Tool Runtime
-      summary: List Runtime Tools
-      description: List all tools in the runtime.
-      operationId: list_runtime_tools_v1_tool_runtime_list_tools_get
-      parameters:
-      - name: authorization
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Authorization
-      - name: tool_group_id
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Tool Group Id
-      - name: mcp_endpoint
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-          - type: 'null'
-          title: Mcp Endpoint
-      deprecated: true
-  /v1/toolgroups:
-    get:
-      responses:
-        '200':
-          description: A ListToolGroupsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListToolGroupsResponse'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Tool Groups
-      summary: List Tool Groups
-      description: List tool groups with optional provider.
-      operationId: list_tool_groups_v1_toolgroups_get
-      deprecated: true
-    post:
-      responses:
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-        '204':
-          description: Successful Response
-      tags:
-      - Tool Groups
-      summary: Register Tool Group
-      description: Register a tool group.
-      operationId: register_tool_group_v1_toolgroups_post
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RegisterToolGroupRequest'
-        required: true
-      deprecated: true
-  /v1/toolgroups/{toolgroup_id}:
-    get:
-      responses:
-        '200':
-          description: A ToolGroup.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ToolGroup'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Tool Groups
-      summary: Get Tool Group
-      description: Get a tool group by its ID.
-      operationId: get_tool_group_v1_toolgroups__toolgroup_id__get
-      parameters:
-      - name: toolgroup_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: toolgroup_id'
-      deprecated: true
-    delete:
-      responses:
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-        '204':
-          description: Successful Response
-      tags:
-      - Tool Groups
-      summary: Unregister Toolgroup
-      description: Unregister a tool group.
-      operationId: unregister_toolgroup_v1_toolgroups__toolgroup_id__delete
-      parameters:
-      - name: toolgroup_id
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: toolgroup_id'
-      deprecated: true
-  /v1/tools:
-    get:
-      responses:
-        '200':
-          description: A ListToolDefsResponse.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListToolDefsResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest400'
-          description: Bad Request
-        '429':
-          $ref: '#/components/responses/TooManyRequests429'
-          description: Too Many Requests
-        '500':
-          $ref: '#/components/responses/InternalServerError500'
-          description: Internal Server Error
-        default:
-          $ref: '#/components/responses/DefaultError'
-          description: Default Response
-      tags:
-      - Tool Groups
-      summary: List Tools
-      description: List tools with optional tool group.
-      operationId: list_tools_v1_tools_get
-      parameters:
-      - name: toolgroup_id
-        in: query
-        required: false
-        schema:
-          anyOf:
-          - type: string
-          - type: 'null'
-          title: Toolgroup Id
-      deprecated: true
-  /v1/tools/{tool_name}:
-    get:
-      responses:
-        '200':
-          description: A ToolDef.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ToolDef'
-        '400':
-          description: Bad Request
-          $ref: '#/components/responses/BadRequest400'
-        '429':
-          description: Too Many Requests
-          $ref: '#/components/responses/TooManyRequests429'
-        '500':
-          description: Internal Server Error
-          $ref: '#/components/responses/InternalServerError500'
-        default:
-          description: Default Response
-          $ref: '#/components/responses/DefaultError'
-      tags:
-      - Tool Groups
-      summary: Get Tool
-      description: Get a tool by its name.
-      operationId: get_tool_v1_tools__tool_name__get
-      parameters:
-      - name: tool_name
-        in: path
-        required: true
-        schema:
-          type: string
-        description: 'Path parameter: tool_name'
-      deprecated: true
   /v1beta/datasets:
     get:
       responses:
@@ -6499,24 +6226,6 @@ components:
       - data
       title: ListShieldsResponse
       description: Response containing a list of all shields.
-    InvokeToolRequest:
-      properties:
-        tool_name:
-          type: string
-          title: Tool Name
-        kwargs:
-          additionalProperties: true
-          type: object
-          title: Kwargs
-        authorization:
-          anyOf:
-          - type: string
-          - type: 'null'
-      type: object
-      required:
-      - tool_name
-      - kwargs
-      title: InvokeToolRequest
     ImageContentItem:
       description: A image content item
       properties:
@@ -6588,53 +6297,57 @@ components:
       title: TextContentItem
       description: A text content item
     ToolInvocationResult:
+      description: Result of a tool invocation.
       properties:
         content:
           anyOf:
           - type: string
-          - oneOf:
-            - $ref: '#/components/schemas/ImageContentItem-Output'
-              title: ImageContentItem-Output
+          - discriminator:
+              mapping:
+                image: '#/components/schemas/ImageContentItem'
+                text: '#/components/schemas/TextContentItem'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/ImageContentItem'
+              title: ImageContentItem
             - $ref: '#/components/schemas/TextContentItem'
               title: TextContentItem
-            discriminator:
-              propertyName: type
-              mapping:
-                image: '#/components/schemas/ImageContentItem-Output'
-                text: '#/components/schemas/TextContentItem'
-            title: ImageContentItem-Output | TextContentItem
+            title: ImageContentItem | TextContentItem
           - items:
+              discriminator:
+                mapping:
+                  image: '#/components/schemas/ImageContentItem'
+                  text: '#/components/schemas/TextContentItem'
+                propertyName: type
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem-Output'
-                title: ImageContentItem-Output
+              - $ref: '#/components/schemas/ImageContentItem'
+                title: ImageContentItem
               - $ref: '#/components/schemas/TextContentItem'
                 title: TextContentItem
-              discriminator:
-                propertyName: type
-                mapping:
-                  image: '#/components/schemas/ImageContentItem-Output'
-                  text: '#/components/schemas/TextContentItem'
-              title: ImageContentItem-Output | TextContentItem
+              title: ImageContentItem | TextContentItem
             type: array
-            title: list[ImageContentItem-Output | TextContentItem]
+            title: list[ImageContentItem | TextContentItem]
           - type: 'null'
-          title: string | list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem | TextContentItem]
+          nullable: true
         error_message:
           anyOf:
           - type: string
           - type: 'null'
+          nullable: true
         error_code:
           anyOf:
           - type: integer
           - type: 'null'
+          nullable: true
         metadata:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
-      type: object
+          nullable: true
       title: ToolInvocationResult
-      description: Result of a tool invocation.
+      type: object
     URL:
       properties:
         uri:
@@ -6679,66 +6392,69 @@ components:
       title: ToolDef
       description: Tool definition used in runtime contexts.
     ListToolDefsResponse:
+      description: Response containing a list of tool definitions.
       properties:
         data:
           items:
             $ref: '#/components/schemas/ToolDef'
-          type: array
           title: Data
-      type: object
+          type: array
       required:
       - data
       title: ListToolDefsResponse
-      description: Response containing a list of tool definitions.
+      type: object
     ToolGroup:
+      description: A group of related tools managed together.
       properties:
         identifier:
-          type: string
-          title: Identifier
           description: Unique identifier for this resource in llama stack
+          title: Identifier
+          type: string
         provider_resource_id:
           anyOf:
           - type: string
           - type: 'null'
           description: Unique identifier for this resource in the provider
+          nullable: true
         provider_id:
-          type: string
-          title: Provider Id
           description: ID of the provider that owns this resource
-        type:
+          title: Provider Id
           type: string
+        type:
           const: tool_group
-          title: Type
           default: tool_group
+          title: Type
+          type: string
         mcp_endpoint:
           anyOf:
           - $ref: '#/components/schemas/URL'
             title: URL
           - type: 'null'
+          nullable: true
           title: URL
         args:
           anyOf:
           - additionalProperties: true
             type: object
           - type: 'null'
-      type: object
+          nullable: true
       required:
       - identifier
       - provider_id
       title: ToolGroup
-      description: A group of related tools managed together.
+      type: object
     ListToolGroupsResponse:
+      description: Response containing a list of tool groups.
       properties:
         data:
           items:
             $ref: '#/components/schemas/ToolGroup'
-          type: array
           title: Data
-      type: object
+          type: array
       required:
       - data
       title: ListToolGroupsResponse
-      description: Response containing a list of tool groups.
+      type: object
     Chunk:
       properties:
         content:
@@ -8711,30 +8427,6 @@ components:
       - shield_id
       title: RegisterShieldRequest
       description: Request model for registering a shield.
-    RegisterToolGroupRequest:
-      properties:
-        toolgroup_id:
-          type: string
-          title: Toolgroup Id
-        provider_id:
-          type: string
-          title: Provider Id
-        mcp_endpoint:
-          anyOf:
-          - $ref: '#/components/schemas/URL'
-            title: URL
-          - type: 'null'
-          title: URL
-        args:
-          anyOf:
-          - additionalProperties: true
-            type: object
-          - type: 'null'
-      type: object
-      required:
-      - toolgroup_id
-      - provider_id
-      title: RegisterToolGroupRequest
     DataSource:
       discriminator:
         mapping:
@@ -11084,6 +10776,12 @@ components:
           description: Notes whether this provider is an external provider.
           title: Is External
           type: boolean
+        toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: For tool_runtime providers, the built-in tool group ID this provider serves (e.g. 'builtin::websearch').
+          nullable: true
         deps__:
           items:
             type: string
@@ -11158,6 +10856,12 @@ components:
           description: Notes whether this provider is an external provider.
           title: Is External
           type: boolean
+        toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: For tool_runtime providers, the built-in tool group ID this provider serves (e.g. 'builtin::websearch').
+          nullable: true
         deps__:
           items:
             type: string
@@ -11249,6 +10953,12 @@ components:
           description: Notes whether this provider is an external provider.
           title: Is External
           type: boolean
+        toolgroup_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: For tool_runtime providers, the built-in tool group ID this provider serves (e.g. 'builtin::websearch').
+          nullable: true
         deps__:
           items:
             type: string

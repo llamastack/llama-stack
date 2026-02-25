@@ -9,7 +9,6 @@ from llama_stack.core.datatypes import (
     ModelInput,
     Provider,
     ShieldInput,
-    ToolGroupInput,
 )
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.inference.sentence_transformers import (
@@ -93,17 +92,6 @@ def get_distribution_template() -> DistributionTemplate:
             "embedding_dimension": 768,
         },
     )
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="brave-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
-        ),
-    ]
-
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -117,7 +105,6 @@ def get_distribution_template() -> DistributionTemplate:
                     "vector_io": [chromadb_provider],
                 },
                 default_models=[inference_model, embedding_model],
-                default_tool_groups=default_tool_groups,
             ),
             "run-with-safety.yaml": RunConfigSettings(
                 provider_overrides={
@@ -130,7 +117,6 @@ def get_distribution_template() -> DistributionTemplate:
                 },
                 default_models=[inference_model, safety_model, embedding_model],
                 default_shields=[ShieldInput(shield_id="${env.SAFETY_MODEL}")],
-                default_tool_groups=default_tool_groups,
             ),
         },
         run_config_env_vars={
