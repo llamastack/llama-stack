@@ -202,7 +202,9 @@ class TestIntegrationWorkflow:
                 store=True,
             )
 
-            yield OpenAIResponseObjectStreamResponseCompleted(response=mock_response, type="response.completed")
+            yield OpenAIResponseObjectStreamResponseCompleted(
+                response=mock_response, sequence_number=2, type="response.completed"
+            )
 
         responses_impl_with_conversations._create_streaming_response = mock_streaming_response
 

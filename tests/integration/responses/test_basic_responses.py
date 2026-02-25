@@ -296,7 +296,7 @@ def test_include_logprobs_streaming(client_with_models, text_model_id):
                 f"Expected logprobs in the returned chunk ({chunk.type=}), but none were returned"
             )
         elif chunk.type == "response.content_part.done":
-            assert chunk.part.logprobs is None, f"Expected no logprobs in the returned chunk ({chunk.type=})"
+            assert chunk.part.logprobs == [], f"Expected no logprobs in the returned chunk ({chunk.type=})"
 
 
 def test_include_logprobs_with_web_search(client_with_models, text_model_id):
