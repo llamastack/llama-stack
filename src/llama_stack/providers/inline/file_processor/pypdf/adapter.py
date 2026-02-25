@@ -4,12 +4,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Any
 
 from fastapi import UploadFile
 
-from llama_stack_api.file_processors import ProcessFileResponse
-from llama_stack_api.vector_io import VectorStoreChunkingStrategy
+from llama_stack_api.file_processors import ProcessFileRequest, ProcessFileResponse
 
 from .config import PyPDFFileProcessorConfig
 from .pypdf import PyPDFFileProcessor
@@ -25,15 +23,13 @@ class PyPDFFileProcessorAdapter:
 
     async def process_file(
         self,
+        request: ProcessFileRequest,
         file: UploadFile | None = None,
-        file_id: str | None = None,
-        options: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> ProcessFileResponse:
         """Process a file using PyPDF processor."""
         return await self.processor.process_file(
             file=file,
-            file_id=file_id,
-            options=options,
-            chunking_strategy=chunking_strategy,
+            file_id=request.file_id,
+            options=request.options,
+            chunking_strategy=request.chunking_strategy,
         )
