@@ -15,7 +15,6 @@ from llama_stack.core.datatypes import (
     RerankerModel,
     SafetyConfig,
     ShieldInput,
-    ToolGroupInput,
     VectorStoresConfig,
 )
 from llama_stack.core.storage.kvstore.config import PostgresKVStoreConfig
@@ -175,16 +174,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         provider_type="inline::transformers",
         config=TransformersInferenceConfig.sample_run_config(),
     )
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
-        ),
-    ]
     default_shields = [
         # if the
         ShieldInput(
@@ -275,7 +264,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     base_run_settings = RunConfigSettings(
         provider_overrides=default_overrides,
         default_models=[],
-        default_tool_groups=default_tool_groups,
         default_shields=default_shields,
         default_connectors=[],
         vector_stores_config=VectorStoresConfig(

@@ -71,8 +71,6 @@ from llama_stack_api import (
     Scoring,
     ScoringFunctions,
     Shields,
-    ToolGroups,
-    ToolRuntime,
     VectorIO,
 )
 from llama_stack_api.datasets import RegisterDatasetRequest
@@ -96,8 +94,6 @@ class LlamaStack(
     Models,
     Shields,
     Inspect,
-    ToolGroups,
-    ToolRuntime,
     Files,
     Prompts,
     Conversations,
@@ -120,7 +116,6 @@ RESOURCES = [
         RegisterScoringFunctionRequest,
     ),
     ("benchmarks", Api.benchmarks, "register_benchmark", "list_benchmarks", RegisterBenchmarkRequest),
-    ("tool_groups", Api.tool_groups, "register_tool_group", "list_tool_groups", None),
     ("vector_stores", Api.vector_stores, "register_vector_store", "list_vector_stores", None),
 ]
 
@@ -138,7 +133,6 @@ RESOURCE_ID_FIELDS = [
     "dataset_id",
     "scoring_fn_id",
     "benchmark_id",
-    "toolgroup_id",
 ]
 
 
@@ -253,6 +247,75 @@ async def register_resources(run_config: StackConfig, impls: dict[Api, Any]):
             logger.debug(
                 f"{rsrc.capitalize()}: {obj.identifier} served by {obj.provider_id}",
             )
+
+
+async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, Any]):
+    """Auto-register built-in tool groups based on configured tool_runtime providers.
+
+    For each tool_runtime provider whose spec declares a toolgroup_id,
+    register that tool group automatically. This replaces the old explicit
+    tool_groups config in registered_resources.
+
+    The toolgroup_id is declared in the provider registry
+    (see providers/registry/tool_runtime.py).
+    """
+    if Api.tool_groups not in impls:
+        return
+
+    tool_groups_impl = impls[Api.tool_groups]
+
+    # Build a mapping from provider_type -> toolgroup_id using the provider registry
+    provider_registry = get_provider_registry(run_config)
+    provider_type_to_toolgroup: dict[str, str] = {}
+    tool_runtime_specs = provider_registry.get(Api.tool_runtime, {})
+    for provider_type, spec in tool_runtime_specs.items():
+        if spec.toolgroup_id:
+            provider_type_to_toolgroup[provider_type] = spec.toolgroup_id
+
+    # Collect existing tool groups so we can clean up stale entries from
+    # previous server runs before re-registering. Re-registration is required
+    # because register_tool_group also indexes tools into in-memory lookup
+    # maps (_index_tools), which are empty after a restart.
+    existing_groups: set[str] = set()
+    try:
+        existing = await tool_groups_impl.list_tool_groups()
+        existing_groups = {tg.identifier for tg in existing.data}
+    except Exception:
+        logger.debug("Could not list existing tool groups; will attempt all registrations")
+
+    # Track which tool group IDs have already been registered to avoid duplicates
+    # (e.g., multiple search providers all map to builtin::websearch)
+    registered: set[str] = set()
+
+    tool_runtime_providers = run_config.providers.get("tool_runtime", [])
+    for provider in tool_runtime_providers:
+        if not provider.provider_id or provider.provider_id == "__disabled__":
+            continue
+
+        toolgroup_id = provider_type_to_toolgroup.get(provider.provider_type)
+        if toolgroup_id is None:
+            continue
+
+        if toolgroup_id in registered:
+            continue
+
+        # Unregister stale entry so register_tool_group can re-create it
+        # and rebuild in-memory tool indexes.
+        if toolgroup_id in existing_groups:
+            try:
+                await tool_groups_impl.unregister_toolgroup(toolgroup_id)
+            except Exception:
+                logger.debug(f"Could not unregister stale tool group '{toolgroup_id}'")
+
+        logger.debug(f"Auto-registering tool group '{toolgroup_id}' with provider '{provider.provider_id}'")
+        try:
+            await tool_groups_impl.register_tool_group(
+                toolgroup_id=toolgroup_id,
+                provider_id=provider.provider_id,
+            )
+            registered.add(toolgroup_id)
+        except Exception:
+            logger.warning(f"Failed to auto-register tool group '{toolgroup_id}'", exc_info=True)
 
 
 async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
@@ -699,6 +762,7 @@ class Stack:
             await impls[Api.connectors].initialize()
 
         await register_resources(self.run_config, impls)
+        await auto_register_tool_groups(self.run_config, impls)
         await register_connectors(self.run_config, impls)
         await refresh_registry_once(impls)
         await validate_vector_stores_config(self.run_config.vector_stores, impls)
