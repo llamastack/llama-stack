@@ -4,8 +4,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import datetime
 from collections.abc import Iterable
 
+import google.auth.credentials
 import google.auth.transport.requests
 from google.auth import default
 from google.auth.exceptions import DefaultCredentialsError, GoogleAuthError, RefreshError, TransportError
@@ -14,22 +16,48 @@ from llama_stack.providers.utils.inference.openai_mixin import OpenAIMixin
 
 from .config import VertexAIConfig
 
+# Refresh tokens this many seconds before they expire to avoid
+# using a token that expires mid-request.
+TOKEN_EXPIRY_BUFFER_SECONDS = 300
+
 
 class VertexAIInferenceAdapter(OpenAIMixin):
     config: VertexAIConfig
 
     provider_data_api_key_field: str = "vertex_project"
 
+    def __init__(self, config: VertexAIConfig):
+        super().__init__(config=config)
+        self._credentials: google.auth.credentials.Credentials | None = None
+
+    def _is_token_fresh(self) -> bool:
+        if self._credentials is None or not self._credentials.valid:
+            return False
+        if self._credentials.expiry is None:
+            return False
+        expiry = self._credentials.expiry.replace(tzinfo=datetime.UTC)
+        remaining = (expiry - datetime.datetime.now(datetime.UTC)).total_seconds()
+        return bool(remaining > TOKEN_EXPIRY_BUFFER_SECONDS)
+
     def get_api_key(self) -> str:
         """
         Get an access token for Vertex AI using Application Default Credentials.
 
-        Vertex AI uses ADC instead of API keys. This method obtains an access token
-        from the default credentials and returns it for use with the OpenAI-compatible client.
+        Credentials are cached and reused until the token approaches expiry,
+        avoiding an HTTP round-trip to Google's auth servers on every request.
         """
+        credentials = self._credentials
+        if credentials is not None and self._is_token_fresh():
+            return str(credentials.token)
+
         try:
-            # Get default credentials - will read from GOOGLE_APPLICATION_CREDENTIALS
-            credentials, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+            if credentials is None:
+                credentials, _ = default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+                self._credentials = credentials
+            # NOTE: credentials.refresh() is a blocking HTTP call, but
+            # get_api_key() is sync (required by OpenAIMixin). Making it async
+            # would require refactoring the base mixin's client property chain.
+            # Token caching above limits this to once per ~55 minutes.
             credentials.refresh(google.auth.transport.requests.Request())
             return str(credentials.token)
         except DefaultCredentialsError as e:
