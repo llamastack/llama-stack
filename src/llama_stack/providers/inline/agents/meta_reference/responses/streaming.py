@@ -240,7 +240,10 @@ class StreamingResponseOrchestrator:
             prompt_cache_key=self.prompt_cache_key,
         )
 
-        return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
+        self.sequence_number += 1
+        return OpenAIResponseObjectStreamResponseCompleted(
+            response=refusal_response, sequence_number=self.sequence_number
+        )
 
     def _clone_outputs(self, outputs: list[OpenAIResponseOutput]) -> list[OpenAIResponseOutput]:
         cloned: list[OpenAIResponseOutput] = []
@@ -299,7 +302,8 @@ class StreamingResponseOrchestrator:
 
         # Emit response.created followed by response.in_progress to align with OpenAI streaming
         yield OpenAIResponseObjectStreamResponseCreated(
-            response=self._snapshot_response("in_progress", output_messages)
+            response=self._snapshot_response("in_progress", output_messages),
+            sequence_number=self.sequence_number,
         )
 
         self.sequence_number += 1
@@ -565,8 +569,11 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
         else:
+            self.sequence_number += 1
             final_response = self._snapshot_response("completed", output_messages)
-            yield OpenAIResponseObjectStreamResponseCompleted(response=final_response)
+            yield OpenAIResponseObjectStreamResponseCompleted(
+                response=final_response, sequence_number=self.sequence_number
+            )
 
     def _separate_tool_calls(self, current_response, messages) -> tuple[list, list, list, list]:
         """Separate tool calls into function and non-function categories."""
@@ -859,6 +866,7 @@ class StreamingResponseOrchestrator:
                             output_index=message_output_index,
                             part=OpenAIResponseContentPartOutputText(
                                 text="",  # Will be filled incrementally via text deltas
+                                logprobs=[],
                             ),
                             sequence_number=self.sequence_number,
                         )
@@ -868,7 +876,7 @@ class StreamingResponseOrchestrator:
                         content_index=content_index,
                         delta=chunk_choice.delta.content,
                         item_id=message_item_id,
-                        logprobs=chunk_logprobs,
+                        logprobs=chunk_logprobs if chunk_logprobs is not None else [],
                         output_index=message_output_index,
                         sequence_number=self.sequence_number,
                     )
@@ -1035,6 +1043,7 @@ class StreamingResponseOrchestrator:
                 output_index=message_output_index,
                 part=OpenAIResponseContentPartOutputText(
                     text=final_text,
+                    logprobs=[],
                 ),
                 sequence_number=self.sequence_number,
             )

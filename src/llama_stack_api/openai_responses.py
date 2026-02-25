@@ -796,10 +796,12 @@ class OpenAIResponseObjectStreamResponseCreated(BaseModel):
     """Streaming event indicating a new response has been created.
 
     :param response: The response object that was created
+    :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.created"
     """
 
     response: OpenAIResponseObject
+    sequence_number: int
     type: Literal["response.created"] = "response.created"
 
 
@@ -822,10 +824,12 @@ class OpenAIResponseObjectStreamResponseCompleted(BaseModel):
     """Streaming event indicating a response has been completed.
 
     :param response: Completed response object
+    :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.completed"
     """
 
     response: OpenAIResponseObject
+    sequence_number: int
     type: Literal["response.completed"] = "response.completed"
 
 
