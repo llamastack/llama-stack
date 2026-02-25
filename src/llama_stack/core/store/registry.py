@@ -98,9 +98,26 @@ class DiskDistributionRegistry(DistributionRegistry):
         if existing_obj:
             if existing_obj == obj:
                 return True
-            # Update in place so restarts and config-driven re-registrations
-            # succeed even when mutable fields (e.g. owner) differ.
-            logger.debug(f"Updating existing {obj.type} '{obj.identifier}' in registry")
+            # Allow re-registration when the incoming object is a subset of the
+            # existing one (every explicitly-set field matches).  This covers
+            # server restarts where the config-provided object lacks mutable
+            # fields (e.g. ``owner``) that were added during initial registration.
+            # Genuinely conflicting field values still raise an error.
+            incoming_data = obj.model_dump()
+            existing_data = existing_obj.model_dump()
+            conflicts = {
+                field: (incoming_data[field], existing_data[field])
+                for field in obj.model_fields_set
+                if incoming_data[field] != existing_data[field]
+            }
+            if conflicts:
+                raise ValueError(
+                    f"Object of type '{obj.type}' and identifier '{obj.identifier}' already exists "
+                    f"with conflicting field values: {conflicts}. "
+                    "Unregister it first if you want to replace it."
+                )
+            logger.debug(f"Re-registration of {obj.type} '{obj.identifier}' is a no-op (subset match)")
+            return True
 
         await self.kvstore.set(
             KEY_FORMAT.format(type=obj.type, identifier=obj.identifier),
