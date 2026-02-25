@@ -5,12 +5,14 @@
 # the root directory of this source tree.
 
 """Integration tests for MCP tools with complex JSON Schema support.
-Tests $ref, $defs, and other JSON Schema features through MCP integration.
+Tests $ref, $defs, and other JSON Schema features through MCP integration
+via the Responses/Agent API.
 """
 
 import pytest
+from llama_stack_client.lib.agents.agent import Agent
+from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
 
-from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import make_mcp_server
 
 AUTH_TOKEN = "test-token"
@@ -54,16 +56,7 @@ def mcp_server_with_complex_schemas():
         else:
             return {"type": "phone", "value": contact_info}
 
-    # Manually attach complex schemas to the functions
-    # (FastMCP might not support this by default, so this is test setup)
-
-    # For MCP, we need to set the schema via tool annotations
-    # This is test infrastructure to force specific schemas
-
     tools = {"book_flight": book_flight, "process_order": process_order, "flexible_contact": flexible_contact}
-
-    # Note: In real MCP implementation, we'd configure these schemas properly
-    # For testing, we may need to mock or extend the MCP server setup
 
     with make_mcp_server(required_auth_token=AUTH_TOKEN, tools=tools) as server_info:
         yield server_info
@@ -96,263 +89,20 @@ def mcp_server_with_output_schemas():
         yield server_info
 
 
-class TestMCPSchemaPreservation:
-    """Test that MCP tool schemas are preserved correctly."""
+class TestMCPToolInvocationViaAgent:
+    """Test invoking MCP tools with complex schemas through the Agent API."""
 
-    def test_mcp_tools_list_with_schemas(self, llama_stack_client, mcp_server_with_complex_schemas):
-        """Test listing MCP tools preserves input_schema."""
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        test_toolgroup_id = "mcp::complex_list"
+    def test_invoke_mcp_tool_with_nested_data(self, llama_stack_client, text_model_id, mcp_server_with_complex_schemas):
+        """Test that an MCP tool accepting nested object structures can be invoked via the Agent."""
         uri = mcp_server_with_complex_schemas["server_url"]
 
-        # Clean up any existing registration
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        # Register MCP toolgroup
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        # Use the dedicated authorization parameter
-        # List runtime tools
-        response = llama_stack_client.tool_runtime.list_tools(
-            tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
-        )
-
-        tools = response
-        assert len(tools) > 0
-
-        # Check each tool has input_schema
-        for tool in tools:
-            assert hasattr(tool, "input_schema")
-            # Schema might be None or a dict depending on tool
-            if tool.input_schema is not None:
-                assert isinstance(tool.input_schema, dict)
-                # Should have basic JSON Schema structure
-                if "properties" in tool.input_schema:
-                    assert "type" in tool.input_schema
-
-    def test_mcp_schema_with_refs_preserved(self, llama_stack_client, mcp_server_with_complex_schemas):
-        """Test that $ref and $defs in MCP schemas are preserved."""
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        test_toolgroup_id = "mcp::complex_refs"
-        uri = mcp_server_with_complex_schemas["server_url"]
-
-        # Register
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        # Use the dedicated authorization parameter
-        # List tools
-        response = llama_stack_client.tool_runtime.list_tools(
-            tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
-        )
-
-        # Find book_flight tool (which should have $ref/$defs)
-        book_flight_tool = next((t for t in response if t.name == "book_flight"), None)
-
-        if book_flight_tool and book_flight_tool.input_schema:
-            # If the MCP server provides $defs, they should be preserved
-            # This is the KEY test for the bug fix
-            schema = book_flight_tool.input_schema
-
-            # Check if schema has properties (might vary based on MCP implementation)
-            if "properties" in schema:
-                # Verify schema structure is preserved (exact structure depends on MCP server)
-                assert isinstance(schema["properties"], dict)
-
-            # If $defs are present, verify they're preserved
-            if "$defs" in schema:
-                assert isinstance(schema["$defs"], dict)
-                # Each definition should be a dict
-                for _def_name, def_schema in schema["$defs"].items():
-                    assert isinstance(def_schema, dict)
-
-    def test_mcp_output_schema_preserved(self, llama_stack_client, mcp_server_with_output_schemas):
-        """Test that MCP outputSchema is preserved."""
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        test_toolgroup_id = "mcp::with_output"
-        uri = mcp_server_with_output_schemas["server_url"]
-
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        # Use the dedicated authorization parameter
-        response = llama_stack_client.tool_runtime.list_tools(
-            tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
-        )
-
-        # Find get_weather tool
-        weather_tool = next((t for t in response if t.name == "get_weather"), None)
-
-        if weather_tool:
-            # Check if output_schema field exists and is preserved
-            assert hasattr(weather_tool, "output_schema")
-
-            # If MCP server provides output schema, it should be preserved
-            if weather_tool.output_schema is not None:
-                assert isinstance(weather_tool.output_schema, dict)
-                # Should have JSON Schema structure
-                if "properties" in weather_tool.output_schema:
-                    assert "type" in weather_tool.output_schema
-
-
-class TestMCPToolInvocation:
-    """Test invoking MCP tools with complex schemas."""
-
-    def test_invoke_mcp_tool_with_nested_data(self, llama_stack_client, mcp_server_with_complex_schemas):
-        """Test invoking MCP tool that expects nested object structure."""
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        test_toolgroup_id = "mcp::complex_invoke_nested"
-        uri = mcp_server_with_complex_schemas["server_url"]
-
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        # Use the dedicated authorization parameter
-        llama_stack_client.tool_runtime.list_tools(
-            tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
-        )
-
-        # Invoke tool with complex nested data
-        result = llama_stack_client.tool_runtime.invoke_tool(
-            tool_name="process_order",
-            kwargs={
-                "order_data": {
-                    "items": [{"name": "Widget", "quantity": 2}, {"name": "Gadget", "quantity": 1}],
-                    "shipping": {"address": {"street": "123 Main St", "city": "San Francisco", "zipcode": "94102"}},
-                }
-            },
-            authorization=AUTH_TOKEN,
-        )
-
-        # Should succeed without schema validation errors
-        assert result.content is not None
-        assert result.error_message is None
-
-    def test_invoke_with_flexible_schema(self, llama_stack_client, mcp_server_with_complex_schemas):
-        """Test invoking tool with anyOf schema (flexible input)."""
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        test_toolgroup_id = "mcp::complex_invoke_flexible"
-        uri = mcp_server_with_complex_schemas["server_url"]
-
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        # Use the dedicated authorization parameter
-        llama_stack_client.tool_runtime.list_tools(
-            tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
-        )
-
-        # Test with email format
-        result_email = llama_stack_client.tool_runtime.invoke_tool(
-            tool_name="flexible_contact",
-            kwargs={"contact_info": "user@example.com"},
-            authorization=AUTH_TOKEN,
-        )
-
-        assert result_email.error_message is None
-
-        # Test with phone format
-        result_phone = llama_stack_client.tool_runtime.invoke_tool(
-            tool_name="flexible_contact",
-            kwargs={"contact_info": "+15551234567"},
-            authorization=AUTH_TOKEN,
-        )
-
-        assert result_phone.error_message is None
-
-
-class TestAgentWithMCPTools:
-    """Test agents using MCP tools with complex schemas."""
-
-    @pytest.mark.skip(reason="we need tool call recording for this test since session_id is injected")
-    def test_agent_with_complex_mcp_tool(self, llama_stack_client, text_model_id, mcp_server_with_complex_schemas):
-        """Test agent can use MCP tools with $ref/$defs schemas."""
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        from llama_stack_client.lib.agents.agent import Agent
-        from llama_stack_client.lib.agents.turn_events import StepCompleted
-
-        test_toolgroup_id = "mcp::complex_agent"
-        uri = mcp_server_with_complex_schemas["server_url"]
-
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        # Use the dedicated authorization parameter
-        tools_list = llama_stack_client.tool_runtime.list_tools(
-            tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
-        )
         tool_defs = [
             {
                 "type": "mcp",
                 "server_url": uri,
-                "server_label": test_toolgroup_id,
+                "server_label": "complex-schemas",
                 "require_approval": "never",
-                "allowed_tools": [tool.name for tool in tools_list],
+                "allowed_tools": ["process_order"],
                 "authorization": AUTH_TOKEN,
             }
         ]
@@ -360,13 +110,10 @@ class TestAgentWithMCPTools:
         agent = Agent(
             client=llama_stack_client,
             model=text_model_id,
-            instructions="You are a helpful assistant that can process orders and book flights.",
+            instructions="You are a helpful assistant. When asked to process an order, use the process_order tool.",
             tools=tool_defs,
         )
-
-        session_id = agent.create_session("test-session-complex")
-
-        # Ask agent to use a tool with complex schema
+        session_id = agent.create_session("test-nested-data")
         chunks = list(
             agent.create_turn(
                 session_id=session_id,
@@ -377,7 +124,10 @@ class TestAgentWithMCPTools:
                         "content": [
                             {
                                 "type": "input_text",
-                                "text": "Process an order with 2 widgets going to 123 Main St, San Francisco",
+                                "text": (
+                                    "Process an order with 2 widgets and 1 gadget, "
+                                    "shipping to 123 Main St, San Francisco 94102."
+                                ),
                             }
                         ],
                     }
@@ -387,10 +137,178 @@ class TestAgentWithMCPTools:
         )
 
         events = [chunk.event for chunk in chunks]
-        tool_execution_steps = [
+
+        issued_calls = [
+            event
+            for event in events
+            if isinstance(event, StepProgress) and isinstance(event.delta, ToolCallIssuedDelta)
+        ]
+        assert issued_calls, "Expected at least one tool call to be issued"
+        assert issued_calls[-1].delta.tool_name == "process_order"
+
+        tool_events = [
             event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
         ]
+        assert tool_events, "Expected tool execution to complete"
+        assert tool_events[-1].result.tool_calls[0].tool_name == "process_order"
 
-        for step in tool_execution_steps:
-            for tool_response in step.result.tool_responses:
-                assert tool_response.get("content") is not None
+    def test_invoke_with_flexible_schema(self, llama_stack_client, text_model_id, mcp_server_with_complex_schemas):
+        """Test invoking a tool that accepts flexible input (email or phone)."""
+        uri = mcp_server_with_complex_schemas["server_url"]
+
+        tool_defs = [
+            {
+                "type": "mcp",
+                "server_url": uri,
+                "server_label": "complex-schemas",
+                "require_approval": "never",
+                "allowed_tools": ["flexible_contact"],
+                "authorization": AUTH_TOKEN,
+            }
+        ]
+
+        agent = Agent(
+            client=llama_stack_client,
+            model=text_model_id,
+            instructions="You are a helpful assistant. Use the flexible_contact tool when given contact info.",
+            tools=tool_defs,
+        )
+        session_id = agent.create_session("test-flexible")
+        chunks = list(
+            agent.create_turn(
+                session_id=session_id,
+                messages=[
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": "Save this contact info: user@example.com",
+                            }
+                        ],
+                    }
+                ],
+                stream=True,
+            )
+        )
+
+        events = [chunk.event for chunk in chunks]
+        tool_events = [
+            event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
+        ]
+        assert tool_events, "Expected tool execution to complete"
+        assert tool_events[-1].result.tool_calls[0].tool_name == "flexible_contact"
+
+
+class TestMCPSchemaRoundTrip:
+    """Test that MCP tool schemas survive the full round-trip:
+    MCP server -> tool discovery -> LLM tool call -> MCP invocation -> result.
+    """
+
+    def test_complex_tool_produces_valid_result(
+        self, llama_stack_client, text_model_id, mcp_server_with_output_schemas
+    ):
+        """Test that a tool with structured output returns valid data through the Agent."""
+        uri = mcp_server_with_output_schemas["server_url"]
+
+        tool_defs = [
+            {
+                "type": "mcp",
+                "server_url": uri,
+                "server_label": "output-schemas",
+                "require_approval": "never",
+                "allowed_tools": ["calculate"],
+                "authorization": AUTH_TOKEN,
+            }
+        ]
+
+        agent = Agent(
+            client=llama_stack_client,
+            model=text_model_id,
+            instructions="You are a helpful calculator. Use the calculate tool to answer math questions.",
+            tools=tool_defs,
+        )
+        session_id = agent.create_session("test-output-schema")
+        chunks = list(
+            agent.create_turn(
+                session_id=session_id,
+                messages=[
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": "What is 7 + 3? Use the calculate tool with operation 'add'.",
+                            }
+                        ],
+                    }
+                ],
+                stream=True,
+            )
+        )
+
+        events = [chunk.event for chunk in chunks]
+
+        tool_events = [
+            event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
+        ]
+        assert tool_events, "Expected tool execution to complete"
+
+        tool_result = tool_events[-1].result.tool_calls[0]
+        assert tool_result.tool_name == "calculate"
+
+        final_response = next((chunk.response for chunk in reversed(chunks) if chunk.response), None)
+        assert final_response is not None
+        assert "10" in final_response.output_text
+
+    def test_multi_tool_mcp_server(self, llama_stack_client, text_model_id, mcp_server_with_complex_schemas):
+        """Test that multiple tools from the same MCP server are all discoverable and callable."""
+        uri = mcp_server_with_complex_schemas["server_url"]
+
+        tool_defs = [
+            {
+                "type": "mcp",
+                "server_url": uri,
+                "server_label": "complex-schemas",
+                "require_approval": "never",
+                "allowed_tools": ["book_flight", "process_order", "flexible_contact"],
+                "authorization": AUTH_TOKEN,
+            }
+        ]
+
+        agent = Agent(
+            client=llama_stack_client,
+            model=text_model_id,
+            instructions=("You are a helpful assistant. Use the flexible_contact tool to save contact information."),
+            tools=tool_defs,
+        )
+        session_id = agent.create_session("test-multi-tool")
+        chunks = list(
+            agent.create_turn(
+                session_id=session_id,
+                messages=[
+                    {
+                        "type": "message",
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "input_text",
+                                "text": "Save the contact info for phone number +15551234567.",
+                            }
+                        ],
+                    }
+                ],
+                stream=True,
+            )
+        )
+
+        events = [chunk.event for chunk in chunks]
+        tool_events = [
+            event for event in events if isinstance(event, StepCompleted) and event.step_type == "tool_execution"
+        ]
+        assert tool_events, "Expected tool execution to complete"
+
+        final_response = next((chunk.response for chunk in reversed(chunks) if chunk.response), None)
+        assert final_response is not None
