@@ -293,6 +293,17 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
         if toolgroup_id in registered:
             continue
 
+        # Skip providers whose api_key is empty — they won't be functional.
+        # This matters when multiple providers map to the same toolgroup_id
+        # (e.g., brave-search and tavily-search both serve builtin::websearch).
+        api_key = provider.config.get("api_key")
+        if "api_key" in provider.config and not api_key:
+            logger.debug(
+                f"Skipping provider '{provider.provider_id}' for tool group '{toolgroup_id}': "
+                "api_key is not configured"
+            )
+            continue
+
         # Unregister stale entry so register_tool_group can re-create it
         # and rebuild in-memory tool indexes.
         if toolgroup_id in existing_groups:
