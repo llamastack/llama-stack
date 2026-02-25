@@ -6,6 +6,8 @@
 
 from typing import Any
 
+from llama_stack.providers.inline.agents.meta_reference.responses.streaming import _VALID_RESPONSE_ERROR_CODES
+
 
 class StreamingValidator:
     """Helper class for validating streaming response events."""
@@ -148,6 +150,10 @@ class StreamingValidator:
                 assert chunk.response.status == "failed"
                 assert isinstance(chunk.sequence_number, int)
                 assert chunk.response.error is not None
+                assert chunk.response.error.code in _VALID_RESPONSE_ERROR_CODES, (
+                    f"Error code '{chunk.response.error.code}' is not a valid Responses API error code"
+                )
+                assert chunk.response.error.message, "Error message should be non-empty"
             elif chunk.type == "response.completed":
                 assert chunk.response.status == "completed"
             elif chunk.type in {"response.content_part.added", "response.content_part.done"}:
