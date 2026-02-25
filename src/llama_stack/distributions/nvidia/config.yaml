@@ -60,8 +60,8 @@ providers:
   - provider_id: basic
     provider_type: inline::basic
   tool_runtime:
-  - provider_id: file-search
-    provider_type: inline::file-search
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
   files:
   - provider_id: builtin-files
     provider_type: inline::localfs
@@ -103,8 +103,5 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321

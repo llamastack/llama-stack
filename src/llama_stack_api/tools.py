@@ -8,12 +8,10 @@ from enum import Enum
 from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel
-from typing_extensions import runtime_checkable
 
 from llama_stack_api.common.content_types import URL, InterleavedContent
 from llama_stack_api.resource import Resource, ResourceType
-from llama_stack_api.schema_utils import json_schema_type, webmethod
-from llama_stack_api.version import LLAMA_STACK_API_V1
+from llama_stack_api.schema_utils import json_schema_type
 
 
 @json_schema_type
@@ -107,9 +105,14 @@ class ListToolDefsResponse(BaseModel):
     data: list[ToolDef]
 
 
-@runtime_checkable
 class ToolGroups(Protocol):
-    @webmethod(route="/toolgroups", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
+    """Internal protocol for managing tool groups.
+
+    Tool groups are collections of related tools registered with specific providers.
+    This protocol is used internally by agents and is not exposed as an HTTP API.
+    Use the Connectors API for managing MCP servers and tool integrations.
+    """
+
     async def register_tool_group(
         self,
         toolgroup_id: str,
@@ -126,7 +129,6 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def get_tool_group(
         self,
         toolgroup_id: str,
@@ -138,24 +140,21 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/toolgroups", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def list_tool_groups(self) -> ListToolGroupsResponse:
-        """List tool groups with optional provider.
+        """List tool groups.
 
         :returns: A ListToolGroupsResponse.
         """
         ...
 
-    @webmethod(route="/tools", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def list_tools(self, toolgroup_id: str | None = None) -> ListToolDefsResponse:
-        """List tools with optional tool group.
+        """List tools with optional tool group filter.
 
         :param toolgroup_id: The ID of the tool group to list tools for.
         :returns: A ListToolDefsResponse.
         """
         ...
 
-    @webmethod(route="/tools/{tool_name:path}", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def get_tool(
         self,
         tool_name: str,
@@ -167,7 +166,6 @@ class ToolGroups(Protocol):
         """
         ...
 
-    @webmethod(route="/toolgroups/{toolgroup_id:path}", method="DELETE", level=LLAMA_STACK_API_V1, deprecated=True)
     async def unregister_toolgroup(
         self,
         toolgroup_id: str,
@@ -188,12 +186,15 @@ class SpecialToolGroup(Enum):
     rag_tool = "rag_tool"
 
 
-@runtime_checkable
 class ToolRuntime(Protocol):
+    """Internal protocol for listing and invoking tools from registered tool groups.
+
+    This protocol is used internally by agents and is not exposed as an HTTP API.
+    Use the Connectors API for managing MCP servers and tool integrations.
+    """
+
     tool_store: ToolStore | None = None
 
-    # TODO: This needs to be renamed once OPEN API generator name conflict issue is fixed.
-    @webmethod(route="/tool-runtime/list-tools", method="GET", level=LLAMA_STACK_API_V1, deprecated=True)
     async def list_runtime_tools(
         self,
         tool_group_id: str | None = None,
@@ -209,7 +210,6 @@ class ToolRuntime(Protocol):
         """
         ...
 
-    @webmethod(route="/tool-runtime/invoke", method="POST", level=LLAMA_STACK_API_V1, deprecated=True)
     async def invoke_tool(
         self,
         tool_name: str,

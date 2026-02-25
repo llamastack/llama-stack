@@ -15,7 +15,6 @@ from llama_stack.core.datatypes import (
     RerankerModel,
     SafetyConfig,
     ShieldInput,
-    ToolGroupInput,
     VectorStoresConfig,
 )
 from llama_stack.core.storage.kvstore.config import PostgresKVStoreConfig
@@ -72,7 +71,6 @@ ENABLED_INFERENCE_PROVIDERS = [
     "nvidia",
     "bedrock",
     "azure",
-    "watsonx",
 ]
 
 INFERENCE_PROVIDER_IDS = {
@@ -83,7 +81,6 @@ INFERENCE_PROVIDER_IDS = {
     "nvidia": "${env.NVIDIA_API_KEY:+nvidia}",
     "vertexai": "${env.VERTEX_AI_PROJECT:+vertexai}",
     "azure": "${env.AZURE_API_KEY:+azure}",
-    "watsonx": "${env.WATSONX_API_KEY:+watsonx}",
 }
 
 
@@ -154,7 +151,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::file-search"),
+            BuildProvider(provider_type="inline::rag-runtime"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
         "batches": [
@@ -177,16 +174,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         provider_type="inline::transformers",
         config=TransformersInferenceConfig.sample_run_config(),
     )
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::file_search",
-            provider_id="file-search",
-        ),
-    ]
     default_shields = [
         # if the
         ShieldInput(
@@ -277,7 +264,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     base_run_settings = RunConfigSettings(
         provider_overrides=default_overrides,
         default_models=[],
-        default_tool_groups=default_tool_groups,
         default_shields=default_shields,
         default_connectors=[],
         vector_stores_config=VectorStoresConfig(
@@ -381,18 +367,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "AZURE_API_TYPE": (
                 "azure",
                 "Azure API Type",
-            ),
-            "WATSONX_API_KEY": (
-                "",
-                "WatsonX API Key",
-            ),
-            "WATSONX_BASE_URL": (
-                "https://us-south.ml.cloud.ibm.com",
-                "WatsonX Base URL",
-            ),
-            "WATSONX_PROJECT_ID": (
-                "",
-                "WatsonX Project ID",
             ),
         },
     )

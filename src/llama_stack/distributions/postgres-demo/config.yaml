@@ -56,8 +56,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: file-search
-    provider_type: inline::file-search
+  - provider_id: rag-runtime
+    provider_type: inline::rag-runtime
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
 storage:
@@ -113,10 +113,5 @@ registered_resources:
   datasets: []
   scoring_fns: []
   benchmarks: []
-  tool_groups:
-  - toolgroup_id: builtin::websearch
-    provider_id: tavily-search
-  - toolgroup_id: builtin::file_search
-    provider_id: file-search
 server:
   port: 8321

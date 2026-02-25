@@ -11,9 +11,7 @@ import inspect
 import json
 import logging  # allow-direct-logging
 import os
-import sys
 import traceback
-import warnings
 from collections.abc import Callable
 from contextlib import asynccontextmanager
 from importlib.metadata import version as parse_version
@@ -65,16 +63,6 @@ from .quota import QuotaMiddleware
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
 
 logger = get_logger(name=__name__, category="core::server")
-
-
-def warn_with_traceback(message, category, filename, lineno, file=None, line=None):
-    log = file if hasattr(file, "write") else sys.stderr
-    traceback.print_stack(file=log)
-    log.write(warnings.formatwarning(message, category, filename, lineno, line))
-
-
-if os.environ.get("LLAMA_STACK_TRACE_WARNINGS"):
-    warnings.showwarning = warn_with_traceback
 
 
 def create_sse_event(data: Any) -> str:
@@ -209,9 +197,11 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
                     result.url = route
 
                 if method.upper() == "DELETE" and result is None:
-                    return Response(status_code=httpx.codes.NO_CONTENT)
+                    resp = Response(status_code=httpx.codes.NO_CONTENT)
+                else:
+                    resp = result
 
-                return result
+                return resp
         except Exception as e:
             if logger.isEnabledFor(logging.INFO):
                 logger.exception(f"Error executing endpoint {route=} {method=}")
@@ -463,6 +453,8 @@ def create_app() -> StackApp:
                 raise ValueError(f"No methods found for {route.name} on {impl}")
             method = available_methods[0]
             logger.debug(f"{method} {route.path}")
+
+            import warnings
 
             with warnings.catch_warnings():
                 warnings.filterwarnings("ignore", category=UserWarning, module="pydantic._internal._fields")

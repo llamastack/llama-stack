@@ -6,7 +6,7 @@
 
 from pathlib import Path
 
-from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput, ToolGroupInput
+from llama_stack.core.datatypes import BuildProvider, ModelInput, Provider, ShieldInput
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.remote.datasetio.nvidia import NvidiaDatasetIOConfig
@@ -27,7 +27,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
             BuildProvider(provider_type="remote::nvidia"),
         ],
         "scoring": [BuildProvider(provider_type="inline::basic")],
-        "tool_runtime": [BuildProvider(provider_type="inline::file-search")],
+        "tool_runtime": [BuildProvider(provider_type="inline::rag-runtime")],
         "files": [BuildProvider(provider_type="inline::localfs")],
     }
 
@@ -65,13 +65,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         provider_id="nvidia",
     )
 
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::file_search",
-            provider_id="file-search",
-        ),
-    ]
-
     return DistributionTemplate(
         name=name,
         distro_type="self_hosted",
@@ -87,7 +80,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
                     "eval": [eval_provider],
                     "files": [files_provider],
                 },
-                default_tool_groups=default_tool_groups,
             ),
             "run-with-safety.yaml": RunConfigSettings(
                 provider_overrides={
@@ -100,7 +92,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
                 },
                 default_models=[inference_model, safety_model],
                 default_shields=[ShieldInput(shield_id="${env.SAFETY_MODEL}", provider_id="nvidia")],
-                default_tool_groups=default_tool_groups,
             ),
         },
         run_config_env_vars={
