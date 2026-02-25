@@ -311,6 +311,25 @@ class TestLiteLLMOpenAIMixinSafetyIdentifierPassing:
             call_kwargs = mock_acompletion.call_args[1]
             assert call_kwargs["safety_identifier"] == "user-456-hashed"
 
+    async def test_chat_completion_with_top_p(self, mixin_with_model_store):
+        """Test that top_p is properly passed through to litellm"""
+        top_p_value = 0.8
+
+        with patch("litellm.acompletion", new_callable=AsyncMock) as mock_acompletion:
+            mock_acompletion.return_value = MagicMock()
+
+            await mixin_with_model_store.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="test-model",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_p=top_p_value,
+                )
+            )
+
+            mock_acompletion.assert_called_once()
+            call_kwargs = mock_acompletion.call_args[1]
+            assert call_kwargs["top_p"] == top_p_value
+
 
 class TestLiteLLMOpenAIMixinPromptCacheKeyPassing:
     """Test cases for prompt_cache_key parameter passing through LiteLLM"""

@@ -98,8 +98,8 @@
     "conformance": {
       "score": 84.6,
       "issues": 272,
-      "missing_properties": 128,
-      "total_problems": 400,
+      "missing_properties": 127,
+      "total_problems": 399,
       "total_properties": 2598
     }
   },
@@ -1692,9 +1692,9 @@
       ]
     },
     "Responses": {
-      "score": 84.4,
+      "score": 84.9,
       "issues": 26,
-      "missing_properties": 9,
+      "missing_properties": 8,
       "total_properties": 225,
       "endpoints": [
         {
@@ -1707,7 +1707,6 @@
                 "POST.requestBody.content.application/json.properties.presence_penalty",
                 "POST.requestBody.content.application/json.properties.stream_options",
                 "POST.requestBody.content.application/json.properties.top_logprobs",
-                "POST.requestBody.content.application/json.properties.top_p",
                 "POST.requestBody.content.application/x-www-form-urlencoded",
                 "POST.responses.200.content.application/json.properties.frequency_penalty",
                 "POST.responses.200.content.application/json.properties.presence_penalty",
@@ -1901,7 +1900,7 @@
                   ]
                 }
               ],
-              "missing_count": 9,
+              "missing_count": 8,
               "issues_count": 26
             }
           ]

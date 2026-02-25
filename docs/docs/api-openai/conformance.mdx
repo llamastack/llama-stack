@@ -22,8 +22,8 @@ This documentation is auto-generated from the OpenAI API specification compariso
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
 | **Schema/Type Issues** | 272 |
-| **Missing Properties** | 128 |
-| **Total Issues to Fix** | 400 |
+| **Missing Properties** | 127 |
+| **Total Issues to Fix** | 399 |
 
 ## Category Scores
 
@@ -38,7 +38,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
-| Responses | 84.4% | 225 | 26 | 9 |
+| Responses | 84.9% | 225 | 26 | 8 |
 | Chat | 92.8% | 402 | 23 | 6 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
@@ -936,20 +936,19 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 84.4% · **Issues:** 26 · **Missing:** 9
+**Score:** 84.9% · **Issues:** 26 · **Missing:** 8
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Missing Properties (9)</summary>
+<summary>Missing Properties (8)</summary>
 
 - `requestBody.content.application/json.properties.frequency_penalty`
 - `requestBody.content.application/json.properties.presence_penalty`
 - `requestBody.content.application/json.properties.stream_options`
 - `requestBody.content.application/json.properties.top_logprobs`
-- `requestBody.content.application/json.properties.top_p`
 - `requestBody.content.application/x-www-form-urlencoded`
 - `responses.200.content.application/json.properties.frequency_penalty`
 - `responses.200.content.application/json.properties.presence_penalty`

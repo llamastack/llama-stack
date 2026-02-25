@@ -27,7 +27,7 @@ from openai import OpenAI
 
 from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
-from llama_stack.core.stack import run_config_from_adhoc_config_spec
+from llama_stack.core.stack import run_config_from_dynamic_config_spec
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.env import get_env_or_fail
 
@@ -321,14 +321,13 @@ def instantiate_llama_stack_client(session):
         pass
 
     if "=" in config:
-        run_config = run_config_from_adhoc_config_spec(config)
+        run_config = run_config_from_dynamic_config_spec(config)
 
         # --stack-config bypasses template so need this to set default embedding model
         if "vector_io" in config and "inference" in config:
-            if "inline" in session.config.getoption("embedding_model"):
-                provider_id = "inline::sentence-transformers"
-            else:
-                provider_id = parse_vector_io_provider(config)
+            embedding_model_opt = session.config.getoption("embedding_model") or ""
+            # Model identifiers are in provider_id/model_id format; extract the provider.
+            provider_id = embedding_model_opt.split("/")[0] if "/" in embedding_model_opt else "sentence-transformers"
             passed_model = extract_model(session.config.getoption("embedding_model"), "nomic-ai/nomic-embed-text-v1.5")
             passed_emb = session.config.getoption("embedding_dimension")
 

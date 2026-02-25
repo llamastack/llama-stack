@@ -712,7 +712,7 @@ class OpenAIResponseIncompleteDetails(BaseModel):
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
 
-    :param background: Whether this response was run in background mode
+    :param background: Whether this response was run in background mode (default: False)
     :param created_at: Unix timestamp when the response was created
     :param completed_at: (Optional) Unix timestamp when the response was completed
     :param error: (Optional) Error details if the response generation failed
