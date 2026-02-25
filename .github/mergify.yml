@@ -34,3 +34,15 @@ pull_request_rules:
   actions:
     merge:
       method: merge
+
+- name: auto-merge dependabot github-deps PRs
+  conditions:
+      - author=dependabot[bot]
+      - title~=^chore\(github-deps\)
+      - check-success=ci-status
+      - -conflict
+      - -draft
+      - -closed
+  actions:
+    merge:
+      method: merge
