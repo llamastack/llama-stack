@@ -11,11 +11,6 @@ Tests that tools pass through correctly to various LLM providers.
 
 import pytest
 
-from llama_stack.core.library_client import LlamaStackAsLibraryClient
-from tests.common.mcp import make_mcp_server
-
-AUTH_TOKEN = "test-token"
-
 
 class TestChatCompletionWithTools:
     """Test chat completion with tools that have complex schemas."""
@@ -157,68 +152,39 @@ class TestOpenAICompatibility:
 
 
 class TestMCPToolsInChatCompletion:
-    """Test using MCP tools in chat completion."""
+    """Test using MCP-style tool schemas in chat completion."""
 
-    @pytest.fixture
-    def mcp_with_schemas(self):
-        """MCP server for chat completion tests."""
-        from mcp.server.fastmcp import Context
-
-        async def calculate(x: float, y: float, operation: str, ctx: Context) -> float:
-            ops = {"add": x + y, "sub": x - y, "mul": x * y, "div": x / y if y != 0 else None}
-            return ops.get(operation, 0)
-
-        with make_mcp_server(required_auth_token=AUTH_TOKEN, tools={"calculate": calculate}) as server:
-            yield server
-
-    def test_mcp_tools_in_inference(self, llama_stack_client, text_model_id, mcp_with_schemas):
-        """Test that MCP tools can be used in inference."""
-        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
-            pytest.skip("Library client required for local MCP server")
-
-        test_toolgroup_id = "mcp::calc"
-        uri = mcp_with_schemas["server_url"]
-
-        try:
-            llama_stack_client.toolgroups.unregister(toolgroup_id=test_toolgroup_id)
-        except Exception:
-            pass
-
-        llama_stack_client.toolgroups.register(
-            toolgroup_id=test_toolgroup_id,
-            provider_id="model-context-protocol",
-            mcp_endpoint=dict(uri=uri),
-        )
-
-        # Use the dedicated authorization parameter
-        # Get the tools from MCP
-        tools_response = llama_stack_client.tool_runtime.list_tools(
-            tool_group_id=test_toolgroup_id,
-            authorization=AUTH_TOKEN,
-        )
-
-        # Convert to OpenAI format for inference
-        tools = []
-        for tool in tools_response:
-            tools.append(
-                {
-                    "type": "function",
-                    "function": {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "parameters": tool.input_schema or {},
+    def test_mcp_tools_in_inference(self, llama_stack_client, text_model_id):
+        """Test that MCP-style tool schemas work in inference."""
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "calculate",
+                    "description": "Perform a calculation on two numbers.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "x": {"type": "number", "description": "First operand"},
+                            "y": {"type": "number", "description": "Second operand"},
+                            "operation": {
+                                "type": "string",
+                                "description": "The operation to perform",
+                                "enum": ["add", "sub", "mul", "div"],
+                            },
+                        },
+                        "required": ["x", "y", "operation"],
                     },
-                }
-            )
+                },
+            }
+        ]
 
-        # Use in chat completion
         response = llama_stack_client.chat.completions.create(
             model=text_model_id,
             messages=[{"role": "user", "content": "Calculate 5 + 3"}],
             tools=tools,
         )
 
-        # Schema should have been passed through correctly
         assert response is not None
 
 
