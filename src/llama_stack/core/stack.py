@@ -299,8 +299,7 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
         api_key = provider.config.get("api_key")
         if "api_key" in provider.config and not api_key:
             logger.debug(
-                f"Skipping provider '{provider.provider_id}' for tool group '{toolgroup_id}': "
-                "api_key is not configured"
+                f"Skipping provider '{provider.provider_id}' for tool group '{toolgroup_id}': api_key is not configured"
             )
             continue
 
