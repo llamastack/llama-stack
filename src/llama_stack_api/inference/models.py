@@ -892,7 +892,9 @@ class OpenAIChatCompletionRequestWithExtraBody(BaseModel, extra="allow"):
     temperature: float | None = Field(default=None, ge=0.0, le=2.0, description="The temperature to use.")
     tool_choice: str | dict[str, Any] | None = Field(default=None, description="The tool choice to use.")
     tools: list[dict[str, Any]] | None = Field(default=None, description="The tools to use.")
-    top_logprobs: int | None = Field(default=None, ge=0, description="The top log probabilities to use.")
+    top_logprobs: int | None = Field(
+        default=None, ge=0, le=20, description="The number of most likely tokens to return at each position."
+    )
     top_p: float | None = Field(default=None, ge=0.0, le=1.0, description="The top p to use.")
     user: str | None = Field(default=None, description="The user to use.")
     safety_identifier: str | None = Field(

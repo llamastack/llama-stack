@@ -153,6 +153,7 @@ class StreamingResponseOrchestrator:
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
         truncation: ResponseTruncation | None = None,
+        top_logprobs: int | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -181,6 +182,7 @@ class StreamingResponseOrchestrator:
         self.service_tier = service_tier.value if service_tier is not None else None
         self.metadata = metadata
         self.truncation = truncation
+        self.top_logprobs = top_logprobs
         self.store = store
         self.include = include
         self.store = bool(store) if store is not None else True
@@ -281,6 +283,7 @@ class StreamingResponseOrchestrator:
             service_tier=self.service_tier or "default",
             metadata=self.metadata,
             truncation=self.truncation or "disabled",
+            top_logprobs=self.top_logprobs,
             store=self.store,
             prompt_cache_key=self.prompt_cache_key,
         )
@@ -396,7 +399,10 @@ class StreamingResponseOrchestrator:
                 logger.debug(f"calling openai_chat_completion with tools: {effective_tools}")
 
                 logprobs = (
-                    True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
+                    True
+                    if (self.include and ResponseItemInclude.message_output_text_logprobs in self.include)
+                    or self.top_logprobs
+                    else None
                 )
 
                 # In OpenAI, parallel_tool_calls is only allowed when 'tools' are specified.
@@ -424,6 +430,7 @@ class StreamingResponseOrchestrator:
                     service_tier=self.service_tier,
                     max_completion_tokens=remaining_output_tokens,
                     prompt_cache_key=self.prompt_cache_key,
+                    top_logprobs=self.top_logprobs,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

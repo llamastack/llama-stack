@@ -167,6 +167,12 @@ class CreateResponseRequest(BaseModel):
         default=None,
         description="Controls how the service truncates input when it exceeds the model context window.",
     )
+    top_logprobs: int | None = Field(
+        default=None,
+        ge=0,
+        le=20,
+        description="The number of most likely tokens to return at each position, along with their log probabilities.",
+    )
 
 
 class RetrieveResponseRequest(BaseModel):

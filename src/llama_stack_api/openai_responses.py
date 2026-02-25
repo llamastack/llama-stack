@@ -729,6 +729,7 @@ class OpenAIResponseObject(BaseModel):
     :param temperature: (Optional) Sampling temperature used for generation
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
+    :param top_logprobs: (Optional) Number of most likely tokens returned at each position with log probabilities
     :param tools: (Optional) An array of tools the model may call while generating a response.
     :param tool_choice: (Optional) Tool choice configuration for the response.
     :param truncation: (Optional) Truncation strategy applied to the response
@@ -759,6 +760,7 @@ class OpenAIResponseObject(BaseModel):
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
+    top_logprobs: int | None = None
     tools: Sequence[OpenAIResponseTool] | None = None
     tool_choice: OpenAIResponseInputToolChoice | None = None
     truncation: str | None = None
