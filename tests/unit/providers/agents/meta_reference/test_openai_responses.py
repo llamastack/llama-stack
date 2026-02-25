@@ -3484,7 +3484,7 @@ async def test_create_openai_response_with_frequency_penalty_streaming(
 
 
 async def test_create_openai_response_with_frequency_penalty_none(openai_responses_impl, mock_inference_api):
-    """Test that frequency_penalty defaults to None when not provided."""
+    """Test that frequency_penalty defaults to 0.0 when not provided."""
     input_text = "Hello"
     model = "meta-llama/Llama-3.1-8B-Instruct"
 
@@ -3497,8 +3497,8 @@ async def test_create_openai_response_with_frequency_penalty_none(openai_respons
         stream=False,
     )
 
-    # Verify response has None for frequency_penalty
-    assert result.frequency_penalty is None
+    # Verify response has 0.0 for frequency_penalty (non-null default for OpenResponses conformance)
+    assert result.frequency_penalty == 0.0
 
     # Verify inference API was called with None
     mock_inference_api.openai_chat_completion.assert_called()
@@ -3590,7 +3590,7 @@ async def test_create_openai_response_with_presence_penalty_streaming(
 
 
 async def test_create_openai_response_with_presence_penalty_default_none(openai_responses_impl, mock_inference_api):
-    """Test that presence_penalty defaults to None when not provided."""
+    """Test that presence_penalty defaults to 0.0 when not provided."""
     input_text = "Hi"
     model = "meta-llama/Llama-3.1-8B-Instruct"
 
@@ -3603,8 +3603,8 @@ async def test_create_openai_response_with_presence_penalty_default_none(openai_
         stream=False,
     )
 
-    # Verify presence_penalty is None
-    assert result.presence_penalty is None
+    # Verify presence_penalty is 0.0 (non-null default for OpenResponses conformance)
+    assert result.presence_penalty == 0.0
     assert result.status == "completed"
 
     # Verify the inference API was called with presence_penalty=None
