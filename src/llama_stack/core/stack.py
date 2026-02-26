@@ -277,10 +277,14 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
     except Exception:
         logger.debug("Could not list existing tool groups; will attempt all registrations")
 
-    # Track which tool group IDs have already been registered to avoid duplicates
-    # (e.g., multiple search providers all map to builtin::websearch)
-    registered: set[str] = set()
-
+    # Group candidate providers by toolgroup_id, preferring providers that
+    # have a configured api_key over those with an empty one. When multiple
+    # providers serve the same toolgroup (e.g., brave-search and tavily-search
+    # both map to builtin::websearch), this ensures we pick one that is
+    # actually functional.  If none have a key, we still register the first
+    # candidate so the tool group exists (invocation will fail with a clear
+    # provider error rather than "tool not found").
+    candidates: dict[str, list[tuple[Any, bool]]] = {}
     tool_runtime_providers = run_config.providers.get("tool_runtime", [])
     for provider in tool_runtime_providers:
         if not provider.provider_id or provider.provider_id == "__disabled__":
@@ -290,18 +294,16 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
         if toolgroup_id is None:
             continue
 
-        if toolgroup_id in registered:
-            continue
+        has_key = "api_key" not in provider.config or bool(provider.config.get("api_key"))
+        candidates.setdefault(toolgroup_id, []).append((provider, has_key))
 
-        # Skip providers whose api_key is empty — they won't be functional.
-        # This matters when multiple providers map to the same toolgroup_id
-        # (e.g., brave-search and tavily-search both serve builtin::websearch).
-        api_key = provider.config.get("api_key")
-        if "api_key" in provider.config and not api_key:
-            logger.debug(
-                f"Skipping provider '{provider.provider_id}' for tool group '{toolgroup_id}': api_key is not configured"
-            )
-            continue
+    for toolgroup_id, provider_list in candidates.items():
+        # Pick the first provider with a configured api_key; fall back to the
+        # first candidate if none have one.
+        provider = next(
+            (p for p, has_key in provider_list if has_key),
+            provider_list[0][0],
+        )
 
         # Unregister stale entry so register_tool_group can re-create it
         # and rebuild in-memory tool indexes.
@@ -317,7 +319,6 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
                 toolgroup_id=toolgroup_id,
                 provider_id=provider.provider_id,
             )
-            registered.add(toolgroup_id)
         except Exception:
             logger.warning(f"Failed to auto-register tool group '{toolgroup_id}'", exc_info=True)
 
