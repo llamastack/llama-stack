@@ -154,6 +154,7 @@ class StreamingResponseOrchestrator:
         store: bool | None = True,
         truncation: ResponseTruncation | None = None,
         top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -183,9 +184,9 @@ class StreamingResponseOrchestrator:
         self.metadata = metadata
         self.truncation = truncation
         self.top_logprobs = top_logprobs
-        self.store = store
         self.include = include
         self.store = bool(store) if store is not None else True
+        self.presence_penalty = presence_penalty
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -220,11 +221,13 @@ class StreamingResponseOrchestrator:
             background=False,
             id=self.response_id,
             created_at=self.created_at,
+            frequency_penalty=self.ctx.frequency_penalty if self.ctx.frequency_penalty is not None else 0.0,
             model=self.ctx.model,
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
             temperature=self.ctx.temperature if self.ctx.temperature is not None else 1.0,
             top_p=self.ctx.top_p if self.ctx.top_p is not None else 1.0,
+            top_logprobs=self.top_logprobs if self.top_logprobs is not None else 0,
             tools=self.ctx.available_tools(),
             tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
             truncation=self.truncation or "disabled",
@@ -232,11 +235,15 @@ class StreamingResponseOrchestrator:
             safety_identifier=self.safety_identifier,
             service_tier=self.service_tier or "default",
             metadata=self.metadata,
+            presence_penalty=self.presence_penalty if self.presence_penalty is not None else 0.0,
             store=self.store,
             prompt_cache_key=self.prompt_cache_key,
         )
 
-        return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
+        self.sequence_number += 1
+        return OpenAIResponseObjectStreamResponseCompleted(
+            response=refusal_response, sequence_number=self.sequence_number
+        )
 
     def _clone_outputs(self, outputs: list[OpenAIResponseOutput]) -> list[OpenAIResponseOutput]:
         cloned: list[OpenAIResponseOutput] = []
@@ -260,6 +267,7 @@ class StreamingResponseOrchestrator:
             background=False,
             created_at=self.created_at,
             completed_at=completed_at,
+            frequency_penalty=self.ctx.frequency_penalty if self.ctx.frequency_penalty is not None else 0.0,
             id=self.response_id,
             model=self.ctx.model,
             object="response",
@@ -268,6 +276,7 @@ class StreamingResponseOrchestrator:
             text=self.text,
             temperature=self.ctx.temperature if self.ctx.temperature is not None else 1.0,
             top_p=self.ctx.top_p if self.ctx.top_p is not None else 1.0,
+            top_logprobs=self.top_logprobs if self.top_logprobs is not None else 0,
             tools=self.ctx.available_tools(),
             tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
             error=error,
@@ -283,7 +292,7 @@ class StreamingResponseOrchestrator:
             service_tier=self.service_tier or "default",
             metadata=self.metadata,
             truncation=self.truncation or "disabled",
-            top_logprobs=self.top_logprobs,
+            presence_penalty=self.presence_penalty if self.presence_penalty is not None else 0.0,
             store=self.store,
             prompt_cache_key=self.prompt_cache_key,
         )
@@ -293,7 +302,8 @@ class StreamingResponseOrchestrator:
 
         # Emit response.created followed by response.in_progress to align with OpenAI streaming
         yield OpenAIResponseObjectStreamResponseCreated(
-            response=self._snapshot_response("in_progress", output_messages)
+            response=self._snapshot_response("in_progress", output_messages),
+            sequence_number=self.sequence_number,
         )
 
         self.sequence_number += 1
@@ -419,6 +429,7 @@ class StreamingResponseOrchestrator:
                     stream=True,
                     temperature=self.ctx.temperature,
                     top_p=self.ctx.top_p,
+                    frequency_penalty=self.ctx.frequency_penalty,
                     response_format=response_format,
                     stream_options={
                         "include_usage": True,
@@ -431,6 +442,7 @@ class StreamingResponseOrchestrator:
                     max_completion_tokens=remaining_output_tokens,
                     prompt_cache_key=self.prompt_cache_key,
                     top_logprobs=self.top_logprobs,
+                    presence_penalty=self.presence_penalty,
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -557,8 +569,11 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
         else:
+            self.sequence_number += 1
             final_response = self._snapshot_response("completed", output_messages)
-            yield OpenAIResponseObjectStreamResponseCompleted(response=final_response)
+            yield OpenAIResponseObjectStreamResponseCompleted(
+                response=final_response, sequence_number=self.sequence_number
+            )
 
     def _separate_tool_calls(self, current_response, messages) -> tuple[list, list, list, list]:
         """Separate tool calls into function and non-function categories."""
@@ -851,6 +866,7 @@ class StreamingResponseOrchestrator:
                             output_index=message_output_index,
                             part=OpenAIResponseContentPartOutputText(
                                 text="",  # Will be filled incrementally via text deltas
+                                logprobs=[],
                             ),
                             sequence_number=self.sequence_number,
                         )
@@ -860,7 +876,7 @@ class StreamingResponseOrchestrator:
                         content_index=content_index,
                         delta=chunk_choice.delta.content,
                         item_id=message_item_id,
-                        logprobs=chunk_logprobs,
+                        logprobs=chunk_logprobs if chunk_logprobs is not None else [],
                         output_index=message_output_index,
                         sequence_number=self.sequence_number,
                     )
@@ -1027,6 +1043,7 @@ class StreamingResponseOrchestrator:
                 output_index=message_output_index,
                 part=OpenAIResponseContentPartOutputText(
                     text=final_text,
+                    logprobs=[],
                 ),
                 sequence_number=self.sequence_number,
             )

@@ -745,6 +745,7 @@ class OpenAIResponseObject(BaseModel):
     created_at: int
     completed_at: int | None = None
     error: OpenAIResponseError | None = None
+    frequency_penalty: float | None = None
     id: str
     incomplete_details: OpenAIResponseIncompleteDetails | None = None
     model: str
@@ -772,6 +773,7 @@ class OpenAIResponseObject(BaseModel):
     safety_identifier: str | None = None
     service_tier: str | None = None
     metadata: dict[str, str] | None = None
+    presence_penalty: float | None = None
     store: bool
 
 
@@ -794,10 +796,12 @@ class OpenAIResponseObjectStreamResponseCreated(BaseModel):
     """Streaming event indicating a new response has been created.
 
     :param response: The response object that was created
+    :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.created"
     """
 
     response: OpenAIResponseObject
+    sequence_number: int
     type: Literal["response.created"] = "response.created"
 
 
@@ -820,10 +824,12 @@ class OpenAIResponseObjectStreamResponseCompleted(BaseModel):
     """Streaming event indicating a response has been completed.
 
     :param response: Completed response object
+    :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.completed"
     """
 
     response: OpenAIResponseObject
+    sequence_number: int
     type: Literal["response.completed"] = "response.completed"
 
 
