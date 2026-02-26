@@ -385,6 +385,9 @@ class OpenAIChatCompletionToolCall(BaseModel):
         default="function", description="Must be 'function' to identify this as a function call."
     )
     function: OpenAIChatCompletionToolCallFunction | None = Field(default=None, description="Function call details.")
+    extra_content: dict[str, Any] | None = Field(
+        default=None, description="Extra content of the tool call (e.g. thought_signature for Gemini)."
+    )
 
 
 @json_schema_type
@@ -400,6 +403,12 @@ class OpenAIAssistantMessageParam(BaseModel):
     name: str | None = Field(default=None, description="The name of the assistant message participant.")
     tool_calls: list[OpenAIChatCompletionToolCall] | None = Field(
         default=None, description="List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object."
+    )
+    reasoning_content: str | None = Field(
+        default=None, description="The reasoning content from the model (for vLLM <= v0.8.4)."
+    )
+    reasoning: str | None = Field(
+        default=None, description="The reasoning content from the model (for vLLM >= v0.9.x)."
     )
 
 
@@ -594,7 +603,10 @@ class OpenAIChoiceDelta(BaseModel):
         default=None, description="The tool calls of the delta."
     )
     reasoning_content: str | None = Field(
-        default=None, description="The reasoning content from the model (for o1/o3 models)."
+        default=None, description="The reasoning content from the model (for o1/o3 models, vLLM <= v0.8.4)."
+    )
+    reasoning: str | None = Field(
+        default=None, description="The reasoning content from the model (for vLLM >= v0.9.x)."
     )
 
 
