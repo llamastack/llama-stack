@@ -42,11 +42,8 @@ permissions:
 
 jobs:
   openresponses-conformance:
-    name: OpenResponses Conformance (Informational)
+    name: OpenResponses Conformance
     runs-on: ubuntu-latest
-    # Failures are expected — this job does NOT block PRs or merges.
-    # It exists solely to track progress toward OpenResponses API conformance.
-    continue-on-error: true
 
     env:
       # Dummy key satisfies config parsing; actual inference is replayed from recordings

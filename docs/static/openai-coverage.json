@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 84.6,
-      "issues": 272,
-      "missing_properties": 127,
-      "total_problems": 399,
+      "score": 84.8,
+      "issues": 275,
+      "missing_properties": 121,
+      "total_problems": 396,
       "total_properties": 2598
     }
   },
@@ -1692,9 +1692,9 @@
       ]
     },
     "Responses": {
-      "score": 84.9,
-      "issues": 26,
-      "missing_properties": 8,
+      "score": 86.2,
+      "issues": 29,
+      "missing_properties": 2,
       "total_properties": 225,
       "endpoints": [
         {
@@ -1703,14 +1703,8 @@
             {
               "method": "POST",
               "missing_properties": [
-                "POST.requestBody.content.application/json.properties.frequency_penalty",
-                "POST.requestBody.content.application/json.properties.presence_penalty",
                 "POST.requestBody.content.application/json.properties.stream_options",
-                "POST.requestBody.content.application/json.properties.top_logprobs",
-                "POST.requestBody.content.application/x-www-form-urlencoded",
-                "POST.responses.200.content.application/json.properties.frequency_penalty",
-                "POST.responses.200.content.application/json.properties.presence_penalty",
-                "POST.responses.200.content.application/json.properties.top_logprobs"
+                "POST.requestBody.content.application/x-www-form-urlencoded"
               ],
               "conformance_issues": [
                 {
@@ -1801,6 +1795,14 @@
                   ]
                 },
                 {
+                  "property": "POST.responses.200.content.application/json.properties.frequency_penalty",
+                  "details": [
+                    "Type removed: ['number']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
                   "property": "POST.responses.200.content.application/json.properties.incomplete_details",
                   "details": [
                     "Union variants added: 1",
@@ -1833,6 +1835,14 @@
                     "Nullable added (OpenAI non-nullable)",
                     "Union variants added: 2",
                     "Default changed: None -> True"
+                  ]
+                },
+                {
+                  "property": "POST.responses.200.content.application/json.properties.presence_penalty",
+                  "details": [
+                    "Type removed: ['number']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
                   ]
                 },
                 {
@@ -1879,6 +1889,14 @@
                   ]
                 },
                 {
+                  "property": "POST.responses.200.content.application/json.properties.top_logprobs",
+                  "details": [
+                    "Type removed: ['integer']",
+                    "Nullable added (OpenAI non-nullable)",
+                    "Union variants added: 2"
+                  ]
+                },
+                {
                   "property": "POST.responses.200.content.application/json.properties.top_p",
                   "details": [
                     "Type removed: ['number']",
@@ -1900,8 +1918,8 @@
                   ]
                 }
               ],
-              "missing_count": 8,
-              "issues_count": 26
+              "missing_count": 2,
+              "issues_count": 29
             }
           ]
         }

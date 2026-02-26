@@ -535,6 +535,219 @@ def test_response_function_call_ordering_2(responses_client, text_model_id):
     assert "Los Angeles" in response.output_text
 
 
+def test_function_call_output_list_text(responses_client, text_model_id):
+    """Test that function_call_output.output accepts a list of input_text content blocks."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get current temperature for a given location.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "location": {
+                        "description": "City and country e.g. Bogotá, Colombia",
+                        "type": "string",
+                    }
+                },
+                "required": ["location"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="What is the weather in Paris?",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_text", "text": "It is sunny and 22 degrees Celsius in Paris."}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_text_multi_block(responses_client, text_model_id):
+    """Test that function_call_output.output accepts multiple input_text blocks in a list."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get current temperature for a given location.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "location": {
+                        "description": "City and country e.g. Bogotá, Colombia",
+                        "type": "string",
+                    }
+                },
+                "required": ["location"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="What is the weather in London?",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [
+                {"type": "input_text", "text": "Current conditions: overcast skies."},
+                {"type": "input_text", "text": "Temperature: 15 degrees Celsius."},
+            ],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_image(responses_client, vision_model_id):
+    """Test that function_call_output.output accepts a list containing an input_image block."""
+    if vision_model_id is None:
+        pytest.skip("No vision model configured")
+    if "llama3.2-vision:11b" in vision_model_id:
+        pytest.skip("registry.ollama.ai/library/llama3.2-vision:11b does not support tools")
+
+    tools = [
+        {
+            "type": "function",
+            "name": "capture_screenshot",
+            "description": "Capture a screenshot of the current state of the application.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "url": {
+                        "description": "The URL of the page to screenshot",
+                        "type": "string",
+                    }
+                },
+                "required": ["url"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=vision_model_id,
+        input="Take a screenshot of example.com and describe what you see.",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    # 1x1 white pixel PNG encoded as a data URL — minimal valid image
+    tiny_png_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg=="
+    image_data_url = f"data:image/png;base64,{tiny_png_b64}"
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_image", "image_url": image_data_url}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=vision_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_file(responses_client, text_model_id, tmp_path):
+    """Test that function_call_output.output accepts a list containing an input_file block."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_report",
+            "description": "Retrieve the latest quarterly report for a given company.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "company": {
+                        "description": "Company name",
+                        "type": "string",
+                    }
+                },
+                "required": ["company"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="Get the latest quarterly report for Acme Corp and summarize it.",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    report_text = "Q3 2024 Report: Revenue was $50M, up 12% YoY. Net income was $8M."
+    report_path = tmp_path / "acme_q3_2024.txt"
+    report_path.write_text(report_text)
+    file_response = upload_file(responses_client, "acme_q3_2024.txt", report_path)
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_file", "file_id": file_response.id}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
 @pytest.mark.parametrize("case", multi_turn_tool_execution_test_cases)
 def test_response_non_streaming_multi_turn_tool_execution(responses_client, text_model_id, case):
     """Test multi-turn tool execution where multiple MCP tool calls are performed in sequence."""

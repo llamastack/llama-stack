@@ -4,6 +4,16 @@ PYTHON := uv run python
 # Auto-detect openapi-generator command (npm installs as openapi-generator-cli, brew as openapi-generator)
 OPENAPI_GENERATOR := $(shell command -v openapi-generator-cli 2>/dev/null || command -v openapi-generator 2>/dev/null || echo openapi-generator-cli)
 
+# Package naming: set OPEN=0 to generate as "llama_stack_client" (without "open")
+OPEN ?= 1
+ifeq ($(OPEN),0)
+  PACKAGE_NAME := llama_stack_client
+  PROJECT_NAME := llama-stack-client
+else
+  PACKAGE_NAME := llama_stack_open_client
+  PROJECT_NAME := llama-stack-open-client
+endif
+
 # Scripts
 MERGE_SCRIPT := ./merge_stainless_config.py
 HIERARCHY_SCRIPT := ./build_hierarchy.py
@@ -13,6 +23,7 @@ PATCH_SCRIPT := ./patch_hierarchy.py
 PATCHES_FILE := ./patches.yml
 STAINLESS_CONFIG := $(STAINLESS_DIR)/config.yml
 STAINLESS_OPENAPI := $(STAINLESS_DIR)/openapi.yml
+OPENAPI_CONFIG_TEMPLATE := openapi-config.json.template
 OPENAPI_CONFIG := openapi-config.json
 TEMPLATE_DIR := ./templates/python
 
@@ -21,12 +32,11 @@ OPENAPI_OUTPUT := openapi.yml
 PROCESSED_SPEC := openapi-hierarchical.yml
 HIERARCHY_FILE := api-hierarchy.yml
 SDK_OUTPUT_DIR := sdks/python
-PACKAGE_NAME := $(shell grep '"packageName"' $(OPENAPI_CONFIG) | cut -d'"' -f4)
 
 # Extract version from root pyproject.toml
 VERSION := $(shell grep 'fallback_version' ../../pyproject.toml | cut -d'"' -f2)
 
-.PHONY: all sdk openapi hierarchy clean help version check-generator
+.PHONY: all sdk openapi hierarchy clean help version check-generator generate-config
 
 all: sdk
 
@@ -41,6 +51,10 @@ help:
 	@echo "  help       - Show this help message"
 	@echo ""
 	@echo "Pipeline: openapi -> hierarchy -> sdk (each target triggers its dependencies)"
+	@echo ""
+	@echo "Options:"
+	@echo "  OPEN=1     - (default) Generate as llama_stack_open_client"
+	@echo "  OPEN=0     - Generate as llama_stack_client (without 'open')"
 
 version:
 	@echo "SDK version: $(VERSION)"
@@ -90,9 +104,18 @@ $(PROCESSED_SPEC): $(HIERARCHY_SCRIPT) $(OPENAPI_OUTPUT)
 	@echo "Processing hierarchy..."
 	$(PYTHON) $(HIERARCHY_SCRIPT) --source $(OPENAPI_OUTPUT) --output $(PROCESSED_SPEC) --hierarchy $(HIERARCHY_FILE)
 
+# Generate openapi-config.json from template based on OPEN flag
+generate-config: $(OPENAPI_CONFIG_TEMPLATE)
+	@echo "Generating $(OPENAPI_CONFIG) (OPEN=$(OPEN), package=$(PACKAGE_NAME))..."
+ifeq ($(OPEN),0)
+	@sed 's/{{open.}}//g' $(OPENAPI_CONFIG_TEMPLATE) > $(OPENAPI_CONFIG)
+else
+	@sed 's/{{\(open.\)}}/\1/g' $(OPENAPI_CONFIG_TEMPLATE) > $(OPENAPI_CONFIG)
+endif
+
 # Step 3: Generate Python SDK from processed spec, then patch in hierarchy
-sdk: check-generator $(PROCESSED_SPEC)
-	@echo "Generating Python SDK (version: $(VERSION))..."
+sdk: check-generator $(PROCESSED_SPEC) generate-config
+	@echo "Generating Python SDK (version: $(VERSION), package: $(PACKAGE_NAME))..."
 	@mkdir -p $(SDK_OUTPUT_DIR)
 	$(OPENAPI_GENERATOR) generate -i $(PROCESSED_SPEC) -g python -c $(OPENAPI_CONFIG) -o $(SDK_OUTPUT_DIR) \
 		--additional-properties=packageVersion=$(VERSION) -t $(TEMPLATE_DIR)
@@ -102,5 +125,5 @@ sdk: check-generator $(PROCESSED_SPEC)
 
 clean:
 	@echo "Cleaning generated files..."
-	@rm -f $(OPENAPI_OUTPUT) $(PROCESSED_SPEC) $(HIERARCHY_FILE)
+	@rm -f $(OPENAPI_OUTPUT) $(PROCESSED_SPEC) $(HIERARCHY_FILE) $(OPENAPI_CONFIG)
 	@rm -rf sdks

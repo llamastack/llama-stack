@@ -273,7 +273,7 @@ kubectl logs -n llama-stack-operator-system -l control-plane=controller-manager
 kubectl get svc llamastack-vllm-service
 
 # Test connectivity from within the cluster
-kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- curl http://llamastack-vllm-service:8321/health
+kubectl run -it --rm debug --image=curlimages/curl --restart=Never -- curl http://llamastack-vllm-service:8321/v1/health
 ```
 
 ## Related Resources

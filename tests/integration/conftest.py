@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 from dotenv import load_dotenv
 
-from llama_stack.core.stack import run_config_from_adhoc_config_spec
+from llama_stack.core.stack import run_config_from_dynamic_config_spec
 from llama_stack.log import get_logger
 from llama_stack.testing.api_recorder import patch_httpx_for_test_id
 
@@ -148,7 +148,7 @@ def pytest_configure(config):
     if getattr(config.option, "embedding_model", None) is None:
         stack_config = config.getoption("--stack-config", default=None)
         if stack_config and "=" in stack_config:
-            run_config = run_config_from_adhoc_config_spec(stack_config)
+            run_config = run_config_from_dynamic_config_spec(stack_config)
             inference_providers = run_config.providers.get("inference", [])
             if any("sentence-transformers" in p.provider_type for p in inference_providers):
                 config.option.embedding_model = "sentence-transformers/nomic-ai/nomic-embed-text-v1.5"
@@ -162,7 +162,7 @@ def pytest_addoption(parser):
             a 'pointer' to the stack. this can be either be:
             (a) a template name like `starter`, or
             (b) a path to a config.yaml file, or
-            (c) an adhoc config spec, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`, or
+            (c) a dynamic config spec, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`, or
             (d) a server config like `server:ci-tests`, or
             (e) a docker config like `docker:ci-tests` (builds and runs container)
             """
@@ -256,7 +256,7 @@ def pytest_generate_tests(metafunc):
         config_str = metafunc.config.getoption("--stack-config", default=None) or os.environ.get("LLAMA_STACK_CONFIG")
         providers = None
         if config_str and "=" in config_str:
-            run_config = run_config_from_adhoc_config_spec(config_str)
+            run_config = run_config_from_dynamic_config_spec(config_str)
             providers = [p.provider_id for p in run_config.providers.get("vector_io", [])]
         if providers is None:
             inference_mode = os.environ.get("LLAMA_STACK_TEST_INFERENCE_MODE")

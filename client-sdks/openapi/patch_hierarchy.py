@@ -17,6 +17,7 @@ parent-child API relationships, enabling nested access like:
 For a hierarchy like {chat: {completions: {}}}, this will:
 1. Add an import of CompletionsApi in chat_api.py
 2. Add a property `self.completions` in ChatApi
+3. Wire up `client.chat.completions = client.completions` in LlamaStackClient
 """
 
 import argparse
@@ -150,6 +151,125 @@ def patch_optional_import(api_file: Path) -> bool:
     return False
 
 
+def patch_llama_stack_client(client_file: Path, pairs: list[tuple[str, str]]) -> bool:
+    """Patch LlamaStackClient to wire up parent-child API relationships.
+
+    Looks for the '# Nested API structure' comment and inserts assignments like:
+        self.chat.completions = self.completions
+
+    Returns True if the file was modified.
+    """
+    if not client_file.exists():
+        print(f"  Warning: Client file {client_file} does not exist")
+        return False
+
+    with open(client_file) as f:
+        lines = f.readlines()
+
+    # Find the anchor comment
+    comment_idx = None
+    for i, line in enumerate(lines):
+        if "# Nested API structure" in line:
+            comment_idx = i
+            break
+
+    if comment_idx is None:
+        print(f"  Warning: '# Nested API structure' comment not found in {client_file}")
+        return False
+
+    # Check if already patched
+    if pairs:
+        parent_snake = to_snake_case(pairs[0][0])
+        child_snake = to_snake_case(pairs[0][1])
+        test_line = f"self.{parent_snake}.{child_snake} = self.{child_snake}"
+        if any(test_line in line for line in lines):
+            return False
+
+    comment_line = lines[comment_idx]
+    indent = len(comment_line) - len(comment_line.lstrip())
+
+    patch_lines = [f"{' ' * indent}# Wire up parent-child API relationships\n"]
+    for parent_tag, child_tag in pairs:
+        parent_snake = to_snake_case(parent_tag)
+        child_snake = to_snake_case(child_tag)
+        patch_lines.append(f"{' ' * indent}self.{parent_snake}.{child_snake} = self.{child_snake}\n")
+        # Also add a short alias if the child name is prefixed with the parent name
+        # e.g., chat_completions -> chat.completions
+        if child_snake.startswith(f"{parent_snake}_"):
+            subresource_name = child_snake.removeprefix(f"{parent_snake}_")
+            patch_lines.append(
+                f"{' ' * indent}self.{parent_snake}.__dict__['{subresource_name}'] = self.{child_snake}\n"
+            )
+
+    insert_idx = comment_idx + 1
+    for line in reversed(patch_lines):
+        lines.insert(insert_idx, line)
+
+    with open(client_file, "w") as f:
+        f.writelines(lines)
+
+    print(f"  Patched LlamaStackClient with {len(pairs)} parent-child relationships")
+    return True
+
+
+def patch_proxy_methods(api_dir: Path, proxy_methods: list[dict]) -> int:
+    """Inject proxy methods into parent API classes that delegate to child subresources.
+
+    For example, if models.list() should proxy to models.openai.list(), this adds
+    a list() method to ModelsApi that calls self.openai.list().
+
+    Returns the number of proxy methods injected.
+    """
+    count = 0
+
+    for pm in proxy_methods:
+        parent_tag = pm["parent_tag"]
+        child_tag = pm["child_tag"]
+        method_name = pm["method_name"]
+
+        parent_snake = to_snake_case(parent_tag)
+        child_snake = to_snake_case(child_tag)
+        parent_file = api_dir / f"{parent_snake}_api.py"
+
+        if not parent_file.exists():
+            print(f"  Warning: {parent_file} does not exist, skipping proxy method {method_name}")
+            continue
+
+        with open(parent_file) as f:
+            content = f.read()
+
+        # Check if proxy method already exists
+        proxy_signature = f"def {method_name}(self,"
+        if proxy_signature in content:
+            print(f"  Skipped: {parent_snake}_api.py already has {method_name}()")
+            continue
+
+        # Find the end of __init__ (look for the next method definition or end of class)
+        # We insert the proxy method after __init__
+        init_match = re.search(r"    def __init__\(self.*?\n(?=    def |\nclass |\Z)", content, re.DOTALL)
+        if not init_match:
+            print(f"  Warning: Could not find __init__ in {parent_file}")
+            continue
+
+        insert_pos = init_match.end()
+
+        proxy_code = (
+            f"\n    def {method_name}(self, *args, **kwargs):\n"
+            f'        """Proxy to self.{child_snake}.{method_name}()."""\n'
+            f"        return self.{child_snake}.{method_name}(*args, **kwargs)\n"
+        )
+
+        content = content[:insert_pos] + proxy_code + content[insert_pos:]
+
+        with open(parent_file, "w") as f:
+            f.write(content)
+
+        print(f"  Injected proxy: {parent_snake}_api.py.{method_name}() -> {child_snake}.{method_name}()")
+        count += 1
+
+    return count
+
+
 def patch_apis(hierarchy_file: str, sdk_dir: str, package_name: str = "llama_stack_client") -> None:
     """Patch all generated API files based on the hierarchy."""
     yaml_handler = ryaml.YAML()
@@ -183,6 +303,19 @@ def patch_apis(hierarchy_file: str, sdk_dir: str, package_name: str = "llama_sta
 
         if patch_api_file(parent_file, child_tag, package_name):
             patched_count += 1
+
+    # Patch the main client class
+    client_file = Path(sdk_dir) / package_name / "llama_stack_client.py"
+    if client_file.exists():
+        patch_llama_stack_client(client_file, pairs)
+    else:
+        print(f"  Warning: LlamaStackClient not found at {client_file}")
+
+    # Inject proxy methods for shared endpoints
+    proxy_methods = data.get("proxy_methods", [])
+    if proxy_methods:
+        proxy_count = patch_proxy_methods(api_dir, proxy_methods)
+        print(f"Injected {proxy_count} proxy method(s)")
 
     print(f"Patched {patched_count} API files")
 

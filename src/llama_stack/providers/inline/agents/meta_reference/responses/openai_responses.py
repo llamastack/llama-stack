@@ -553,6 +553,7 @@ class OpenAIResponsesImpl:
         stream: bool | None = False,
         temperature: float | None = None,
         top_p: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
@@ -567,6 +568,8 @@ class OpenAIResponsesImpl:
         service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
+        top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
     ):
         stream = bool(stream)
         background = bool(background)
@@ -627,6 +630,7 @@ class OpenAIResponsesImpl:
                 conversation=conversation,
                 store=store,
                 temperature=temperature,
+                frequency_penalty=frequency_penalty,
                 text=text,
                 tool_choice=tool_choice,
                 tools=tools,
@@ -641,6 +645,7 @@ class OpenAIResponsesImpl:
                 service_tier=service_tier,
                 metadata=metadata,
                 truncation=truncation,
+                presence_penalty=presence_penalty,
             )
 
         stream_gen = self._create_streaming_response(
@@ -654,6 +659,7 @@ class OpenAIResponsesImpl:
             store=store,
             temperature=temperature,
             top_p=top_p,
+            frequency_penalty=frequency_penalty,
             text=text,
             tools=tools,
             tool_choice=tool_choice,
@@ -668,6 +674,8 @@ class OpenAIResponsesImpl:
             metadata=metadata,
             include=include,
             truncation=truncation,
+            top_logprobs=top_logprobs,
+            presence_penalty=presence_penalty,
         )
 
         if stream:
@@ -735,6 +743,7 @@ class OpenAIResponsesImpl:
         conversation: str | None = None,
         store: bool | None = True,
         temperature: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
@@ -749,6 +758,7 @@ class OpenAIResponsesImpl:
         service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
+        presence_penalty: float | None = None,
     ) -> OpenAIResponseObject:
         """Create a response that processes in the background.
 
@@ -805,6 +815,7 @@ class OpenAIResponsesImpl:
                     conversation=conversation,
                     store=store,
                     temperature=temperature,
+                    frequency_penalty=frequency_penalty,
                     text=text,
                     tool_choice=tool_choice,
                     tools=tools,
@@ -819,6 +830,7 @@ class OpenAIResponsesImpl:
                     service_tier=service_tier,
                     metadata=metadata,
                     truncation=truncation,
+                    presence_penalty=presence_penalty,
                 )
             )
         except asyncio.QueueFull:
@@ -839,6 +851,7 @@ class OpenAIResponsesImpl:
         conversation: str | None = None,
         store: bool | None = True,
         temperature: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
@@ -853,6 +866,7 @@ class OpenAIResponsesImpl:
         service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
+        presence_penalty: float | None = None,
     ) -> None:
         """Inner loop for background response processing, separated for timeout wrapping."""
         # Check if response was cancelled before starting
@@ -875,6 +889,7 @@ class OpenAIResponsesImpl:
             previous_response_id=previous_response_id,
             store=store,
             temperature=temperature,
+            frequency_penalty=frequency_penalty,
             text=text,
             tools=tools,
             tool_choice=tool_choice,
@@ -890,6 +905,7 @@ class OpenAIResponsesImpl:
             include=include,
             truncation=truncation,
             response_id=response_id,
+            presence_penalty=presence_penalty,
         )
 
         result_response = None
@@ -933,6 +949,7 @@ class OpenAIResponsesImpl:
         store: bool | None = True,
         temperature: float | None = None,
         top_p: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
@@ -948,6 +965,8 @@ class OpenAIResponsesImpl:
         include: list[ResponseItemInclude] | None = None,
         truncation: ResponseTruncation | None = None,
         response_id: str | None = None,
+        top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -975,6 +994,7 @@ class OpenAIResponsesImpl:
             tool_choice=tool_choice,
             temperature=temperature,
             top_p=top_p,
+            frequency_penalty=frequency_penalty,
             response_format=response_format,
             tool_context=tool_context,
             inputs=all_input,
@@ -1020,6 +1040,8 @@ class OpenAIResponsesImpl:
                 include=include,
                 store=store,
                 truncation=truncation,
+                top_logprobs=top_logprobs,
+                presence_penalty=presence_penalty,
             )
 
             final_response = None

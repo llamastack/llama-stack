@@ -28,12 +28,12 @@ class {{#operations}}Test{{classname}}(unittest.{{#async}}IsolatedAsyncio{{/asyn
 
     {{#operation}}
     {{#async}}
-    async def test_{{operationId}}(self) -> None:
+    async def test_{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}(self) -> None:
     {{/async}}
     {{^async}}
-    def test_{{operationId}}(self) -> None:
+    def test_{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}(self) -> None:
     {{/async}}
-        """Test case for {{{operationId}}}
+        """Test case for {{#vendorExtensions.x-operation-name}}{{{vendorExtensions.x-operation-name}}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{{operationId}}}{{/vendorExtensions.x-operation-name}}
 
 {{#summary}}
         {{{.}}}

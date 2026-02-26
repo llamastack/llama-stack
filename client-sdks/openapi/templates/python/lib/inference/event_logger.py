@@ -5,8 +5,9 @@
 # the root directory of this source tree.
 from collections.abc import Generator
 
-from llama_stack_client.types import ChatCompletionChunk
 from termcolor import cprint
+
+from ...models.open_ai_chat_completion_chunk import OpenAIChatCompletionChunk as ChatCompletionChunk
 
 
 class InferenceStreamPrintableEvent:
