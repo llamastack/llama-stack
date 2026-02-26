@@ -227,15 +227,15 @@ providers:
     config:
       openai_api_key: ${env.OPENAI_API_KEY:=}
   tool_runtime:
-  - provider_id: ${env.BRAVE_SEARCH_API_KEY:+brave-search}
-    provider_type: remote::brave-search
-    config:
-      api_key: ${env.BRAVE_SEARCH_API_KEY:=}
-      max_results: 3
-  - provider_id: ${env.TAVILY_SEARCH_API_KEY:+tavily-search}
+  - provider_id: tavily-search
     provider_type: remote::tavily-search
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
+      max_results: 3
+  - provider_id: brave-search
+    provider_type: remote::brave-search
+    config:
+      api_key: ${env.BRAVE_SEARCH_API_KEY:=}
       max_results: 3
   - provider_id: rag-runtime
     provider_type: inline::rag-runtime
