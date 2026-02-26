@@ -6782,6 +6782,10 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
+        mcp_server_instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
       type: object
       required:
       - identifier
@@ -10703,6 +10707,11 @@ components:
           - type: 'null'
           nullable: true
           title: URL
+        mcp_server_instructions:
+          anyOf:
+          - type: string
+          - type: 'null'
+          nullable: true
       required:
       - toolgroup_id
       - provider_id
