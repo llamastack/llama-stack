@@ -11,6 +11,8 @@ Tests that tools pass through correctly to various LLM providers.
 
 import pytest
 
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
+
 
 class TestChatCompletionWithTools:
     """Test chat completion with tools that have complex schemas."""
@@ -156,6 +158,8 @@ class TestMCPToolsInChatCompletion:
 
     def test_mcp_tools_in_inference(self, llama_stack_client, text_model_id):
         """Test that MCP-style tool schemas work in inference."""
+        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
+            pytest.skip("Library client required")
         tools = [
             {
                 "type": "function",
