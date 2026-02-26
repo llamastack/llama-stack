@@ -60,31 +60,56 @@ Features:
 
 ### Using Remote MCP Servers
 
-You can find some popular remote MCP servers [here](https://github.com/jaw9c/awesome-remote-mcp-servers). Use the [Connectors API](/references/api_reference/connectors) to register them:
+You can find some popular remote MCP servers [here](https://github.com/jaw9c/awesome-remote-mcp-servers). Register them as connectors in your stack config:
 
-```python
-client.connectors.register(
-    connector_id="mcp::deepwiki",
-    connector_type="mcp",
-    url="https://mcp.deepwiki.com/sse",
-)
+```yaml
+connectors:
+  - connector_id: "mcp::deepwiki"
+    connector_type: mcp
+    url: "https://mcp.deepwiki.com/sse"
 ```
 
-Note that most of the more useful MCP servers need you to authenticate with them. Many of them use OAuth2.0 for authentication. You can provide the authorization token when creating the Agent:
+Then reference the connector by `connector_id` when creating the Agent:
 
 ```python
 agent = Agent(
-    ...,
+    client,
+    model="meta-llama/Llama-3.2-3B-Instruct",
+    instructions="You are a helpful assistant.",
     tools=[
         {
             "type": "mcp",
-            "server_url": "https://mcp.deepwiki.com/sse",
-            "server_label": "mcp::deepwiki",
-            "authorization": "<your_access_token>",  # OAuth token (without "Bearer " prefix)
+            "connector_id": "mcp::deepwiki",
+            "server_label": "deepwiki",
         }
     ],
 )
 agent.create_turn(...)
+```
+
+Note that most of the more useful MCP servers need you to authenticate with them. Many of them use OAuth2.0 for authentication. You can provide the authorization token in the tool definition:
+
+```python
+tools=[
+    {
+        "type": "mcp",
+        "connector_id": "mcp::deepwiki",
+        "server_label": "deepwiki",
+        "authorization": "<your_access_token>",  # OAuth token (without "Bearer " prefix)
+    }
+]
+```
+
+Alternatively, you can pass the `server_url` directly without registering a connector:
+
+```python
+tools=[
+    {
+        "type": "mcp",
+        "server_url": "https://mcp.deepwiki.com/sse",
+        "server_label": "deepwiki",
+    }
+]
 ```
 
 ### Running Your Own MCP Server
@@ -105,12 +130,29 @@ npx -y supergateway --port 8000 --stdio 'npx -y @modelcontextprotocol/server-fil
 </TabItem>
 <TabItem value="register" label="Registration">
 
+Register the MCP server as a connector in your stack config:
+
+```yaml
+connectors:
+  - connector_id: "mcp::filesystem"
+    connector_type: mcp
+    url: "http://localhost:8000/sse"
+```
+
+Then reference it when creating the Agent:
+
 ```python
-# Register the MCP server using the Connectors API
-client.connectors.register(
-    connector_id="mcp::filesystem",
-    connector_type="mcp",
-    url="http://localhost:8000/sse",
+agent = Agent(
+    client,
+    model="meta-llama/Llama-3.2-3B-Instruct",
+    instructions="You are a helpful file system assistant.",
+    tools=[
+        {
+            "type": "mcp",
+            "connector_id": "mcp::filesystem",
+            "server_label": "filesystem",
+        }
+    ],
 )
 ```
 
