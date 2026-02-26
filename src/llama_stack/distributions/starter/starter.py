@@ -35,6 +35,8 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.config import (
     SQLiteVectorIOConfig,
 )
 from llama_stack.providers.registry.inference import available_providers
+from llama_stack.providers.remote.tool_runtime.brave_search.config import BraveSearchToolConfig
+from llama_stack.providers.remote.tool_runtime.tavily_search.config import TavilySearchToolConfig
 from llama_stack.providers.remote.vector_io.chroma.config import ChromaVectorIOConfig
 from llama_stack.providers.remote.vector_io.elasticsearch.config import ElasticsearchVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.config import (
@@ -257,6 +259,26 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 provider_id="pypdf",
                 provider_type="inline::pypdf",
                 config=PyPDFFileProcessorConfig.sample_run_config(),
+            ),
+        ],
+        "tool_runtime": [
+            Provider(
+                provider_id="${env.BRAVE_SEARCH_API_KEY:+brave-search}",
+                provider_type="remote::brave-search",
+                config=BraveSearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="${env.TAVILY_SEARCH_API_KEY:+tavily-search}",
+                provider_type="remote::tavily-search",
+                config=TavilySearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="rag-runtime",
+                provider_type="inline::rag-runtime",
+            ),
+            Provider(
+                provider_id="model-context-protocol",
+                provider_type="remote::model-context-protocol",
             ),
         ],
     }
