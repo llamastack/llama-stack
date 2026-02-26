@@ -21,12 +21,12 @@ class ToolParser:
 
     Example:
         class MyCustomParser(ToolParser):
-            def get_tool_calls(self, output_message: CompletionMessage) -> List[ToolCall]:
+            def get_tool_calls(self, output_message: CompletionMessage) -> list[ToolCall]:
                 # Add your custom parsing logic here
                 return extracted_tool_calls
 
     Methods:
-        get_tool_calls(output_message: CompletionMessage) -> List[ToolCall]:
+        get_tool_calls(output_message: CompletionMessage) -> list[ToolCall]:
             Abstract method that must be implemented by subclasses to process
             the agent's response and extract tool calls.
 
@@ -34,7 +34,7 @@ class ToolParser:
                 output_message (CompletionMessage): The response message from agent turn
 
             Returns:
-                Optional[List[ToolCall]]: A list of parsed tool calls, or None if no tools should be called
+                list[ToolCall] | None: A list of parsed tool calls, or None if no tools should be called
     """
 
     @abstractmethod

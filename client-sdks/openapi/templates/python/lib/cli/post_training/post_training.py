@@ -6,12 +6,10 @@
 
 
 import click
-from llama_stack_client.types.alpha.post_training_supervised_fine_tune_params import (
-    AlgorithmConfig,
-    TrainingConfig,
-)
 from rich.console import Console
 
+from ....models.algorithm_config import AlgorithmConfig
+from ....models.training_config import TrainingConfig
 from ..common.utils import handle_client_errors
 
 

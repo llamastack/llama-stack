@@ -1,0 +1,57 @@
+    def __iter__(self):
+        """Iterate over items if actual_instance is iterable."""
+        if hasattr(self.actual_instance, '__iter__'):
+            return iter(self.actual_instance)
+        raise TypeError(f"'{type(self.actual_instance).__name__}' object is not iterable")
+
+    def __getitem__(self, index):
+        """Get item by index if actual_instance supports indexing."""
+        if hasattr(self.actual_instance, '__getitem__'):
+            return self.actual_instance[index]
+        raise TypeError(f"'{type(self.actual_instance).__name__}' object is not subscriptable")
+
+    def __len__(self):
+        """Get length if actual_instance supports len()."""
+        if hasattr(self.actual_instance, '__len__'):
+            return len(self.actual_instance)
+        raise TypeError(f"object of type '{type(self.actual_instance).__name__}' has no len()")
+
+    def __bool__(self):
+        """Handle truthiness checks - wrapper is truthy if actual_instance is not None."""
+        return self.actual_instance is not None
+
+    def __eq__(self, other):
+        """Handle equality comparisons transparently."""
+        if hasattr(self, 'actual_instance') and self.actual_instance is not None:
+            other_value = other.actual_instance if hasattr(other, 'actual_instance') else other
+            return self.actual_instance == other_value
+        return super().__eq__(other)
+
+    def __hash__(self):
+        """Handle hashing - use actual_instance's hash if available."""
+        if hasattr(self, 'actual_instance') and self.actual_instance is not None:
+            try:
+                return hash(self.actual_instance)
+            except TypeError:
+                return id(self)
+        return super().__hash__()
+
+    def __repr__(self):
+        """Return repr of actual_instance for debugging."""
+        if hasattr(self, 'actual_instance') and self.actual_instance is not None:
+            return repr(self.actual_instance)
+        return super().__repr__()
+
+    def to_json(self) -> str:
+        """Returns the JSON representation of the actual instance"""
+        if self.actual_instance is None:
+            return "null"
+
+        if hasattr(self.actual_instance, "to_json") and callable(self.actual_instance.to_json):
+            return self.actual_instance.to_json()
+        else:
+            return json.dumps(self.actual_instance)
+
+    def to_str(self) -> str:
+        """Returns the string representation of the actual instance"""
+        return pprint.pformat(self.model_dump())

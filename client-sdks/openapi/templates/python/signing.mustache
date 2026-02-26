@@ -1,5 +1,7 @@
 {{>partial_header}}
 
+from __future__ import annotations
+
 from base64 import b64encode
 from Crypto.IO import PEM, PKCS8
 from Crypto.Hash import SHA256, SHA512
@@ -12,7 +14,6 @@ from email.utils import formatdate
 import os
 import re
 from time import time
-from typing import List, Optional, Union
 from urllib.parse import urlencode, urlparse
 
 # The constants below define a subset of HTTP headers that can be included in the
@@ -117,11 +118,11 @@ class HttpSigningConfiguration:
         key_id: str,
         signing_scheme: str,
         private_key_path: str,
-        private_key_passphrase: Union[None, str]=None,
-        signed_headers: Optional[List[str]]=None,
-        signing_algorithm: Optional[str]=None,
-        hash_algorithm: Optional[str]=None,
-        signature_max_validity: Optional[timedelta]=None,
+        private_key_passphrase: str | None=None,
+        signed_headers: list[str] | None=None,
+        signing_algorithm: str | None=None,
+        hash_algorithm: str | None=None,
+        signature_max_validity: timedelta | None=None,
     ) -> None:
         self.key_id = key_id
         if signing_scheme not in {SCHEME_HS2019, SCHEME_RSA_SHA256, SCHEME_RSA_SHA512}:
@@ -166,11 +167,11 @@ class HttpSigningConfiguration:
         if HEADER_AUTHORIZATION in signed_headers:
             raise Exception("'Authorization' header cannot be included in signed headers")
         self.signed_headers = signed_headers
-        self.private_key: Optional[Union[ECC.EccKey, RSA.RsaKey]] = None
+        self.private_key: ECC.EccKey | RSA.RsaKey | None = None
         """The private key used to sign HTTP requests.
            Initialized when the PEM-encoded private key is loaded from a file.
         """
-        self.host: Optional[str] = None
+        self.host: str | None = None
         """The host name, optionally followed by a colon and TCP port number.
         """
         self._load_private_key()
@@ -208,7 +209,7 @@ class HttpSigningConfiguration:
     def get_public_key(self):
         """Returns the public key object associated with the private key.
         """
-        pubkey: Optional[Union[ECC.EccKey, RSA.RsaKey]] = None
+        pubkey: ECC.EccKey | RSA.RsaKey | None = None
         if isinstance(self.private_key, RSA.RsaKey):
             pubkey = self.private_key.publickey()
         elif isinstance(self.private_key, ECC.EccKey):
@@ -348,7 +349,7 @@ class HttpSigningConfiguration:
             to generate the 'Digest' header as specified in RFC 3230.
         """
 
-        digest: Union[SHA256Hash, SHA512Hash]
+        digest: SHA256Hash | SHA512Hash
 
         if self.hash_algorithm == HASH_SHA512:
             digest = SHA512.new()

@@ -19,13 +19,13 @@ from pprint import pprint
         {{#summary}}
         # {{{.}}}
         {{/summary}}
-        {{#returnType}}api_response = {{/returnType}}{{#async}}await {{/async}}api_instance.{{{operationId}}}({{#allParams}}{{#required}}{{paramName}}{{/required}}{{^required}}{{paramName}}={{paramName}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+        {{#returnType}}api_response = {{/returnType}}{{#async}}await {{/async}}api_instance.{{#vendorExtensions.x-operation-name}}{{{vendorExtensions.x-operation-name}}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{{operationId}}}{{/vendorExtensions.x-operation-name}}({{#allParams}}{{#required}}{{paramName}}{{/required}}{{^required}}{{paramName}}={{paramName}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
         {{#returnType}}
-        print("The response of {{classname}}->{{operationId}}:\n")
+        print("The response of {{classname}}->{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}:\n")
         pprint(api_response)
         {{/returnType}}
     except ApiException as e:
-        print("Exception when calling {{classname}}->{{operationId}}: %s\n" % e)
+        print("Exception when calling {{classname}}->{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}: %s\n" % e)
 {{/-first}}{{/operation}}{{/operations}}{{/-first}}{{/apis}}{{/apiInfo}}
 ```
 
@@ -35,7 +35,7 @@ All URIs are relative to *{{{basePath}}}*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}*{{classname}}* | [**{{operationId}}**]({{apiDocPath}}{{classname}}.md#{{operationIdLowerCase}}) | **{{httpMethod}}** {{path}} | {{summary}}
+{{#apiInfo}}{{#apis}}{{#operations}}{{#operation}}*{{classname}}* | [**{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}**]({{apiDocPath}}{{classname}}.md#{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationIdLowerCase}}{{/vendorExtensions.x-operation-name}}) | **{{httpMethod}}** {{path}} | {{summary}}
 {{/operation}}{{/operations}}{{/apis}}{{/apiInfo}}
 
 ## Documentation For Models

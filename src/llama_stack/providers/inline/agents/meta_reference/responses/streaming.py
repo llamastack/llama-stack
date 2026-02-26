@@ -9,6 +9,7 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
+from openai import APIStatusError
 from openai.types.chat import ChatCompletionToolParam
 from opentelemetry import trace
 
@@ -109,6 +110,78 @@ from .utils import (
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
 tracer = trace.get_tracer(__name__)
+
+# Maps OpenAI Chat Completions error codes to Responses API error codes
+_RESPONSES_API_ERROR_CODES = {
+    "invalid_base64": "invalid_base64_image",
+}
+
+_VALID_RESPONSE_ERROR_CODES = frozenset(
+    {
+        "server_error",
+        "rate_limit_exceeded",
+        "invalid_prompt",
+        "vector_store_timeout",
+        "invalid_image",
+        "invalid_image_format",
+        "invalid_base64_image",
+        "invalid_image_url",
+        "image_too_large",
+        "image_too_small",
+        "image_parse_error",
+        "image_content_policy_violation",
+        "invalid_image_mode",
+        "image_file_too_large",
+        "unsupported_image_media_type",
+        "empty_image_file",
+        "failed_to_download_image",
+        "image_file_not_found",
+    }
+)
+
+
+def extract_openai_error(exc: Exception) -> tuple[str, str]:
+    """Extract error code and message from a provider SDK exception.
+
+    The exception should have a `body` attribute containing error details in one of two formats:
+        1. Nested: {"error": {"code": "...", "message": "...", ...}}
+        2. Direct: {"code": "...", "message": "...", ...}
+
+    Args:
+        exc: An exception with a `body` attribute containing error details
+
+    Returns:
+        Tuple of (error_code, error_message). Falls back to ("server_error", str(exc))
+        if the body doesn't contain a valid code. The message is always preserved.
+    """
+    body = getattr(exc, "body", None)
+    fallback_message = str(exc)
+
+    if not isinstance(body, dict):
+        logger.warning(f"Unexpected body type {type(body)}, expected dict: {exc}")
+        return ("server_error", fallback_message)
+
+    # Try nested format first: {"error": {"code": "...", ...}}
+    error_obj = body.get("error")
+    if isinstance(error_obj, dict):
+        raw_code = error_obj.get("code")
+        raw_message = error_obj.get("message")
+    else:
+        raw_code = body.get("code")
+        raw_message = body.get("message")
+
+    if raw_code and isinstance(raw_code, str):
+        final_code: str = _RESPONSES_API_ERROR_CODES.get(raw_code, raw_code)
+    else:
+        final_code = "server_error"
+
+    if final_code not in _VALID_RESPONSE_ERROR_CODES:
+        logger.info(f"Unmapped provider error code '{final_code}', falling back to server_error")
+        final_code = "server_error"
+
+    message: str = raw_message if isinstance(raw_message, str) else fallback_message
+
+    return final_code, message
 
 
 def convert_tooldef_to_chat_tool(tool_def):
@@ -327,7 +400,7 @@ class StreamingResponseOrchestrator:
             logger.warning("Truncation mode 'auto' is not yet supported")
             self.sequence_number += 1
             error = OpenAIResponseError(
-                code="invalid_request_error",
+                code="server_error",
                 message="Truncation mode 'auto' is not supported. Use 'disabled' to let the inference provider reject oversized contexts.",
             )
             failure_response = self._snapshot_response("failed", output_messages, error=error)
@@ -546,7 +619,17 @@ class StreamingResponseOrchestrator:
         except Exception as exc:  # noqa: BLE001
             self.final_messages = messages.copy()
             self.sequence_number += 1
-            error = OpenAIResponseError(code="internal_error", message=str(exc))
+
+            if isinstance(exc, APIStatusError) or (hasattr(exc, "status_code") and hasattr(exc, "body")):
+                logger.warning(f"Provider SDK error during response generation: {exc}")
+                error_code, error_message = extract_openai_error(exc)
+            else:
+                logger.exception(f"Unexpected '{type(exc).__name__}' error during response generation", exc_info=exc)
+                error_code, error_message = (
+                    "server_error",
+                    "An unexpected error occurred while generating the response.",
+                )
+            error = OpenAIResponseError(code=error_code, message=error_message)
             failure_response = self._snapshot_response("failed", output_messages, error=error)
             yield OpenAIResponseObjectStreamResponseFailed(
                 response=failure_response,

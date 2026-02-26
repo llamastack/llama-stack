@@ -105,3 +105,12 @@ operations:
       oneOf:
         - type: string
         - type: object
+
+  # Mark response models that support output_text extraction
+  - path: "components.schemas.OpenAIResponseObject.x-has-output-text"
+    action: "set"
+    value: true
+
+  - path: "components.schemas.OpenAIResponseObjectWithInput.x-has-output-text"
+    action: "set"
+    value: true

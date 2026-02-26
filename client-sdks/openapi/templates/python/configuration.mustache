@@ -2,10 +2,9 @@
 
 {{>partial_header}}
 
+from __future__ import annotations
 
-{{#async}}
 import base64
-{{/async}}
 import copy
 import http.client as httplib
 import logging
@@ -14,12 +13,9 @@ from logging import FileHandler
 import multiprocessing
 {{/async}}
 import sys
-from typing import Any, ClassVar, Dict, List, Literal, Optional, TypedDict, Union
-from typing_extensions import NotRequired, Self
 
-{{^async}}
-import urllib3
-{{/async}}
+from typing import Any, ClassVar, Literal, TypedDict
+from typing_extensions import NotRequired, Self
 
 {{#hasHttpSignatureMethods}}
 from {{packageName}}.signing import HttpSigningConfiguration
@@ -31,7 +27,7 @@ JSON_SCHEMA_VALIDATION_KEYWORDS = {
     'minLength', 'pattern', 'maxItems', 'minItems'
 }
 
-ServerVariablesT = Dict[str, str]
+ServerVariablesT = dict[str, str]
 
 GenericAuthSetting = TypedDict(
     "GenericAuthSetting",
@@ -61,7 +57,7 @@ APIKeyAuthSetting = TypedDict(
         "type": Literal["api_key"],
         "in": str,
         "key": str,
-        "value": Optional[str],
+        "value": str | None,
     },
 )
 
@@ -72,7 +68,7 @@ BasicAuthSetting = TypedDict(
         "type": Literal["basic"],
         "in": Literal["header"],
         "key": Literal["Authorization"],
-        "value": Optional[str],
+        "value": str | None,
     },
 )
 
@@ -146,13 +142,13 @@ AuthSettings = TypedDict(
 class HostSettingVariable(TypedDict):
     description: str
     default_value: str
-    enum_values: List[str]
+    enum_values: list[str]
 
 
 class HostSetting(TypedDict):
     url: str
     description: str
-    variables: NotRequired[Dict[str, HostSettingVariable]]
+    variables: NotRequired[dict[str, HostSettingVariable]]
 
 
 class Configuration:
@@ -189,10 +185,14 @@ class Configuration:
     :param ssl_ca_cert: str - the path to a file of concatenated CA certificates
       in PEM format.
     :param retries: Number of retries for API requests.
+    :param timeout: Default timeout for API requests in seconds. Can be overridden per-request.
     :param ca_cert_data: verify the peer using concatenated CA certificate data
       in PEM (str) or DER (bytes) format.
     :param cert_file: the path to a client certificate file, for mTLS.
     :param key_file: the path to a client key file, for mTLS.
+    :param http2: Enable HTTP/2 support. Default is False. Requires 'h2' package.
+    :param follow_redirects: Whether to follow HTTP redirects. Default is True.
+    :param base_url: Alias for host. If both host and base_url are provided, host will be used.
 
 {{#hasAuthMethods}}
     :Example:
@@ -279,34 +279,40 @@ conf = {{{packageName}}}.Configuration(
 {{/hasAuthMethods}}
     """
 
-    _default: ClassVar[Optional[Self]] = None
+    _default: ClassVar[Self | None] = None
 
     def __init__(
         self,
-        host: Optional[str]=None,
-        api_key: Optional[Dict[str, str]]=None,
-        api_key_prefix: Optional[Dict[str, str]]=None,
-        username: Optional[str]=None,
-        password: Optional[str]=None,
-        access_token: Optional[str]=None,
+        host: str | None=None,
+        api_key: dict[str, str] | None=None,
+        api_key_prefix: dict[str, str] | None=None,
+        username: str | None=None,
+        password: str | None=None,
+        access_token: str | None=None,
 {{#hasHttpSignatureMethods}}
-        signing_info: Optional[HttpSigningConfiguration]=None,
+        signing_info: HttpSigningConfiguration | None=None,
 {{/hasHttpSignatureMethods}}
-        server_index: Optional[int]=None,
-        server_variables: Optional[ServerVariablesT]=None,
-        server_operation_index: Optional[Dict[int, int]]=None,
-        server_operation_variables: Optional[Dict[int, ServerVariablesT]]=None,
+        server_index: int | None=None,
+        server_variables: ServerVariablesT | None=None,
+        server_operation_index: dict[int, int] | None=None,
+        server_operation_variables: dict[int, ServerVariablesT] | None=None,
         ignore_operation_servers: bool=False,
-        ssl_ca_cert: Optional[str]=None,
-        retries: Optional[int] = None,
-        ca_cert_data: Optional[Union[str, bytes]] = None,
-        cert_file: Optional[str]=None,
-        key_file: Optional[str]=None,
+        ssl_ca_cert: str | None=None,
+        retries: int | None = None,
+        timeout: int | float | None = None,
+        ca_cert_data: str | bytes | None = None,
+        cert_file: str | None=None,
+        key_file: str | None=None,
+        http2: bool = False,
+        follow_redirects: bool = True,
         *,
-        debug: Optional[bool] = None,
+        debug: bool | None = None,
+        base_url: str | None=None,
     ) -> None:
         """Constructor
         """
+        host = base_url if host is None else host
+        self.base_url = host
         self._base_path = "{{{basePath}}}" if host is None else host
         """Default Base url
         """
@@ -358,16 +364,14 @@ conf = {{{packageName}}}.Configuration(
         """Logging Settings
         """
         self.logger["package_logger"] = logging.getLogger("{{packageName}}")
-        {{^async}}
-        self.logger["urllib3_logger"] = logging.getLogger("urllib3")
-        {{/async}}
+        self.logger["httpx_logger"] = logging.getLogger("httpx")
         self.logger_format = '%(asctime)s %(levelname)s %(message)s'
         """Log format
         """
         self.logger_stream_handler = None
         """Log stream handler
         """
-        self.logger_file_handler: Optional[FileHandler] = None
+        self.logger_file_handler: FileHandler | None = None
         """Log file handler
         """
         self.logger_file = None
@@ -398,13 +402,6 @@ conf = {{{packageName}}}.Configuration(
         self.key_file = key_file
         """client key file
         """
-        self.assert_hostname = None
-        """Set this to True/False to enable/disable SSL hostname verification.
-        """
-        self.tls_server_name = None
-        """SSL/TLS Server Name Indication (SNI)
-           Set this to the SNI value expected by the server.
-        """
 
         {{#async}}
         self.connection_pool_maxsize = 100
@@ -414,15 +411,12 @@ conf = {{{packageName}}}.Configuration(
         {{/async}}
         {{^async}}
         self.connection_pool_maxsize = multiprocessing.cpu_count() * 5
-        """urllib3 connection pool's maximum number of connections saved
-           per pool. urllib3 uses 1 connection as default value, but this is
-           not the best value when you are making a lot of possibly parallel
-           requests to the same host, which is often the case here.
+        """httpx connection pool's maximum number of connections.
            cpu_count * 5 is used as default value to increase performance.
         """
         {{/async}}
 
-        self.proxy: Optional[str] = None
+        self.proxy: str | None = None
         """Proxy URL
         """
         self.proxy_headers = None
@@ -432,14 +426,20 @@ conf = {{{packageName}}}.Configuration(
         """Safe chars for path_param
         """
         self.retries = retries
-        """Adding retries to override urllib3 default value 3
+        """Number of retries for API requests.
+        """
+        self.timeout = timeout
+        """Default timeout for API requests in seconds
+        """
+        self.http2 = http2
+        """Enable HTTP/2 support
+        """
+        self.follow_redirects = follow_redirects
+        """Whether to follow HTTP redirects
         """
         # Enable client side validation
         self.client_side_validation = True
 
-        self.socket_options = None
-        """Options to pass down to the underlying urllib3 socket
-        """
 
         self.datetime_format = "{{{datetimeFormat}}}"
         """datetime format
@@ -449,7 +449,7 @@ conf = {{{packageName}}}.Configuration(
         """date format
         """
 
-    def __deepcopy__(self, memo:  Dict[int, Any]) -> Self:
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
         cls = self.__class__
         result = cls.__new__(cls)
         memo[id(self)] = result
@@ -473,7 +473,7 @@ conf = {{{packageName}}}.Configuration(
 {{/hasHttpSignatureMethods}}
 
     @classmethod
-    def set_default(cls, default: Optional[Self]) -> None:
+    def set_default(cls, default: Self | None) -> None:
         """Set default instance of configuration.
 
         It stores default configuration, which can be
@@ -508,7 +508,7 @@ conf = {{{packageName}}}.Configuration(
         return cls._default
 
     @property
-    def logger_file(self) -> Optional[str]:
+    def logger_file(self) -> str | None:
         """The logger file.
 
         If the logger_file is None, then add stream handler and remove file
@@ -520,7 +520,7 @@ conf = {{{packageName}}}.Configuration(
         return self.__logger_file
 
     @logger_file.setter
-    def logger_file(self, value: Optional[str]) -> None:
+    def logger_file(self, value: str | None) -> None:
         """The logger file.
 
         If the logger_file is None, then add stream handler and remove file
@@ -592,7 +592,7 @@ conf = {{{packageName}}}.Configuration(
         self.__logger_format = value
         self.logger_formatter = logging.Formatter(self.__logger_format)
 
-    def get_api_key_with_prefix(self, identifier: str, alias: Optional[str]=None) -> Optional[str]:
+    def get_api_key_with_prefix(self, identifier: str, alias: str | None=None) -> str | None:
         """Gets API key (with prefix if set).
 
         :param identifier: The identifier of apiKey.
@@ -611,28 +611,16 @@ conf = {{{packageName}}}.Configuration(
 
         return None
 
-    def get_basic_auth_token(self) -> Optional[str]:
+    def get_basic_auth_token(self) -> str | None:
         """Gets HTTP basic authentication header (string).
 
         :return: The token for basic HTTP authentication.
         """
-        username = ""
-        if self.username is not None:
-            username = self.username
-        password = ""
-        if self.password is not None:
-            password = self.password
-
-        {{#async}}
-        return "Basic " + base64.b64encode(
-            (username + ":" + password).encode('utf-8')
-        ).decode('utf-8')
-        {{/async}}
-        {{^async}}
-        return urllib3.util.make_headers(
-            basic_auth=username + ':' + password
-        ).get('authorization')
-        {{/async}}
+        username = self.username or ""
+        password = self.password or ""
+        credentials = f"{username}:{password}"
+        encoded = base64.b64encode(credentials.encode('utf-8')).decode('ascii')
+        return f"Basic {encoded}"
 
     def auth_settings(self)-> AuthSettings:
         """Gets Auth Settings dict for api client.
@@ -709,7 +697,7 @@ conf = {{{packageName}}}.Configuration(
                "SDK Package Version: {{packageVersion}}".\
                format(env=sys.platform, pyversion=sys.version)
 
-    def get_host_settings(self) -> List[HostSetting]:
+    def get_host_settings(self) -> list[HostSetting]:
         """Gets an array of host settings
 
         :return: An array of host settings
@@ -735,11 +723,6 @@ conf = {{{packageName}}}.Configuration(
                         ]
                         {{/-last}}
                         {{/enumValues}}
-                        {{^enumValues}}
-                        {{#async}}
-                        'enum_values': []
-                        {{/async}}
-                        {{/enumValues}}
                         }{{^-last}},{{/-last}}
                 {{#-last}}
                     }
@@ -751,9 +734,9 @@ conf = {{{packageName}}}.Configuration(
 
     def get_host_from_settings(
         self,
-        index: Optional[int],
-        variables: Optional[ServerVariablesT]=None,
-        servers: Optional[List[HostSetting]]=None,
+        index: int | None,
+        variables: ServerVariablesT | None=None,
+        servers: list[HostSetting] | None=None,
     ) -> str:
         """Gets host URL based on the index and variables
         :param index: array index of the host settings
@@ -782,7 +765,6 @@ conf = {{{packageName}}}.Configuration(
                 variable_name, variable['default_value'])
 
             if 'enum_values' in variable \
-                    and variable['enum_values'] \
                     and used_value not in variable['enum_values']:
                 raise ValueError(
                     "The variable `{0}` in the host URL has invalid value "

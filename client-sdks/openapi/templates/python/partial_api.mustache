@@ -1,4 +1,4 @@
-        """{{#isDeprecated}}(Deprecated) {{/isDeprecated}}{{{summary}}}{{^summary}}{{operationId}}{{/summary}}
+        """{{#isDeprecated}}(Deprecated) {{/isDeprecated}}{{{summary}}}{{^summary}}{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}{{/summary}}
 
         {{#notes}}
         {{{.}}}
@@ -32,8 +32,19 @@
         {{#isDeprecated}}
         warnings.warn("{{{httpMethod}}} {{{path}}} is deprecated.", DeprecationWarning)
         {{/isDeprecated}}
+        {{#bodyParam}}{{^isPrimitiveType}}
+        # If body param not provided, construct from kwargs
+        if {{paramName}} is None and kwargs:
+            try:
+                # Try proper type conversion via from_json
+                {{paramName}} = {{{dataType}}}.from_json(json.dumps(kwargs))
+            except Exception:
+                # Fall back to lenient construction for complex/flexible types
+                # Server will still validate the final request
+                {{paramName}} = {{{dataType}}}.model_construct(**kwargs)
+        {{/isPrimitiveType}}{{/bodyParam}}
 
-        _param = self._{{operationId}}_serialize(
+        _param = self._{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}_serialize(
             {{#allParams}}
             {{paramName}}={{paramName}},
             {{/allParams}}
@@ -43,7 +54,7 @@
             _host_index=_host_index
         )
 
-        _response_types_map: Dict[str, Optional[str]] = {
+        _response_types_map: dict[str, str | None] = {
             {{#responses}}
             {{^isWildcard}}
             '{{code}}': {{#dataType}}"{{.}}"{{/dataType}}{{^dataType}}None{{/dataType}},

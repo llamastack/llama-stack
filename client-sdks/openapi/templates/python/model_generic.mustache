@@ -9,7 +9,7 @@ import json
 {{#vendorExtensions.x-py-model-imports}}
 {{{.}}}
 {{/vendorExtensions.x-py-model-imports}}
-from typing import Optional, Set
+from typing import Any, ClassVar
 from typing_extensions import Self
 
 {{#hasChildren}}
@@ -31,9 +31,9 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
     {{name}}: {{{vendorExtensions.x-py-typing}}}
 {{/vars}}
 {{#isAdditionalPropertiesTrue}}
-    additional_properties: Dict[str, Any] = {}
+    additional_properties: dict[str, Any] = {}
 {{/isAdditionalPropertiesTrue}}
-    __properties: ClassVar[List[str]] = [{{#allVars}}"{{baseName}}"{{^-last}}, {{/-last}}{{/allVars}}]
+    __properties: ClassVar[list[str]] = [{{#allVars}}"{{baseName}}"{{^-last}}, {{/-last}}{{/allVars}}]
 {{#vars}}
     {{#vendorExtensions.x-regex}}
 
@@ -100,18 +100,100 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
     )
 
 
+{{#vendorExtensions.x-has-output-text}}
+    @property
+    def output_text(self) -> str:
+        """Extract text content from output messages.
+
+        This property iterates through the output list and extracts text from
+        message content parts, concatenating them together.
+
+        Returns:
+            str: Concatenated text from all output messages, or empty string if no output field exists
+        """
+        # Check if this model has an output field
+        if not hasattr(self, 'output') or not self.output:
+            return ""
+
+        text_parts = []
+        for item in self.output:
+            # Handle oneOf wrapper - get actual_instance if it exists
+            actual_item = getattr(item, 'actual_instance', item)
+
+            # Check if this is a message type with content
+            if hasattr(actual_item, 'content'):
+                content = actual_item.content
+                # Handle oneOf wrapper for content
+                actual_content = getattr(content, 'actual_instance', content)
+
+                # If content is a string, use it directly
+                if isinstance(actual_content, str):
+                    text_parts.append(actual_content)
+                # If content is a list, iterate through parts
+                elif isinstance(actual_content, list):
+                    for content_part in actual_content:
+                        # Handle oneOf wrapper for content part
+                        actual_part = getattr(content_part, 'actual_instance', content_part)
+                        # Extract text if this part has a text attribute
+                        if hasattr(actual_part, 'text'):
+                            text_parts.append(actual_part.text)
+
+        return "".join(text_parts)
+
+{{/vendorExtensions.x-has-output-text}}
+
+    def __getattribute__(self, name):
+        """Override to automatically unwrap OneOf/AnyOf instances."""
+        value = super().__getattribute__(name)
+
+        # Unwrap OneOf/AnyOf wrappers directly
+        if hasattr(value, 'actual_instance') and value.actual_instance is not None:
+            return value.actual_instance
+
+        # If the value is a dict, unwrap any OneOf instances in its values
+        if isinstance(value, dict):
+            unwrapped = {}
+            for k, v in value.items():
+                # Check if this is a OneOf wrapper with actual_instance
+                if hasattr(v, 'actual_instance') and v.actual_instance is not None:
+                    unwrapped[k] = v.actual_instance
+                else:
+                    unwrapped[k] = v
+            return unwrapped
+
+        return value
+
+{{#vars}}{{#datatype}}{{#isArray}}{{#-first}}
+    # Make this model iterable/indexable to access the {{name}} field directly
+    # This allows: for item in response: ... and response[0]
+    def __iter__(self):
+        """Iterate over items in the {{name}} field"""
+        return iter(self.{{name}} if self.{{name}} is not None else [])
+
+    def __getitem__(self, index):
+        """Get item by index from the {{name}} field"""
+        if self.{{name}} is None:
+            raise IndexError("list index out of range")
+        return self.{{name}}[index]
+
+    def __len__(self):
+        """Get length of the {{name}} field"""
+        return len(self.{{name}}) if self.{{name}} is not None else 0
+
+{{/-first}}{{/isArray}}{{/datatype}}{{/vars}}
+
 {{#hasChildren}}
 {{#discriminator}}
     # JSON field name that stores the object type
     __discriminator_property_name: ClassVar[str] = '{{discriminator.propertyBaseName}}'
 
     # discriminator mappings
-    __discriminator_value_class_map: ClassVar[Dict[str, str]] = {
+    __discriminator_value_class_map: ClassVar[dict[str, str]] = {
         {{#mappedModels}}'{{{mappingName}}}': '{{{modelName}}}'{{^-last}},{{/-last}}{{/mappedModels}}
     }
 
     @classmethod
-    def get_discriminator_value(cls, obj: Dict[str, Any]) -> Optional[str]:
+    def get_discriminator_value(cls, obj: dict[str, Any]) -> str | None:
         """Returns the discriminator value (object type) of the data"""
         discriminator_value = obj[cls.__discriminator_property_name]
         if discriminator_value:
@@ -131,11 +213,11 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> Optional[{{^hasChildren}}Self{{/hasChildren}}{{#hasChildren}}{{#discriminator}}Union[{{#mappedModels}}{{{modelName}}}{{^-last}}, {{/-last}}{{/mappedModels}}]{{/discriminator}}{{^discriminator}}Self{{/discriminator}}{{/hasChildren}}]:
+    def from_json(cls, json_str: str) -> {{^hasChildren}}Self{{/hasChildren}}{{#hasChildren}}{{#discriminator}}{{#mappedModels}}{{{modelName}}}{{^-last}} | {{/-last}}{{/mappedModels}}{{/discriminator}}{{^discriminator}}Self{{/discriminator}}{{/hasChildren}} | None:
         """Create an instance of {{{classname}}} from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return the dictionary representation of the model using alias.
 
         This has the following differences from calling pydantic's
@@ -151,7 +233,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         * Fields in `self.additional_properties` are added to the output dict.
         {{/isAdditionalPropertiesTrue}}
         """
-        excluded_fields: Set[str] = set([
+        excluded_fields: set[str] = set([
             {{#vendorExtensions.x-py-readonly}}
             "{{{.}}}",
             {{/vendorExtensions.x-py-readonly}}
@@ -176,7 +258,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
             for _item_{{{name}}} in self.{{{name}}}:
                 if _item_{{{name}}}:
                     _items.append(
-                         [_inner_item.to_dict() for _inner_item in _item_{{{name}}} if _inner_item is not None]
+                         [_inner_item.to_dict() if hasattr(_inner_item, 'to_dict') else _inner_item for _inner_item in _item_{{{name}}} if _inner_item is not None]
                     )
             _dict['{{{baseName}}}'] = _items
         {{/items.items.isPrimitiveType}}
@@ -189,7 +271,10 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         if self.{{{name}}}:
             for _item_{{{name}}} in self.{{{name}}}:
                 if _item_{{{name}}}:
-                    _items.append(_item_{{{name}}}.to_dict())
+                    if hasattr(_item_{{{name}}}, 'to_dict'):
+                        _items.append(_item_{{{name}}}.to_dict())
+                    else:
+                        _items.append(_item_{{{name}}})
             _dict['{{{baseName}}}'] = _items
         {{/items.isEnumOrRef}}
         {{/items.isPrimitiveType}}
@@ -204,7 +289,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
             for _key_{{{name}}} in self.{{{name}}}:
                 if self.{{{name}}}[_key_{{{name}}}] is not None:
                     _field_dict_of_array[_key_{{{name}}}] = [
-                        _item.to_dict() for _item in self.{{{name}}}[_key_{{{name}}}]
+                        _item.to_dict() if hasattr(_item, 'to_dict') else _item for _item in self.{{{name}}}[_key_{{{name}}}]
                     ]
             _dict['{{{baseName}}}'] = _field_dict_of_array
         {{/items.items.isPrimitiveType}}
@@ -216,8 +301,13 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         _field_dict = {}
         if self.{{{name}}}:
             for _key_{{{name}}} in self.{{{name}}}:
-                if self.{{{name}}}[_key_{{{name}}}]:
-                    _field_dict[_key_{{{name}}}] = self.{{{name}}}[_key_{{{name}}}].to_dict()
+                _val = self.{{{name}}}[_key_{{{name}}}]
+                if _val is None:
+                    _field_dict[_key_{{{name}}}] = None
+                elif hasattr(_val, 'to_dict'):
+                    _field_dict[_key_{{{name}}}] = _val.to_dict()
+                else:
+                    _field_dict[_key_{{{name}}}] = _val
             _dict['{{{baseName}}}'] = _field_dict
         {{/items.isEnumOrRef}}
         {{/items.isPrimitiveType}}
@@ -229,7 +319,16 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         {{^isEnumOrRef}}
         # override the default output from pydantic by calling `to_dict()` of {{{name}}}
         if self.{{{name}}}:
-            _dict['{{{baseName}}}'] = self.{{{name}}}.to_dict()
+            if hasattr(self.{{{name}}}, 'to_dict'):
+                _dict_value = self.{{{name}}}.to_dict()
+                # Only include if to_dict() returns a non-None value (handles oneOf wrappers with actual_instance=None)
+                if _dict_value is not None:
+                    _dict['{{{baseName}}}'] = _dict_value
+                elif '{{{baseName}}}' in _dict:
+                    # Remove from dict if to_dict() returned None (oneOf wrapper with no actual instance)
+                    del _dict['{{{baseName}}}']
+            else:
+                _dict['{{{baseName}}}'] = self.{{{name}}}
         {{/isEnumOrRef}}
         {{/isPrimitiveType}}
         {{/isContainer}}
@@ -254,7 +353,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
 
     {{#hasChildren}}
     @classmethod
-    def from_dict(cls, obj: Dict[str, Any]) -> Optional[{{#discriminator}}Union[{{#mappedModels}}{{{modelName}}}{{^-last}}, {{/-last}}{{/mappedModels}}]{{/discriminator}}{{^discriminator}}Self{{/discriminator}}]:
+    def from_dict(cls, obj: dict[str, Any]) -> {{#discriminator}}{{#mappedModels}}{{{modelName}}}{{^-last}} | {{/-last}}{{/mappedModels}}{{/discriminator}}{{^discriminator}}Self{{/discriminator}} | None:
         """Create an instance of {{{classname}}} from a dict"""
         {{#discriminator}}
         # look up the object type based on discriminator mapping
@@ -271,7 +370,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
     {{/hasChildren}}
     {{^hasChildren}}
     @classmethod
-    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
+    def from_dict(cls, obj: dict[str, Any] | None) -> Self | None:
         """Create an instance of {{{classname}}} from a dict"""
         if obj is None:
             return None
@@ -289,31 +388,45 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         {{/isAdditionalPropertiesTrue}}
         {{/disallowAdditionalPropertiesIfNotPresent}}
         _obj = cls.model_validate({
+            k: v for k, v in {
             {{#allVars}}
             {{#isContainer}}
             {{#isArray}}
             {{#items.isArray}}
             {{#items.items.isPrimitiveType}}
-            "{{{baseName}}}": obj.get("{{{baseName}}}"){{^-last}},{{/-last}}
+            "{{{baseName}}}": obj.get("{{{baseName}}}"),
             {{/items.items.isPrimitiveType}}
             {{^items.items.isPrimitiveType}}
             "{{{baseName}}}": [
                     [{{{items.items.dataType}}}.from_dict(_inner_item) for _inner_item in _item]
                     for _item in obj["{{{baseName}}}"]
-                ] if obj.get("{{{baseName}}}") is not None else None{{^-last}},{{/-last}}
+                ] if obj.get("{{{baseName}}}") is not None else None,
             {{/items.items.isPrimitiveType}}
             {{/items.isArray}}
             {{^items.isArray}}
             {{^items.isPrimitiveType}}
             {{#items.isEnumOrRef}}
-            "{{{baseName}}}": obj.get("{{{baseName}}}"){{^-last}},{{/-last}}
+            "{{{baseName}}}": obj.get("{{{baseName}}}"),
             {{/items.isEnumOrRef}}
             {{^items.isEnumOrRef}}
-            "{{{baseName}}}": [{{{items.dataType}}}.from_dict(_item) for _item in obj["{{{baseName}}}"]] if obj.get("{{{baseName}}}") is not None else None{{^-last}},{{/-last}}
+            {{#items.isMap}}
+            {{#items.items.isPrimitiveType}}
+            "{{{baseName}}}": obj.get("{{{baseName}}}"),
+            {{/items.items.isPrimitiveType}}
+            {{^items.items.isPrimitiveType}}
+            "{{{baseName}}}": [
+                dict((_k, {{{items.items.dataType}}}.from_dict(_v)) for _k, _v in _item.items())
+                for _item in obj["{{{baseName}}}"]
+            ] if obj.get("{{{baseName}}}") is not None else None,
+            {{/items.items.isPrimitiveType}}
+            {{/items.isMap}}
+            {{^items.isMap}}
+            "{{{baseName}}}": [{{{items.dataType}}}.from_dict(_item) for _item in obj["{{{baseName}}}"]] if obj.get("{{{baseName}}}") is not None else None,
+            {{/items.isMap}}
             {{/items.isEnumOrRef}}
             {{/items.isPrimitiveType}}
             {{#items.isPrimitiveType}}
-            "{{{baseName}}}": obj.get("{{{baseName}}}"){{^-last}},{{/-last}}
+            "{{{baseName}}}": obj.get("{{{baseName}}}"),
             {{/items.isPrimitiveType}}
             {{/items.isArray}}
             {{/isArray}}
@@ -333,7 +446,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
                 for _k, _v in obj.get("{{{baseName}}}").items()
             )
             if obj.get("{{{baseName}}}") is not None
-            else None{{^-last}},{{/-last}}
+            else None,
             {{/items.isMap}}
             {{#items.isArray}}
             "{{{baseName}}}": dict(
@@ -343,7 +456,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
                         else None
                 )
                 for _k, _v in obj.get("{{{baseName}}}", {}).items()
-            ){{^-last}},{{/-last}}
+            ),
             {{/items.isArray}}
             {{/items.isContainer}}
             {{^items.isContainer}}
@@ -352,37 +465,38 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
                 for _k, _v in obj["{{{baseName}}}"].items()
             )
             if obj.get("{{{baseName}}}") is not None
-            else None{{^-last}},{{/-last}}
+            else None,
             {{/items.isContainer}}
             {{/items.isEnumOrRef}}
             {{#items.isEnumOrRef}}
-            "{{{baseName}}}": dict((_k, _v) for _k, _v in obj.get("{{{baseName}}}").items()) if obj.get("{{{baseName}}}") is not None else None{{^-last}},{{/-last}}
+            "{{{baseName}}}": dict((_k, _v) for _k, _v in obj.get("{{{baseName}}}").items()) if obj.get("{{{baseName}}}") is not None else None,
             {{/items.isEnumOrRef}}
             {{/items.isPrimitiveType}}
             {{#items.isPrimitiveType}}
-            "{{{baseName}}}": obj.get("{{{baseName}}}"){{^-last}},{{/-last}}
+            "{{{baseName}}}": obj.get("{{{baseName}}}"),
             {{/items.isPrimitiveType}}
             {{/isMap}}
             {{/isContainer}}
             {{^isContainer}}
             {{^isPrimitiveType}}
             {{^isEnumOrRef}}
-            "{{{baseName}}}": {{{dataType}}}.from_dict(obj["{{{baseName}}}"]) if obj.get("{{{baseName}}}") is not None else None{{^-last}},{{/-last}}
+            "{{{baseName}}}": {{{dataType}}}.from_dict(obj["{{{baseName}}}"]) if obj.get("{{{baseName}}}") is not None else None,
             {{/isEnumOrRef}}
             {{#isEnumOrRef}}
-            "{{{baseName}}}": obj.get("{{{baseName}}}"){{#defaultValue}} if obj.get("{{baseName}}") is not None else {{{defaultValue}}}{{/defaultValue}}{{^-last}},{{/-last}}
+            "{{{baseName}}}": obj.get("{{{baseName}}}"){{#defaultValue}} if obj.get("{{baseName}}") is not None else {{{defaultValue}}}{{/defaultValue}},
             {{/isEnumOrRef}}
             {{/isPrimitiveType}}
             {{#isPrimitiveType}}
             {{#defaultValue}}
-            "{{{baseName}}}": obj.get("{{{baseName}}}") if obj.get("{{{baseName}}}") is not None else {{{defaultValue}}}{{^-last}},{{/-last}}
+            "{{{baseName}}}": obj.get("{{{baseName}}}") if obj.get("{{{baseName}}}") is not None else {{{defaultValue}}},
             {{/defaultValue}}
             {{^defaultValue}}
-            "{{{baseName}}}": obj.get("{{{baseName}}}"){{^-last}},{{/-last}}
+            "{{{baseName}}}": obj.get("{{{baseName}}}"),
             {{/defaultValue}}
             {{/isPrimitiveType}}
             {{/isContainer}}
             {{/allVars}}
+            }.items() if k in obj
         })
         {{#isAdditionalPropertiesTrue}}
         # store additional fields in additional_properties

@@ -9,7 +9,18 @@ from importlib.metadata import version
 
 import click
 import yaml
-from llama_stack_client import LlamaStackClient
+
+from ... import LlamaStackClient
+
+
+def _get_version():
+    for dist_name in ("llama-stack-client", "llama-stack-open-client"):
+        try:
+            return version(dist_name)
+        except Exception:
+            continue
+    return "unknown"
+
 
 from .configure import configure
 from .constants import get_config_file_path
@@ -29,7 +40,7 @@ from .vector_stores import vector_stores
 
 @click.group()
 @click.help_option("-h", "--help")
-@click.version_option(version=version("llama-stack-client"), prog_name="llama-stack-client")
+@click.version_option(version=_get_version(), prog_name="llama-stack-client")
 @click.option("--endpoint", type=str, help="Llama Stack distribution endpoint", default="")
 @click.option("--api-key", type=str, help="Llama Stack distribution API key", default="")
 @click.option("--config", type=str, help="Path to config file", default=None)

@@ -126,6 +126,24 @@ async def convert_chat_choice_to_response_message(
     )
 
 
+def _file_part_to_text_part(part: OpenAIFile) -> OpenAIChatCompletionContentPartTextParam:
+    # OpenAIFile carries a data URL in part.file.file_data.  Decode text MIME types back
+    # to a plain string so tool message content (text-only) stays readable to the model.
+    data_url = part.file.file_data if part.file else None
+    if data_url and data_url.startswith("data:"):
+        # data:<mime>;base64,<payload>
+        header, _, payload = data_url.partition(",")
+        mime = header.split(";")[0][len("data:") :]
+        if mime.startswith("text/") and payload:
+            try:
+                return OpenAIChatCompletionContentPartTextParam(text=base64.b64decode(payload).decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                pass
+        if payload:
+            return OpenAIChatCompletionContentPartTextParam(text=data_url)
+    return OpenAIChatCompletionContentPartTextParam(text=data_url or "")
+
+
 async def convert_response_content_to_chat_content(
     content: str | Sequence[OpenAIResponseInputMessageContent | OpenAIResponseOutputMessageContent],
     files_api: Files | None,
@@ -243,8 +261,23 @@ async def convert_response_input_to_chat_messages(
         tool_call_results = {}
         for input_item in input:
             if isinstance(input_item, OpenAIResponseInputFunctionToolCallOutput):
+                output = input_item.output
+                if isinstance(output, list):
+                    # output is list[OpenAIResponseInputMessageContent] — convert to chat content
+                    converted = await convert_response_content_to_chat_content(output, files_api=files_api)
+                    if isinstance(converted, list):
+                        # OpenAIToolMessageParam only supports text content parts; convert any
+                        # OpenAIFile parts (valid in user messages) to text by decoding their payload
+                        content: str | list[OpenAIChatCompletionContentPartTextParam] = [
+                            _file_part_to_text_part(part) if isinstance(part, OpenAIFile) else part
+                            for part in converted
+                        ]
+                    else:
+                        content = converted
+                else:
+                    content = output
                 tool_call_results[input_item.call_id] = OpenAIToolMessageParam(
-                    content=input_item.output,
+                    content=content,
                     tool_call_id=input_item.call_id,
                 )
 

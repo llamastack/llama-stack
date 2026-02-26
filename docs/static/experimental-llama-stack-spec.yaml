@@ -2617,8 +2617,26 @@ components:
           type: string
           title: Call Id
         output:
-          type: string
-          title: Output
+          anyOf:
+          - type: string
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
+                title: OpenAIResponseInputMessageContentText
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                title: OpenAIResponseInputMessageContentImage
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                title: OpenAIResponseInputMessageContentFile
+              discriminator:
+                propertyName: type
+                mapping:
+                  input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                  input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                  input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
+              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
+            type: array
+            title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
         type:
           type: string
           const: function_call_output

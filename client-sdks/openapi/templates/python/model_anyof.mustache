@@ -9,9 +9,10 @@ import re  # noqa: F401
 {{#vendorExtensions.x-py-model-imports}}
 {{{.}}}
 {{/vendorExtensions.x-py-model-imports}}
-from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
+from typing import Any, TYPE_CHECKING
 from typing_extensions import Literal, Self
 from pydantic import Field
+from {{packageName}}.lib._utils import pascal_to_snake_case
 
 {{#lambda.uppercase}}{{{classname}}}{{/lambda.uppercase}}_ANY_OF_SCHEMAS = [{{#anyOf}}"{{.}}"{{^-last}}, {{/-last}}{{/anyOf}}]
 
@@ -25,10 +26,10 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
     {{vendorExtensions.x-py-name}}: {{{vendorExtensions.x-py-typing}}}
 {{/composedSchemas.anyOf}}
     if TYPE_CHECKING:
-        actual_instance: Optional[Union[{{#anyOf}}{{{.}}}{{^-last}}, {{/-last}}{{/anyOf}}]] = None
+        actual_instance: {{#anyOf}}{{{.}}}{{^-last}} | {{/-last}}{{/anyOf}} | None = None
     else:
         actual_instance: Any = None
-    any_of_schemas: Set[str] = { {{#anyOf}}"{{.}}"{{^-last}}, {{/-last}}{{/anyOf}} }
+    any_of_schemas: set[str] = { {{#anyOf}}"{{.}}"{{^-last}}, {{/-last}}{{/anyOf}} }
 
     model_config = {
         "validate_assignment": True,
@@ -36,7 +37,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
     }
 {{#discriminator}}
 
-    discriminator_value_class_map: Dict[str, str] = {
+    discriminator_value_class_map: dict[str, str] = {
 {{#children}}
         '{{^vendorExtensions.x-discriminator-value}}{{name}}{{/vendorExtensions.x-discriminator-value}}{{#vendorExtensions.x-discriminator-value}}{{{vendorExtensions.x-discriminator-value}}}{{/vendorExtensions.x-discriminator-value}}': '{{{classname}}}'{{^-last}},{{/-last}}
 {{/children}}
@@ -53,6 +54,20 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         else:
             super().__init__(**kwargs)
 
+    def __getattr__(self, name: str):
+        """Proxy attribute access to actual_instance for transparency."""
+        # Avoid infinite recursion for private attributes and model fields
+        if name.startswith('_') or name in ('actual_instance', 'any_of_schemas', 'model_config', 'model_fields'):
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}'")
+
+        actual = super().__getattribute__('actual_instance')
+        if actual is None:
+            raise AttributeError(f"'{type(self).__name__}' object has no attribute '{name}' (actual_instance is None)")
+
+        return getattr(actual, name)
+
+{{>partial_model_wrapper_methods}}
+
     @field_validator('actual_instance')
     def actual_instance_must_validate_anyof(cls, v):
         {{#isNullable}}
@@ -66,7 +81,39 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         # validate data type: {{{dataType}}}
         {{#isContainer}}
         try:
-            instance.{{vendorExtensions.x-py-name}} = v
+            # For lists, we need to validate each item and potentially construct models from dicts
+            # This ensures default values are applied when users pass plain dicts
+            if isinstance(v, list):
+                # Extract the item type from the dataType (e.g., "List[Foo]" -> "Foo")
+                type_str = "{{{dataType}}}"
+                match_result = re.match(r'List\[(.+)\]', type_str)
+                if match_result:
+                    item_type_name = match_result.group(1)
+                    # Check if item_type_name is a primitive type (object, str, int, etc.)
+                    # These don't have corresponding model classes to import
+                    primitive_types = {'object', 'str', 'int', 'float', 'bool', 'Any'}
+                    if item_type_name in primitive_types:
+                        # For primitives, just use the list as-is
+                        instance.{{vendorExtensions.x-py-name}} = v
+                    else:
+                        # Manually construct each item using from_dict to ensure actual_instance is set
+                        import importlib
+                        module_name = pascal_to_snake_case(item_type_name)
+                        item_module = importlib.import_module('{{packageName}}.models.' + module_name)
+                        item_class = getattr(item_module, item_type_name)
+                        validated_items = []
+                        for item in v:
+                            if isinstance(item, dict):
+                                validated_items.append(item_class.from_dict(item))
+                            else:
+                                # Already a model instance
+                                validated_items.append(item)
+                        # Return the validated list directly to avoid re-triggering validation
+                        return validated_items
+                else:
+                    instance.{{vendorExtensions.x-py-name}} = v
+            else:
+                instance.{{vendorExtensions.x-py-name}} = v
             return v
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
@@ -95,7 +142,13 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
             return v
 
     @classmethod
-    def from_dict(cls, obj: Dict[str, Any]) -> Self:
+    def from_dict(cls, obj: dict[str, Any] | list | str | Any) -> Self:
+        # Handle primitives and lists directly - don't double-serialize them
+        if isinstance(obj, (str, int, float, bool, type(None), list)):
+            # For non-dict content, bypass from_json and use actual_instance_must_validate_anyof
+            instance = cls.model_construct()
+            instance.actual_instance = cls.actual_instance_must_validate_anyof(obj)
+            return instance
         return cls.from_json(json.dumps(obj))
 
     @classmethod
@@ -112,10 +165,36 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         {{#isContainer}}
         # deserialize data into {{{dataType}}}
         try:
-            # validation
-            instance.{{vendorExtensions.x-py-name}} = json.loads(json_str)
-            # assign value to actual_instance
-            instance.actual_instance = instance.{{vendorExtensions.x-py-name}}
+            _data = json.loads(json_str)
+            # Extract the item type from the dataType (e.g., "List[Foo]" -> "Foo")
+            _type_str = "{{{dataType}}}"
+            _match_result = re.match(r'List\[(.+)\]', _type_str)
+            if _match_result and isinstance(_data, list):
+                _item_type_name = _match_result.group(1)
+                # Check if item_type_name is a primitive type
+                _primitive_types = {'object', 'str', 'int', 'float', 'bool', 'Any'}
+                if _item_type_name in _primitive_types:
+                    # For primitives, just use the list as-is
+                    instance.{{vendorExtensions.x-py-name}} = _data
+                    instance.actual_instance = _data
+                else:
+                    # Manually construct each item using from_dict to ensure actual_instance is set
+                    import importlib
+                    _module_name = pascal_to_snake_case(_item_type_name)
+                    _item_module = importlib.import_module('{{packageName}}.models.' + _module_name)
+                    _item_class = getattr(_item_module, _item_type_name)
+                    _validated_items = []
+                    for _item in _data:
+                        if isinstance(_item, dict):
+                            _validated_items.append(_item_class.from_dict(_item))
+                        else:
+                            # Already a model instance
+                            _validated_items.append(_item)
+                    instance.{{vendorExtensions.x-py-name}} = _validated_items
+                    instance.actual_instance = _validated_items
+            else:
+                instance.{{vendorExtensions.x-py-name}} = _data
+                instance.actual_instance = _data
             return instance
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
@@ -149,17 +228,7 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         else:
             return instance
 
-    def to_json(self) -> str:
-        """Returns the JSON representation of the actual instance"""
-        if self.actual_instance is None:
-            return "null"
-
-        if hasattr(self.actual_instance, "to_json") and callable(self.actual_instance.to_json):
-            return self.actual_instance.to_json()
-        else:
-            return json.dumps(self.actual_instance)
-
-    def to_dict(self) -> Optional[Union[Dict[str, Any], {{#anyOf}}{{.}}{{^-last}}, {{/-last}}{{/anyOf}}]]:
+    def to_dict(self) -> dict[str, Any] | {{#anyOf}}{{.}}{{^-last}} | {{/-last}}{{/anyOf}} | None:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None
@@ -169,14 +238,4 @@ class {{classname}}({{#parent}}{{{.}}}{{/parent}}{{^parent}}BaseModel{{/parent}}
         else:
             return self.actual_instance
 
-    def to_str(self) -> str:
-        """Returns the string representation of the actual instance"""
-        return pprint.pformat(self.model_dump())
-
-{{#vendorExtensions.x-py-postponed-model-imports.size}}
-{{#vendorExtensions.x-py-postponed-model-imports}}
-{{{.}}}
-{{/vendorExtensions.x-py-postponed-model-imports}}
-# TODO: Rewrite to not use raise_errors
-{{classname}}.model_rebuild(raise_errors=False)
-{{/vendorExtensions.x-py-postponed-model-imports.size}}
+{{>partial_model_postponed_imports}}
