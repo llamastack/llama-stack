@@ -93,6 +93,7 @@ from llama_stack_api import (
     OpenAIResponseUsageOutputTokensDetails,
     OpenAIToolMessageParam,
     ResponseItemInclude,
+    ResponseStreamOptions,
     ResponseTruncation,
     Safety,
     ToolDef,
@@ -228,6 +229,7 @@ class StreamingResponseOrchestrator:
         truncation: ResponseTruncation | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
+        stream_options: ResponseStreamOptions | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -257,6 +259,7 @@ class StreamingResponseOrchestrator:
         self.metadata = metadata
         self.truncation = truncation
         self.top_logprobs = top_logprobs
+        self.stream_options = stream_options
         self.include = include
         self.store = bool(store) if store is not None else True
         self.presence_penalty = presence_penalty
@@ -493,6 +496,11 @@ class StreamingResponseOrchestrator:
                     self.parallel_tool_calls if effective_tools is not None and len(effective_tools) > 0 else None
                 )
 
+                # Merge user stream_options with default include_usage
+                effective_stream_options = {"include_usage": True}
+                if self.stream_options:
+                    effective_stream_options.update(self.stream_options)
+
                 params = OpenAIChatCompletionRequestWithExtraBody(
                     model=self.ctx.model,
                     messages=messages,
@@ -504,9 +512,7 @@ class StreamingResponseOrchestrator:
                     top_p=self.ctx.top_p,
                     frequency_penalty=self.ctx.frequency_penalty,
                     response_format=response_format,
-                    stream_options={
-                        "include_usage": True,
-                    },
+                    stream_options=effective_stream_options,
                     logprobs=logprobs,
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,

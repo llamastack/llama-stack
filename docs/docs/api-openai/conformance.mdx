@@ -21,8 +21,8 @@ This documentation is auto-generated from the OpenAI API specification compariso
 | **Overall Conformance Score** | 84.8% |
 | **Endpoints Implemented** | 28/114 |
 | **Total Properties Checked** | 2598 |
-| **Schema/Type Issues** | 275 |
-| **Missing Properties** | 121 |
+| **Schema/Type Issues** | 276 |
+| **Missing Properties** | 120 |
 | **Total Issues to Fix** | 396 |
 
 ## Category Scores
@@ -38,7 +38,7 @@ Categories are sorted by conformance score (lowest first, needing most attention
 | Files | 54.8% | 42 | 11 | 8 |
 | Vector stores | 65.2% | 310 | 94 | 14 |
 | Embeddings | 71.4% | 14 | 4 | 0 |
-| Responses | 86.2% | 225 | 29 | 2 |
+| Responses | 86.2% | 225 | 30 | 1 |
 | Chat | 92.8% | 402 | 23 | 6 |
 | Conversations | 98.0% | 1323 | 22 | 4 |
 
@@ -936,22 +936,21 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 ### Responses
 
-**Score:** 86.2% · **Issues:** 29 · **Missing:** 2
+**Score:** 86.2% · **Issues:** 30 · **Missing:** 1
 
 #### `/responses`
 
 **POST**
 
 <details>
-<summary>Missing Properties (2)</summary>
+<summary>Missing Properties (1)</summary>
 
-- `requestBody.content.application/json.properties.stream_options`
 - `requestBody.content.application/x-www-form-urlencoded`
 
 </details>
 
 <details>
-<summary>Schema Issues (29)</summary>
+<summary>Schema Issues (30)</summary>
 
 | Property | Issues |
 |----------|--------|
@@ -963,6 +962,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `requestBody.content.application/json.properties.service_tier` | Union variants added: 2 |
 | `requestBody.content.application/json.properties.store` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> True |
 | `requestBody.content.application/json.properties.stream` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> False |
+| `requestBody.content.application/json.properties.stream_options` | Union variants added: 1; Union variants removed: 1 |
 | `requestBody.content.application/json.properties.text` | Union variants added: 1; Union variants removed: 1 |
 | `requestBody.content.application/json.properties.tool_choice` | Union variants added: 2; Union variants removed: 1 |
 | `requestBody.content.application/json.properties.truncation` | Union variants added: 2 |

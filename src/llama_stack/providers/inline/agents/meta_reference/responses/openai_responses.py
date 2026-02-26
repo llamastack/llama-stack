@@ -53,6 +53,7 @@ from llama_stack_api import (
     Prompts,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseStreamOptions,
     ResponseTruncation,
     Safety,
     ServiceNotEnabledError,
@@ -570,6 +571,7 @@ class OpenAIResponsesImpl:
         truncation: ResponseTruncation | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
+        stream_options: ResponseStreamOptions | None = None,
     ):
         stream = bool(stream)
         background = bool(background)
@@ -676,6 +678,7 @@ class OpenAIResponsesImpl:
             truncation=truncation,
             top_logprobs=top_logprobs,
             presence_penalty=presence_penalty,
+            stream_options=stream_options,
         )
 
         if stream:
@@ -967,6 +970,7 @@ class OpenAIResponsesImpl:
         response_id: str | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
+        stream_options: ResponseStreamOptions | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -1042,6 +1046,7 @@ class OpenAIResponsesImpl:
                 truncation=truncation,
                 top_logprobs=top_logprobs,
                 presence_penalty=presence_penalty,
+                stream_options=stream_options,
             )
 
             final_response = None

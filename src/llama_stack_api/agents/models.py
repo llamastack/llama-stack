@@ -58,6 +58,17 @@ class ResponseGuardrailSpec(BaseModel):
 ResponseGuardrail = str | ResponseGuardrailSpec
 
 
+class ResponseStreamOptions(BaseModel):
+    """Options that control streamed response behavior."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    include_obfuscation: bool = Field(
+        default=True,
+        description="Whether to obfuscate sensitive information in streamed output.",
+    )
+
+
 class CreateResponseRequest(BaseModel):
     """Request model for creating a response."""
 
@@ -184,6 +195,10 @@ class CreateResponseRequest(BaseModel):
         ge=-2.0,
         le=2.0,
         description="Penalizes new tokens based on whether they appear in the text so far.",
+    )
+    stream_options: ResponseStreamOptions | None = Field(
+        default=None,
+        description="Options that control streamed response behavior.",
     )
 
 
