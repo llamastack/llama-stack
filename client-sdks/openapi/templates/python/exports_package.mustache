@@ -14,6 +14,23 @@ from {{packageName}}.exceptions import ApiException as ApiException
 {{#hasHttpSignatureMethods}}
 from {{packageName}}.signing import HttpSigningConfiguration as HttpSigningConfiguration
 {{/hasHttpSignatureMethods}}
+# import async classes
+from {{packageName}}.async_api_client import AsyncApiClient as AsyncApiClient
+from {{packageName}}.async_api_response import AsyncApiResponse as AsyncApiResponse
+from {{packageName}}.async_stream import AsyncStream as AsyncStream
+# import sync stream
+from {{packageName}}.stream import Stream as Stream
+# import types
+from {{packageName}}._types import NoneType as NoneType
+from {{packageName}}._types import NotGiven as NotGiven
+from {{packageName}}._types import NOT_GIVEN as NOT_GIVEN
+from {{packageName}}._types import not_given as not_given
+from {{packageName}}._types import Omit as Omit
+from {{packageName}}._types import omit as omit
+from {{packageName}}._types import RequestOptions as RequestOptions
+# import LlamaStackClient and AsyncLlamaStackClient
+from {{packageName}}.llama_stack_client import LlamaStackClient as LlamaStackClient
+from {{packageName}}.llama_stack_client import AsyncLlamaStackClient as AsyncLlamaStackClient
 
 # import models into sdk package
 {{#models}}{{#model}}from {{modelPackage}}.{{classFilename}} import {{classname}} as {{classname}}

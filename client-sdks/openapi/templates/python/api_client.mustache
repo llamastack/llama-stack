@@ -2,6 +2,7 @@
 
 {{>partial_header}}
 
+from __future__ import annotations
 
 import datetime
 from dateutil.parser import parse
@@ -15,7 +16,6 @@ import tempfile
 import uuid
 
 from urllib.parse import quote
-from typing import Tuple, Optional, List, Dict, Union
 from pydantic import SecretStr
 {{#tornado}}
 import tornado.gen
@@ -35,7 +35,7 @@ from {{packageName}}.exceptions import (
     ServiceException
 )
 
-RequestSerialized = Tuple[str, str, Dict[str, str], Optional[str], List[str]]
+RequestSerialized = tuple[str, str, dict[str, str], str | None, list[str]]
 
 class ApiClient:
     """Generic API client for OpenAPI client library builds.
@@ -103,7 +103,7 @@ class ApiClient:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        pass
+        self.rest_client.close()
 {{/async}}
 
     @property
@@ -232,7 +232,7 @@ class ApiClient:
         )
 
         # body
-        if body:
+        if body is not None:
             body = self.sanitize_for_serialization(body)
 
         # request url
@@ -295,7 +295,7 @@ class ApiClient:
     def response_deserialize(
         self,
         response_data: rest.RESTResponse,
-        response_types_map: Optional[Dict[str, ApiResponseT]]=None
+        response_types_map: dict[str, ApiResponseT] | None=None
     ) -> ApiResponse[ApiResponseT]:
         """Deserializes response into an object.
         :param response_data: RESTResponse object to be deserialized.
@@ -321,7 +321,7 @@ class ApiClient:
                 return_data = self.__deserialize_file(response_data)
             elif response_type is not None:
                 match = None
-                content_type = response_data.headers.get('content-type')
+                content_type = response_data.getheader('content-type')
                 if content_type is not None:
                     match = re.search(r"charset=([a-zA-Z\-\d]+)[\s;]?", content_type)
                 encoding = match.group(1) if match else "utf-8"
@@ -338,7 +338,7 @@ class ApiClient:
         return ApiResponse(
             status_code = response_data.status,
             data = return_data,
-            headers = response_data.headers,
+            headers = response_data.getheaders(),
             raw_data = response_data.data
         )
 
@@ -376,7 +376,7 @@ class ApiClient:
             return tuple(
                 self.sanitize_for_serialization(sub_obj) for sub_obj in obj
             )
-        elif isinstance(obj, (datetime.datetime, datetime.date)):
+        elif isinstance(obj, datetime.datetime | datetime.date):
             return obj.isoformat()
         elif isinstance(obj, decimal.Decimal):
             return str(obj)
@@ -391,6 +391,12 @@ class ApiClient:
             # model definition for request.
             if hasattr(obj, 'to_dict') and callable(getattr(obj, 'to_dict')):
                 obj_dict = obj.to_dict()
+                # Handle Pydantic models that return None from to_dict()
+                if obj_dict is None:
+                    obj_dict = {}
+                # Handle oneOf wrappers that return primitives (str, int, etc.) from to_dict()
+                elif isinstance(obj_dict, self.PRIMITIVE_TYPES):
+                    return obj_dict
             else:
                 obj_dict = obj.__dict__
 
@@ -403,7 +409,7 @@ class ApiClient:
             for key, val in obj_dict.items()
         }
 
-    def deserialize(self, response_text: str, response_type: str, content_type: Optional[str]):
+    def deserialize(self, response_text: str, response_type: str, content_type: str | None):
         """Deserializes response into an object.
 
         :param response: RESTResponse object to be deserialized.
@@ -425,13 +431,18 @@ class ApiClient:
                 data = ""
             else:
                 data = json.loads(response_text)
-        elif re.match(r'^text\/[a-z.+-]+\s*(;|$)', content_type, re.IGNORECASE):
+        elif re.match(r'^(text\/[a-z.+-]+|application/octet-stream)\s*(;|$)', content_type, re.IGNORECASE):
             data = response_text
         else:
             raise ApiException(
                 status=0,
                 reason="Unsupported content type: {0}".format(content_type)
             )
+
+        # Handle error responses that are wrapped in an "error" key
+        # Server may return {"error": {"detail": ...}} but spec expects {"detail": ...}
+        if response_type == "Error" and isinstance(data, dict) and "error" in data:
+            data = data["error"]
 
         return self.__deserialize(data, response_type)
 
@@ -489,7 +500,7 @@ class ApiClient:
         :param dict collection_formats: Parameter collection formats
         :return: Parameters as list of tuples, collections formatted
         """
-        new_params: List[Tuple[str, str]] = []
+        new_params: list[tuple[str, str]] = []
         if collection_formats is None:
             collection_formats = {}
         for k, v in params.items() if isinstance(params, dict) else params:
@@ -519,13 +530,13 @@ class ApiClient:
         :param dict collection_formats: Parameter collection formats
         :return: URL query string (e.g. a=Hello%20World&b=123)
         """
-        new_params: List[Tuple[str, str]] = []
+        new_params: list[tuple[str, str]] = []
         if collection_formats is None:
             collection_formats = {}
         for k, v in params.items() if isinstance(params, dict) else params:
             if isinstance(v, bool):
                 v = str(v).lower()
-            if isinstance(v, (int, float)):
+            if isinstance(v, int | float):
                 v = str(v)
             if isinstance(v, dict):
                 v = json.dumps(v)
@@ -553,7 +564,7 @@ class ApiClient:
 
     def files_parameters(
         self,
-        files: Dict[str, Union[str, bytes, List[str], List[bytes], Tuple[str, bytes]]],
+        files: dict[str, str | bytes | list[str] | list[bytes] | tuple[str, bytes]],
     ):
         """Builds form parameters.
 
@@ -575,6 +586,18 @@ class ApiClient:
                 for file_param in v:
                     params.extend(self.files_parameters({k: file_param}))
                 continue
+            elif hasattr(v, 'read'):
+                # File-like object (BytesIO, file handle, etc.)
+                filename = getattr(v, 'name', k)
+                if hasattr(filename, '__fspath__'):
+                    # Handle PathLike objects
+                    filename = os.fspath(filename)
+                if not isinstance(filename, str):
+                    filename = k
+                # Extract just the basename if it's a full path
+                if os.path.sep in filename or (os.path.altsep and os.path.altsep in filename):
+                    filename = os.path.basename(filename)
+                filedata = v.read()
             else:
                 raise ValueError("Unsupported file value")
             mimetype = (
@@ -586,7 +609,7 @@ class ApiClient:
             )
         return params
 
-    def select_header_accept(self, accepts: List[str]) -> Optional[str]:
+    def select_header_accept(self, accepts: list[str]) -> str | None:
         """Returns `Accept` based on an array of accepts provided.
 
         :param accepts: List of headers.
@@ -719,7 +742,7 @@ class ApiClient:
         os.close(fd)
         os.remove(path)
 
-        content_disposition = response.headers.get("Content-Disposition")
+        content_disposition = response.getheader("Content-Disposition")
         if content_disposition:
             m = re.search(
                 r'filename=[\'"]?([^\'"\s]+)[\'"]?',

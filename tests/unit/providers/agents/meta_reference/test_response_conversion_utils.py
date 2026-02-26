@@ -177,6 +177,51 @@ class TestConvertResponseInputToChatMessages:
         assert result[1].content == "Tool output"
         assert result[1].tool_call_id == "call_123"
 
+    async def test_convert_function_tool_call_output_with_list_content(self):
+        # The OpenAI Responses API spec uses "input_text" as the type discriminator
+        # for text content blocks in function_call_output.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_123",
+                name="search_parks",
+                arguments='{"state_code": "RI"}',
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[{"type": "input_text", "text": '{"parks": ["Park A", "Park B"]}'}],
+                call_id="call_123",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 2
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert result[1].content == [OpenAIChatCompletionContentPartTextParam(text='{"parks": ["Park A", "Park B"]}')]
+        assert result[1].tool_call_id == "call_123"
+
+    async def test_convert_function_tool_call_output_with_multi_block_list_content(self):
+        # Multiple text blocks should each become a separate content part.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_456",
+                name="search",
+                arguments="{}",
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[{"type": "input_text", "text": "first"}, {"type": "input_text", "text": "second"}],
+                call_id="call_456",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 2
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert result[1].content == [
+            OpenAIChatCompletionContentPartTextParam(text="first"),
+            OpenAIChatCompletionContentPartTextParam(text="second"),
+        ]
+
     async def test_convert_function_tool_call(self):
         input_items = [
             OpenAIResponseOutputMessageFunctionToolCall(

@@ -2625,7 +2625,7 @@ async def test_create_openai_response_with_truncation_auto_streaming(
     assert failed_event.type == "response.failed"
     assert failed_event.response.truncation == ResponseTruncation.auto
     assert failed_event.response.error is not None
-    assert failed_event.response.error.code == "invalid_request_error"
+    assert failed_event.response.error.code == "server_error"
     assert "Truncation mode 'auto' is not supported" in failed_event.response.error.message
 
     # Inference API should not be called since error occurs before inference

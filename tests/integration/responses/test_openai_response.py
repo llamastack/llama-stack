@@ -6,10 +6,26 @@
 
 import pytest
 
+from .streaming_assertions import StreamingValidator
+
 
 @pytest.mark.integration
 class TestOpenAIResponses:
     """Integration tests for the OpenAI responses API."""
+
+    def _invalid_base64_image_input(self):
+        return [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": "What is in this image?"},
+                    {
+                        "type": "input_image",
+                        "image_url": "data:image/png;base64,not_valid_base64_data!!!",
+                    },
+                ],
+            }
+        ]
 
     def test_openai_response_with_max_output_tokens(self, openai_client, text_model_id):
         """Test OpenAI response with max_output_tokens parameter."""
@@ -60,3 +76,55 @@ class TestOpenAIResponses:
         # Should get a validation error
         error_message = str(exc_info.value).lower()
         assert "validation" in error_message or "invalid" in error_message or "16" in error_message
+
+    def test_openai_response_streaming_failed_error_code_is_spec_compliant(self, openai_client, text_model_id):
+        """Verify streaming failures produce a spec-compliant error code."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input="Hello",
+            stream=True,
+            truncation="auto",
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        failed_events = [e for e in chunks if e.type == "response.failed"]
+        assert len(failed_events) == 1, f"Expected exactly one response.failed event, got {len(failed_events)}"
+
+        validator.validate_event_structure()
+
+    def test_openai_response_streaming_invalid_base64_image_failure_code_is_spec_compliant(
+        self, openai_client, text_model_id
+    ):
+        """Verify invalid base64 image input becomes response.failed with a spec-compliant error code."""
+        if text_model_id.startswith("ollama/"):
+            # In some replay environments, Ollama models may not be exposed via `models.list()`.
+            available_model_ids = {m.id for m in openai_client.models.list()}
+            if text_model_id not in available_model_ids:
+                pytest.skip(f"Model {text_model_id} not available in this environment")
+
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=self._invalid_base64_image_input(),
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        failed_events = [e for e in chunks if e.type == "response.failed"]
+        assert len(failed_events) == 1, f"Expected exactly one response.failed event, got {len(failed_events)}"
+
+        error = failed_events[0].response.error
+        assert error is not None
+
+        validator.validate_event_structure()
+
+        if text_model_id.startswith("openai/"):
+            assert error.code == "invalid_base64_image"
+
+        if text_model_id.startswith("ollama/"):
+            assert error.code in {"invalid_base64_image", "server_error"}
