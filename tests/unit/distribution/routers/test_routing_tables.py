@@ -358,22 +358,18 @@ async def test_double_registration_models_positive(cached_disk_dist_registry):
 
 
 async def test_double_registration_models_negative(cached_disk_dist_registry):
-    """Test that registering the same model with different data updates it (upsert)."""
+    """Test that registering the same model with conflicting data fails."""
     table = ModelsRoutingTable({"test_provider": InferenceImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
 
     # Register a model with specific metadata
     await table.register_model(model_id="test-model", provider_id="test_provider", metadata={"param1": "value1"})
 
-    # Re-register the same model with different metadata - should succeed (upsert)
-    await table.register_model(
-        model_id="test-model", provider_id="test_provider", metadata={"param1": "different_value"}
-    )
-
-    # Verify model was updated with new metadata
-    models = await table.list_models()
-    assert len(models.data) == 1
-    assert models.data[0].metadata["param1"] == "different_value"
+    # Try to register the same model with conflicting metadata - should fail
+    with pytest.raises(ValueError, match="conflicting field values"):
+        await table.register_model(
+            model_id="test-model", provider_id="test_provider", metadata={"param1": "different_value"}
+        )
 
 
 async def test_double_registration_scoring_functions_positive(cached_disk_dist_registry):
@@ -410,8 +406,8 @@ async def test_double_registration_scoring_functions_positive(cached_disk_dist_r
 
 
 async def test_double_registration_scoring_functions_negative(cached_disk_dist_registry):
-    """Test that registering the same scoring function with different data updates it (upsert)."""
-    from llama_stack_api import ListScoringFunctionsRequest, RegisterScoringFunctionRequest
+    """Test that registering the same scoring function with conflicting data fails."""
+    from llama_stack_api import RegisterScoringFunctionRequest
 
     table = ScoringFunctionsRoutingTable({"test_provider": ScoringFunctionsImpl()}, cached_disk_dist_registry, {})
     await table.initialize()
@@ -426,20 +422,16 @@ async def test_double_registration_scoring_functions_negative(cached_disk_dist_r
         )
     )
 
-    # Re-register the same scoring function with different description - should succeed (upsert)
-    await table.register_scoring_function(
-        RegisterScoringFunctionRequest(
-            scoring_fn_id="test-scoring-fn",
-            provider_id="test_provider",
-            description="Different description",
-            return_type=NumberType(),
+    # Try to register the same scoring function with conflicting description - should fail
+    with pytest.raises(ValueError, match="conflicting field values"):
+        await table.register_scoring_function(
+            RegisterScoringFunctionRequest(
+                scoring_fn_id="test-scoring-fn",
+                provider_id="test_provider",
+                description="Different description",
+                return_type=NumberType(),
+            )
         )
-    )
-
-    # Verify scoring function was updated with new description
-    scoring_functions = await table.list_scoring_functions(ListScoringFunctionsRequest())
-    assert len(scoring_functions.data) == 1
-    assert scoring_functions.data[0].description == "Different description"
 
 
 async def test_double_registration_different_providers(cached_disk_dist_registry):
