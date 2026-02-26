@@ -13,6 +13,7 @@ import pytest
 from llama_stack_client.lib.agents.agent import Agent
 from llama_stack_client.lib.agents.turn_events import StepCompleted, StepProgress, ToolCallIssuedDelta
 
+from llama_stack.core.library_client import LlamaStackAsLibraryClient
 from tests.common.mcp import make_mcp_server
 
 AUTH_TOKEN = "test-token"
@@ -94,6 +95,8 @@ class TestMCPToolInvocationViaAgent:
 
     def test_invoke_mcp_tool_with_nested_data(self, llama_stack_client, text_model_id, mcp_server_with_complex_schemas):
         """Test that an MCP tool accepting nested object structures can be invoked via the Agent."""
+        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
+            pytest.skip("Library client required for local MCP server")
         uri = mcp_server_with_complex_schemas["server_url"]
 
         tool_defs = [
@@ -154,6 +157,8 @@ class TestMCPToolInvocationViaAgent:
 
     def test_invoke_with_flexible_schema(self, llama_stack_client, text_model_id, mcp_server_with_complex_schemas):
         """Test invoking a tool that accepts flexible input (email or phone)."""
+        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
+            pytest.skip("Library client required for local MCP server")
         uri = mcp_server_with_complex_schemas["server_url"]
 
         tool_defs = [
@@ -210,6 +215,8 @@ class TestMCPSchemaRoundTrip:
         self, llama_stack_client, text_model_id, mcp_server_with_output_schemas
     ):
         """Test that a tool with structured output returns valid data through the Agent."""
+        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
+            pytest.skip("Library client required for local MCP server")
         uri = mcp_server_with_output_schemas["server_url"]
 
         tool_defs = [
@@ -265,6 +272,8 @@ class TestMCPSchemaRoundTrip:
 
     def test_multi_tool_mcp_server(self, llama_stack_client, text_model_id, mcp_server_with_complex_schemas):
         """Test that multiple tools from the same MCP server are all discoverable and callable."""
+        if not isinstance(llama_stack_client, LlamaStackAsLibraryClient):
+            pytest.skip("Library client required for local MCP server")
         uri = mcp_server_with_complex_schemas["server_url"]
 
         tool_defs = [
