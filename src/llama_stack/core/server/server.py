@@ -214,7 +214,6 @@ def create_dynamic_typed_route(func: Any, method: str, route: str) -> Callable:
                     return Response(status_code=httpx.codes.NO_CONTENT)
 
                 return result
-
         except Exception as e:
             if logger.isEnabledFor(logging.INFO):
                 logger.exception(f"Error executing endpoint {route=} {method=}")
