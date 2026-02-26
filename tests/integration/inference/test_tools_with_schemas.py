@@ -187,6 +187,7 @@ class TestMCPToolsInChatCompletion:
             model=text_model_id,
             messages=[{"role": "user", "content": "Calculate 5 + 3"}],
             tools=tools,
+            max_tokens=256,
         )
 
         assert response is not None
