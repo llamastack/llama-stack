@@ -145,8 +145,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::braintrust"),
         ],
         "tool_runtime": [
-            BuildProvider(provider_type="remote::tavily-search"),
             BuildProvider(provider_type="remote::brave-search"),
+            BuildProvider(provider_type="remote::tavily-search"),
             BuildProvider(provider_type="inline::rag-runtime"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
@@ -252,14 +252,14 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         ],
         "tool_runtime": [
             Provider(
-                provider_id="tavily-search",
-                provider_type="remote::tavily-search",
-                config=TavilySearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
-            ),
-            Provider(
                 provider_id="brave-search",
                 provider_type="remote::brave-search",
                 config=BraveSearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
+            ),
+            Provider(
+                provider_id="tavily-search",
+                provider_type="remote::tavily-search",
+                config=TavilySearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
             ),
             Provider(
                 provider_id="rag-runtime",
