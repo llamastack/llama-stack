@@ -84,12 +84,11 @@ pagination:
         purpose: next_cursor_field
 streaming:
   on_event:
-    - data_starts_with: "[DONE]"
-      handle: done
-    - kind: fallthrough
-      handle: yield
-      error_property: error
-
+  - data_starts_with: '[DONE]'
+    handle: done
+  - kind: fallthrough
+    handle: yield
+    error_property: error
 settings:
   license: MIT
   unwrap_response_fields:
