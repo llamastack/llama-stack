@@ -63,7 +63,7 @@ logger = get_logger(name=__name__, category="core::routers")
 class SearchFilterTranslator(ABC):
     """Abstract base class for translating search filters to provider-specific format.
 
-    This replaces the gross if/elif chains across providers with a clean dispatch table approach.
+    Uses a dispatch table to map comparison operators to handler methods.
     Subclasses implement the actual translation logic for their specific provider format.
     """
 
