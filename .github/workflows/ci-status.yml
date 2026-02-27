@@ -7,9 +7,13 @@ on:
     branches:
       - main
       - 'release-[0-9]+.[0-9]+.x'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -23,7 +27,7 @@ jobs:
         uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
         with:
           script: |
-            const sha = context.payload.pull_request.head.sha;
+            const sha = context.payload.pull_request?.head.sha ?? context.sha;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
 

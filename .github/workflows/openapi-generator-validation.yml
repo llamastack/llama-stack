@@ -19,6 +19,10 @@ on:
       - 'client-sdks/stainless/config.yml'
       # This workflow itself
       - '.github/workflows/openapi-generator-validation.yml'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
   push:
     branches:
       - main
