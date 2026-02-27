@@ -1,0 +1,96 @@
+name: CI Status
+
+run-name: Aggregate CI check status
+
+on:
+  pull_request:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  ci-status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      checks: read
+    steps:
+      - name: Wait for CI checks to complete
+        uses: actions/github-script@60a0d83039c74a4aee543508d2ffcb1c3799cdea # v7.0.1
+        with:
+          script: |
+            const sha = context.payload.pull_request.head.sha;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Wait for other workflows to get queued
+            core.info('Waiting 60s for CI workflows to get queued...');
+            await new Promise(r => setTimeout(r, 60000));
+
+            const excludedChecks = new Set(['ci-status']);
+            const excludedApps = new Set(['mergify']);
+
+            const terminalStatuses = new Set(['completed']);
+            const successConclusions = new Set(['success', 'skipped', 'neutral']);
+            const failureConclusions = new Set(['failure', 'cancelled', 'timed_out']);
+
+            while (true) {
+              const { data: checkRuns } = await github.rest.checks.listForRef({
+                owner,
+                repo,
+                ref: sha,
+                per_page: 100,
+              });
+
+              // Filter to only GitHub Actions checks, excluding ourselves and bots
+              const relevant = checkRuns.check_runs.filter(cr => {
+                if (excludedChecks.has(cr.name)) return false;
+                if (cr.app && excludedApps.has(cr.app.slug)) return false;
+                // Only include GitHub Actions checks
+                if (!cr.app || cr.app.slug !== 'github-actions') return false;
+                return true;
+              });
+
+              if (relevant.length === 0) {
+                core.info('No other CI checks found yet, waiting...');
+                await new Promise(r => setTimeout(r, 30000));
+                continue;
+              }
+
+              const pending = relevant.filter(cr => !terminalStatuses.has(cr.status));
+              const completed = relevant.filter(cr => terminalStatuses.has(cr.status));
+
+              core.info(`Checks: ${completed.length} completed, ${pending.length} pending out of ${relevant.length} total`);
+
+              for (const cr of completed) {
+                core.info(`  ✓ ${cr.name}: ${cr.conclusion}`);
+              }
+              for (const cr of pending) {
+                core.info(`  ⏳ ${cr.name}: ${cr.status}`);
+              }
+
+              if (pending.length > 0) {
+                core.info('Waiting 30s for pending checks...');
+                await new Promise(r => setTimeout(r, 30000));
+                continue;
+              }
+
+              // All checks completed — evaluate conclusions
+              const failed = completed.filter(cr => failureConclusions.has(cr.conclusion));
+
+              if (failed.length > 0) {
+                for (const cr of failed) {
+                  core.error(`${cr.name} concluded with: ${cr.conclusion}`);
+                }
+                core.setFailed(`${failed.length} CI check(s) failed.`);
+                return;
+              }
+
+              const succeeded = completed.filter(cr => successConclusions.has(cr.conclusion));
+              core.info(`All ${succeeded.length} CI checks passed.`);
+              return;
+            }

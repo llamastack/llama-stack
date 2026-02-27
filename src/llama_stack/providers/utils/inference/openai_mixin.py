@@ -251,7 +251,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         if self.provider_data_api_key_field:
             provider_data = self.get_request_provider_data()
             if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
-                api_key = getattr(provider_data, self.provider_data_api_key_field)
+                value = getattr(provider_data, self.provider_data_api_key_field)
+                api_key = value.get_secret_value()
 
         return api_key
 

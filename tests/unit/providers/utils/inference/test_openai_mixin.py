@@ -10,7 +10,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
@@ -639,7 +639,7 @@ class TestOpenAIMixinModelRegistration:
 class ProviderDataValidator(BaseModel):
     """Validator for provider data in tests"""
 
-    test_api_key: str | None = Field(default=None)
+    test_api_key: SecretStr | None = Field(default=None)
 
 
 class OpenAIMixinWithProviderData(OpenAIMixinImpl):
@@ -1168,6 +1168,26 @@ class TestOpenAIMixinSafetyIdentifierPassing:
             call_kwargs = mock_client.chat.completions.create.call_args[1]
             assert call_kwargs["safety_identifier"] == "user-123-hashed"
 
+    async def test_chat_completion_with_top_p(self, mixin, mock_client_context):
+        """Test that top_p is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        top_p_value = 0.9
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_p=top_p_value,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_p"] == top_p_value
+
 
 class TestOpenAIMixinPromptCacheKey:
     """Test cases for prompt_cache_key parameter propagation"""
@@ -1215,3 +1235,61 @@ class TestOpenAIMixinServiceTier:
             mock_client.chat.completions.create.assert_called_once()
             call_kwargs = mock_client.chat.completions.create.call_args[1]
             assert call_kwargs["service_tier"] == ServiceTier.priority
+
+
+class TestOpenAIMixinTopLogprobs:
+    """Test cases for top_logprobs parameter in chat completion requests"""
+
+    async def test_chat_completion_with_top_logprobs_value_5(self, mixin, mock_client_context):
+        """Test that top_logprobs=5 is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=5,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_logprobs"] == 5
+
+    async def test_chat_completion_with_top_logprobs_boundary_min(self, mixin, mock_client_context):
+        """Test that top_logprobs=0 (minimum) is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=0,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_logprobs"] == 0
+
+    async def test_chat_completion_with_top_logprobs_boundary_max(self, mixin, mock_client_context):
+        """Test that top_logprobs=20 (maximum) is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=20,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_logprobs"] == 20

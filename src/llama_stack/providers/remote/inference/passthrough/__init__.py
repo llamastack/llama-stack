@@ -4,14 +4,14 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from pydantic import BaseModel
+from pydantic import BaseModel, SecretStr
 
 from .config import PassthroughImplConfig
 
 
 class PassthroughProviderDataValidator(BaseModel):
     passthrough_url: str
-    passthrough_api_key: str
+    passthrough_api_key: SecretStr
 
 
 async def get_adapter_impl(config: PassthroughImplConfig, _deps):

@@ -103,7 +103,7 @@ class PassthroughInferenceAdapter(NeedsRequestProviderData, Inference):
             raise ValueError(
                 'Pass API Key for the passthrough endpoint in the header X-LlamaStack-Provider-Data as { "passthrough_api_key": <your api key>}'
             )
-        return provider_data.passthrough_api_key
+        return provider_data.passthrough_api_key.get_secret_value()
 
     async def openai_completion(
         self,
