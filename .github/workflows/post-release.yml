@@ -162,7 +162,7 @@ jobs:
           )"
 
       # -----------------------------------------------------------------------
-      # Step C: Update npm lockfile on release branch and open PR
+      # Step C: Update npm lockfile on release branch (direct commit)
       # -----------------------------------------------------------------------
       - name: Set up Node.js
         uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
@@ -170,15 +170,10 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Create npm lockfile update PR
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Commit npm lockfile update directly to release branch
         run: |
           VERSION="${{ steps.parse.outputs.version }}"
           RELEASE_BRANCH="${{ steps.parse.outputs.release_branch }}"
-          MAJOR="${{ steps.parse.outputs.major }}"
-          MINOR="${{ steps.parse.outputs.minor }}"
-          BRANCH="post-release/npm-lockfile-${VERSION}"
 
           # Check if release branch exists
           if ! git rev-parse "origin/${RELEASE_BRANCH}" >/dev/null 2>&1; then
@@ -186,7 +181,7 @@ jobs:
             exit 0
           fi
 
-          git checkout -b "$BRANCH" "origin/${RELEASE_BRANCH}"
+          git checkout -b "npm-lockfile-${VERSION}" "origin/${RELEASE_BRANCH}"
 
           # Update npm lockfile
           cd src/llama_stack_ui
@@ -195,7 +190,7 @@ jobs:
 
           # Check if there are changes
           if git diff --quiet; then
-            echo "No npm lockfile changes, skipping PR"
+            echo "No npm lockfile changes, skipping commit"
             exit 0
           fi
 
@@ -203,18 +198,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add src/llama_stack_ui/package.json src/llama_stack_ui/package-lock.json
           git commit -s -m "chore: update llama-stack-client to ^${VERSION} in UI lockfile"
-          git push origin "$BRANCH"
-
-          gh pr create \
-            --base "$RELEASE_BRANCH" \
-            --head "$BRANCH" \
-            --title "chore: update llama-stack-client npm lockfile for v${VERSION}" \
-            --body "$(cat <<EOF
-          Automated post-release npm lockfile update after \`v${VERSION}\`.
-
-          Runs \`npm install llama-stack-client@^${VERSION}\` in \`src/llama_stack_ui/\` to update
-          \`package.json\` and \`package-lock.json\`.
-
-          This PR was created automatically by the post-release workflow.
-          EOF
-          )"
+          git push origin "HEAD:${RELEASE_BRANCH}"
+          echo "Committed npm lockfile update directly to ${RELEASE_BRANCH}"

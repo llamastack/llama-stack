@@ -104,27 +104,29 @@ For each release, the Release Owner should complete:
 
 **Pre-release on `release-0.4.x`:**
 
-- [ ] Cherry-pick any needed fixes to the release branch
-- [ ] Run the **Prepare release** workflow (`.github/workflows/prepare-release.yml`):
+Backports are handled automatically by Mergify — patch releases ship whatever has already been backported to the release branch. No manual cherry-picking needed.
+
+- [ ] Run the [**Prepare release**](https://github.com/llamastack/llama-stack/actions/workflows/prepare-release.yml) workflow:
   - Input `version`: `0.4.5`
   - Input `release_branch`: `release-0.4.x`
-  - This updates `fallback_version` and `llama-stack-client` pins automatically
-- [ ] Review and merge the generated PR to `release-0.4.x`
+  - This commits `fallback_version` and `llama-stack-client` pin updates directly to the release branch
 
 **Release:**
 
 - [ ] Create GitHub release: tag `v0.4.5`, target `release-0.4.x`
-- [ ] Verify all 4 packages published (llama-stack, llama-stack-api, llama-stack-client python+typescript)
+- [ ] Verify all 4 packages published:
+  - [llama-stack on PyPI](https://pypi.org/project/llama-stack/)
+  - [llama-stack-api on PyPI](https://pypi.org/project/llama-stack-api/)
+  - [llama-stack-client on PyPI](https://pypi.org/project/llama-stack-client/)
+  - [llama-stack-client on npm](https://www.npmjs.com/package/llama-stack-client)
 
 **Post-release (automated):**
 
-The following steps are handled automatically by the **Post-release automation** workflow (`.github/workflows/post-release.yml`), which triggers on `release: published`:
+The following steps are handled automatically by the [**Post-release automation**](https://github.com/llamastack/llama-stack/actions/workflows/post-release.yml) workflow, which triggers on `release: published`:
 
 - Tags `main` with `v0.4.6-dev` (next dev tag)
-- Opens a PR to `main` bumping `fallback_version` to `"0.4.6.dev0"`
-- Opens a PR to `release-0.4.x` updating the npm lockfile in `src/llama_stack_ui/`
-
-Review and merge the generated PRs.
+- Opens a PR to `main` bumping `fallback_version` to `"0.4.6.dev0"` — review and merge this PR
+- Commits the npm lockfile update directly to `release-0.4.x`
 
 #### Minor release (e.g., 0.5.0 — new release branch)
 
