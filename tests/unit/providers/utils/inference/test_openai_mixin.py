@@ -635,6 +635,94 @@ class TestOpenAIMixinModelRegistration:
             with pytest.raises(Exception, match="API Error"):
                 await mixin.register_model(model)
 
+    async def test_register_model_with_provider_level_skip(self, mock_client_with_models, mock_client_context):
+        """Test model registration with skip_model_availability at provider level"""
+        # Create mixin with skip_model_availability enabled at provider level
+        config = RemoteInferenceProviderConfig(skip_model_availability=True)
+        mixin = OpenAIMixinImpl(config=config)
+
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should succeed without checking model availability
+            result = await mixin.register_model(model)
+
+            assert result == model
+            # Verify that models.list() was NOT called
+            mock_client_with_models.models.list.assert_not_called()
+
+    async def test_register_model_with_model_level_skip(self, mixin, mock_client_with_models, mock_client_context):
+        """Test model registration with skip_model_availability at model level"""
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+            metadata={"skip_model_availability": True},
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should succeed without checking model availability
+            result = await mixin.register_model(model)
+
+            assert result == model
+            # Verify that models.list() was NOT called
+            mock_client_with_models.models.list.assert_not_called()
+
+    async def test_register_model_skip_model_level_overrides_provider_level(
+        self, mock_client_with_models, mock_client_context
+    ):
+        """Test that model-level skip_model_availability overrides provider-level setting"""
+        # Provider has skip enabled
+        config = RemoteInferenceProviderConfig(skip_model_availability=True)
+        mixin = OpenAIMixinImpl(config=config)
+
+        # But model explicitly disables skip
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+            metadata={"skip_model_availability": False},
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should fail because model-level False overrides provider-level True
+            with pytest.raises(ValueError, match="Model non-existent-model is not available"):
+                await mixin.register_model(model)
+            # Verify that models.list() WAS called (validation happened)
+            mock_client_with_models.models.list.assert_called_once()
+
+    async def test_register_model_skip_precedence_model_true_provider_false(
+        self, mock_client_with_models, mock_client_context
+    ):
+        """Test that model-level skip=True overrides provider-level skip=False"""
+        # Provider has skip disabled (default)
+        config = RemoteInferenceProviderConfig(skip_model_availability=False)
+        mixin = OpenAIMixinImpl(config=config)
+
+        # But model explicitly enables skip
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+            metadata={"skip_model_availability": True},
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should succeed because model-level True overrides provider-level False
+            result = await mixin.register_model(model)
+
+            assert result == model
+            # Verify that models.list() was NOT called
+            mock_client_with_models.models.list.assert_not_called()
+
 
 class ProviderDataValidator(BaseModel):
     """Validator for provider data in tests"""
