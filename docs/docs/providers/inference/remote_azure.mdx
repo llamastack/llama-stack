@@ -41,6 +41,7 @@ https://learn.microsoft.com/en-us/azure/ai-foundry/openai/overview
 | `network.timeout.connect` | `float \| None` | No |  | Connection timeout in seconds. |
 | `network.timeout.read` | `float \| None` | No |  | Read timeout in seconds. |
 | `network.headers` | `dict[str, str] \| None` | No |  | Additional HTTP headers to include in all requests. |
+| `skip_model_availability` | `bool` | No | False | Skip model availability check on startup. Useful when using placeholder API keys with per-request authentication via provider_data header. |
 | `base_url` | `HttpUrl \| None` | No |  | Azure API base for Azure (e.g., https://your-resource-name.openai.azure.com/openai/v1) |
 | `api_version` | `str \| None` | No |  | Azure API version for Azure (e.g., 2024-12-01-preview) |
 | `api_type` | `str \| None` | No | azure | Azure API type for Azure (e.g., azure) |

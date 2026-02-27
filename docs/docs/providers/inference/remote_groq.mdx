@@ -34,6 +34,7 @@ Groq inference provider for ultra-fast inference using Groq's LPU technology.
 | `network.timeout.connect` | `float \| None` | No |  | Connection timeout in seconds. |
 | `network.timeout.read` | `float \| None` | No |  | Read timeout in seconds. |
 | `network.headers` | `dict[str, str] \| None` | No |  | Additional HTTP headers to include in all requests. |
+| `skip_model_availability` | `bool` | No | False | Skip model availability check on startup. Useful when using placeholder API keys with per-request authentication via provider_data header. |
 | `base_url` | `HttpUrl \| None` | No | https://api.groq.com/openai/v1 | The URL for the Groq AI server |
 
 ## Sample Configuration

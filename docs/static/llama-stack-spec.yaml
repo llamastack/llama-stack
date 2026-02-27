@@ -10424,6 +10424,11 @@ components:
           - type: 'null'
           description: The type of model to register.
           title: ModelType
+        skip_model_availability:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Skip model availability check on startup for this specific model. Overrides provider-level setting if specified.
       type: object
       required:
       - model_id

@@ -41,6 +41,7 @@ https://docs.oracle.com/en-us/iaas/Content/generative-ai/home.htm
 | `network.timeout.connect` | `float \| None` | No |  | Connection timeout in seconds. |
 | `network.timeout.read` | `float \| None` | No |  | Read timeout in seconds. |
 | `network.headers` | `dict[str, str] \| None` | No |  | Additional HTTP headers to include in all requests. |
+| `skip_model_availability` | `bool` | No | False | Skip model availability check on startup. Useful when using placeholder API keys with per-request authentication via provider_data header. |
 | `oci_auth_type` | `str` | No | instance_principal | OCI authentication type (must be one of: instance_principal, config_file) |
 | `oci_region` | `str` | No | us-ashburn-1 | OCI region (e.g., us-ashburn-1) |
 | `oci_compartment_id` | `str` | No |  | OCI compartment ID for the Generative AI service |

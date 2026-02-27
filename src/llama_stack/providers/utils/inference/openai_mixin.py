@@ -480,6 +480,18 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     ##
 
     async def register_model(self, model: Model) -> Model:
+        # Check if we should skip availability check (model-level overrides provider-level)
+        model_level_skip = model.metadata.get("skip_model_availability") if model.metadata else None
+        provider_level_skip = hasattr(self.config, "skip_model_availability") and self.config.skip_model_availability
+
+        should_skip = model_level_skip if model_level_skip is not None else provider_level_skip
+
+        if should_skip:
+            logger.debug(
+                f"Skipping model availability check for {model.provider_model_id} (skip_model_availability=true)"
+            )
+            return model
+
         if not await self.check_model_availability(model.provider_model_id):
             raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")  # type: ignore[attr-defined]
         return model

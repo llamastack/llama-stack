@@ -177,6 +177,10 @@ class RemoteInferenceProviderConfig(BaseModel):
         default=None,
         description="Network configuration including TLS, proxy, and timeout settings.",
     )
+    skip_model_availability: bool = Field(
+        default=False,
+        description="Skip model availability check on startup. Useful when using placeholder API keys with per-request authentication via provider_data header.",
+    )
 
 
 # TODO: this class is more confusing than useful right now. We need to make it
