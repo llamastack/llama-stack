@@ -256,68 +256,45 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
     register that tool group automatically. This replaces the old explicit
     tool_groups config in registered_resources.
 
-    The toolgroup_id is declared in the provider registry
-    (see providers/registry/tool_runtime.py).
+    When multiple providers map to the same toolgroup (e.g. brave-search and
+    tavily-search both serve builtin::websearch), the provider with a configured
+    api_key wins. If none have a key, the first candidate is used so the tool
+    group still exists (invocation will fail with a clear provider error rather
+    than "tool not found").
     """
     if Api.tool_groups not in impls:
         return
 
     tool_groups_impl = impls[Api.tool_groups]
 
-    # Build a mapping from provider_type -> toolgroup_id using the provider registry
-    provider_registry = get_provider_registry(run_config)
-    provider_type_to_toolgroup: dict[str, str] = {}
-    tool_runtime_specs = provider_registry.get(Api.tool_runtime, {})
-    for provider_type, spec in tool_runtime_specs.items():
-        if spec.toolgroup_id:
-            provider_type_to_toolgroup[provider_type] = spec.toolgroup_id
+    registry = get_provider_registry(run_config)
+    type_to_toolgroup = {
+        ptype: spec.toolgroup_id for ptype, spec in registry.get(Api.tool_runtime, {}).items() if spec.toolgroup_id
+    }
 
-    # Collect existing tool groups so we can clean up stale entries from
-    # previous server runs before re-registering. Re-registration is required
-    # because register_tool_group also indexes tools into in-memory lookup
-    # maps (_index_tools), which are empty after a restart.
-    existing_groups: set[str] = set()
-    try:
-        existing = await tool_groups_impl.list_tool_groups()
-        existing_groups = {tg.identifier for tg in existing.data}
-    except Exception:
-        logger.debug("Could not list existing tool groups; will attempt all registrations")
-
-    # Group candidate providers by toolgroup_id, preferring providers that
-    # have a configured api_key over those with an empty one. When multiple
-    # providers serve the same toolgroup (e.g., brave-search and tavily-search
-    # both map to builtin::websearch), this ensures we pick one that is
-    # actually functional.  If none have a key, we still register the first
-    # candidate so the tool group exists (invocation will fail with a clear
-    # provider error rather than "tool not found").
-    candidates: dict[str, list[tuple[Any, bool]]] = {}
-    tool_runtime_providers = run_config.providers.get("tool_runtime", [])
-    for provider in tool_runtime_providers:
+    # Single-pass selection: keep the first provider per toolgroup, but
+    # let a provider with a configured api_key replace one without.
+    chosen: dict[str, Provider] = {}
+    chosen_has_key: dict[str, bool] = {}
+    for provider in run_config.providers.get("tool_runtime", []):
         if not provider.provider_id or provider.provider_id == "__disabled__":
             continue
-
-        toolgroup_id = provider_type_to_toolgroup.get(provider.provider_type)
-        if toolgroup_id is None:
+        toolgroup_id = type_to_toolgroup.get(provider.provider_type)
+        if not toolgroup_id:
             continue
 
         has_key = "api_key" not in provider.config or bool(provider.config.get("api_key"))
-        candidates.setdefault(toolgroup_id, []).append((provider, has_key))
+        if toolgroup_id not in chosen or (has_key and not chosen_has_key[toolgroup_id]):
+            chosen[toolgroup_id] = provider
+            chosen_has_key[toolgroup_id] = has_key
 
-    for toolgroup_id, provider_list in candidates.items():
-        # Pick the first provider with a configured api_key; fall back to the
-        # first candidate if none have one.
-        provider = next(
-            (p for p, has_key in provider_list if has_key),
-            provider_list[0][0],
-        )
-
-        # Unregister stale entry so register_tool_group can re-create it
-        # and rebuild in-memory tool indexes.
-        if toolgroup_id in existing_groups:
-            try:
-                await tool_groups_impl.unregister_toolgroup(toolgroup_id)
-            except Exception:
-                logger.debug(f"Could not unregister stale tool group '{toolgroup_id}'")
+    for toolgroup_id, provider in chosen.items():
+        # Unregister first so register_tool_group rebuilds in-memory tool
+        # indexes (_index_tools) which are empty after a restart.
+        try:
+            await tool_groups_impl.unregister_toolgroup(toolgroup_id)
+        except Exception:
+            pass
 
         logger.debug(f"Auto-registering tool group '{toolgroup_id}' with provider '{provider.provider_id}'")
         try:
