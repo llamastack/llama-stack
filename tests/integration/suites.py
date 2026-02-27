@@ -115,6 +115,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="OpenAI GPT models for high-quality responses and tool calling",
         defaults={
             "text_model": "openai/gpt-4o",
+            "vision_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
             "embedding_dimension": 1536,
         },
