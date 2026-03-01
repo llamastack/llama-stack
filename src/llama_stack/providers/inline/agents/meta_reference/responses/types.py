@@ -72,7 +72,7 @@ class ChatCompletionResult:
     @property
     def content_text(self) -> str:
         """Get joined content as string."""
-        return "".join(self.content)
+        return "".join(c for c in self.content if c is not None)
 
     @property
     def has_tool_calls(self) -> bool:
