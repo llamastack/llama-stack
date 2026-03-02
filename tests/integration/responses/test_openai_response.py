@@ -128,3 +128,67 @@ class TestOpenAIResponses:
 
         if text_model_id.startswith("ollama/"):
             assert error.code in {"invalid_base64_image", "server_error"}
+
+    def test_openai_response_with_prompt_cache_key(self, openai_client, text_model_id):
+        """Test OpenAI response with prompt_cache_key parameter."""
+        cache_key = "test-cache-key-001"
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the capital of France?"}],
+            prompt_cache_key=cache_key,
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.prompt_cache_key == cache_key
+
+    def test_openai_response_with_prompt_cache_key_streaming(self, openai_client, text_model_id):
+        """Test OpenAI response with prompt_cache_key in streaming mode."""
+        cache_key = "test-cache-key-streaming-001"
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the capital of Germany?"}],
+            prompt_cache_key=cache_key,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify cache key is in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.prompt_cache_key == cache_key
+
+        # Verify cache key is in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.prompt_cache_key == cache_key
+
+    def test_openai_response_with_prompt_cache_key_and_previous_response(self, openai_client, text_model_id):
+        """Test that prompt_cache_key works correctly with previous_response_id."""
+        cache_key = "conversation-cache-001"
+
+        # Create first response
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 2+2?"}],
+            prompt_cache_key=cache_key,
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.prompt_cache_key == cache_key
+
+        # Create second response referencing the first one with the same cache key
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 3+3?"}],
+            previous_response_id=response1.id,
+            prompt_cache_key=cache_key,
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.prompt_cache_key == cache_key
+        assert len(response2.output_text.strip()) > 0
