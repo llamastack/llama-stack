@@ -159,13 +159,21 @@ jobs:
           elif [ "${{ github.event_name }}" == "release" ]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           else
-            # Read base version from fallback_version in pyproject.toml
-            BASE=$(python3 -c "
+            # Use git describe to get version from nearest tag (e.g., v0.5.1-dev)
+            # Falls back to fallback_version in pyproject.toml if no tags are reachable
+            RAW=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$RAW" ]; then
+              BASE="${RAW#v}"          # strip 'v' prefix
+              BASE="${BASE%-dev}"      # strip any -dev suffix from the tag
+            else
+              # Fallback: read from pyproject.toml (e.g., source tarballs without git history)
+              BASE=$(python3 -c "
           import tomllib, pathlib
           p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
           v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
           print(v.split('.dev')[0])
           ")
+            fi
             DATE=$(date -u +%Y%m%d)
             VERSION="${BASE}.dev${DATE}"
           fi
