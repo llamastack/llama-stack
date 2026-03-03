@@ -123,6 +123,7 @@ class MetaReferenceAgentsImpl(Agents):
             stream=request.stream,
             temperature=request.temperature,
             top_p=request.top_p,
+            frequency_penalty=request.frequency_penalty,
             text=request.text,
             tool_choice=request.tool_choice,
             tools=request.tools,
@@ -138,6 +139,8 @@ class MetaReferenceAgentsImpl(Agents):
             metadata=request.metadata,
             background=request.background,
             truncation=request.truncation,
+            top_logprobs=request.top_logprobs,
+            presence_penalty=request.presence_penalty,
         )
         return result
 

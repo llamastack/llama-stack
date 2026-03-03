@@ -64,18 +64,68 @@ def parse_endpoint(endpoint_str: str) -> tuple[str, str]:
         return None, parts[0]
 
 
-def extract_resources(stainless_config: dict[str, Any]) -> tuple[dict[str, Any], set[str]]:
+def extract_resources(stainless_config: dict[str, Any]) -> tuple[dict[str, Any], set[str], list[dict[str, Any]]]:
     """
     Extract resource->method->endpoint mappings from Stainless config.
 
     Returns:
-        Tuple of (endpoint_map, collision_set)
+        Tuple of (endpoint_map, collision_set, proxy_methods)
         - endpoint_map: dict mapping (http_method, path) -> resource_info
         - collision_set: set of resource names that appear in multiple places
+        - proxy_methods: list of proxy method entries for parent resources that share
+          an endpoint with a subresource. Each entry is a dict with:
+          - parent_nesting_path: the nesting path of the parent resource
+          - child_nesting_path: the nesting path of the child (subresource)
+          - method_name: the method name (e.g., "list")
     """
     resources = stainless_config.get("resources", {})
     endpoint_map = {}
     resource_name_counts = {}  # Count how many times each resource name appears
+    proxy_methods = []
+
+    def _record_endpoint(http_method: str, path: str, method_name: str, current_path: list[str], resource_name: str):
+        """Record an endpoint mapping, detecting overwrites to capture proxy info."""
+        key = (http_method, path)
+        existing = endpoint_map.get(key)
+
+        if existing is not None and existing["operation_name"] == method_name:
+            # Same endpoint, same method name, different nesting paths.
+            # The deeper (subresource) path keeps the endpoint; the shallower
+            # (parent) path gets a proxy method that delegates to the child.
+            if len(current_path) > len(existing["nesting_path"]):
+                # New entry is deeper — it wins the endpoint, parent gets proxy
+                proxy_methods.append(
+                    {
+                        "parent_nesting_path": list(existing["nesting_path"]),
+                        "child_nesting_path": list(current_path),
+                        "method_name": method_name,
+                    }
+                )
+                endpoint_map[key] = {
+                    "operation_name": method_name,
+                    "nesting_path": current_path,
+                    "resource_name": resource_name,
+                }
+            else:
+                # Existing entry is deeper or same depth — keep existing, new gets proxy
+                proxy_methods.append(
+                    {
+                        "parent_nesting_path": list(current_path),
+                        "child_nesting_path": list(existing["nesting_path"]),
+                        "method_name": method_name,
+                    }
+                )
+        elif existing is not None:
+            # Same endpoint, different method name, same or different resource.
+            # Keep the first (canonical) name; record the new name as an alias.
+            aliases = existing.setdefault("aliases", [])
+            aliases.append(method_name)
+        else:
+            endpoint_map[key] = {
+                "operation_name": method_name,
+                "nesting_path": current_path,
+                "resource_name": resource_name,
+            }
 
     def process_resource(resource_name: str, resource_data: Any, parent_path: list[str] = None):
         """Recursively process resources and subresources."""
@@ -100,20 +150,12 @@ def extract_resources(stainless_config: dict[str, Any]) -> tuple[dict[str, Any],
                 if endpoint:
                     http_method, path = parse_endpoint(endpoint)
                     if http_method and path:
-                        endpoint_map[(http_method, path)] = {
-                            "operation_name": method_name,
-                            "nesting_path": current_path,
-                            "resource_name": resource_name,
-                        }
+                        _record_endpoint(http_method, path, method_name, current_path, resource_name)
             elif isinstance(method_config, str):
                 # Simple string endpoint like "get /v1/tools"
                 http_method, path = parse_endpoint(method_config)
                 if http_method and path:
-                    endpoint_map[(http_method, path)] = {
-                        "operation_name": method_name,
-                        "nesting_path": current_path,
-                        "resource_name": resource_name,
-                    }
+                    _record_endpoint(http_method, path, method_name, current_path, resource_name)
 
         # Process subresources recursively
         subresources = resource_data.get("subresources", {})
@@ -127,11 +169,14 @@ def extract_resources(stainless_config: dict[str, Any]) -> tuple[dict[str, Any],
     # Find collisions - resource names that appear more than once
     collision_set = {name for name, count in resource_name_counts.items() if count > 1}
 
-    return endpoint_map, collision_set
+    return endpoint_map, collision_set, proxy_methods
 
 
 def enrich_openapi_spec(
-    openapi_spec: dict[str, Any], endpoint_map: dict[tuple[str, str], dict[str, Any]], collision_set: set[str]
+    openapi_spec: dict[str, Any],
+    endpoint_map: dict[tuple[str, str], dict[str, Any]],
+    collision_set: set[str],
+    proxy_methods: list[dict[str, Any]],
 ) -> dict[str, Any]:
     """
     Enrich OpenAPI spec with x-operation-name and tags from endpoint_map.
@@ -140,6 +185,7 @@ def enrich_openapi_spec(
         openapi_spec: The base OpenAPI specification
         endpoint_map: Map of (method, path) -> resource info
         collision_set: Set of resource names that appear in multiple places in the hierarchy
+        proxy_methods: List of proxy method entries for shared endpoints
 
     Returns:
         Enriched OpenAPI specification
@@ -170,6 +216,13 @@ def enrich_openapi_spec(
                 # Add x-operation-name
                 operation["x-operation-name"] = resource_info["operation_name"]
 
+                # Add aliases for operations that have multiple method names
+                if resource_info.get("aliases"):
+                    operation["x-operation-aliases"] = [
+                        {"alias": alias, "target": resource_info["operation_name"]}
+                        for alias in resource_info["aliases"]
+                    ]
+
                 # Build tags based on the resource hierarchy from Stainless
                 nesting_path = resource_info["nesting_path"]
                 if nesting_path:
@@ -195,6 +248,10 @@ def enrich_openapi_spec(
                                 tags.append(resource_name.lower())
 
                     operation["tags"] = tags
+
+    # Store proxy methods as a top-level extension for downstream tools
+    if proxy_methods:
+        openapi_spec["x-proxy-methods"] = proxy_methods
 
     return openapi_spec
 
@@ -361,10 +418,17 @@ def main():
         stainless_config = yaml_loader.load(f)
 
     # Extract resource mappings
-    endpoint_map, collision_set = extract_resources(stainless_config)
+    endpoint_map, collision_set, proxy_methods = extract_resources(stainless_config)
+
+    if proxy_methods:
+        print(f"Detected {len(proxy_methods)} proxy method(s) for shared endpoints:")
+        for pm in proxy_methods:
+            print(
+                f"  {'.'.join(pm['parent_nesting_path'])}.{pm['method_name']}() -> {'.'.join(pm['child_nesting_path'])}.{pm['method_name']}()"
+            )
 
     # Enrich the OpenAPI spec
-    enriched_spec = enrich_openapi_spec(openapi_spec, endpoint_map, collision_set)
+    enriched_spec = enrich_openapi_spec(openapi_spec, endpoint_map, collision_set, proxy_methods)
 
     # Apply patches if provided
     if args.patch:

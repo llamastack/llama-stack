@@ -22,6 +22,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRoute
 from pydantic import BaseModel
 
+from llama_stack_api.common.errors import OpenAIErrorResponse
 from llama_stack_api.common.responses import Order
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
@@ -76,7 +77,7 @@ async def sse_generator(event_gen):
         http_exc = _try_translate_to_http_exception(e)
         status_code = http_exc.status_code if http_exc else 500
         detail = http_exc.detail if http_exc else "Internal server error: An unexpected error occurred."
-        yield create_sse_event({"error": {"status_code": status_code, "message": detail}})
+        yield create_sse_event(OpenAIErrorResponse.from_message(detail, code=str(status_code)).to_dict())
 
 
 # Automatically generate dependency functions from Pydantic models

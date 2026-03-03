@@ -2,9 +2,15 @@
 
 {{>partial_header}}
 
+import importlib
+import json
+import logging
+import re
+import sys
 import warnings
-from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
-from typing import Any, Dict, List, Optional, Tuple, Union
+
+from pydantic import validate_call, Field, SkipValidation, StrictFloat, StrictStr, StrictInt
+from typing import Any
 from typing_extensions import Annotated
 
 {{#imports}}
@@ -14,6 +20,8 @@ from typing_extensions import Annotated
 from {{packageName}}.api_client import ApiClient, RequestSerialized
 from {{packageName}}.api_response import ApiResponse
 from {{packageName}}.rest import RESTResponseType
+from {{packageName}}.stream import Stream
+from {{packageName}}.lib._utils import pascal_to_snake_case
 
 
 {{#operations}}
@@ -28,41 +36,129 @@ class {{classname}}:
         if api_client is None:
             api_client = ApiClient.get_default()
         self.api_client = api_client
+        self.logger = logging.getLogger({{classname}}.__name__)
+
+        # Child API attributes (set by LlamaStackClient based on x-nesting-path)
+{{#operation}}{{#vendorExtensions.x-nesting-path}}{{#-first}}{{#tags}}{{#-first}}{{#vendorExtensions.x-nesting-path}}{{^-last}}        self.{{.}}: Any | None = None  # Next in nesting path
+{{/-last}}{{/vendorExtensions.x-nesting-path}}{{/-first}}{{/tags}}{{/-first}}{{/vendorExtensions.x-nesting-path}}{{/operation}}
+
+    def _create_event_stream(self, response_data: RESTResponseType, stream_type_name: str) -> Stream[Any]:
+        """Create a typed event stream from an SSE response.
+
+        Args:
+            response_data: The raw HTTP response containing the SSE stream.
+            stream_type_name: The schema name for the streaming response type
+                (e.g., 'OpenAIChatCompletionChunk', 'OpenAIResponseObjectStream').
+        """
+        # Import the stream type class once
+        stream_class = None
+        discriminator_map = None
+        discriminator_property = None
+        try:
+            module_name = pascal_to_snake_case(stream_type_name)
+            model_module = importlib.import_module('{{packageName}}.models.' + module_name)
+            stream_class = getattr(model_module, stream_type_name)
+            # Check if the stream type has a discriminator (e.g., oneOf with propertyName)
+            discriminator_map = getattr(stream_class, 'discriminator_value_class_map', None)
+            discriminator_property = getattr(stream_class, 'discriminator_property_name', None)
+        except (ImportError, ModuleNotFoundError, AttributeError) as e:
+            self.logger.debug(f"Could not import stream type {stream_type_name}: {e}")
+
+        def stream_decoder(data_str: str) -> Any:
+            if not data_str:
+                return None
+            try:
+                data = json.loads(data_str)
+            except json.JSONDecodeError:
+                return data_str
+
+            # If we have a discriminator, resolve the specific variant class
+            if discriminator_map and discriminator_property:
+                disc_value = data.get(discriminator_property, '')
+                variant_class_name = discriminator_map.get(disc_value)
+                if variant_class_name:
+                    try:
+                        variant_module_name = pascal_to_snake_case(variant_class_name)
+                        variant_module = importlib.import_module('{{packageName}}.models.' + variant_module_name)
+                        variant_class = getattr(variant_module, variant_class_name)
+                        return variant_class.from_dict(data)
+                    except Exception as e:
+                        self.logger.debug(f"Failed to deserialize as {variant_class_name}: {e}")
+
+            # Non-discriminated: deserialize as stream type directly
+            if stream_class is not None:
+                try:
+                    result = stream_class.from_dict(data)
+                    # Unwrap oneOf/anyOf wrappers
+                    if hasattr(result, 'actual_instance') and result.actual_instance is not None:
+                        return result.actual_instance
+                    return result
+                except Exception as e:
+                    self.logger.debug(f"Failed to deserialize as {stream_type_name}: {e}")
+
+            # Final fallback: return raw dict
+            return data
+
+        return Stream(
+            response=response_data.response,
+            client=self.api_client,
+            decoder=stream_decoder,
+        )
+
 {{#operation}}
 
-
     @validate_call
-    {{#async}}async {{/async}}def {{operationId}}{{>partial_api_args}} -> {{{returnType}}}{{^returnType}}None{{/returnType}}:
+    {{#async}}async {{/async}}def {{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}{{>partial_api_args}} -> {{#vendorExtensions.x-streaming}}{{#vendorExtensions.x-unwrap-list-response}}{{#returnType}}{{#returnContainer}}{{{returnBaseType}}} | Stream[{{{returnBaseType}}}]{{/returnContainer}}{{^returnContainer}}{{{returnType}}} | Stream[{{{returnType}}}]{{/returnContainer}}{{/returnType}}{{^returnType}}None | Stream[None]{{/returnType}}{{/vendorExtensions.x-unwrap-list-response}}{{^vendorExtensions.x-unwrap-list-response}}{{{returnType}}}{{^returnType}}None{{/returnType}} | Stream[{{{returnType}}}{{^returnType}}None{{/returnType}}]{{/vendorExtensions.x-unwrap-list-response}}{{/vendorExtensions.x-streaming}}{{^vendorExtensions.x-streaming}}{{#vendorExtensions.x-unwrap-list-response}}{{#returnType}}{{#returnContainer}}{{{returnBaseType}}}{{/returnContainer}}{{^returnContainer}}{{{returnType}}}{{/returnContainer}}{{/returnType}}{{^returnType}}None{{/returnType}}{{/vendorExtensions.x-unwrap-list-response}}{{^vendorExtensions.x-unwrap-list-response}}{{{returnType}}}{{^returnType}}None{{/returnType}}{{/vendorExtensions.x-unwrap-list-response}}{{/vendorExtensions.x-streaming}}:
 {{>partial_api}}
 
         response_data = {{#async}}await {{/async}}self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
+
+{{#vendorExtensions.x-streaming}}
+        # Check if this is a streaming response
+        content_type = response_data.response.headers.get('Content-Type', '')
+        if 'text/event-stream' in content_type:
+            return self._create_event_stream(response_data, "{{vendorExtensions.x-streaming-type}}")
+
+{{/vendorExtensions.x-streaming}}
         {{#async}}await {{/async}}response_data.read()
-        return self.api_client.response_deserialize(
+        _deserialized = self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         ).data
-
+        # Unwrap List*Response wrappers to return the data field directly
+        {{#vendorExtensions.x-unwrap-list-response}}
+        if _deserialized is not None and hasattr(_deserialized, 'data'):
+            return _deserialized.data
+        {{/vendorExtensions.x-unwrap-list-response}}
+        return _deserialized
 
     @validate_call
-    {{#async}}async {{/async}}def {{operationId}}_with_http_info{{>partial_api_args}} -> ApiResponse[{{{returnType}}}{{^returnType}}None{{/returnType}}]:
+    {{#async}}async {{/async}}def {{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}_with_http_info{{>partial_api_args}} -> {{#vendorExtensions.x-streaming}}ApiResponse[{{{returnType}}}{{^returnType}}None{{/returnType}}] | Stream[{{{returnType}}}{{^returnType}}None{{/returnType}}]{{/vendorExtensions.x-streaming}}{{^vendorExtensions.x-streaming}}ApiResponse[{{{returnType}}}{{^returnType}}None{{/returnType}}]{{/vendorExtensions.x-streaming}}:
 {{>partial_api}}
 
         response_data = {{#async}}await {{/async}}self.api_client.call_api(
             *_param,
             _request_timeout=_request_timeout
         )
+
+{{#vendorExtensions.x-streaming}}
+        # Check if this is a streaming response
+        content_type = response_data.response.headers.get('Content-Type', '')
+        if 'text/event-stream' in content_type:
+            return self._create_event_stream(response_data, "{{vendorExtensions.x-streaming-type}}")
+
+{{/vendorExtensions.x-streaming}}
         {{#async}}await {{/async}}response_data.read()
         return self.api_client.response_deserialize(
             response_data=response_data,
             response_types_map=_response_types_map,
         )
 
-
     @validate_call
-    {{#async}}async {{/async}}def {{operationId}}_without_preload_content{{>partial_api_args}} -> RESTResponseType:
+    {{#async}}async {{/async}}def {{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}_without_preload_content{{>partial_api_args}} -> RESTResponseType:
 {{>partial_api}}
 
         response_data = {{#async}}await {{/async}}self.api_client.call_api(
@@ -72,7 +168,7 @@ class {{classname}}:
         return response_data.response
 
 
-    def _{{operationId}}_serialize(
+    def _{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}_serialize(
         self,
         {{#allParams}}
         {{paramName}},
@@ -93,7 +189,7 @@ class {{classname}}:
         _host = None
         {{/servers.0}}
 
-        _collection_formats: Dict[str, str] = {
+        _collection_formats: dict[str, str] = {
             {{#allParams}}
             {{#isArray}}
             '{{baseName}}': '{{collectionFormat}}',
@@ -101,14 +197,14 @@ class {{classname}}:
             {{/allParams}}
         }
 
-        _path_params: Dict[str, str] = {}
-        _query_params: List[Tuple[str, str]] = []
-        _header_params: Dict[str, Optional[str]] = _headers or {}
-        _form_params: List[Tuple[str, str]] = []
-        _files: Dict[
-            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        _path_params: dict[str, str] = {}
+        _query_params: list[tuple[str, str]] = []
+        _header_params: dict[str, str | None] = _headers or {}
+        _form_params: list[tuple[str, str]] = []
+        _files: dict[
+            str, str | bytes | list[str] | list[bytes] | list[tuple[str, bytes]]
         ] = {}
-        _body_params: Optional[bytes] = None
+        _body_params: bytes | None = None
 
         # process the path parameters
 {{#pathParams}}
@@ -220,7 +316,7 @@ class {{classname}}:
         {{/hasConsumes}}
 
         # authentication setting
-        _auth_settings: List[str] = [{{#authMethods}}
+        _auth_settings: list[str] = [{{#authMethods}}
             '{{name}}'{{^-last}}, {{/-last}}{{/authMethods}}
         ]
 
@@ -239,6 +335,9 @@ class {{classname}}:
             _request_auth=_request_auth
         )
 
+{{#vendorExtensions.x-operation-aliases}}
+    {{alias}} = {{target}}
+{{/vendorExtensions.x-operation-aliases}}
 
 {{/operation}}
 {{/operations}}

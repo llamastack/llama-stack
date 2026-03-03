@@ -3,15 +3,26 @@
 
 All URIs are relative to *{{basePath}}*
 
+{{#operations}}{{#operation}}{{#vendorExtensions.x-child-tags}}{{#-first}}
+## Nested API Access
+
+This API provides access to nested sub-APIs through attributes:
+
+{{/-first}}
+- `{{{.}}}`: Access methods via `client.{{#tags}}{{#-first}}{{{name}}}{{/-first}}{{/tags}}.{{{.}}}.method()`
+{{#-last}}
+
+{{/-last}}{{/vendorExtensions.x-child-tags}}{{#-last}}{{/-last}}{{/operation}}{{/operations}}
+
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-{{#operations}}{{#operation}}[**{{operationId}}**]({{classname}}.md#{{operationId}}) | **{{httpMethod}}** {{path}} | {{summary}}
+{{#operations}}{{#operation}}[**{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}**]({{classname}}.md#{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}) | **{{httpMethod}}** {{path}} | {{summary}}
 {{/operation}}{{/operations}}
 
 {{#operations}}
 {{#operation}}
-# **{{{operationId}}}**
-> {{#returnType}}{{{.}}} {{/returnType}}{{{operationId}}}({{#allParams}}{{#required}}{{{paramName}}}{{/required}}{{^required}}{{{paramName}}}={{{paramName}}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+# **{{#vendorExtensions.x-operation-name}}{{{vendorExtensions.x-operation-name}}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{{operationId}}}{{/vendorExtensions.x-operation-name}}**
+> {{#returnType}}{{{.}}} {{/returnType}}{{#vendorExtensions.x-operation-name}}{{{vendorExtensions.x-operation-name}}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{{operationId}}}{{/vendorExtensions.x-operation-name}}({{#allParams}}{{#required}}{{{paramName}}}{{/required}}{{^required}}{{{paramName}}}={{{paramName}}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
 
 {{#summary}}
 {{{summary}}}

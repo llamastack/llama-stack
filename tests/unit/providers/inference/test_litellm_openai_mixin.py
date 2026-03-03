@@ -392,3 +392,68 @@ class TestLiteLLMOpenAIMixinServiceTier:
             mock_acompletion.assert_called_once()
             call_kwargs = mock_acompletion.call_args[1]
             assert call_kwargs["service_tier"] == ServiceTier.flex
+
+
+class TestLiteLLMOpenAIMixinTopLogprobs:
+    """Test cases for top_logprobs parameter in LiteLLM chat completion requests"""
+
+    @pytest.fixture
+    def mixin_with_model_store(self, adapter_with_config_key):
+        """Fixture to create adapter with mocked model store"""
+        mock_model_store = AsyncMock()
+        mock_model = MagicMock()
+        mock_model.provider_resource_id = "test-model-id"
+        mock_model_store.get_model = AsyncMock(return_value=mock_model)
+        adapter_with_config_key.model_store = mock_model_store
+        return adapter_with_config_key
+
+    async def test_chat_completion_with_top_logprobs_value_5(self, mixin_with_model_store):
+        """Test that top_logprobs=5 is properly passed to LiteLLM"""
+        with patch("litellm.acompletion", new_callable=AsyncMock) as mock_acompletion:
+            mock_acompletion.return_value = MagicMock()
+
+            await mixin_with_model_store.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="test-model",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=5,
+                )
+            )
+
+            mock_acompletion.assert_called_once()
+            call_kwargs = mock_acompletion.call_args[1]
+            assert call_kwargs["top_logprobs"] == 5
+
+    async def test_chat_completion_with_top_logprobs_boundary_min(self, mixin_with_model_store):
+        """Test that top_logprobs=0 (minimum) is properly passed to LiteLLM"""
+        with patch("litellm.acompletion", new_callable=AsyncMock) as mock_acompletion:
+            mock_acompletion.return_value = MagicMock()
+
+            await mixin_with_model_store.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="test-model",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=0,
+                )
+            )
+
+            mock_acompletion.assert_called_once()
+            call_kwargs = mock_acompletion.call_args[1]
+            assert call_kwargs["top_logprobs"] == 0
+
+    async def test_chat_completion_with_top_logprobs_boundary_max(self, mixin_with_model_store):
+        """Test that top_logprobs=20 (maximum) is properly passed to LiteLLM"""
+        with patch("litellm.acompletion", new_callable=AsyncMock) as mock_acompletion:
+            mock_acompletion.return_value = MagicMock()
+
+            await mixin_with_model_store.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="test-model",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=20,
+                )
+            )
+
+            mock_acompletion.assert_called_once()
+            call_kwargs = mock_acompletion.call_args[1]
+            assert call_kwargs["top_logprobs"] == 20

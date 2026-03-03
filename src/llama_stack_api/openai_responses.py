@@ -712,7 +712,7 @@ class OpenAIResponseIncompleteDetails(BaseModel):
 class OpenAIResponseObject(BaseModel):
     """Complete OpenAI response object containing generation results and metadata.
 
-    :param background: Whether this response was run in background mode
+    :param background: Whether this response was run in background mode (default: False)
     :param created_at: Unix timestamp when the response was created
     :param completed_at: (Optional) Unix timestamp when the response was completed
     :param error: (Optional) Error details if the response generation failed
@@ -729,6 +729,7 @@ class OpenAIResponseObject(BaseModel):
     :param temperature: (Optional) Sampling temperature used for generation
     :param text: Text formatting configuration for the response
     :param top_p: (Optional) Nucleus sampling parameter used for generation
+    :param top_logprobs: (Optional) Number of most likely tokens returned at each position with log probabilities
     :param tools: (Optional) An array of tools the model may call while generating a response.
     :param tool_choice: (Optional) Tool choice configuration for the response.
     :param truncation: (Optional) Truncation strategy applied to the response
@@ -744,6 +745,7 @@ class OpenAIResponseObject(BaseModel):
     created_at: int
     completed_at: int | None = None
     error: OpenAIResponseError | None = None
+    frequency_penalty: float | None = None
     id: str
     incomplete_details: OpenAIResponseIncompleteDetails | None = None
     model: str
@@ -759,6 +761,7 @@ class OpenAIResponseObject(BaseModel):
     # before the field was added. New responses will have this set always.
     text: OpenAIResponseText = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text"))
     top_p: float | None = None
+    top_logprobs: int | None = None
     tools: Sequence[OpenAIResponseTool] | None = None
     tool_choice: OpenAIResponseInputToolChoice | None = None
     truncation: str | None = None
@@ -770,6 +773,7 @@ class OpenAIResponseObject(BaseModel):
     safety_identifier: str | None = None
     service_tier: str | None = None
     metadata: dict[str, str] | None = None
+    presence_penalty: float | None = None
     store: bool
 
 
@@ -792,10 +796,12 @@ class OpenAIResponseObjectStreamResponseCreated(BaseModel):
     """Streaming event indicating a new response has been created.
 
     :param response: The response object that was created
+    :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.created"
     """
 
     response: OpenAIResponseObject
+    sequence_number: int
     type: Literal["response.created"] = "response.created"
 
 
@@ -818,10 +824,12 @@ class OpenAIResponseObjectStreamResponseCompleted(BaseModel):
     """Streaming event indicating a response has been completed.
 
     :param response: Completed response object
+    :param sequence_number: Sequential number for ordering streaming events
     :param type: Event type identifier, always "response.completed"
     """
 
     response: OpenAIResponseObject
+    sequence_number: int
     type: Literal["response.completed"] = "response.completed"
 
 
@@ -1453,7 +1461,7 @@ class OpenAIResponseInputFunctionToolCallOutput(BaseModel):
     """
 
     call_id: str
-    output: str
+    output: str | list[OpenAIResponseInputMessageContent]
     type: Literal["function_call_output"] = "function_call_output"
     id: str | None = None
     status: str | None = None

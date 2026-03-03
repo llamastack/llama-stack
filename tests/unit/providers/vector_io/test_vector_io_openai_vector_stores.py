@@ -1401,3 +1401,113 @@ async def test_search_vector_store_ignores_rewrite_query(vector_io_adapter):
     # Search should succeed - the mixin ignores rewrite_query and just does the search
     assert result is not None
     assert result.search_query == ["test query"]  # Original query preserved
+
+
+async def test_create_gin_index_executes_correct_sql():
+    from unittest.mock import MagicMock
+
+    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+
+    connection = MagicMock()
+    cursor = MagicMock()
+    cursor.__enter__ = MagicMock(return_value=cursor)
+    cursor.__exit__ = MagicMock()
+    connection.cursor.return_value = cursor
+
+    vector_store = VectorStore(
+        identifier="test-vector-db",
+        embedding_model="test-model",
+        embedding_dimension=768,
+        provider_id="pgvector",
+    )
+
+    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2"):
+        index = PGVectorIndex(
+            vector_store=vector_store,
+            dimension=768,
+            conn=connection,
+            distance_metric="COSINE",
+            vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
+        )
+        index.table_name = "vs_test_table"
+
+    await index.create_gin_index(cursor)
+
+    cursor.execute.assert_called_once()
+    executed_sql = cursor.execute.call_args[0][0]
+    assert "CREATE INDEX IF NOT EXISTS" in executed_sql
+    assert "vs_test_table_content_gin_idx" in executed_sql
+    assert "ON vs_test_table" in executed_sql
+    assert "USING GIN(tokenized_content)" in executed_sql
+
+
+async def test_create_gin_index_raises_runtime_error_on_db_error():
+    from unittest.mock import MagicMock
+
+    import psycopg2
+
+    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+
+    connection = MagicMock()
+    cursor = MagicMock()
+    cursor.__enter__ = MagicMock(return_value=cursor)
+    cursor.__exit__ = MagicMock()
+    cursor.execute.side_effect = psycopg2.Error("mock database error")
+    connection.cursor.return_value = cursor
+
+    vector_store = VectorStore(
+        identifier="test-vector-db",
+        embedding_model="test-model",
+        embedding_dimension=768,
+        provider_id="pgvector",
+    )
+
+    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2"):
+        index = PGVectorIndex(
+            vector_store=vector_store,
+            dimension=768,
+            conn=connection,
+            distance_metric="COSINE",
+            vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
+        )
+        index.table_name = "vs_test_table"
+
+    with pytest.raises(RuntimeError, match="Failed to create GIN index"):
+        await index.create_gin_index(cursor)
+
+
+async def test_gin_index_creation_in_initialize_call():
+    from unittest.mock import MagicMock
+
+    from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex
+    from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex
+
+    connection = MagicMock()
+    cursor = MagicMock()
+    cursor.__enter__ = MagicMock(return_value=cursor)
+    cursor.__exit__ = MagicMock()
+    connection.cursor.return_value = cursor
+
+    vector_store = VectorStore(
+        identifier="test-vector-db",
+        embedding_model="test-model",
+        embedding_dimension=768,
+        provider_id="pgvector",
+    )
+
+    with patch("llama_stack.providers.remote.vector_io.pgvector.pgvector.psycopg2") as mock_psycopg2:
+        mock_psycopg2.extras.DictCursor = MagicMock()
+
+        index = PGVectorIndex(
+            vector_store=vector_store,
+            dimension=768,
+            conn=connection,
+            distance_metric="COSINE",
+            vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
+        )
+
+        with patch.object(index, "create_gin_index") as mock_gin:
+            await index.initialize()
+            mock_gin.assert_called_once()

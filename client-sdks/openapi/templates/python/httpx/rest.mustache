@@ -2,16 +2,19 @@
 
 {{>partial_header}}
 
+from __future__ import annotations
 
 import io
 import json
+import logging
 import re
 import ssl
-from typing import Optional, Union
 
 import httpx
 
 from {{packageName}}.exceptions import ApiException, ApiValueError
+
+logger = logging.getLogger(__name__)
 
 RESTResponseType = httpx.Response
 
@@ -28,17 +31,12 @@ class RESTResponse(io.IOBase):
             self.data = await self.response.aread()
         return self.data
 
-    @property
-    def headers(self):
-        """Returns a CIMultiDictProxy of response headers."""
-        return self.response.headers
-
     def getheaders(self):
-        """Returns a CIMultiDictProxy of the response headers; use ``headers`` instead."""
+        """Returns a CIMultiDictProxy of the response headers."""
         return self.response.headers
 
     def getheader(self, name, default=None):
-        """Returns a given response header; use ``headers`` instead."""
+        """Returns a given response header."""
         return self.response.headers.get(name, default)
 
 
@@ -64,8 +62,14 @@ class RESTClientObject:
 
         self.proxy = configuration.proxy
         self.proxy_headers = configuration.proxy_headers
+        self.retries = configuration.retries
+        self.http2 = getattr(configuration, 'http2', False)
+        self.follow_redirects = getattr(configuration, 'follow_redirects', True)
 
-        self.pool_manager: Optional[httpx.AsyncClient] = None
+        # Store default timeout from configuration
+        self.default_timeout = configuration.timeout if configuration.timeout is not None else 5 * 60
+
+        self.pool_manager: httpx.AsyncClient | None = None
 
     async def close(self):
         if self.pool_manager is not None:
@@ -111,7 +115,7 @@ class RESTClientObject:
 
         post_params = post_params or {}
         headers = headers or {}
-        timeout = _request_timeout or 5 * 60
+        timeout = _request_timeout if _request_timeout is not None else self.default_timeout
 
         if 'Content-Type' not in headers:
             headers['Content-Type'] = 'application/json'
@@ -169,7 +173,14 @@ class RESTClientObject:
         if self.pool_manager is None:
             self.pool_manager = self._create_pool_manager()
 
-        r = await self.pool_manager.request(**args)
+        request = self.pool_manager.build_request(**args)
+
+        # Call _prepare_request hook if parent client has it
+        if hasattr(self, '_parent_client') and self._parent_client is not None:
+            if hasattr(self._parent_client, '_prepare_request'):
+                self._parent_client._prepare_request(request)
+
+        r = await self.pool_manager.send(request, stream=True)
         return RESTResponse(r)
 
     def _create_pool_manager(self) -> httpx.AsyncClient:
@@ -182,9 +193,25 @@ class RESTClientObject:
                 headers=self.proxy_headers
             )
 
-        return httpx.AsyncClient(
-            limits=limits,
-            proxy=proxy,
-            verify=self.ssl_context,
-            trust_env=True
-        )
+        # Wire retries to transport if configured
+        transport = None
+        if self.retries is not None:
+            transport = httpx.AsyncHTTPTransport(retries=self.retries)
+
+        try:
+            return httpx.AsyncClient(
+                limits=limits,
+                proxy=proxy,
+                transport=transport,
+                verify=self.ssl_context,
+                http2=self.http2,
+                follow_redirects=self.follow_redirects,
+                trust_env=True,
+            )
+        except ImportError:
+            if self.http2:
+                raise ImportError(
+                    "HTTP/2 support requires the 'h2' package. "
+                    "Install it with: pip install h2"
+                )
+            raise

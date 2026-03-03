@@ -1958,9 +1958,10 @@ components:
         top_logprobs:
           anyOf:
           - type: integer
+            maximum: 20.0
             minimum: 0.0
           - type: 'null'
-          description: The top log probabilities to use.
+          description: The number of most likely tokens to return at each position.
         top_p:
           anyOf:
           - type: number
@@ -2616,8 +2617,26 @@ components:
           type: string
           title: Call Id
         output:
-          type: string
-          title: Output
+          anyOf:
+          - type: string
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
+                title: OpenAIResponseInputMessageContentText
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                title: OpenAIResponseInputMessageContentImage
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                title: OpenAIResponseInputMessageContentFile
+              discriminator:
+                propertyName: type
+                mapping:
+                  input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                  input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                  input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
+              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
+            type: array
+            title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
         type:
           type: string
           const: function_call_output
@@ -4106,6 +4125,10 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
@@ -4187,6 +4210,10 @@ components:
         top_p:
           anyOf:
           - type: number
+          - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
           - type: 'null'
         tools:
           anyOf:
@@ -4286,6 +4313,10 @@ components:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean
@@ -4571,6 +4602,10 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
@@ -4652,6 +4687,10 @@ components:
         top_p:
           anyOf:
           - type: number
+          - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
           - type: 'null'
         tools:
           anyOf:
@@ -4751,6 +4790,10 @@ components:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean
@@ -4957,6 +5000,9 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
+        sequence_number:
+          title: Sequence Number
+          type: integer
         type:
           const: response.completed
           default: response.completed
@@ -4964,6 +5010,7 @@ components:
           type: string
       required:
       - response
+      - sequence_number
       title: OpenAIResponseObjectStreamResponseCompleted
       type: object
     OpenAIResponseObjectStreamResponseContentPartAdded:
@@ -5065,6 +5112,9 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
+        sequence_number:
+          title: Sequence Number
+          type: integer
         type:
           const: response.created
           default: response.created
@@ -5072,6 +5122,7 @@ components:
           type: string
       required:
       - response
+      - sequence_number
       title: OpenAIResponseObjectStreamResponseCreated
       type: object
     OpenAIResponseObjectStreamResponseFailed:
