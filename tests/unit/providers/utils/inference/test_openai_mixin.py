@@ -621,6 +621,31 @@ class TestOpenAIMixinModelRegistration:
         result_with_refresh = await mixin_with_refresh.should_refresh_models()
         assert result_with_refresh is True
 
+    async def test_should_refresh_models_with_skip_model_availability_true(self):
+        """Test that skip_model_availability=True prevents model refresh"""
+        # When skip_model_availability=True and refresh_models=True
+        config = RemoteInferenceProviderConfig(skip_model_availability=True, refresh_models=True)
+        mixin = OpenAIMixinImpl(config=config)
+        result = await mixin.should_refresh_models()
+        # Should return False because skip_model_availability takes precedence
+        assert result is False
+
+    async def test_should_refresh_models_with_skip_model_availability_false(self):
+        """Test that skip_model_availability=False respects refresh_models setting"""
+        # When skip_model_availability=False and refresh_models=True
+        config = RemoteInferenceProviderConfig(skip_model_availability=False, refresh_models=True)
+        mixin = OpenAIMixinImpl(config=config)
+        result = await mixin.should_refresh_models()
+        # Should return True (respects refresh_models)
+        assert result is True
+
+        # When skip_model_availability=False and refresh_models=False
+        config = RemoteInferenceProviderConfig(skip_model_availability=False, refresh_models=False)
+        mixin = OpenAIMixinImpl(config=config)
+        result = await mixin.should_refresh_models()
+        # Should return False (respects refresh_models)
+        assert result is False
+
     async def test_register_model_error_propagation(self, mixin, mock_client_with_exception, mock_client_context):
         """Test that errors from provider API are properly propagated during registration"""
         model = Model(

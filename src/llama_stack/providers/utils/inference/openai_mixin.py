@@ -558,6 +558,9 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         return model in self._model_cache
 
     async def should_refresh_models(self) -> bool:
+        # Skip model refresh if skip_model_availability is set (e.g., no API key available for a provider)
+        if hasattr(self.config, "skip_model_availability") and self.config.skip_model_availability:
+            return False
         return self.config.refresh_models
 
     #
