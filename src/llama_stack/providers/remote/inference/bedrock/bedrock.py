@@ -4,7 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from collections.abc import AsyncIterator, Iterable
+from collections.abc import AsyncIterator
 
 from openai import AuthenticationError
 
