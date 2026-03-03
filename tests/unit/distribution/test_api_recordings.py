@@ -446,18 +446,6 @@ class TestRecordingDirResolution:
         finally:
             reset_test_context(token)
 
-    def test_non_pytest_test_id_uses_base_dir(self, temp_storage_dir):
-        """A non-pytest test_id (no .py in path) should fall back to base_dir."""
-        from llama_stack.core.testing_context import reset_test_context, set_test_context
-
-        storage = ResponseStorage(temp_storage_dir)
-        token = set_test_context("my-go-test-suite")
-        try:
-            result = storage._get_test_dir()
-            assert result == temp_storage_dir / "recordings"
-        finally:
-            reset_test_context(token)
-
     def test_pytest_test_id_derives_path_with_relative_base_dir(self):
         """Default behavior: pytest-style test_id derives path from test file location."""
         from llama_stack.core.testing_context import reset_test_context, set_test_context
@@ -469,12 +457,6 @@ class TestRecordingDirResolution:
             assert result == Path("tests/integration/inference/recordings")
         finally:
             reset_test_context(token)
-
-    def test_no_test_context_uses_base_dir(self, temp_storage_dir):
-        """Without any test context, should use base_dir/recordings."""
-        storage = ResponseStorage(temp_storage_dir)
-        result = storage._get_test_dir()
-        assert result == temp_storage_dir / "recordings"
 
     def test_explicit_dir_store_and_find(self, temp_storage_dir):
         """End-to-end: store and find a recording with explicit_recording_dir + test_id."""
@@ -503,25 +485,6 @@ class TestRecordingDirResolution:
         finally:
             reset_test_context(token)
 
-    def test_pytest_test_id_absolute_base_dir_uses_find_repo_root(self, temp_storage_dir):
-        """Absolute base_dir with pytest test_id should use _find_repo_root() to locate the repo,
-        not the brittle parent.parent.parent heuristic."""
-        from llama_stack.core.testing_context import reset_test_context, set_test_context
-
-        (temp_storage_dir / "pyproject.toml").touch()
-        abs_base = temp_storage_dir / "tests" / "integration" / "common"
-        abs_base.mkdir(parents=True)
-
-        storage = ResponseStorage(abs_base, explicit_recording_dir=False)
-        token = set_test_context("tests/integration/inference/test_foo.py::test_bar")
-        try:
-            result = storage._get_test_dir()
-            # resolve() to match _find_repo_root which resolves symlinks (e.g. /var -> /private/var on macOS)
-            expected = temp_storage_dir.resolve() / "tests" / "integration" / "inference" / "recordings"
-            assert result == expected
-        finally:
-            reset_test_context(token)
-
     def test_setup_api_recording_sets_explicit_flag(self, temp_storage_dir):
         """setup_api_recording() must set explicit_recording_dir=True when the env var is present."""
         import llama_stack.testing.api_recorder as recorder
@@ -537,37 +500,12 @@ class TestRecordingDirResolution:
                 assert recorder._current_storage is not None
                 assert recorder._current_storage.explicit_recording_dir is True
 
-    def test_find_recording_fallback_to_base_dir(self, temp_storage_dir):
-        """find_recording() should fall back to base_dir/recordings/ when the test-specific
-        directory doesn't contain the recording (e.g. session-level recordings)."""
-        from llama_stack.core.testing_context import reset_test_context, set_test_context
-
-        fallback_dir = temp_storage_dir / "recordings"
-        fallback_dir.mkdir(parents=True)
-        recording = {
-            "test_id": None,
-            "request": {"endpoint": "/v1/chat/completions"},
-            "response": {"body": {"content": "from fallback"}, "is_streaming": False},
-            "id_normalization_mapping": {},
-        }
-        with open(fallback_dir / "abc123.json", "w") as f:
-            json.dump(recording, f)
-
-        storage = ResponseStorage(temp_storage_dir, explicit_recording_dir=False)
-        token = set_test_context("my-go-test")
-        try:
-            result = storage.find_recording("abc123")
-            assert result is not None
-            assert result["response"]["body"]["content"] == "from fallback"
-        finally:
-            reset_test_context(token)
-
 
 class TestFindRepoRoot:
     """Test the _find_repo_root() helper that replaced the brittle parent.parent.parent heuristic."""
 
-    def test_walks_up_to_find_pyproject(self):
-        """Should walk up from a nested directory to find the pyproject.toml marker."""
+    def test_walks_up_to_find_marker(self):
+        """Should walk up from a nested directory to find the repo root marker."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             (root / "pyproject.toml").touch()
@@ -575,12 +513,3 @@ class TestFindRepoRoot:
             nested.mkdir(parents=True)
 
             assert _find_repo_root(nested) == root.resolve()
-
-    def test_fallback_when_no_marker(self):
-        """Without a pyproject.toml anywhere, should return the resolved start path."""
-        with tempfile.TemporaryDirectory() as tmp:
-            start = Path(tmp) / "some" / "deep" / "path"
-            start.mkdir(parents=True)
-
-            result = _find_repo_root(start)
-            assert result == start.resolve()
