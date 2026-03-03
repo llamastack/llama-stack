@@ -95,11 +95,29 @@ class DiskDistributionRegistry(DistributionRegistry):
 
     async def register(self, obj: RoutableObjectWithProvider) -> bool:
         existing_obj = await self.get(obj.type, obj.identifier)
-        if existing_obj and existing_obj != obj:
-            raise ValueError(
-                f"Object of type '{obj.type}' and identifier '{obj.identifier}' already exists. "
-                "Unregister it first if you want to replace it."
-            )
+        if existing_obj:
+            if existing_obj == obj:
+                return True
+            # Allow re-registration when the incoming object is a subset of the
+            # existing one (every explicitly-set field matches).  This covers
+            # server restarts where the config-provided object lacks mutable
+            # fields (e.g. ``owner``) that were added during initial registration.
+            # Genuinely conflicting field values still raise an error.
+            incoming_data = obj.model_dump()
+            existing_data = existing_obj.model_dump()
+            conflicts = {
+                field: (incoming_data[field], existing_data[field])
+                for field in obj.model_fields_set
+                if incoming_data[field] != existing_data[field]
+            }
+            if conflicts:
+                raise ValueError(
+                    f"Object of type '{obj.type}' and identifier '{obj.identifier}' already exists "
+                    f"with conflicting field values: {conflicts}. "
+                    "Unregister it first if you want to replace it."
+                )
+            logger.debug(f"Re-registration of {obj.type} '{obj.identifier}' is a no-op (subset match)")
+            return True
 
         await self.kvstore.set(
             KEY_FORMAT.format(type=obj.type, identifier=obj.identifier),
