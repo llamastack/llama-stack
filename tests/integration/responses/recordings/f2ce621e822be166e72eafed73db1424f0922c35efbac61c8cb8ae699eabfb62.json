@@ -1,0 +1,5796 @@
+{
+  "test_id": "tests/integration/responses/test_basic_responses.py::test_response_streaming_incremental_content[client_with_models-txt=vllm/Qwen/Qwen3-0.6B-saturn]",
+  "request": {
+    "method": "POST",
+    "url": "http://127.0.0.1:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Which planet has rings around it with a name starting with letter S?"
+        }
+      ],
+      "max_tokens": 4096,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "<think>",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "Okay",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " so",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " I",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " need",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " to",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " figure",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " out",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " which",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planet",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " has",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " rings",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " around",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " it",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " and",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " name",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " starts",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " '",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "S",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Let",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " me",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " start",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " by",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " recalling",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " some",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planets",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " The",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planets",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " in",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " our",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " solar",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " system",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " are",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Mercury",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Venus",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Earth",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Mars",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Jupiter",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Saturn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " and",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " so",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " on",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " \n\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "First",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " I",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " remember",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " that",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Saturn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " a",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planet",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " rings",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " I",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " think",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Saturn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'s",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " name",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " starts",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " '",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "S",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "',",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " which",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " matches",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " requirement",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " But",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " wait",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " question",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " says",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " name",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " starts",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " '",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "S",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " So",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " maybe",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " there",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'s",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " another",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planet",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " rings",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " and",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " a",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " similar",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " name",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Let",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " me",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " double",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "-check",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".\n\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "Wait",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Jupiter",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " also",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " a",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planet",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " rings",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " But",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Jupiter",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'s",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " name",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " J",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "up",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "it",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "ers",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " which",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " starts",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " '",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "J",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " So",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " that",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " doesn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'t",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " fit",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Then",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " there",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'s",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Saturn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " which",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " S",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " So",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " maybe",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " answer",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Saturn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Let",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " me",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " make",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " sure",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " there",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'s",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " no",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " other",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planet",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " rings",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " that",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " starts",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " '",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "S",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "'.",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " \n\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "I",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " think",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Saturn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " only",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " one",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " So",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " answer",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " should",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " be",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " Saturn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "</think>",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "\n\n",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "The",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planet",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " rings",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " around",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " it",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " and",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " a",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " name",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " starting",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " with",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " letter",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " **",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "S",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "**",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": " **",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "Sat",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "urn",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "**",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "stop_reason": null
+            }
+          ],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f2ce621e822b",
+          "choices": [],
+          "created": 0,
+          "model": "Qwen/Qwen3-0.6B",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": {
+            "completion_tokens": 220,
+            "prompt_tokens": 22,
+            "total_tokens": 242,
+            "completion_tokens_details": null,
+            "prompt_tokens_details": null
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

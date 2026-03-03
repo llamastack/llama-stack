@@ -247,4 +247,10 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         ],
         default_setup="bedrock",
     ),
+    # vLLM responses tests with pre-recorded responses (no live API calls in CI)
+    "responses-vllm": Suite(
+        name="responses-vllm",
+        roots=["tests/integration/responses/test_basic_responses.py"],
+        default_setup="vllm",
+    ),
 }
