@@ -1,28 +1,28 @@
 {
-  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming[client_with_models-txt=bedrock/openai.gpt-oss-20b-1:0-inference:chat_completion:streaming_02]",
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming[client_with_models-txt=bedrock/openai.gpt-oss-20b-inference:chat_completion:streaming_01]",
   "request": {
     "method": "POST",
-    "url": "https://bedrock-runtime.us-west-2.amazonaws.com/openai/v1/v1/chat/completions",
+    "url": "https://bedrock-mantle.us-west-2.api.aws/v1/v1/chat/completions",
     "headers": {},
     "body": {
-      "model": "openai.gpt-oss-20b-1:0",
+      "model": "openai.gpt-oss-20b",
       "messages": [
         {
           "role": "user",
-          "content": "What is the name of the US captial?"
+          "content": "What's the name of the Sun in latin?"
         }
       ],
       "stream": true
     },
     "endpoint": "/v1/chat/completions",
-    "model": "openai.gpt-oss-20b-1:0"
+    "model": "openai.gpt-oss-20b"
   },
   "response": {
     "body": [
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-b82395f96e95",
+          "id": "rec-42ba670916eb",
           "choices": [
             {
               "delta": {
@@ -34,11 +34,12 @@
               },
               "finish_reason": null,
               "index": 0,
-              "logprobs": null
+              "logprobs": null,
+              "obfuscation": "3B1spDvEZvRlMCLvQXN07uJd2bHYzrqGHet0XU5YbV3K4c18gUfs2SUn0MXW4S4MB51veIEf5D8ErJse1X77yQirNdnvRiFVO0h"
             }
           ],
           "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
+          "model": "openai.gpt-oss-20b",
           "object": "chat.completion.chunk",
           "service_tier": "default",
           "system_fingerprint": null,
@@ -48,11 +49,67 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-b82395f96e95",
+          "id": "rec-42ba670916eb",
           "choices": [
             {
               "delta": {
-                "content": "<reasoning>The user asks: \"What is the name of the US captial?\" Likely a misspelling \"captial\" should be \"capital\". They want the</reasoning>",
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The user asks: \"What's the name of the Sun in Latin?\" Likely answer: \"Sol\". They might also want explanation. The answer: \"Sol\". Maybe mention \"Sol\" is Latin word for Sun; also used used in Roman myth, named after the deity Sol. Could include \"Sol\" or \"Solis\". If asked as \"What is name of Sun in Latin?\" The answer: \"Sol\" is the nominative. The genitive is \"Solis\". Provide examples. Let's respond conc"
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "7NLShbb8H2xkfs2ZuhjISQeivUos7lftKvvPJFR663mStgrTvLnXIRbL5ckdKTjXq5IOP0XAOuXNBpv25"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-42ba670916eb",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "isely but explain."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "0U3GX9WYErAN5myOAm7sT1yHdhiDsy3Zdc7UWSnn2FqTWeB7LrhTHs45UIM2scVuHCtBTlIYiRR3nTyvb57DO"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-42ba670916eb",
+          "choices": [
+            {
+              "delta": {
+                "content": "In Latin the Sun is called **Sol** (nominative singular). The related genitive form is **Solis** (used for \u201cof the Sun\u201d). So when you want to refer to the Sun in classical Latin",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -60,11 +117,12 @@
               },
               "finish_reason": null,
               "index": 0,
-              "logprobs": null
+              "logprobs": null,
+              "obfuscation": "ChR6ovDD13hV40SOp1EQBVAzmVZXTWYwJGnFBn1G7Dq9o7A8IIza8SBPll"
             }
           ],
           "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
+          "model": "openai.gpt-oss-20b",
           "object": "chat.completion.chunk",
           "service_tier": "default",
           "system_fingerprint": null,
@@ -74,11 +132,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-b82395f96e95",
+          "id": "rec-42ba670916eb",
           "choices": [
             {
               "delta": {
-                "content": "<reasoning> name of the U.S. capital: Washington, D.C. Provide the answer. Also maybe mention clarification. We should respond. It's straightforward.</reasoning>",
+                "content": ", you say \u201cSol.\u201d",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -86,11 +144,12 @@
               },
               "finish_reason": null,
               "index": 0,
-              "logprobs": null
+              "logprobs": null,
+              "obfuscation": "fTEAgd3Zli7rDTVmD6mrTCcJ9hGje3qpncbqPqcd5q9cqLzBnqwmS3B13193z9MpJJhS2nVVSNsVvHDyG4lcsDD1Cd4BkC9OtQTo3v9"
             }
           ],
           "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
+          "model": "openai.gpt-oss-20b",
           "object": "chat.completion.chunk",
           "service_tier": "default",
           "system_fingerprint": null,
@@ -100,33 +159,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-b82395f96e95",
-          "choices": [
-            {
-              "delta": {
-                "content": "The capital of the United States is **Washington,\u202fD.C.**",
-                "function_call": null,
-                "refusal": null,
-                "role": null,
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
-          "object": "chat.completion.chunk",
-          "service_tier": "default",
-          "system_fingerprint": null,
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "rec-b82395f96e95",
+          "id": "rec-42ba670916eb",
           "choices": [
             {
               "delta": {
@@ -138,11 +171,12 @@
               },
               "finish_reason": "stop",
               "index": 0,
-              "logprobs": null
+              "logprobs": null,
+              "obfuscation": "fWzh4F11JhVOA0HxUJuoRN2zMoJrLHgGAWWPywzDb8jO3Tq3FE4tXRdUis4LoBOl6Xhe0ZcoC2yx5tJpbqUseQt6sFrst0WMnLunODOICEImhbTpQgmb8YLUlol2o0p"
             }
           ],
           "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
+          "model": "openai.gpt-oss-20b",
           "object": "chat.completion.chunk",
           "service_tier": "default",
           "system_fingerprint": null,

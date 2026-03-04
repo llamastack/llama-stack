@@ -1,28 +1,28 @@
 {
-  "test_id": "tests/integration/inference/test_openai_completion.py::test_inference_store[client_with_models-txt=bedrock/openai.gpt-oss-20b-1:0-True]",
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_streaming[client_with_models-txt=bedrock/openai.gpt-oss-20b-inference:chat_completion:streaming_02]",
   "request": {
     "method": "POST",
-    "url": "https://bedrock-runtime.us-west-2.amazonaws.com/openai/v1/v1/chat/completions",
+    "url": "https://bedrock-mantle.us-west-2.api.aws/v1/v1/chat/completions",
     "headers": {},
     "body": {
-      "model": "openai.gpt-oss-20b-1:0",
+      "model": "openai.gpt-oss-20b",
       "messages": [
         {
           "role": "user",
-          "content": "Hello, world!"
+          "content": "What is the name of the US captial?"
         }
       ],
       "stream": true
     },
     "endpoint": "/v1/chat/completions",
-    "model": "openai.gpt-oss-20b-1:0"
+    "model": "openai.gpt-oss-20b"
   },
   "response": {
     "body": [
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-3dcb9e38f66c",
+          "id": "rec-1675987cb787",
           "choices": [
             {
               "delta": {
@@ -34,11 +34,12 @@
               },
               "finish_reason": null,
               "index": 0,
-              "logprobs": null
+              "logprobs": null,
+              "obfuscation": "qfR6nbPa5IQKbu8zhgodKZCaAhU1aqCbHucDO0WmdrIBvlxJAICO99ltrfTq9dBNKyeYuOlvqqG39OT4LQZ4APjgTnYJ5kvkcL2yKhdlCWXcbQ6TBty1cO5p0w"
             }
           ],
           "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
+          "model": "openai.gpt-oss-20b",
           "object": "chat.completion.chunk",
           "service_tier": "default",
           "system_fingerprint": null,
@@ -48,11 +49,39 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-3dcb9e38f66c",
+          "id": "rec-1675987cb787",
           "choices": [
             {
               "delta": {
-                "content": "<reasoning>User says \"Hello, world!\" No instruction. Usually respond politely?</reasoning>",
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "The user asks: \"What is the name of the US capital?\" The answer: Washington, D.C. They might expect \"Washington, D.C.\" Provide that. No extra info. Let's respond."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "S6RV5Bx499b9ByYFchfZzR6u9jNQ3JXx99K3xtuVlpkVGfd7Iz1"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-1675987cb787",
+          "choices": [
+            {
+              "delta": {
+                "content": "The capital of the United States is **Washington, D.C.**",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -60,11 +89,12 @@
               },
               "finish_reason": null,
               "index": 0,
-              "logprobs": null
+              "logprobs": null,
+              "obfuscation": "JwJClIIdzYcdivy81iLz25GKPmLYhIP4PuAmuDmckWluxDuOkzqgkd6DAHFu1iqmp9mpFgOdqzOjfpobEwa8LsUPSBCOhJUz2Qe2Z8gyh5wEghMS7yvRSApeLmbDDM"
             }
           ],
           "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
+          "model": "openai.gpt-oss-20b",
           "object": "chat.completion.chunk",
           "service_tier": "default",
           "system_fingerprint": null,
@@ -74,59 +104,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-3dcb9e38f66c",
-          "choices": [
-            {
-              "delta": {
-                "content": "Hello! \ud83d\udc4b How can",
-                "function_call": null,
-                "refusal": null,
-                "role": null,
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
-          "object": "chat.completion.chunk",
-          "service_tier": "default",
-          "system_fingerprint": null,
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "rec-3dcb9e38f66c",
-          "choices": [
-            {
-              "delta": {
-                "content": " I help you today?",
-                "function_call": null,
-                "refusal": null,
-                "role": null,
-                "tool_calls": null
-              },
-              "finish_reason": null,
-              "index": 0,
-              "logprobs": null
-            }
-          ],
-          "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
-          "object": "chat.completion.chunk",
-          "service_tier": "default",
-          "system_fingerprint": null,
-          "usage": null
-        }
-      },
-      {
-        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
-        "__data__": {
-          "id": "rec-3dcb9e38f66c",
+          "id": "rec-1675987cb787",
           "choices": [
             {
               "delta": {
@@ -138,11 +116,12 @@
               },
               "finish_reason": "stop",
               "index": 0,
-              "logprobs": null
+              "logprobs": null,
+              "obfuscation": "haxIrtBSlETTUuSIb6G9DeaJHTOBgmj7q7C4"
             }
           ],
           "created": 0,
-          "model": "openai.gpt-oss-20b-1:0",
+          "model": "openai.gpt-oss-20b",
           "object": "chat.completion.chunk",
           "service_tier": "default",
           "system_fingerprint": null,
