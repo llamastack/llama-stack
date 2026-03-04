@@ -43,6 +43,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             # If should_refresh_models returns False (e.g., skip_model_availability=True),
             # mark provider as listed to prevent repeated refresh attempts
             if not should_refresh and provider_id not in self.listed_providers:
+                logger.debug(f"Model refresh skipped for provider {provider_id}")
                 self.listed_providers.add(provider_id)
                 continue
 
