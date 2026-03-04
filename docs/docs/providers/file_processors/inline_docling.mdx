@@ -1,0 +1,26 @@
+---
+description: "Docling-based file processor for layout-aware, structure-preserving document parsing."
+sidebar_label: Docling
+title: inline::docling
+---
+
+# inline::docling
+
+## Description
+
+Docling-based file processor for layout-aware, structure-preserving document parsing.
+
+## Configuration
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `default_chunk_size_tokens` | `int` | No | 800 | Default chunk size in tokens when chunking_strategy type is 'auto' |
+| `default_chunk_overlap_tokens` | `int` | No | 400 | Default chunk overlap in tokens when chunking_strategy type is 'auto' |
+| `max_file_size_bytes` | `int` | No | 104857600 | Maximum file size in bytes for uploaded files (default 100MB) |
+| `max_page_count` | `int` | No | 100 | Maximum number of pages to process (docling safeguard for CPU cost) |
+
+## Sample Configuration
+
+```yaml
+{}
+```
