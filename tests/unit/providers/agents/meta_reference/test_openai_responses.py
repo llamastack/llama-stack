@@ -3160,3 +3160,70 @@ async def test_create_openai_response_with_presence_penalty_default(openai_respo
     call_args = mock_inference_api.openai_chat_completion.call_args
     params = call_args.args[0]
     assert params.presence_penalty is None
+
+
+async def test_hallucinated_tool_call_does_not_cause_500(openai_responses_impl, mock_inference_api):
+    """Regression test: a hallucinated tool name should not produce a 500 (InternalServerError).
+
+    When the LLM calls a tool name that is not in the registered tools list the server
+    was raising ValueError from _coordinate_tool_execution which then propagated as an
+    InternalServerError (HTTP 500). The correct behaviour is to surface the unknown call
+    as a regular function-tool-call output so the client can respond, exactly as OpenAI
+    does for any function tool call.
+    """
+    input_text = "What is the capital of Ireland?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    async def fake_stream_hallucinated_tool():
+        # The LLM calls "lookup_capital_city" which is NOT in the registered tools list.
+        yield ChatCompletionChunk(
+            id="hallucinated-123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="tc_hall_123",
+                                function=ChoiceDeltaToolCallFunction(
+                                    name="lookup_capital_city",
+                                    arguments='{"country": "Ireland"}',
+                                ),
+                                type="function",
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_hallucinated_tool()
+
+    # The only registered tool is "get_weather".  The LLM hallucinated "lookup_capital_city".
+    # The response should complete without raising InternalServerError, and the hallucinated
+    # call should appear in the output as a function_call item so the client can handle it.
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_weather",
+                description="Get current temperature for a given location.",
+                parameters={
+                    "type": "object",
+                    "properties": {"location": {"type": "string"}},
+                    "required": ["location"],
+                },
+            )
+        ],
+    )
+
+    assert result is not None
+    assert result.status == "completed"
+    assert len(result.output) == 1
+    assert result.output[0].type == "function_call"
+    assert result.output[0].name == "lookup_capital_city"
