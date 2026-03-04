@@ -14,6 +14,36 @@ from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
 
+async def test_sqlstore_shutdown_disposes_engine():
+    """Test that shutdown() properly disposes the async engine.
+
+    This is critical for aiosqlite >= 0.22 where worker threads are non-daemon.
+    Without proper engine disposal, the process hangs on exit.
+    See: https://github.com/llamastack/llama-stack/issues/4587
+    """
+    with TemporaryDirectory() as tmp_dir:
+        db_path = tmp_dir + "/shutdown_test.db"
+        store = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=db_path))
+
+        # Verify engine exists
+        assert store._engine is not None
+
+        # Create a table and insert data to ensure connections are established
+        await store.create_table(
+            "test",
+            {"id": ColumnType.INTEGER, "name": ColumnType.STRING},
+        )
+        await store.insert("test", {"id": 1, "name": "test"})
+
+        # Shutdown should dispose the engine and close connections
+        await store.shutdown()
+
+        # Engine should be None after shutdown
+        assert store._engine is None, (
+            "Engine not disposed after shutdown. This causes process hang on exit with aiosqlite >= 0.22"
+        )
+
+
 async def test_sqlite_sqlstore():
     with TemporaryDirectory() as tmp_dir:
         db_name = "test.db"
