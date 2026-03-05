@@ -118,6 +118,8 @@ class OpenAIResponsesImpl:
         self.connectors_api = connectors_api
         self._background_queue: asyncio.Queue = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
         self._background_worker_tasks: set[asyncio.Task] = set()
+        self._background_response_tasks: dict[str, asyncio.Task] = {}
+        self._background_response_tasks_lock = asyncio.Lock()
 
     async def initialize(self) -> None:
         """No-op: background workers are started lazily on first use.
@@ -137,21 +139,51 @@ class OpenAIResponsesImpl:
 
     async def shutdown(self) -> None:
         """Stop background worker pool."""
+        # Cancel all in-progress response tasks
+        async with self._background_response_tasks_lock:
+            for task in self._background_response_tasks.values():
+                task.cancel()
+            response_task_list = list(self._background_response_tasks.values())
+
+        # Cancel worker tasks
         for task in self._background_worker_tasks:
             task.cancel()
-        await asyncio.gather(*self._background_worker_tasks, return_exceptions=True)
+
+        # Wait for all tasks to complete
+        all_tasks = list(self._background_worker_tasks) + response_task_list
+        await asyncio.gather(*all_tasks, return_exceptions=True)
 
     async def _background_worker(self) -> None:
         """Worker coroutine that pulls items from the queue and processes them."""
         while True:
             kwargs = await self._background_queue.get()
-            try:
-                await asyncio.wait_for(
+            response_id = kwargs["response_id"]
+
+            # Create a task for this specific response so we can cancel it
+            processing_task = asyncio.create_task(
+                asyncio.wait_for(
                     self._run_background_response_loop(**kwargs),
                     timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
                 )
+            )
+
+            # Track the task
+            async with self._background_response_tasks_lock:
+                self._background_response_tasks[response_id] = processing_task
+
+            try:
+                await processing_task
+            except asyncio.CancelledError:
+                # Response was cancelled via cancel_openai_response
+                logger.info(f"Background response {response_id} was cancelled")
+                try:
+                    existing = await self.responses_store.get_response_object(response_id)
+                    if existing.status != "cancelled":
+                        existing.status = "cancelled"
+                        await self.responses_store.update_response_object(existing)
+                except Exception:
+                    logger.exception(f"Failed to update response {response_id} with cancelled status")
             except TimeoutError:
-                response_id = kwargs["response_id"]
                 logger.exception(
                     f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
                 )
@@ -169,7 +201,6 @@ class OpenAIResponsesImpl:
                         "Client polling this response will not see the failure."
                     )
             except Exception as e:
-                response_id = kwargs["response_id"]
                 logger.exception(f"Error processing background response {response_id}")
                 try:
                     existing = await self.responses_store.get_response_object(response_id)
@@ -185,6 +216,9 @@ class OpenAIResponsesImpl:
                         "Client polling this response will not see the failure."
                     )
             finally:
+                # Remove from tracking
+                async with self._background_response_tasks_lock:
+                    self._background_response_tasks.pop(response_id, None)
                 self._background_queue.task_done()
 
     async def _prepend_previous_response(
@@ -1094,6 +1128,61 @@ class OpenAIResponsesImpl:
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)
+
+    async def cancel_openai_response(
+        self,
+        response_id: str,
+    ) -> OpenAIResponseObject:
+        """Cancel a response that is queued or in progress.
+
+        Args:
+            response_id: The ID of the response to cancel
+
+        Returns:
+            The updated response object with status "cancelled"
+
+        Raises:
+            ResponseNotFoundError: If the response doesn't exist (automatically from store)
+            ConflictError: If the response is already in a terminal state
+        """
+        from llama_stack_api import ConflictError
+
+        # Get current response state
+        response = await self.responses_store.get_response_object(response_id)
+
+        # Preserve the background field
+        was_background = response.background
+
+        # If already cancelled, return current state (idempotent)
+        if response.status == "cancelled":
+            cancelled_response = response.to_response_object()
+            # Ensure background field is preserved
+            if was_background:
+                cancelled_response.background = was_background
+            return cancelled_response
+
+        # Cannot cancel responses in terminal states
+        if response.status in ["completed", "failed", "incomplete"]:
+            raise ConflictError(f"Cannot cancel response '{response_id}' with status '{response.status}'")
+
+        # Update status to cancelled in database
+        response.status = "cancelled"
+        await self.responses_store.update_response_object(response)
+
+        # If the response is currently being processed, cancel the task
+        async with self._background_response_tasks_lock:
+            task = self._background_response_tasks.get(response_id)
+            if task:
+                task.cancel()
+                # Note: task removal handled in worker's finally block
+
+        # Return updated response
+        response_with_input = await self.responses_store.get_response_object(response_id)
+        cancelled_response = response_with_input.to_response_object()
+        # Ensure background field is preserved
+        if was_background:
+            cancelled_response.background = was_background
+        return cancelled_response
 
     async def _sync_response_to_conversation(
         self, conversation_id: str, input: str | list[OpenAIResponseInput] | None, output_items: list[ConversationItem]

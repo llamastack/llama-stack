@@ -235,3 +235,11 @@ class DeleteResponseRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     response_id: str = Field(..., min_length=1, description="The ID of the OpenAI response to delete.")
+
+
+class CancelResponseRequest(BaseModel):
+    """Request model for canceling a response."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    response_id: str = Field(..., min_length=1, description="The ID of the OpenAI response to cancel.")

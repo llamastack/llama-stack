@@ -39,6 +39,7 @@ from llama_stack_api.version import LLAMA_STACK_API_V1
 
 from .api import Agents
 from .models import (
+    CancelResponseRequest,
     CreateResponseRequest,
     DeleteResponseRequest,
     ListResponseInputItemsRequest,
@@ -83,6 +84,7 @@ async def sse_generator(event_gen):
 # Automatically generate dependency functions from Pydantic models
 get_retrieve_response_request = create_path_dependency(RetrieveResponseRequest)
 get_delete_response_request = create_path_dependency(DeleteResponseRequest)
+get_cancel_response_request = create_path_dependency(CancelResponseRequest)
 get_list_responses_request = create_query_dependency(ListResponsesRequest)
 
 
@@ -280,5 +282,21 @@ def create_router(impl: Agents) -> APIRouter:
         request: Annotated[DeleteResponseRequest, Depends(get_delete_response_request)],
     ) -> OpenAIDeleteResponseObject:
         return await impl.delete_openai_response(request)
+
+    @router.post(
+        "/responses/{response_id}/cancel",
+        response_model=OpenAIResponseObject,
+        summary="Cancel a response that is in progress.",
+        description="Cancel a response that is queued or in progress.",
+        responses={
+            200: {"description": "The updated response object with status 'cancelled'."},
+            404: {"description": "Response not found."},
+            409: {"description": "Conflict: Cannot cancel response in terminal state."},
+        },
+    )
+    async def cancel_openai_response(
+        request: Annotated[CancelResponseRequest, Depends(get_cancel_response_request)],
+    ) -> OpenAIResponseObject:
+        return await impl.cancel_openai_response(request)
 
     return router
