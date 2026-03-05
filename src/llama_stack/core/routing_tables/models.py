@@ -227,9 +227,9 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             metadata = request.metadata or {}
             model_type = request.model_type
 
-            # Transfer skip_model_availability from request to metadata if present
-            if hasattr(request, "skip_model_availability") and request.skip_model_availability is not None:
-                metadata["skip_model_availability"] = request.skip_model_availability
+            # Transfer model_validation from request to metadata if present
+            if hasattr(request, "model_validation") and request.model_validation is not None:
+                metadata["model_validation"] = request.model_validation
         elif isinstance(request, str):
             # Legacy positional argument: register_model("model-id", ...)
             model_id = request

@@ -480,17 +480,13 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     ##
 
     async def register_model(self, model: Model) -> Model:
-        # Determine if we should skip model availability check
-        # Model-level setting overrides provider-level setting if specified
-        if model.metadata and "skip_model_availability" in model.metadata:
-            should_skip = model.metadata["skip_model_availability"]
-        else:
-            should_skip = self.config.skip_model_availability
+        # Check if we should validate model availability (defaults to False)
+        should_validate = False
+        if model.metadata and "model_validation" in model.metadata:
+            should_validate = model.metadata["model_validation"]
 
-        if should_skip:
-            logger.debug(
-                f"Skipping model availability check for {model.provider_model_id} (skip_model_availability=true)"
-            )
+        if not should_validate:
+            logger.debug(f"Skipping model availability check for {model.provider_model_id} (model_validation=false)")
             return model
 
         if not await self.check_model_availability(model.provider_model_id):
@@ -559,9 +555,6 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         return model in self._model_cache
 
     async def should_refresh_models(self) -> bool:
-        # Skip model refresh if skip_model_availability is set
-        if self.config.skip_model_availability:
-            return False
         return self.config.refresh_models
 
     #

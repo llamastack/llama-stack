@@ -80,9 +80,9 @@ class ModelInput(CommonModelFields):
     provider_id: str | None = None
     provider_model_id: str | None = None
     model_type: ModelType | None = ModelType.llm
-    skip_model_availability: bool | None = Field(
+    model_validation: bool | None = Field(
         default=None,
-        description="Skip model availability check during registration and preserve this model during provider refresh. Overrides provider-level setting if specified.",
+        description="Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.",
     )
     model_config = ConfigDict(protected_namespaces=())
 
@@ -138,9 +138,9 @@ class RegisterModelRequest(BaseModel):
     provider_id: str | None = Field(default=None, description="The identifier of the provider.")
     metadata: dict[str, Any] | None = Field(default=None, description="Any additional metadata for this model.")
     model_type: ModelType | None = Field(default=None, description="The type of model to register.")
-    skip_model_availability: bool | None = Field(
+    model_validation: bool | None = Field(
         default=None,
-        description="Skip model availability check during registration and preserve this model during provider refresh. Overrides provider-level setting if specified.",
+        description="Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.",
     )
 
 

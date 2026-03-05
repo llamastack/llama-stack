@@ -8645,11 +8645,11 @@ components:
           - type: 'null'
           description: The type of model to register.
           title: ModelType
-        skip_model_availability:
+        model_validation:
           anyOf:
           - type: boolean
           - type: 'null'
-          description: Skip model availability check during registration and preserve this model during provider refresh. Overrides provider-level setting if specified.
+          description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
       type: object
       required:
       - model_id

@@ -34,7 +34,6 @@ IBM WatsonX inference provider for accessing AI models on IBM's WatsonX platform
 | `network.timeout.connect` | `float \| None` | No |  | Connection timeout in seconds. |
 | `network.timeout.read` | `float \| None` | No |  | Read timeout in seconds. |
 | `network.headers` | `dict[str, str] \| None` | No |  | Additional HTTP headers to include in all requests. |
-| `skip_model_availability` | `bool` | No | False | Skip model availability checks and model refresh. Useful when using placeholder API keys with per-request authentication via provider_data header. |
 | `base_url` | `HttpUrl \| None` | No | https://us-south.ml.cloud.ibm.com | A base url for accessing the watsonx.ai |
 | `project_id` | `str \| None` | No |  | The watsonx.ai project ID |
 | `timeout` | `int` | No | 60 | Timeout for the HTTP requests |
