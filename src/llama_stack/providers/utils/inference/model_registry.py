@@ -179,7 +179,7 @@ class RemoteInferenceProviderConfig(BaseModel):
     )
     skip_model_availability: bool = Field(
         default=False,
-        description="Skip model availability check on startup. Useful when using placeholder API keys with per-request authentication via provider_data header.",
+        description="Skip model availability checks and model refresh. Useful when using placeholder API keys with per-request authentication via provider_data header.",
     )
 
 

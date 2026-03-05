@@ -34,7 +34,7 @@ Llama OpenAI-compatible provider for using Llama models with OpenAI API format.
 | `network.timeout.connect` | `float \| None` | No |  | Connection timeout in seconds. |
 | `network.timeout.read` | `float \| None` | No |  | Read timeout in seconds. |
 | `network.headers` | `dict[str, str] \| None` | No |  | Additional HTTP headers to include in all requests. |
-| `skip_model_availability` | `bool` | No | False | Skip model availability check on startup. Useful when using placeholder API keys with per-request authentication via provider_data header. |
+| `skip_model_availability` | `bool` | No | False | Skip model availability checks and model refresh. Useful when using placeholder API keys with per-request authentication via provider_data header. |
 | `base_url` | `HttpUrl \| None` | No | https://api.llama.com/compat/v1/ | The URL for the Llama API server |
 
 ## Sample Configuration

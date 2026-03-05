@@ -8649,7 +8649,7 @@ components:
           anyOf:
           - type: boolean
           - type: 'null'
-          description: Skip model availability check on startup for this specific model. Overrides provider-level setting if specified.
+          description: Skip model availability check during registration and preserve this model during provider refresh. Overrides provider-level setting if specified.
       type: object
       required:
       - model_id

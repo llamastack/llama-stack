@@ -82,7 +82,7 @@ class ModelInput(CommonModelFields):
     model_type: ModelType | None = ModelType.llm
     skip_model_availability: bool | None = Field(
         default=None,
-        description="Skip model availability check on startup for this specific model. Overrides provider-level setting if specified.",
+        description="Skip model availability check during registration and preserve this model during provider refresh. Overrides provider-level setting if specified.",
     )
     model_config = ConfigDict(protected_namespaces=())
 
@@ -140,7 +140,7 @@ class RegisterModelRequest(BaseModel):
     model_type: ModelType | None = Field(default=None, description="The type of model to register.")
     skip_model_availability: bool | None = Field(
         default=None,
-        description="Skip model availability check on startup for this specific model. Overrides provider-level setting if specified.",
+        description="Skip model availability check during registration and preserve this model during provider refresh. Overrides provider-level setting if specified.",
     )
 
 

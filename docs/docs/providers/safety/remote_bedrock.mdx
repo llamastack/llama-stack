@@ -33,7 +33,7 @@ AWS Bedrock safety provider for content moderation using AWS's safety services.
 | `network.timeout.connect` | `float \| None` | No |  | Connection timeout in seconds. |
 | `network.timeout.read` | `float \| None` | No |  | Read timeout in seconds. |
 | `network.headers` | `dict[str, str] \| None` | No |  | Additional HTTP headers to include in all requests. |
-| `skip_model_availability` | `bool` | No | False | Skip model availability check on startup. Useful when using placeholder API keys with per-request authentication via provider_data header. |
+| `skip_model_availability` | `bool` | No | False | Skip model availability checks and model refresh. Useful when using placeholder API keys with per-request authentication via provider_data header. |
 | `aws_access_key_id` | `SecretStr \| None` | No |  | The AWS access key to use. Default use environment variable: AWS_ACCESS_KEY_ID |
 | `aws_secret_access_key` | `SecretStr \| None` | No |  | The AWS secret access key to use. Default use environment variable: AWS_SECRET_ACCESS_KEY |
 | `aws_session_token` | `SecretStr \| None` | No |  | The AWS session token to use. Default use environment variable: AWS_SESSION_TOKEN |
