@@ -12741,7 +12741,7 @@ components:
             minimum: -2.0
           - type: 'null'
           description: Penalizes new tokens based on whether they appear in the text so far.
-      additionalProperties: false
+      additionalProperties: true
       type: object
       required:
       - input
