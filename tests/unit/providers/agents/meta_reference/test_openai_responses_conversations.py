@@ -5,6 +5,8 @@
 # the root directory of this source tree.
 
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 # Fixtures imported from test_openai_responses via root conftest.py for pytest 8.4+ compatibility
@@ -156,6 +158,57 @@ class TestMessageSyncing:
         items = request.items
         # Should have input message + output message
         assert len(items) == 2
+
+
+_RESPONSES_MODULE = "llama_stack.providers.inline.agents.meta_reference.responses.openai_responses"
+
+
+class TestConversationSyncErrorHandling:
+    """Verify that conversation sync failures don't break the response."""
+
+    async def test_sync_failure_still_yields_completed_response(
+        self, responses_impl_with_conversations, mock_conversations_api, mock_responses_store
+    ):
+        """Conversation sync failure must not prevent the client from receiving its response."""
+        mock_conversations_api.list_items.return_value = ConversationItemList(
+            data=[], first_id=None, has_more=False, last_id=None, object="list"
+        )
+        mock_conversations_api.add_items.side_effect = Exception("store unavailable")
+
+        completed_response = OpenAIResponseObject(
+            id="resp_1",
+            created_at=0,
+            model="test-model",
+            object="response",
+            output=[],
+            status="completed",
+            store=True,
+        )
+
+        async def fake_create_response():
+            yield OpenAIResponseObjectStreamResponseCompleted(
+                response=completed_response, sequence_number=1, type="response.completed"
+            )
+
+        mock_orch = AsyncMock()
+        mock_orch.create_response = fake_create_response
+        mock_orch.final_messages = []
+
+        with (
+            patch(f"{_RESPONSES_MODULE}.MCPSessionManager") as mock_mcp,
+            patch(f"{_RESPONSES_MODULE}.ToolExecutor"),
+            patch(f"{_RESPONSES_MODULE}.StreamingResponseOrchestrator", return_value=mock_orch),
+        ):
+            mock_mcp.return_value.__aenter__ = AsyncMock(return_value=AsyncMock())
+            mock_mcp.return_value.__aexit__ = AsyncMock(return_value=False)
+
+            response = await responses_impl_with_conversations.create_openai_response(
+                input="Hello", model="test-model", conversation="conv_test123", stream=False, store=False
+            )
+
+        assert response.id == "resp_1"
+        assert response.status == "completed"
+        mock_conversations_api.add_items.assert_called_once()
 
 
 class TestIntegrationWorkflow:

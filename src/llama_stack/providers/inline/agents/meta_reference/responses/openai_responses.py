@@ -1094,11 +1094,17 @@ class OpenAIResponsesImpl:
                     and failed_response is None
                 ):
                     if conversation:
-                        messages_to_store = list(
-                            filter(lambda x: not isinstance(x, OpenAISystemMessageParam), orchestrator.final_messages)
-                        )
-                        await self._sync_response_to_conversation(conversation, input, output_items)
-                        await self.responses_store.store_conversation_messages(conversation, messages_to_store)
+                        try:
+                            messages_to_store = list(
+                                filter(
+                                    lambda x: not isinstance(x, OpenAISystemMessageParam),
+                                    orchestrator.final_messages,
+                                )
+                            )
+                            await self._sync_response_to_conversation(conversation, input, output_items)
+                            await self.responses_store.store_conversation_messages(conversation, messages_to_store)
+                        except Exception as e:
+                            logger.exception("Failed to sync response to conversation %s: %s", conversation, e)
 
                 yield stream_chunk
 
