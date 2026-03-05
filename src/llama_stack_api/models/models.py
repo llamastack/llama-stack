@@ -66,6 +66,10 @@ class Model(CommonModelFields, Resource):
     model_config = ConfigDict(protected_namespaces=())
 
     model_type: ModelType = Field(default=ModelType.llm)
+    model_validation: bool | None = Field(
+        default=None,
+        description="Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.",
+    )
 
     @field_validator("provider_resource_id")
     @classmethod
@@ -80,10 +84,6 @@ class ModelInput(CommonModelFields):
     provider_id: str | None = None
     provider_model_id: str | None = None
     model_type: ModelType | None = ModelType.llm
-    model_validation: bool | None = Field(
-        default=None,
-        description="Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.",
-    )
     model_config = ConfigDict(protected_namespaces=())
 
 

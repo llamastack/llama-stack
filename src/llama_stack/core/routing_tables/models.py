@@ -218,6 +218,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         provider_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
+        model_validation: bool | None = None,
     ) -> Model:
         # Support both the public Models API (RegisterModelRequest) and legacy parameter-based interface
         if isinstance(request, RegisterModelRequest):
@@ -226,10 +227,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             provider_id = request.provider_id
             metadata = request.metadata or {}
             model_type = request.model_type
-
-            # Transfer model_validation from request to metadata if present
-            if hasattr(request, "model_validation") and request.model_validation is not None:
-                metadata["model_validation"] = request.model_validation
+            model_validation = request.model_validation
         elif isinstance(request, str):
             # Legacy positional argument: register_model("model-id", ...)
             model_id = request
@@ -260,6 +258,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             provider_id=provider_id,
             metadata=metadata,
             model_type=model_type,
+            model_validation=model_validation,
             source=RegistryEntrySource.via_register_api,
         )
         registered_model = await self.register_object(model)

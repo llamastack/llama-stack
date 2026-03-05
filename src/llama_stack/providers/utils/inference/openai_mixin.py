@@ -481,9 +481,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
     async def register_model(self, model: Model) -> Model:
         # Check if we should validate model availability (defaults to False)
-        should_validate = False
-        if model.metadata and "model_validation" in model.metadata:
-            should_validate = model.metadata["model_validation"]
+        should_validate = model.model_validation if model.model_validation is not None else False
 
         if not should_validate:
             logger.debug(f"Skipping model availability check for {model.provider_model_id} (model_validation=false)")

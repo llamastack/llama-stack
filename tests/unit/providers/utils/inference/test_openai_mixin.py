@@ -526,7 +526,7 @@ class TestOpenAIMixinModelRegistration:
             provider_resource_id="some-mock-model-id",
             identifier="test-model",
             model_type=ModelType.llm,
-            metadata={"model_validation": True},
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -550,7 +550,7 @@ class TestOpenAIMixinModelRegistration:
             provider_resource_id="non-existent-model",
             identifier="test-model",
             model_type=ModelType.llm,
-            metadata={"model_validation": True},
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -571,7 +571,7 @@ class TestOpenAIMixinModelRegistration:
             provider_resource_id="some-mock-model-id",
             identifier="allowed-model",
             model_type=ModelType.llm,
-            metadata={"model_validation": True},
+            model_validation=True,
         )
 
         # Test with disallowed model (with validation enabled)
@@ -580,7 +580,7 @@ class TestOpenAIMixinModelRegistration:
             provider_resource_id="final-mock-model-id",
             identifier="disallowed-model",
             model_type=ModelType.llm,
-            metadata={"model_validation": True},
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -646,7 +646,7 @@ class TestOpenAIMixinModelRegistration:
             provider_resource_id="some-model",
             identifier="test-model",
             model_type=ModelType.llm,
-            metadata={"model_validation": True},
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_exception):
@@ -707,7 +707,7 @@ class TestOpenAIMixinModelRegistration:
             provider_resource_id="non-existent-model",
             identifier="test-model",
             model_type=ModelType.llm,
-            metadata={"model_validation": True},
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -731,7 +731,7 @@ class TestOpenAIMixinModelRegistration:
             provider_resource_id="non-existent-model",
             identifier="test-model",
             model_type=ModelType.llm,
-            metadata={"model_validation": False},
+            model_validation=False,
         )
 
         with mock_client_context(mixin, mock_client_with_models):

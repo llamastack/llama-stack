@@ -3575,6 +3575,11 @@ components:
         model_type:
           $ref: '#/components/schemas/ModelType'
           default: llm
+        model_validation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
       type: object
       required:
       - identifier
