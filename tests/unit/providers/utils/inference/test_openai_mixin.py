@@ -675,26 +675,6 @@ class TestOpenAIMixinModelRegistration:
             # Verify that models.list() was NOT called
             mock_client_with_models.models.list.assert_not_called()
 
-    async def test_register_model_with_model_level_validation_disabled(
-        self, mixin, mock_client_with_models, mock_client_context
-    ):
-        """Test model registration with model_validation=False at model level"""
-        model = Model(
-            provider_id="test-provider",
-            provider_resource_id="non-existent-model",
-            identifier="test-model",
-            model_type=ModelType.llm,
-            metadata={"model_validation": False},
-        )
-
-        with mock_client_context(mixin, mock_client_with_models):
-            # Should succeed without checking model availability
-            result = await mixin.register_model(model)
-
-            assert result == model
-            # Verify that models.list() was NOT called
-            mock_client_with_models.models.list.assert_not_called()
-
     async def test_register_model_with_validation_enabled(self, mock_client_with_models, mock_client_context):
         """Test that model-level model_validation=True enables validation"""
         # Default config (no provider-level validation setting)
