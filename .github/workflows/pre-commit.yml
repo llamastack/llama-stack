@@ -4,6 +4,7 @@ run-name: Run pre-commit checks
 
 on:
   pull_request:
+  merge_group:
   push:
     branches:
       - main
@@ -50,7 +51,7 @@ jobs:
           cache-dependency-path: 'src/llama_stack_ui/'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
 
       - name: Install npm dependencies
         run: npm ci
