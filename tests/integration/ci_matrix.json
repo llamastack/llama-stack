@@ -6,7 +6,8 @@
     {"suite": "vision", "setup": "ollama-vision"},
     {"suite": "responses", "setup": "gpt"},
     {"suite": "base-vllm-subset", "setup": "vllm"},
-    {"suite": "reasoning", "setup": "vllm"}
+    {"suite": "vllm-reasoning", "setup": "vllm"},
+    {"suite": "ollama-reasoning", "setup": "ollama-reasoning"}
   ],
   "stainless": [
     {"suite": "base", "setup": "ollama", "inference_mode": "record-if-missing"}

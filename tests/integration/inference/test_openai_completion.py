@@ -235,7 +235,7 @@ def test_openai_completion_guided_choice(llama_stack_client, client_with_models,
         model=text_model_id,
         prompt=prompt,
         stream=False,
-        extra_body={"guided_choice": ["joy", "sadness"]},
+        extra_body={"structured_outputs": {"choice": ["joy", "sadness"]}},
     )
     assert len(response.choices) > 0
     choice = response.choices[0]
@@ -519,6 +519,54 @@ def test_openai_chat_completion_non_streaming_with_file(openai_client, client_wi
     message_content = response.choices[0].message.content.lower().strip()
     normalized_content = _normalize_text(message_content)
     assert "hello world" in normalized_content
+
+
+def skip_if_model_doesnt_support_reasoning(model_id):
+    """Skip if the model is not known to emit reasoning/thinking tokens."""
+    if "gpt-oss" not in model_id.lower():
+        pytest.skip(f"Model {model_id} doesn't emit reasoning tokens; skipping reasoning passthrough test.")
+
+
+def test_openai_chat_completion_reasoning_passthrough(openai_client, client_with_models, text_model_id):
+    """Verify that reasoning tokens survive a round-trip through Llama Stack.
+
+    Turn 1: send a prompt, assert that the response carries reasoning content
+            in model_extra (transparent passthrough from the provider).
+    Turn 2: echo the assistant message, including its reasoning field, back
+            as history, send a follow-up, and assert that the stack accepted
+            the message and returned a coherent answer.  This exercises the
+            OpenAIAssistantMessageParam extra="allow" fix: without it the
+            reasoning field would be silently dropped before reaching the
+            provider, degrading multi-turn quality.
+    """
+    skip_if_model_doesnt_support_openai_chat_completion(client_with_models, text_model_id)
+    skip_if_model_doesnt_support_reasoning(text_model_id)
+
+    # Turn 1
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        {"role": "user", "content": "What is 2+2? Think step by step."},
+    ]
+    resp1 = openai_client.chat.completions.create(model=text_model_id, messages=messages)
+    msg1 = resp1.choices[0].message
+
+    # Reasoning content arrives as a non-spec field; it lives in model_extra
+    # because the OpenAI SDK uses extra="allow" on its response types.
+    reasoning = (msg1.model_extra or {}).get("reasoning") or (msg1.model_extra or {}).get("reasoning_content")
+    assert reasoning, (
+        f"Expected reasoning content in turn-1 response from {text_model_id}. model_extra={msg1.model_extra}"
+    )
+
+    # Turn 2
+    # model_dump() includes model_extra, so 'reasoning' is present in the dict
+    # that gets sent back to the stack.  The stack must not drop it.
+    messages.append(msg1.model_dump())
+    messages.append({"role": "user", "content": "Now multiply that result by 3."})
+
+    resp2 = openai_client.chat.completions.create(model=text_model_id, messages=messages)
+    msg2 = resp2.choices[0].message
+
+    assert msg2.content, "Expected a non-empty response in turn 2"
 
 
 def skip_if_doesnt_support_completions_stop_sequence(client_with_models, model_id):

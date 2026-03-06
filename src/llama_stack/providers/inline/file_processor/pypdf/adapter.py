@@ -33,3 +33,7 @@ class PyPDFFileProcessorAdapter:
             options=request.options,
             chunking_strategy=request.chunking_strategy,
         )
+
+    async def shutdown(self) -> None:
+        """Shutdown the PyPDF file processor."""
+        pass

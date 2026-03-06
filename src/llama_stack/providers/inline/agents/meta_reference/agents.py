@@ -141,6 +141,7 @@ class MetaReferenceAgentsImpl(Agents):
             truncation=request.truncation,
             top_logprobs=request.top_logprobs,
             presence_penalty=request.presence_penalty,
+            extra_body=request.model_extra,
         )
         return result
 

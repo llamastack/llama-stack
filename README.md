@@ -2,6 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/llama_stack.svg)](https://pypi.org/project/llama_stack/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/llama-stack)](https://pypi.org/project/llama-stack/)
+[![Docker Hub - Pulls](https://img.shields.io/docker/pulls/llamastack/distribution-starter)](https://hub.docker.com/u/llamastack)
 [![License](https://img.shields.io/pypi/l/llama_stack.svg)](https://github.com/meta-llama/llama-stack/blob/main/LICENSE)
 [![Discord](https://img.shields.io/discord/1257833999603335178?color=6A7EC2&logo=discord&logoColor=ffffff)](https://discord.gg/llama-stack)
 [![Unit Tests](https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml?query=branch%3Amain)
@@ -88,8 +89,10 @@ Here are some of the distributions we support:
 |               **Distribution**                |                                                                    **Llama Stack Docker**                                                                     |                                                 Start This Distribution                                                  |
 |:---------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------:|
 |                Starter Distribution                 |           [llamastack/distribution-starter](https://hub.docker.com/repository/docker/llamastack/distribution-starter/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/starter)      |
+|                Starter Distribution GPU                 |           [llamastack/distribution-starter-cpu](https://hub.docker.com/repository/docker/llamastack/distribution-starter-cpu/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/starter)      |
 |                Meta Reference                 |           [llamastack/distribution-meta-reference-gpu](https://hub.docker.com/repository/docker/llamastack/distribution-meta-reference-gpu/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/meta-reference-gpu)      |
-|                   PostgreSQL                  |                [llamastack/distribution-postgres-demo](https://hub.docker.com/repository/docker/llamastack/distribution-postgres-demo/general)                |                  |
+|                   PostgreSQL                  |                [llamastack/distribution-postgres-demo](https://hub.docker.com/repository/docker/llamastack/distribution-postgres-demo/general)                | N/A |
+|                Dell                 |           [llamastack/distribution-dell](https://hub.docker.com/repository/docker/llamastack/distribution-dell/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/dell)      |
 
 For full documentation on the Llama Stack distributions see the [Distributions Overview](https://llamastack.github.io/docs/distributions) page.
 

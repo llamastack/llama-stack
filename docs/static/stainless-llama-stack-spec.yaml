@@ -4600,6 +4600,7 @@ components:
       title: ListOpenAIChatCompletionResponse
       description: Response from listing OpenAI-compatible chat completions.
     OpenAIAssistantMessageParam:
+      additionalProperties: true
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
       properties:
         role:
@@ -12740,7 +12741,7 @@ components:
             minimum: -2.0
           - type: 'null'
           description: Penalizes new tokens based on whether they appear in the text so far.
-      additionalProperties: false
+      additionalProperties: true
       type: object
       required:
       - input
@@ -13051,6 +13052,7 @@ components:
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+      additionalProperties: true
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -13084,6 +13086,7 @@ components:
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+      additionalProperties: true
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.

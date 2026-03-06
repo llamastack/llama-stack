@@ -9,13 +9,19 @@
 This module provides standard error response definitions for FastAPI routers.
 These responses use OpenAPI $ref references to component responses defined
 in the OpenAPI specification.
+
+It also provides :class:`ExceptionTranslatingRoute`, a reusable route class
+that catches known exception types (``ValueError``, ``LlamaStackError``)
+and translates them to ``HTTPException`` so that FastAPI returns proper
+JSON error responses instead of dropping the connection.
 """
 
 import inspect
 from collections.abc import Callable
 from typing import Annotated, Any, TypeVar
 
-from fastapi import Path, Query
+from fastapi import HTTPException, Path, Query, Request, Response
+from fastapi.routing import APIRoute
 from pydantic import BaseModel
 
 # OpenAPI extension key to mark routes that don't require authentication.
@@ -158,3 +164,51 @@ def create_path_dependency[T: BaseModel](model_class: type[T]) -> Callable[..., 
     dependency_func.__name__ = f"get_{model_class.__name__.lower()}_request"  # type: ignore[attr-defined]
 
     return dependency_func
+
+
+def try_translate_to_http_exception(exc: Exception) -> HTTPException | None:
+    """Try to translate an exception to an HTTPException.
+
+    Returns an HTTPException for known exception types (HTTPException,
+    ValueError, and exceptions with a ``status_code`` attribute such as
+    LlamaStackError subclasses).  Returns ``None`` for unknown types so
+    the caller can decide whether to re-raise the original exception.
+
+    The full ``translate_exception`` pipeline lives in ``llama_stack.core``
+    which ``llama_stack_api`` must not import, so we duplicate the minimal
+    logic required here.
+    """
+    if isinstance(exc, HTTPException):
+        return exc
+    status_code = getattr(exc, "status_code", None)
+    if isinstance(status_code, int):
+        return HTTPException(status_code=status_code, detail=str(exc))
+    if isinstance(exc, ValueError):
+        return HTTPException(status_code=400, detail=str(exc) or "Invalid value")
+    return None
+
+
+class ExceptionTranslatingRoute(APIRoute):
+    """Route class that converts known exception types to HTTPException.
+
+    ValueError and LlamaStackError (which carry a ``status_code``) are
+    translated to the appropriate HTTPException so that FastAPI's built-in
+    handler returns a proper JSON error response.  All other exceptions
+    are left untouched so they can propagate to the server's global
+    ``Exception`` handler registered via ``app.exception_handler(Exception)``.
+    """
+
+    def get_route_handler(self):
+        original = super().get_route_handler()
+
+        async def handler(request: Request) -> Response:
+            try:
+                resp: Response = await original(request)
+            except Exception as exc:
+                http_exc = try_translate_to_http_exception(exc)
+                if http_exc is not None:
+                    raise http_exc from exc
+                raise
+            return resp
+
+        return handler

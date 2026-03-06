@@ -425,13 +425,15 @@ class OCI26aiIndex(EmbeddingIndex):
 
     async def delete_chunks(self, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         chunk_ids = [c.chunk_id for c in chunks_for_deletion]
+        if not chunk_ids:
+            return
+        placeholders = [f":id_{i}" for i in range(len(chunk_ids))]
+        params = {f"id_{i}": cid for i, cid in enumerate(chunk_ids)}
         cursor = self.connection.cursor()
         try:
             cursor.execute(
-                f"""
-                DELETE FROM {self.table_name}
-                WHERE chunk_id IN ({", ".join([f"'{chunk_id}'" for chunk_id in chunk_ids])})
-                """
+                f"DELETE FROM {self.table_name} WHERE chunk_id IN ({', '.join(placeholders)})",
+                params,
             )
         except Exception as e:
             logger.error(f"Error deleting chunks from Oracle 26AI table {self.table_name}: {e}")

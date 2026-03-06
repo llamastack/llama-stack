@@ -13,7 +13,7 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 from enum import Enum, StrEnum
 from typing import Annotated, Any, Literal, Self
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from typing_extensions import TypedDict
 
 from llama_stack_api.common.content_types import InterleavedContent
@@ -390,6 +390,8 @@ class OpenAIChatCompletionToolCall(BaseModel):
 @json_schema_type
 class OpenAIAssistantMessageParam(BaseModel):
     """A message containing the model's (assistant) response in an OpenAI-compatible chat completion request."""
+
+    model_config = ConfigDict(extra="allow")
 
     role: Literal["assistant"] = Field(
         default="assistant", description="Must be 'assistant' to identify this as the model's response."
