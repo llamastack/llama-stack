@@ -20,7 +20,7 @@ def test_consecutive_errors_keep_connection_alive():
     Without the route class, unhandled exceptions reach ServerErrorMiddleware which
     can close the TCP transport on Linux (RST). This test verifies the conversations
     router has ExceptionTranslatingRoute applied by sending two requests on the same
-    connection and confirming both get proper JSON responses.
+    connection and confirming both requests get proper JSON responses.
     """
     app = FastAPI()
     impl = AsyncMock(spec=Conversations)
