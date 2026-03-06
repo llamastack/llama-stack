@@ -38,23 +38,20 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
 
     async def refresh(self) -> None:
         for provider_id, provider in self.impls_by_provider_id.items():
-            should_refresh = await provider.should_refresh_models()
-
-            # If should_refresh_models returns False
-            # mark provider as listed to prevent repeated refresh attempts
-            if not should_refresh and provider_id not in self.listed_providers:
-                logger.debug(f"Model refresh skipped for provider {provider_id}")
-                self.listed_providers.add(provider_id)
-                continue
-
-            refresh = should_refresh or provider_id not in self.listed_providers
+            refresh = await provider.should_refresh_models()
+            refresh = refresh or provider_id not in self.listed_providers
             if not refresh:
                 continue
 
             try:
                 models = await provider.list_models()
             except Exception as e:
-                logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
+                if provider_id not in self.listed_providers:
+                    # Mark provider as listed to prevent repeated refresh attempts
+                    self.listed_providers.add(provider_id)
+                    logger.warning(f"Model refresh skipped for provider {provider_id}")
+                else:
+                    logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
                 continue
 
             self.listed_providers.add(provider_id)
