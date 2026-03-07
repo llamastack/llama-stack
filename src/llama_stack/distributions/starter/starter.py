@@ -21,6 +21,7 @@ from llama_stack.core.storage.kvstore.config import PostgresKVStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import PostgresSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
+from llama_stack.providers.inline.file_processor.docling.config import DoclingFileProcessorConfig
 from llama_stack.providers.inline.file_processor.pypdf.config import PyPDFFileProcessorConfig
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.inference.sentence_transformers import (
@@ -126,7 +127,10 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="remote::elasticsearch"),
         ],
         "files": [BuildProvider(provider_type="inline::localfs")],
-        "file_processors": [BuildProvider(provider_type="inline::pypdf")],
+        "file_processors": [
+            BuildProvider(provider_type="inline::pypdf"),
+            BuildProvider(provider_type="inline::docling"),
+        ],
         "safety": [
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
@@ -257,6 +261,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 provider_id="pypdf",
                 provider_type="inline::pypdf",
                 config=PyPDFFileProcessorConfig.sample_run_config(),
+            ),
+            Provider(
+                provider_id="docling",
+                provider_type="inline::docling",
+                config=DoclingFileProcessorConfig.sample_run_config(),
             ),
         ],
     }

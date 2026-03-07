@@ -172,6 +172,8 @@ providers:
   file_processors:
   - provider_id: pypdf
     provider_type: inline::pypdf
+  - provider_id: docling
+    provider_type: inline::docling
   safety:
   - provider_id: llama-guard
     provider_type: inline::llama-guard
