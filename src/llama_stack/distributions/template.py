@@ -22,7 +22,6 @@ from llama_stack.core.datatypes import (
     Provider,
     SafetyConfig,
     ShieldInput,
-    ToolGroupInput,
     VectorStoresConfig,
 )
 from llama_stack.core.distribution import get_provider_registry
@@ -178,7 +177,6 @@ class RunConfigSettings(BaseModel):
     provider_overrides: dict[str, list[Provider]] = Field(default_factory=dict)
     default_models: list[ModelInput] | None = None
     default_shields: list[ShieldInput] | None = None
-    default_tool_groups: list[ToolGroupInput] | None = None
     default_datasets: list[DatasetInput] | None = None
     default_benchmarks: list[BenchmarkInput] | None = None
     default_connectors: list[ConnectorInput] | None = None
@@ -282,7 +280,6 @@ class RunConfigSettings(BaseModel):
                 "datasets": [d.model_dump(exclude_none=True) for d in (self.default_datasets or [])],
                 "scoring_fns": [],
                 "benchmarks": [b.model_dump(exclude_none=True) for b in (self.default_benchmarks or [])],
-                "tool_groups": [t.model_dump(exclude_none=True) for t in (self.default_tool_groups or [])],
             },
             "server": {
                 "port": 8321,

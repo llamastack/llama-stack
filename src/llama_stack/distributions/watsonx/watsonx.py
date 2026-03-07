@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from llama_stack.core.datatypes import BuildProvider, Provider, ToolGroupInput
+from llama_stack.core.datatypes import BuildProvider, Provider
 from llama_stack.distributions.template import DistributionTemplate, RunConfigSettings
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.remote.inference.watsonx import WatsonXConfig
@@ -45,17 +45,6 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
         config=WatsonXConfig.sample_run_config(),
     )
 
-    default_tool_groups = [
-        ToolGroupInput(
-            toolgroup_id="builtin::websearch",
-            provider_id="tavily-search",
-        ),
-        ToolGroupInput(
-            toolgroup_id="builtin::rag",
-            provider_id="rag-runtime",
-        ),
-    ]
-
     files_provider = Provider(
         provider_id="meta-reference-files",
         provider_type="inline::localfs",
@@ -75,7 +64,6 @@ def get_distribution_template(name: str = "watsonx") -> DistributionTemplate:
                     "files": [files_provider],
                 },
                 default_models=[],
-                default_tool_groups=default_tool_groups,
             ),
         },
         run_config_env_vars={
