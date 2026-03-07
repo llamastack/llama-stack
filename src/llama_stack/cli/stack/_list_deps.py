@@ -81,6 +81,14 @@ def run_stack_list_deps_command(args: argparse.Namespace) -> None:
             with open(config_file) as f:
                 try:
                     contents = yaml.safe_load(f)
+                    # Remove auth provider_config to avoid validation errors with env var syntax.
+                    # We only need provider dependencies, not auth config (auth has no pip_packages).
+                    # This is simpler than modifying the schema to accept type="" which would require
+                    # removing discriminated union and adding custom validation logic and modifying
+                    # all 4 auth provider config classes (a very invasive change)
+                    if "server" in contents and "auth" in contents["server"]:
+                        if "provider_config" in contents["server"]["auth"]:
+                            contents["server"]["auth"]["provider_config"] = None
                     config = StackConfig(**contents)
                 except Exception as e:
                     cprint(
