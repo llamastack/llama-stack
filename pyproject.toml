@@ -46,6 +46,7 @@ dependencies = [
     "h11>=0.16.0",
     "python-multipart>=0.0.22",                       # For fastapi Form
     "uvicorn>=0.34.0",                                # server
+    "gunicorn>=23.0.0",                               # production server for Unix systems
     "opentelemetry-sdk>=1.30.0",                      # server
     "opentelemetry-exporter-otlp-proto-http>=1.30.0", # server
     "opentelemetry-distro>=0.60b1",                  # optional CLI instrumentation; only pre-releases on PyPI (latest 0.60b1)
