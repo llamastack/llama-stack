@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-from llama_stack.core.routers.vector_io import VectorIORouter
+from llama_stack.core.routers.vector_io import SearchFilterTranslator, VectorIORouter
 from llama_stack_api import (
     ModelNotFoundError,
     ModelType,
@@ -17,6 +17,107 @@ from llama_stack_api import (
     OpenAISearchVectorStoreRequest,
     OpenAIUpdateVectorStoreRequest,
 )
+from llama_stack_api.filters import ComparisonFilter
+
+
+# Concrete implementation of SearchFilterTranslator for testing
+class MockFilterTranslator(SearchFilterTranslator):
+    """Mock implementation that returns simple string representations."""
+
+    def translate_equals(self, key: str, value) -> str:
+        return f"{key} == {value}"
+
+    def translate_not_equals(self, key: str, value) -> str:
+        return f"{key} != {value}"
+
+    def translate_greater_than(self, key: str, value) -> str:
+        return f"{key} > {value}"
+
+    def translate_greater_than_or_equal(self, key: str, value) -> str:
+        return f"{key} >= {value}"
+
+    def translate_less_than(self, key: str, value) -> str:
+        return f"{key} < {value}"
+
+    def translate_less_than_or_equal(self, key: str, value) -> str:
+        return f"{key} <= {value}"
+
+    def translate_in(self, key: str, value) -> str:
+        return f"{key} IN {value}"
+
+    def translate_not_in(self, key: str, value) -> str:
+        return f"{key} NOT IN {value}"
+
+
+class TestSearchFilterTranslator:
+    """Tests for the SearchFilterTranslator abstract base class."""
+
+    def test_dispatch_equals_operator(self):
+        translator = MockFilterTranslator()
+        filter_obj = ComparisonFilter(type="eq", key="status", value="active")
+        result = translator.translate_comparison_filter(filter_obj)
+        assert result == "status == active"
+
+    def test_dispatch_not_equals_operator(self):
+        translator = MockFilterTranslator()
+        filter_obj = ComparisonFilter(type="ne", key="status", value="deleted")
+        result = translator.translate_comparison_filter(filter_obj)
+        assert result == "status != deleted"
+
+    def test_dispatch_greater_than_operator(self):
+        translator = MockFilterTranslator()
+        filter_obj = ComparisonFilter(type="gt", key="count", value=10)
+        result = translator.translate_comparison_filter(filter_obj)
+        assert result == "count > 10"
+
+    def test_dispatch_greater_than_or_equal_operator(self):
+        translator = MockFilterTranslator()
+        filter_obj = ComparisonFilter(type="gte", key="score", value=85)
+        result = translator.translate_comparison_filter(filter_obj)
+        assert result == "score >= 85"
+
+    def test_dispatch_less_than_operator(self):
+        translator = MockFilterTranslator()
+        filter_obj = ComparisonFilter(type="lt", key="age", value=30)
+        result = translator.translate_comparison_filter(filter_obj)
+        assert result == "age < 30"
+
+    def test_dispatch_less_than_or_equal_operator(self):
+        translator = MockFilterTranslator()
+        filter_obj = ComparisonFilter(type="lte", key="priority", value=5)
+        result = translator.translate_comparison_filter(filter_obj)
+        assert result == "priority <= 5"
+
+    def test_dispatch_in_operator(self):
+        translator = MockFilterTranslator()
+        filter_obj = ComparisonFilter(type="in", key="category", value=["a", "b", "c"])
+        result = translator.translate_comparison_filter(filter_obj)
+        assert result == "category IN ['a', 'b', 'c']"
+
+    def test_dispatch_not_in_operator(self):
+        translator = MockFilterTranslator()
+        filter_obj = ComparisonFilter(type="nin", key="tag", value=["spam", "junk"])
+        result = translator.translate_comparison_filter(filter_obj)
+        assert result == "tag NOT IN ['spam', 'junk']"
+
+    def test_unsupported_operator_raises_error(self):
+        translator = MockFilterTranslator()
+        # Create a filter with an invalid type by bypassing validation
+        filter_obj = ComparisonFilter.model_construct(type="unsupported", key="field", value="value")
+        with pytest.raises(ValueError, match="Unsupported comparison operator: unsupported"):
+            translator.translate_comparison_filter(filter_obj)
+
+    def test_all_operators_in_dispatch_table(self):
+        """Verify all expected operators are mapped in OPERATOR_HANDLERS."""
+        expected_operators = {"eq", "ne", "gt", "gte", "lt", "lte", "in", "nin"}
+        assert set(SearchFilterTranslator.OPERATOR_HANDLERS.keys()) == expected_operators
+
+    def test_all_handlers_point_to_valid_abstract_methods(self):
+        """Verify each handler in dispatch table corresponds to an abstract method."""
+        translator = MockFilterTranslator()
+        for method_name in SearchFilterTranslator.OPERATOR_HANDLERS.values():
+            assert hasattr(translator, method_name), f"Missing method: {method_name}"
+            assert callable(getattr(translator, method_name)), f"Not callable: {method_name}"
 
 
 async def test_single_provider_auto_selection():
