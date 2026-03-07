@@ -324,8 +324,9 @@ def setup_api_recording():
     if mode == APIRecordingMode.LIVE:
         return None
 
-    storage_dir = os.environ.get("LLAMA_STACK_TEST_RECORDING_DIR", DEFAULT_STORAGE_DIR)
-    return api_recording(mode=mode, storage_dir=storage_dir)
+    explicit_dir = os.environ.get("LLAMA_STACK_TEST_RECORDING_DIR")
+    storage_dir = explicit_dir if explicit_dir else DEFAULT_STORAGE_DIR
+    return api_recording(mode=mode, storage_dir=storage_dir, explicit_recording_dir=explicit_dir is not None)
 
 
 def _normalize_response(data: dict[str, Any], request_hash: str) -> dict[str, Any]:
@@ -399,50 +400,87 @@ def _deserialize_response(data: dict[str, Any]) -> Any:
     return data
 
 
-class ResponseStorage:
-    """Handles SQLite index + JSON file storage/retrieval for inference recordings."""
+def _find_repo_root(start: Path) -> Path:
+    """Walk up from start to find the project root (directory containing pyproject.toml).
 
-    def __init__(self, base_dir: Path):
+    Uses pyproject.toml as the root marker because pytest node IDs (used as test_id)
+    are relative to the Python project root, not the VCS root. This matches pytest's
+    own rootdir detection (PEP 517/518).
+    """
+    current = start.resolve()
+    while current != current.parent:
+        if (current / "pyproject.toml").exists():
+            return current
+        current = current.parent
+    return start.resolve()
+
+
+class ResponseStorage:
+    """Handles JSON file storage/retrieval for inference recordings."""
+
+    def __init__(self, base_dir: Path, explicit_recording_dir: bool = False):
         self.base_dir = base_dir
+        self.explicit_recording_dir = explicit_recording_dir
         # Don't create responses_dir here - determine it per-test at runtime
 
     def _get_test_dir(self) -> Path:
-        """Get the recordings directory in the test file's parent directory.
+        """Get the recordings directory for the current test context.
 
-        For test at "tests/integration/inference/test_foo.py::test_bar",
-        returns "tests/integration/inference/recordings/".
+        Path resolution strategy:
+        1. If LLAMA_STACK_TEST_RECORDING_DIR was explicitly set (explicit_recording_dir=True),
+           always use base_dir/recordings/ regardless of test_id. The test_id only affects
+           hash computation for test isolation, not storage location.
+        2. If test_id looks like a pytest node ID (contains ".py"), derive the path from
+           the test file location (co-located recordings).
+        3. Otherwise (no test_id, or non-pytest test_id), use base_dir/recordings/.
         """
         test_id = get_test_context()
-        if test_id:
-            # Extract the directory path from the test nodeid
-            # e.g., "tests/integration/inference/test_basic.py::test_foo[params]"
-            # -> get "tests/integration/inference"
-            test_file = test_id.split("::")[0]  # Remove test function part
-            test_dir = Path(test_file).parent  # Get parent directory
 
-            if self.base_dir.is_absolute():
-                repo_root = self.base_dir.parent.parent.parent
-                result = repo_root / test_dir / "recordings"
-                if is_debug_mode():
-                    logger.info("[RECORDING DEBUG] Path resolution (absolute base_dir):")
-                    logger.info(f"  Test ID: {test_id}")
-                    logger.info(f"  Base dir: {self.base_dir}")
-                    logger.info(f"  Repo root: {repo_root}")
-                    logger.info(f"  Test file: {test_file}")
-                    logger.info(f"  Test dir: {test_dir}")
-                    logger.info(f"  Recordings dir: {result}")
-                return result
+        if self.explicit_recording_dir:
+            result = self.base_dir / "recordings"
+            if is_debug_mode():
+                logger.info("[RECORDING DEBUG] Path resolution (explicit recording dir):")
+                logger.info(f"  Test ID: {test_id}")
+                logger.info(f"  Base dir: {self.base_dir}")
+                logger.info(f"  Recordings dir: {result}")
+            return result
+
+        if test_id:
+            test_file = test_id.split("::")[0]
+
+            if ".py" in test_file:
+                test_dir = Path(test_file).parent
+
+                if self.base_dir.is_absolute():
+                    repo_root = _find_repo_root(self.base_dir)
+                    result = repo_root / test_dir / "recordings"
+                    if is_debug_mode():
+                        logger.info("[RECORDING DEBUG] Path resolution (absolute base_dir, pytest):")
+                        logger.info(f"  Test ID: {test_id}")
+                        logger.info(f"  Base dir: {self.base_dir}")
+                        logger.info(f"  Repo root: {repo_root}")
+                        logger.info(f"  Test file: {test_file}")
+                        logger.info(f"  Test dir: {test_dir}")
+                        logger.info(f"  Recordings dir: {result}")
+                    return result
+                else:
+                    result = test_dir / "recordings"
+                    if is_debug_mode():
+                        logger.info("[RECORDING DEBUG] Path resolution (relative base_dir, pytest):")
+                        logger.info(f"  Test ID: {test_id}")
+                        logger.info(f"  Base dir: {self.base_dir}")
+                        logger.info(f"  Test dir: {test_dir}")
+                        logger.info(f"  Recordings dir: {result}")
+                    return result
             else:
-                result = test_dir / "recordings"
+                result = self.base_dir / "recordings"
                 if is_debug_mode():
-                    logger.info("[RECORDING DEBUG] Path resolution (relative base_dir):")
+                    logger.info("[RECORDING DEBUG] Path resolution (non-pytest test_id):")
                     logger.info(f"  Test ID: {test_id}")
                     logger.info(f"  Base dir: {self.base_dir}")
-                    logger.info(f"  Test dir: {test_dir}")
                     logger.info(f"  Recordings dir: {result}")
                 return result
         else:
-            # Fallback for non-test contexts
             result = self.base_dir / "recordings"
             if is_debug_mode():
                 logger.info("[RECORDING DEBUG] Path resolution (no test context):")
@@ -1142,7 +1180,9 @@ def unpatch_inference_clients():
 
 
 @contextmanager
-def api_recording(mode: str, storage_dir: str | Path | None = None) -> Generator[None, None, None]:
+def api_recording(
+    mode: str, storage_dir: str | Path | None = None, explicit_recording_dir: bool = False
+) -> Generator[None, None, None]:
     """Context manager for API recording/replaying (inference and tools)."""
     global _current_mode, _current_storage
 
@@ -1157,7 +1197,7 @@ def api_recording(mode: str, storage_dir: str | Path | None = None) -> Generator
         if mode in ["record", "replay", "record-if-missing"]:
             if storage_dir is None:
                 raise ValueError("storage_dir is required for record, replay, and record-if-missing modes")
-            _current_storage = ResponseStorage(Path(storage_dir))
+            _current_storage = ResponseStorage(Path(storage_dir), explicit_recording_dir=explicit_recording_dir)
             _id_counters.clear()
             patch_inference_clients()
             previous_override = set_id_override(_deterministic_id_override)
