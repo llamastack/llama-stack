@@ -117,18 +117,14 @@ jobs:
           echo "Pushed tag $DEV_TAG to main ($MAIN_SHA)"
 
       # -----------------------------------------------------------------------
-      # Step B: Bump fallback_version on main and open PR
+      # Step B: Bump fallback_version on main (direct commit)
       # -----------------------------------------------------------------------
-      - name: Create fallback_version bump PR
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Bump fallback_version on main
         run: |
           NEXT_FALLBACK="${{ steps.parse.outputs.next_fallback }}"
           VERSION="${{ steps.parse.outputs.version }}"
-          BRANCH="post-release/bump-fallback-${VERSION}"
 
-          # Create branch from main
-          git checkout -b "$BRANCH" origin/main
+          git checkout -b "bump-fallback-${VERSION}" origin/main
 
           # Update fallback_version in root pyproject.toml
           sed -i "s/^fallback_version = .*/fallback_version = \"${NEXT_FALLBACK}\"/" pyproject.toml
@@ -138,7 +134,7 @@ jobs:
 
           # Check if there are changes
           if git diff --quiet; then
-            echo "No changes to fallback_version, skipping PR"
+            echo "No changes to fallback_version, skipping commit"
             exit 0
           fi
 
@@ -146,20 +142,8 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml src/llama_stack_api/pyproject.toml
           git commit -s -m "chore: bump fallback_version to ${NEXT_FALLBACK} after ${VERSION} release"
-          git push origin "$BRANCH"
-
-          gh pr create \
-            --base main \
-            --head "$BRANCH" \
-            --title "chore: bump fallback_version to ${NEXT_FALLBACK}" \
-            --body "$(cat <<EOF
-          Automated post-release version bump after \`v${VERSION}\`.
-
-          Updates \`fallback_version\` in both \`pyproject.toml\` files to \`${NEXT_FALLBACK}\`.
-
-          This PR was created automatically by the post-release workflow.
-          EOF
-          )"
+          git push origin "HEAD:main"
+          echo "Committed fallback_version bump directly to main"
 
       # -----------------------------------------------------------------------
       # Step C: Update npm lockfile on release branch (direct commit)

@@ -125,7 +125,7 @@ Backports are handled automatically by Mergify — patch releases ship whatever 
 The following steps are handled automatically by the [**Post-release automation**](https://github.com/llamastack/llama-stack/actions/workflows/post-release.yml) workflow, which triggers on `release: published`:
 
 - Tags `main` with `v0.4.6-dev` (next dev tag)
-- Opens a PR to `main` bumping `fallback_version` to `"0.4.6.dev0"` — review and merge this PR
+- Commits `fallback_version` bump to `"0.4.6.dev0"` directly to `main`
 - Commits the npm lockfile update directly to `release-0.4.x`
 
 #### Minor release (e.g., 0.5.0 — new release branch)
@@ -206,7 +206,7 @@ Triggered via `workflow_dispatch`. Takes a version and release branch as input, 
 
 Triggered automatically after the `pypi.yml` workflow succeeds for a release event. Handles:
 - **Dev tag**: Tags `main` with `vX.Y.(Z+1)-dev` so setuptools-scm can infer versions
-- **Fallback bump**: Opens a PR to `main` bumping `fallback_version` to the next `.dev0`
+- **Fallback bump**: Commits `fallback_version` bump to the next `.dev0` directly to `main`
 - **npm lockfile**: Opens a PR to the release branch updating the UI lockfile
 
 ### Nightly version computation
