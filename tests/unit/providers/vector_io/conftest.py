@@ -252,7 +252,7 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
                 embedding_dimension,
                 connection,
                 distance_metric="COSINE",
-                vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
+                vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64, ef_search=40),
             )
             index._test_chunks = []
             original_add_chunks = index.add_chunks
@@ -283,7 +283,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         user="test_user",
         password="test_password",
         distance_metric="COSINE",
-        vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
+        vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64, ef_search=40),
         persistence=unique_kvstore_config,
     )
 

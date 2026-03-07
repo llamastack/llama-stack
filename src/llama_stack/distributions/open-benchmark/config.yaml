@@ -62,6 +62,7 @@ providers:
         type: HNSW
         m: 16
         ef_construction: 64
+        ef_search: 40
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default
