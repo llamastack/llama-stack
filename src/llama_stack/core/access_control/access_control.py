@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import re
 from typing import Any
 
 from llama_stack.core.datatypes import User
@@ -26,6 +27,9 @@ logger = get_logger(name=__name__, category="core::auth")
 def matches_resource(resource_scope: str, actual_resource: str) -> bool:
     if resource_scope == actual_resource:
         return True
+    if resource_scope.startswith("regex:"):
+        pattern = resource_scope[6:]
+        return bool(re.match(pattern, actual_resource))
     return resource_scope.endswith("::*") and actual_resource.startswith(resource_scope[:-1])
 
 

@@ -129,10 +129,20 @@ jobs:
                   description: User1 can read and delete their Files
                 - permit:
                     actions: [read]
-                    resource: sql_record::openai_files::*
+                    resource: regex:sql_record::openai_files::file-[a-f0-9-]+
                   when:
                     - user in owners roles
                   description: Owners can read their Files
+              route_policy:
+                - permit:
+                    paths: ["/v1/health", "/v1/version"]
+                  description: Public endpoints (no auth required)
+                - permit:
+                    paths: regex:^/v1/(files|providers)(/.*)?$
+                  description: Authenticated users can access files and providers endpoints (regex test)
+                - forbid:
+                    paths: "*"
+                  description: Forbid all other routes by default
           EOF
           yq eval '.server.auth.provider_config.type = "${{ matrix.auth-provider }}"' -i $run_dir/config.yaml
           yq eval '.server.auth.provider_config.tls_cafile = "${{ env.KUBERNETES_CA_CERT_PATH }}"' -i $run_dir/config.yaml
