@@ -1,0 +1,135 @@
+{
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_inference_store[client_with_models-txt=bedrock/openai.gpt-oss-20b-True]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-west-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hello, world!"
+        }
+      ],
+      "stream": true
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b"
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-718bb1cd939e",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "nVqi56m1mwXSuATrGGFqADiSOdQJesovuCxPviEwXQDcYs8JtUHTaKTVKI88K3YFt57sfhN6qtEbQ4YwGgmaFht0aWzQwSsC6UyRkkfyrNpogUsF2Lm"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-718bb1cd939e",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null,
+                "reasoning": "We need to answer. Simple greeting perhaps."
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "4s2xgVX35VZvhiZOGOPDbrqL1JT8UcLHEA2mD"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-718bb1cd939e",
+          "choices": [
+            {
+              "delta": {
+                "content": "Hello, world! \ud83c\udf0d How can I help you today?",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "TCts9Y8MUTazb5scNuQp0iuti4RkXcM5kjBbsQGIYF3eQ511qtH7SBjw56lkUW4AajKLbk0uRmpMV9s952nTVgDn9ymuMAPKiB"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-718bb1cd939e",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "obfuscation": "idu15PAokfyH4XUD2Wuaxff1OHWcRG8wrHgzFWYBvvLYTUifvhYvjixdtc"
+            }
+          ],
+          "created": 0,
+          "model": "openai.gpt-oss-20b",
+          "object": "chat.completion.chunk",
+          "service_tier": "default",
+          "system_fingerprint": null,
+          "usage": null
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

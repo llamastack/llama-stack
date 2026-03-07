@@ -1,0 +1,59 @@
+{
+  "test_id": "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_non_streaming[client_with_models-txt=bedrock/openai.gpt-oss-20b-inference:chat_completion:non_streaming_02]",
+  "request": {
+    "method": "POST",
+    "url": "https://bedrock-mantle.us-west-2.api.aws/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "openai.gpt-oss-20b",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Which planet has rings around it with a name starting with letter S?"
+        }
+      ],
+      "stream": false
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "openai.gpt-oss-20b"
+  },
+  "response": {
+    "body": {
+      "__type__": "openai.types.chat.chat_completion.ChatCompletion",
+      "__data__": {
+        "id": "rec-de019f1d2995",
+        "choices": [
+          {
+            "finish_reason": "stop",
+            "index": 0,
+            "logprobs": null,
+            "message": {
+              "content": "**Saturn**  \nSaturn is the planet whose name begins with \u201cS\u201d and is famous for its spectacular system of rings.",
+              "refusal": null,
+              "role": "assistant",
+              "annotations": null,
+              "audio": null,
+              "function_call": null,
+              "tool_calls": null,
+              "reasoning": "We need to think of planet with rings, name starting with S. Planet rings: Saturn, Jupiter, Uranus, Neptune, and some dwarf planets: Pluto, Eris? But rings around whose name starting with S? \"Saturn\" has rings. So answer: Saturn. But maybe \"Saturn\" is the one. Site? There is also \"Swallow\" maybe? Wait: The question: \"Which planet has rings around it with a name starting with letter S?\" So which planet has rings that is a planet with a name starting with S. That is Saturn. So answer: Saturn. Quick. Let's provide final answer."
+            }
+          }
+        ],
+        "created": 0,
+        "model": "openai.gpt-oss-20b",
+        "object": "chat.completion",
+        "service_tier": "default",
+        "system_fingerprint": null,
+        "usage": {
+          "completion_tokens": 167,
+          "prompt_tokens": 79,
+          "total_tokens": 246,
+          "completion_tokens_details": null,
+          "prompt_tokens_details": null
+        }
+      }
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}
