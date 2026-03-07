@@ -169,7 +169,8 @@ const sidebars: SidebarsConfig = {
             'providers/vector_io/remote_qdrant',
             'providers/vector_io/remote_weaviate',
             'providers/vector_io/remote_elasticsearch',
-            'providers/vector_io/remote_oci'
+            'providers/vector_io/remote_oci',
+            'providers/vector_io/remote_infinispan'
           ],
         },
         {
