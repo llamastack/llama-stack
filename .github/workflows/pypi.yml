@@ -300,7 +300,7 @@ jobs:
       # === NODE SETUP (for npm packages) ===
       - name: Set up Node.js
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'npm'
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
@@ -427,7 +427,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Set up Node.js
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: '20'
 
@@ -677,7 +677,7 @@ jobs:
       # === NPM PUBLISHING ===
       - name: Set up Node.js
         if: steps.should-publish.outputs.skip != 'true' && matrix.registry == 'npm' && steps.check-artifacts.outputs.has_artifacts == 'true'
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
