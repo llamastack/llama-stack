@@ -25,7 +25,7 @@ def available_providers() -> list[ProviderSpec]:
                 "numpy",
                 "scikit-learn",
                 "scipy",
-                "nltk",
+                "nltk>=3.9.3",
                 "sentencepiece",
                 "transformers",
             ],
