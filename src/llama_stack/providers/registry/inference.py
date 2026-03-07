@@ -201,7 +201,7 @@ def available_providers() -> list[ProviderSpec]:
             adapter_type="vertexai",
             provider_type="remote::vertexai",
             pip_packages=[
-                "google-cloud-aiplatform>=1.131.0",
+                "google-genai",
             ],
             module="llama_stack.providers.remote.inference.vertexai",
             config_class="llama_stack.providers.remote.inference.vertexai.VertexAIConfig",
