@@ -23,9 +23,9 @@ class DistributionRegistry(Protocol):
 
     async def initialize(self) -> None: ...
 
-    async def get(self, identifier: str) -> RoutableObjectWithProvider | None: ...
+    async def get(self, type: str, identifier: str) -> RoutableObjectWithProvider | None: ...
 
-    def get_cached(self, identifier: str) -> RoutableObjectWithProvider | None: ...
+    def get_cached(self, type: str, identifier: str) -> RoutableObjectWithProvider | None: ...
 
     async def update(self, obj: RoutableObjectWithProvider) -> RoutableObjectWithProvider: ...
 
@@ -86,7 +86,7 @@ class DiskDistributionRegistry(DistributionRegistry):
             logger.error(f"Error parsing registry value for {type}:{identifier}, raw value: {json_str}. Error: {e}")
             return None
 
-    async def update(self, obj: RoutableObjectWithProvider) -> None:
+    async def update(self, obj: RoutableObjectWithProvider) -> RoutableObjectWithProvider:
         await self.kvstore.set(
             KEY_FORMAT.format(type=obj.type, identifier=obj.identifier),
             obj.model_dump_json(),
@@ -171,15 +171,39 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
 
     async def get_all(self) -> list[RoutableObjectWithProvider]:
         await self._ensure_initialized()
+
+        # Refresh cache from database to handle multi-worker scenarios
+        # This ensures we see objects created by other workers
+        start_key, end_key = _get_registry_key_range()
+        values = await self.kvstore.values_in_range(start_key, end_key)
+        objects = _parse_registry_values(values)
+
+        # Update cache with any new objects found in the database
         async with self._locked_cache() as cache:
+            for obj in objects:
+                cache_key = (obj.type, obj.identifier)
+                cache[cache_key] = obj
+
             return list(cache.values())
 
     async def get(self, type: str, identifier: str) -> RoutableObjectWithProvider | None:
         await self._ensure_initialized()
         cache_key = (type, identifier)
 
+        # First check the cache
         async with self._locked_cache() as cache:
-            return cache.get(cache_key, None)
+            cached_obj = cache.get(cache_key, None)
+            if cached_obj is not None:
+                return cached_obj
+
+        # If not in cache, check the database (handles multi-worker scenarios)
+        obj = await super().get(type, identifier)
+        if obj is not None:
+            # Update cache with the newly found object
+            async with self._locked_cache() as cache:
+                cache[cache_key] = obj
+
+        return obj
 
     async def register(self, obj: RoutableObjectWithProvider) -> bool:
         await self._ensure_initialized()
@@ -192,12 +216,12 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
 
         return success
 
-    async def update(self, obj: RoutableObjectWithProvider) -> None:
-        await super().update(obj)
+    async def update(self, obj: RoutableObjectWithProvider) -> RoutableObjectWithProvider:
+        result = await super().update(obj)
         cache_key = (obj.type, obj.identifier)
         async with self._locked_cache() as cache:
             cache[cache_key] = obj
-        return obj
+        return result
 
     async def delete(self, type: str, identifier: str) -> None:
         await super().delete(type, identifier)
