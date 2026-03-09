@@ -228,6 +228,7 @@ class StreamingResponseOrchestrator:
         truncation: ResponseTruncation | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -258,6 +259,7 @@ class StreamingResponseOrchestrator:
         self.truncation = truncation
         self.top_logprobs = top_logprobs
         self.include = include
+        self.extra_body = extra_body
         self.store = bool(store) if store is not None else True
         self.presence_penalty = presence_penalty
         self.sequence_number = 0
@@ -516,6 +518,7 @@ class StreamingResponseOrchestrator:
                     prompt_cache_key=self.prompt_cache_key,
                     top_logprobs=self.top_logprobs,
                     presence_penalty=self.presence_penalty,
+                    **(self.extra_body or {}),
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 

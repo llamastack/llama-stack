@@ -22,9 +22,31 @@ def get_distribution_template() -> DistributionTemplate:
         url="http://localhost:5199/sse",
     )
 
+    # Add conditional authentication config (disabled by default for CI tests)
+    # This tests the conditional auth provider feature and provides a template for users
+    # To enable: export AUTH_PROVIDER=enabled and configure the auth env vars
+    auth_config = {
+        # Authentication is disabled by default (AUTH_PROVIDER not set)
+        # To enable: export AUTH_PROVIDER=enabled
+        # Then configure the required auth provider settings below
+        "provider_config": {
+            "type": "${env.AUTH_PROVIDER:+oauth2_token}",
+            "audience": "${env.AUTH_AUDIENCE:=llama-stack}",
+            "issuer": "${env.AUTH_ISSUER:=}",
+            "jwks": {
+                "uri": "${env.AUTH_JWKS_URI:=}",
+                "key_recheck_period": "${env.AUTH_JWKS_RECHECK_PERIOD:=3600}",
+            },
+            "verify_tls": "${env.AUTH_VERIFY_TLS:=true}",
+        }
+    }
+
     for run_config in template.run_configs.values():
         if run_config.default_connectors is None:
             run_config.default_connectors = []
         run_config.default_connectors.append(test_mcp_connector)
+
+        # Add conditional auth config
+        run_config.auth_config = auth_config
 
     return template

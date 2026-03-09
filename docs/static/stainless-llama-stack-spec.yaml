@@ -4600,6 +4600,7 @@ components:
       title: ListOpenAIChatCompletionResponse
       description: Response from listing OpenAI-compatible chat completions.
     OpenAIAssistantMessageParam:
+      additionalProperties: true
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
       properties:
         role:
@@ -7031,6 +7032,11 @@ components:
         model_type:
           $ref: '#/components/schemas/ModelType'
           default: llm
+        model_validation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
       type: object
       required:
       - identifier
@@ -12021,6 +12027,11 @@ components:
           - type: 'null'
           description: The type of model to register.
           title: ModelType
+        model_validation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
       type: object
       required:
       - model_id
@@ -12740,7 +12751,7 @@ components:
             minimum: -2.0
           - type: 'null'
           description: Penalizes new tokens based on whether they appear in the text so far.
-      additionalProperties: false
+      additionalProperties: true
       type: object
       required:
       - input
@@ -13051,6 +13062,7 @@ components:
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+      additionalProperties: true
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -13084,6 +13096,7 @@ components:
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+      additionalProperties: true
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
