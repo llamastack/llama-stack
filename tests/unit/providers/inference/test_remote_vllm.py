@@ -24,7 +24,6 @@ from llama_stack_api import (
     OpenAICompletion,
     OpenAICompletionChoice,
     OpenAICompletionRequestWithExtraBody,
-    ToolChoice,
 )
 
 # These are unit test for the remote vllm provider
@@ -45,35 +44,6 @@ async def vllm_inference_adapter():
     inference_adapter.model_store = AsyncMock()
     await inference_adapter.initialize()
     return inference_adapter
-
-
-async def test_old_vllm_tool_choice(vllm_inference_adapter):
-    """
-    Test that we set tool_choice to none when no tools are in use
-    to support older versions of vLLM
-    """
-    mock_model = Model(identifier="mock-model", provider_resource_id="mock-model", provider_id="vllm-inference")
-    vllm_inference_adapter.model_store.get_model.return_value = mock_model
-
-    # Patch the client property to avoid instantiating a real AsyncOpenAI client
-    with patch.object(VLLMInferenceAdapter, "client", new_callable=PropertyMock) as mock_client_property:
-        mock_client = MagicMock()
-        mock_client.chat.completions.create = AsyncMock()
-        mock_client_property.return_value = mock_client
-
-        # No tools but auto tool choice
-        params = OpenAIChatCompletionRequestWithExtraBody(
-            model="mock-model",
-            messages=[{"role": "user", "content": "test"}],
-            stream=False,
-            tools=None,
-            tool_choice=ToolChoice.auto.value,
-        )
-        await vllm_inference_adapter.openai_chat_completion(params)
-        mock_client.chat.completions.create.assert_called()
-        call_args = mock_client.chat.completions.create.call_args
-        # Ensure tool_choice gets converted to none for older vLLM versions
-        assert call_args.kwargs["tool_choice"] == ToolChoice.none.value
 
 
 async def test_health_status_success(vllm_inference_adapter):

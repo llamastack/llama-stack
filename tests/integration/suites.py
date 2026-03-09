@@ -103,6 +103,16 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "rerank_model": "vllm/Qwen/Qwen3-Reranker-0.6B",
         },
     ),
+    "ollama-reasoning": Setup(
+        name="ollama",
+        description="Local Ollama provider with a reasoning-capable model (gpt-oss)",
+        env={
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
+        },
+        defaults={
+            "text_model": "ollama/gpt-oss:20b",
+        },
+    ),
     "bedrock": Setup(
         name="bedrock",
         description="AWS Bedrock provider with OpenAI GPT-OSS model (us-west-2)",
@@ -232,10 +242,17 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         roots=["tests/integration/inference/test_vision_inference.py"],
         default_setup="ollama-vision",
     ),
-    "reasoning": Suite(
-        name="reasoning",
+    "vllm-reasoning": Suite(
+        name="vllm-reasoning",
         roots=["tests/integration/responses/test_reasoning.py"],
         default_setup="vllm",
+    ),
+    "ollama-reasoning": Suite(
+        name="ollama-reasoning",
+        roots=[
+            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_reasoning_passthrough",
+        ],
+        default_setup="ollama-reasoning",
     ),
     # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
     "bedrock": Suite(

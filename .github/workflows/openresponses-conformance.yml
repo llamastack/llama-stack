@@ -31,6 +31,10 @@ on:
       - 'src/llama_stack/apis/agents/**'
       - 'tests/integration/openresponses/**'
       - '.github/workflows/openresponses-conformance.yml'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
   workflow_dispatch:
 
 concurrency:
