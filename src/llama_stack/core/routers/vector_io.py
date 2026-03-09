@@ -6,7 +6,6 @@
 
 import asyncio
 import uuid
-from abc import ABC, abstractmethod
 from typing import Annotated, Any
 
 from fastapi import Body
@@ -58,86 +57,6 @@ from llama_stack_api.filters import (
 )
 
 logger = get_logger(name=__name__, category="core::routers")
-
-
-class SearchFilterTranslator(ABC):
-    """Abstract base class for translating search filters to provider-specific format.
-
-    Uses a dispatch table to map comparison operators to handler methods.
-    Subclasses implement the actual translation logic for their specific provider format.
-    """
-
-    # Dispatch table mapping comparison operators to their handler methods
-    OPERATOR_HANDLERS: dict[str, str] = {
-        "eq": "translate_equals",
-        "ne": "translate_not_equals",
-        "gt": "translate_greater_than",
-        "gte": "translate_greater_than_or_equal",
-        "lt": "translate_less_than",
-        "lte": "translate_less_than_or_equal",
-        "in": "translate_in",
-        "nin": "translate_not_in",
-    }
-
-    def translate_comparison_filter(self, filter_obj: ComparisonFilter) -> Any:
-        """Translate a comparison filter using dispatch table instead of if/elif chains.
-
-        Args:
-            filter_obj: The comparison filter to translate
-
-        Returns:
-            Provider-specific filter format
-
-        Raises:
-            ValueError: If the operator is not supported
-        """
-        op_type = filter_obj.type
-        if op_type not in self.OPERATOR_HANDLERS:
-            raise ValueError(f"Unsupported comparison operator: {op_type}")
-
-        handler_method_name = self.OPERATOR_HANDLERS[op_type]
-        handler_method = getattr(self, handler_method_name)
-        return handler_method(filter_obj.key, filter_obj.value)
-
-    @abstractmethod
-    def translate_equals(self, key: str, value: Any) -> Any:
-        """Translate 'eq' operator."""
-        pass
-
-    @abstractmethod
-    def translate_not_equals(self, key: str, value: Any) -> Any:
-        """Translate 'ne' operator."""
-        pass
-
-    @abstractmethod
-    def translate_greater_than(self, key: str, value: Any) -> Any:
-        """Translate 'gt' operator."""
-        pass
-
-    @abstractmethod
-    def translate_greater_than_or_equal(self, key: str, value: Any) -> Any:
-        """Translate 'gte' operator."""
-        pass
-
-    @abstractmethod
-    def translate_less_than(self, key: str, value: Any) -> Any:
-        """Translate 'lt' operator."""
-        pass
-
-    @abstractmethod
-    def translate_less_than_or_equal(self, key: str, value: Any) -> Any:
-        """Translate 'lte' operator."""
-        pass
-
-    @abstractmethod
-    def translate_in(self, key: str, value: Any) -> Any:
-        """Translate 'in' operator."""
-        pass
-
-    @abstractmethod
-    def translate_not_in(self, key: str, value: Any) -> Any:
-        """Translate 'nin' operator."""
-        pass
 
 
 class VectorIORouter(VectorIO):
