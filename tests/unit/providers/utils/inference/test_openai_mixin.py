@@ -515,13 +515,18 @@ class TestOpenAIMixinAllowedModels:
 class TestOpenAIMixinModelRegistration:
     """Test cases for model registration functionality"""
 
-    async def test_register_model_success(self, mixin, mock_client_with_models, mock_client_context):
+    async def test_register_model_success(self, mock_client_with_models, mock_client_context):
         """Test successful model registration when model is available"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Enable validation for this model
         model = Model(
             provider_id="test-provider",
             provider_resource_id="some-mock-model-id",
             identifier="test-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -534,13 +539,18 @@ class TestOpenAIMixinModelRegistration:
             assert result.model_type == ModelType.llm
             mock_client_with_models.models.list.assert_called_once()
 
-    async def test_register_model_not_available(self, mixin, mock_client_with_models, mock_client_context):
+    async def test_register_model_not_available(self, mock_client_with_models, mock_client_context):
         """Test model registration failure when model is not available from provider"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Enable validation for this model
         model = Model(
             provider_id="test-provider",
             provider_resource_id="non-existent-model",
             identifier="test-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -550,24 +560,27 @@ class TestOpenAIMixinModelRegistration:
                 await mixin.register_model(model)
             mock_client_with_models.models.list.assert_called_once()
 
-    async def test_register_model_with_allowed_models_filter(self, mixin, mock_client_with_models, mock_client_context):
+    async def test_register_model_with_allowed_models_filter(self, mock_client_with_models, mock_client_context):
         """Test model registration with allowed_models filtering"""
-        mixin.config.allowed_models = ["some-mock-model-id"]
+        config = RemoteInferenceProviderConfig(allowed_models=["some-mock-model-id"])
+        mixin = OpenAIMixinImpl(config=config)
 
-        # Test with allowed model
+        # Test with allowed model (with validation enabled)
         allowed_model = Model(
             provider_id="test-provider",
             provider_resource_id="some-mock-model-id",
             identifier="allowed-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
-        # Test with disallowed model
+        # Test with disallowed model (with validation enabled)
         disallowed_model = Model(
             provider_id="test-provider",
             provider_resource_id="final-mock-model-id",
             identifier="disallowed-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -616,24 +629,98 @@ class TestOpenAIMixinModelRegistration:
         result = await mixin.should_refresh_models()
         assert result is False
 
+        # With refresh_models=True, should return True
         config_with_refresh = RemoteInferenceProviderConfig(refresh_models=True)
         mixin_with_refresh = OpenAIMixinImpl(config=config_with_refresh)
         result_with_refresh = await mixin_with_refresh.should_refresh_models()
         assert result_with_refresh is True
 
-    async def test_register_model_error_propagation(self, mixin, mock_client_with_exception, mock_client_context):
+    async def test_register_model_error_propagation(self, mock_client_with_exception, mock_client_context):
         """Test that errors from provider API are properly propagated during registration"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Enable validation for this model
         model = Model(
             provider_id="test-provider",
             provider_resource_id="some-model",
             identifier="test-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_exception):
             # The exception from the API should be propagated
             with pytest.raises(Exception, match="API Error"):
                 await mixin.register_model(model)
+
+    async def test_register_model_default_behavior_no_validation(self, mock_client_with_models, mock_client_context):
+        """Test model registration with default behavior (no validation)"""
+        # Default behavior - no validation
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should succeed without checking model availability (default behavior)
+            result = await mixin.register_model(model)
+
+            assert result == model
+            # Verify that models.list() was NOT called
+            mock_client_with_models.models.list.assert_not_called()
+
+    async def test_register_model_with_validation_enabled(self, mock_client_with_models, mock_client_context):
+        """Test that model-level model_validation=True enables validation"""
+        # Default config (no provider-level validation setting)
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Model explicitly enables validation
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+            model_validation=True,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should fail because model-level validation is enabled
+            with pytest.raises(ValueError, match="Model non-existent-model is not available"):
+                await mixin.register_model(model)
+            # Verify that models.list() WAS called (validation happened)
+            mock_client_with_models.models.list.assert_called_once()
+
+    async def test_register_model_with_validation_explicitly_disabled(
+        self, mock_client_with_models, mock_client_context
+    ):
+        """Test that model-level model_validation=False explicitly disables validation"""
+        # Default config
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Model explicitly disables validation (though this is the default anyway)
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+            model_validation=False,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should succeed because validation is disabled
+            result = await mixin.register_model(model)
+
+            assert result == model
+            # Verify that models.list() was NOT called
+            mock_client_with_models.models.list.assert_not_called()
 
 
 class ProviderDataValidator(BaseModel):
