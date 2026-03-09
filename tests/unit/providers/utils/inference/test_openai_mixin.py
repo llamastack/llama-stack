@@ -727,6 +727,7 @@ class ProviderDataValidator(BaseModel):
     """Validator for provider data in tests"""
 
     test_api_key: SecretStr | None = Field(default=None)
+    extra_headers: dict[str, str] | None = None
 
 
 class OpenAIMixinWithProviderData(OpenAIMixinImpl):
@@ -928,6 +929,98 @@ class TestOpenAIMixinProviderDataApiKey:
         error_message = str(exc_info.value)
         assert "test_api_key" in error_message
         assert "x-llamastack-provider-data" in error_message
+
+
+class TestOpenAIMixinExtraHeaders:
+    """Test cases for extra_headers forwarding via provider data"""
+
+    @pytest.fixture
+    def mixin_with_provider_data_field(self):
+        config = RemoteInferenceProviderConfig()
+        mixin_instance = OpenAIMixinWithProviderData(config=config)
+        mock_provider_spec = MagicMock()
+        mock_provider_spec.provider_type = "test-provider-with-data"
+        mock_provider_spec.provider_data_validator = (
+            "tests.unit.providers.utils.inference.test_openai_mixin.ProviderDataValidator"
+        )
+        mixin_instance.__provider_spec__ = mock_provider_spec
+        return mixin_instance
+
+    def test_no_extra_headers(self, mixin_with_provider_data_field):
+        """Extra headers are None when no provider data is set"""
+        result = mixin_with_provider_data_field._get_extra_headers_from_provider_data()
+        assert result is None
+
+    def test_extra_headers_from_provider_data(self, mixin_with_provider_data_field):
+        """Extra headers are extracted from provider data"""
+        with request_provider_data_context(
+            {
+                "x-llamastack-provider-data": json.dumps(
+                    {"test_api_key": "key", "extra_headers": {"X-MAAS-SUBSCRIPTION": "free-tier"}}
+                )
+            }
+        ):
+            result = mixin_with_provider_data_field._get_extra_headers_from_provider_data()
+            assert result == {"X-MAAS-SUBSCRIPTION": "free-tier"}
+
+    def test_extra_headers_passed_to_client(self, mixin_with_provider_data_field):
+        """AsyncOpenAI is constructed with default_headers from extra_headers."""
+        with request_provider_data_context(
+            {"x-llamastack-provider-data": json.dumps({"test_api_key": "key", "extra_headers": {"X-Custom": "value"}})}
+        ):
+            with patch("llama_stack.providers.utils.inference.openai_mixin.AsyncOpenAI", wraps=None) as mock_cls:
+                mock_cls.return_value = MagicMock()
+                _ = mixin_with_provider_data_field.client
+                mock_cls.assert_called_once()
+                call_kwargs = mock_cls.call_args[1]
+                assert call_kwargs["default_headers"] == {"X-Custom": "value"}
+
+    def test_empty_extra_headers(self, mixin_with_provider_data_field):
+        """Empty extra_headers dict returns None"""
+        with request_provider_data_context(
+            {"x-llamastack-provider-data": json.dumps({"test_api_key": "key", "extra_headers": {}})}
+        ):
+            result = mixin_with_provider_data_field._get_extra_headers_from_provider_data()
+            assert result is None
+
+    def test_blocked_headers_are_filtered(self, mixin_with_provider_data_field):
+        """Security-sensitive headers are stripped from extra_headers"""
+        with request_provider_data_context(
+            {
+                "x-llamastack-provider-data": json.dumps(
+                    {
+                        "test_api_key": "key",
+                        "extra_headers": {
+                            "X-MAAS-SUBSCRIPTION": "free-tier",
+                            "Authorization": "Bearer evil",
+                            "Host": "evil.internal",
+                            "X-Forwarded-For": "1.2.3.4",
+                        },
+                    }
+                )
+            }
+        ):
+            result = mixin_with_provider_data_field._get_extra_headers_from_provider_data()
+            assert result == {"X-MAAS-SUBSCRIPTION": "free-tier"}
+
+    def test_all_blocked_headers_returns_none(self, mixin_with_provider_data_field):
+        """Returns None when all provided headers are blocked"""
+        with request_provider_data_context(
+            {
+                "x-llamastack-provider-data": json.dumps(
+                    {"test_api_key": "key", "extra_headers": {"Authorization": "Bearer x", "Host": "evil"}}
+                )
+            }
+        ):
+            result = mixin_with_provider_data_field._get_extra_headers_from_provider_data()
+            assert result is None
+
+    def test_no_provider_data_field_returns_none(self):
+        """Mixin without provider_data_api_key_field returns None"""
+        config = RemoteInferenceProviderConfig()
+        mixin_instance = OpenAIMixinImpl(config=config)
+        result = mixin_instance._get_extra_headers_from_provider_data()
+        assert result is None
 
 
 class TestOpenAIMixinAllowedModelsInference:

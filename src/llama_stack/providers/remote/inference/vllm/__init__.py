@@ -4,13 +4,17 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from pydantic import BaseModel, SecretStr
+from pydantic import BaseModel, Field, SecretStr
 
 from .config import VLLMInferenceAdapterConfig
 
 
 class VLLMProviderDataValidator(BaseModel):
     vllm_api_token: SecretStr | None = None
+    extra_headers: dict[str, str] | None = Field(
+        default=None,
+        description="Extra HTTP headers to forward to the upstream vLLM endpoint",
+    )
 
 
 async def get_adapter_impl(config: VLLMInferenceAdapterConfig, _deps):
