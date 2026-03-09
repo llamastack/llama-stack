@@ -192,3 +192,63 @@ class TestOpenAIResponses:
         assert response2.id.startswith("resp_")
         assert response2.prompt_cache_key == cache_key
         assert len(response2.output_text.strip()) > 0
+
+    def test_openai_response_with_top_p(self, openai_client, text_model_id):
+        """Test OpenAI response with top_p parameter."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the largest ocean on Earth?"}],
+            top_p=0.9,
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.top_p == 0.9
+
+    def test_openai_response_with_top_p_streaming(self, openai_client, text_model_id):
+        """Test OpenAI response with top_p in streaming mode."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the smallest continent?"}],
+            top_p=0.8,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify top_p is in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.top_p == 0.8
+
+        # Verify top_p is in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.top_p == 0.8
+
+    def test_openai_response_with_top_p_and_previous_response(self, openai_client, text_model_id):
+        """Test that top_p works correctly with previous_response_id."""
+        # Create first response
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 4+4?"}],
+            top_p=0.7,
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.top_p == 0.7
+
+        # Create second response referencing the first one with the same top_p
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 6+6?"}],
+            previous_response_id=response1.id,
+            top_p=0.7,
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.top_p == 0.7
+        assert len(response2.output_text.strip()) > 0
