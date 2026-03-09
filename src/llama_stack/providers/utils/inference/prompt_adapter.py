@@ -33,7 +33,8 @@ def interleaved_content_as_str(
         if isinstance(c, str):
             return c
         elif isinstance(c, TextContentItem) or isinstance(c, OpenAIChatCompletionContentPartTextParam):
-            return c.text
+            # c.text may be None when a model returns content: null (e.g. during tool calls)
+            return c.text or ""
         elif isinstance(c, ImageContentItem) or isinstance(c, OpenAIChatCompletionContentPartImageParam):
             return "<image>"
         elif isinstance(c, OpenAIFile):
