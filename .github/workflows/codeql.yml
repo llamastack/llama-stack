@@ -1,15 +1,12 @@
 name: "CodeQL Workflow Security Scan"
 
-# Temporarily disabled - to be re-enabled
-# on:
-#   pull_request:
-#     # PRs are checked for new issues
-#     branches: [ "main" ]
-#     # Limit scans to changes in the .github directory, bash scripts are not scanned anyway
-#     paths:
-#       - '.github/**'
 on:
-  workflow_dispatch: # manual trigger only while disabled
+  pull_request:
+    # PRs are checked for new issues
+    branches: [ "main" ]
+    # Limit scans to changes in the .github directory, bash scripts are not scanned anyway
+    paths:
+      - '.github/**'
 
 jobs:
   analyze:
