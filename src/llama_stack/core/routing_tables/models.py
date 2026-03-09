@@ -46,7 +46,12 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             try:
                 models = await provider.list_models()
             except Exception as e:
-                logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
+                if provider_id not in self.listed_providers:
+                    # Mark provider as listed to prevent repeated refresh attempts
+                    self.listed_providers.add(provider_id)
+                    logger.warning(f"Model refresh skipped for provider {provider_id}")
+                else:
+                    logger.warning(f"Model refresh failed for provider {provider_id}: {e}")
                 continue
 
             self.listed_providers.add(provider_id)
@@ -210,14 +215,16 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
         provider_id: str | None = None,
         metadata: dict[str, Any] | None = None,
         model_type: ModelType | None = None,
+        model_validation: bool | None = None,
     ) -> Model:
         # Support both the public Models API (RegisterModelRequest) and legacy parameter-based interface
         if isinstance(request, RegisterModelRequest):
             model_id = request.model_id
             provider_model_id = request.provider_model_id
             provider_id = request.provider_id
-            metadata = request.metadata
+            metadata = request.metadata or {}
             model_type = request.model_type
+            model_validation = request.model_validation
         elif isinstance(request, str):
             # Legacy positional argument: register_model("model-id", ...)
             model_id = request
@@ -248,6 +255,7 @@ class ModelsRoutingTable(CommonRoutingTableImpl, Models):
             provider_id=provider_id,
             metadata=metadata,
             model_type=model_type,
+            model_validation=model_validation,
             source=RegistryEntrySource.via_register_api,
         )
         registered_model = await self.register_object(model)
