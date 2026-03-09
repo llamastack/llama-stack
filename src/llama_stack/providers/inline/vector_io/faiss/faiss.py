@@ -41,6 +41,25 @@ from .config import FaissVectorIOConfig
 
 logger = get_logger(name=__name__, category="vector_io")
 
+
+def _list_op(mv: Any, fv: Any, *, negate: bool) -> bool:
+    op = "nin" if negate else "in"
+    if not isinstance(fv, list):
+        raise ValueError(f"'{op}' filter requires a list value, got {type(fv)}")
+    return (mv not in fv) if negate else (mv in fv)
+
+
+_COMPARISON_OPS: dict[str, Any] = {
+    "eq": lambda mv, fv: mv == fv,
+    "ne": lambda mv, fv: mv != fv,
+    "gt": lambda mv, fv: mv > fv,
+    "gte": lambda mv, fv: mv >= fv,
+    "lt": lambda mv, fv: mv < fv,
+    "lte": lambda mv, fv: mv <= fv,
+    "in": lambda mv, fv: _list_op(mv, fv, negate=False),
+    "nin": lambda mv, fv: _list_op(mv, fv, negate=True),
+}
+
 VERSION = "v3"
 VECTOR_DBS_PREFIX = f"vector_stores:{VERSION}::"
 FAISS_INDEX_PREFIX = f"faiss_index:{VERSION}::"
@@ -173,37 +192,13 @@ class FaissIndex(EmbeddingIndex):
 
     def _matches_comparison_filter(self, metadata: dict[str, Any], filter_obj: ComparisonFilter) -> bool:
         """Check if metadata matches a comparison filter."""
-        key = filter_obj.key
-        value = filter_obj.value
-        op_type = filter_obj.type
-
+        key, value, op_type = filter_obj.key, filter_obj.value, filter_obj.type
         if key not in metadata:
             return False
-
-        metadata_value = metadata[key]
-
-        if op_type == "eq":
-            return bool(metadata_value == value)
-        elif op_type == "ne":
-            return bool(metadata_value != value)
-        elif op_type == "gt":
-            return bool(metadata_value > value)
-        elif op_type == "gte":
-            return bool(metadata_value >= value)
-        elif op_type == "lt":
-            return bool(metadata_value < value)
-        elif op_type == "lte":
-            return bool(metadata_value <= value)
-        elif op_type == "in":
-            if not isinstance(value, list):
-                raise ValueError(f"'in' filter requires a list value, got {type(value)}")
-            return metadata_value in value
-        elif op_type == "nin":
-            if not isinstance(value, list):
-                raise ValueError(f"'nin' filter requires a list value, got {type(value)}")
-            return metadata_value not in value
-        else:
+        op = _COMPARISON_OPS.get(op_type)
+        if op is None:
             raise ValueError(f"Unknown comparison operator: {op_type}")
+        return bool(op(metadata[key], value))
 
     def _matches_compound_filter(self, metadata: dict[str, Any], filter_obj: CompoundFilter) -> bool:
         """Check if metadata matches a compound filter (and/or)."""

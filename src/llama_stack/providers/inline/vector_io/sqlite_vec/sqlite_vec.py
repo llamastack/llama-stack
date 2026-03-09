@@ -44,6 +44,15 @@ from llama_stack_api.internal.kvstore import KVStore
 
 logger = get_logger(name=__name__, category="vector_io")
 
+_SQL_OPS: dict[str, str] = {
+    "eq": "=",
+    "ne": "!=",
+    "gt": ">",
+    "gte": ">=",
+    "lt": "<",
+    "lte": "<=",
+}
+
 # Specifying search mode is dependent on the VectorIO provider.
 VECTOR_SEARCH = "vector"
 KEYWORD_SEARCH = "keyword"
@@ -235,36 +244,22 @@ class SQLiteVecIndex(EmbeddingIndex):
 
     def _translate_comparison_filter(self, filter_obj: ComparisonFilter) -> tuple[str, list[Any]]:
         """Translate a comparison filter to SQL WHERE clause."""
-        key = filter_obj.key
-        value = filter_obj.value
-        op_type = filter_obj.type
-
-        # Use JSON_EXTRACT to access metadata fields from the chunk JSON
-        # The chunk is stored as JSON with metadata nested inside
+        key, value, op_type = filter_obj.key, filter_obj.value, filter_obj.type
         json_path = f"$.metadata.{key}"
+        expr = f"JSON_EXTRACT(m.chunk, '{json_path}')"
 
-        if op_type == "eq":
-            return f"JSON_EXTRACT(m.chunk, '{json_path}') = ?", [value]
-        elif op_type == "ne":
-            return f"JSON_EXTRACT(m.chunk, '{json_path}') != ?", [value]
-        elif op_type == "gt":
-            return f"JSON_EXTRACT(m.chunk, '{json_path}') > ?", [value]
-        elif op_type == "gte":
-            return f"JSON_EXTRACT(m.chunk, '{json_path}') >= ?", [value]
-        elif op_type == "lt":
-            return f"JSON_EXTRACT(m.chunk, '{json_path}') < ?", [value]
-        elif op_type == "lte":
-            return f"JSON_EXTRACT(m.chunk, '{json_path}') <= ?", [value]
+        if op_type in _SQL_OPS:
+            return f"{expr} {_SQL_OPS[op_type]} ?", [value]
         elif op_type == "in":
             if not isinstance(value, list):
                 raise ValueError(f"'in' filter requires a list value, got {type(value)}")
             placeholders = ", ".join("?" * len(value))
-            return f"JSON_EXTRACT(m.chunk, '{json_path}') IN ({placeholders})", value
+            return f"{expr} IN ({placeholders})", value
         elif op_type == "nin":
             if not isinstance(value, list):
                 raise ValueError(f"'nin' filter requires a list value, got {type(value)}")
             placeholders = ", ".join("?" * len(value))
-            return f"JSON_EXTRACT(m.chunk, '{json_path}') NOT IN ({placeholders})", value
+            return f"{expr} NOT IN ({placeholders})", value
         else:
             raise ValueError(f"Unknown comparison operator: {op_type}")
 

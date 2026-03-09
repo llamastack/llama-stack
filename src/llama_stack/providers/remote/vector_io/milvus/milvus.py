@@ -46,6 +46,17 @@ from .config import MilvusVectorIOConfig as RemoteMilvusVectorIOConfig
 logger = get_logger(name=__name__, category="vector_io::milvus")
 
 
+def _fmt(v: Any) -> str:
+    return f'"{v}"' if isinstance(v, str) else str(v)
+
+
+_MILVUS_OPS: dict[str, str] = {
+    "gt": ">",
+    "gte": ">=",
+    "lt": "<",
+    "lte": "<=",
+}
+
 VERSION = "v3"
 VECTOR_DBS_PREFIX = f"vector_stores:milvus:{VERSION}::"
 VECTOR_INDEX_PREFIX = f"vector_index:milvus:{VERSION}::"
@@ -161,56 +172,20 @@ class MilvusIndex(EmbeddingIndex):
         Milvus uses JSONPath-like expressions to access metadata fields.
         The metadata is stored in the chunk_content JSON field.
         """
-        key = filter_obj.key
-        value = filter_obj.value
-        op_type = filter_obj.type
-
-        # Milvus uses JSONPath syntax to access nested fields in JSON
-        # The metadata is stored in chunk_content["metadata"][key]
+        key, value, op_type = filter_obj.key, filter_obj.value, filter_obj.type
         json_path = f"chunk_content['metadata']['{key}']"
 
-        if op_type == "eq":
-            if isinstance(value, str):
-                return f'{json_path} == "{value}"'
-            else:
-                return f"{json_path} == {value}"
-        elif op_type == "ne":
-            if isinstance(value, str):
-                return f'{json_path} != "{value}"'
-            else:
-                return f"{json_path} != {value}"
-        elif op_type == "gt":
-            return f"{json_path} > {value}"
-        elif op_type == "gte":
-            return f"{json_path} >= {value}"
-        elif op_type == "lt":
-            return f"{json_path} < {value}"
-        elif op_type == "lte":
-            return f"{json_path} <= {value}"
-        elif op_type == "in":
-            # For "in" operations, value should be a list
-            if isinstance(value, list):
-                formatted_values = []
-                for v in value:
-                    if isinstance(v, str):
-                        formatted_values.append(f'"{v}"')
-                    else:
-                        formatted_values.append(str(v))
-                return f"{json_path} in [{', '.join(formatted_values)}]"
-            else:
-                raise ValueError(f"'in' filter requires a list value, got {type(value)}")
-        elif op_type == "nin":
-            # For "not in" operations, value should be a list
-            if isinstance(value, list):
-                formatted_values = []
-                for v in value:
-                    if isinstance(v, str):
-                        formatted_values.append(f'"{v}"')
-                    else:
-                        formatted_values.append(str(v))
-                return f"{json_path} not in [{', '.join(formatted_values)}]"
-            else:
-                raise ValueError(f"'nin' filter requires a list value, got {type(value)}")
+        if op_type in ("eq", "ne"):
+            sym = "==" if op_type == "eq" else "!="
+            return f"{json_path} {sym} {_fmt(value)}"
+        elif op_type in _MILVUS_OPS:
+            return f"{json_path} {_MILVUS_OPS[op_type]} {value}"
+        elif op_type in ("in", "nin"):
+            if not isinstance(value, list):
+                raise ValueError(f"'{op_type}' filter requires a list value, got {type(value)}")
+            formatted = [_fmt(v) for v in value]
+            kw = "not in" if op_type == "nin" else "in"
+            return f"{json_path} {kw} [{', '.join(formatted)}]"
         else:
             raise ValueError(f"Unsupported comparison operator: {op_type}")
 
