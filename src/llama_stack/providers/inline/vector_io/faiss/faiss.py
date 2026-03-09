@@ -19,7 +19,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
-from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter, Filter
+from llama_stack.providers.utils.vector_io.filters import CompoundFilter, Filter
 from llama_stack_api import (
     DeleteChunksRequest,
     EmbeddedChunk,
@@ -80,6 +80,10 @@ class FaissIndex(EmbeddingIndex):
         self.chunk_id_lock = asyncio.Lock()
         self.chunk_ids: list[Any] = []
 
+        # Inverted index: metadata_key -> metadata_value -> set of faiss positions
+        # Rebuilt from chunk_by_index on initialize(); not persisted separately.
+        self._meta_index: dict[str, dict[Any, set[int]]] = {}
+
     @classmethod
     async def create(cls, dimension: int, kvstore: KVStore | None = None, bank_id: str | None = None):
         instance = cls(dimension, kvstore, bank_id)
@@ -105,6 +109,10 @@ class FaissIndex(EmbeddingIndex):
             try:
                 self.index = faiss.deserialize_index(np.load(buffer, allow_pickle=False))
                 self.chunk_ids = [embedded_chunk.chunk_id for embedded_chunk in self.chunk_by_index.values()]
+                # Rebuild inverted metadata index from loaded chunks
+                for pos, chunk in self.chunk_by_index.items():
+                    for key, val in chunk.metadata.items():
+                        self._meta_index.setdefault(key, {}).setdefault(val, set()).add(pos)
             except Exception as e:
                 logger.debug(e, exc_info=True)
                 raise ValueError(
@@ -144,10 +152,13 @@ class FaissIndex(EmbeddingIndex):
         if embedding_dim != self.index.d:
             raise ValueError(f"Embedding dimension mismatch. Expected {self.index.d}, got {embedding_dim}")
 
-        # Store chunks by index
+        # Store chunks by index and update inverted metadata index
         indexlen = len(self.chunk_by_index)
         for i, embedded_chunk in enumerate(embedded_chunks):
-            self.chunk_by_index[indexlen + i] = embedded_chunk
+            faiss_pos = indexlen + i
+            self.chunk_by_index[faiss_pos] = embedded_chunk
+            for key, val in embedded_chunk.metadata.items():
+                self._meta_index.setdefault(key, {}).setdefault(val, set()).add(faiss_pos)
 
         async with self.chunk_id_lock:
             self.index.add(embeddings)
@@ -162,18 +173,30 @@ class FaissIndex(EmbeddingIndex):
             return
 
         def remove_chunk(chunk_id: str):
-            index = self.chunk_ids.index(chunk_id)
-            self.index.remove_ids(np.array([index]))
+            removed_pos = self.chunk_ids.index(chunk_id)
+            self.index.remove_ids(np.array([removed_pos]))
+
+            # Remove deleted position from _meta_index
+            for val_map in self._meta_index.values():
+                for positions in val_map.values():
+                    positions.discard(removed_pos)
 
             new_chunk_by_index = {}
             for idx, chunk in self.chunk_by_index.items():
                 # Shift all chunks after the removed chunk to the left
-                if idx > index:
+                if idx > removed_pos:
                     new_chunk_by_index[idx - 1] = chunk
                 else:
                     new_chunk_by_index[idx] = chunk
             self.chunk_by_index = new_chunk_by_index
-            self.chunk_ids.pop(index)
+            self.chunk_ids.pop(removed_pos)
+
+            # Shift all _meta_index positions > removed_pos down by 1
+            for val_map in self._meta_index.values():
+                for val in list(val_map):
+                    val_map[val] = {p - 1 if p > removed_pos else p for p in val_map[val]}
+                    if not val_map[val]:
+                        del val_map[val]
 
         async with self.chunk_id_lock:
             for chunk_id in chunk_ids:
@@ -181,50 +204,70 @@ class FaissIndex(EmbeddingIndex):
 
         await self._save_index()
 
-    def _matches_filter(self, metadata: dict[str, Any], filter_obj: Filter) -> bool:
-        """Check if metadata matches the given filter."""
-        if isinstance(filter_obj, ComparisonFilter):
-            return self._matches_comparison_filter(metadata, filter_obj)
-        elif isinstance(filter_obj, CompoundFilter):
-            return self._matches_compound_filter(metadata, filter_obj)
-        else:
-            raise ValueError(f"Unknown filter type: {type(filter_obj)}")
+    def _resolve_filter_positions(self, filter_obj: Filter) -> set[int]:
+        """
+        Return the set of faiss positions that match filter_obj.
 
-    def _matches_comparison_filter(self, metadata: dict[str, Any], filter_obj: ComparisonFilter) -> bool:
-        """Check if metadata matches a comparison filter."""
+        Uses the inverted _meta_index for O(1) equality/set lookups and falls
+        back to a linear scan of chunk_by_index for range ops (gt/gte/lt/lte/ne).
+        """
+        if isinstance(filter_obj, CompoundFilter):
+            sub_sets = [self._resolve_filter_positions(f) for f in filter_obj.filters]
+            if not sub_sets:
+                return set()
+            if filter_obj.type == "and":
+                return set.intersection(*sub_sets)
+            else:  # "or"
+                return set.union(*sub_sets)
+
+        # ComparisonFilter
         key, value, op_type = filter_obj.key, filter_obj.value, filter_obj.type
-        if key not in metadata:
-            return False
+        if op_type == "eq":
+            return self._meta_index.get(key, {}).get(value, set()).copy()
+        if op_type == "in":
+            result: set[int] = set()
+            for v in value:
+                result |= self._meta_index.get(key, {}).get(v, set())
+            return result
+        if op_type == "nin":
+            excluded: set[int] = set()
+            for v in value:
+                excluded |= self._meta_index.get(key, {}).get(v, set())
+            all_positions = {pos for s in self._meta_index.get(key, {}).values() for pos in s}
+            return all_positions - excluded
+        # Range ops and ne: linear scan over chunk_by_index metadata
         op = _COMPARISON_OPS.get(op_type)
         if op is None:
             raise ValueError(f"Unknown comparison operator: {op_type}")
-        return bool(op(metadata[key], value))
-
-    def _matches_compound_filter(self, metadata: dict[str, Any], filter_obj: CompoundFilter) -> bool:
-        """Check if metadata matches a compound filter (and/or)."""
-        if not filter_obj.filters:
-            return True
-
-        if filter_obj.type == "and":
-            return all(self._matches_filter(metadata, f) for f in filter_obj.filters)
-        elif filter_obj.type == "or":
-            return any(self._matches_filter(metadata, f) for f in filter_obj.filters)
-        else:
-            raise ValueError(f"Unknown compound filter type: {filter_obj.type}")
+        return {
+            pos
+            for pos, chunk in self.chunk_by_index.items()
+            if key in chunk.metadata and op(chunk.metadata[key], value)
+        }
 
     async def query_vector(
         self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
     ) -> QueryChunksResponse:
         """
         Performs vector-based search using Faiss similarity search.
-        Optionally filters results based on metadata.
+        When filters are provided, pre-computes matching positions via the
+        inverted _meta_index and passes them directly to Faiss via IDSelectorBatch,
+        eliminating the need for post-hoc filtering or over-retrieval heuristics.
         """
-        # Request more results if filtering, since some may be filtered out
-        search_k = k * 3 if filters else k
+        if filters is not None:
+            candidate_positions = self._resolve_filter_positions(filters)
+            if not candidate_positions:
+                return QueryChunksResponse(chunks=[], scores=[])
+            sel = faiss.IDSelectorBatch(np.array(sorted(candidate_positions), dtype=np.int64))
+            params = faiss.SearchParameters(sel=sel)
+            distances, indices = await asyncio.to_thread(
+                lambda: self.index.search(embedding.reshape(1, -1).astype(np.float32), k, params=params)
+            )
+        else:
+            distances, indices = await asyncio.to_thread(
+                self.index.search, embedding.reshape(1, -1).astype(np.float32), k
+            )
 
-        distances, indices = await asyncio.to_thread(
-            self.index.search, embedding.reshape(1, -1).astype(np.float32), search_k
-        )
         chunks: list[EmbeddedChunk] = []
         scores: list[float] = []
         for d, i in zip(distances[0], indices[0], strict=False):
@@ -233,19 +276,8 @@ class FaissIndex(EmbeddingIndex):
             score = 1.0 / float(d) if d != 0 else float("inf")
             if score < score_threshold:
                 continue
-
-            chunk = self.chunk_by_index[int(i)]
-
-            # Apply filter if provided
-            if filters and not self._matches_filter(chunk.metadata, filters):
-                continue
-
-            chunks.append(chunk)
+            chunks.append(self.chunk_by_index[int(i)])
             scores.append(score)
-
-            # Stop once we have enough results
-            if len(chunks) >= k:
-                break
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
