@@ -25,7 +25,7 @@ from ..conftest import vector_provider_wrapper
 
 # Providers that support native filtering
 # Other providers (chroma, pgvector, qdrant, weaviate, elasticsearch, milvus) raise NotImplementedError
-PROVIDERS_WITH_NATIVE_FILTERING = {"faiss", "sqlite-vec"}
+PROVIDERS_WITH_NATIVE_FILTERING = {"faiss", "sqlite-vec", "milvus"}
 
 
 def skip_if_provider_doesnt_support_filters(vector_io_provider_id: str):
