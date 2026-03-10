@@ -12,6 +12,7 @@ from fastapi import Body
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.vector_io.filters import parse_filter
 from llama_stack_api import (
     DEFAULT_CHUNK_OVERLAP_TOKENS,
     DEFAULT_CHUNK_SIZE_TOKENS,
@@ -142,7 +143,30 @@ class VectorIORouter(VectorIO):
         request: QueryChunksRequest,
     ) -> QueryChunksResponse:
         logger.debug(f"VectorIORouter.query_chunks: {request.vector_store_id}")
-        return await self.routing_table.query_chunks(request)
+
+        # Handle the no-filters case early
+        if not request.params or "filters" not in request.params:
+            return await self.routing_table.query_chunks(request)
+
+        # Extract and parse filters from request params
+        # Create a shallow copy to avoid mutating the caller's request
+        params_copy = dict(request.params)
+        filter_data = params_copy.pop("filters")
+
+        try:
+            parsed_filters = parse_filter(filter_data)
+        except ValueError as e:
+            logger.error(f"Invalid filter data: {e}")
+            raise ValueError(f"Invalid filter: {e}") from e
+
+        # Create a new request with the modified params
+        # Add the parsed filters back to params for the provider
+        params_copy["filters"] = parsed_filters
+        modified_request = QueryChunksRequest(
+            vector_store_id=request.vector_store_id, query=request.query, params=params_copy
+        )
+
+        return await self.routing_table.query_chunks(modified_request)
 
     # OpenAI Vector Stores API endpoints
     async def openai_create_vector_store(
