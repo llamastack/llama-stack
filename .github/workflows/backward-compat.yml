@@ -15,6 +15,10 @@ on:
       - 'src/llama_stack/distributions/**/config.yaml'
       - 'tests/backward_compat/**'
       - '.github/workflows/backward-compat.yml'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -37,7 +41,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
         with:
           enable-cache: true
 
@@ -232,6 +236,7 @@ jobs:
 
   test-integration-release:
     name: Run Integration Tests with Latest Release (Informational)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -401,6 +406,7 @@ jobs:
 
   check-schema-release-compatibility:
     name: Check Schema Compatibility with Latest Release (Informational)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -415,7 +421,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
         with:
           enable-cache: true
 

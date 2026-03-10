@@ -671,8 +671,13 @@ def test_function_call_output_list_image(responses_client, vision_model_id):
     assert response.output[0].type == "function_call"
     call_id = response.output[0].call_id
 
-    # 1x1 white pixel PNG encoded as a data URL — minimal valid image
-    tiny_png_b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwADhQGAWjR9awAAAABJRU5ErkJggg=="
+    # 50x50 RGB PNG — small but large enough for OpenAI's minimum image requirements
+    tiny_png_b64 = (
+        "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAApklEQVR4nO2YsQ2AMBADnV8qC/FTZSEyVSiCCaKi"
+        "Ahe+DqU5vZBluezbhhu1tftnz/zlNQSdemYIOuG6lpQTppaaE4AyxlBzwuOXF3GqrYWgE65rSTlhaqk5AShO+YVT"
+        "njjlSXfKn0ilVwg6wSkPd3niLk/c5Rfu8sQpT9zlSfViE99fAi9evdikF5uJuzzxYrPwLk+8yxPv8qR7l4/vL4EX"
+        "r6K7/AGZuvY6STxy/gAAAABJRU5ErkJggg=="
+    )
     image_data_url = f"data:image/png;base64,{tiny_png_b64}"
 
     inputs = [

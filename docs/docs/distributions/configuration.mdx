@@ -288,6 +288,36 @@ The `auth` section configures authentication for the server. When configured, al
 Authorization: Bearer <token>
 ```
 
+#### Conditional Authentication
+
+Authentication can be conditionally enabled or disabled using environment variables with the conditional syntax (`:+`). This is useful for deploying the same configuration to different environments where auth may or may not be required.
+
+Example:
+```yaml
+server:
+  auth:
+    provider_config:
+      type: ${env.AUTH_PROVIDER:+oauth2_token}
+      audience: "llama-stack"
+      jwks:
+        uri: ${env.KEYCLOAK_URL}/realms/llamastack/protocol/openid-connect/certs
+      issuer: ${env.KEYCLOAK_URL}/realms/llamastack
+```
+
+**Behavior:**
+- **If `AUTH_PROVIDER` is set** (to any value): Authentication is enabled with OAuth2
+- **If `AUTH_PROVIDER` is NOT set**: Authentication is completely disabled (no middleware added)
+
+This allows you to:
+- Run without authentication in local development (unset the env var)
+- Enable authentication in staging/production (set the env var)
+- Use the same config.yaml across all environments
+
+**Important Notes:**
+- The `type` field uses the conditional syntax to control whether the entire auth provider is enabled
+- When the env var is not set, the entire `provider_config` is set to `None` and no authentication middleware is initialized
+- Other auth config fields (like `route_policy`) can still be used independently when `provider_config` is disabled
+
 The server supports multiple authentication providers:
 
 #### OAuth 2.0/OpenID Connect Provider with Kubernetes

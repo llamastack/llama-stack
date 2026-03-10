@@ -24,7 +24,6 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     RerankData,
     RerankResponse,
-    ToolChoice,
 )
 from llama_stack_api.inference import RerankRequest
 
@@ -37,9 +36,6 @@ class VLLMInferenceAdapter(OpenAIMixin):
     config: VLLMInferenceAdapterConfig
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    # vLLM does not support the stream_options parameter
-    supports_stream_options: bool = False
 
     provider_data_api_key_field: str = "vllm_api_token"
 
@@ -104,13 +100,6 @@ class VLLMInferenceAdapter(OpenAIMixin):
         # Apply vLLM-specific defaults
         if params.max_tokens is None and self.config.max_tokens:
             params.max_tokens = self.config.max_tokens
-
-        # This is to be consistent with OpenAI API and support vLLM <= v0.6.3
-        # References:
-        #   * https://platform.openai.com/docs/api-reference/chat/create#chat-create-tool_choice
-        #   * https://github.com/vllm-project/vllm/pull/10000
-        if not params.tools and params.tool_choice is not None:
-            params.tool_choice = ToolChoice.none.value
 
         return await super().openai_chat_completion(params)
 

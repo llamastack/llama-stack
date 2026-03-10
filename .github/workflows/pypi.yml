@@ -159,13 +159,21 @@ jobs:
           elif [ "${{ github.event_name }}" == "release" ]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           else
-            # Read base version from fallback_version in pyproject.toml
-            BASE=$(python3 -c "
+            # Use git describe to get version from nearest tag (e.g., v0.5.1-dev)
+            # Falls back to fallback_version in pyproject.toml if no tags are reachable
+            RAW=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$RAW" ]; then
+              BASE="${RAW#v}"          # strip 'v' prefix
+              BASE="${BASE%-dev}"      # strip any -dev suffix from the tag
+            else
+              # Fallback: read from pyproject.toml (e.g., source tarballs without git history)
+              BASE=$(python3 -c "
           import tomllib, pathlib
           p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
           v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
           print(v.split('.dev')[0])
           ")
+            fi
             DATE=$(date -u +%Y%m%d)
             VERSION="${BASE}.dev${DATE}"
           fi
@@ -283,7 +291,7 @@ jobs:
 
       - name: Install uv
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
 
       - name: Install build dependencies
         if: steps.should-build.outputs.skip != 'true' && matrix.registry == 'pypi'
@@ -414,7 +422,7 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -752,8 +760,6 @@ jobs:
           - distro: dell
             platforms: linux/amd64,linux/arm64
           # GPU distributions — amd64 only
-          - distro: meta-reference-gpu
-            platforms: linux/amd64
           - distro: starter-gpu
             platforms: linux/amd64
 
