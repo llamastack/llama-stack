@@ -18,14 +18,15 @@ from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import (
     WeightedInMemoryAggregator,
     load_embedded_chunk_with_backward_compat,
     sanitize_collection_name,
 )
 from llama_stack_api import (
-    ChunkForDeletion,
+    ComparisonFilter,
+    CompoundFilter,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
@@ -238,7 +239,9 @@ class PGVectorIndex(EmbeddingIndex):
             ):
                 await self.create_ivfflat_vector_index(cur)
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Any = None
+    ) -> QueryChunksResponse:
         """
         Performs vector similarity search using PostgreSQL's search function. Default distance metric is COSINE.
 
@@ -246,10 +249,15 @@ class PGVectorIndex(EmbeddingIndex):
             embedding: The query embedding vector
             k: Number of results to return
             score_threshold: Minimum similarity score threshold
+            filters: Optional filters (not yet supported for PGVector provider)
 
         Returns:
             QueryChunksResponse with combined results
         """
+        # Filters are not yet implemented for PGVector provider
+        if filters is not None:
+            raise NotImplementedError("PGVector provider does not yet support native filtering")
+
         pgvector_search_function = self.get_pgvector_search_function()
 
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
@@ -291,7 +299,13 @@ class PGVectorIndex(EmbeddingIndex):
 
             return QueryChunksResponse(chunks=chunks, scores=scores)
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self,
+        query_string: str,
+        k: int,
+        score_threshold: float,
+        filters: ComparisonFilter | CompoundFilter | None = None,
+    ) -> QueryChunksResponse:
         """
         Performs keyword-based search using PostgreSQL's full-text search with ts_rank scoring.
 
@@ -303,6 +317,10 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
+        # PGVector provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("PGVector provider does not yet support native filtering")
+
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             # Use plainto_tsquery to handle user input safely and ts_rank for relevance scoring
             cur.execute(
@@ -335,6 +353,7 @@ class PGVectorIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: ComparisonFilter | CompoundFilter | None = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword search using configurable reranking.
@@ -350,6 +369,10 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
+        # PGVector provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("PGVector provider does not yet support native filtering")
+
         if reranker_params is None:
             reranker_params = {}
 

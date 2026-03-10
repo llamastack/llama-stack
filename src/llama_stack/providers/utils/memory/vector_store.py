@@ -22,6 +22,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
     Chunk,
@@ -183,11 +184,15 @@ class EmbeddingIndex(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         raise NotImplementedError()
 
     @abstractmethod
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         raise NotImplementedError()
 
     @abstractmethod
@@ -199,6 +204,7 @@ class EmbeddingIndex(ABC):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         raise NotImplementedError()
 
@@ -237,6 +243,9 @@ class VectorStoreWithIndex:
         k = params.get("max_chunks", 3)
         mode = params.get("mode")
         score_threshold = params.get("score_threshold", 0.0)
+
+        # Extract filters from params (processed by router)
+        filters = params.get("filters")
 
         # Get reranker configuration from params (set by openai_vector_store_mixin)
         # NOTE: Breaking change - removed support for old nested "ranker" format.
@@ -286,7 +295,7 @@ class VectorStoreWithIndex:
 
         query_string = interleaved_content_as_str(request.query)
         if mode == "keyword":
-            return await self.index.query_keyword(query_string, k, score_threshold)
+            return await self.index.query_keyword(query_string, k, score_threshold, filters)
 
         if "embedding_dimensions" in params:
             embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
@@ -302,10 +311,10 @@ class VectorStoreWithIndex:
         query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
         if mode == "hybrid":
             return await self.index.query_hybrid(
-                query_vector, query_string, k, score_threshold, reranker_type, reranker_params
+                query_vector, query_string, k, score_threshold, reranker_type, reranker_params, filters
             )
         else:
-            return await self.index.query_vector(query_vector, k, score_threshold)
+            return await self.index.query_vector(query_vector, k, score_threshold, filters)
 
     # Note: File processing for vector stores now happens at the
     # openai_attach_file_to_vector_store level using file_id.

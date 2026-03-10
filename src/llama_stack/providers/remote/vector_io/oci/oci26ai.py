@@ -23,6 +23,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import (
     WeightedInMemoryAggregator,
     sanitize_collection_name,
@@ -216,7 +217,8 @@ class OCI26aiIndex(EmbeddingIndex):
         self,
         embedding: NDArray,
         k: int,
-        score_threshold: float | None,
+        score_threshold: float,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
         Oracle vector search using COSINE similarity.
@@ -288,7 +290,9 @@ class OCI26aiIndex(EmbeddingIndex):
         finally:
             cursor.close()
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float | None) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         cursor = self.connection.cursor()
 
         # Build base query
@@ -356,9 +360,10 @@ class OCI26aiIndex(EmbeddingIndex):
         embedding: NDArray,
         query_string: str,
         k: int,
-        score_threshold: float | None,
+        score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword search using configurable reranking.
