@@ -42,6 +42,17 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
     pytest.skip("OpenAI vector stores are not supported by any provider")
 
 
+_PROVIDERS_WITH_NATIVE_FILTERING = {"inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::milvus"}
+
+
+def skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id: str):
+    if vector_io_provider_id not in _PROVIDERS_WITH_NATIVE_FILTERING:
+        pytest.skip(
+            f"Provider '{vector_io_provider_id}' does not yet support native filtering. "
+            f"Supported providers: {_PROVIDERS_WITH_NATIVE_FILTERING}"
+        )
+
+
 def skip_if_provider_doesnt_support_openai_vector_stores_search(
     client_with_models, search_mode, vector_io_provider_id=None, embedding_dimension=None
 ):
@@ -3527,6 +3538,7 @@ def test_openai_vector_store_with_chunks(
 ):
     """Test vector store functionality with actual chunks using both OpenAI and native APIs."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id)
 
     compat_client = compat_client_with_empty_stores
     llama_client = client_with_models
@@ -4226,11 +4238,10 @@ def test_openai_vector_store_search_with_typed_filters(
     that eq/lte/compound-or filters return exactly the expected result sets and
     exclude documents that should not match.
 
-    Filter evaluation is post-retrieval (Python-side) in the mixin's _matches_filters(),
-    so this test applies to providers that support OpenAI vector stores.
     max_num_results=10 ensures all 3 single-chunk files are candidates before filtering.
     """
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id)
 
     compat_client = compat_client_with_empty_stores
 
