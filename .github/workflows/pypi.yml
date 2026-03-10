@@ -814,6 +814,23 @@ jobs:
             echo "Publishing test image: ${IMAGE}:test-${VERSION}"
           fi
 
+      - name: Wait for package on test PyPI
+        if: steps.meta.outputs.install_mode == 'test-pypi'
+        run: |
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          URL="https://test.pypi.org/pypi/llama-stack/${VERSION}/json"
+          echo "Polling ${URL} ..."
+          for i in $(seq 1 20); do
+            if curl -sf "$URL" -o /dev/null; then
+              echo "llama-stack==${VERSION} is available on test PyPI"
+              exit 0
+            fi
+            echo "Attempt ${i}/20: not yet available, waiting 30s..."
+            sleep 30
+          done
+          echo "::error::llama-stack==${VERSION} did not appear on test PyPI after 10 minutes"
+          exit 1
+
       - name: Build and push Docker image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
