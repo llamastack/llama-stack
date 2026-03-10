@@ -36,6 +36,7 @@ from llama_stack_api.inference import (
     OpenAIUserMessageParam,
 )
 from llama_stack_api.openai_responses import (
+    MCPListToolsTool,
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInputFunctionToolCallOutput,
     OpenAIResponseInputMessageContentFile,
@@ -46,6 +47,10 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseMessage,
     OpenAIResponseOutputMessageContentOutputText,
     OpenAIResponseOutputMessageFunctionToolCall,
+    OpenAIResponseOutputMessageMCPCall,
+    OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageReasoningItem,
+    OpenAIResponseOutputMessageReasoningSummary,
     OpenAIResponseText,
     OpenAIResponseTextFormat,
 )
@@ -479,6 +484,300 @@ class TestIsFunctionToolCall:
 
         result = is_function_tool_call(tool_call, tools)
         assert result is False
+
+
+class TestReasoningSupportInConversion:
+    """Tests for reasoning look-back in convert_response_input_to_chat_messages.
+
+    When a ReasoningItem appears in the input, it should be:
+    1. Skipped (not converted to its own CC message)
+    2. Attached as `reasoning=<text>` on the NEXT assistant message via _get_preceding_reasoning()
+
+    This applies to FunctionToolCalls, McpCalls, and ResponseMessages with role='assistant'.
+    """
+
+    async def test_reasoning_attached_to_function_tool_call(self):
+        """ReasoningItem before a FunctionToolCall should attach reasoning to the assistant message.
+
+        Scenario: Model reasons about which tool to call, then calls get_weather.
+        """
+        input_items = [
+            OpenAIResponseMessage(role="user", content="What's the weather in Tokyo?"),
+            OpenAIResponseOutputMessageReasoningItem(
+                id="rs_001",
+                summary=[OpenAIResponseOutputMessageReasoningSummary(text="Need to call get_weather for Tokyo.")],
+                status="completed",
+            ),
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_abc",
+                name="get_weather",
+                arguments='{"location":"Tokyo","unit":"celsius"}',
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output='{"temperature": 27, "condition": "humid"}',
+                call_id="call_abc",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 3
+        # user message
+        assert isinstance(result[0], OpenAIUserMessageParam)
+        # assistant with reasoning attached
+        assert isinstance(result[1], OpenAIAssistantMessageParam)
+        assert result[1].tool_calls[0].function.name == "get_weather"
+        assert result[1].reasoning == "Need to call get_weather for Tokyo."
+        # tool result
+        assert isinstance(result[2], OpenAIToolMessageParam)
+        assert result[2].tool_call_id == "call_abc"
+
+    async def test_reasoning_attached_to_assistant_content_message(self):
+        """ReasoningItem before an assistant ResponseMessage should attach reasoning.
+
+        Scenario: resp_2 output from the MCP notebook -- model reasons then produces content.
+        Input: [user("Hi!"), McpListTools, ReasoningItem("greeting"), ResponseMessage(assistant, "Hi there!")]
+        Expected CC: [user("Hi!"), assistant(content="Hi there!", reasoning="greeting")]
+        """
+        input_items = [
+            OpenAIResponseMessage(role="user", content="Hi !"),
+            OpenAIResponseOutputMessageMCPListTools(
+                id="mcp_list_001",
+                server_label="gitmcp",
+                tools=[
+                    MCPListToolsTool(
+                        input_schema={"type": "object", "properties": {"query": {"type": "string"}}},
+                        name="search_docs",
+                        description="Search documentation",
+                    ),
+                ],
+            ),
+            OpenAIResponseOutputMessageReasoningItem(
+                id="rs_002",
+                summary=[
+                    OpenAIResponseOutputMessageReasoningSummary(
+                        text='The user says "Hi !". We respond politely.',
+                    )
+                ],
+                status="completed",
+            ),
+            OpenAIResponseMessage(
+                role="assistant",
+                content=[OpenAIResponseOutputMessageContentOutputText(text="Hi there! How can I help you today?")],
+                id="msg_001",
+                status="completed",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 2
+        # user
+        assert isinstance(result[0], OpenAIUserMessageParam)
+        assert result[0].content == "Hi !"
+        # assistant with reasoning from look-back
+        assert isinstance(result[1], OpenAIAssistantMessageParam)
+        assert result[1].reasoning == 'The user says "Hi !". We respond politely.'
+
+    async def test_mcp_tool_call_reasoning_lookback(self):
+        """ReasoningItem before an McpCall should attach reasoning to the assistant message.
+
+        This is the resp_3 scenario from the MCP notebook: resp_2 returned
+        [McpListTools, ReasoningItem, McpCall(search), ReasoningItem, McpCall(fetch),
+         ReasoningItem, OutputMessage]. When passed back as input for resp_3,
+        the McpCall assistant messages should carry their preceding reasoning.
+
+        Input (simplified from debug logs):
+          [user("Hi!"), McpListTools, ReasoningItem("greeting"), assistant("Hi there!"),
+           user("overview?"), McpListTools,
+           ReasoningItem("First search"), McpCall(search, output="Found: overview"),
+           ReasoningItem("Now fetch"), McpCall(fetch, output="tiktoken is a fast BPE..."),
+           ReasoningItem("Produce overview"), assistant("**tiktoken**..."),
+           user("thanks!")]
+
+        Expected CC output:
+          [user("Hi!"), assistant("Hi there!", reasoning="greeting"),
+           user("overview?"),
+           assistant(tool_calls=[search], reasoning="First search"), tool("Found: overview"),
+           assistant(tool_calls=[fetch], reasoning="Now fetch"), tool("tiktoken is..."),
+           assistant("**tiktoken**...", reasoning="Produce overview"),
+           user("thanks!")]
+        """
+        input_items = [
+            # Turn 1: greeting
+            OpenAIResponseMessage(role="user", content="Hi !"),
+            OpenAIResponseOutputMessageMCPListTools(
+                id="mcp_list_001",
+                server_label="gitmcp",
+                tools=[
+                    MCPListToolsTool(
+                        input_schema={"type": "object", "properties": {"query": {"type": "string"}}},
+                        name="search_tiktoken_documentation",
+                        description="Search tiktoken docs",
+                    ),
+                    MCPListToolsTool(
+                        input_schema={"type": "object", "properties": {"topic": {"type": "string"}}},
+                        name="fetch_tiktoken_documentation",
+                        description="Fetch tiktoken docs for a topic",
+                    ),
+                ],
+            ),
+            OpenAIResponseOutputMessageReasoningItem(
+                id="rs_greeting",
+                summary=[OpenAIResponseOutputMessageReasoningSummary(text="Friendly greeting back.")],
+                status="completed",
+            ),
+            OpenAIResponseMessage(
+                role="assistant",
+                content=[OpenAIResponseOutputMessageContentOutputText(text="Hi there! How can I help you today?")],
+                id="msg_greeting",
+                status="completed",
+            ),
+            # Turn 2: user asks about tiktoken
+            OpenAIResponseMessage(
+                role="user",
+                content="Give me very brief overview of tiktoken?",
+            ),
+            # Turn 2 output: MCP tool calls with reasoning
+            OpenAIResponseOutputMessageMCPListTools(
+                id="mcp_list_002",
+                server_label="gitmcp",
+                tools=[
+                    MCPListToolsTool(
+                        input_schema={"type": "object", "properties": {"query": {"type": "string"}}},
+                        name="search_tiktoken_documentation",
+                        description="Search tiktoken docs",
+                    ),
+                    MCPListToolsTool(
+                        input_schema={"type": "object", "properties": {"topic": {"type": "string"}}},
+                        name="fetch_tiktoken_documentation",
+                        description="Fetch tiktoken docs for a topic",
+                    ),
+                ],
+            ),
+            OpenAIResponseOutputMessageReasoningItem(
+                id="rs_search",
+                summary=[
+                    OpenAIResponseOutputMessageReasoningSummary(
+                        text="We need to use the provided tool functions. First search.",
+                    )
+                ],
+                status="completed",
+            ),
+            OpenAIResponseOutputMessageMCPCall(
+                id="fc_search",
+                name="search_tiktoken_documentation",
+                arguments='{"query":"tiktoken overview"}',
+                server_label="gitmcp",
+                output="Found Section: `overview`",
+            ),
+            OpenAIResponseOutputMessageReasoningItem(
+                id="rs_fetch",
+                summary=[OpenAIResponseOutputMessageReasoningSummary(text="Now fetch overview.")],
+                status="completed",
+            ),
+            OpenAIResponseOutputMessageMCPCall(
+                id="fc_fetch",
+                name="fetch_tiktoken_documentation",
+                arguments='{"topic":"overview"}',
+                server_label="gitmcp",
+                output="tiktoken is a fast BPE tokeniser for OpenAI models.",
+            ),
+            OpenAIResponseOutputMessageReasoningItem(
+                id="rs_summary",
+                summary=[OpenAIResponseOutputMessageReasoningSummary(text="We need to produce brief overview.")],
+                status="completed",
+            ),
+            OpenAIResponseMessage(
+                role="assistant",
+                content=[
+                    OpenAIResponseOutputMessageContentOutputText(
+                        text="**tiktoken** - a fast BPE tokenizer for OpenAI models.",
+                    )
+                ],
+                id="msg_summary",
+                status="completed",
+            ),
+            # Turn 3: user thanks
+            OpenAIResponseMessage(role="user", content="hmm. thanks ! this is helpful"),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        # Expected: 9 messages
+        # [0] user("Hi!")
+        # [1] assistant("Hi there!", reasoning="Friendly greeting back.")
+        # [2] user("overview?")
+        # [3] assistant(tool_calls=[search], reasoning="...First search.")
+        # [4] tool("Found Section: overview")
+        # [5] assistant(tool_calls=[fetch], reasoning="Now fetch overview.")
+        # [6] tool("tiktoken is a fast BPE...")
+        # [7] assistant("**tiktoken**...", reasoning="...produce brief overview.")
+        # [8] user("thanks!")
+        assert len(result) == 9
+
+        # [0] user
+        assert isinstance(result[0], OpenAIUserMessageParam)
+        assert result[0].content == "Hi !"
+
+        # [1] assistant with greeting reasoning
+        assert isinstance(result[1], OpenAIAssistantMessageParam)
+        assert result[1].reasoning == "Friendly greeting back."
+
+        # [2] user
+        assert isinstance(result[2], OpenAIUserMessageParam)
+        assert result[2].content == "Give me very brief overview of tiktoken?"
+
+        # [3] assistant from McpCall(search) -- should have reasoning from look-back
+        assert isinstance(result[3], OpenAIAssistantMessageParam)
+        assert result[3].tool_calls is not None
+        assert result[3].tool_calls[0].function.name == "search_tiktoken_documentation"
+        assert result[3].reasoning == "We need to use the provided tool functions. First search."
+
+        # [4] tool result for search
+        assert isinstance(result[4], OpenAIToolMessageParam)
+        assert result[4].content == "Found Section: `overview`"
+        assert result[4].tool_call_id == "fc_search"
+
+        # [5] assistant from McpCall(fetch) -- should have reasoning from look-back
+        assert isinstance(result[5], OpenAIAssistantMessageParam)
+        assert result[5].tool_calls is not None
+        assert result[5].tool_calls[0].function.name == "fetch_tiktoken_documentation"
+        assert result[5].reasoning == "Now fetch overview."
+
+        # [6] tool result for fetch
+        assert isinstance(result[6], OpenAIToolMessageParam)
+        assert result[6].content == "tiktoken is a fast BPE tokeniser for OpenAI models."
+        assert result[6].tool_call_id == "fc_fetch"
+
+        # [7] assistant content message with reasoning
+        assert isinstance(result[7], OpenAIAssistantMessageParam)
+        assert result[7].reasoning == "We need to produce brief overview."
+
+        # [8] user
+        assert isinstance(result[8], OpenAIUserMessageParam)
+        assert result[8].content == "hmm. thanks ! this is helpful"
+
+    async def test_no_reasoning_when_no_preceding_reasoning_item(self):
+        """When there is no ReasoningItem before a tool call, reasoning should not be set."""
+        input_items = [
+            OpenAIResponseMessage(role="user", content="What's the weather?"),
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_no_reason",
+                name="get_weather",
+                arguments='{"location":"Tokyo"}',
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output='{"temperature": 27}',
+                call_id="call_no_reason",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 3
+        assert isinstance(result[1], OpenAIAssistantMessageParam)
+        assert not hasattr(result[1], "reasoning")
 
 
 class TestExtractCitationsFromText:

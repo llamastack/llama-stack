@@ -84,6 +84,8 @@ from llama_stack_api import (
     OpenAIResponseOutputMessageFunctionToolCall,
     OpenAIResponseOutputMessageMCPCall,
     OpenAIResponseOutputMessageMCPListTools,
+    OpenAIResponseOutputMessageReasoningItem,
+    OpenAIResponseOutputMessageReasoningSummary,
     OpenAIResponseOutputMessageWebSearchToolCall,
     OpenAIResponsePrompt,
     OpenAIResponseReasoning,
@@ -550,14 +552,12 @@ class StreamingResponseOrchestrator:
                     self.service_tier = completion_result_data.service_tier
 
                 current_response = self._build_chat_completion(completion_result_data)
-
                 (
                     function_tool_calls,
                     non_function_tool_calls,
                     approvals,
                     next_turn_messages,
                 ) = self._separate_tool_calls(current_response, messages)
-
                 # add any approval requests required
                 for tool_call in approvals:
                     async for evt in self._add_mcp_approval_request(
@@ -565,7 +565,19 @@ class StreamingResponseOrchestrator:
                     ):
                         yield evt
 
-                # Handle choices with no tool calls
+                # Reasoning is independent of the response type — whether the assistant
+                # response is a tool call or a content message, reasoning (if present)
+                # is added to output_messages before processing choices.
+                # how `completion_result_data.reasoning` gets populated is provider-specific (e.g. Ollama/vLLM emit a separate
+                # reasoning field on chunks, Gemini sends <think> tags in content — not yet handled).
+                if completion_result_data.reasoning:
+                    reasoning_item = OpenAIResponseOutputMessageReasoningItem(
+                        id=f"rs_{uuid.uuid4().hex}",
+                        summary=[OpenAIResponseOutputMessageReasoningSummary(text=completion_result_data.reasoning)],
+                        status="completed",
+                    )
+                    output_messages.append(reasoning_item)
+
                 for choice in current_response.choices:
                     has_tool_calls = choice.message.tool_calls and self.ctx.response_tools
                     if not has_tool_calls:
@@ -576,7 +588,6 @@ class StreamingResponseOrchestrator:
                                 message_id=completion_result_data.message_item_id,
                             )
                         )
-
                 # Execute tool calls and coordinate results
                 async for stream_event in self._coordinate_tool_execution(
                     function_tool_calls,
@@ -586,9 +597,7 @@ class StreamingResponseOrchestrator:
                     next_turn_messages,
                 ):
                     yield stream_event
-
                 messages = next_turn_messages
-
                 if not function_tool_calls and not non_function_tool_calls:
                     break
 
@@ -670,12 +679,13 @@ class StreamingResponseOrchestrator:
 
         for choice in current_response.choices:
             # Convert response message to input message format for multi-turn
-            next_turn_messages.append(
-                OpenAIAssistantMessageParam(
-                    content=choice.message.content,
-                    tool_calls=choice.message.tool_calls,
-                )
+            message = OpenAIAssistantMessageParam(
+                content=choice.message.content,
+                tool_calls=choice.message.tool_calls,
             )
+            if getattr(choice.message, "reasoning", None):
+                message.reasoning = choice.message.reasoning
+            next_turn_messages.append(message)
             logger.debug(f"Choice message content: {choice.message.content}")
             logger.debug(f"Choice message tool_calls: {choice.message.tool_calls}")
 
@@ -1197,6 +1207,7 @@ class StreamingResponseOrchestrator:
             content_part_emitted=content_part_emitted,
             logprobs=OpenAIChoiceLogprobs(content=chat_response_logprobs) if chat_response_logprobs else None,
             service_tier=chunk_service_tier,
+            reasoning="".join(reasoning_text_accumulated) if reasoning_text_accumulated else None,
         )
 
     def _build_chat_completion(self, result: ChatCompletionResult) -> OpenAIChatCompletion:
@@ -1211,6 +1222,8 @@ class StreamingResponseOrchestrator:
             content=result.content_text,
             tool_calls=tool_calls,
         )
+        if result.reasoning:
+            assistant_message.reasoning = result.reasoning
         return OpenAIChatCompletion(
             id=result.response_id,
             choices=[
