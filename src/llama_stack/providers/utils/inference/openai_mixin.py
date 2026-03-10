@@ -480,6 +480,13 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     ##
 
     async def register_model(self, model: Model) -> Model:
+        # Check if we should validate model availability (defaults to False)
+        should_validate = bool(model.model_validation)
+
+        if not should_validate:
+            logger.debug(f"Skipping model availability check for {model.provider_model_id} (model_validation=false)")
+            return model
+
         if not await self.check_model_availability(model.provider_model_id):
             raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")  # type: ignore[attr-defined]
         return model

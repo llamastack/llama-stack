@@ -67,6 +67,16 @@ def available_providers() -> list[ProviderSpec]:
         ),
         RemoteProviderSpec(
             api=Api.safety,
+            adapter_type="passthrough",
+            provider_type="remote::passthrough",
+            pip_packages=[],
+            module="llama_stack.providers.remote.safety.passthrough",
+            config_class="llama_stack.providers.remote.safety.passthrough.PassthroughSafetyConfig",
+            provider_data_validator="llama_stack.providers.remote.safety.passthrough.config.PassthroughProviderDataValidator",
+            description="Passthrough safety provider that forwards moderation calls to a downstream HTTP service.",
+        ),
+        RemoteProviderSpec(
+            api=Api.safety,
             adapter_type="sambanova",
             provider_type="remote::sambanova",
             pip_packages=["litellm", "requests"],
