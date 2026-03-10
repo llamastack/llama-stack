@@ -388,3 +388,119 @@ class TestOpenAIResponses:
         assert response2.id.startswith("resp_")
         assert response2.top_p == 0.7
         assert len(response2.output_text.strip()) > 0
+
+    def _function_tools(self):
+        """Return a pair of function tools for parallel tool call testing."""
+        return [
+            {
+                "type": "function",
+                "name": "get_weather",
+                "description": "Get weather information for a specified location",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "The city name (e.g., 'New York', 'London')",
+                        },
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "name": "get_time",
+                "description": "Get current time for a specified location",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "location": {
+                            "type": "string",
+                            "description": "The city name (e.g., 'New York', 'London')",
+                        },
+                    },
+                },
+            },
+        ]
+
+    def test_openai_response_with_parallel_tool_calls_enabled(self, openai_client, text_model_id):
+        """Test that parallel_tool_calls=True produces multiple function calls."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="What is the weather in Paris and the current time in London?",
+            tools=self._function_tools(),
+            parallel_tool_calls=True,
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.parallel_tool_calls is True
+
+        # With parallel_tool_calls enabled, expect two function calls
+        function_calls = [o for o in response.output if o.type == "function_call"]
+        assert len(function_calls) == 2
+        call_names = {c.name for c in function_calls}
+        assert "get_weather" in call_names
+        assert "get_time" in call_names
+
+    def test_openai_response_with_parallel_tool_calls_disabled(self, openai_client, text_model_id):
+        """Test that parallel_tool_calls=False produces only one function call."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="What is the weather in Paris and the current time in London?",
+            tools=self._function_tools(),
+            parallel_tool_calls=False,
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.parallel_tool_calls is False
+
+        # With parallel_tool_calls disabled, expect only one function call
+        function_calls = [o for o in response.output if o.type == "function_call"]
+        assert len(function_calls) == 1
+
+    def test_openai_response_with_parallel_tool_calls_disabled_streaming(self, openai_client, text_model_id):
+        """Test parallel_tool_calls disabled in streaming mode with function tools."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input="What is the weather in Paris and the current time in London?",
+            tools=self._function_tools(),
+            parallel_tool_calls=False,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify parallel_tool_calls is in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.parallel_tool_calls is False
+
+        # Verify parallel_tool_calls is in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.parallel_tool_calls is False
+
+    def test_openai_response_with_parallel_tool_calls_and_previous_response(self, openai_client, text_model_id):
+        """Test that parallel_tool_calls works correctly with previous_response_id."""
+        # Create first response without tools so the conversation can be chained
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 4+4?"}],
+            parallel_tool_calls=False,
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.parallel_tool_calls is False
+
+        # Create second response referencing the first one with the same parallel_tool_calls
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 6+6?"}],
+            previous_response_id=response1.id,
+            parallel_tool_calls=False,
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.parallel_tool_calls is False
