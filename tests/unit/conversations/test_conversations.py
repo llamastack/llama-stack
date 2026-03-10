@@ -4,6 +4,13 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+"""Tests for conversation service lifecycle, compatibility, and validation.
+
+0. Purpose: validate conversation service behavior and OpenAI compatibility.
+1. Categories: lifecycle CRUD, validation errors, provider compatibility, regression.
+2. Tests: lifecycle create/read/delete; item add/list/retrieve; ID validation; empty params; OpenAI adapters; deprecated fields; policy config; regression for missing message type.
+"""
+
 import tempfile
 from pathlib import Path
 
@@ -24,7 +31,13 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack_api import OpenAIResponseInputMessageContentText, OpenAIResponseMessage
+from llama_stack_api import (
+    ConversationItemNotFoundError,
+    ConversationNotFoundError,
+    InvalidParameterError,
+    OpenAIResponseInputMessageContentText,
+    OpenAIResponseMessage,
+)
 from llama_stack_api.conversations import (
     AddItemsRequest,
     CreateConversationRequest,
@@ -95,13 +108,41 @@ async def test_conversation_items(service):
 
 
 async def test_invalid_conversation_id(service):
-    with pytest.raises(ValueError, match="Expected an ID that begins with 'conv_'"):
-        await service._get_validated_conversation("invalid_id")
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.get_conversation(GetConversationRequest(conversation_id="invalid_id"))
 
 
-async def test_empty_parameter_validation(service):
-    with pytest.raises(ValueError, match="Expected a non-empty value"):
-        await service.retrieve(RetrieveItemRequest(conversation_id="", item_id="item_123"))
+async def test_invalid_conversation_id_on_retrieve(service):
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.retrieve(RetrieveItemRequest(conversation_id="bad_id", item_id="item_123"))
+
+
+async def test_invalid_conversation_id_on_update(service):
+    from llama_stack_api.conversations import UpdateConversationRequest
+
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.update_conversation("bad_id", UpdateConversationRequest(metadata={}))
+
+
+async def test_invalid_conversation_id_on_delete(service):
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.openai_delete_conversation(DeleteConversationRequest(conversation_id="bad_id"))
+
+
+async def test_nonexistent_conversation_raises_conversation_not_found(service):
+    """Test that get_conversation raises ConversationNotFoundError for nonexistent ID."""
+    with pytest.raises(ConversationNotFoundError, match="Conversation 'conv_nonexistent' not found"):
+        await service.get_conversation(GetConversationRequest(conversation_id="conv_nonexistent"))
+
+
+async def test_retrieve_nonexistent_item_raises_conversation_item_not_found(service):
+    """Test that retrieve raises ConversationItemNotFoundError for nonexistent item."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+    with pytest.raises(
+        ConversationItemNotFoundError,
+        match="Conversation item 'msg_nonexistent' not found in conversation",
+    ):
+        await service.retrieve(RetrieveItemRequest(conversation_id=conversation.id, item_id="msg_nonexistent"))
 
 
 async def test_openai_type_compatibility(service):
@@ -136,6 +177,27 @@ async def test_openai_type_compatibility(service):
     openai_item_adapter.validate_python(item_dict)
 
 
+async def test_items_not_returned_on_creation_or_retrieval(service):
+    """Test that items field is not returned when creating or retrieving a conversation.
+
+    The items field is deprecated and kept for backward compatibility.
+    Items should be accessed via the conversation_items table using the /items endpoint.
+    """
+    # Create a conversation
+    conversation = await service.create_conversation(CreateConversationRequest(metadata={"test": "value"}))
+
+    # Verify items field doesn't exist in serialized response
+    conversation_dict = conversation.model_dump(exclude_none=True)
+    assert "items" not in conversation_dict, "items should not be in creation response"
+
+    # Retrieve the conversation
+    retrieved = await service.get_conversation(GetConversationRequest(conversation_id=conversation.id))
+
+    # Verify items field doesn't exist in retrieval response
+    retrieved_dict = retrieved.model_dump(exclude_none=True)
+    assert "items" not in retrieved_dict, "items should not be in retrieval response"
+
+
 async def test_policy_configuration():
     from llama_stack.core.access_control.datatypes import Action, Scope
     from llama_stack.core.datatypes import AccessRule
@@ -168,3 +230,29 @@ async def test_policy_configuration():
         assert service.policy == restrictive_policy
         assert len(service.policy) == 1
         assert service.policy[0].forbid is not None
+
+
+async def test_add_items_defaults_message_type(service):
+    items = [
+        {"role": "user", "content": [{"type": "input_text", "text": "Hello"}]},
+    ]
+
+    conversation = await service.create_conversation(CreateConversationRequest())
+
+    added = await service.add_items(conversation.id, AddItemsRequest(items=items))
+
+    assert len(added.data) == 1
+    assert added.data[0].type == "message"
+
+
+async def test_create_conversation_defaults_message_type(service):
+    items = [
+        {"role": "assistant", "content": [{"type": "output_text", "text": "Hi"}]},
+    ]
+
+    conversation = await service.create_conversation(CreateConversationRequest(items=items))
+
+    listed = await service.list_items(ListItemsRequest(conversation_id=conversation.id))
+
+    assert len(listed.data) == 1
+    assert listed.data[0].type == "message"

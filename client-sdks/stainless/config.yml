@@ -25,11 +25,6 @@ targets:
     publish:
       pypi: true
     project_name: llama_stack_client
-  kotlin:
-    reverse_domain: com.llama_stack_client.api
-    production_repo: null
-    publish:
-      maven: false
   go:
     package_name: llama-stack-client
     production_repo: llamastack/llama-stack-client-go
@@ -87,6 +82,13 @@ pagination:
       type: string
       x-stainless-pagination-property:
         purpose: next_cursor_field
+streaming:
+  on_event:
+  - data_starts_with: '[DONE]'
+    handle: done
+  - kind: fallthrough
+    handle: yield
+    error_property: error
 settings:
   license: MIT
   unwrap_response_fields:
@@ -424,9 +426,6 @@ resources:
       cancel: post /v1/batches/{batch_id}/cancel
   alpha:
     subresources:
-      inference:
-        methods:
-          rerank: post /v1alpha/inference/rerank
       post_training:
         models:
           algorithm_config: AlgorithmConfig
@@ -438,9 +437,9 @@ resources:
         subresources:
           job:
             methods:
-              artifacts: get /v1alpha/post-training/job/artifacts
-              cancel: post /v1alpha/post-training/job/cancel
-              status: get /v1alpha/post-training/job/status
+              artifacts: get /v1alpha/post-training/jobs/{job_uuid}/artifacts
+              cancel: post /v1alpha/post-training/jobs/{job_uuid}/cancel
+              status: get /v1alpha/post-training/jobs/{job_uuid}/status
               list:
                 paginated: false
                 endpoint: get /v1alpha/post-training/jobs
@@ -478,6 +477,9 @@ resources:
           list_routes: get /v1alpha/admin/inspect/routes
           health: get /v1alpha/admin/health
           version: get /v1alpha/admin/version
+      inference:
+        methods:
+          rerank: post /v1alpha/inference/rerank
   beta:
     subresources:
       datasets:

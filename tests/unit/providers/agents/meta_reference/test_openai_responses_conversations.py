@@ -13,7 +13,7 @@ from llama_stack.providers.inline.agents.meta_reference.responses.openai_respons
 )
 from llama_stack_api.common.errors import (
     ConversationNotFoundError,
-    InvalidConversationIdError,
+    InvalidParameterError,
 )
 from llama_stack_api.conversations import (
     ConversationItemList,
@@ -202,7 +202,9 @@ class TestIntegrationWorkflow:
                 store=True,
             )
 
-            yield OpenAIResponseObjectStreamResponseCompleted(response=mock_response, type="response.completed")
+            yield OpenAIResponseObjectStreamResponseCompleted(
+                response=mock_response, sequence_number=2, type="response.completed"
+            )
 
         responses_impl_with_conversations._create_streaming_response = mock_streaming_response
 
@@ -222,12 +224,10 @@ class TestIntegrationWorkflow:
 
     async def test_create_response_with_invalid_conversation_id(self, responses_impl_with_conversations):
         """Test creating a response with an invalid conversation ID."""
-        with pytest.raises(InvalidConversationIdError) as exc_info:
+        with pytest.raises(InvalidParameterError, match="Expected an ID that begins with 'conv_'"):
             await responses_impl_with_conversations.create_openai_response(
                 input="Hello", model="test-model", conversation="invalid_id", stream=False
             )
-
-        assert "Expected an ID that begins with 'conv_'" in str(exc_info.value)
 
     async def test_create_response_with_nonexistent_conversation(
         self, responses_impl_with_conversations, mock_conversations_api
@@ -245,11 +245,10 @@ class TestIntegrationWorkflow:
     async def test_conversation_and_previous_response_id(
         self, responses_impl_with_conversations, mock_conversations_api, mock_responses_store
     ):
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(InvalidParameterError, match="Provide only one") as exc_info:
             await responses_impl_with_conversations.create_openai_response(
                 input="test", model="test", conversation="conv_123", previous_response_id="resp_123"
             )
 
-        assert "Mutually exclusive parameters" in str(exc_info.value)
         assert "previous_response_id" in str(exc_info.value)
         assert "conversation" in str(exc_info.value)

@@ -11,7 +11,6 @@ Tests the new input_schema and output_schema fields.
 
 from pydantic import ValidationError
 
-from llama_stack.models.llama.datatypes import BuiltinTool, ToolDefinition
 from llama_stack_api import ToolDef
 
 
@@ -178,56 +177,6 @@ class TestToolDefValidation:
             # For now this passes, but shouldn't after we add validation
         except ValidationError:
             pass  # Expected once validation is added
-
-
-class TestToolDefinitionValidation:
-    """Test ToolDefinition (internal) validation with JSON Schema."""
-
-    def test_simple_tool_definition(self):
-        """Test ToolDefinition with simple schema."""
-        tool = ToolDefinition(
-            tool_name="get_time",
-            description="Get current time",
-            input_schema={"type": "object", "properties": {"timezone": {"type": "string"}}},
-        )
-
-        assert tool.tool_name == "get_time"
-        assert tool.input_schema is not None
-
-    def test_builtin_tool_with_schema(self):
-        """Test ToolDefinition with BuiltinTool enum."""
-        tool = ToolDefinition(
-            tool_name=BuiltinTool.code_interpreter,
-            description="Run Python code",
-            input_schema={"type": "object", "properties": {"code": {"type": "string"}}, "required": ["code"]},
-            output_schema={"type": "object", "properties": {"output": {"type": "string"}, "error": {"type": "string"}}},
-        )
-
-        assert isinstance(tool.tool_name, BuiltinTool)
-        assert tool.input_schema is not None
-        assert tool.output_schema is not None
-
-    def test_tool_definition_with_refs(self):
-        """Test ToolDefinition preserves $ref/$defs."""
-        tool = ToolDefinition(
-            tool_name="process_data",
-            input_schema={
-                "type": "object",
-                "properties": {"data": {"$ref": "#/$defs/DataObject"}},
-                "$defs": {
-                    "DataObject": {
-                        "type": "object",
-                        "properties": {
-                            "id": {"type": "integer"},
-                            "values": {"type": "array", "items": {"type": "number"}},
-                        },
-                    }
-                },
-            },
-        )
-
-        assert "$defs" in tool.input_schema
-        assert tool.input_schema["properties"]["data"]["$ref"] == "#/$defs/DataObject"
 
 
 class TestSchemaEquivalence:

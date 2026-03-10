@@ -1,0 +1,56 @@
+{
+  "test_id": "tests/integration/inference/test_rerank.py::test_rerank_semantic_correctness[rerank=vllm/Qwen/Qwen3-Reranker-0.6B-What is C++?-items1-C++ is a programming language. ]",
+  "request": {
+    "test_id": "tests/integration/inference/test_rerank.py::test_rerank_semantic_correctness[rerank=vllm/Qwen/Qwen3-Reranker-0.6B-What is C++?-items1-C++ is a programming language. ]",
+    "url": "http://localhost:8000/rerank",
+    "method": "POST",
+    "payload": {
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "query": "What is C++?",
+      "documents": [
+        "Learning new things is interesting. ",
+        "C++ is a programming language. ",
+        "Books provide knowledge and entertainment. "
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "id": "rerank-bbc08f2f3432f9a3",
+      "model": "Qwen/Qwen3-Reranker-0.6B",
+      "usage": {
+        "prompt_tokens": 40,
+        "total_tokens": 40
+      },
+      "results": [
+        {
+          "index": 1,
+          "document": {
+            "text": "C++ is a programming language. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.6802699565887451
+        },
+        {
+          "index": 0,
+          "document": {
+            "text": "Learning new things is interesting. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.6742694973945618
+        },
+        {
+          "index": 2,
+          "document": {
+            "text": "Books provide knowledge and entertainment. ",
+            "multi_modal": null
+          },
+          "relevance_score": 0.6657939553260803
+        }
+      ]
+    },
+    "is_streaming": false
+  },
+  "id_normalization_mapping": {}
+}

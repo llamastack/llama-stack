@@ -17,10 +17,11 @@ import logging  # allow-direct-logging
 from collections.abc import AsyncIterator
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Path, Query
+from fastapi import APIRouter, Body, Depends, Path, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from llama_stack_api.common.errors import OpenAIErrorResponse
 from llama_stack_api.common.responses import Order
 from llama_stack_api.openai_responses import (
     ListOpenAIResponseInputItem,
@@ -29,9 +30,11 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseObject,
 )
 from llama_stack_api.router_utils import (
+    ExceptionTranslatingRoute,
     create_path_dependency,
     create_query_dependency,
     standard_responses,
+    try_translate_to_http_exception,
 )
 from llama_stack_api.version import LLAMA_STACK_API_V1
 
@@ -72,8 +75,10 @@ async def sse_generator(event_gen):
         raise  # Re-raise to maintain proper cancellation semantics
     except Exception as e:
         logger.exception("Error in SSE generator")
-        exc = _http_exception_from_sse_error(e)
-        yield create_sse_event({"error": {"status_code": exc.status_code, "message": exc.detail}})
+        http_exc = try_translate_to_http_exception(e)
+        status_code = http_exc.status_code if http_exc else 500
+        detail = http_exc.detail if http_exc else "Internal server error: An unexpected error occurred."
+        yield create_sse_event(OpenAIErrorResponse.from_message(detail, code=str(status_code)).to_dict())
 
 
 # Automatically generate dependency functions from Pydantic models
@@ -115,29 +120,6 @@ async def get_list_response_input_items_request(
     )
 
 
-def _http_exception_from_value_error(exc: ValueError) -> HTTPException:
-    """Convert implementation `ValueError` into an OpenAI-compatible HTTP error.
-
-    The compatibility OpenAI client maps HTTP 400 -> `BadRequestError`.
-    The existing API surface (and integration tests) expect "not found" cases
-    to be represented as a 400, not a 404.
-    """
-
-    detail = str(exc) or "Invalid value"
-    return HTTPException(status_code=400, detail=detail)
-
-
-def _http_exception_from_sse_error(exc: Exception) -> HTTPException:
-    if isinstance(exc, HTTPException):
-        return exc
-    if isinstance(exc, ValueError):
-        return _http_exception_from_value_error(exc)
-    status_code = getattr(exc, "status_code", None)
-    if isinstance(status_code, int):
-        return HTTPException(status_code=status_code, detail=str(exc))
-    return HTTPException(status_code=500, detail="Internal server error: An unexpected error occurred.")
-
-
 def _preserve_context_for_sse(event_gen):
     # StreamingResponse runs in a different task, losing request contextvars.
     # create_task inside context.run captures the context at task creation.
@@ -173,6 +155,7 @@ def create_router(impl: Agents) -> APIRouter:
         prefix=f"/{LLAMA_STACK_API_V1}",
         tags=["Agents"],
         responses=standard_responses,
+        route_class=ExceptionTranslatingRoute,
     )
 
     @router.get(
@@ -184,10 +167,7 @@ def create_router(impl: Agents) -> APIRouter:
     async def get_openai_response(
         request: Annotated[RetrieveResponseRequest, Depends(get_retrieve_response_request)],
     ) -> OpenAIResponseObject:
-        try:
-            return await impl.get_openai_response(request)
-        except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from exc
+        return await impl.get_openai_response(request)
 
     @router.post(
         "/responses",
@@ -208,10 +188,7 @@ def create_router(impl: Agents) -> APIRouter:
     async def create_openai_response(
         request: Annotated[CreateResponseRequest, Body(...)],
     ) -> OpenAIResponseObject | StreamingResponse:
-        try:
-            result = await impl.create_openai_response(request)
-        except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from exc
+        result = await impl.create_openai_response(request)
 
         # For streaming responses, wrap in StreamingResponse for HTTP requests.
         # The implementation is typed to return an `AsyncIterator` for streaming.
@@ -232,10 +209,7 @@ def create_router(impl: Agents) -> APIRouter:
     async def list_openai_responses(
         request: Annotated[ListResponsesRequest, Depends(get_list_responses_request)],
     ) -> ListOpenAIResponseObject:
-        try:
-            return await impl.list_openai_responses(request)
-        except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from exc
+        return await impl.list_openai_responses(request)
 
     @router.get(
         "/responses/{response_id}/input_items",
@@ -246,10 +220,7 @@ def create_router(impl: Agents) -> APIRouter:
     async def list_openai_response_input_items(
         request: Annotated[ListResponseInputItemsRequest, Depends(get_list_response_input_items_request)],
     ) -> ListOpenAIResponseInputItem:
-        try:
-            return await impl.list_openai_response_input_items(request)
-        except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from exc
+        return await impl.list_openai_response_input_items(request)
 
     @router.delete(
         "/responses/{response_id}",
@@ -260,9 +231,6 @@ def create_router(impl: Agents) -> APIRouter:
     async def delete_openai_response(
         request: Annotated[DeleteResponseRequest, Depends(get_delete_response_request)],
     ) -> OpenAIDeleteResponseObject:
-        try:
-            return await impl.delete_openai_response(request)
-        except ValueError as exc:
-            raise _http_exception_from_value_error(exc) from exc
+        return await impl.delete_openai_response(request)
 
     return router

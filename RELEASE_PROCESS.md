@@ -94,9 +94,46 @@ Testing requirements scale with release type:
 For each release, the Release Owner should complete:
 
 - [ ] Create release-specific thread in `#releases` Discord channel
-- [ ] Trigger release workflows
+- [ ] Complete the technical release steps below
 - [ ] Generate release notes
 - [ ] Announce in `#announcements` Discord channel
+
+### Technical Release Steps
+
+#### Patch release (e.g., 0.4.5 on existing `release-0.4.x`)
+
+**Pre-release on `release-0.4.x`:**
+
+Backports are handled automatically by Mergify — patch releases ship whatever has already been backported to the release branch. No manual cherry-picking needed.
+
+- [ ] Run the [**Prepare release**](https://github.com/llamastack/llama-stack/actions/workflows/prepare-release.yml) workflow:
+  - Input `version`: `0.4.5`
+  - Input `release_branch`: `release-0.4.x`
+  - This commits `fallback_version` and `llama-stack-client` pin updates directly to the release branch
+
+**Release:**
+
+- [ ] Create GitHub release: tag `v0.4.5`, target `release-0.4.x`
+- [ ] Verify all 4 packages published:
+  - [llama-stack on PyPI](https://pypi.org/project/llama-stack/)
+  - [llama-stack-api on PyPI](https://pypi.org/project/llama-stack-api/)
+  - [llama-stack-client on PyPI](https://pypi.org/project/llama-stack-client/)
+  - [llama-stack-client on npm](https://www.npmjs.com/package/llama-stack-client)
+
+**Post-release (automated):**
+
+The following steps are handled automatically by the [**Post-release automation**](https://github.com/llamastack/llama-stack/actions/workflows/post-release.yml) workflow, which triggers on `release: published`:
+
+- Tags `main` with `v0.4.6-dev` (next dev tag)
+- Commits `fallback_version` bump to `"0.4.6.dev0"` directly to `main`
+- Commits the npm lockfile update directly to `release-0.4.x`
+
+#### Minor release (e.g., 0.5.0 — new release branch)
+
+**All of the above, plus:**
+
+- [ ] Create `release-0.5.x` branch off `main`
+- [ ] Ensure the release branch has the setuptools-scm config in both `pyproject.toml` files (`dynamic = ["version"]`, `[tool.setuptools_scm]`, etc.)
 
 ## Release Artifacts
 
@@ -136,3 +173,63 @@ If the current release is `v0.4.x`:
 - `v0.2.x` and earlier — Unmaintained
 
 Users on unmaintained versions are encouraged to upgrade to continue receiving fixes.
+
+## How the Release Workflow Works
+
+The unified workflow (`.github/workflows/pypi.yml`) builds and publishes all packages:
+
+- **Local packages** (llama-stack, llama-stack-api): version comes from the git tag via `SETUPTOOLS_SCM_PRETEND_VERSION`
+- **External packages** (llama-stack-client python/typescript): the workflow patches `pyproject.toml`/`_version.py`/`package.json` at build time using the tag version via `sed`/`npm version`
+- `fallback_version` is only used for nightly/dev builds and Docker — not for releases
+- The workflow always runs from `main` but checks out the tag's commit for local packages
+
+### Workflow Modes
+
+| Trigger | Version | Target |
+|---|---|---|
+| `release: published` | From tag (`v0.4.5` → `0.4.5`) | pypi.org + npm |
+| `schedule` (nightly) | `{base}.dev{YYYYMMDD}` (from dev tag or fallback) | test.pypi.org |
+| `workflow_dispatch` dry_run=test-pypi | `{base}.dev{YYYYMMDD}` or manual `version` input | test.pypi.org |
+| `workflow_dispatch` dry_run=off | Manual `version` input | pypi.org + npm |
+| `workflow_dispatch` dry_run=build-only | N/A | No publish |
+
+## Automation Workflows
+
+### Prepare release (`.github/workflows/prepare-release.yml`)
+
+Triggered via `workflow_dispatch`. Takes a version and release branch as input, then:
+- Updates `fallback_version` to the release version in both `pyproject.toml` files
+- Updates `llama-stack-client` pins to `==X.Y.Z`
+- Opens a PR to the release branch
+
+### Post-release (`.github/workflows/post-release.yml`)
+
+Triggered automatically after the `pypi.yml` workflow succeeds for a release event. Handles:
+- **Dev tag**: Tags `main` with `vX.Y.(Z+1)-dev` so setuptools-scm can infer versions
+- **Fallback bump**: Commits `fallback_version` bump to the next `.dev0` directly to `main`
+- **npm lockfile**: Opens a PR to the release branch updating the UI lockfile
+
+### Nightly version computation
+
+The nightly build (in `pypi.yml`) derives its base version from `git describe --tags --match 'v*'`, using the dev tag pushed by the post-release workflow. `fallback_version` in `pyproject.toml` serves as a safety net for builds without git history (e.g., source tarballs).
+
+## Future Improvements
+
+### 1. Remove the client pin problem
+
+The `llama-stack-client==X.Y.Z` pin in `pyproject.toml` can't be satisfied until the client is published, but the client is published in the same workflow run. Options:
+- Change the pin to `>=X.Y.Z` or `~=X.Y` so it doesn't require an exact match that doesn't exist yet
+- Remove the pin from the release branch entirely and let the workflow handle compatibility
+- Publish client packages first in a separate step, then update pins, then publish llama-stack
+
+### 2. Let setuptools-scm infer version from tags directly
+
+Right now the workflow computes the version separately and passes it via `SETUPTOOLS_SCM_PRETEND_VERSION`. With dev tags now on `main`, setuptools-scm can potentially infer versions natively, which would:
+- Eliminate the `compute-version` step entirely
+- Eliminate `fallback_version` management (no more bumping it post-release)
+- Make `uv build` work correctly locally without any env vars
+- Let setuptools-scm generate dev versions automatically (e.g., `0.5.0.dev3+gabcdef` based on commits since last tag)
+
+### 3. Client repos should use dynamic versioning
+
+The `llama-stack-client-python` and `llama-stack-client-typescript` repos use static versions. The workflow patches them with `sed` at build time, which is fragile. If those repos adopted setuptools-scm (Python) or a similar scheme, the workflow could just set an env var instead of rewriting files.

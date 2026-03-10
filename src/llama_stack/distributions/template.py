@@ -36,7 +36,7 @@ from llama_stack.core.storage.kvstore.config import SqliteKVStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
 from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.providers.utils.inference.model_registry import ProviderModelEntry
-from llama_stack_api import ConnectorInput, DatasetPurpose, ModelType
+from llama_stack_api import ConnectorInput, ConnectorType, DatasetPurpose, ModelType
 
 
 def filter_empty_values(obj: Any) -> Any:
@@ -184,6 +184,7 @@ class RunConfigSettings(BaseModel):
     default_connectors: list[ConnectorInput] | None = None
     vector_stores_config: VectorStoresConfig | None = None
     safety_config: SafetyConfig | None = None
+    auth_config: dict[str, Any] | None = None
     storage_backends: dict[str, Any] | None = None
     storage_stores: dict[str, Any] | None = None
 
@@ -289,6 +290,9 @@ class RunConfigSettings(BaseModel):
             },
         }
 
+        if self.auth_config:
+            config["server"]["auth"] = self.auth_config
+
         if self.vector_stores_config:
             config["vector_stores"] = self.vector_stores_config.model_dump(exclude_none=True)
 
@@ -386,9 +390,11 @@ class DistributionTemplate(BaseModel):
         yaml.add_representer(ModelType, enum_representer)
         yaml.add_representer(DatasetPurpose, enum_representer)
         yaml.add_representer(StorageBackendType, enum_representer)
+        yaml.add_representer(ConnectorType, enum_representer)
         yaml.SafeDumper.add_representer(ModelType, enum_representer)
         yaml.SafeDumper.add_representer(DatasetPurpose, enum_representer)
         yaml.SafeDumper.add_representer(StorageBackendType, enum_representer)
+        yaml.SafeDumper.add_representer(ConnectorType, enum_representer)
 
         for output_dir in [yaml_output_dir, doc_output_dir]:
             output_dir.mkdir(parents=True, exist_ok=True)

@@ -215,10 +215,10 @@ def test_response_non_streaming_mcp_tool(responses_client, text_model_id, case, 
         call = response.output[1]
         assert call.type == "mcp_call"
         assert call.name == "get_boiling_point"
-        assert json.loads(call.arguments) == {
-            "liquid_name": "myawesomeliquid",
-            "celsius": True,
-        }
+        args = json.loads(call.arguments)
+        assert args["liquid_name"] == "myawesomeliquid"
+        # celsius has a default value of True, so it may be omitted or explicitly set
+        assert args.get("celsius", True) is True
         assert call.error is None
         assert "-100" in call.output
 
@@ -285,10 +285,10 @@ def test_response_sequential_mcp_tool(responses_client, text_model_id, case):
         call = response.output[1]
         assert call.type == "mcp_call"
         assert call.name == "get_boiling_point"
-        assert json.loads(call.arguments) == {
-            "liquid_name": "myawesomeliquid",
-            "celsius": True,
-        }
+        args = json.loads(call.arguments)
+        assert args["liquid_name"] == "myawesomeliquid"
+        # celsius has a default value of True, so it may be omitted or explicitly set
+        assert args.get("celsius", True) is True
         assert call.error is None
         assert "-100" in call.output
 
@@ -303,6 +303,59 @@ def test_response_sequential_mcp_tool(responses_client, text_model_id, case):
 
         assert len(response2.output) >= 1
         message = response2.output[-1]
+        text_content = message.content[0].text
+        assert "boiling point" in text_content.lower()
+
+
+# Port must match the connector URL configured in ci-tests/config.yaml
+CONNECTOR_MCP_PORT = 5199
+
+
+def test_response_connector_resolution_mcp_tool(responses_client, text_model_id):
+    """Test that connector_id is resolved to the server_url from the registered connector
+    and the MCP tool call goes through correctly.
+
+    The 'test-mcp-connector' connector is pre-registered in the ci-tests config with
+    url http://localhost:5199/sse. This test starts an MCP server on that port and
+    references the connector by connector_id instead of server_url.
+    """
+    with make_mcp_server(port=CONNECTOR_MCP_PORT) as _mcp_server_info:
+        tools = [
+            {
+                "type": "mcp",
+                "server_label": "localmcp",
+                "connector_id": "test-mcp-connector",
+            }
+        ]
+
+        response = responses_client.responses.create(
+            model=text_model_id,
+            input="What is the boiling point of myawesomeliquid in Celsius?",
+            tools=tools,
+            stream=False,
+        )
+
+        assert len(response.output) >= 3
+
+        list_tools = response.output[0]
+        assert list_tools.type == "mcp_list_tools"
+        assert list_tools.server_label == "localmcp"
+        assert len(list_tools.tools) == 2
+        assert {t.name for t in list_tools.tools} == {
+            "get_boiling_point",
+            "greet_everyone",
+        }
+
+        call = response.output[1]
+        assert call.type == "mcp_call"
+        assert call.name == "get_boiling_point"
+        args = json.loads(call.arguments)
+        assert args["liquid_name"] == "myawesomeliquid"
+        assert args.get("celsius", True) is True
+        assert call.error is None
+        assert "-100" in call.output
+
+        message = response.output[-1]
         text_content = message.content[0].text
         assert "boiling point" in text_content.lower()
 
@@ -363,10 +416,10 @@ def test_response_mcp_tool_approval(responses_client, text_model_id, case, appro
             call = response.output[1]
             assert call.type == "mcp_call"
             assert call.name == "get_boiling_point"
-            assert json.loads(call.arguments) == {
-                "liquid_name": "myawesomeliquid",
-                "celsius": True,
-            }
+            args = json.loads(call.arguments)
+            assert args["liquid_name"] == "myawesomeliquid"
+            # celsius has a default value of True, so it may be omitted or explicitly set
+            assert args.get("celsius", True) is True
             assert call.error is None
             assert "-100" in call.output
 
@@ -480,6 +533,224 @@ def test_response_function_call_ordering_2(responses_client, text_model_id):
     )
     assert len(response.output) == 1
     assert "Los Angeles" in response.output_text
+
+
+def test_function_call_output_list_text(responses_client, text_model_id):
+    """Test that function_call_output.output accepts a list of input_text content blocks."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get current temperature for a given location.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "location": {
+                        "description": "City and country e.g. Bogotá, Colombia",
+                        "type": "string",
+                    }
+                },
+                "required": ["location"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="What is the weather in Paris?",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_text", "text": "It is sunny and 22 degrees Celsius in Paris."}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_text_multi_block(responses_client, text_model_id):
+    """Test that function_call_output.output accepts multiple input_text blocks in a list."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get current temperature for a given location.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "location": {
+                        "description": "City and country e.g. Bogotá, Colombia",
+                        "type": "string",
+                    }
+                },
+                "required": ["location"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="What is the weather in London?",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [
+                {"type": "input_text", "text": "Current conditions: overcast skies."},
+                {"type": "input_text", "text": "Temperature: 15 degrees Celsius."},
+            ],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_image(responses_client, vision_model_id):
+    """Test that function_call_output.output accepts a list containing an input_image block."""
+    if vision_model_id is None:
+        pytest.skip("No vision model configured")
+    if "llama3.2-vision:11b" in vision_model_id:
+        pytest.skip("registry.ollama.ai/library/llama3.2-vision:11b does not support tools")
+
+    tools = [
+        {
+            "type": "function",
+            "name": "capture_screenshot",
+            "description": "Capture a screenshot of the current state of the application.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "url": {
+                        "description": "The URL of the page to screenshot",
+                        "type": "string",
+                    }
+                },
+                "required": ["url"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=vision_model_id,
+        input="Take a screenshot of example.com and describe what you see.",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    # 50x50 RGB PNG — small but large enough for OpenAI's minimum image requirements
+    tiny_png_b64 = (
+        "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAApklEQVR4nO2YsQ2AMBADnV8qC/FTZSEyVSiCCaKi"
+        "Ahe+DqU5vZBluezbhhu1tftnz/zlNQSdemYIOuG6lpQTppaaE4AyxlBzwuOXF3GqrYWgE65rSTlhaqk5AShO+YVT"
+        "njjlSXfKn0ilVwg6wSkPd3niLk/c5Rfu8sQpT9zlSfViE99fAi9evdikF5uJuzzxYrPwLk+8yxPv8qR7l4/vL4EX"
+        "r6K7/AGZuvY6STxy/gAAAABJRU5ErkJggg=="
+    )
+    image_data_url = f"data:image/png;base64,{tiny_png_b64}"
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_image", "image_url": image_data_url}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=vision_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_file(responses_client, text_model_id, tmp_path):
+    """Test that function_call_output.output accepts a list containing an input_file block."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_report",
+            "description": "Retrieve the latest quarterly report for a given company.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "company": {
+                        "description": "Company name",
+                        "type": "string",
+                    }
+                },
+                "required": ["company"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="Get the latest quarterly report for Acme Corp and summarize it.",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    report_text = "Q3 2024 Report: Revenue was $50M, up 12% YoY. Net income was $8M."
+    report_path = tmp_path / "acme_q3_2024.txt"
+    report_path.write_text(report_text)
+    file_response = upload_file(responses_client, "acme_q3_2024.txt", report_path)
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_file", "file_id": file_response.id}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
 
 
 @pytest.mark.parametrize("case", multi_turn_tool_execution_test_cases)
@@ -679,8 +950,9 @@ def test_max_tool_calls_invalid(responses_client, text_model_id):
         )
 
     error_message = str(excinfo.value)
-    assert f"Invalid max_tool_calls={invalid_max_tool_calls}; should be >= 1" in error_message, (
-        f"Expected error message about invalid max_tool_calls, got: {error_message}"
+    # Pydantic validation error (custom validation was removed in PR #4780)
+    assert "Input should be greater than or equal to 1" in error_message, (
+        f"Expected Pydantic validation error about max_tool_calls >= 1, got: {error_message}"
     )
 
 
@@ -752,3 +1024,129 @@ def test_max_tool_calls_with_mcp_tools(responses_client, text_model_id):
 
         # Verify we have a valid max_tool_calls field
         assert response_3.max_tool_calls == max_tool_calls[1]
+
+
+def test_parallel_tool_calls_with_function_tools(responses_client, text_model_id):
+    """Test handling of parallel_tool_calls with function tools in responses."""
+
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get weather information for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city name (e.g., 'New York', 'London')",
+                    },
+                },
+            },
+        },
+        {
+            "type": "function",
+            "name": "get_time",
+            "description": "Get current time for a specified location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city name (e.g., 'New York', 'London')",
+                    },
+                },
+            },
+        },
+    ]
+
+    # First create a response that triggers function tools with parallel_tool_calls enabled
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="Can you tell me the weather in Paris and the current time?",
+        tools=tools,
+        stream=False,
+        parallel_tool_calls=True,
+    )
+
+    # Verify we got two function calls
+    assert len(response.output) == 2
+    assert response.output[0].type == "function_call"
+    assert response.output[0].name == "get_weather"
+    assert response.output[0].status == "completed"
+    assert response.output[1].type == "function_call"
+    assert response.output[1].name == "get_time"
+    assert response.output[1].status == "completed"
+
+    # Verify we have a valid parallel_tool_calls field
+    assert response.parallel_tool_calls
+
+    # Next create a response that triggers function tools with parallel_tool_calls disabled
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input="Can you tell me the weather in Paris and the current time?",
+        tools=tools,
+        stream=False,
+        parallel_tool_calls=False,
+    )
+
+    # Verify we got one function call i.e. get_weather
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "function_call"
+    assert response2.output[0].name == "get_weather"
+    assert response2.output[0].status == "completed"
+
+    # Verify we have a valid parallel_tool_calls field
+    assert not response2.parallel_tool_calls
+
+
+def test_parallel_tool_calls_with_mcp_tools(responses_client, text_model_id):
+    """Test handling of parallel_tool_calls with mcp tools in responses."""
+
+    with make_mcp_server(tools=dependency_tools()) as mcp_server_info:
+        input = "Get the experiment ID for 'boiling_point' and get the user ID for 'charlie'"
+        tools = [
+            {"type": "mcp", "server_label": "localmcp", "server_url": mcp_server_info["server_url"]},
+        ]
+
+        # First create a response that triggers mcp tools with parallel_tool_calls enabled
+        response = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            parallel_tool_calls=True,
+        )
+
+        # Verify we got two mcp tool calls followed by a message
+        assert len(response.output) == 4
+        mcp_list_tools = [output for output in response.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 2, f"Expected two mcp calls, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Verify we have a valid parallel_tool_calls field
+        assert response.parallel_tool_calls
+
+        # Next create a response that triggers mcp tools with parallel_tool_calls disabled
+        response2 = responses_client.responses.create(
+            model=text_model_id,
+            input=input,
+            tools=tools,
+            stream=False,
+            parallel_tool_calls=False,
+        )
+
+        # Verify we got two mcp tool calls followed by a message
+        assert len(response2.output) == 4
+        mcp_list_tools = [output for output in response2.output if output.type == "mcp_list_tools"]
+        mcp_calls = [output for output in response2.output if output.type == "mcp_call"]
+        message_outputs = [output for output in response2.output if output.type == "message"]
+        assert len(mcp_list_tools) == 1
+        assert len(mcp_calls) == 2, f"Expected two mcp calls, got {len(mcp_calls)}"
+        assert len(message_outputs) == 1, f"Expected one message output, got {len(message_outputs)}"
+
+        # Verify we have a valid parallel_tool_calls field
+        assert not response2.parallel_tool_calls

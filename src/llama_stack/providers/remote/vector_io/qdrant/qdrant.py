@@ -16,18 +16,22 @@ from qdrant_client.models import PointStruct
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.qdrant import QdrantVectorIOConfig as InlineQdrantVectorIOConfig
+from llama_stack.providers.utils.inference.prompt_adapter import interleaved_content_as_str
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
-from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
+from llama_stack.providers.utils.memory.vector_store import EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io.vector_utils import load_embedded_chunk_with_backward_compat
 from llama_stack_api import (
+    ChunkForDeletion,
+    DeleteChunksRequest,
     EmbeddedChunk,
     Files,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
+    OpenAIAttachFileRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
     VectorStore,
-    VectorStoreChunkingStrategy,
     VectorStoreFileObject,
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
@@ -80,11 +84,16 @@ class QdrantIndex(EmbeddingIndex):
         points = []
         for chunk in chunks:
             chunk_id = chunk.chunk_id
+            content_text = interleaved_content_as_str(chunk.content)
             points.append(
                 PointStruct(
                     id=convert_id(chunk_id),
-                    vector=chunk.embedding,  # Already a list[float]
-                    payload={"chunk_content": chunk.model_dump()} | {CHUNK_ID_KEY: chunk_id},
+                    vector=chunk.embedding,
+                    payload={
+                        "chunk_content": chunk.model_dump(),
+                        "content_text": content_text,
+                        CHUNK_ID_KEY: chunk_id,
+                    },
                 )
             )
 
@@ -144,32 +153,32 @@ class QdrantIndex(EmbeddingIndex):
             QueryChunksResponse with chunks and scores matching the keyword query
         """
         try:
-            results = (
-                await self.client.query_points(
-                    collection_name=self.collection_name,
-                    query_filter=models.Filter(
-                        must=[
-                            models.FieldCondition(
-                                key="chunk_content.content", match=models.MatchText(text=query_string)
-                            )
-                        ]
-                    ),
-                    limit=k,
-                    with_payload=True,
-                    with_vectors=False,
-                    score_threshold=score_threshold,
-                )
-            ).points
+            # Use scroll for keyword-only search since query_points requires a query vector
+            # Scroll allows filtering without a query vector
+            query_words = query_string.lower().split()
+            if not query_words:
+                return QueryChunksResponse(chunks=[], scores=[])
+            scroll_result = await self.client.scroll(
+                collection_name=self.collection_name,
+                scroll_filter=models.Filter(
+                    should=[
+                        models.FieldCondition(key="content_text", match=models.MatchText(text=word))
+                        for word in query_words
+                    ]
+                ),
+                limit=k,
+                with_payload=True,
+                with_vectors=False,
+            )
+            results = scroll_result[0]
         except Exception as e:
             log.error(f"Error querying keyword search in Qdrant collection {self.collection_name}: {e}")
             raise
 
         chunks, scores = [], []
         for point in results:
-            if not isinstance(point, models.ScoredPoint):
-                raise RuntimeError(f"Expected ScoredPoint from Qdrant query, got {type(point).__name__}")
             if point.payload is None:
-                raise RuntimeError("Qdrant query returned point with no payload")
+                raise RuntimeError("Qdrant scroll returned point with no payload")
 
             try:
                 chunk = load_embedded_chunk_with_backward_compat(point.payload["chunk_content"])
@@ -182,8 +191,13 @@ class QdrantIndex(EmbeddingIndex):
                 )
                 continue
 
+            # For keyword search, use a fixed score of 1.0 since we're not doing vector similarity
+            score = 1.0
+            if score < score_threshold:
+                continue
+
             chunks.append(chunk)
-            scores.append(point.score)
+            scores.append(score)
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
@@ -214,22 +228,35 @@ class QdrantIndex(EmbeddingIndex):
             QueryChunksResponse with filtered vector search results
         """
         try:
-            results = (
-                await self.client.query_points(
-                    collection_name=self.collection_name,
-                    query=embedding.tolist(),
-                    query_filter=models.Filter(
-                        must=[
-                            models.FieldCondition(
-                                key="chunk_content.content", match=models.MatchText(text=query_string)
-                            )
-                        ]
-                    ),
-                    limit=k,
-                    with_payload=True,
-                    score_threshold=score_threshold,
-                )
-            ).points
+            query_words = query_string.lower().split()
+            if not query_words:
+                # If no words, just do vector search without keyword filter
+                results = (
+                    await self.client.query_points(
+                        collection_name=self.collection_name,
+                        query=embedding.tolist(),
+                        limit=k,
+                        with_payload=True,
+                        score_threshold=score_threshold,
+                    )
+                ).points
+            else:
+                # Use should to match any of the query words
+                results = (
+                    await self.client.query_points(
+                        collection_name=self.collection_name,
+                        query=embedding.tolist(),
+                        query_filter=models.Filter(
+                            should=[
+                                models.FieldCondition(key="content_text", match=models.MatchText(text=word))
+                                for word in query_words
+                            ]
+                        ),
+                        limit=k,
+                        with_payload=True,
+                        score_threshold=score_threshold,
+                    )
+                ).points
         except Exception as e:
             log.error(f"Error querying hybrid search in Qdrant collection {self.collection_name}: {e}")
             raise
@@ -342,41 +369,33 @@ class QdrantVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtoc
         self.cache[vector_store_id] = index
         return index
 
-    async def insert_chunks(
-        self, vector_store_id: str, chunks: list[EmbeddedChunk], ttl_seconds: int | None = None
-    ) -> None:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def insert_chunks(self, request: InsertChunksRequest) -> None:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        await index.insert_chunks(chunks)
+        await index.insert_chunks(request)
 
-    async def query_chunks(
-        self, vector_store_id: str, query: InterleavedContent, params: dict[str, Any] | None = None
-    ) -> QueryChunksResponse:
-        index = await self._get_and_cache_vector_store_index(vector_store_id)
+    async def query_chunks(self, request: QueryChunksRequest) -> QueryChunksResponse:
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise VectorStoreNotFoundError(vector_store_id)
+            raise VectorStoreNotFoundError(request.vector_store_id)
 
-        return await index.query_chunks(query, params)
+        return await index.query_chunks(request)
 
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
-        file_id: str,
-        attributes: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+        request: OpenAIAttachFileRequest,
     ) -> VectorStoreFileObject:
         # Qdrant doesn't allow multiple clients to access the same storage path simultaneously.
         async with self._qdrant_lock:
-            return await super().openai_attach_file_to_vector_store(
-                vector_store_id, file_id, attributes, chunking_strategy
-            )
+            return await super().openai_attach_file_to_vector_store(vector_store_id, request)
 
-    async def delete_chunks(self, store_id: str, chunks_for_deletion: list[ChunkForDeletion]) -> None:
+    async def delete_chunks(self, request: DeleteChunksRequest) -> None:
         """Delete chunks from a Qdrant vector store."""
-        index = await self._get_and_cache_vector_store_index(store_id)
+        index = await self._get_and_cache_vector_store_index(request.vector_store_id)
         if not index:
-            raise ValueError(f"Vector DB {store_id} not found")
+            raise ValueError(f"Vector DB {request.vector_store_id} not found")
 
-        await index.index.delete_chunks(chunks_for_deletion)
+        await index.index.delete_chunks(request.chunks)

@@ -13,7 +13,16 @@ import pytest
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
 from llama_stack.providers.utils.responses.responses_store import ResponsesStore
-from llama_stack_api import OpenAIMessageParam, OpenAIResponseInput, OpenAIResponseObject, OpenAIUserMessageParam, Order
+from llama_stack_api import (
+    InvalidParameterError,
+    OpenAIMessageParam,
+    OpenAIResponseInput,
+    OpenAIResponseObject,
+    OpenAIUserMessageParam,
+    Order,
+    ResponseInputItemNotFoundError,
+    ResponseNotFoundError,
+)
 
 
 def build_store(db_path: str, policy: list | None = None) -> ResponsesStore:
@@ -193,7 +202,7 @@ async def test_responses_store_pagination_invalid_after():
         await store.initialize()
 
         # Try to paginate with non-existent ID
-        with pytest.raises(ValueError, match="Record with id.*'non-existent' not found in table 'openai_responses'"):
+        with pytest.raises(ValueError, match="Record with id.*'non-existent' not found in table 'responses'"):
             await store.list_responses(after="non-existent", limit=2)
 
 
@@ -253,7 +262,7 @@ async def test_responses_store_get_response_object():
         assert retrieved.input[0].content == "Test input content"
 
         # Test error for non-existent response
-        with pytest.raises(ValueError, match="Response with id non-existent not found"):
+        with pytest.raises(ResponseNotFoundError, match="Response 'non-existent' not found"):
             await store.get_response_object("non-existent")
 
 
@@ -326,7 +335,7 @@ async def test_responses_store_input_items_pagination():
         assert result_asc2.data[1].content == "Third input"
 
         # Test error for non-existent after ID
-        with pytest.raises(ValueError, match="Input item with id 'non-existent' not found for response 'test-resp'"):
+        with pytest.raises(ResponseInputItemNotFoundError, match="Input item 'non-existent' not found"):
             await store.list_response_input_items("test-resp", after="non-existent")
 
         # Test error for unsupported features
@@ -334,7 +343,7 @@ async def test_responses_store_input_items_pagination():
             await store.list_response_input_items("test-resp", include=["some-field"])
 
         # Test error for mutually exclusive parameters
-        with pytest.raises(ValueError, match="Cannot specify both 'before' and 'after' parameters"):
+        with pytest.raises(InvalidParameterError, match="Cannot specify both 'before' and 'after' parameters"):
             await store.list_response_input_items("test-resp", before="some-id", after="other-id")
 
 
@@ -393,7 +402,41 @@ async def test_responses_store_input_items_before_pagination():
         assert result4.data[1].content == "Second input"
 
         # Test error for non-existent before ID
-        with pytest.raises(
-            ValueError, match="Input item with id 'non-existent' not found for response 'test-resp-before'"
-        ):
+        with pytest.raises(ResponseInputItemNotFoundError, match="Input item 'non-existent' not found"):
             await store.list_response_input_items("test-resp-before", before="non-existent")
+
+
+async def test_responses_store_safety_identifier():
+    """Test that safety_identifier field is correctly stored and retrieved."""
+    with TemporaryDirectory() as tmp_dir:
+        db_path = tmp_dir + "/test.db"
+        store = build_store(db_path)
+        await store.initialize()
+
+        # Create test response with safety_identifier
+        safety_id = "safety-test-12345"
+        response = OpenAIResponseObject(
+            id="test-safety-resp",
+            created_at=int(time.time()),
+            model="test-model",
+            object="response",
+            output=[],
+            status="completed",
+            store=True,
+            safety_identifier=safety_id,
+        )
+        input_list = [create_test_response_input("Test input", "input-1")]
+        messages = create_test_messages("Test input")
+
+        # Store the response
+        await store.store_response_object(response, input_list, messages)
+        await store.flush()
+
+        # Retrieve and verify safety_identifier is preserved
+        retrieved = await store.get_response_object("test-safety-resp")
+        assert retrieved.safety_identifier == safety_id
+
+        # Test list_responses also preserves safety_identifier
+        list_result = await store.list_responses(limit=10)
+        assert len(list_result.data) == 1
+        assert list_result.data[0].safety_identifier == safety_id

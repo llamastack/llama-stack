@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -18,10 +18,12 @@ from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
     get_message_type_by_role,
     is_function_tool_call,
 )
+from llama_stack_api import RetrieveFileContentRequest, RetrieveFileRequest
 from llama_stack_api.inference import (
     OpenAIAssistantMessageParam,
     OpenAIChatCompletionContentPartImageParam,
     OpenAIChatCompletionContentPartTextParam,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
     OpenAIChoice,
@@ -36,6 +38,7 @@ from llama_stack_api.inference import (
 from llama_stack_api.openai_responses import (
     OpenAIResponseAnnotationFileCitation,
     OpenAIResponseInputFunctionToolCallOutput,
+    OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
     OpenAIResponseInputMessageContentText,
     OpenAIResponseInputToolFunction,
@@ -57,7 +60,7 @@ def mock_files_api():
 class TestConvertChatChoiceToResponseMessage:
     async def test_convert_string_content(self):
         choice = OpenAIChoice(
-            message=OpenAIAssistantMessageParam(content="Test message"),
+            message=OpenAIChatCompletionResponseMessage(content="Test message"),
             finish_reason="stop",
             index=0,
         )
@@ -70,19 +73,22 @@ class TestConvertChatChoiceToResponseMessage:
         assert isinstance(result.content[0], OpenAIResponseOutputMessageContentOutputText)
         assert result.content[0].text == "Test message"
 
-    async def test_convert_text_param_content(self):
+    async def test_convert_none_content(self):
         choice = OpenAIChoice(
-            message=OpenAIAssistantMessageParam(
-                content=[OpenAIChatCompletionContentPartTextParam(text="Test text param")]
+            message=OpenAIChatCompletionResponseMessage(
+                content=None,
             ),
             finish_reason="stop",
             index=0,
         )
 
-        with pytest.raises(ValueError) as exc_info:
-            await convert_chat_choice_to_response_message(choice)
+        result = await convert_chat_choice_to_response_message(choice)
 
-        assert "does not yet support output content type" in str(exc_info.value)
+        assert result.role == "assistant"
+        assert result.status == "completed"
+        assert len(result.content) == 1
+        assert isinstance(result.content[0], OpenAIResponseOutputMessageContentOutputText)
+        assert result.content[0].text == ""
 
 
 class TestConvertResponseContentToChatContent:
@@ -113,6 +119,30 @@ class TestConvertResponseContentToChatContent:
         assert isinstance(result[0], OpenAIChatCompletionContentPartImageParam)
         assert result[0].image_url.url == "https://example.com/image.jpg"
         assert result[0].image_url.detail == "high"
+
+    async def test_convert_image_content_with_file_id_calls_retrieve_with_request_objects(self, mock_files_api):
+        mock_files_api.openai_retrieve_file.return_value = Mock(filename="photo.png")
+        mock_files_api.openai_retrieve_file_content.return_value = Mock(body=b"\x89PNG\r\n")
+
+        content = [OpenAIResponseInputMessageContentImage(file_id="file-abc123")]
+        await convert_response_content_to_chat_content(content, mock_files_api)
+
+        mock_files_api.openai_retrieve_file.assert_called_once_with(RetrieveFileRequest(file_id="file-abc123"))
+        mock_files_api.openai_retrieve_file_content.assert_called_once_with(
+            RetrieveFileContentRequest(file_id="file-abc123")
+        )
+
+    async def test_convert_file_content_with_file_id_calls_retrieve_with_request_objects(self, mock_files_api):
+        mock_files_api.openai_retrieve_file.return_value = Mock(filename="report.txt")
+        mock_files_api.openai_retrieve_file_content.return_value = Mock(body=b"report content")
+
+        content = [OpenAIResponseInputMessageContentFile(file_id="file-def456")]
+        await convert_response_content_to_chat_content(content, mock_files_api)
+
+        mock_files_api.openai_retrieve_file.assert_called_once_with(RetrieveFileRequest(file_id="file-def456"))
+        mock_files_api.openai_retrieve_file_content.assert_called_once_with(
+            RetrieveFileContentRequest(file_id="file-def456")
+        )
 
 
 class TestConvertResponseInputToChatMessages:
@@ -146,6 +176,105 @@ class TestConvertResponseInputToChatMessages:
         assert isinstance(result[1], OpenAIToolMessageParam)
         assert result[1].content == "Tool output"
         assert result[1].tool_call_id == "call_123"
+
+    async def test_convert_function_tool_call_output_with_list_content(self):
+        # The OpenAI Responses API spec uses "input_text" as the type discriminator
+        # for text content blocks in function_call_output.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_123",
+                name="search_parks",
+                arguments='{"state_code": "RI"}',
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[{"type": "input_text", "text": '{"parks": ["Park A", "Park B"]}'}],
+                call_id="call_123",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 2
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert result[1].content == [OpenAIChatCompletionContentPartTextParam(text='{"parks": ["Park A", "Park B"]}')]
+        assert result[1].tool_call_id == "call_123"
+
+    async def test_convert_function_tool_call_output_with_multi_block_list_content(self):
+        # Multiple text blocks should each become a separate content part.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_456",
+                name="search",
+                arguments="{}",
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[{"type": "input_text", "text": "first"}, {"type": "input_text", "text": "second"}],
+                call_id="call_456",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 2
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert result[1].content == [
+            OpenAIChatCompletionContentPartTextParam(text="first"),
+            OpenAIChatCompletionContentPartTextParam(text="second"),
+        ]
+
+    async def test_convert_function_tool_call_output_with_image_content(self):
+        # Image parts in function_call_output can't go in OpenAIToolMessageParam (text-only).
+        # They should be split: tool message gets placeholder text, image goes in a user message.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_789",
+                name="capture_screenshot",
+                arguments='{"url": "https://example.com"}',
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[{"type": "input_image", "image_url": "data:image/png;base64,iVBORw0KGgo="}],
+                call_id="call_789",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        # Should produce 3 messages: assistant (tool_call), tool (text placeholder), user (image)
+        assert len(result) == 3
+        assert isinstance(result[0], OpenAIAssistantMessageParam)
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert isinstance(result[2], OpenAIUserMessageParam)
+        # Tool message should have placeholder text since there were no text parts
+        assert result[1].content == [OpenAIChatCompletionContentPartTextParam(text="[image]")]
+        # User message should carry the image
+        assert isinstance(result[2].content, list)
+        assert len(result[2].content) == 1
+        assert isinstance(result[2].content[0], OpenAIChatCompletionContentPartImageParam)
+
+    async def test_convert_function_tool_call_output_with_mixed_text_and_image(self):
+        # When output has both text and image parts, text stays in tool message, image in user message.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_mix",
+                name="analyze",
+                arguments="{}",
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[
+                    {"type": "input_text", "text": "Screenshot captured successfully"},
+                    {"type": "input_image", "image_url": "data:image/png;base64,iVBORw0KGgo="},
+                ],
+                call_id="call_mix",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 3
+        assert isinstance(result[0], OpenAIAssistantMessageParam)
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert result[1].content == [OpenAIChatCompletionContentPartTextParam(text="Screenshot captured successfully")]
+        assert isinstance(result[2], OpenAIUserMessageParam)
 
     async def test_convert_function_tool_call(self):
         input_items = [

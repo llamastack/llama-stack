@@ -5,6 +5,8 @@
 # the root directory of this source tree.
 
 
+import llama_stack_client
+import openai
 import pytest
 
 from tests.common.mcp import make_mcp_server
@@ -66,7 +68,9 @@ def test_mcp_authorization_error_when_header_provided(responses_client, text_mod
         )
 
         # Create response - should raise BadRequestError for security reasons
-        with pytest.raises((ValueError, Exception), match="Authorization header cannot be passed via 'headers'"):
+        with pytest.raises(
+            (llama_stack_client.BadRequestError, openai.BadRequestError), match="'authorization' parameter"
+        ):
             responses_client.responses.create(
                 model=text_model_id,
                 input="What is the boiling point of myawesomeliquid?",

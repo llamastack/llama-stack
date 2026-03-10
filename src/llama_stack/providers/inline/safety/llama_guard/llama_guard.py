@@ -10,8 +10,6 @@ from string import Template
 
 from llama_stack.core.datatypes import Api
 from llama_stack.log import get_logger
-from llama_stack.models.llama.datatypes import Role
-from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
@@ -93,13 +91,13 @@ DEFAULT_LG_V3_SAFETY_CATEGORIES = [
 
 # accept both CoreModelId and huggingface repo id
 LLAMA_GUARD_MODEL_IDS = {
-    CoreModelId.llama_guard_3_8b.value: "meta-llama/Llama-Guard-3-8B",
+    "Llama-Guard-3-8B": "meta-llama/Llama-Guard-3-8B",
     "meta-llama/Llama-Guard-3-8B": "meta-llama/Llama-Guard-3-8B",
-    CoreModelId.llama_guard_3_1b.value: "meta-llama/Llama-Guard-3-1B",
+    "Llama-Guard-3-1B": "meta-llama/Llama-Guard-3-1B",
     "meta-llama/Llama-Guard-3-1B": "meta-llama/Llama-Guard-3-1B",
-    CoreModelId.llama_guard_3_11b_vision.value: "meta-llama/Llama-Guard-3-11B-Vision",
+    "Llama-Guard-3-11B-Vision": "meta-llama/Llama-Guard-3-11B-Vision",
     "meta-llama/Llama-Guard-3-11B-Vision": "meta-llama/Llama-Guard-3-11B-Vision",
-    CoreModelId.llama_guard_4_12b.value: "meta-llama/Llama-Guard-4-12B",
+    "Llama-Guard-4-12B": "meta-llama/Llama-Guard-4-12B",
     "meta-llama/Llama-Guard-4-12B": "meta-llama/Llama-Guard-4-12B",
 }
 
@@ -252,13 +250,16 @@ class LlamaGuardShield:
         self.safety_categories = safety_categories
 
     def check_unsafe_response(self, response: str) -> str | None:
-        match = re.match(r"^unsafe\n(.*)$", response)
-        if match:
-            # extracts the unsafe code
-            extracted = match.group(1)
-            return extracted
+        if not response.startswith("unsafe"):
+            return None
 
-        return None
+        found_codes = re.findall(r"\bS\d{1,2}\b", response)
+        valid_codes = set(SAFETY_CATEGORIES_TO_CODE_MAP.values())
+        filtered_codes = [code for code in found_codes if code in valid_codes]
+        if not filtered_codes:
+            return None
+
+        return ",".join(filtered_codes)
 
     def get_safety_categories(self) -> list[str]:
         excluded_categories = self.excluded_categories
@@ -279,10 +280,10 @@ class LlamaGuardShield:
     def validate_messages(self, messages: list[OpenAIMessageParam]) -> list[OpenAIMessageParam]:
         if len(messages) == 0:
             raise ValueError("Messages must not be empty")
-        if messages[0].role != Role.user.value:
+        if messages[0].role != "user":
             raise ValueError("Messages must start with user")
 
-        if len(messages) >= 2 and (messages[0].role == Role.user.value and messages[1].role == Role.user.value):
+        if len(messages) >= 2 and (messages[0].role == "user" and messages[1].role == "user"):
             messages = messages[1:]
 
         return messages
@@ -290,7 +291,7 @@ class LlamaGuardShield:
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         messages = self.validate_messages(messages)
 
-        if self.model == CoreModelId.llama_guard_3_11b_vision.value:
+        if self.model == "Llama-Guard-3-11B-Vision":
             shield_input_message = self.build_vision_shield_input(messages)
         else:
             shield_input_message = self.build_text_shield_input(messages)
@@ -317,7 +318,7 @@ class LlamaGuardShield:
             if isinstance(m.content, str) or isinstance(m.content, TextContentItem):
                 conversation.append(m)
             elif isinstance(m.content, ImageContentItem):
-                if most_recent_img is None and m.role == Role.user.value:
+                if most_recent_img is None and m.role == "user":
                     most_recent_img = m.content
                     conversation.append(m)
             elif isinstance(m.content, list):
@@ -326,7 +327,7 @@ class LlamaGuardShield:
                     if isinstance(c, str) or isinstance(c, TextContentItem):
                         content.append(c)
                     elif isinstance(c, ImageContentItem):
-                        if most_recent_img is None and m.role == Role.user.value:
+                        if most_recent_img is None and m.role == "user":
                             most_recent_img = c
                             content.append(c)
                     else:

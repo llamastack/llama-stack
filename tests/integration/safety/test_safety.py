@@ -49,7 +49,6 @@ def test_unsafe_examples(client_with_models, shield_id):
         response = client_with_models.safety.run_shield(
             messages=[message],
             shield_id=shield_id,
-            params={},
         )
         assert response.violation is not None
         assert response.violation.violation_level == ViolationLevel.ERROR.value
@@ -117,7 +116,6 @@ def test_safe_examples(client_with_models, shield_id):
         response = client_with_models.safety.run_shield(
             messages=[message],
             shield_id=shield_id,
-            params={},
         )
         assert response.violation is None
 
@@ -153,7 +151,6 @@ def test_safety_with_code_scanner(client_with_models, code_scanner_shield_id, mo
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=code_scanner_shield_id,
-        params={},
     )
     assert response is not None
     assert response.violation is not None
@@ -235,7 +232,6 @@ def test_safety_with_code_interpreter_abuse(client_with_models, shield_id):
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=shield_id,
-        params={},
     )
     assert response is not None
     assert response.violation is not None

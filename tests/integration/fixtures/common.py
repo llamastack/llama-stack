@@ -27,7 +27,7 @@ from openai import OpenAI
 
 from llama_stack.core.datatypes import QualifiedModel, VectorStoresConfig
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
-from llama_stack.core.stack import run_config_from_adhoc_config_spec
+from llama_stack.core.stack import run_config_from_dynamic_config_spec
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.env import get_env_or_fail
 
@@ -44,8 +44,10 @@ def is_port_available(port: int, host: str = "localhost") -> bool:
         return False
 
 
-def start_llama_stack_server(config_name: str) -> subprocess.Popen:
+def start_llama_stack_server(config_name: str, *, log_stderr: bool | None = None) -> subprocess.Popen:
     """Start a llama stack server with the given config."""
+    if log_stderr is None:
+        log_stderr = os.environ.get("LLAMA_STACK_TEST_LOG_STDERR", "1") == "1"
 
     # remove server.log if it exists
     if os.path.exists("server.log"):
@@ -56,7 +58,7 @@ def start_llama_stack_server(config_name: str) -> subprocess.Popen:
     process = subprocess.Popen(
         shlex.split(cmd),
         stdout=devnull,  # redirect stdout to devnull to prevent deadlock
-        stderr=subprocess.PIPE,  # keep stderr to see errors
+        stderr=subprocess.PIPE if log_stderr else subprocess.DEVNULL,
         text=True,
         env={**os.environ, "LLAMA_STACK_LOG_FILE": "server.log"},
         # Create new process group so we can kill all child processes
@@ -73,7 +75,10 @@ def wait_for_server_ready(base_url: str, timeout: int = 30, process: subprocess.
     while time.time() - start_time < timeout:
         if process and process.poll() is not None:
             print(f"Server process terminated with return code: {process.returncode}")
-            print(f"Server stderr: {process.stderr.read()}")
+            if process.stderr:
+                print(f"Server stderr: {process.stderr.read()}")
+            else:
+                print("Server stderr disabled. Check server.log for details.")
             return False
 
         try:
@@ -230,6 +235,24 @@ def llama_stack_client(request):
     return client
 
 
+def parse_vector_io_provider(config_string: str) -> str:
+    # Split the string into individual key-value pairs
+    pairs = config_string.split(",")
+    for pair in pairs:
+        # Split each pair into key and value
+        key_value = pair.split("=")
+        if len(key_value) == 2 and key_value[0].strip() == "vector_io":
+            # Extract the provider after the last '::' if it exists
+            return key_value[1].strip()
+    return "inline::sentence-transformers"
+
+
+def extract_model(model: str | None, default: str) -> str:
+    if not model or "/" not in model:
+        return default
+    return model.split("/", 1)[1]
+
+
 def instantiate_llama_stack_client(session):
     config = session.config.getoption("--stack-config")
     if not config:
@@ -303,14 +326,21 @@ def instantiate_llama_stack_client(session):
         pass
 
     if "=" in config:
-        run_config = run_config_from_adhoc_config_spec(config)
+        run_config = run_config_from_dynamic_config_spec(config)
 
         # --stack-config bypasses template so need this to set default embedding model
         if "vector_io" in config and "inference" in config:
+            embedding_model_opt = session.config.getoption("embedding_model") or ""
+            # Model identifiers are in provider_id/model_id format; extract the provider.
+            provider_id = embedding_model_opt.split("/")[0] if "/" in embedding_model_opt else "sentence-transformers"
+            passed_model = extract_model(session.config.getoption("embedding_model"), "nomic-ai/nomic-embed-text-v1.5")
+            passed_emb = session.config.getoption("embedding_dimension")
+
             run_config.vector_stores = VectorStoresConfig(
                 default_embedding_model=QualifiedModel(
-                    provider_id="inline::sentence-transformers",
-                    model_id="nomic-ai/nomic-embed-text-v1.5",
+                    provider_id=provider_id,
+                    model_id=passed_model,
+                    embedding_dimensions=passed_emb,
                 )
             )
 

@@ -13,12 +13,11 @@ from collections.abc import Generator
 
 import pytest
 
-from llama_stack.models.llama.sku_types import CoreModelId
 from llama_stack_api import ViolationLevel
 
 # Llama Guard models available for text and vision shields
-LLAMA_GUARD_TEXT_MODELS = [CoreModelId.llama_guard_4_12b.value]
-LLAMA_GUARD_VISION_MODELS = [CoreModelId.llama_guard_4_12b.value]
+LLAMA_GUARD_TEXT_MODELS = ["Llama-Guard-4-12B"]
+LLAMA_GUARD_VISION_MODELS = ["Llama-Guard-4-12B"]
 
 
 def data_url_from_image(file_path):
@@ -57,9 +56,7 @@ def text_shield_id(client_with_models, safety_provider, text_model) -> Generator
     shield_id = f"test_llama_guard_{uuid.uuid4().hex[:8]}"
 
     # Register the shield with the verified model ID from text_model fixture
-    client_with_models.shields.register(
-        shield_id=shield_id, provider_id=safety_provider, provider_shield_id=text_model, params={}
-    )
+    client_with_models.shields.register(shield_id=shield_id, provider_id=safety_provider, provider_shield_id=text_model)
 
     # Return the shield ID for use in tests
     yield shield_id
@@ -95,7 +92,7 @@ def vision_shield_id(client_with_models, safety_provider, vision_model) -> Gener
     # Register the shield with the verified model ID from vision_model fixture
     try:
         client_with_models.shields.register(
-            shield_id=shield_id, provider_id=safety_provider, provider_shield_id=vision_model, params={}
+            shield_id=shield_id, provider_id=safety_provider, provider_shield_id=vision_model
         )
     except Exception as e:
         pytest.skip(reason=f"Unable to register Llama Guard Vision shield with model {vision_model}: {str(e)}")
@@ -148,7 +145,6 @@ def test_unsafe_text_examples(client_with_models, text_shield_id, example):
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=text_shield_id,
-        params={},
     )
     assert response.violation is not None
     assert response.violation.violation_level == ViolationLevel.ERROR.value
@@ -174,7 +170,6 @@ def test_safe_text_examples(client_with_models, text_shield_id, example):
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=text_shield_id,
-        params={},
     )
     assert response.violation is None
 
@@ -209,7 +204,6 @@ def test_llama_guard_for_code_interpreter_abuse(client_with_models, text_shield_
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=text_shield_id,
-        params={},
     )
     assert response is not None
     assert response.violation is not None
@@ -239,7 +233,6 @@ def test_llama_guard_with_conversation_history(client_with_models, text_shield_i
     response = client_with_models.safety.run_shield(
         messages=[message1, message2, message3],
         shield_id=text_shield_id,
-        params={},
     )
     assert response.violation is not None
     assert response.violation.violation_level == ViolationLevel.ERROR.value
@@ -291,7 +284,6 @@ def test_vision_safety_with_safe_image(client_with_models, vision_shield_id, saf
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=vision_shield_id,
-        params={},
     )
 
     # Safe image should not trigger a violation
@@ -314,7 +306,6 @@ def test_vision_safety_with_unsafe_image(client_with_models, vision_shield_id, u
     response = client_with_models.safety.run_shield(
         messages=[message],
         shield_id=vision_shield_id,
-        params={},
     )
 
     # Unsafe image should trigger a violation

@@ -16,8 +16,11 @@ STACK_CONFIG=""
 TEST_SUITE="base"
 TEST_SETUP=""
 TEST_SUBDIRS=""
+TEST_FILE=""
 TEST_PATTERN=""
 INFERENCE_MODE="replay"
+TEXT_MODEL=""
+VISION_MODEL=""
 EXTRA_PARAMS=""
 COLLECT_ONLY=false
 TYPESCRIPT_ONLY=false
@@ -31,8 +34,11 @@ Options:
     --stack-config STRING    Stack configuration to use (required)
     --suite STRING           Test suite to run (default: 'base')
     --setup STRING           Test setup (models, env) to use (e.g., 'ollama', 'ollama-vision', 'gpt', 'vllm')
+    --text-model STRING      Override text model (e.g. 'ollama/llama3.2:3b', 'openai/gpt-4o')
+    --vision-model STRING    Override vision model (e.g. 'ollama/llama3.2-vision:11b')
     --inference-mode STRING  Inference mode: replay, record-if-missing or record (default: replay)
     --subdirs STRING         Comma-separated list of test subdirectories to run (overrides suite)
+    --file PATH              Single test file to run (e.g. tests/integration/responses/test_foo.py)
     --pattern STRING         Regex pattern to pass to pytest -k
     --collect-only           Collect tests only without running them (skips server startup)
     --typescript-only        Skip Python tests and run only TypeScript client tests
@@ -58,6 +64,12 @@ Examples:
 
     # Record mode for updating test recordings
     $0 --stack-config server:ci-tests --suite base --inference-mode record
+
+    # Run a single test file
+    $0 --stack-config server:ci-tests --file tests/integration/responses/test_responses_access_control.py --setup gpt
+
+    # Override model (setup still provides env, e.g. OLLAMA_URL)
+    $0 --stack-config server:ci-tests --suite base --setup ollama --text-model ollama/llama3.2:1b
 EOF
 }
 
@@ -72,8 +84,20 @@ while [[ $# -gt 0 ]]; do
         TEST_SETUP="$2"
         shift 2
         ;;
+    --text-model)
+        TEXT_MODEL="$2"
+        shift 2
+        ;;
+    --vision-model)
+        VISION_MODEL="$2"
+        shift 2
+        ;;
     --subdirs)
         TEST_SUBDIRS="$2"
+        shift 2
+        ;;
+    --file)
+        TEST_FILE="$2"
         shift 2
         ;;
     --suite)
@@ -121,14 +145,22 @@ if [[ -z "$TEST_SETUP" && -n "$TEST_SUBDIRS" && "$COLLECT_ONLY" == false ]]; the
     exit 1
 fi
 
-if [[ -z "$TEST_SUITE" && -z "$TEST_SUBDIRS" ]]; then
-    echo "Error: --suite or --subdirs is required"
+if [[ -z "$TEST_SUITE" && -z "$TEST_SUBDIRS" && -z "$TEST_FILE" ]]; then
+    echo "Error: --suite, --subdirs, or --file is required"
+    exit 1
+fi
+
+if [[ -n "$TEST_FILE" && -z "$TEST_SETUP" ]]; then
+    echo "Error: --setup is required when --file is provided"
+    usage
     exit 1
 fi
 
 echo "=== Llama Stack Integration Test Runner ==="
 echo "Stack Config: $STACK_CONFIG"
 echo "Setup: $TEST_SETUP"
+echo "Text model: ${TEXT_MODEL:- (from setup)}"
+echo "Vision model: ${VISION_MODEL:- (from setup)}"
 echo "Inference Mode: $INFERENCE_MODE"
 echo "Test Suite: $TEST_SUITE"
 echo "Test Subdirs: $TEST_SUBDIRS"
@@ -145,6 +177,12 @@ THIS_DIR=$(dirname "$0")
 
 if [[ -n "$TEST_SETUP" ]]; then
     EXTRA_PARAMS="--setup=$TEST_SETUP"
+fi
+if [[ -n "$TEXT_MODEL" ]]; then
+    EXTRA_PARAMS="$EXTRA_PARAMS --text-model=$TEXT_MODEL"
+fi
+if [[ -n "$VISION_MODEL" ]]; then
+    EXTRA_PARAMS="$EXTRA_PARAMS --vision-model=$VISION_MODEL"
 fi
 
 if [[ "$COLLECT_ONLY" == true ]]; then
@@ -519,8 +557,15 @@ if [[ -n "$TEST_PATTERN" ]]; then
 fi
 
 echo "Test subdirs to run: $TEST_SUBDIRS"
+echo "Test file to run: ${TEST_FILE:- (none)}"
 
-if [[ -n "$TEST_SUBDIRS" ]]; then
+if [[ -n "$TEST_FILE" ]]; then
+    if [[ ! -f "$TEST_FILE" ]]; then
+        echo "Error: Test file not found: $TEST_FILE"
+        exit 1
+    fi
+    PYTEST_TARGET="$TEST_FILE"
+elif [[ -n "$TEST_SUBDIRS" ]]; then
     # Collect all test files for the specified test types
     TEST_FILES=""
     for test_subdir in $(echo "$TEST_SUBDIRS" | tr ',' '\n'); do
@@ -602,6 +647,14 @@ fi
 # Run TypeScript client tests if TS_CLIENT_PATH is set
 if [[ $exit_code -eq 0 && -n "${TS_CLIENT_PATH:-}" && "${LLAMA_STACK_TEST_STACK_CONFIG_TYPE:-}" == "server" ]]; then
     run_client_ts_tests
+fi
+
+# Optional post-command (e.g. auth tests) while server is still up; runs before EXIT trap
+if [[ $exit_code -eq 0 && -n "${INTEGRATION_TESTS_POST_CMD:-}" ]]; then
+    echo ""
+    echo "=== Running post command (server still up) ==="
+    eval "$INTEGRATION_TESTS_POST_CMD"
+    exit_code=$?
 fi
 
 echo ""

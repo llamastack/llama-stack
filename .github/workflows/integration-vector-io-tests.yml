@@ -20,6 +20,10 @@ on:
       - 'pyproject.toml'
       - 'requirements.txt'
       - '.github/workflows/integration-vector-io-tests.yml' # This workflow
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
   schedule:
     - cron: '0 0 * * *'  # (test on python 3.13) Daily at 12 AM UTC
 
@@ -38,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Install dependencies
         uses: ./.github/actions/setup-runner

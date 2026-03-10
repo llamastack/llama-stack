@@ -4,13 +4,11 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-from typing import Any, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from fastapi import UploadFile
 
-from llama_stack_api.vector_io import VectorStoreChunkingStrategy
-
-from .models import ProcessFileResponse
+from .models import ProcessFileRequest, ProcessFileResponse
 
 
 @runtime_checkable
@@ -38,27 +36,23 @@ class FileProcessors(Protocol):
 
     async def process_file(
         self,
+        request: ProcessFileRequest,
         file: UploadFile | None = None,
-        file_id: str | None = None,
-        options: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> ProcessFileResponse:
         """
         Process a file into chunks ready for vector database storage.
 
         This method supports two modes of operation via multipart form request:
         1. Direct upload: Upload and process a file directly (file parameter)
-        2. File storage: Process files already uploaded to file storage (file_id parameter)
+        2. File storage: Process files already uploaded to file storage (request.file_id parameter)
 
-        Exactly one of file or file_id must be provided.
+        Exactly one of file or request.file_id must be provided.
 
         If no chunking_strategy is provided, the entire file content is returned as a single chunk.
         If chunking_strategy is provided, the file is split according to the strategy.
 
-        :param file: The uploaded file object containing content and metadata (filename, content_type, etc.). Mutually exclusive with file_id.
-        :param file_id: ID of file already uploaded to file storage. Mutually exclusive with file.
-        :param options: Provider-specific processing options (e.g., OCR settings, output format).
-        :param chunking_strategy: Optional strategy for splitting content into chunks.
+        :param request: The request containing file_id, options, and chunking_strategy.
+        :param file: The uploaded file object containing content and metadata (filename, content_type, etc.). Mutually exclusive with request.file_id.
         :returns: ProcessFileResponse with chunks ready for vector database storage.
         """
         ...

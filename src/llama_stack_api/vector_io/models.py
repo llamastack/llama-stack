@@ -12,10 +12,18 @@ using Pydantic with Field descriptions for OpenAPI schema generation.
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from llama_stack_api.inference import InterleavedContent
+from llama_stack_api.common.content_types import InterleavedContent
 from llama_stack_api.schema_utils import json_schema_type, register_schema
+
+# OpenAI-compatible chunking defaults
+# See: https://platform.openai.com/docs/api-reference/vector-stores-files/createFile
+DEFAULT_CHUNK_SIZE_TOKENS = 800
+DEFAULT_CHUNK_OVERLAP_TOKENS = 400
+
+# Pagination limits matching OpenAI API constraints
+MAX_PAGINATION_LIMIT = 100
 
 
 @json_schema_type
@@ -325,8 +333,8 @@ class VectorStoreChunkingStrategyStaticConfig(BaseModel):
     :param max_chunk_size_tokens: Maximum number of tokens per chunk, must be between 100 and 4096
     """
 
-    chunk_overlap_tokens: int = 400
-    max_chunk_size_tokens: int = Field(800, ge=100, le=4096)
+    chunk_overlap_tokens: int = DEFAULT_CHUNK_OVERLAP_TOKENS
+    max_chunk_size_tokens: int = Field(DEFAULT_CHUNK_SIZE_TOKENS, ge=100, le=4096)
 
 
 @json_schema_type
@@ -341,8 +349,88 @@ class VectorStoreChunkingStrategyStatic(BaseModel):
     static: VectorStoreChunkingStrategyStaticConfig
 
 
+DEFAULT_CONTEXT_PROMPT = (
+    "<document>\n{{WHOLE_DOCUMENT}}\n</document>\n"
+    "Here is the chunk we want to situate within the whole document\n"
+    "<chunk>\n{{CHUNK_CONTENT}}\n</chunk>\n"
+    "Please give a short succinct description to situate this chunk of text within the overall document "
+    "for the purposes of improving search retrieval of the chunk. "
+    "Answer only with the succinct description and nothing else."
+)
+
+
+def _strip_context_prompt_default(schema: dict) -> None:
+    """Strip context_prompt default from JSON schema to prevent double-curly-brace
+    template placeholders from breaking Stainless SDK code generation."""
+    if props := schema.get("properties", {}):
+        if cp := props.get("context_prompt"):
+            cp.pop("default", None)
+
+
+@json_schema_type
+class VectorStoreChunkingStrategyContextualConfig(BaseModel):
+    model_config = ConfigDict(json_schema_extra=_strip_context_prompt_default)
+
+    model_id: str | None = Field(
+        default=None,
+        min_length=1,
+        description="LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.",
+    )
+    context_prompt: str = Field(
+        default=DEFAULT_CONTEXT_PROMPT,
+        description="Prompt template for contextual retrieval. Uses WHOLE_DOCUMENT and CHUNK_CONTENT placeholders wrapped in double curly braces.",
+    )
+    max_chunk_size_tokens: int = Field(
+        default=700,
+        ge=100,
+        le=4096,
+        description="Maximum tokens per chunk. Suggested ~700 to allow room for prepended context.",
+    )
+    chunk_overlap_tokens: int = Field(
+        default=400,
+        ge=0,
+        description="Tokens to overlap between adjacent chunks. Must be less than max_chunk_size_tokens.",
+    )
+    timeout_seconds: int | None = Field(
+        default=None,
+        ge=1,
+        description="Timeout per LLM call in seconds. Falls back to config default if not provided.",
+    )
+    max_concurrency: int | None = Field(
+        default=None,
+        ge=1,
+        description="Maximum concurrent LLM calls. Falls back to config default if not provided.",
+    )
+
+    @model_validator(mode="after")
+    def validate_config(self) -> "VectorStoreChunkingStrategyContextualConfig":
+        if self.chunk_overlap_tokens >= self.max_chunk_size_tokens:
+            raise ValueError("chunk_overlap_tokens must be less than max_chunk_size_tokens")
+
+        if "{{WHOLE_DOCUMENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{WHOLE_DOCUMENT}} placeholder")
+        if "{{CHUNK_CONTENT}}" not in self.context_prompt:
+            raise ValueError("context_prompt must contain {{CHUNK_CONTENT}} placeholder")
+        if self.context_prompt.index("{{WHOLE_DOCUMENT}}") >= self.context_prompt.index("{{CHUNK_CONTENT}}"):
+            raise ValueError(
+                "context_prompt must have {{WHOLE_DOCUMENT}} before {{CHUNK_CONTENT}} to enable prefix caching"
+            )
+
+        return self
+
+
+@json_schema_type
+class VectorStoreChunkingStrategyContextual(BaseModel):
+    """Contextual chunking strategy that uses an LLM to situate chunks within the document."""
+
+    type: Literal["contextual"] = Field(default="contextual", description="Strategy type identifier.")
+    contextual: VectorStoreChunkingStrategyContextualConfig = Field(
+        description="Configuration for contextual chunking."
+    )
+
+
 VectorStoreChunkingStrategy = Annotated[
-    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic,
+    VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual,
     Field(discriminator="type"),
 ]
 register_schema(VectorStoreChunkingStrategy, name="VectorStoreChunkingStrategy")
@@ -351,8 +439,45 @@ register_schema(VectorStoreChunkingStrategy, name="VectorStoreChunkingStrategy")
 class SearchRankingOptions(BaseModel):
     """Options for ranking and filtering search results.
 
-    :param ranker: (Optional) Name of the ranking algorithm to use
-    :param score_threshold: (Optional) Minimum relevance score threshold for results
+    This class configures how search results are ranked and filtered. You can use algorithm-based
+    rerankers (weighted, RRF) or neural rerankers. Defaults from VectorStoresConfig are
+    used when parameters are not provided.
+
+    Examples:
+        # Weighted ranker with custom alpha
+        SearchRankingOptions(ranker="weighted", alpha=0.7)
+
+        # RRF ranker with custom impact factor
+        SearchRankingOptions(ranker="rrf", impact_factor=50.0)
+
+        # Use config defaults (just specify ranker type)
+        SearchRankingOptions(ranker="weighted")  # Uses alpha from VectorStoresConfig
+
+        # Score threshold filtering
+        SearchRankingOptions(ranker="weighted", score_threshold=0.5)
+
+    :param ranker: (Optional) Name of the ranking algorithm to use. Supported values:
+        - "weighted": Weighted combination of vector and keyword scores
+        - "rrf": Reciprocal Rank Fusion algorithm
+        - "neural": Neural reranking model (requires model parameter, Part II)
+        Note: For OpenAI API compatibility, any string value is accepted, but only the above values are supported.
+    :param score_threshold: (Optional) Minimum relevance score threshold for results. Default: 0.0
+    :param alpha: (Optional) Weight factor for weighted ranker (0-1).
+        - 0.0 = keyword only
+        - 0.5 = equal weight (default)
+        - 1.0 = vector only
+        Only used when ranker="weighted" and weights is not provided.
+        Falls back to VectorStoresConfig.chunk_retrieval_params.weighted_search_alpha if not provided.
+    :param impact_factor: (Optional) Impact factor (k) for RRF algorithm.
+        Lower values emphasize higher-ranked results. Default: 60.0 (optimal from research).
+        Only used when ranker="rrf".
+        Falls back to VectorStoresConfig.chunk_retrieval_params.rrf_impact_factor if not provided.
+    :param weights: (Optional) Dictionary of weights for combining different signal types.
+        Keys can be "vector", "keyword", "neural". Values should sum to 1.0.
+        Used when combining algorithm-based reranking with neural reranking (Part II).
+        Example: {"vector": 0.3, "keyword": 0.3, "neural": 0.4}
+    :param model: (Optional) Model identifier for neural reranker (e.g., "vllm/Qwen3-Reranker-0.6B").
+        Required when ranker="neural" or when weights contains "neural" (Part II).
     """
 
     ranker: str | None = None
@@ -360,6 +485,25 @@ class SearchRankingOptions(BaseModel):
     # we don't guarantee that the score is between 0 and 1, so will leave this unconstrained
     # and let the provider handle it
     score_threshold: float | None = Field(default=0.0)
+    alpha: float | None = Field(default=None, ge=0.0, le=1.0, description="Weight factor for weighted ranker")
+    impact_factor: float | None = Field(default=None, gt=0.0, description="Impact factor for RRF algorithm")
+    weights: dict[str, float] | None = Field(
+        default=None,
+        description="Weights for combining vector, keyword, and neural scores. Keys: 'vector', 'keyword', 'neural'",
+    )
+    model: str | None = Field(default=None, description="Model identifier for neural reranker")
+
+    @field_validator("weights")
+    @classmethod
+    def validate_weights(cls, v: dict[str, float] | None) -> dict[str, float] | None:
+        if v is None:
+            return v
+        allowed_keys = {"vector", "keyword", "neural"}
+        if not all(key in allowed_keys for key in v.keys()):
+            raise ValueError(f"weights keys must be from {allowed_keys}")
+        if abs(sum(v.values()) - 1.0) > 0.001:
+            raise ValueError("weights must sum to 1.0")
+        return v
 
 
 @json_schema_type
@@ -573,16 +717,106 @@ class OpenAICreateVectorStoreFileBatchRequestWithExtraBody(BaseModel, extra="all
     chunking_strategy: VectorStoreChunkingStrategy | None = None
 
 
+@json_schema_type
+class ChunkForDeletion(BaseModel):
+    """Information needed to delete a chunk from a vector store.
+
+    :param chunk_id: The ID of the chunk to delete
+    :param document_id: The ID of the document this chunk belongs to
+    """
+
+    chunk_id: str
+    document_id: str
+
+
+@json_schema_type
+class InsertChunksRequest(BaseModel):
+    """Request body for inserting chunks into a vector store."""
+
+    vector_store_id: str = Field(description="The ID of the vector store to insert chunks into.")
+    chunks: list[EmbeddedChunk] = Field(description="The list of embedded chunks to insert.")
+    ttl_seconds: int | None = Field(default=None, description="Time-to-live in seconds for the inserted chunks.")
+
+
+@json_schema_type
+class DeleteChunksRequest(BaseModel):
+    """Request body for deleting chunks from a vector store."""
+
+    vector_store_id: str = Field(description="The ID of the vector store to delete chunks from.")
+    chunks: list[ChunkForDeletion] = Field(description="The list of chunks to delete.")
+
+
+@json_schema_type
+class QueryChunksRequest(BaseModel):
+    """Request body for querying chunks from a vector store."""
+
+    vector_store_id: str = Field(description="The ID of the vector store to query.")
+    query: InterleavedContent = Field(description="The query content to search for.")
+    params: dict[str, Any] | None = Field(default=None, description="Additional query parameters.")
+
+
+@json_schema_type
+class OpenAIUpdateVectorStoreRequest(BaseModel):
+    """Request body for updating a vector store."""
+
+    name: str | None = Field(default=None, description="The new name for the vector store.")
+    expires_after: dict[str, Any] | None = Field(default=None, description="Expiration policy for the vector store.")
+    metadata: dict[str, Any] | None = Field(default=None, description="Metadata to associate with the vector store.")
+
+
+@json_schema_type
+class OpenAISearchVectorStoreRequest(BaseModel):
+    """Request body for searching a vector store."""
+
+    query: str | list[str] = Field(description="The search query string or list of query strings.")
+    filters: dict[str, Any] | None = Field(default=None, description="Filters to apply to the search.")
+    max_num_results: int | None = Field(default=10, description="Maximum number of results to return.")
+    ranking_options: SearchRankingOptions | None = Field(default=None, description="Options for ranking results.")
+    rewrite_query: bool | None = Field(default=False, description="Whether to rewrite the query for better results.")
+    search_mode: str | None = Field(default="vector", description="The search mode to use (e.g., 'vector', 'keyword').")
+
+
+@json_schema_type
+class OpenAIAttachFileRequest(BaseModel):
+    """Request body for attaching a file to a vector store."""
+
+    file_id: str = Field(description="The ID of the file to attach.")
+    attributes: dict[str, Any] | None = Field(default=None, description="Attributes to associate with the file.")
+    chunking_strategy: VectorStoreChunkingStrategy | None = Field(
+        default=None, description="Strategy for chunking the file content."
+    )
+
+
+@json_schema_type
+class OpenAIUpdateVectorStoreFileRequest(BaseModel):
+    """Request body for updating a vector store file."""
+
+    attributes: dict[str, Any] = Field(description="The new attributes for the file.")
+
+
 __all__ = [
     "Chunk",
+    "ChunkForDeletion",
     "ChunkMetadata",
+    "DEFAULT_CHUNK_OVERLAP_TOKENS",
+    "DEFAULT_CHUNK_SIZE_TOKENS",
+    "DeleteChunksRequest",
     "EmbeddedChunk",
+    "InsertChunksRequest",
+    "MAX_PAGINATION_LIMIT",
+    "OpenAIAttachFileRequest",
     "OpenAICreateVectorStoreFileBatchRequestWithExtraBody",
     "OpenAICreateVectorStoreRequestWithExtraBody",
+    "OpenAISearchVectorStoreRequest",
+    "OpenAIUpdateVectorStoreFileRequest",
+    "OpenAIUpdateVectorStoreRequest",
+    "QueryChunksRequest",
     "QueryChunksResponse",
     "SearchRankingOptions",
     "VectorStoreChunkingStrategy",
     "VectorStoreChunkingStrategyAuto",
+    "VectorStoreChunkingStrategyContextual",
+    "VectorStoreChunkingStrategyContextualConfig",
     "VectorStoreChunkingStrategyStatic",
     "VectorStoreChunkingStrategyStaticConfig",
     "VectorStoreContent",

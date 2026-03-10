@@ -1,0 +1,161 @@
+"""Async streaming response handler."""
+
+from __future__ import annotations
+from typing import TypeVar, Generic, AsyncIterator, Callable, Any, TYPE_CHECKING
+import json
+import httpx
+
+if TYPE_CHECKING:
+    from {{packageName}}.async_api_client import AsyncApiClient
+
+T = TypeVar("T")
+
+
+class AsyncStream(Generic[T]):
+    """
+    Async streaming response handler.
+
+    Handles asynchronous streaming responses, particularly for server-sent events (SSE).
+    """
+
+    def __init__(
+        self,
+        response: httpx.Response,
+        client: AsyncApiClient,
+        *,
+        cast_to: type[T] | None = None,
+        decoder: Callable[[str], T] | None = None,
+    ) -> None:
+        """
+        Initialize AsyncStream.
+
+        :param response: httpx.Response object with streaming enabled
+        :param client: AsyncApiClient instance
+        :param cast_to: Optional type to cast streamed data to
+        :param decoder: Optional custom decoder function
+        """
+        self._response = response
+        self._client = client
+        self._cast_to = cast_to
+        self._decoder = decoder or self._default_decoder
+        self._iterator: AsyncIterator[T] | None = None
+
+    def _default_decoder(self, data: str) -> Any:
+        """
+        Default decoder for streaming data.
+
+        :param data: Raw string data
+        :return: Decoded data
+        """
+        if not data:
+            return None
+
+        try:
+            json_data = json.loads(data)
+            if self._cast_to and hasattr(self._cast_to, 'model_validate'):
+                # Pydantic model
+                return self._cast_to.model_validate(json_data)
+            return json_data
+        except json.JSONDecodeError:
+            return data
+
+    async def __aiter__(self) -> AsyncIterator[T]:
+        """
+        Async iterator over stream items.
+
+        :return: Async iterator
+        """
+        async for item in self._iter_events():
+            if item is not None:
+                yield item
+
+    async def __anext__(self) -> T:
+        """
+        Get next item in stream.
+
+        :return: Next stream item
+        :raises StopAsyncIteration: When stream is exhausted
+        """
+        if self._iterator is None:
+            self._iterator = self._iter_events()
+        return await self._iterator.__anext__()
+
+    async def _iter_events(self) -> AsyncIterator[T]:
+        """
+        Iterate through server-sent events.
+
+        Parses SSE format and yields decoded events.
+
+        :return: Async iterator of decoded events
+        """
+        async for line in self._response.aiter_lines():
+            line = line.strip()
+
+            # Skip empty lines and comments
+            if not line or line.startswith(':'):
+                continue
+
+            # Parse SSE format
+            if line.startswith('data: '):
+                data = line[6:]  # Remove 'data: ' prefix
+
+                # Handle end of stream marker
+                if data == '[DONE]':
+                    break
+
+                # Decode and yield the data
+                decoded = self._decoder(data)
+                if decoded is not None:
+                    yield decoded
+
+    async def _iter_raw(self) -> AsyncIterator[bytes]:
+        """
+        Iterate over raw byte chunks.
+
+        :return: Async iterator of byte chunks
+        """
+        async for chunk in self._response.aiter_bytes():
+            yield chunk
+
+    async def _iter_text(self) -> AsyncIterator[str]:
+        """
+        Iterate over text chunks.
+
+        :return: Async iterator of text chunks
+        """
+        async for chunk in self._response.aiter_text():
+            yield chunk
+
+    async def close(self) -> None:
+        """
+        Close the async response connection.
+        """
+        await self._response.aclose()
+
+    async def __aenter__(self) -> AsyncStream[T]:
+        """Async context manager entry."""
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        """Async context manager exit."""
+        await self.close()
+
+    @property
+    def status_code(self) -> int:
+        """HTTP status code."""
+        return self._response.status_code
+
+    @property
+    def headers(self) -> httpx.Headers:
+        """HTTP headers."""
+        return self._response.headers
+
+    async def until_done(self) -> None:
+        """
+        Consume the entire stream until completion.
+
+        This is useful when you need to ensure the stream is fully consumed
+        but don't need to process the items.
+        """
+        async for _ in self:
+            pass

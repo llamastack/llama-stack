@@ -23,6 +23,7 @@ SECTION_ORDER = [
     "client_settings",
     "environments",
     "pagination",
+    "streaming",
     "settings",
     "openapi",
     "readme",
@@ -51,11 +52,6 @@ TARGETS = {
         "options": {"use_uv": True},
         "publish": {"pypi": True},
         "project_name": "llama_stack_client",
-    },
-    "kotlin": {
-        "reverse_domain": "com.llama_stack_client.api",
-        "production_repo": None,
-        "publish": {"maven": False},
     },
     "go": {
         "package_name": "llama-stack-client",
@@ -118,6 +114,13 @@ PAGINATION = [
         },
     },
 ]
+
+STREAMING = {
+    "on_event": [
+        {"data_starts_with": "[DONE]", "handle": "done"},
+        {"kind": "fallthrough", "handle": "yield", "error_property": "error"},
+    ]
+}
 
 SETTINGS = {
     "license": "MIT",
@@ -512,7 +515,6 @@ ALL_RESOURCES = {
     },
     "alpha": {
         "subresources": {
-            "inference": {"methods": {"rerank": "post /v1alpha/inference/rerank"}},
             "post_training": {
                 "models": {
                     "algorithm_config": "AlgorithmConfig",
@@ -526,9 +528,9 @@ ALL_RESOURCES = {
                 "subresources": {
                     "job": {
                         "methods": {
-                            "artifacts": "get /v1alpha/post-training/job/artifacts",
-                            "cancel": "post /v1alpha/post-training/job/cancel",
-                            "status": "get /v1alpha/post-training/job/status",
+                            "artifacts": "get /v1alpha/post-training/jobs/{job_uuid}/artifacts",
+                            "cancel": "post /v1alpha/post-training/jobs/{job_uuid}/cancel",
+                            "status": "get /v1alpha/post-training/jobs/{job_uuid}/status",
                             "list": {
                                 "paginated": False,
                                 "endpoint": "get /v1alpha/post-training/jobs",
@@ -581,6 +583,11 @@ ALL_RESOURCES = {
                     "list_routes": "get /v1alpha/admin/inspect/routes",
                     "health": "get /v1alpha/admin/health",
                     "version": "get /v1alpha/admin/version",
+                },
+            },
+            "inference": {
+                "methods": {
+                    "rerank": "post /v1alpha/inference/rerank",
                 },
             },
         }
@@ -709,6 +716,7 @@ class StainlessConfig:
     client_settings: dict[str, Any]
     environments: dict[str, Any]
     pagination: list[dict[str, Any]]
+    streaming: dict[str, Any]
     settings: dict[str, Any]
     openapi: dict[str, Any]
     readme: dict[str, Any]
@@ -724,6 +732,7 @@ class StainlessConfig:
             client_settings=CLIENT_SETTINGS,
             environments=ENVIRONMENTS,
             pagination=PAGINATION,
+            streaming=STREAMING,
             settings=SETTINGS,
             openapi=OPENAPI,
             readme=README,

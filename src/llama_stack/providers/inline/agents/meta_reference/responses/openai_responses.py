@@ -24,14 +24,17 @@ from llama_stack_api import (
     ConversationItem,
     Conversations,
     Files,
+    GetPromptRequest,
     Inference,
-    InvalidConversationIdError,
+    InternalServerError,
+    InvalidParameterError,
     ListItemsRequest,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIChatCompletionContentPartParam,
     OpenAIDeleteResponseObject,
     OpenAIMessageParam,
+    OpenAIResponseError,
     OpenAIResponseInput,
     OpenAIResponseInputMessageContentFile,
     OpenAIResponseInputMessageContentImage,
@@ -51,11 +54,14 @@ from llama_stack_api import (
     Prompts,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseTruncation,
     Safety,
+    ServiceNotEnabledError,
     ToolGroups,
     ToolRuntime,
     VectorIO,
 )
+from llama_stack_api.inference import ServiceTier
 
 from .streaming import StreamingResponseOrchestrator
 from .tool_executor import ToolExecutor
@@ -68,6 +74,10 @@ from .utils import (
 )
 
 logger = get_logger(name=__name__, category="openai_responses")
+
+BACKGROUND_RESPONSE_TIMEOUT_SECONDS = 300  # 5 minutes
+BACKGROUND_QUEUE_MAX_SIZE = 100
+BACKGROUND_NUM_WORKERS = 10
 
 
 class OpenAIResponsePreviousResponseWithInputItems(BaseModel):
@@ -106,6 +116,76 @@ class OpenAIResponsesImpl:
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.connectors_api = connectors_api
+        self._background_queue: asyncio.Queue = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
+        self._background_worker_tasks: set[asyncio.Task] = set()
+
+    async def initialize(self) -> None:
+        """No-op: background workers are started lazily on first use.
+
+        Workers must be started in the event loop that handles requests, not the
+        temporary loop used during provider initialization (which is destroyed after
+        init completes, cancelling any tasks created there).
+        """
+        pass
+
+    async def _ensure_workers_started(self) -> None:
+        """Start background workers in the current event loop if not already running."""
+        for _ in range(BACKGROUND_NUM_WORKERS - len(self._background_worker_tasks)):
+            task = asyncio.create_task(self._background_worker())
+            self._background_worker_tasks.add(task)
+            task.add_done_callback(self._background_worker_tasks.discard)
+
+    async def shutdown(self) -> None:
+        """Stop background worker pool."""
+        for task in self._background_worker_tasks:
+            task.cancel()
+        await asyncio.gather(*self._background_worker_tasks, return_exceptions=True)
+
+    async def _background_worker(self) -> None:
+        """Worker coroutine that pulls items from the queue and processes them."""
+        while True:
+            kwargs = await self._background_queue.get()
+            try:
+                await asyncio.wait_for(
+                    self._run_background_response_loop(**kwargs),
+                    timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
+                )
+            except TimeoutError:
+                response_id = kwargs["response_id"]
+                logger.exception(
+                    f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
+                )
+                try:
+                    existing = await self.responses_store.get_response_object(response_id)
+                    existing.status = "failed"
+                    existing.error = OpenAIResponseError(
+                        code="processing_error",
+                        message=f"Background response timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s",
+                    )
+                    await self.responses_store.update_response_object(existing)
+                except Exception:
+                    logger.exception(
+                        f"Failed to update response {response_id} with timeout status. "
+                        "Client polling this response will not see the failure."
+                    )
+            except Exception as e:
+                response_id = kwargs["response_id"]
+                logger.exception(f"Error processing background response {response_id}")
+                try:
+                    existing = await self.responses_store.get_response_object(response_id)
+                    existing.status = "failed"
+                    existing.error = OpenAIResponseError(
+                        code="processing_error",
+                        message=str(e),
+                    )
+                    await self.responses_store.update_response_object(existing)
+                except Exception:
+                    logger.exception(
+                        f"Failed to update response {response_id} with error status. "
+                        "Client polling this response will not see the failure."
+                    )
+            finally:
+                self._background_queue.task_done()
 
     async def _prepend_previous_response(
         self,
@@ -140,6 +220,11 @@ class OpenAIResponsesImpl:
             previous_response: _OpenAIResponseObjectWithInputAndMessages = (
                 await self.responses_store.get_response_object(previous_response_id)
             )
+            if previous_response.status in ("queued", "in_progress"):
+                raise ValueError(
+                    f"Response {previous_response_id} is still {previous_response.status}. "
+                    "Cannot use an incomplete background response as previous_response_id."
+                )
             all_input = await self._prepend_previous_response(input, previous_response)
 
             if previous_response.messages:
@@ -207,7 +292,9 @@ class OpenAIResponsesImpl:
             return
 
         prompt_version = int(openai_response_prompt.version) if openai_response_prompt.version else None
-        cur_prompt = await self.prompts_api.get_prompt(openai_response_prompt.id, prompt_version)
+        cur_prompt = await self.prompts_api.get_prompt(
+            GetPromptRequest(prompt_id=openai_response_prompt.id, version=prompt_version)
+        )
 
         if not cur_prompt or not cur_prompt.prompt:
             return
@@ -222,7 +309,11 @@ class OpenAIResponsesImpl:
         # Validate that all provided variables exist in the prompt
         for name in openai_response_prompt.variables.keys():
             if name not in cur_prompt_variables:
-                raise ValueError(f"Variable {name} not found in prompt {openai_response_prompt.id}")
+                raise InvalidParameterError(
+                    "prompt.variables",
+                    name,
+                    f"Variable not defined in prompt '{openai_response_prompt.id}'.",
+                )
 
         # Separate text and media variables
         text_substitutions = {}
@@ -332,17 +423,140 @@ class OpenAIResponsesImpl:
             messages=messages,
         )
 
+    def _prepare_input_items_for_storage(
+        self,
+        input: str | list[OpenAIResponseInput],
+    ) -> list[OpenAIResponseInput]:
+        """Prepare input items for storage, adding IDs where needed.
+
+        This method is called once at the start of streaming to prepare input items
+        that will be reused across multiple persistence calls during streaming.
+        """
+        new_input_id = f"msg_{uuid.uuid4()}"
+        input_items_data: list[OpenAIResponseInput] = []
+
+        if isinstance(input, str):
+            input_content = OpenAIResponseInputMessageContentText(text=input)
+            input_content_item = OpenAIResponseMessage(
+                role="user",
+                content=[input_content],
+                id=new_input_id,
+            )
+            input_items_data = [input_content_item]
+        else:
+            for input_item in input:
+                if isinstance(input_item, OpenAIResponseMessage):
+                    input_item_dict = input_item.model_dump()
+                    if "id" not in input_item_dict:
+                        input_item_dict["id"] = new_input_id
+                    input_items_data.append(OpenAIResponseMessage(**input_item_dict))
+                else:
+                    input_items_data.append(input_item)
+
+        return input_items_data
+
+    async def _persist_streaming_state(
+        self,
+        stream_chunk: OpenAIResponseObjectStream,
+        orchestrator,
+        input_items: list[OpenAIResponseInput],
+        output_items: list,
+    ) -> None:
+        """Persist response state at significant streaming events.
+
+        This enables clients to poll GET /v1/responses/{response_id} during streaming
+        to see in-progress turn state instead of empty results.
+
+        Persistence occurs at:
+        - response.in_progress: Initial INSERT with empty output
+        - response.output_item.done: UPDATE with accumulated output items
+        - response.completed/response.incomplete: Final UPDATE with complete state
+        - response.failed: UPDATE with error state
+
+        :param stream_chunk: The current streaming event.
+        :param orchestrator: The streaming orchestrator (for snapshotting response).
+        :param input_items: Pre-prepared input items for storage.
+        :param output_items: Accumulated output items so far.
+        """
+        try:
+            match stream_chunk.type:
+                case "response.in_progress":
+                    # Initial persistence when response starts
+                    in_progress_response = stream_chunk.response
+                    await self.responses_store.upsert_response_object(
+                        response_object=in_progress_response,
+                        input=input_items,
+                        messages=[],
+                    )
+
+                case "response.output_item.done":
+                    # Incremental update when an output item completes (tool call, message)
+                    current_snapshot = orchestrator._snapshot_response(
+                        status="in_progress",
+                        outputs=output_items,
+                    )
+                    # Get current messages (filter out system messages)
+                    messages_to_store = list(
+                        filter(
+                            lambda x: not isinstance(x, OpenAISystemMessageParam),
+                            orchestrator.final_messages or orchestrator.ctx.messages,
+                        )
+                    )
+                    await self.responses_store.upsert_response_object(
+                        response_object=current_snapshot,
+                        input=input_items,
+                        messages=messages_to_store,
+                    )
+
+                case "response.completed" | "response.incomplete":
+                    # Final persistence when response finishes
+                    final_response = stream_chunk.response
+                    messages_to_store = list(
+                        filter(
+                            lambda x: not isinstance(x, OpenAISystemMessageParam),
+                            orchestrator.final_messages,
+                        )
+                    )
+                    await self.responses_store.upsert_response_object(
+                        response_object=final_response,
+                        input=input_items,
+                        messages=messages_to_store,
+                    )
+
+                case "response.failed":
+                    # Persist failed state so GET shows error
+                    failed_response = stream_chunk.response
+                    # Preserve any accumulated non-system messages for failed responses
+                    messages_to_store = list(
+                        filter(
+                            lambda x: not isinstance(x, OpenAISystemMessageParam),
+                            orchestrator.final_messages or orchestrator.ctx.messages,
+                        )
+                    )
+                    await self.responses_store.upsert_response_object(
+                        response_object=failed_response,
+                        input=input_items,
+                        messages=messages_to_store,
+                    )
+        except Exception as e:
+            # Best-effort persistence: log error but don't fail the stream
+            logger.warning(f"Failed to persist streaming state for {stream_chunk.type}: {e}")
+
     async def create_openai_response(
         self,
         input: str | list[OpenAIResponseInput],
         model: str,
+        background: bool | None = False,
         prompt: OpenAIResponsePrompt | None = None,
         instructions: str | None = None,
         previous_response_id: str | None = None,
+        prompt_cache_key: str | None = None,
         conversation: str | None = None,
         store: bool | None = True,
         stream: bool | None = False,
         temperature: float | None = None,
+        top_p: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
@@ -352,10 +566,25 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
+        truncation: ResponseTruncation | None = None,
+        top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ):
         stream = bool(stream)
+        background = bool(background)
         text = OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")) if text is None else text
+
+        # Validate that stream and background are mutually exclusive
+        if stream and background:
+            raise ValueError("Llama Stack does not yet support 'stream' and 'background' together.")
+
+        if background and store is False:
+            raise ValueError("Cannot use 'background' with 'store=False'. Background responses must be stored.")
 
         # Validate MCP tools: ensure Authorization header is not passed via headers dict
         if tools:
@@ -365,33 +594,301 @@ class OpenAIResponsesImpl:
                 if isinstance(tool, OpenAIResponseInputToolMCP) and tool.headers:
                     for key in tool.headers.keys():
                         if key.lower() == "authorization":
-                            raise ValueError(
-                                "Authorization header cannot be passed via 'headers'. "
-                                "Please use the 'authorization' parameter instead."
+                            raise InvalidParameterError(
+                                f"tools[server_label={tool.server_label!r}].headers",
+                                key,
+                                "Authorization credentials must be passed via the 'authorization' parameter, not 'headers'.",
                             )
 
         guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
 
         # Validate that Safety API is available if guardrails are requested
         if guardrail_ids and self.safety_api is None:
-            raise ValueError(
-                "Cannot process guardrails: Safety API is not configured.\n\n"
-                "To use guardrails, ensure the Safety API is configured in your stack, or remove "
-                "the 'guardrails' parameter from your request."
+            raise ServiceNotEnabledError(
+                "Safety API",
+                provider_specific_message="Ensure the Safety API is enabled in your stack, otherwise remove the 'guardrails' parameter from your request.",
             )
 
         if conversation is not None:
             if previous_response_id is not None:
-                raise ValueError(
-                    "Mutually exclusive parameters: 'previous_response_id' and 'conversation'. Ensure you are only providing one of these parameters."
+                raise InvalidParameterError(
+                    "previous_response_id, conversation",
+                    "previous_response_id and conversation are both provided",
+                    "Provide only one of these parameters.",
                 )
 
             if not conversation.startswith("conv_"):
-                raise InvalidConversationIdError(conversation)
+                raise InvalidParameterError("conversation", conversation, "Expected an ID that begins with 'conv_'.")
 
         if max_tool_calls is not None and max_tool_calls < 1:
             raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
 
+        # Handle background mode
+        if background:
+            return await self._create_background_response(
+                input=input,
+                model=model,
+                prompt=prompt,
+                instructions=instructions,
+                previous_response_id=previous_response_id,
+                conversation=conversation,
+                store=store,
+                temperature=temperature,
+                frequency_penalty=frequency_penalty,
+                text=text,
+                tool_choice=tool_choice,
+                tools=tools,
+                include=include,
+                max_infer_iters=max_infer_iters,
+                guardrail_ids=guardrail_ids,
+                parallel_tool_calls=parallel_tool_calls,
+                max_tool_calls=max_tool_calls,
+                reasoning=reasoning,
+                max_output_tokens=max_output_tokens,
+                safety_identifier=safety_identifier,
+                service_tier=service_tier,
+                metadata=metadata,
+                truncation=truncation,
+                presence_penalty=presence_penalty,
+                extra_body=extra_body,
+            )
+
+        stream_gen = self._create_streaming_response(
+            input=input,
+            conversation=conversation,
+            model=model,
+            prompt=prompt,
+            instructions=instructions,
+            previous_response_id=previous_response_id,
+            prompt_cache_key=prompt_cache_key,
+            store=store,
+            temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            text=text,
+            tools=tools,
+            tool_choice=tool_choice,
+            max_infer_iters=max_infer_iters,
+            guardrail_ids=guardrail_ids,
+            parallel_tool_calls=parallel_tool_calls,
+            max_tool_calls=max_tool_calls,
+            reasoning=reasoning,
+            max_output_tokens=max_output_tokens,
+            safety_identifier=safety_identifier,
+            service_tier=service_tier,
+            metadata=metadata,
+            include=include,
+            truncation=truncation,
+            top_logprobs=top_logprobs,
+            presence_penalty=presence_penalty,
+            extra_body=extra_body,
+        )
+
+        if stream:
+            return stream_gen
+        else:
+            final_response = None
+            final_event_type = None
+            failed_response = None
+            async for stream_chunk in stream_gen:
+                match stream_chunk.type:
+                    case "response.completed" | "response.incomplete":
+                        if final_response is not None:
+                            logger.error(
+                                "The response stream produced multiple terminal events, when it should produce exactly one.",
+                                extra={
+                                    "response_id": stream_chunk.response.id,
+                                    "first_terminal_event": final_event_type,
+                                    "second_terminal_event": stream_chunk.type,
+                                    "model": model,
+                                    "conversation": conversation,
+                                    "previous_response_id": previous_response_id,
+                                },
+                            )
+                            raise InternalServerError()
+                        final_response = stream_chunk.response
+                        final_event_type = stream_chunk.type
+                    case "response.failed":
+                        failed_response = stream_chunk.response
+                        error_message = (
+                            failed_response.error.message
+                            if failed_response.error
+                            else "response failed but no error message was provided"
+                        )
+                        logger.error(
+                            "response creation failed",
+                            extra={
+                                "error_message": error_message,
+                                "response_id": failed_response.id,
+                                "model": model,
+                            },
+                        )
+                        # Surface the provider message — it may be actionable (e.g. context window exceeded)
+                        # and is already visible to callers in streaming mode via the response.failed event.
+                        raise InternalServerError(error_message)
+                    case _:
+                        pass  # Other event types don't have .response
+
+            if final_response is None:
+                logger.error(
+                    "The response stream never reached a terminal state",
+                    extra={"model": model, "conversation": conversation, "previous_response_id": previous_response_id},
+                )
+                raise InternalServerError()
+            # Set background=False for non-background responses
+            final_response.background = False
+            return final_response
+
+    async def _create_background_response(
+        self,
+        input: str | list[OpenAIResponseInput],
+        model: str,
+        prompt: OpenAIResponsePrompt | None = None,
+        instructions: str | None = None,
+        previous_response_id: str | None = None,
+        conversation: str | None = None,
+        store: bool | None = True,
+        temperature: float | None = None,
+        frequency_penalty: float | None = None,
+        text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
+        tools: list[OpenAIResponseInputTool] | None = None,
+        include: list[ResponseItemInclude] | None = None,
+        max_infer_iters: int | None = 10,
+        guardrail_ids: list[str] | None = None,
+        parallel_tool_calls: bool | None = None,
+        max_tool_calls: int | None = None,
+        reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
+        metadata: dict[str, str] | None = None,
+        truncation: ResponseTruncation | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
+    ) -> OpenAIResponseObject:
+        """Create a response that processes in the background.
+
+        Returns immediately with a queued response object.
+        """
+        # Start workers in the current (request-handling) event loop if not already running.
+        await self._ensure_workers_started()
+
+        response_id = f"resp_{uuid.uuid4()}"
+        created_at = int(time.time())
+
+        # Normalize input to list format for storage
+        input_items = [OpenAIResponseMessage(content=input, role="user")] if isinstance(input, str) else input
+
+        # Create initial queued response
+        queued_response = OpenAIResponseObject(
+            id=response_id,
+            created_at=created_at,
+            model=model,
+            status="queued",
+            output=[],
+            background=True,
+            parallel_tool_calls=parallel_tool_calls if parallel_tool_calls is not None else True,
+            previous_response_id=previous_response_id,
+            prompt=prompt,
+            temperature=temperature,
+            text=text if text else OpenAIResponseText(format=OpenAIResponseTextFormat(type="text")),
+            tools=[],  # Will be populated when processing completes
+            tool_choice=tool_choice,
+            instructions=instructions,
+            max_tool_calls=max_tool_calls,
+            reasoning=reasoning,
+            metadata=metadata,
+            store=store if store is not None else True,
+        )
+
+        # Store the queued response
+        await self.responses_store.store_response_object(
+            response_object=queued_response,
+            input=input_items,
+            messages=[],
+        )
+
+        # Enqueue work item for background workers. Raises QueueFull if at capacity.
+        try:
+            self._background_queue.put_nowait(
+                dict(
+                    response_id=response_id,
+                    input=input,
+                    model=model,
+                    prompt=prompt,
+                    instructions=instructions,
+                    previous_response_id=previous_response_id,
+                    conversation=conversation,
+                    store=store,
+                    temperature=temperature,
+                    frequency_penalty=frequency_penalty,
+                    text=text,
+                    tool_choice=tool_choice,
+                    tools=tools,
+                    include=include,
+                    max_infer_iters=max_infer_iters,
+                    guardrail_ids=guardrail_ids,
+                    parallel_tool_calls=parallel_tool_calls,
+                    max_tool_calls=max_tool_calls,
+                    reasoning=reasoning,
+                    max_output_tokens=max_output_tokens,
+                    safety_identifier=safety_identifier,
+                    service_tier=service_tier,
+                    metadata=metadata,
+                    truncation=truncation,
+                    presence_penalty=presence_penalty,
+                    extra_body=extra_body,
+                )
+            )
+        except asyncio.QueueFull:
+            raise ValueError(
+                f"Background response queue is full (max {BACKGROUND_QUEUE_MAX_SIZE}). Try again later."
+            ) from None
+
+        return queued_response
+
+    async def _run_background_response_loop(
+        self,
+        response_id: str,
+        input: str | list[OpenAIResponseInput],
+        model: str,
+        prompt: OpenAIResponsePrompt | None = None,
+        instructions: str | None = None,
+        previous_response_id: str | None = None,
+        conversation: str | None = None,
+        store: bool | None = True,
+        temperature: float | None = None,
+        frequency_penalty: float | None = None,
+        text: OpenAIResponseText | None = None,
+        tool_choice: OpenAIResponseInputToolChoice | None = None,
+        tools: list[OpenAIResponseInputTool] | None = None,
+        include: list[ResponseItemInclude] | None = None,
+        max_infer_iters: int | None = 10,
+        guardrail_ids: list[str] | None = None,
+        parallel_tool_calls: bool | None = None,
+        max_tool_calls: int | None = None,
+        reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
+        metadata: dict[str, str] | None = None,
+        truncation: ResponseTruncation | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
+    ) -> None:
+        """Inner loop for background response processing, separated for timeout wrapping."""
+        # Check if response was cancelled before starting
+        existing = await self.responses_store.get_response_object(response_id)
+        if existing.status == "cancelled":
+            logger.info(f"Background response {response_id} was cancelled before processing started")
+            return
+
+        # Update status to in_progress
+        existing.status = "in_progress"
+        await self.responses_store.update_response_object(existing)
+
+        # Process the response using existing streaming logic
         stream_gen = self._create_streaming_response(
             input=input,
             conversation=conversation,
@@ -401,6 +898,7 @@ class OpenAIResponsesImpl:
             previous_response_id=previous_response_id,
             store=store,
             temperature=temperature,
+            frequency_penalty=frequency_penalty,
             text=text,
             tools=tools,
             tool_choice=tool_choice,
@@ -409,43 +907,45 @@ class OpenAIResponsesImpl:
             parallel_tool_calls=parallel_tool_calls,
             max_tool_calls=max_tool_calls,
             reasoning=reasoning,
+            max_output_tokens=max_output_tokens,
+            safety_identifier=safety_identifier,
+            service_tier=service_tier,
             metadata=metadata,
             include=include,
+            truncation=truncation,
+            response_id=response_id,
+            presence_penalty=presence_penalty,
+            extra_body=extra_body,
         )
 
-        if stream:
-            return stream_gen
+        result_response = None
+
+        async for stream_chunk in stream_gen:
+            # Check for cancellation periodically
+            current = await self.responses_store.get_response_object(response_id)
+            if current.status == "cancelled":
+                logger.info(f"Background response {response_id} was cancelled during processing")
+                return
+
+            match stream_chunk.type:
+                case "response.completed" | "response.incomplete" | "response.failed":
+                    result_response = stream_chunk.response
+                case _:
+                    pass
+
+        if result_response is not None:
+            result_response.background = True
+            result_response.id = response_id  # Ensure we update the correct response
+            await self.responses_store.update_response_object(result_response)
         else:
-            final_response = None
-            final_event_type = None
-            failed_response = None
-
-            async for stream_chunk in stream_gen:
-                match stream_chunk.type:
-                    case "response.completed" | "response.incomplete":
-                        if final_response is not None:
-                            raise ValueError(
-                                "The response stream produced multiple terminal responses! "
-                                f"Earlier response from {final_event_type}"
-                            )
-                        final_response = stream_chunk.response
-                        final_event_type = stream_chunk.type
-                    case "response.failed":
-                        failed_response = stream_chunk.response
-                    case _:
-                        pass  # Other event types don't have .response
-
-            if failed_response is not None:
-                error_message = (
-                    failed_response.error.message
-                    if failed_response and failed_response.error
-                    else "Response stream failed without error details"
-                )
-                raise RuntimeError(f"OpenAI response failed: {error_message}")
-
-            if final_response is None:
-                raise ValueError("The response stream never reached a terminal state")
-            return final_response
+            # Something went wrong - mark as failed
+            existing = await self.responses_store.get_response_object(response_id)
+            existing.status = "failed"
+            existing.error = OpenAIResponseError(
+                code="processing_error",
+                message="Response stream never reached a terminal state",
+            )
+            await self.responses_store.update_response_object(existing)
 
     async def _create_streaming_response(
         self,
@@ -453,10 +953,13 @@ class OpenAIResponsesImpl:
         model: str,
         instructions: str | None = None,
         previous_response_id: str | None = None,
+        prompt_cache_key: str | None = None,
         conversation: str | None = None,
         prompt: OpenAIResponsePrompt | None = None,
         store: bool | None = True,
         temperature: float | None = None,
+        top_p: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
@@ -465,8 +968,16 @@ class OpenAIResponsesImpl:
         parallel_tool_calls: bool | None = True,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
+        max_output_tokens: int | None = None,
+        safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
+        truncation: ResponseTruncation | None = None,
+        response_id: str | None = None,
+        top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -493,56 +1004,66 @@ class OpenAIResponsesImpl:
             response_tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
             response_format=response_format,
             tool_context=tool_context,
             inputs=all_input,
+            extra_body=extra_body,
         )
 
         # Create orchestrator and delegate streaming logic
-        response_id = f"resp_{uuid.uuid4()}"
+        if response_id is None:
+            response_id = f"resp_{uuid.uuid4()}"
         created_at = int(time.time())
 
         # Create a per-request MCP session manager for session reuse (fix for #4452)
         # This avoids redundant tools/list calls when making multiple MCP tool invocations
-        mcp_session_manager = MCPSessionManager()
+        async with MCPSessionManager() as mcp_session_manager:
+            request_tool_executor = ToolExecutor(
+                tool_groups_api=self.tool_groups_api,
+                tool_runtime_api=self.tool_runtime_api,
+                vector_io_api=self.vector_io_api,
+                vector_stores_config=self.tool_executor.vector_stores_config,
+                mcp_session_manager=mcp_session_manager,
+            )
 
-        # Create a per-request ToolExecutor with the session manager
-        request_tool_executor = ToolExecutor(
-            tool_groups_api=self.tool_groups_api,
-            tool_runtime_api=self.tool_runtime_api,
-            vector_io_api=self.vector_io_api,
-            vector_stores_config=self.tool_executor.vector_stores_config,
-            mcp_session_manager=mcp_session_manager,
-        )
+            orchestrator = StreamingResponseOrchestrator(
+                inference_api=self.inference_api,
+                ctx=ctx,
+                response_id=response_id,
+                created_at=created_at,
+                prompt=prompt,
+                prompt_cache_key=prompt_cache_key,
+                text=text,
+                max_infer_iters=max_infer_iters,
+                parallel_tool_calls=parallel_tool_calls,
+                tool_executor=request_tool_executor,
+                safety_api=self.safety_api,
+                connectors_api=self.connectors_api,
+                guardrail_ids=guardrail_ids,
+                instructions=instructions,
+                max_tool_calls=max_tool_calls,
+                reasoning=reasoning,
+                max_output_tokens=max_output_tokens,
+                safety_identifier=safety_identifier,
+                service_tier=service_tier,
+                metadata=metadata,
+                include=include,
+                store=store,
+                truncation=truncation,
+                top_logprobs=top_logprobs,
+                presence_penalty=presence_penalty,
+                extra_body=extra_body,
+            )
 
-        orchestrator = StreamingResponseOrchestrator(
-            inference_api=self.inference_api,
-            ctx=ctx,
-            response_id=response_id,
-            created_at=created_at,
-            prompt=prompt,
-            text=text,
-            max_infer_iters=max_infer_iters,
-            parallel_tool_calls=parallel_tool_calls,
-            tool_executor=request_tool_executor,
-            safety_api=self.safety_api,
-            connectors_api=self.connectors_api,
-            guardrail_ids=guardrail_ids,
-            instructions=instructions,
-            max_tool_calls=max_tool_calls,
-            reasoning=reasoning,
-            metadata=metadata,
-            include=include,
-            store=store,
-        )
+            final_response = None
+            failed_response = None
 
-        # Stream the response
-        final_response = None
-        failed_response = None
+            output_items: list[ConversationItem] = []
 
-        # Type as ConversationItem to avoid list invariance issues
-        output_items: list[ConversationItem] = []
-        try:
+            input_items_for_storage = self._prepare_input_items_for_storage(all_input)
+
             async for stream_chunk in orchestrator.create_response():
                 match stream_chunk.type:
                     case "response.completed" | "response.incomplete":
@@ -555,6 +1076,16 @@ class OpenAIResponsesImpl:
                     case _:
                         pass  # Other event types
 
+                # Incremental persistence: persist on significant state changes
+                # This enables clients to poll GET /v1/responses/{response_id} during streaming
+                if store:
+                    await self._persist_streaming_state(
+                        stream_chunk=stream_chunk,
+                        orchestrator=orchestrator,
+                        input_items=input_items_for_storage,
+                        output_items=output_items,
+                    )
+
                 # Store and sync before yielding terminal events
                 # This ensures the storage/syncing happens even if the consumer breaks after receiving the event
                 if (
@@ -562,32 +1093,14 @@ class OpenAIResponsesImpl:
                     and final_response
                     and failed_response is None
                 ):
-                    messages_to_store = list(
-                        filter(lambda x: not isinstance(x, OpenAISystemMessageParam), orchestrator.final_messages)
-                    )
-                    if store:
-                        # TODO: we really should work off of output_items instead of "final_messages"
-                        await self._store_response(
-                            response=final_response,
-                            input=all_input,
-                            messages=messages_to_store,
-                        )
-
                     if conversation:
+                        messages_to_store = list(
+                            filter(lambda x: not isinstance(x, OpenAISystemMessageParam), orchestrator.final_messages)
+                        )
                         await self._sync_response_to_conversation(conversation, input, output_items)
                         await self.responses_store.store_conversation_messages(conversation, messages_to_store)
 
                 yield stream_chunk
-        finally:
-            # Clean up MCP sessions at the end of the request (fix for #4452)
-            # Use shield() to prevent cancellation from interrupting cleanup and leaking resources
-            # Wrap in try/except as cleanup errors should not mask the original response
-            try:
-                await asyncio.shield(mcp_session_manager.close_all())
-            except BaseException as e:
-                # Debug level - cleanup errors are expected in streaming scenarios where
-                # anyio cancel scopes may be in a different task context
-                logger.debug(f"Error during MCP session cleanup: {e}")
 
     async def delete_openai_response(self, response_id: str) -> OpenAIDeleteResponseObject:
         return await self.responses_store.delete_response_object(response_id)

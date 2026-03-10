@@ -12,7 +12,6 @@ Tests that tools pass through correctly to various LLM providers.
 import pytest
 
 from llama_stack.core.library_client import LlamaStackAsLibraryClient
-from llama_stack.models.llama.datatypes import ToolDefinition
 from tests.common.mcp import make_mcp_server
 
 AUTH_TOKEN = "test-token"
@@ -221,45 +220,6 @@ class TestMCPToolsInChatCompletion:
 
         # Schema should have been passed through correctly
         assert response is not None
-
-
-class TestProviderSpecificBehavior:
-    """Test provider-specific handling of schemas."""
-
-    def test_openai_provider_drops_output_schema(self, llama_stack_client, text_model_id):
-        """Test that OpenAI provider doesn't send output_schema (API limitation)."""
-        # This is more of a documentation test
-        # OpenAI API doesn't support output schemas, so we drop them
-
-        _tool = ToolDefinition(
-            tool_name="test",
-            input_schema={"type": "object", "properties": {"x": {"type": "string"}}},
-            output_schema={"type": "object", "properties": {"y": {"type": "number"}}},
-        )
-
-        # When this tool is sent to OpenAI provider, output_schema is dropped
-        # But input_schema is preserved
-        # This test documents the expected behavior
-
-        # We can't easily test this without mocking, but the unit tests cover it
-        pass
-
-    def test_gemini_array_support(self):
-        """Test that Gemini receives array schemas correctly (issue from commit 65f7b81e)."""
-        # This was the original bug that led to adding 'items' field
-        # Now with full JSON Schema pass-through, arrays should work
-
-        tool = ToolDefinition(
-            tool_name="tag_processor",
-            input_schema={
-                "type": "object",
-                "properties": {"tags": {"type": "array", "items": {"type": "string"}, "description": "List of tags"}},
-            },
-        )
-
-        # With new approach, the complete schema with items is preserved
-        assert tool.input_schema["properties"]["tags"]["type"] == "array"
-        assert tool.input_schema["properties"]["tags"]["items"]["type"] == "string"
 
 
 class TestStreamingWithTools:

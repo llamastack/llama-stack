@@ -100,6 +100,17 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         defaults={
             "text_model": "vllm/Qwen/Qwen3-0.6B",
             "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
+            "rerank_model": "vllm/Qwen/Qwen3-Reranker-0.6B",
+        },
+    ),
+    "ollama-reasoning": Setup(
+        name="ollama",
+        description="Local Ollama provider with a reasoning-capable model (gpt-oss)",
+        env={
+            "OLLAMA_URL": "http://0.0.0.0:11434/v1",
+        },
+        defaults={
+            "text_model": "ollama/gpt-oss:20b",
         },
     ),
     "bedrock": Setup(
@@ -114,6 +125,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         description="OpenAI GPT models for high-quality responses and tool calling",
         defaults={
             "text_model": "openai/gpt-4o",
+            "vision_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
             "embedding_dimension": 1536,
         },
@@ -180,6 +192,25 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "text_model": "groq/llama-3.3-70b-versatile",
         },
     ),
+    "llama-cpp-server": Setup(
+        name="llama-cpp-server",
+        description="llama.cpp server provider with OpenAI-compatible API",
+        env={
+            "LLAMA_CPP_SERVER_URL": "http://localhost:8080",
+        },
+        defaults={
+            "text_model": "llama-cpp-server/qwen2.5",
+            "embedding_model": "sentence-transformers/nomic-embed-text-v1.5",
+        },
+    ),
+    "vllm-qwen3next": Setup(
+        name="vllm-qwen3next",
+        description="Qwen3-Next model for contextual retrieval validation",
+        defaults={
+            "text_model": "Qwen3-Next-80B-A3B-Instruct-FP8",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+        },
+    ),
 }
 
 
@@ -211,10 +242,17 @@ SUITE_DEFINITIONS: dict[str, Suite] = {
         roots=["tests/integration/inference/test_vision_inference.py"],
         default_setup="ollama-vision",
     ),
-    "reasoning": Suite(
-        name="reasoning",
+    "vllm-reasoning": Suite(
+        name="vllm-reasoning",
         roots=["tests/integration/responses/test_reasoning.py"],
         default_setup="vllm",
+    ),
+    "ollama-reasoning": Suite(
+        name="ollama-reasoning",
+        roots=[
+            "tests/integration/inference/test_openai_completion.py::test_openai_chat_completion_reasoning_passthrough",
+        ],
+        default_setup="ollama-reasoning",
     ),
     # Bedrock-specific tests with pre-recorded responses (no live API calls in CI)
     "bedrock": Suite(
