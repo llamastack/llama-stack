@@ -24,6 +24,7 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseReasoning,
     OpenAIResponseText,
 )
+from llama_stack_api.schema_utils import remove_null_from_anyof
 
 
 class ResponseItemInclude(StrEnum):
@@ -57,13 +58,19 @@ class ResponseGuardrailSpec(BaseModel):
 ResponseGuardrail = str | ResponseGuardrailSpec
 
 
+# extra_body can be accessed via .model_extra
 class CreateResponseRequest(BaseModel):
     """Request model for creating a response."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="allow")
 
     input: str | list[OpenAIResponseInput] = Field(..., description="Input message(s) to create the response.")
     model: str = Field(..., description="The underlying LLM used for completions.")
+    background: bool | None = Field(
+        default=None,
+        description="Whether to run the model response in the background. When true, returns immediately with status 'queued'.",
+        json_schema_extra=remove_null_from_anyof,
+    )
     prompt: OpenAIResponsePrompt | None = Field(
         default=None, description="Prompt object with ID, version, and variables."
     )
@@ -98,6 +105,18 @@ class CreateResponseRequest(BaseModel):
         ge=0.0,
         le=2.0,
         description="Sampling temperature.",
+    )
+    top_p: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus sampling parameter that controls response diversity (lower values increase focus).",
+    )
+    frequency_penalty: float | None = Field(
+        default=None,
+        ge=-2.0,
+        le=2.0,
+        description="Penalizes new tokens based on their frequency in the text so far.",
     )
     text: OpenAIResponseText | None = Field(
         default=None,
@@ -154,6 +173,18 @@ class CreateResponseRequest(BaseModel):
     truncation: ResponseTruncation | None = Field(
         default=None,
         description="Controls how the service truncates input when it exceeds the model context window.",
+    )
+    top_logprobs: int | None = Field(
+        default=None,
+        ge=0,
+        le=20,
+        description="The number of most likely tokens to return at each position, along with their log probabilities.",
+    )
+    presence_penalty: float | None = Field(
+        default=None,
+        ge=-2.0,
+        le=2.0,
+        description="Penalizes new tokens based on whether they appear in the text so far.",
     )
 
 

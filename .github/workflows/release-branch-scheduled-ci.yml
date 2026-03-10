@@ -126,7 +126,7 @@ jobs:
 
       - name: Setup Node.js for TypeScript client tests
         if: matrix.client == 'server' && steps.check-ts-client.outputs.exists == 'true'
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -170,7 +170,7 @@ jobs:
           ref: ${{ matrix.branch }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b # v7.3.0
+        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: true

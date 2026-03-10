@@ -116,7 +116,7 @@ async def test_cached_registry_updates(cached_disk_dist_registry):
     assert result_vector_store.provider_id == new_vector_store.provider_id
 
 
-async def test_duplicate_provider_registration(cached_disk_dist_registry):
+async def test_duplicate_provider_registration_conflict(cached_disk_dist_registry):
     original_vector_store = VectorStore(
         identifier="test_vector_store_2",
         embedding_model="nomic-embed-text-v1.5",
@@ -126,21 +126,21 @@ async def test_duplicate_provider_registration(cached_disk_dist_registry):
     )
     assert await cached_disk_dist_registry.register(original_vector_store)
 
-    duplicate_vector_store = VectorStore(
+    updated_vector_store = VectorStore(
         identifier="test_vector_store_2",
-        embedding_model="different-model",
+        embedding_model="different-model",  # Conflicting value
         embedding_dimension=768,
         provider_resource_id="test_vector_store_2",
-        provider_id="baz",  # Same provider_id
+        provider_id="baz",
     )
-    with pytest.raises(
-        ValueError, match="Object of type 'vector_store' and identifier 'test_vector_store_2' already exists"
-    ):
-        await cached_disk_dist_registry.register(duplicate_vector_store)
+    # Re-registration with conflicting field values should raise ValueError
+    with pytest.raises(ValueError, match="conflicting field values"):
+        await cached_disk_dist_registry.register(updated_vector_store)
 
+    # Original object should be preserved
     result = await cached_disk_dist_registry.get("vector_store", "test_vector_store_2")
     assert result is not None
-    assert result.embedding_model == original_vector_store.embedding_model  # Original values preserved
+    assert result.embedding_model == original_vector_store.embedding_model
 
 
 async def test_get_all_objects(cached_disk_dist_registry):
@@ -267,8 +267,8 @@ async def test_double_registration_identical_objects(disk_dist_registry):
     assert retrieved.embedding_model == vector_store.embedding_model
 
 
-async def test_double_registration_different_objects(disk_dist_registry):
-    """Test that registering different objects with same identifier fails."""
+async def test_double_registration_conflicting_objects(disk_dist_registry):
+    """Test that re-registering with conflicting field values raises ValueError."""
     vector_store1 = VectorStoreWithOwner(
         identifier="test_vector_store",
         embedding_model="all-MiniLM-L6-v2",
@@ -279,7 +279,7 @@ async def test_double_registration_different_objects(disk_dist_registry):
 
     vector_store2 = VectorStoreWithOwner(
         identifier="test_vector_store",  # Same identifier
-        embedding_model="different-model",  # Different embedding model
+        embedding_model="different-model",  # Conflicting embedding model
         embedding_dimension=384,
         provider_resource_id="test_vector_store",
         provider_id="test-provider",
@@ -289,20 +289,59 @@ async def test_double_registration_different_objects(disk_dist_registry):
     result1 = await disk_dist_registry.register(vector_store1)
     assert result1 is True
 
-    # Second registration with different data should fail
-    with pytest.raises(
-        ValueError, match="Object of type 'vector_store' and identifier 'test_vector_store' already exists"
-    ):
+    # Second registration with conflicting data should raise ValueError
+    with pytest.raises(ValueError, match="conflicting field values"):
         await disk_dist_registry.register(vector_store2)
 
-    # Verify original object is unchanged
+    # Original object should be preserved
     retrieved = await disk_dist_registry.get("vector_store", "test_vector_store")
     assert retrieved is not None
-    assert retrieved.embedding_model == "all-MiniLM-L6-v2"  # Original value
+    assert retrieved.embedding_model == "all-MiniLM-L6-v2"
 
 
-async def test_double_registration_with_cache(cached_disk_dist_registry):
-    """Test double registration behavior with caching enabled."""
+async def test_restart_registration_with_owner_mismatch(disk_dist_registry):
+    """Test that re-registration succeeds when persisted object has owner set.
+
+    Simulates a server restart: first registration sets an owner field,
+    but on restart the config-provided object has no owner.  Since owner
+    is not in the incoming object's ``model_fields_set``, it is treated
+    as an unset field and the existing record is accepted as-is.
+    """
+    from llama_stack.core.datatypes import User
+
+    # First registration with owner (as if set during initial startup)
+    vector_store_with_owner = VectorStoreWithOwner(
+        identifier="restart_test_vs",
+        embedding_model="all-MiniLM-L6-v2",
+        embedding_dimension=384,
+        provider_resource_id="restart_test_vs",
+        provider_id="test-provider",
+        owner=User(principal="admin", attributes=None),
+    )
+    result1 = await disk_dist_registry.register(vector_store_with_owner)
+    assert result1 is True
+
+    # Simulated restart: config-provided object without owner
+    vector_store_no_owner = VectorStoreWithOwner(
+        identifier="restart_test_vs",
+        embedding_model="all-MiniLM-L6-v2",
+        embedding_dimension=384,
+        provider_resource_id="restart_test_vs",
+        provider_id="test-provider",
+    )
+    result2 = await disk_dist_registry.register(vector_store_no_owner)
+    assert result2 is True
+
+    # Existing record should be preserved (owner NOT overwritten)
+    retrieved = await disk_dist_registry.get("vector_store", "restart_test_vs")
+    assert retrieved is not None
+    assert retrieved.identifier == "restart_test_vs"
+    assert retrieved.owner is not None
+    assert retrieved.owner.principal == "admin"
+
+
+async def test_double_registration_with_cache_conflict(cached_disk_dist_registry):
+    """Test that re-registration with conflicting fields raises ValueError and preserves cache."""
     from llama_stack.core.datatypes import ModelWithOwner
     from llama_stack_api import ModelType
 
@@ -317,7 +356,7 @@ async def test_double_registration_with_cache(cached_disk_dist_registry):
         identifier="test_model",  # Same identifier
         provider_resource_id="test_model",
         provider_id="test-provider",
-        model_type=ModelType.embedding,  # Different type
+        model_type=ModelType.embedding,  # Conflicting type
     )
 
     # First registration should succeed and populate cache
@@ -329,8 +368,8 @@ async def test_double_registration_with_cache(cached_disk_dist_registry):
     assert cached_model is not None
     assert cached_model.model_type == ModelType.llm
 
-    # Second registration with different data should fail
-    with pytest.raises(ValueError, match="Object of type 'model' and identifier 'test_model' already exists"):
+    # Second registration with conflicting data should raise ValueError
+    with pytest.raises(ValueError, match="conflicting field values"):
         await cached_disk_dist_registry.register(model2)
 
     # Cache should still contain original model

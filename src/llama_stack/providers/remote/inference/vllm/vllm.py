@@ -24,7 +24,6 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     RerankData,
     RerankResponse,
-    ToolChoice,
 )
 from llama_stack_api.inference import RerankRequest
 
@@ -37,9 +36,6 @@ class VLLMInferenceAdapter(OpenAIMixin):
     config: VLLMInferenceAdapterConfig
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    # vLLM does not support the stream_options parameter
-    supports_stream_options: bool = False
 
     provider_data_api_key_field: str = "vllm_api_token"
 
@@ -105,19 +101,19 @@ class VLLMInferenceAdapter(OpenAIMixin):
         if params.max_tokens is None and self.config.max_tokens:
             params.max_tokens = self.config.max_tokens
 
-        # This is to be consistent with OpenAI API and support vLLM <= v0.6.3
-        # References:
-        #   * https://platform.openai.com/docs/api-reference/chat/create#chat-create-tool_choice
-        #   * https://github.com/vllm-project/vllm/pull/10000
-        if not params.tools and params.tool_choice is not None:
-            params.tool_choice = ToolChoice.none.value
-
         return await super().openai_chat_completion(params)
 
     def construct_model_from_identifier(self, identifier: str) -> Model:
-        if (
-            "rerank" in identifier.lower()
-        ):  # TODO: guessing that any model with "rerank" in its name is a reranking model is pretty hacky
+        # vLLM's /v1/models response does not expose a model task/type field, so classify by name.
+        if "embed" in identifier.lower():
+            return Model(
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=identifier,
+                identifier=identifier,
+                model_type=ModelType.embedding,
+                metadata={},
+            )
+        if "rerank" in identifier.lower():
             return Model(
                 provider_id=self.__provider_id__,  # type: ignore[attr-defined]
                 provider_resource_id=identifier,

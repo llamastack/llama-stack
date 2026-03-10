@@ -83,6 +83,7 @@ py-modules = [
     "llama_stack_api.vector_stores",
     "llama_stack_api.version",
     "llama_stack_api.validators",
+    "llama_stack_api.helpers",
 ]
 
 [tool.setuptools.package-data]
@@ -90,7 +91,7 @@ llama_stack_api = ["py.typed", "**/*.json", "**/*.yaml"]
 
 [tool.setuptools_scm]
 root = "../.."
-fallback_version = "0.5.1.dev0"
+fallback_version = "0.5.3.dev0"
 
 [tool.ruff]
 line-length = 120

@@ -10,7 +10,7 @@ from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, PropertyMock, patch
 
 import pytest
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, SecretStr
 
 from llama_stack.core.request_headers import request_provider_data_context
 from llama_stack.providers.utils.inference.model_registry import RemoteInferenceProviderConfig
@@ -515,13 +515,18 @@ class TestOpenAIMixinAllowedModels:
 class TestOpenAIMixinModelRegistration:
     """Test cases for model registration functionality"""
 
-    async def test_register_model_success(self, mixin, mock_client_with_models, mock_client_context):
+    async def test_register_model_success(self, mock_client_with_models, mock_client_context):
         """Test successful model registration when model is available"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Enable validation for this model
         model = Model(
             provider_id="test-provider",
             provider_resource_id="some-mock-model-id",
             identifier="test-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -534,13 +539,18 @@ class TestOpenAIMixinModelRegistration:
             assert result.model_type == ModelType.llm
             mock_client_with_models.models.list.assert_called_once()
 
-    async def test_register_model_not_available(self, mixin, mock_client_with_models, mock_client_context):
+    async def test_register_model_not_available(self, mock_client_with_models, mock_client_context):
         """Test model registration failure when model is not available from provider"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Enable validation for this model
         model = Model(
             provider_id="test-provider",
             provider_resource_id="non-existent-model",
             identifier="test-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -550,24 +560,27 @@ class TestOpenAIMixinModelRegistration:
                 await mixin.register_model(model)
             mock_client_with_models.models.list.assert_called_once()
 
-    async def test_register_model_with_allowed_models_filter(self, mixin, mock_client_with_models, mock_client_context):
+    async def test_register_model_with_allowed_models_filter(self, mock_client_with_models, mock_client_context):
         """Test model registration with allowed_models filtering"""
-        mixin.config.allowed_models = ["some-mock-model-id"]
+        config = RemoteInferenceProviderConfig(allowed_models=["some-mock-model-id"])
+        mixin = OpenAIMixinImpl(config=config)
 
-        # Test with allowed model
+        # Test with allowed model (with validation enabled)
         allowed_model = Model(
             provider_id="test-provider",
             provider_resource_id="some-mock-model-id",
             identifier="allowed-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
-        # Test with disallowed model
+        # Test with disallowed model (with validation enabled)
         disallowed_model = Model(
             provider_id="test-provider",
             provider_resource_id="final-mock-model-id",
             identifier="disallowed-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_models):
@@ -616,18 +629,24 @@ class TestOpenAIMixinModelRegistration:
         result = await mixin.should_refresh_models()
         assert result is False
 
+        # With refresh_models=True, should return True
         config_with_refresh = RemoteInferenceProviderConfig(refresh_models=True)
         mixin_with_refresh = OpenAIMixinImpl(config=config_with_refresh)
         result_with_refresh = await mixin_with_refresh.should_refresh_models()
         assert result_with_refresh is True
 
-    async def test_register_model_error_propagation(self, mixin, mock_client_with_exception, mock_client_context):
+    async def test_register_model_error_propagation(self, mock_client_with_exception, mock_client_context):
         """Test that errors from provider API are properly propagated during registration"""
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Enable validation for this model
         model = Model(
             provider_id="test-provider",
             provider_resource_id="some-model",
             identifier="test-model",
             model_type=ModelType.llm,
+            model_validation=True,
         )
 
         with mock_client_context(mixin, mock_client_with_exception):
@@ -635,11 +654,79 @@ class TestOpenAIMixinModelRegistration:
             with pytest.raises(Exception, match="API Error"):
                 await mixin.register_model(model)
 
+    async def test_register_model_default_behavior_no_validation(self, mock_client_with_models, mock_client_context):
+        """Test model registration with default behavior (no validation)"""
+        # Default behavior - no validation
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should succeed without checking model availability (default behavior)
+            result = await mixin.register_model(model)
+
+            assert result == model
+            # Verify that models.list() was NOT called
+            mock_client_with_models.models.list.assert_not_called()
+
+    async def test_register_model_with_validation_enabled(self, mock_client_with_models, mock_client_context):
+        """Test that model-level model_validation=True enables validation"""
+        # Default config (no provider-level validation setting)
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Model explicitly enables validation
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+            model_validation=True,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should fail because model-level validation is enabled
+            with pytest.raises(ValueError, match="Model non-existent-model is not available"):
+                await mixin.register_model(model)
+            # Verify that models.list() WAS called (validation happened)
+            mock_client_with_models.models.list.assert_called_once()
+
+    async def test_register_model_with_validation_explicitly_disabled(
+        self, mock_client_with_models, mock_client_context
+    ):
+        """Test that model-level model_validation=False explicitly disables validation"""
+        # Default config
+        config = RemoteInferenceProviderConfig()
+        mixin = OpenAIMixinImpl(config=config)
+
+        # Model explicitly disables validation (though this is the default anyway)
+        model = Model(
+            provider_id="test-provider",
+            provider_resource_id="non-existent-model",
+            identifier="test-model",
+            model_type=ModelType.llm,
+            model_validation=False,
+        )
+
+        with mock_client_context(mixin, mock_client_with_models):
+            # Should succeed because validation is disabled
+            result = await mixin.register_model(model)
+
+            assert result == model
+            # Verify that models.list() was NOT called
+            mock_client_with_models.models.list.assert_not_called()
+
 
 class ProviderDataValidator(BaseModel):
     """Validator for provider data in tests"""
 
-    test_api_key: str | None = Field(default=None)
+    test_api_key: SecretStr | None = Field(default=None)
 
 
 class OpenAIMixinWithProviderData(OpenAIMixinImpl):
@@ -1168,6 +1255,26 @@ class TestOpenAIMixinSafetyIdentifierPassing:
             call_kwargs = mock_client.chat.completions.create.call_args[1]
             assert call_kwargs["safety_identifier"] == "user-123-hashed"
 
+    async def test_chat_completion_with_top_p(self, mixin, mock_client_context):
+        """Test that top_p is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        top_p_value = 0.9
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_p=top_p_value,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_p"] == top_p_value
+
 
 class TestOpenAIMixinPromptCacheKey:
     """Test cases for prompt_cache_key parameter propagation"""
@@ -1215,3 +1322,61 @@ class TestOpenAIMixinServiceTier:
             mock_client.chat.completions.create.assert_called_once()
             call_kwargs = mock_client.chat.completions.create.call_args[1]
             assert call_kwargs["service_tier"] == ServiceTier.priority
+
+
+class TestOpenAIMixinTopLogprobs:
+    """Test cases for top_logprobs parameter in chat completion requests"""
+
+    async def test_chat_completion_with_top_logprobs_value_5(self, mixin, mock_client_context):
+        """Test that top_logprobs=5 is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=5,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_logprobs"] == 5
+
+    async def test_chat_completion_with_top_logprobs_boundary_min(self, mixin, mock_client_context):
+        """Test that top_logprobs=0 (minimum) is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=0,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_logprobs"] == 0
+
+    async def test_chat_completion_with_top_logprobs_boundary_max(self, mixin, mock_client_context):
+        """Test that top_logprobs=20 (maximum) is properly passed to the OpenAI client"""
+        mock_client = MagicMock()
+        mock_client.chat.completions.create = AsyncMock(return_value=MagicMock())
+
+        with mock_client_context(mixin, mock_client):
+            await mixin.openai_chat_completion(
+                OpenAIChatCompletionRequestWithExtraBody(
+                    model="gpt-4",
+                    messages=[OpenAIUserMessageParam(role="user", content="Hello")],
+                    top_logprobs=20,
+                )
+            )
+
+            mock_client.chat.completions.create.assert_called_once()
+            call_kwargs = mock_client.chat.completions.create.call_args[1]
+            assert call_kwargs["top_logprobs"] == 20

@@ -229,26 +229,13 @@ def test_parse_and_maybe_upgrade_config_preserves_custom_external_providers_dir(
 
 
 def test_generate_run_config_from_providers():
-    """Test that _generate_run_config_from_providers creates a valid config"""
-    import argparse
+    """Test that run_config_from_dynamic_config_spec creates a valid config for the providers-run distro"""
+    from llama_stack.core.stack import run_config_from_dynamic_config_spec
 
-    from llama_stack.cli.stack.run import StackRun
-    from llama_stack.core.datatypes import Provider
-
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers()
-    stack_run = StackRun(subparsers)
-
-    providers = {
-        "inference": [
-            Provider(
-                provider_type="inline::meta-reference",
-                provider_id="meta-reference",
-            )
-        ]
-    }
-
-    config = stack_run._generate_run_config_from_providers(providers=providers)
+    config = run_config_from_dynamic_config_spec(
+        "inference=remote::openai",
+        distro_name="providers-run",
+    )
     config_dict = config.model_dump(mode="json")
 
     # Verify basic structure

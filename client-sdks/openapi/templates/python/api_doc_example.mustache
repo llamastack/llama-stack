@@ -1,0 +1,37 @@
+
+```python
+import {{{packageName}}}
+{{#vendorExtensions.x-py-example-import}}
+{{{.}}}
+{{/vendorExtensions.x-py-example-import}}
+from {{{packageName}}} import {{#async}}AsyncLlamaStackClient{{/async}}{{^async}}LlamaStackClient{{/async}}
+from {{{packageName}}}.rest import ApiException
+from pprint import pprint
+
+{{> python_doc_auth_partial}}
+
+# Create a LlamaStack client instance
+{{#async}}async {{/async}}with {{#async}}AsyncLlamaStackClient{{/async}}{{^async}}LlamaStackClient{{/async}}(configuration) as client:
+    {{#allParams}}
+    {{paramName}} = {{{example}}} # {{{dataType}}} | {{{description}}}{{^required}} (optional){{/required}}{{#defaultValue}} (default to {{{.}}}){{/defaultValue}}
+    {{/allParams}}
+
+    try:
+        {{#summary}}
+        # {{{.}}}
+        {{/summary}}
+        {{#returnType}}api_response = {{/returnType}}{{#async}}await {{/async}}client.{{#tags}}{{#-first}}{{{name}}}{{/-first}}{{/tags}}.{{#vendorExtensions.x-operation-name}}{{{vendorExtensions.x-operation-name}}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{{operationId}}}{{/vendorExtensions.x-operation-name}}({{#allParams}}{{#required}}{{paramName}}{{/required}}{{^required}}{{paramName}}={{paramName}}{{/required}}{{^-last}}, {{/-last}}{{/allParams}})
+        {{#returnType}}
+        print("The response:\n")
+        pprint(api_response)
+        {{/returnType}}
+    except Exception as e:
+        print("Exception when calling client.{{#tags}}{{#-first}}{{{name}}}{{/-first}}{{/tags}}.{{#vendorExtensions.x-operation-name}}{{vendorExtensions.x-operation-name}}{{/vendorExtensions.x-operation-name}}{{^vendorExtensions.x-operation-name}}{{operationId}}{{/vendorExtensions.x-operation-name}}: %s\n" % e)
+```
+
+{{#vendorExtensions.x-py-postponed-example-imports.size}}
+{{#vendorExtensions.x-py-postponed-example-imports}}
+{{{.}}}
+{{/vendorExtensions.x-py-postponed-example-imports}}
+{{classname}}.update_forward_refs()
+{{/vendorExtensions.x-py-postponed-example-imports.size}}

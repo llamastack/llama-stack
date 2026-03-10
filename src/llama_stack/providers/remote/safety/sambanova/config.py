@@ -12,7 +12,7 @@ from llama_stack_api import json_schema_type
 
 
 class SambaNovaProviderDataValidator(BaseModel):
-    sambanova_api_key: str | None = Field(
+    sambanova_api_key: SecretStr | None = Field(
         default=None,
         description="Sambanova Cloud API key",
     )

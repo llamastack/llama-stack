@@ -9,7 +9,7 @@ import base64
 import io
 from urllib.parse import unquote
 
-from llama_stack.providers.utils.memory.vector_store import parse_data_url
+from llama_stack.providers.utils.common.data_url import parse_data_url
 
 
 async def get_dataframe_from_uri(uri: str):

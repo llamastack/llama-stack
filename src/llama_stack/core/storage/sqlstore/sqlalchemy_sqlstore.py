@@ -187,6 +187,7 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         table: str,
         where: Mapping[str, Any] | None = None,
         where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
         limit: int | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
         cursor: tuple[str, str] | None = None,
@@ -200,7 +201,10 @@ class SqlAlchemySqlStoreImpl(SqlStore):
                     query = query.where(_build_where_expr(table_obj.c[key], value))
 
             if where_sql:
-                query = query.where(text(where_sql))
+                clause = text(where_sql)
+                if where_sql_params:
+                    clause = clause.bindparams(**where_sql_params)
+                query = query.where(clause)
 
             # Handle cursor-based pagination
             if cursor:
@@ -287,9 +291,10 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         table: str,
         where: Mapping[str, Any] | None = None,
         where_sql: str | None = None,
+        where_sql_params: Mapping[str, Any] | None = None,
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
     ) -> dict[str, Any] | None:
-        result = await self.fetch_all(table, where, where_sql, limit=1, order_by=order_by)
+        result = await self.fetch_all(table, where, where_sql, where_sql_params, limit=1, order_by=order_by)
         if not result.data:
             return None
         return result.data[0]

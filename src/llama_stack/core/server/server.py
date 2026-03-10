@@ -57,6 +57,7 @@ from llama_stack.core.utils.config_resolution import resolve_config_or_distro
 from llama_stack.core.utils.context import preserve_contexts_async_generator
 from llama_stack.log import LoggingConfig, get_logger
 from llama_stack_api import Api, ConflictError, PaginatedResponse, ResourceNotFoundError
+from llama_stack_api.common.errors import OpenAIErrorResponse
 
 from .auth import AuthenticationMiddleware, RouteAuthorizationMiddleware
 from .quota import QuotaMiddleware
@@ -96,10 +97,9 @@ async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, ResourceNotFoundError) and request.url.path.startswith("/v1/vector_stores"):
         http_exc = HTTPException(status_code=httpx.codes.BAD_REQUEST, detail=str(exc))
 
-    # The OpenAI Python SDK parses error responses as body["error"]["message"].
-    # Using "message" (not "detail") ensures the SDK surfaces the actual error text
-    # in exception messages, which client code and integration tests rely on.
-    return JSONResponse(status_code=http_exc.status_code, content={"error": {"message": http_exc.detail}})
+    return JSONResponse(
+        status_code=http_exc.status_code, content=OpenAIErrorResponse.from_message(http_exc.detail).to_dict()
+    )
 
 
 class StackApp(FastAPI):
@@ -167,13 +167,7 @@ async def sse_generator(event_gen_coroutine):
             await event_gen.aclose()
     except Exception as e:
         logger.exception("Error in sse_generator")
-        yield create_sse_event(
-            {
-                "error": {
-                    "message": str(translate_exception(e)),
-                },
-            }
-        )
+        yield create_sse_event(OpenAIErrorResponse.from_message(translate_exception(e)).to_dict())
 
 
 async def log_request_pre_validation(request: Request):
@@ -280,13 +274,9 @@ class ClientVersionMiddleware:
                                     "headers": [[b"content-type", b"application/json"]],
                                 }
                             )
-                            error_msg = json.dumps(
-                                {
-                                    "error": {
-                                        "message": f"Client version {client_version} is not compatible with server version {self.server_version}. Please update your client."
-                                    }
-                                }
-                            ).encode()
+                            error_msg = OpenAIErrorResponse.from_message(
+                                f"Client version {client_version} is not compatible with server version {self.server_version}. Please update your client."
+                            ).to_bytes()
                             await send({"type": "http.response.body", "body": error_msg})
 
                         return await send_version_error(send)

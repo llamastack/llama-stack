@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import json
 from dataclasses import dataclass
 from typing import cast
 
@@ -32,6 +33,14 @@ from llama_stack_api import (
     OpenAIResponseToolMCP,
     OpenAITokenLogProb,
 )
+
+
+def _json_equal(a: str, b: str) -> bool:
+    """Compare two JSON strings by value, falling back to string comparison."""
+    try:
+        return json.loads(a) == json.loads(b)
+    except (json.JSONDecodeError, TypeError):
+        return a == b
 
 
 class ToolExecutionResult(BaseModel):
@@ -163,9 +172,12 @@ class ChatCompletionContext(BaseModel):
     response_tools: list[OpenAIResponseInputTool] | None = None
     chat_tools: list[ChatCompletionToolParam] | None = None
     temperature: float | None
+    top_p: float | None
+    frequency_penalty: float | None = None
     response_format: OpenAIResponseFormatParam
     tool_context: ToolContext | None
     tool_choice: OpenAIResponseInputToolChoice | None = None
+    extra_body: dict | None = None
     approval_requests: list[OpenAIResponseMCPApprovalRequest] = []
     approval_responses: dict[str, OpenAIResponseMCPApprovalResponse] = {}
 
@@ -175,19 +187,25 @@ class ChatCompletionContext(BaseModel):
         messages: list[OpenAIMessageParam],
         response_tools: list[OpenAIResponseInputTool] | None,
         temperature: float | None,
+        top_p: float | None,
         response_format: OpenAIResponseFormatParam,
         tool_context: ToolContext,
         inputs: list[OpenAIResponseInput] | str,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
+        frequency_penalty: float | None = None,
+        extra_body: dict | None = None,
     ):
         super().__init__(
             model=model,
             messages=messages,
             response_tools=response_tools,
             temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
             response_format=response_format,
             tool_context=tool_context,
             tool_choice=tool_choice,
+            extra_body=extra_body,
         )
         if not isinstance(inputs, str):
             self.approval_requests = [input for input in inputs if input.type == "mcp_approval_request"]
@@ -201,7 +219,7 @@ class ChatCompletionContext(BaseModel):
 
     def _approval_request(self, tool_name: str, arguments: str) -> OpenAIResponseMCPApprovalRequest | None:
         for request in self.approval_requests:
-            if request.name == tool_name and request.arguments == arguments:
+            if request.name == tool_name and _json_equal(request.arguments, arguments):
                 return request
         return None
 
