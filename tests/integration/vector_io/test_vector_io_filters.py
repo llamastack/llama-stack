@@ -825,13 +825,6 @@ def test_filter_multiple_and_conditions(
 # =============================================================================
 
 
-def skip_if_provider_doesnt_support_openai_vector_stores(client):
-    """Skip test if provider doesn't support OpenAI vector stores."""
-    providers = [p for p in client.providers.list() if p.api == "vector_io"]
-    if not providers:
-        pytest.skip("No vector_io providers available")
-
-
 @vector_provider_wrapper
 def test_openai_search_with_comparison_filter(
     client_with_empty_registry,
@@ -841,12 +834,8 @@ def test_openai_search_with_comparison_filter(
     vector_io_provider_id,
 ):
     """Test OpenAI-compatible search with comparison filter."""
-    # Skip for llama-stack client as it doesn't support params in vector_stores.search()
-    # This functionality requires OpenAI-compatible client or updated client SDK
-    pytest.skip("Skipping for llama-stack client: vector_stores.search() doesn't support params parameter yet")
-
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
-    skip_if_provider_doesnt_support_openai_vector_stores(client)
 
     vector_store = client.vector_stores.create(
         name="openai_filter_test",
@@ -861,13 +850,11 @@ def test_openai_search_with_comparison_filter(
         chunks=filter_test_chunks,
     )
 
-    # Search with filter using typed Filter object
-    filter_obj = ComparisonFilter(type="eq", key="topic", value="programming")
-
+    # Use the OpenAI-native `filters=` parameter (dict form) that gets parsed by openai_search_vector_store
     response = client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="programming language",
-        params={"filters": filter_obj.model_dump()},
+        filters={"type": "eq", "key": "topic", "value": "programming"},
         max_num_results=5,
     )
 
@@ -888,12 +875,8 @@ def test_openai_search_with_compound_filter(
     vector_io_provider_id,
 ):
     """Test OpenAI-compatible search with compound filter."""
-    # Skip for llama-stack client as it doesn't support params in vector_stores.search()
-    # This functionality requires OpenAI-compatible client or updated client SDK
-    pytest.skip("Skipping for llama-stack client: vector_stores.search() doesn't support params parameter yet")
-
+    skip_if_provider_doesnt_support_filters(vector_io_provider_id)
     client = client_with_empty_registry
-    skip_if_provider_doesnt_support_openai_vector_stores(client)
 
     vector_store = client.vector_stores.create(
         name="openai_compound_filter_test",
@@ -908,19 +891,17 @@ def test_openai_search_with_compound_filter(
         chunks=filter_test_chunks,
     )
 
-    # Search with AND compound filter
-    filter_obj = CompoundFilter(
-        type="and",
-        filters=[
-            ComparisonFilter(type="eq", key="category", value="technology"),
-            ComparisonFilter(type="eq", key="is_featured", value=True),
-        ],
-    )
-
+    # AND compound filter: category == "technology" AND is_featured == True
     response = client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="artificial intelligence",
-        params={"filters": filter_obj.model_dump()},
+        filters={
+            "type": "and",
+            "filters": [
+                {"type": "eq", "key": "category", "value": "technology"},
+                {"type": "eq", "key": "is_featured", "value": True},
+            ],
+        },
         max_num_results=5,
     )
 

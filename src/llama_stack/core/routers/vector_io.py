@@ -6,12 +6,13 @@
 
 import asyncio
 import uuid
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import Body
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.vector_io.filters import parse_filter
 from llama_stack_api import (
     DEFAULT_CHUNK_OVERLAP_TOKENS,
     DEFAULT_CHUNK_SIZE_TOKENS,
@@ -47,13 +48,6 @@ from llama_stack_api import (
     VectorStoreListResponse,
     VectorStoreObject,
     VectorStoreSearchResponsePage,
-)
-from llama_stack_api.filters import (
-    ALL_FILTER_TYPES,
-    COMPARISON_FILTER_TYPES,
-    COMPOUND_FILTER_TYPES,
-    ComparisonFilter,
-    CompoundFilter,
 )
 
 logger = get_logger(name=__name__, category="core::routers")
@@ -144,60 +138,6 @@ class VectorIORouter(VectorIO):
         )
         return await self.routing_table.insert_chunks(request)
 
-    def _parse_filter(self, filter_data: Any) -> Any:
-        """Recursively parse filter data into typed Filter objects.
-
-        This method handles the conversion of dictionary-based filter data into proper
-        typed Filter objects (ComparisonFilter or CompoundFilter), supporting arbitrary
-        nesting levels and pre-typed filter objects.
-
-        Args:
-            filter_data: Filter data as dict, ComparisonFilter, or CompoundFilter
-
-        Returns:
-            Typed filter object (ComparisonFilter or CompoundFilter)
-
-        Raises:
-            ValueError: If filter data is invalid or has unsupported structure
-        """
-
-        # Handle pre-typed filter objects - pass through unchanged
-        if isinstance(filter_data, ComparisonFilter | CompoundFilter):
-            return filter_data
-
-        # Validate that filter_data is a dictionary
-        if not isinstance(filter_data, dict):
-            raise ValueError("Filter must be a dict or typed Filter object")
-
-        filter_type = filter_data.get("type")
-        if not filter_type:
-            raise ValueError("Filter must have a 'type' field")
-
-        # Handle comparison filters
-        if filter_type in COMPARISON_FILTER_TYPES:
-            # Validate required fields for comparison filters
-            if "key" not in filter_data or "value" not in filter_data:
-                raise ValueError(f"Comparison filter '{filter_type}' must have 'key' and 'value' fields")
-            return ComparisonFilter(**filter_data)
-
-        # Handle compound filters
-        elif filter_type in COMPOUND_FILTER_TYPES:
-            sub_filters_data = filter_data.get("filters", [])
-            if not isinstance(sub_filters_data, list):
-                raise ValueError(f"Compound filter '{filter_type}' must have a 'filters' list")
-
-            # Recursively parse all sub-filters
-            parsed_sub_filters = []
-            for sub_filter in sub_filters_data:
-                parsed_sub_filters.append(self._parse_filter(sub_filter))
-
-            return CompoundFilter(type=filter_type, filters=parsed_sub_filters)
-
-        else:
-            # Use the constants in error message for consistency
-            supported_types = ", ".join(sorted(ALL_FILTER_TYPES))
-            raise ValueError(f"Invalid filter type: '{filter_type}'. Supported types: {supported_types}")
-
     async def query_chunks(
         self,
         request: QueryChunksRequest,
@@ -214,8 +154,7 @@ class VectorIORouter(VectorIO):
         filter_data = params_copy.pop("filters")
 
         try:
-            # Parse filter data with full recursive support
-            parsed_filters = self._parse_filter(filter_data)
+            parsed_filters = parse_filter(filter_data)
         except ValueError as e:
             logger.error(f"Invalid filter data: {e}")
             raise ValueError(f"Invalid filter: {e}") from e

@@ -11,7 +11,7 @@ import random
 import time
 import uuid
 from abc import ABC, abstractmethod
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator
 from enum import StrEnum
 from typing import Annotated, Any
 
@@ -27,9 +27,8 @@ from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
 )
+from llama_stack.providers.utils.vector_io.filters import parse_filter
 from llama_stack_api import (
-    COMPARISON_FILTER_TYPES,
-    COMPOUND_FILTER_TYPES,
     DEFAULT_CHUNK_OVERLAP_TOKENS,
     DEFAULT_CHUNK_SIZE_TOKENS,
     MAX_PAGINATION_LIMIT,
@@ -91,18 +90,6 @@ from llama_stack_api.internal.kvstore import KVStore
 EMBEDDING_DIMENSION = 768
 
 logger = get_logger(name=__name__, category="providers::utils")
-
-# Comparison operators for filter matching (dispatch table)
-COMPARISON_OPERATORS: dict[str, Callable[[Any, Any], bool]] = {
-    "eq": lambda mv, fv: bool(mv == fv),
-    "ne": lambda mv, fv: bool(mv != fv),
-    "gt": lambda mv, fv: bool(mv > fv),
-    "gte": lambda mv, fv: bool(mv >= fv),
-    "lt": lambda mv, fv: bool(mv < fv),
-    "lte": lambda mv, fv: bool(mv <= fv),
-    "in": lambda mv, fv: bool(isinstance(fv, list) and mv in fv),
-    "nin": lambda mv, fv: bool(isinstance(fv, list) and mv not in fv),
-}
 
 # Constants for OpenAI vector stores
 
@@ -743,6 +730,10 @@ class OpenAIVectorStoreMixin(ABC):
                 "mode": request.search_mode,
             }
 
+            # Parse filters into typed objects and pass through to the query
+            if request.filters:
+                params["filters"] = parse_filter(request.filters)
+
             # Use VectorStoresConfig defaults when ranking_options values are not provided
             config = self.vector_stores_config or VectorStoresConfig()
             params.update(self._build_reranker_params(request.ranking_options, config))
@@ -758,15 +749,7 @@ class OpenAIVectorStoreMixin(ABC):
             # Convert response to OpenAI format
             data = []
             for embedded_chunk, score in zip(response.chunks, response.scores, strict=False):
-                # EmbeddedChunk inherits from Chunk, so use it directly
                 chunk = embedded_chunk
-
-                # Apply filters if provided
-                if request.filters:
-                    # Simple metadata filtering
-                    if not self._matches_filters(chunk.metadata, request.filters):
-                        continue
-
                 content = self._chunk_to_vector_store_content(chunk)
 
                 response_data_item = VectorStoreSearchResponse(
@@ -852,104 +835,6 @@ class OpenAIVectorStoreMixin(ABC):
                 params["reranker_params"] = reranker_params
 
         return params
-
-    def _matches_comparison_filter(self, metadata_value: Any, filter_type: str, filter_value: Any) -> bool:
-        """Check if a metadata value matches a comparison filter.
-
-        Args:
-            metadata_value: The value from the metadata to test
-            filter_type: The comparison operator (eq, ne, gt, etc.)
-            filter_value: The value to compare against
-
-        Returns:
-            bool: True if the comparison matches, False otherwise
-        """
-        if filter_type not in COMPARISON_OPERATORS:
-            raise ValueError(f"Unsupported comparison filter type: {filter_type}")
-
-        return COMPARISON_OPERATORS[filter_type](metadata_value, filter_value)
-
-    def _matches_legacy_filter(self, metadata: dict[str, Any], filters: dict[str, Any]) -> bool:
-        """Handle legacy filter format (direct key-value pairs without type field).
-
-        Args:
-            metadata: The metadata to test against
-            filters: Dict of key-value pairs to match
-
-        Returns:
-            bool: True if all key-value pairs match the metadata
-        """
-        for key, value in filters.items():
-            if key not in metadata or metadata[key] != value:
-                return False
-        return True
-
-    def _matches_compound_filter(
-        self, metadata: dict[str, Any], filter_type: str, sub_filters: list[dict[str, Any]]
-    ) -> bool:
-        """Handle compound filters (and/or logic).
-
-        Args:
-            metadata: The metadata to test against
-            filter_type: Either "and" or "or"
-            sub_filters: List of filters to combine
-
-        Returns:
-            bool: True if the compound filter matches
-        """
-        if filter_type == "and":
-            return all(self._matches_filters(metadata, f) for f in sub_filters)
-        elif filter_type == "or":
-            return any(self._matches_filters(metadata, f) for f in sub_filters)
-        else:
-            raise ValueError(f"Unsupported compound filter type: {filter_type}")
-
-    def _matches_filters(self, metadata: dict[str, Any], filters: dict[str, Any]) -> bool:
-        """Check if metadata matches the provided filters.
-
-        This method supports multiple filter formats:
-        - OpenAI-style typed filters with "type" field
-        - Legacy direct key-value filters
-        - Compound filters with nested logic
-
-        Args:
-            metadata: The metadata to test against
-            filters: The filter specification
-
-        Returns:
-            bool: True if the metadata matches the filter criteria
-        """
-        if not filters:
-            return True
-
-        filter_type = filters.get("type")
-
-        # Handle legacy format (no type field)
-        if filter_type is None:
-            if "key" not in filters and "value" not in filters and "filters" not in filters:
-                return self._matches_legacy_filter(metadata, filters)
-            else:
-                raise ValueError("Unsupported filter structure: missing 'type' field")
-
-        # Handle comparison filters
-        if filter_type in COMPARISON_FILTER_TYPES:
-            filter_key = filters.get("key")
-            filter_value = filters.get("value")
-
-            # Validate filter structure
-            if not isinstance(filter_key, str) or filter_key not in metadata:
-                return False
-
-            metadata_value = metadata[filter_key]
-            return self._matches_comparison_filter(metadata_value, filter_type, filter_value)
-
-        # Handle compound filters
-        elif filter_type in COMPOUND_FILTER_TYPES:
-            sub_filters = filters.get("filters", [])
-            return self._matches_compound_filter(metadata, filter_type, sub_filters)
-
-        else:
-            raise ValueError(f"Unsupported filter type: {filter_type}")
 
     def _chunk_to_vector_store_content(
         self, chunk: EmbeddedChunk, include_embeddings: bool = False, include_metadata: bool = False
