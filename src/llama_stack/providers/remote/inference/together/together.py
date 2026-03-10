@@ -18,6 +18,7 @@ from llama_stack_api import (
     OpenAIEmbeddingsRequestWithExtraBody,
     OpenAIEmbeddingsResponse,
     OpenAIEmbeddingUsage,
+    validate_embeddings_input_is_text,
 )
 
 from .config import TogetherImplConfig
@@ -54,7 +55,7 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
                 raise ValueError(
                     'Pass Together API Key in the header X-LlamaStack-Provider-Data as { "together_api_key": <your api key>}'
                 )
-            together_api_key = provider_data.together_api_key
+            together_api_key = provider_data.together_api_key.get_secret_value()
         return AsyncTogether(api_key=together_api_key)
 
     async def list_provider_model_ids(self) -> Iterable[str]:
@@ -74,6 +75,9 @@ class TogetherInferenceAdapter(OpenAIMixin, NeedsRequestProviderData):
          - does not support user param, returns 400 Unrecognized request arguments supplied: user
          - does not support dimensions param, returns 400 Unrecognized request arguments supplied: dimensions
         """
+        # Validate that input contains only text, not token arrays
+        validate_embeddings_input_is_text(params)
+
         # Together support ticket #13332 -> will not fix
         if params.user is not None:
             raise ValueError("Together's embeddings endpoint does not support user param.")

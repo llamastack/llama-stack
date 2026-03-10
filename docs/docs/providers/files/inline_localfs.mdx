@@ -16,6 +16,8 @@ Local filesystem-based file storage provider for managing files and documents lo
 |-------|------|----------|---------|-------------|
 | `storage_dir` | `str` | No |  | Directory to store uploaded files |
 | `metadata_store` | `SqlStoreReference` | No |  | SQL store configuration for file metadata |
+| `metadata_store.table_name` | `str` | No |  | Name of the table to use for the SqlStore |
+| `metadata_store.backend` | `str` | No |  | Name of backend from storage.backends |
 | `ttl_secs` | `int` | No | 31536000 |  |
 
 ## Sample Configuration

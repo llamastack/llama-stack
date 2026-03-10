@@ -1,10 +1,21 @@
 name: Stainless SDK Builds
 run-name: Build Stainless SDK from OpenAPI spec changes
 
-# This workflow uses pull_request_target, which allows it to run on pull requests
-# from forks with access to secrets. This is safe because the workflow definition
-# comes from the base branch (trusted), and the action only reads OpenAPI spec
-# files without executing any code from the PR.
+# SECURITY NOTE: This workflow uses pull_request_target, which runs with access to
+# secrets and a privileged GITHUB_TOKEN even for fork PRs.
+#
+# Security measures in place:
+# 1. The preview and merge jobs only use Stainless actions that read OAS/config files
+#    without executing arbitrary code from the PR.
+#
+# 2. The integration tests are called with security flags:
+#    - matrix_json: Pre-defined matrix to skip generate_ci_matrix.py execution
+#    - disable_cache: Prevents cache poisoning
+#    - Composite actions in integration-tests.yml use full repo paths with pinned SHA
+#      so they're loaded from a trusted commit, not from PR checkout
+#
+# References:
+# - https://securitylab.github.com/research/github-actions-preventing-pwn-requests/
 
 on:
   pull_request_target:
@@ -79,9 +90,14 @@ jobs:
 
       - name: Compute branch names
         id: compute
+        # Pass PR title via environment variable to prevent shell injection.
+        # Direct interpolation of ${{ github.event.pull_request.title }} into bash
+        # allows command substitution via backticks or $() in PR titles.
+        env:
+          PR_TITLE_FROM_EVENT: ${{ github.event.pull_request.title }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            # Extract from fetched PR data
+            # Extract from fetched PR data (jq -r safely handles special characters)
             PR_DATA='${{ steps.fetch-pr.outputs.pr_data }}'
             FORK_OWNER=$(echo "$PR_DATA" | jq -r '.headRepositoryOwner.login')
             REPO_NAME=$(echo "$PR_DATA" | jq -r '.headRepository.name')
@@ -99,7 +115,8 @@ jobs:
             HEAD_SHA="${{ github.event.pull_request.head.sha }}"
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
             BASE_REF="${{ github.event.pull_request.base.ref }}"
-            PR_TITLE="${{ github.event.pull_request.title }}"
+            # Use environment variable to prevent shell injection from PR titles
+            PR_TITLE="$PR_TITLE_FROM_EVENT"
           fi
 
           BASE_REPO="${{ github.repository }}"
@@ -147,7 +164,7 @@ jobs:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ needs.compute-branch.outputs.pr_head_repo }}
           ref: ${{ needs.compute-branch.outputs.pr_head_sha }}
@@ -155,7 +172,7 @@ jobs:
 
       - name: Run preview builds
         id: run-preview
-        uses: stainless-api/upload-openapi-spec-action/preview@cf9772d21297506a1933a74b79916e6e829d4442 # 1.10.0
+        uses: stainless-api/upload-openapi-spec-action/preview@574dfd13ae0a31b75c78570b19811e0f03c66c64 # 1.11.6
         env:
           PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
         with:
@@ -183,7 +200,10 @@ jobs:
     with:
       # Use provided sdk_install_url from workflow_dispatch, or from preview build
       sdk_install_url: ${{ inputs.sdk_install_url || needs.preview.outputs.sdk_install_url }}
-      matrix_key: 'stainless'
+      # Hardcoded matrix avoids running generate_ci_matrix.py from the PR checkout
+      matrix_json: '{"include":[{"suite":"base","setup":"ollama","inference_mode":"record-if-missing"}]}'
+      # Disable caching to prevent cache poisoning from fork PRs
+      disable_cache: true
       test-all-client-versions: false
       pr_head_sha: ${{ needs.compute-branch.outputs.pr_head_sha }}
       pr_head_ref: ${{ needs.compute-branch.outputs.pr_head_ref }}
@@ -200,7 +220,7 @@ jobs:
       # Checkout the PR's code to access the OpenAPI spec and config files.
       # This is necessary to read the spec/config from the PR (including from forks).
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ needs.compute-branch.outputs.pr_head_repo }}
           ref: ${{ needs.compute-branch.outputs.pr_head_sha }}
@@ -213,7 +233,7 @@ jobs:
       # against the preview branch to complete, but assuming that
       # the preview job happens before the PR merge, it should be fine.
       - name: Run merge build
-        uses: stainless-api/upload-openapi-spec-action/merge@cf9772d21297506a1933a74b79916e6e829d4442 # 1.10.0
+        uses: stainless-api/upload-openapi-spec-action/merge@574dfd13ae0a31b75c78570b19811e0f03c66c64 # 1.11.6
         with:
           stainless_api_key: ${{ secrets.STAINLESS_API_KEY }}
           org: ${{ env.STAINLESS_ORG }}

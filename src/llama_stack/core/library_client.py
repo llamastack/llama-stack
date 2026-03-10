@@ -20,7 +20,7 @@ import httpx
 import yaml
 from fastapi import Response as FastAPIResponse
 
-from llama_stack.core.utils.type_inspection import is_unwrapped_body_param
+from llama_stack.core.utils.type_inspection import is_body_param, is_unwrapped_body_param
 
 try:
     from llama_stack_client import (
@@ -568,10 +568,26 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         sig = inspect.signature(func)
         params_list = [p for p in sig.parameters.values() if p.name != "self"]
 
+        # Resolve string annotations (from `from __future__ import annotations`) to actual types
+        try:
+            type_hints = typing.get_type_hints(func, include_extras=True)
+        except NameError as e:
+            # Forward reference could not be resolved - fall back to raw annotations
+            logger.debug(f"Could not resolve type hints for {func.__name__}: {e}")
+            type_hints = {}
+        except Exception as e:
+            # Unexpected error - log and fall back
+            logger.warning(f"Failed to resolve type hints for {func.__name__}: {e}")
+            type_hints = {}
+
+        # Helper to get the resolved type for a parameter
+        def get_param_type(param: inspect.Parameter) -> Any:
+            return type_hints.get(param.name, param.annotation)
+
         # Flatten if there's a single unwrapped body parameter (BaseModel or Annotated[BaseModel, Body(embed=False)])
         if len(params_list) == 1:
             param = params_list[0]
-            param_type = param.annotation
+            param_type = get_param_type(param)
             if is_unwrapped_body_param(param_type):
                 base_type = get_args(param_type)[0]
                 return {param.name: base_type(**body)}
@@ -582,16 +598,22 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
         # Check if there's an unwrapped body parameter among multiple parameters
         # (e.g., path param + body param like: vector_store_id: str, params: Annotated[Model, Body(...)])
         unwrapped_body_param = None
+        unwrapped_body_param_type = None
+        body_param = None
         for param in params_list:
-            if is_unwrapped_body_param(param.annotation):
+            param_type = get_param_type(param)
+            if is_unwrapped_body_param(param_type):
                 unwrapped_body_param = param
+                unwrapped_body_param_type = param_type
                 break
+            if body_param is None and is_body_param(param_type):
+                body_param = param
 
         # Check for parameters with Depends() annotation (FastAPI router endpoints)
         # These need special handling: construct the request model from body
         depends_param = None
         for param in params_list:
-            param_type = param.annotation
+            param_type = get_param_type(param)
             if get_origin(param_type) is typing.Annotated:
                 args = get_args(param_type)
                 if len(args) > 1:
@@ -614,11 +636,12 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                 if param_name in exclude_params:
                     converted_body[param_name] = value
                 else:
-                    converted_body[param_name] = convert_to_pydantic(param.annotation, value)
+                    resolved_type = get_param_type(param)
+                    converted_body[param_name] = convert_to_pydantic(resolved_type, value)
 
         # Handle Depends parameter: construct request model from body
         if depends_param and depends_param.name not in converted_body:
-            param_type = depends_param.annotation
+            param_type = get_param_type(depends_param)
             if get_origin(param_type) is typing.Annotated:
                 base_type = get_args(param_type)[0]
                 # Handle Union types (e.g., SomeRequestModel | None) - extract the non-None type
@@ -638,10 +661,15 @@ class AsyncLlamaStackAsLibraryClient(AsyncLlamaStackClient):
                     converted_body[depends_param.name] = base_type(**body)
 
         # handle unwrapped body parameter after processing all named parameters
-        if unwrapped_body_param:
-            base_type = get_args(unwrapped_body_param.annotation)[0]
+        if unwrapped_body_param and unwrapped_body_param_type:
+            base_type = get_args(unwrapped_body_param_type)[0]
             # extract only keys not already used by other params
             remaining_keys = {k: v for k, v in body.items() if k not in converted_body}
             converted_body[unwrapped_body_param.name] = base_type(**remaining_keys)
+        elif body_param and body_param.name not in converted_body:
+            body_param_type = get_param_type(body_param)
+            base_type = get_args(body_param_type)[0]
+            remaining_keys = {k: v for k, v in body.items() if k not in converted_body}
+            converted_body[body_param.name] = base_type(**remaining_keys)
 
         return converted_body

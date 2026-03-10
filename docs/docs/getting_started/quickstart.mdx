@@ -5,7 +5,10 @@ sidebar_position: 1
 title: Quickstart
 ---
 
-Get started with Llama Stack in minutes!
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
+## Get started with Llama Stack in minutes!
 
 Llama Stack is a stateful service with REST APIs to support the seamless transition of AI applications across different
 environments. You can build and test using a local server first and deploy to a hosted endpoint for production.
@@ -15,14 +18,41 @@ as the inference [provider](/docs/providers/inference) for a Llama Model.
 
 **💡 Notebook Version:** You can also follow this quickstart guide in a Jupyter notebook format: [quick_start.ipynb](https://github.com/meta-llama/llama-stack/blob/main/docs/quick_start.ipynb)
 
-#### Step 1: Install and setup
-1. Install [uv](https://docs.astral.sh/uv/)
-2. Run inference on a Llama model with [Ollama](https://ollama.com/download)
+### Step 1: Installation and Setup
+
+Install Ollama by following the instructions on the [Ollama website](https://ollama.com/download), then
+download Llama 3.2 3B model, and then start the Ollama service.
 ```bash
+ollama pull llama3.2:3b
 ollama run llama3.2:3b --keepalive 60m
 ```
 
-#### Step 2: Run the Llama Stack server
+Install [uv](https://docs.astral.sh/uv/) to setup your virtual environment
+
+<Tabs>
+<TabItem value="unix" label="macOS and Linux">
+Use `curl` to download the script and execute it with `sh`:
+```console
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+</TabItem>
+<TabItem value="windows" label="Windows">
+Use `irm` to download the script and execute it with `iex`:
+
+```console
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+</TabItem>
+</Tabs>
+
+Setup your virtual environment.
+
+```bash
+uv sync --python 3.12
+source .venv/bin/activate
+```
+
+### Step 2: Run the Llama Stack server
 
 We will use `uv` to install dependencies and run the Llama Stack server.
 ```bash
@@ -32,7 +62,7 @@ uv run --with llama-stack llama stack list-deps starter | xargs -L1 uv pip insta
 # Run the server
 OLLAMA_URL=http://localhost:11434/v1 uv run --with llama-stack llama stack run starter
 ```
-#### Step 3: Run the demo
+### Step 3: Run the demo
 Now open up a new terminal and copy the following script into a file named `demo_script.py`.
 
 ```python file=./demo_script.py title="demo_script.py"

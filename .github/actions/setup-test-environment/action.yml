@@ -23,6 +23,10 @@ inputs:
   inference-mode:
     description: 'Inference mode (record or replay)'
     required: true
+  branch:
+    description: 'Explicit branch override (used by scheduled CI to pass the matrix branch)'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -33,6 +37,7 @@ runs:
         python-version: ${{ inputs.python-version }}
         client-version: ${{ inputs.client-version }}
         sdk_install_url: ${{ inputs.sdk_install_url }}
+        branch: ${{ inputs.branch }}
 
     - name: Setup ollama
       if: ${{ (inputs.setup == 'ollama' || inputs.setup == 'ollama-vision') && inputs.inference-mode == 'record' }}

@@ -600,8 +600,24 @@ def main():
         action="store_true",
         help="Also generate documentation from coverage report",
     )
+    parser.add_argument(
+        "--check-regression",
+        action="store_true",
+        help="Fail if coverage score decreases compared to existing report",
+    )
 
     args = parser.parse_args()
+
+    # Load existing coverage for regression check
+    previous_score: float | None = None
+    if args.check_regression and args.output.exists():
+        try:
+            with open(args.output) as f:
+                previous_report = json.load(f)
+                previous_score = previous_report.get("summary", {}).get("conformance", {}).get("score")
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"Error: could not load previous report: {e}")
+            sys.exit(1)
 
     try:
         report = calculate_coverage(args.openai_spec, args.llama_spec, args.openresponses_spec)
@@ -611,6 +627,21 @@ def main():
     except RuntimeError as e:
         print(f"Error: {e}")
         sys.exit(1)
+
+    new_score = report["summary"]["conformance"]["score"]
+
+    # Check for coverage regression
+    if args.check_regression and previous_score is not None:
+        if new_score < previous_score:
+            print(f"Coverage regression detected: {previous_score}% -> {new_score}%")
+            print(f"Coverage decreased by {previous_score - new_score:.1f} percentage points")
+            print()
+            print("To fix this, ensure your changes don't reduce OpenAI API conformance.")
+            print("If this is intentional, update the coverage baseline with:")
+            print(f"  python {__file__} --update --generate-docs")
+            sys.exit(1)
+        elif new_score > previous_score and not args.quiet:
+            print(f"Coverage improved: {previous_score}% -> {new_score}% (+{new_score - previous_score:.1f}%)")
 
     if not args.quiet:
         print_summary(report)

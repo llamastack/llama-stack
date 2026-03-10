@@ -1,0 +1,240 @@
+# coding: utf-8
+
+{{>partial_header}}
+
+from __future__ import annotations
+
+import io
+import json
+import logging
+import re
+import ssl
+
+import httpx
+
+from {{packageName}}.exceptions import ApiException, ApiValueError
+
+logger = logging.getLogger(__name__)
+
+RESTResponseType = httpx.Response
+
+
+class RESTResponse(io.IOBase):
+
+    def __init__(self, resp) -> None:
+        self.response = resp
+        self.status = resp.status_code
+        self.reason = resp.reason_phrase
+        self.data = None
+
+    def read(self):
+        if self.data is None:
+            self.data = self.response.read()
+        return self.data
+
+    def getheaders(self):
+        """Returns a dictionary of the response headers."""
+        return self.response.headers
+
+    def getheader(self, name, default=None):
+        """Returns a given response header."""
+        return self.response.headers.get(name, default)
+
+
+class RESTClientObject:
+
+    def __init__(self, configuration) -> None:
+        self.configuration = configuration
+        self._client: httpx.Client | None = None
+
+        # Build SSL context
+        self.ssl_context = ssl.create_default_context(
+            cafile=configuration.ssl_ca_cert,
+            cadata=configuration.ca_cert_data,
+        )
+        if configuration.cert_file:
+            self.ssl_context.load_cert_chain(
+                configuration.cert_file, keyfile=configuration.key_file
+            )
+        if not configuration.verify_ssl:
+            self.ssl_context.check_hostname = False
+            self.ssl_context.verify_mode = ssl.CERT_NONE
+
+    def _create_client(self) -> httpx.Client:
+        """Create and configure httpx.Client instance."""
+        limits = httpx.Limits(
+            max_connections=self.configuration.connection_pool_maxsize
+        )
+
+        # Default timeout from config or 5 minutes
+        timeout = self.configuration.timeout if self.configuration.timeout is not None else 5 * 60
+
+        # Get http2 setting, default to False if not present
+        http2 = getattr(self.configuration, 'http2', False)
+
+        # Build proxy object with headers if configured
+        proxy = None
+        if self.configuration.proxy:
+            proxy = httpx.Proxy(
+                url=self.configuration.proxy,
+                headers=self.configuration.proxy_headers
+            )
+
+        # Wire retries to transport if configured
+        transport = None
+        if self.configuration.retries is not None:
+            transport = httpx.HTTPTransport(retries=self.configuration.retries)
+
+        try:
+            return httpx.Client(
+                limits=limits,
+                verify=self.ssl_context,
+                proxy=proxy,
+                transport=transport,
+                http2=http2,
+                timeout=timeout,
+                trust_env=True,
+                follow_redirects=getattr(self.configuration, 'follow_redirects', True),
+            )
+        except ImportError:
+            if http2:
+                raise ImportError(
+                    "HTTP/2 support requires the 'h2' package. "
+                    "Install it with: pip install h2"
+                )
+            raise
+
+    @property
+    def client(self) -> httpx.Client:
+        """Lazy initialization of httpx.Client."""
+        if self._client is None:
+            self._client = self._create_client()
+        return self._client
+
+    def close(self):
+        """Close the HTTP client and release resources."""
+        if self._client is not None:
+            self._client.close()
+            self._client = None
+
+    def request(
+        self,
+        method,
+        url,
+        headers=None,
+        body=None,
+        post_params=None,
+        _request_timeout=None
+    ):
+        """Perform requests.
+
+        :param method: http request method
+        :param url: http request url
+        :param headers: http request headers
+        :param body: request json body, for `application/json`
+        :param post_params: request post parameters,
+                            `application/x-www-form-urlencoded`
+                            and `multipart/form-data`
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        """
+        method = method.upper()
+        assert method in [
+            'GET',
+            'HEAD',
+            'DELETE',
+            'POST',
+            'PUT',
+            'PATCH',
+            'OPTIONS'
+        ]
+
+        if post_params and body:
+            raise ApiValueError(
+                "body parameter cannot be used with post_params parameter."
+            )
+
+        post_params = post_params or {}
+        headers = headers or {}
+
+        # Build request arguments
+        args = {
+            "method": method,
+            "url": url,
+            "headers": headers,
+        }
+
+        # Handle timeout
+        if _request_timeout is not None:
+            if isinstance(_request_timeout, (int, float)):
+                args["timeout"] = _request_timeout
+            elif isinstance(_request_timeout, tuple) and len(_request_timeout) == 2:
+                # httpx supports tuple timeout as (connect, read/write/pool)
+                args["timeout"] = httpx.Timeout(connect=_request_timeout[0], read=_request_timeout[1])
+
+        # Handle different content types
+        if method in ['POST', 'PUT', 'PATCH', 'OPTIONS', 'DELETE']:
+            content_type = headers.get('Content-Type', '')
+
+            if not content_type or re.search('json', content_type, re.IGNORECASE):
+                # JSON content
+                if 'Content-Type' not in headers:
+                    headers['Content-Type'] = 'application/json'
+                if body is not None:
+                    args["json"] = body
+            elif content_type == 'application/x-www-form-urlencoded':
+                # Form-encoded
+                args["data"] = dict(post_params)
+            elif content_type == 'multipart/form-data':
+                # Multipart - let httpx set Content-Type with boundary
+                del headers['Content-Type']
+
+                files = []
+                data = {}
+                for param in post_params:
+                    k, v = param
+                    if isinstance(v, tuple) and len(v) == 3:
+                        # File tuple: (filename, file_content, content_type)
+                        files.append((k, v))
+                    else:
+                        # Regular field
+                        if isinstance(v, dict):
+                            v = json.dumps(v)
+                        elif isinstance(v, int):
+                            v = str(v)
+                        data[k] = v
+
+                if files:
+                    args["files"] = files
+                if data:
+                    args["data"] = data
+            elif isinstance(body, (str, bytes)):
+                # Raw body content
+                args["content"] = body
+            elif content_type.startswith('text/') and isinstance(body, bool):
+                # Boolean as text
+                request_body = "true" if body else "false"
+                args["content"] = request_body
+            else:
+                msg = """Cannot prepare a request message for provided
+                         arguments. Please check that your arguments match
+                         declared content type."""
+                raise ApiException(status=0, reason=msg)
+
+        request = self.client.build_request(**args)
+
+        # Call _prepare_request hook if parent client has it
+        if hasattr(self, '_parent_client') and self._parent_client is not None:
+            if hasattr(self._parent_client, '_prepare_request'):
+                self._parent_client._prepare_request(request)
+
+        try:
+            r = self.client.send(request, stream=True)
+        except httpx.HTTPStatusError as e:
+            raise ApiException(status=e.response.status_code, reason=str(e))
+        except httpx.RequestError as e:
+            raise ApiException(status=0, reason=str(e))
+
+        return RESTResponse(r)

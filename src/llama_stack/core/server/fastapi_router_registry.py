@@ -21,11 +21,14 @@ from llama_stack_api import (
     agents,
     batches,
     benchmarks,
+    connectors,
     conversations,
     datasetio,
     datasets,
     eval,
+    file_processors,
     files,
+    inference,
     inspect_api,
     models,
     post_training,
@@ -35,6 +38,7 @@ from llama_stack_api import (
     scoring,
     scoring_functions,
     shields,
+    vector_io,
 )
 from llama_stack_api.datatypes import Api
 
@@ -45,11 +49,14 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "agents": agents.fastapi_routes.create_router,
     "batches": batches.fastapi_routes.create_router,
     "benchmarks": benchmarks.fastapi_routes.create_router,
+    "connectors": connectors.fastapi_routes.create_router,
     "conversations": conversations.fastapi_routes.create_router,
     "datasetio": datasetio.fastapi_routes.create_router,
     "datasets": datasets.fastapi_routes.create_router,
     "eval": eval.fastapi_routes.create_router,
+    "file_processors": file_processors.fastapi_routes.create_router,
     "files": files.fastapi_routes.create_router,
+    "inference": inference.fastapi_routes.create_router,
     "inspect": inspect_api.fastapi_routes.create_router,
     "models": models.fastapi_routes.create_router,
     "post_training": post_training.fastapi_routes.create_router,
@@ -59,6 +66,7 @@ _ROUTER_FACTORIES: dict[str, Callable[[Any], APIRouter]] = {
     "scoring": scoring.fastapi_routes.create_router,
     "scoring_functions": scoring_functions.fastapi_routes.create_router,
     "shields": shields.fastapi_routes.create_router,
+    "vector_io": vector_io.fastapi_routes.create_router,
 }
 
 

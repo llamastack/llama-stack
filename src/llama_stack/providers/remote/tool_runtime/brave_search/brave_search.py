@@ -9,7 +9,6 @@ from typing import Any
 import httpx
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
-from llama_stack.models.llama.datatypes import BuiltinTool
 from llama_stack_api import (
     URL,
     ListToolDefsResponse,
@@ -45,7 +44,7 @@ class BraveSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRe
             raise ValueError(
                 'Pass Search provider\'s API Key in the header X-LlamaStack-Provider-Data as { "brave_search_api_key": <your api key>}'
             )
-        return provider_data.brave_search_api_key
+        return provider_data.brave_search_api_key.get_secret_value()
 
     async def list_runtime_tools(
         self,
@@ -68,7 +67,6 @@ class BraveSearchToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsRe
                         },
                         "required": ["query"],
                     },
-                    built_in_type=BuiltinTool.brave_search,
                 )
             ]
         )

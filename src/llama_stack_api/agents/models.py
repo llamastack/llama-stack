@@ -15,6 +15,7 @@ from enum import StrEnum
 from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack_api.common.responses import Order
+from llama_stack_api.inference import ServiceTier
 from llama_stack_api.openai_responses import (
     OpenAIResponseInput,
     OpenAIResponseInputTool,
@@ -23,6 +24,7 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseReasoning,
     OpenAIResponseText,
 )
+from llama_stack_api.schema_utils import remove_null_from_anyof
 
 
 class ResponseItemInclude(StrEnum):
@@ -37,6 +39,13 @@ class ResponseItemInclude(StrEnum):
     reasoning_encrypted_content = "reasoning.encrypted_content"
 
 
+class ResponseTruncation(StrEnum):
+    """Controls how the service truncates input when it exceeds the model context window."""
+
+    auto = "auto"  # Let the service decide how to truncate
+    disabled = "disabled"  # Disable truncation; context over limit results in 400 error
+
+
 class ResponseGuardrailSpec(BaseModel):
     """Specification for a guardrail to apply during response generation."""
 
@@ -49,13 +58,19 @@ class ResponseGuardrailSpec(BaseModel):
 ResponseGuardrail = str | ResponseGuardrailSpec
 
 
+# extra_body can be accessed via .model_extra
 class CreateResponseRequest(BaseModel):
     """Request model for creating a response."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="allow")
 
     input: str | list[OpenAIResponseInput] = Field(..., description="Input message(s) to create the response.")
     model: str = Field(..., description="The underlying LLM used for completions.")
+    background: bool | None = Field(
+        default=None,
+        description="Whether to run the model response in the background. When true, returns immediately with status 'queued'.",
+        json_schema_extra=remove_null_from_anyof,
+    )
     prompt: OpenAIResponsePrompt | None = Field(
         default=None, description="Prompt object with ID, version, and variables."
     )
@@ -67,6 +82,11 @@ class CreateResponseRequest(BaseModel):
     previous_response_id: str | None = Field(
         default=None,
         description="Optional ID of a previous response to continue from.",
+    )
+    prompt_cache_key: str | None = Field(
+        default=None,
+        max_length=64,
+        description="A key to use when reading from or writing to the prompt cache.",
     )
     conversation: str | None = Field(
         default=None,
@@ -85,6 +105,18 @@ class CreateResponseRequest(BaseModel):
         ge=0.0,
         le=2.0,
         description="Sampling temperature.",
+    )
+    top_p: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+        description="Nucleus sampling parameter that controls response diversity (lower values increase focus).",
+    )
+    frequency_penalty: float | None = Field(
+        default=None,
+        ge=-2.0,
+        le=2.0,
+        description="Penalizes new tokens based on their frequency in the text so far.",
     )
     text: OpenAIResponseText | None = Field(
         default=None,
@@ -113,15 +145,46 @@ class CreateResponseRequest(BaseModel):
     )
     max_tool_calls: int | None = Field(
         default=None,
+        ge=1,
         description="Max number of total calls to built-in tools that can be processed in a response.",
+    )
+    max_output_tokens: int | None = Field(
+        default=None,
+        ge=16,
+        description="Upper bound for the number of tokens that can be generated for a response.",
     )
     reasoning: OpenAIResponseReasoning | None = Field(
         default=None,
         description="Configuration for reasoning effort in responses.",
     )
+    safety_identifier: str | None = Field(
+        default=None,
+        max_length=64,
+        description="A stable identifier used for safety monitoring and abuse detection.",
+    )
+    service_tier: ServiceTier | None = Field(
+        default=None,
+        description="The service tier to use for this request.",
+    )
     metadata: dict[str, str] | None = Field(
         default=None,
         description="Dictionary of metadata key-value pairs to attach to the response.",
+    )
+    truncation: ResponseTruncation | None = Field(
+        default=None,
+        description="Controls how the service truncates input when it exceeds the model context window.",
+    )
+    top_logprobs: int | None = Field(
+        default=None,
+        ge=0,
+        le=20,
+        description="The number of most likely tokens to return at each position, along with their log probabilities.",
+    )
+    presence_penalty: float | None = Field(
+        default=None,
+        ge=-2.0,
+        le=2.0,
+        description="Penalizes new tokens based on whether they appear in the text so far.",
     )
 
 

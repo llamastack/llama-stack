@@ -92,6 +92,8 @@ See [Elasticsearch's documentation](https://www.elastic.co/docs/solutions/search
 | `elasticsearch_api_key` | `str \| None` | No |  | The API key for the Elasticsearch instance |
 | `elasticsearch_url` | `str \| None` | No | localhost:9200 | The URL of the Elasticsearch instance |
 | `persistence` | `KVStoreReference \| None` | No |  | Config for KV store backend (SQLite only for now) |
+| `persistence.namespace` | `str` | No |  | Key prefix for KVStore backends |
+| `persistence.backend` | `str` | No |  | Name of backend from storage.backends |
 
 ## Sample Configuration
 

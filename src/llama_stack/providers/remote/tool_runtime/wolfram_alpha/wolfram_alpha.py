@@ -46,7 +46,7 @@ class WolframAlphaToolRuntimeImpl(ToolGroupsProtocolPrivate, ToolRuntime, NeedsR
             raise ValueError(
                 'Pass WolframAlpha API Key in the header X-LlamaStack-Provider-Data as { "wolfram_alpha_api_key": <your api key>}'
             )
-        return provider_data.wolfram_alpha_api_key
+        return provider_data.wolfram_alpha_api_key.get_secret_value()
 
     async def list_runtime_tools(
         self,

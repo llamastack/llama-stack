@@ -16,7 +16,7 @@ repos:
     -   id: check-added-large-files
         args: ['--maxkb=1000']
     -   id: end-of-file-fixer
-        exclude: '^(.*\.svg|.*\.md)$'
+        exclude: '^(.*\.svg|.*\.md|.*\.mustache)$'
     -   id: no-commit-to-branch
     -   id: check-yaml
         args: ["--unsafe"]
@@ -27,6 +27,7 @@ repos:
     -   id: check-executables-have-shebangs
     -   id: check-json
     -   id: check-shebang-scripts-are-executable
+        exclude: '^.*\.mustache$'  # these are not executables, only templates of
     -   id: check-symlinks
     -   id: check-toml
 
@@ -103,7 +104,7 @@ repos:
         name: Provider Codegen
         additional_dependencies:
           - *uv-dependency
-        entry: ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py
+        entry: sh -c 'env -i PATH="$PATH" ./scripts/uv-run-with-index.sh run --group codegen ./scripts/provider_codegen.py'
         language: python
         pass_filenames: false
         require_serial: true
@@ -117,11 +118,20 @@ repos:
         pass_filenames: false
         require_serial: true
         files: ^src/llama_stack_api/.*$
+      - id: api-conformance
+        name: Check API spec for breaking changes
+        entry: ./scripts/check-api-conformance.sh
+        language: golang
+        additional_dependencies:
+          - github.com/oasdiff/oasdiff@latest
+        pass_filenames: false
+        require_serial: true
+        files: ^docs/static/(llama-stack-spec|stable-llama-stack-spec|experimental-llama-stack-spec|deprecated-llama-stack-spec)\.yaml$
       - id: openai-coverage
         name: OpenAI API Coverage
         additional_dependencies:
           - *uv-dependency
-        entry: ./scripts/uv-run-with-index.sh run python scripts/openai_coverage.py --update --generate-docs --quiet
+        entry: ./scripts/uv-run-with-index.sh run python scripts/openai_coverage.py --check-regression --update --generate-docs --quiet
         language: python
         pass_filenames: false
         require_serial: true
@@ -178,6 +188,7 @@ repos:
       - id: check-log-usage
         name: Ensure 'llama_stack.log' usage for logging
         entry: bash
+        exclude: '^client-sdks/openapi/.*$'
         language: system
         types: [python]
         pass_filenames: true
@@ -210,6 +221,33 @@ repos:
               echo;
               exit 1;
             } || true
+      - id: no-sql-string-interpolation
+        name: Block f-string SQL construction (SQL injection risk)
+        entry: bash
+        language: system
+        types: [python]
+        pass_filenames: true
+        args:
+          - -c
+          - |
+            grep -EnH 'f"""[^"]*\b(DELETE|INSERT|UPDATE|SELECT|MERGE)\b.*\{[^}]*\}' "$@" \
+            | grep -v 'self\.table_name' \
+            | grep -v 'self\.dimensions' \
+            | grep -v 'self\.vector_datatype' \
+            | grep -v '#\s*nosec' \
+            && {
+              echo;
+              echo "SQL injection risk: f-string interpolation in SQL query detected."
+              echo "Use parameterized bind variables instead:"
+              echo "  oracledb:    :param_name"
+              echo "  psycopg2:    %s or %(name)s"
+              echo "  aiosqlite:   ? or :name"
+              echo "  SQLAlchemy:  text().bindparams()"
+              echo "If the interpolated value is a safe schema identifier (not user data),"
+              echo "add '# nosec' to the line to suppress this check."
+              echo;
+              exit 1;
+            } || true
       - id: check-api-independence
         name: Ensure llama_stack_api does not import llama_stack
         entry: bash
@@ -238,5 +276,5 @@ ci:
     autofix_prs: true
     autoupdate_branch: ''
     autoupdate_schedule: weekly
-    skip: []
+    skip: [api-conformance]  # requires git history; covered by pre-commit.yml workflow
     submodules: false
