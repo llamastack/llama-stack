@@ -3,6 +3,8 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+import os
+import ssl
 from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
@@ -55,6 +57,15 @@ class VLLMInferenceAdapter(OpenAIMixin):
             raise ValueError(
                 "You must provide a URL in config.yaml (or via the VLLM_URL environment variable) to use vLLM."
             )
+
+        # Shared SSL context for all calls to improve performance
+        if self.config.tls_verify is False:
+            self.shared_ssl_context = False
+        elif isinstance(self.config.tls_verify, str):
+            if os.path.isdir(self.config.tls_verify):
+                self.shared_ssl_context = ssl.create_default_context(capath=self.config.tls_verify)
+            else:
+                self.shared_ssl_context = ssl.create_default_context(cafile=self.config.tls_verify)
 
     async def health(self) -> HealthResponse:
         """
