@@ -257,6 +257,78 @@ class TestOpenAIResponses:
         assert response2.safety_identifier == safety_id
         assert len(response2.output_text.strip()) > 0
 
+    def test_openai_response_with_truncation_disabled(self, openai_client, text_model_id):
+        """Test OpenAI response with truncation set to disabled."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the largest ocean on Earth?"}],
+            truncation="disabled",
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.truncation == "disabled"
+
+    def test_openai_response_with_truncation_disabled_streaming(self, openai_client, text_model_id):
+        """Test OpenAI response with truncation disabled in streaming mode."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the smallest continent?"}],
+            truncation="disabled",
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify truncation is in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.truncation == "disabled"
+
+        # Verify truncation is in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.truncation == "disabled"
+
+    def test_openai_response_with_truncation_and_previous_response(self, openai_client, text_model_id):
+        """Test that truncation works correctly with previous_response_id."""
+        # Create first response
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 4+4?"}],
+            truncation="disabled",
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.truncation == "disabled"
+
+        # Create second response referencing the first one
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 6+6?"}],
+            previous_response_id=response1.id,
+            truncation="disabled",
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.truncation == "disabled"
+        assert len(response2.output_text.strip()) > 0
+
+    def test_openai_response_with_truncation_auto_error(self, openai_client, text_model_id):
+        """Test that truncation='auto' returns an error since it is not yet supported."""
+        with pytest.raises(Exception) as exc_info:
+            openai_client.responses.create(
+                model=text_model_id,
+                input=[{"role": "user", "content": "Hello"}],
+                truncation="auto",
+            )
+
+        error_message = str(exc_info.value).lower()
+        assert "truncation" in error_message or "auto" in error_message or "not supported" in error_message
+
     def test_openai_response_with_top_p(self, openai_client, text_model_id):
         """Test OpenAI response with top_p parameter."""
         response = openai_client.responses.create(
