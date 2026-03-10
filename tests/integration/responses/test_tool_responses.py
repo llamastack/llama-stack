@@ -307,6 +307,59 @@ def test_response_sequential_mcp_tool(responses_client, text_model_id, case):
         assert "boiling point" in text_content.lower()
 
 
+# Port must match the connector URL configured in ci-tests/config.yaml
+CONNECTOR_MCP_PORT = 5199
+
+
+def test_response_connector_resolution_mcp_tool(responses_client, text_model_id):
+    """Test that connector_id is resolved to the server_url from the registered connector
+    and the MCP tool call goes through correctly.
+
+    The 'test-mcp-connector' connector is pre-registered in the ci-tests config with
+    url http://localhost:5199/sse. This test starts an MCP server on that port and
+    references the connector by connector_id instead of server_url.
+    """
+    with make_mcp_server(port=CONNECTOR_MCP_PORT) as _mcp_server_info:
+        tools = [
+            {
+                "type": "mcp",
+                "server_label": "localmcp",
+                "connector_id": "test-mcp-connector",
+            }
+        ]
+
+        response = responses_client.responses.create(
+            model=text_model_id,
+            input="What is the boiling point of myawesomeliquid in Celsius?",
+            tools=tools,
+            stream=False,
+        )
+
+        assert len(response.output) >= 3
+
+        list_tools = response.output[0]
+        assert list_tools.type == "mcp_list_tools"
+        assert list_tools.server_label == "localmcp"
+        assert len(list_tools.tools) == 2
+        assert {t.name for t in list_tools.tools} == {
+            "get_boiling_point",
+            "greet_everyone",
+        }
+
+        call = response.output[1]
+        assert call.type == "mcp_call"
+        assert call.name == "get_boiling_point"
+        args = json.loads(call.arguments)
+        assert args["liquid_name"] == "myawesomeliquid"
+        assert args.get("celsius", True) is True
+        assert call.error is None
+        assert "-100" in call.output
+
+        message = response.output[-1]
+        text_content = message.content[0].text
+        assert "boiling point" in text_content.lower()
+
+
 @pytest.mark.parametrize("case", mcp_tool_test_cases)
 @pytest.mark.parametrize("approve", [True, False])
 def test_response_mcp_tool_approval(responses_client, text_model_id, case, approve):
@@ -480,6 +533,224 @@ def test_response_function_call_ordering_2(responses_client, text_model_id):
     )
     assert len(response.output) == 1
     assert "Los Angeles" in response.output_text
+
+
+def test_function_call_output_list_text(responses_client, text_model_id):
+    """Test that function_call_output.output accepts a list of input_text content blocks."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get current temperature for a given location.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "location": {
+                        "description": "City and country e.g. Bogotá, Colombia",
+                        "type": "string",
+                    }
+                },
+                "required": ["location"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="What is the weather in Paris?",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_text", "text": "It is sunny and 22 degrees Celsius in Paris."}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_text_multi_block(responses_client, text_model_id):
+    """Test that function_call_output.output accepts multiple input_text blocks in a list."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_weather",
+            "description": "Get current temperature for a given location.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "location": {
+                        "description": "City and country e.g. Bogotá, Colombia",
+                        "type": "string",
+                    }
+                },
+                "required": ["location"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="What is the weather in London?",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [
+                {"type": "input_text", "text": "Current conditions: overcast skies."},
+                {"type": "input_text", "text": "Temperature: 15 degrees Celsius."},
+            ],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_image(responses_client, vision_model_id):
+    """Test that function_call_output.output accepts a list containing an input_image block."""
+    if vision_model_id is None:
+        pytest.skip("No vision model configured")
+    if "llama3.2-vision:11b" in vision_model_id:
+        pytest.skip("registry.ollama.ai/library/llama3.2-vision:11b does not support tools")
+
+    tools = [
+        {
+            "type": "function",
+            "name": "capture_screenshot",
+            "description": "Capture a screenshot of the current state of the application.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "url": {
+                        "description": "The URL of the page to screenshot",
+                        "type": "string",
+                    }
+                },
+                "required": ["url"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=vision_model_id,
+        input="Take a screenshot of example.com and describe what you see.",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    # 50x50 RGB PNG — small but large enough for OpenAI's minimum image requirements
+    tiny_png_b64 = (
+        "iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAIAAACRXR/mAAAApklEQVR4nO2YsQ2AMBADnV8qC/FTZSEyVSiCCaKi"
+        "Ahe+DqU5vZBluezbhhu1tftnz/zlNQSdemYIOuG6lpQTppaaE4AyxlBzwuOXF3GqrYWgE65rSTlhaqk5AShO+YVT"
+        "njjlSXfKn0ilVwg6wSkPd3niLk/c5Rfu8sQpT9zlSfViE99fAi9evdikF5uJuzzxYrPwLk+8yxPv8qR7l4/vL4EX"
+        "r6K7/AGZuvY6STxy/gAAAABJRU5ErkJggg=="
+    )
+    image_data_url = f"data:image/png;base64,{tiny_png_b64}"
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_image", "image_url": image_data_url}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=vision_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
+
+
+def test_function_call_output_list_file(responses_client, text_model_id, tmp_path):
+    """Test that function_call_output.output accepts a list containing an input_file block."""
+    tools = [
+        {
+            "type": "function",
+            "name": "get_report",
+            "description": "Retrieve the latest quarterly report for a given company.",
+            "parameters": {
+                "additionalProperties": False,
+                "properties": {
+                    "company": {
+                        "description": "Company name",
+                        "type": "string",
+                    }
+                },
+                "required": ["company"],
+                "type": "object",
+            },
+        }
+    ]
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="Get the latest quarterly report for Acme Corp and summarize it.",
+        tools=tools,
+        stream=False,
+    )
+    assert len(response.output) == 1
+    assert response.output[0].type == "function_call"
+    call_id = response.output[0].call_id
+
+    report_text = "Q3 2024 Report: Revenue was $50M, up 12% YoY. Net income was $8M."
+    report_path = tmp_path / "acme_q3_2024.txt"
+    report_path.write_text(report_text)
+    file_response = upload_file(responses_client, "acme_q3_2024.txt", report_path)
+
+    inputs = [
+        {
+            "type": "function_call_output",
+            "call_id": call_id,
+            "output": [{"type": "input_file", "file_id": file_response.id}],
+        },
+    ]
+    response2 = responses_client.responses.create(
+        model=text_model_id,
+        input=inputs,
+        tools=tools,
+        stream=False,
+        previous_response_id=response.id,
+    )
+    assert len(response2.output) == 1
+    assert response2.output[0].type == "message"
+    assert response2.output_text
 
 
 @pytest.mark.parametrize("case", multi_turn_tool_execution_test_cases)
@@ -879,3 +1150,86 @@ def test_parallel_tool_calls_with_mcp_tools(responses_client, text_model_id):
 
         # Verify we have a valid parallel_tool_calls field
         assert not response2.parallel_tool_calls
+
+
+@pytest.mark.parametrize("case", web_search_test_cases)
+def test_response_streaming_web_search(responses_client, text_model_id, case):
+    """Test streaming behavior with web_search tool."""
+
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input=case.input,
+        tools=case.tools,
+        stream=True,
+    )
+
+    chunks = list(response)
+    validator = StreamingValidator(chunks)
+    validator.assert_basic_event_sequence()
+    validator.assert_response_consistency()
+    validator.assert_has_tool_calls()
+    validator.assert_content_quality(case.expected)
+    validator.assert_has_incremental_content()
+
+    final_chunk = chunks[-1]
+    assert hasattr(final_chunk, "response")
+
+    assert hasattr(final_chunk.response, "output")
+    assert len(final_chunk.response.output) > 0
+
+    web_search_calls = [item for item in final_chunk.response.output if item.type == "web_search_call"]
+    assert len(web_search_calls) > 0, "Response should contain web_search_call"
+    assert web_search_calls[0].status == "completed"
+
+    messages = [item for item in final_chunk.response.output if item.type == "message"]
+    assert len(messages) > 0
+    assert messages[0].status == "completed"
+    assert messages[0].role == "assistant"
+
+
+def test_response_multi_turn_streaming_web_search(responses_client, text_model_id):
+    """Test streaming web_search across multiple turns."""
+
+    # First turn with web search
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="What is the latest Python version?",
+        tools=[{"type": "web_search", "search_context_size": "low"}],
+        stream=True,
+    )
+
+    chunks = list(response)
+    validator = StreamingValidator(chunks)
+
+    validator.assert_basic_event_sequence()
+    validator.assert_response_consistency()
+    validator.assert_has_tool_calls()
+    validator.assert_content_quality("python")
+    validator.assert_has_incremental_content()
+
+    final_chunk = chunks[-1]
+    assert hasattr(final_chunk, "response")
+    assert len(final_chunk.response.output) > 0
+
+    web_search_calls = [item for item in final_chunk.response.output if item.type == "web_search_call"]
+    assert len(web_search_calls) > 0, "First turn should contain web_search_call"
+    assert web_search_calls[0].status == "completed"
+
+    # Second turn.  No tools needed, should use context from first turn.
+    response = responses_client.responses.create(
+        model=text_model_id,
+        input="What are the key features of this version?",
+        previous_response_id=final_chunk.response.id,
+        stream=True,
+    )
+
+    chunks = list(response)
+    validator = StreamingValidator(chunks)
+
+    validator.assert_basic_event_sequence()
+    validator.assert_response_consistency()
+    validator.assert_has_incremental_content()
+
+    final_chunk = chunks[-1]
+    assert hasattr(final_chunk, "response")
+    assert len(final_chunk.response.output_text) > 0

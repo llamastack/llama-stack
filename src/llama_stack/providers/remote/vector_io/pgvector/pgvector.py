@@ -194,13 +194,8 @@ class PGVectorIndex(EmbeddingIndex):
                         "PGVector requires embedding dimensions are up to 2,000 to successfully create a vector index."
                     )
 
-                # Create GIN index for full-text search performance
-                cur.execute(
-                    f"""
-                    CREATE INDEX IF NOT EXISTS {self.table_name}_content_gin_idx
-                    ON {self.table_name} USING GIN(tokenized_content)
-                """
-                )
+                await self.create_gin_index(cur)
+
         except Exception as e:
             log.exception(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}")
             raise RuntimeError(f"Error creating PGVectorIndex for vector_store: {self.vector_store.identifier}") from e
@@ -263,6 +258,14 @@ class PGVectorIndex(EmbeddingIndex):
                 cur.execute(
                     f"""
                     SET ivfflat.probes = {self.vector_index.probes};
+                """
+                )
+
+            # Specify the max size of max heap that holds best candidates when traversing the graph (https://github.com/pgvector/pgvector?tab=readme-ov-file#query-options)
+            elif self.vector_index.type == PGVectorIndexType.HNSW:
+                cur.execute(
+                    f"""
+                    SET hnsw.ef_search = {self.vector_index.ef_search};
                 """
                 )
 
@@ -578,6 +581,30 @@ class PGVectorIndex(EmbeddingIndex):
 
         except psycopg2.Error as e:
             raise RuntimeError(f"Failed to check if vector store has records in PGVector: {e}") from e
+
+    async def create_gin_index(self, cur: cursor) -> None:
+        """Create GIN index for full-text search performance
+
+        Args:
+            cur: PostgreSQL cursor
+
+        Raises:
+            RuntimeError: If the error occurred when creating GIN index
+        """
+
+        try:
+            cur.execute(
+                f"""
+                CREATE INDEX IF NOT EXISTS {self.table_name}_content_gin_idx
+                ON {self.table_name} USING GIN(tokenized_content)
+            """
+            )
+            log.info(f"GIN index verified for vector_store: {self.vector_store.identifier}.")
+
+        except psycopg2.Error as e:
+            raise RuntimeError(
+                f"Failed to create GIN index for vector_store: {self.vector_store.identifier}: {e}"
+            ) from e
 
 
 class PGVectorVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresProtocolPrivate):

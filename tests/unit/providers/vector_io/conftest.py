@@ -20,7 +20,7 @@ from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteV
 from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex, PGVectorVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
 from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantIndex, QdrantVectorIOAdapter
-from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore
+from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore, VectorStoreNotFoundError
 
 EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
@@ -252,7 +252,7 @@ async def pgvector_vec_index(embedding_dimension, mock_psycopg2_connection):
                 embedding_dimension,
                 connection,
                 distance_metric="COSINE",
-                vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
+                vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64, ef_search=40),
             )
             index._test_chunks = []
             original_add_chunks = index.add_chunks
@@ -283,7 +283,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
         user="test_user",
         password="test_password",
         distance_metric="COSINE",
-        vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
+        vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64, ef_search=40),
         persistence=unique_kvstore_config,
     )
 
@@ -315,7 +315,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
                         async def mock_insert_chunks(request):
                             index = await adapter._get_and_cache_vector_store_index(request.vector_store_id)
                             if not index:
-                                raise ValueError(f"Vector DB {request.vector_store_id} not found")
+                                raise VectorStoreNotFoundError(request.vector_store_id)
                             await index.insert_chunks(request)
 
                         adapter.insert_chunks = mock_insert_chunks
@@ -323,7 +323,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
                         async def mock_query_chunks(request):
                             index = await adapter._get_and_cache_vector_store_index(request.vector_store_id)
                             if not index:
-                                raise ValueError(f"Vector DB {request.vector_store_id} not found")
+                                raise VectorStoreNotFoundError(request.vector_store_id)
                             return await index.query_chunks(request)
 
                         adapter.query_chunks = mock_query_chunks
@@ -419,7 +419,7 @@ async def qdrant_vec_adapter(unique_kvstore_config, mock_inference_api, embeddin
                 async def mock_insert_chunks(request):
                     index = await adapter._get_and_cache_vector_store_index(request.vector_store_id)
                     if not index:
-                        raise ValueError(f"Vector DB {request.vector_store_id} not found")
+                        raise VectorStoreNotFoundError(request.vector_store_id)
                     await index.insert_chunks(request)
 
                 adapter.insert_chunks = mock_insert_chunks
@@ -427,7 +427,7 @@ async def qdrant_vec_adapter(unique_kvstore_config, mock_inference_api, embeddin
                 async def mock_query_chunks(request):
                     index = await adapter._get_and_cache_vector_store_index(request.vector_store_id)
                     if not index:
-                        raise ValueError(f"Vector DB {request.vector_store_id} not found")
+                        raise VectorStoreNotFoundError(request.vector_store_id)
                     return await index.query_chunks(request)
 
                 adapter.query_chunks = mock_query_chunks

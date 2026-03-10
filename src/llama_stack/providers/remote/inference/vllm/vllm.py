@@ -3,6 +3,8 @@
 #
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
+import os
+import ssl
 from collections.abc import AsyncIterator
 from urllib.parse import urljoin
 
@@ -24,7 +26,6 @@ from llama_stack_api import (
     OpenAIChatCompletionRequestWithExtraBody,
     RerankData,
     RerankResponse,
-    ToolChoice,
 )
 from llama_stack_api.inference import RerankRequest
 
@@ -37,9 +38,6 @@ class VLLMInferenceAdapter(OpenAIMixin):
     config: VLLMInferenceAdapterConfig
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    # vLLM does not support the stream_options parameter
-    supports_stream_options: bool = False
 
     provider_data_api_key_field: str = "vllm_api_token"
 
@@ -59,6 +57,15 @@ class VLLMInferenceAdapter(OpenAIMixin):
             raise ValueError(
                 "You must provide a URL in config.yaml (or via the VLLM_URL environment variable) to use vLLM."
             )
+
+        # Shared SSL context for all calls to improve performance
+        if self.config.tls_verify is False:
+            self.shared_ssl_context = False
+        elif isinstance(self.config.tls_verify, str):
+            if os.path.isdir(self.config.tls_verify):
+                self.shared_ssl_context = ssl.create_default_context(capath=self.config.tls_verify)
+            else:
+                self.shared_ssl_context = ssl.create_default_context(cafile=self.config.tls_verify)
 
     async def health(self) -> HealthResponse:
         """
@@ -105,19 +112,19 @@ class VLLMInferenceAdapter(OpenAIMixin):
         if params.max_tokens is None and self.config.max_tokens:
             params.max_tokens = self.config.max_tokens
 
-        # This is to be consistent with OpenAI API and support vLLM <= v0.6.3
-        # References:
-        #   * https://platform.openai.com/docs/api-reference/chat/create#chat-create-tool_choice
-        #   * https://github.com/vllm-project/vllm/pull/10000
-        if not params.tools and params.tool_choice is not None:
-            params.tool_choice = ToolChoice.none.value
-
         return await super().openai_chat_completion(params)
 
     def construct_model_from_identifier(self, identifier: str) -> Model:
-        if (
-            "rerank" in identifier.lower()
-        ):  # TODO: guessing that any model with "rerank" in its name is a reranking model is pretty hacky
+        # vLLM's /v1/models response does not expose a model task/type field, so classify by name.
+        if "embed" in identifier.lower():
+            return Model(
+                provider_id=self.__provider_id__,  # type: ignore[attr-defined]
+                provider_resource_id=identifier,
+                identifier=identifier,
+                model_type=ModelType.embedding,
+                metadata={},
+            )
+        if "rerank" in identifier.lower():
             return Model(
                 provider_id=self.__provider_id__,  # type: ignore[attr-defined]
                 provider_resource_id=identifier,

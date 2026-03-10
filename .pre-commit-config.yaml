@@ -16,7 +16,7 @@ repos:
     -   id: check-added-large-files
         args: ['--maxkb=1000']
     -   id: end-of-file-fixer
-        exclude: '^(.*\.svg|.*\.md)$'
+        exclude: '^(.*\.svg|.*\.md|.*\.mustache)$'
     -   id: no-commit-to-branch
     -   id: check-yaml
         args: ["--unsafe"]
@@ -27,6 +27,7 @@ repos:
     -   id: check-executables-have-shebangs
     -   id: check-json
     -   id: check-shebang-scripts-are-executable
+        exclude: '^.*\.mustache$'  # these are not executables, only templates of
     -   id: check-symlinks
     -   id: check-toml
 
@@ -187,6 +188,7 @@ repos:
       - id: check-log-usage
         name: Ensure 'llama_stack.log' usage for logging
         entry: bash
+        exclude: '^client-sdks/openapi/.*$'
         language: system
         types: [python]
         pass_filenames: true
@@ -216,6 +218,33 @@ repos:
               echo;
               echo "❌ Do not use any of the following functions: hashlib.md5, hashlib.sha1, uuid.uuid3, uuid.uuid5"
               echo "   These functions are not FIPS-compliant"
+              echo;
+              exit 1;
+            } || true
+      - id: no-sql-string-interpolation
+        name: Block f-string SQL construction (SQL injection risk)
+        entry: bash
+        language: system
+        types: [python]
+        pass_filenames: true
+        args:
+          - -c
+          - |
+            grep -EnH 'f"""[^"]*\b(DELETE|INSERT|UPDATE|SELECT|MERGE)\b.*\{[^}]*\}' "$@" \
+            | grep -v 'self\.table_name' \
+            | grep -v 'self\.dimensions' \
+            | grep -v 'self\.vector_datatype' \
+            | grep -v '#\s*nosec' \
+            && {
+              echo;
+              echo "SQL injection risk: f-string interpolation in SQL query detected."
+              echo "Use parameterized bind variables instead:"
+              echo "  oracledb:    :param_name"
+              echo "  psycopg2:    %s or %(name)s"
+              echo "  aiosqlite:   ? or :name"
+              echo "  SQLAlchemy:  text().bindparams()"
+              echo "If the interpolated value is a safe schema identifier (not user data),"
+              echo "add '# nosec' to the line to suppress this check."
               echo;
               exit 1;
             } || true

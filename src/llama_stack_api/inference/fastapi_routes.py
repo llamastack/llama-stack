@@ -22,6 +22,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from llama_stack_api.common.errors import OpenAIErrorResponse
 from llama_stack_api.router_utils import create_path_dependency, create_query_dependency, standard_responses
 from llama_stack_api.version import LLAMA_STACK_API_V1, LLAMA_STACK_API_V1ALPHA
 
@@ -65,7 +66,7 @@ async def _sse_generator(event_gen: AsyncIterator[Any], context: str = "inferenc
     except Exception as e:
         logger.exception(f"Error in SSE generator ({context})")
         exc = _http_exception_from_sse_error(e)
-        yield _create_sse_event({"error": {"status_code": exc.status_code, "message": exc.detail}})
+        yield _create_sse_event(OpenAIErrorResponse.from_message(exc.detail, code=str(exc.status_code)).to_dict())
 
 
 def _http_exception_from_value_error(exc: ValueError) -> HTTPException:

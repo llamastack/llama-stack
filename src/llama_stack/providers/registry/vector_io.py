@@ -13,7 +13,7 @@ from llama_stack_api import (
 )
 
 # Common dependencies for all vector IO providers that support document processing
-DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf"]
+DEFAULT_VECTOR_IO_DEPS = ["chardet", "pypdf>=6.7.2"]
 
 
 def available_providers() -> list[ProviderSpec]:
@@ -528,7 +528,6 @@ See [PGVector's documentation](https://github.com/pgvector/pgvector) for more de
             pip_packages=["weaviate-client>=4.16.5"] + DEFAULT_VECTOR_IO_DEPS,
             module="llama_stack.providers.remote.vector_io.weaviate",
             config_class="llama_stack.providers.remote.vector_io.weaviate.WeaviateVectorIOConfig",
-            provider_data_validator="llama_stack.providers.remote.vector_io.weaviate.WeaviateRequestProviderData",
             api_dependencies=[Api.inference],
             optional_api_dependencies=[Api.files, Api.models],
             description="""

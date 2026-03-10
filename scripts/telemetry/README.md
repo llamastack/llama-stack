@@ -153,6 +153,77 @@ A pre-provisioned **Llama Stack** dashboard is available in Grafana with panels 
 - P95 / P99 HTTP Server Duration
 - Total HTTP Requests
 
+### GenAI message content capture (logs vs spans)
+
+- `OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT` controls whether prompts/outputs/tool-call args are captured. **Default: false** (no content captured). Set to `true` to capture.
+- Captured content is emitted as **logs** (e.g., events like `gen_ai.user.message` and `gen_ai.choice`), with `trace_id`/`span_id` for correlation.
+- Spans carry structured metadata (model, finish_reason, usage tokens, latency, HTTP call, etc.) but **not** the raw text content.
+
+### Exporter examples
+
+**Local console (debugging):**
+```bash
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
+OTEL_TRACES_EXPORTER=console \
+OTEL_LOGS_EXPORTER=console \
+opentelemetry-instrument python llama-stack-client.py
+```
+
+**Send to Collector (recommended):**
+```bash
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
+OTEL_TRACES_EXPORTER=otlp \
+OTEL_LOGS_EXPORTER=otlp \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 \
+opentelemetry-instrument python llama-stack-client.py
+```
+
+### Jaeger caveat (logs)
+
+- Jaeger’s built-in OTLP typically ingests **traces only**, not logs. If you point `OTEL_LOGS_EXPORTER=otlp` at Jaeger, logs will be rejected (e.g., 404) and you will not see message content.
+- To view captured content, send logs to an OTel Collector (or another backend that supports OTLP logs). For debugging, you can also use `OTEL_LOGS_EXPORTER=console` to print logs to stdout.
+
+### Minimal Collector example (traces → Jaeger, logs → stdout)
+
+```yaml
+receivers:
+  otlp:
+    protocols:
+      http:
+      grpc:
+
+processors:
+  batch: {}
+
+exporters:
+  jaeger:
+    endpoint: localhost:14250
+    tls:
+      insecure: true
+  logging:  # view logs in collector stdout
+    loglevel: info
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [logging]
+```
+
+Use with:
+```bash
+OTEL_INSTRUMENTATION_GENAI_CAPTURE_MESSAGE_CONTENT=true \
+OTEL_TRACES_EXPORTER=otlp \
+OTEL_LOGS_EXPORTER=otlp \
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 \
+opentelemetry-instrument python llama-stack-client.py
+```
+
 ## Cleanup
 
 Stop and remove all telemetry containers:
