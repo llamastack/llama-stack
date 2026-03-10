@@ -28,6 +28,8 @@ from llama_stack.providers.utils.memory.vector_store import (
     make_overlapped_chunks,
 )
 from llama_stack_api import (
+    COMPARISON_FILTER_TYPES,
+    COMPOUND_FILTER_TYPES,
     DEFAULT_CHUNK_OVERLAP_TOKENS,
     DEFAULT_CHUNK_SIZE_TOKENS,
     MAX_PAGINATION_LIMIT,
@@ -83,10 +85,6 @@ from llama_stack_api.file_processors.models import ProcessFileRequest
 from llama_stack_api.files.models import (
     RetrieveFileContentRequest,
     RetrieveFileRequest,
-)
-from llama_stack_api.filters import (
-    COMPARISON_FILTER_TYPES,
-    COMPOUND_FILTER_TYPES,
 )
 from llama_stack_api.internal.kvstore import KVStore
 

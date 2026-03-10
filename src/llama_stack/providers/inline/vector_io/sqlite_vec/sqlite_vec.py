@@ -301,24 +301,15 @@ class SQLiteVecIndex(EmbeddingIndex):
                 emb_blob = serialize_vector(emb_list)
 
                 # Build query with optional filter clause
-                if filter_clause:
-                    query_sql = f"""
-                        SELECT m.id, m.chunk, v.distance
-                        FROM [{self.vector_table}] AS v
-                        JOIN [{self.metadata_table}] AS m ON m.id = v.id
-                        WHERE v.embedding MATCH ? AND k = ? AND ({filter_clause})
-                        ORDER BY v.distance;
-                    """
-                    cur.execute(query_sql, (emb_blob, k, *filter_params))
-                else:
-                    query_sql = f"""
-                        SELECT m.id, m.chunk, v.distance
-                        FROM [{self.vector_table}] AS v
-                        JOIN [{self.metadata_table}] AS m ON m.id = v.id
-                        WHERE v.embedding MATCH ? AND k = ?
-                        ORDER BY v.distance;
-                    """
-                    cur.execute(query_sql, (emb_blob, k))
+                query_sql = f"""
+                    SELECT m.id, m.chunk, v.distance
+                    FROM [{self.vector_table}] AS v
+                    JOIN [{self.metadata_table}] AS m ON m.id = v.id
+                    WHERE v.embedding MATCH ? AND k = ?
+                    {"AND (" + filter_clause + ")" if filter_clause else ""}
+                    ORDER BY v.distance;
+                """
+                cur.execute(query_sql, (emb_blob, k, *filter_params))
                 return cur.fetchall()
             finally:
                 cur.close()
@@ -356,26 +347,16 @@ class SQLiteVecIndex(EmbeddingIndex):
             cur = connection.cursor()
             try:
                 # Build query with optional filter clause
-                if filter_clause:
-                    query_sql = f"""
-                        SELECT DISTINCT m.id, m.chunk, bm25([{self.fts_table}]) AS score
-                        FROM [{self.fts_table}] AS f
-                        JOIN [{self.metadata_table}] AS m ON m.id = f.id
-                        WHERE f.content MATCH ? AND ({filter_clause})
-                        ORDER BY score ASC
-                        LIMIT ?;
-                    """
-                    cur.execute(query_sql, (query_string, *filter_params, k))
-                else:
-                    query_sql = f"""
-                        SELECT DISTINCT m.id, m.chunk, bm25([{self.fts_table}]) AS score
-                        FROM [{self.fts_table}] AS f
-                        JOIN [{self.metadata_table}] AS m ON m.id = f.id
-                        WHERE f.content MATCH ?
-                        ORDER BY score ASC
-                        LIMIT ?;
-                    """
-                    cur.execute(query_sql, (query_string, k))
+                query_sql = f"""
+                    SELECT DISTINCT m.id, m.chunk, bm25([{self.fts_table}]) AS score
+                    FROM [{self.fts_table}] AS f
+                    JOIN [{self.metadata_table}] AS m ON m.id = f.id
+                    WHERE f.content MATCH ?
+                    {"AND (" + filter_clause + ")" if filter_clause else ""}
+                    ORDER BY score ASC
+                    LIMIT ?;
+                """
+                cur.execute(query_sql, (query_string, *filter_params, k))
                 return cur.fetchall()
             finally:
                 cur.close()

@@ -26,9 +26,12 @@ from llama_stack.providers.utils.vector_io.vector_utils import (
     sanitize_collection_name,
 )
 from llama_stack_api import (
+    ComparisonFilter,
+    CompoundFilter,
     DeleteChunksRequest,
     EmbeddedChunk,
     Files,
+    Filter,
     Inference,
     InsertChunksRequest,
     QueryChunksRequest,
@@ -38,7 +41,6 @@ from llama_stack_api import (
     VectorStoreNotFoundError,
     VectorStoresProtocolPrivate,
 )
-from llama_stack_api.filters import ComparisonFilter, CompoundFilter, Filter
 from llama_stack_api.internal.kvstore import KVStore
 
 from .config import MilvusVectorIOConfig as RemoteMilvusVectorIOConfig

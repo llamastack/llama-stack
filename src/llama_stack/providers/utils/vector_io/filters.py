@@ -12,6 +12,6 @@ while the actual definitions remain in the API package for proper OpenAPI genera
 """
 
 # Re-export filter types from the API package
-from llama_stack_api.filters import ComparisonFilter, CompoundFilter, Filter
+from llama_stack_api import ComparisonFilter, CompoundFilter, Filter
 
 __all__ = ["ComparisonFilter", "CompoundFilter", "Filter"]
