@@ -300,6 +300,15 @@ registered_resources:
     provider_id: rag-runtime
 server:
   port: 8321
+  auth:
+    provider_config:
+      type: ${env.AUTH_PROVIDER:+oauth2_token}
+      audience: ${env.AUTH_AUDIENCE:=llama-stack}
+      issuer: ${env.AUTH_ISSUER:=}
+      jwks:
+        uri: ${env.AUTH_JWKS_URI:=}
+        key_recheck_period: ${env.AUTH_JWKS_RECHECK_PERIOD:=3600}
+      verify_tls: ${env.AUTH_VERIFY_TLS:=true}
 vector_stores:
   default_provider_id: faiss
   default_embedding_model:
