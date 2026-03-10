@@ -36,6 +36,11 @@ class PGVectorHNSWVectorIndex(BaseModel):
         default=64,
         description="PGVector's HNSW index parameter - size of the dynamic candidate list used for graph construction",
     )
+    ef_search: int | None = Field(
+        gt=0,
+        default=40,
+        description="PGVector's HNSW index parameter - a max size of max heap that holds best candidates when traversing the graph",
+    )
 
 
 class PGVectorIVFFlatVectorIndex(BaseModel):
@@ -104,7 +109,7 @@ class PGVectorVectorIOConfig(BaseModel):
             "user": user,
             "password": password,
             "distance_metric": "COSINE",
-            "vector_index": PGVectorHNSWVectorIndex(m=16, ef_construction=64).model_dump(
+            "vector_index": PGVectorHNSWVectorIndex(m=16, ef_construction=64, ef_search=40).model_dump(
                 mode="json", exclude_none=True
             ),
             "persistence": KVStoreReference(
