@@ -297,13 +297,10 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
             pass
 
         logger.debug(f"Auto-registering tool group '{toolgroup_id}' with provider '{provider.provider_id}'")
-        try:
-            await tool_groups_impl.register_tool_group(
-                toolgroup_id=toolgroup_id,
-                provider_id=provider.provider_id,
-            )
-        except Exception:
-            logger.warning(f"Failed to auto-register tool group '{toolgroup_id}'", exc_info=True)
+        await tool_groups_impl.register_tool_group(
+            toolgroup_id=toolgroup_id,
+            provider_id=provider.provider_id,
+        )
 
 
 async def register_connectors(run_config: StackConfig, impls: dict[Api, Any]):
