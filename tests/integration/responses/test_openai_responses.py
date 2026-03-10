@@ -257,7 +257,7 @@ class TestOpenAIResponses:
         assert response2.safety_identifier == safety_id
         assert len(response2.output_text.strip()) > 0
 
-            def test_openai_response_with_top_p(self, openai_client, text_model_id):
+    def test_openai_response_with_top_p(self, openai_client, text_model_id):
         """Test OpenAI response with top_p parameter."""
         response = openai_client.responses.create(
             model=text_model_id,
