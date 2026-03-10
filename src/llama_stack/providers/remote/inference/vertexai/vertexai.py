@@ -20,11 +20,11 @@ from pydantic import BaseModel, ConfigDict, PrivateAttr
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
 from llama_stack.providers.remote.inference.vertexai import converters
-from llama_stack.providers.remote.inference.vertexai.utils import build_http_options as _build_http_options
 from llama_stack.providers.remote.inference.vertexai.config import (
     VertexAIConfig,
     VertexAIProviderDataValidator,
 )
+from llama_stack.providers.remote.inference.vertexai.utils import build_http_options as _build_http_options
 from llama_stack.providers.utils.inference.openai_compat import get_stream_options_for_telemetry
 from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 from llama_stack_api import (
