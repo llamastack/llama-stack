@@ -760,8 +760,6 @@ jobs:
           - distro: dell
             platforms: linux/amd64,linux/arm64
           # GPU distributions — amd64 only
-          - distro: meta-reference-gpu
-            platforms: linux/amd64
           - distro: starter-gpu
             platforms: linux/amd64
 
