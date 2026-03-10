@@ -179,6 +179,7 @@ class VectorIORouter(VectorIO):
         embedding_model = extra.get("embedding_model", metadata.get("embedding_model"))
         embedding_dimension = extra.get("embedding_dimension", metadata.get("embedding_dimension"))
         provider_id = extra.get("provider_id", metadata.get("provider_id"))
+        provider_vector_store_id = extra.get("provider_vector_store_id", metadata.get("provider_vector_store_id"))
 
         # Use default embedding model if not specified
         if (
@@ -234,13 +235,13 @@ class VectorIORouter(VectorIO):
             else:
                 provider_id = list(self.routing_table.impls_by_provider_id.keys())[0]
 
-        vector_store_id = f"vs_{uuid.uuid4()}"
+        vector_store_id = provider_vector_store_id or f"vs_{uuid.uuid4()}"
         registered_vector_store = await self.routing_table.register_vector_store(
             vector_store_id=vector_store_id,
             embedding_model=embedding_model,
             embedding_dimension=embedding_dimension,
             provider_id=provider_id,
-            provider_vector_store_id=vector_store_id,
+            provider_vector_store_id=provider_vector_store_id or vector_store_id,
             vector_store_name=params.name,
         )
         provider = await self.routing_table.get_provider_impl(registered_vector_store.identifier)

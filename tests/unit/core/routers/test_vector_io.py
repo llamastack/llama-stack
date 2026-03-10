@@ -150,6 +150,47 @@ async def test_register_vector_store_only_once():
     mock_provider.register_vector_store.assert_not_called()
 
 
+async def test_provider_vector_store_id_passed_through():
+    """Test that provider_vector_store_id from extra_body is used when creating a new vector store."""
+    mock_provider = Mock()
+    mock_provider.openai_create_vector_store = AsyncMock(return_value=Mock(id="custom_vs_id"))
+
+    mock_routing_table = Mock()
+    mock_routing_table.impls_by_provider_id = {"inline::faiss": mock_provider}
+    mock_routing_table.get_object_by_identifier = AsyncMock(return_value=Mock(model_type=ModelType.embedding))
+    mock_routing_table.register_vector_store = AsyncMock(
+        return_value=Mock(
+            identifier="custom_vs_id",
+            provider_id="inline::faiss",
+            provider_resource_id="custom_vs_id",
+        )
+    )
+    mock_routing_table.get_provider_impl = AsyncMock(return_value=mock_provider)
+
+    router = VectorIORouter(mock_routing_table)
+    request = OpenAICreateVectorStoreRequestWithExtraBody.model_validate(
+        {
+            "name": "test_store",
+            "embedding_model": "nomic-ai/nomic-embed-text-v1.5",
+            "embedding_dimension": 768,
+            "provider_vector_store_id": "custom_vs_id",
+        }
+    )
+
+    result = await router.openai_create_vector_store(request)
+    assert result.id == "custom_vs_id"
+
+    # Verify register_vector_store was called with user-provided provider_vector_store_id
+    mock_routing_table.register_vector_store.assert_called_once()
+    call_kwargs = mock_routing_table.register_vector_store.call_args.kwargs
+    assert call_kwargs["vector_store_id"] == "custom_vs_id"
+    assert call_kwargs["provider_vector_store_id"] == "custom_vs_id"
+
+    # Verify provider received provider_vector_store_id in params
+    provider_call = mock_provider.openai_create_vector_store.call_args[0][0]
+    assert provider_call.model_extra.get("provider_vector_store_id") == "custom_vs_id"
+
+
 async def test_create_vector_store_with_unknown_embedding_model_raises_error():
     """Test that creating a vector store with an unknown embedding model raises
     FoundError."""
