@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import time
 from contextlib import asynccontextmanager
 from typing import Protocol
 
@@ -130,12 +131,14 @@ class DiskDistributionRegistry(DistributionRegistry):
 
 
 class CachedDiskDistributionRegistry(DiskDistributionRegistry):
-    def __init__(self, kvstore: KVStore):
+    def __init__(self, kvstore: KVStore, cache_ttl_seconds: float = 5.0):
         super().__init__(kvstore)
         self.cache: dict[tuple[str, str], RoutableObjectWithProvider] = {}
         self._initialized = False
         self._initialize_lock = asyncio.Lock()
         self._cache_lock = asyncio.Lock()
+        self._cache_ttl_seconds = cache_ttl_seconds
+        self._last_refresh_time = 0.0
 
     @asynccontextmanager
     async def _locked_cache(self):
@@ -169,21 +172,36 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
     def get_cached(self, type: str, identifier: str) -> RoutableObjectWithProvider | None:
         return self.cache.get((type, identifier), None)
 
-    async def get_all(self) -> list[RoutableObjectWithProvider]:
-        await self._ensure_initialized()
+    def _should_refresh_cache(self) -> bool:
+        """Check if cache should be refreshed based on TTL."""
+        current_time = time.time()
+        return (current_time - self._last_refresh_time) >= self._cache_ttl_seconds
 
-        # Refresh cache from database to handle multi-worker scenarios
-        # This ensures we see objects created by other workers
+    async def _refresh_cache_from_db(self) -> None:
+        """Refresh cache from database if TTL has expired."""
+        if not self._should_refresh_cache():
+            return
+
         start_key, end_key = _get_registry_key_range()
         values = await self.kvstore.values_in_range(start_key, end_key)
         objects = _parse_registry_values(values)
 
-        # Update cache with any new objects found in the database
         async with self._locked_cache() as cache:
             for obj in objects:
                 cache_key = (obj.type, obj.identifier)
                 cache[cache_key] = obj
 
+        self._last_refresh_time = time.time()
+
+    async def get_all(self) -> list[RoutableObjectWithProvider]:
+        await self._ensure_initialized()
+
+        # Refresh cache from database to handle multi-worker scenarios
+        # This ensures we see objects created by other workers
+        # Uses TTL to avoid hammering the database
+        await self._refresh_cache_from_db()
+
+        async with self._locked_cache() as cache:
             return list(cache.values())
 
     async def get(self, type: str, identifier: str) -> RoutableObjectWithProvider | None:
@@ -232,10 +250,10 @@ class CachedDiskDistributionRegistry(DiskDistributionRegistry):
 
 
 async def create_dist_registry(
-    metadata_store: KVStoreReference, distro_name: str
+    metadata_store: KVStoreReference, distro_name: str, cache_ttl_seconds: float = 5.0
 ) -> tuple[CachedDiskDistributionRegistry, KVStore]:
     # instantiate kvstore for storing and retrieving distribution metadata
     dist_kvstore = await kvstore_impl(metadata_store)
-    dist_registry = CachedDiskDistributionRegistry(dist_kvstore)
+    dist_registry = CachedDiskDistributionRegistry(dist_kvstore, cache_ttl_seconds=cache_ttl_seconds)
     await dist_registry.initialize()
     return dist_registry, dist_kvstore

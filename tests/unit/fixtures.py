@@ -29,6 +29,7 @@ async def disk_dist_registry(sqlite_kvstore):
 
 @pytest.fixture(scope="function")
 async def cached_disk_dist_registry(sqlite_kvstore):
-    registry = CachedDiskDistributionRegistry(sqlite_kvstore)
+    # Use cache_ttl_seconds=0 for tests to ensure immediate synchronization
+    registry = CachedDiskDistributionRegistry(sqlite_kvstore, cache_ttl_seconds=0)
     await registry.initialize()
     yield registry

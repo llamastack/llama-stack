@@ -73,8 +73,9 @@ async def test_cached_registry_initialization(sqlite_kvstore, sample_vector_stor
     db_path = sqlite_kvstore.db_path
     backend_name = "kv_cached_test"
     register_kvstore_backends({backend_name: SqliteKVStoreConfig(db_path=db_path)})
+    # Use cache_ttl_seconds=0 for tests to ensure immediate synchronization
     cached_registry = CachedDiskDistributionRegistry(
-        await kvstore_impl(KVStoreReference(backend=backend_name, namespace="registry"))
+        await kvstore_impl(KVStoreReference(backend=backend_name, namespace="registry")), cache_ttl_seconds=0
     )
     await cached_registry.initialize()
 
@@ -231,7 +232,8 @@ async def test_cached_registry_error_handling(sqlite_kvstore):
         '{"type": "vector_store", "identifier": "invalid_cached_db", "embedding_model": 12345}',  # Should be string
     )
 
-    cached_registry = CachedDiskDistributionRegistry(sqlite_kvstore)
+    # Use cache_ttl_seconds=0 for tests to ensure immediate synchronization
+    cached_registry = CachedDiskDistributionRegistry(sqlite_kvstore, cache_ttl_seconds=0)
     await cached_registry.initialize()
 
     all_objects = await cached_registry.get_all()
@@ -390,10 +392,11 @@ async def test_multi_worker_cache_synchronization(sqlite_kvstore, sample_vector_
     """
     # Create two separate registry instances sharing the same database
     # This simulates two uvicorn workers with separate memory spaces
-    worker_a_registry = CachedDiskDistributionRegistry(sqlite_kvstore)
+    # Use cache_ttl_seconds=0 for tests to ensure immediate synchronization
+    worker_a_registry = CachedDiskDistributionRegistry(sqlite_kvstore, cache_ttl_seconds=0)
     await worker_a_registry.initialize()
 
-    worker_b_registry = CachedDiskDistributionRegistry(sqlite_kvstore)
+    worker_b_registry = CachedDiskDistributionRegistry(sqlite_kvstore, cache_ttl_seconds=0)
     await worker_b_registry.initialize()
 
     # Worker A registers a vector store
@@ -424,10 +427,11 @@ async def test_multi_worker_cache_synchronization(sqlite_kvstore, sample_vector_
 async def test_multi_worker_get_all_synchronization(sqlite_kvstore, sample_vector_store, sample_model):
     """Test that get_all() refreshes cache from database to see objects created by other workers."""
     # Create two separate registry instances
-    worker_a_registry = CachedDiskDistributionRegistry(sqlite_kvstore)
+    # Use cache_ttl_seconds=0 for tests to ensure immediate synchronization
+    worker_a_registry = CachedDiskDistributionRegistry(sqlite_kvstore, cache_ttl_seconds=0)
     await worker_a_registry.initialize()
 
-    worker_b_registry = CachedDiskDistributionRegistry(sqlite_kvstore)
+    worker_b_registry = CachedDiskDistributionRegistry(sqlite_kvstore, cache_ttl_seconds=0)
     await worker_b_registry.initialize()
 
     # Worker A registers multiple objects
