@@ -384,33 +384,28 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
 
             # Handle multiline default values and escape problematic characters for MDX
             if "\n" in default:
-                # For multiline defaults, escape angle brackets and use <br/> for line breaks
+                # For multiline defaults, escape angle brackets, curly braces, and use <br/> for line breaks
                 lines = default.split("\n")
                 escaped_lines = []
                 for line in lines:
                     if line.strip():
-                        # Escape angle brackets and wrap template tokens in backticks
-                        escaped_line = line.strip().replace("<", "&lt;").replace(">", "&gt;")
-                        if ("{" in escaped_line and "}" in escaped_line) or (
-                            "&lt;|" in escaped_line and "|&gt;" in escaped_line
-                        ):
-                            escaped_lines.append(f"`{escaped_line}`")
-                        else:
-                            escaped_lines.append(escaped_line)
+                        # Escape all special characters that MDX might interpret
+                        escaped_line = (
+                            line.strip()
+                            .replace("<", "&lt;")
+                            .replace(">", "&gt;")
+                            .replace("{", "&#123;")
+                            .replace("}", "&#125;")
+                        )
+                        escaped_lines.append(escaped_line)
                     else:
                         escaped_lines.append("")
                 default = "<br/>".join(escaped_lines)
             else:
-                # For single line defaults, escape angle brackets first
-                escaped_default = default.replace("<", "&lt;").replace(">", "&gt;")
-                # Then wrap template tokens in backticks
-                if ("{" in escaped_default and "}" in escaped_default) or (
-                    "&lt;|" in escaped_default and "|&gt;" in escaped_default
-                ):
-                    default = f"`{escaped_default}`"
-                else:
-                    # Apply additional escaping for curly braces
-                    default = escaped_default.replace("{", "&#123;").replace("}", "&#125;")
+                # For single line defaults, escape all special characters
+                default = (
+                    default.replace("<", "&lt;").replace(">", "&gt;").replace("{", "&#123;").replace("}", "&#125;")
+                )
 
             description_text = field_info["description"] or ""
             # Escape curly braces in description text for MDX compatibility
@@ -466,6 +461,14 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
                         nested_default = (
                             str(nested_field_info["default"]) if nested_field_info["default"] is not None else ""
                         )
+                        # Escape special characters in nested default values
+                        if nested_default:
+                            nested_default = (
+                                nested_default.replace("<", "&lt;")
+                                .replace(">", "&gt;")
+                                .replace("{", "&#123;")
+                                .replace("}", "&#125;")
+                            )
                         nested_description = nested_field_info["description"] or ""
 
                         # Add note for Union types that the expanded fields only apply when using the model
@@ -512,6 +515,14 @@ def generate_provider_docs(progress, provider_spec: Any, api_name: str) -> str:
                                             if deeper_field_info["default"] is not None
                                             else ""
                                         )
+                                        # Escape special characters in deeper default values
+                                        if deeper_default:
+                                            deeper_default = (
+                                                deeper_default.replace("<", "&lt;")
+                                                .replace(">", "&gt;")
+                                                .replace("{", "&#123;")
+                                                .replace("}", "&#125;")
+                                            )
                                         deeper_description = deeper_field_info["description"] or ""
                                         deeper_description = deeper_description.replace("{", "&#123;").replace(
                                             "}", "&#125;"

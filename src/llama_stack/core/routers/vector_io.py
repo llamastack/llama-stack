@@ -6,30 +6,34 @@
 
 import asyncio
 import uuid
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import Body
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    EmbeddedChunk,
+    DEFAULT_CHUNK_OVERLAP_TOKENS,
+    DEFAULT_CHUNK_SIZE_TOKENS,
     HealthResponse,
     HealthStatus,
     Inference,
-    InterleavedContent,
+    InsertChunksRequest,
     ModelNotFoundError,
     ModelType,
     ModelTypeError,
+    OpenAIAttachFileRequest,
     OpenAIChatCompletionRequestWithExtraBody,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAISearchVectorStoreRequest,
+    OpenAIUpdateVectorStoreFileRequest,
+    OpenAIUpdateVectorStoreRequest,
     OpenAIUserMessageParam,
+    QueryChunksRequest,
     QueryChunksResponse,
     RoutingTable,
-    SearchRankingOptions,
     VectorIO,
-    VectorStoreChunkingStrategy,
     VectorStoreChunkingStrategyStatic,
     VectorStoreChunkingStrategyStaticConfig,
     VectorStoreDeleteResponse,
@@ -124,25 +128,21 @@ class VectorIORouter(VectorIO):
 
     async def insert_chunks(
         self,
-        vector_store_id: str,
-        chunks: list[EmbeddedChunk],
-        ttl_seconds: int | None = None,
+        request: InsertChunksRequest,
     ) -> None:
-        doc_ids = [chunk.document_id for chunk in chunks[:3]]
+        doc_ids = [chunk.document_id for chunk in request.chunks[:3]]
         logger.debug(
-            f"VectorIORouter.insert_chunks: {vector_store_id}, {len(chunks)} chunks, "
-            f"ttl_seconds={ttl_seconds}, chunk_ids={doc_ids}{' and more...' if len(chunks) > 3 else ''}"
+            f"VectorIORouter.insert_chunks: {request.vector_store_id}, {len(request.chunks)} chunks, "
+            f"ttl_seconds={request.ttl_seconds}, chunk_ids={doc_ids}{' and more...' if len(request.chunks) > 3 else ''}"
         )
-        return await self.routing_table.insert_chunks(vector_store_id, chunks, ttl_seconds)
+        return await self.routing_table.insert_chunks(request)
 
     async def query_chunks(
         self,
-        vector_store_id: str,
-        query: InterleavedContent,
-        params: dict[str, Any] | None = None,
+        request: QueryChunksRequest,
     ) -> QueryChunksResponse:
-        logger.debug(f"VectorIORouter.query_chunks: {vector_store_id}")
-        return await self.routing_table.query_chunks(vector_store_id, query, params)
+        logger.debug(f"VectorIORouter.query_chunks: {request.vector_store_id}")
+        return await self.routing_table.query_chunks(request)
 
     # OpenAI Vector Stores API endpoints
     async def openai_create_vector_store(
@@ -221,21 +221,30 @@ class VectorIORouter(VectorIO):
         )
         provider = await self.routing_table.get_provider_impl(registered_vector_store.identifier)
 
-        # Update model_extra with registered values so provider uses the already-registered vector_store
-        if params.model_extra is None:
-            params.model_extra = {}
-        params.model_extra["provider_vector_store_id"] = registered_vector_store.provider_resource_id
-        params.model_extra["provider_id"] = registered_vector_store.provider_id
+        # Build extra fields to pass to provider with registered values
+        extra_fields: dict[str, str | int | None] = {
+            "provider_vector_store_id": registered_vector_store.provider_resource_id,
+            "provider_id": registered_vector_store.provider_id,
+        }
         if embedding_model is not None:
-            params.model_extra["embedding_model"] = embedding_model
+            extra_fields["embedding_model"] = embedding_model
         if embedding_dimension is not None:
-            params.model_extra["embedding_dimension"] = embedding_dimension
+            extra_fields["embedding_dimension"] = embedding_dimension
+
+        # Rebuild params with merged extra fields (Pydantic v2: model_extra is read-only)
+        # We need to dump and revalidate to properly merge extra fields
+        existing_extra = params.model_extra or {}
+        merged_data = {**params.model_dump(exclude_unset=True), **existing_extra, **extra_fields}
+        params = OpenAICreateVectorStoreRequestWithExtraBody.model_validate(merged_data)
 
         # Set chunking strategy explicitly if not provided
         if params.chunking_strategy is None or params.chunking_strategy.type == "auto":
             # actualize the chunking strategy to static
             params.chunking_strategy = VectorStoreChunkingStrategyStatic(
-                static=VectorStoreChunkingStrategyStaticConfig()
+                static=VectorStoreChunkingStrategyStaticConfig(
+                    max_chunk_size_tokens=DEFAULT_CHUNK_SIZE_TOKENS,
+                    chunk_overlap_tokens=DEFAULT_CHUNK_OVERLAP_TOKENS,
+                )
             )
 
         return await provider.openai_create_vector_store(params)
@@ -302,23 +311,19 @@ class VectorIORouter(VectorIO):
     async def openai_update_vector_store(
         self,
         vector_store_id: str,
-        name: str | None = None,
-        expires_after: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
+        request: OpenAIUpdateVectorStoreRequest,
     ) -> VectorStoreObject:
         logger.debug(f"VectorIORouter.openai_update_vector_store: {vector_store_id}")
 
         # Check if provider_id is being changed (not supported)
-        if metadata and "provider_id" in metadata:
+        if request.metadata and "provider_id" in request.metadata:
             current_store = await self.routing_table.get_object_by_identifier("vector_store", vector_store_id)
-            if current_store and current_store.provider_id != metadata["provider_id"]:
+            if current_store and current_store.provider_id != request.metadata["provider_id"]:
                 raise ValueError("provider_id cannot be changed after vector store creation")
 
         return await self.routing_table.openai_update_vector_store(
             vector_store_id=vector_store_id,
-            name=name,
-            expires_after=expires_after,
-            metadata=metadata,
+            request=request,
         )
 
     async def openai_delete_vector_store(
@@ -331,49 +336,50 @@ class VectorIORouter(VectorIO):
     async def openai_search_vector_store(
         self,
         vector_store_id: str,
-        query: str | list[str],
-        filters: dict[str, Any] | None = None,
-        max_num_results: int | None = 10,
-        ranking_options: SearchRankingOptions | None = None,
-        rewrite_query: bool | None = False,
-        search_mode: str | None = "vector",
+        request: OpenAISearchVectorStoreRequest,
     ) -> VectorStoreSearchResponsePage:
         logger.debug(f"VectorIORouter.openai_search_vector_store: {vector_store_id}")
 
         # Handle query rewriting at the router level
-        search_query = query
-        if rewrite_query:
-            if isinstance(query, list):
-                original_query = " ".join(query)
+        search_query = request.query
+        if request.rewrite_query:
+            if isinstance(request.query, list):
+                original_query = " ".join(request.query)
             else:
-                original_query = query
+                original_query = request.query
             search_query = await self._rewrite_query_for_search(original_query)
+
+        # Create a new request with the rewritten query and disabled rewriting (since we handled it)
+        forward_request = request.model_copy()
+        forward_request.query = search_query
+        forward_request.rewrite_query = False
 
         return await self.routing_table.openai_search_vector_store(
             vector_store_id=vector_store_id,
-            query=search_query,
-            filters=filters,
-            max_num_results=max_num_results,
-            ranking_options=ranking_options,
-            rewrite_query=False,  # Already handled at router level
-            search_mode=search_mode,
+            request=forward_request,
         )
 
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
-        file_id: str,
-        attributes: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+        request: OpenAIAttachFileRequest,
     ) -> VectorStoreFileObject:
-        logger.debug(f"VectorIORouter.openai_attach_file_to_vector_store: {vector_store_id}, {file_id}")
-        if chunking_strategy is None or chunking_strategy.type == "auto":
-            chunking_strategy = VectorStoreChunkingStrategyStatic(static=VectorStoreChunkingStrategyStaticConfig())
+        logger.debug(f"VectorIORouter.openai_attach_file_to_vector_store: {vector_store_id}, {request.file_id}")
+
+        # Create a copy to modify chunking strategy if needed
+        params = request.model_copy()
+
+        if params.chunking_strategy is None or params.chunking_strategy.type == "auto":
+            params.chunking_strategy = VectorStoreChunkingStrategyStatic(
+                static=VectorStoreChunkingStrategyStaticConfig(
+                    max_chunk_size_tokens=DEFAULT_CHUNK_SIZE_TOKENS,
+                    chunk_overlap_tokens=DEFAULT_CHUNK_OVERLAP_TOKENS,
+                )
+            )
+
         return await self.routing_table.openai_attach_file_to_vector_store(
             vector_store_id=vector_store_id,
-            file_id=file_id,
-            attributes=attributes,
-            chunking_strategy=chunking_strategy,
+            request=params,
         )
 
     async def openai_list_files_in_vector_store(
@@ -429,13 +435,13 @@ class VectorIORouter(VectorIO):
         self,
         vector_store_id: str,
         file_id: str,
-        attributes: dict[str, Any],
+        request: OpenAIUpdateVectorStoreFileRequest,
     ) -> VectorStoreFileObject:
         logger.debug(f"VectorIORouter.openai_update_vector_store_file: {vector_store_id}, {file_id}")
         return await self.routing_table.openai_update_vector_store_file(
             vector_store_id=vector_store_id,
             file_id=file_id,
-            attributes=attributes,
+            request=request,
         )
 
     async def openai_delete_vector_store_file(

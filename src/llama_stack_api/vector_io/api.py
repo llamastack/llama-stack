@@ -11,20 +11,22 @@ Pydantic models are defined in llama_stack_api.vector_io.models.
 The FastAPI router is defined in llama_stack_api.vector_io.fastapi_routes.
 """
 
-from typing import Annotated, Any, Protocol, runtime_checkable
+from typing import Annotated, Protocol, runtime_checkable
 
 from fastapi import Body, Query
 
-from llama_stack_api.inference import InterleavedContent
 from llama_stack_api.vector_stores import VectorStore
 
 from .models import (
-    EmbeddedChunk,
+    InsertChunksRequest,
+    OpenAIAttachFileRequest,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAISearchVectorStoreRequest,
+    OpenAIUpdateVectorStoreFileRequest,
+    OpenAIUpdateVectorStoreRequest,
+    QueryChunksRequest,
     QueryChunksResponse,
-    SearchRankingOptions,
-    VectorStoreChunkingStrategy,
     VectorStoreDeleteResponse,
     VectorStoreFileBatchObject,
     VectorStoreFileContentResponse,
@@ -51,18 +53,14 @@ class VectorIO(Protocol):
     # probably return a Job instance which can be polled for completion
     async def insert_chunks(
         self,
-        vector_store_id: str,
-        chunks: list[EmbeddedChunk],
-        ttl_seconds: int | None = None,
+        request: InsertChunksRequest,
     ) -> None:
         """Insert embedded chunks into a vector database."""
         ...
 
     async def query_chunks(
         self,
-        vector_store_id: str,
-        query: InterleavedContent,
-        params: dict[str, Any] | None = None,
+        request: QueryChunksRequest,
     ) -> QueryChunksResponse:
         """Query chunks from a vector database."""
         ...
@@ -98,9 +96,7 @@ class VectorIO(Protocol):
     async def openai_update_vector_store(
         self,
         vector_store_id: str,
-        name: str | None = None,
-        expires_after: dict[str, Any] | None = None,
-        metadata: dict[str, Any] | None = None,
+        request: OpenAIUpdateVectorStoreRequest,
     ) -> VectorStoreObject:
         """Updates a vector store."""
         ...
@@ -115,14 +111,7 @@ class VectorIO(Protocol):
     async def openai_search_vector_store(
         self,
         vector_store_id: str,
-        query: str | list[str],
-        filters: dict[str, Any] | None = None,
-        max_num_results: int | None = 10,
-        ranking_options: SearchRankingOptions | None = None,
-        rewrite_query: bool | None = False,
-        search_mode: (
-            str | None
-        ) = "vector",  # Using str instead of Literal due to OpenAPI schema generator limitations
+        request: OpenAISearchVectorStoreRequest,
     ) -> VectorStoreSearchResponsePage:
         """Search for chunks in a vector store.
 
@@ -133,9 +122,7 @@ class VectorIO(Protocol):
     async def openai_attach_file_to_vector_store(
         self,
         vector_store_id: str,
-        file_id: str,
-        attributes: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
+        request: OpenAIAttachFileRequest,
     ) -> VectorStoreFileObject:
         """Attach a file to a vector store."""
         ...
@@ -174,7 +161,7 @@ class VectorIO(Protocol):
         self,
         vector_store_id: str,
         file_id: str,
-        attributes: dict[str, Any],
+        request: OpenAIUpdateVectorStoreFileRequest,
     ) -> VectorStoreFileObject:
         """Updates a vector store file."""
         ...

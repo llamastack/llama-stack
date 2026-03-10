@@ -185,3 +185,119 @@ def test_multiple_resources_with_conditional_ids(setup_env_vars):
         assert len(result["models"]) == 0
     finally:
         del os.environ["INCLUDE_BENCHMARK"]
+
+
+def test_auth_provider_disabled_when_type_not_set(setup_env_vars):
+    """Test that auth provider_config is set to None when type field is conditional and env var not set."""
+    data = {
+        "server": {
+            "auth": {
+                "provider_config": {
+                    "type": "${env.AUTH_PROVIDER:+oauth2_token}",
+                    "audience": "llama-stack",
+                    "issuer": "https://auth.example.com",
+                },
+                "route_policy": [],
+            }
+        }
+    }
+    # AUTH_PROVIDER is not set, so provider_config should become None
+    result = replace_env_vars(data, "")
+    assert result["server"]["auth"]["provider_config"] is None
+    # route_policy should still be present
+    assert result["server"]["auth"]["route_policy"] == []
+
+
+def test_auth_provider_enabled_when_type_is_set(setup_env_vars):
+    """Test that auth provider_config is preserved when type field is set via env var."""
+    os.environ["AUTH_PROVIDER"] = "yes"
+    try:
+        data = {
+            "server": {
+                "auth": {
+                    "provider_config": {
+                        "type": "${env.AUTH_PROVIDER:+oauth2_token}",
+                        "audience": "llama-stack",
+                        "issuer": "https://auth.example.com",
+                    },
+                    "route_policy": [],
+                }
+            }
+        }
+        result = replace_env_vars(data, "")
+        # AUTH_PROVIDER is set, so provider_config should be preserved with resolved type
+        assert result["server"]["auth"]["provider_config"] is not None
+        assert result["server"]["auth"]["provider_config"]["type"] == "oauth2_token"
+        assert result["server"]["auth"]["provider_config"]["audience"] == "llama-stack"
+        assert result["server"]["auth"]["provider_config"]["issuer"] == "https://auth.example.com"
+    finally:
+        del os.environ["AUTH_PROVIDER"]
+
+
+def test_auth_provider_disabled_when_type_is_empty(setup_env_vars):
+    """Test that auth provider_config is set to None when type field resolves to empty string."""
+    data = {
+        "server": {
+            "auth": {
+                "provider_config": {
+                    "type": "${env.NOT_SET:=}",
+                    "audience": "llama-stack",
+                },
+                "route_policy": [],
+            }
+        }
+    }
+    # NOT_SET env var is not set, and default is empty, so provider_config should become None
+    result = replace_env_vars(data, "")
+    assert result["server"]["auth"]["provider_config"] is None
+
+
+def test_auth_provider_with_hardcoded_type(setup_env_vars):
+    """Test that auth provider_config with hardcoded type is preserved."""
+    data = {
+        "server": {
+            "auth": {
+                "provider_config": {
+                    "type": "oauth2_token",
+                    "audience": "llama-stack",
+                    "issuer": "https://auth.example.com",
+                },
+                "route_policy": [],
+            }
+        }
+    }
+    result = replace_env_vars(data, "")
+    # Hardcoded type should be preserved as-is
+    assert result["server"]["auth"]["provider_config"] is not None
+    assert result["server"]["auth"]["provider_config"]["type"] == "oauth2_token"
+    assert result["server"]["auth"]["provider_config"]["audience"] == "llama-stack"
+
+
+def test_auth_provider_with_complex_config(setup_env_vars):
+    """Test conditional auth with complex nested config."""
+    os.environ["ENABLE_AUTH"] = "true"
+    os.environ["KEYCLOAK_URL"] = "http://keycloak:8080"
+    try:
+        data = {
+            "server": {
+                "auth": {
+                    "provider_config": {
+                        "type": "${env.ENABLE_AUTH:+oauth2_token}",
+                        "audience": "account",
+                        "issuer": "${env.KEYCLOAK_URL}/realms/llamastack",
+                        "jwks": {"uri": "${env.KEYCLOAK_URL}/realms/llamastack/protocol/openid-connect/certs"},
+                    }
+                }
+            }
+        }
+        result = replace_env_vars(data, "")
+        assert result["server"]["auth"]["provider_config"] is not None
+        assert result["server"]["auth"]["provider_config"]["type"] == "oauth2_token"
+        assert result["server"]["auth"]["provider_config"]["issuer"] == "http://keycloak:8080/realms/llamastack"
+        assert (
+            result["server"]["auth"]["provider_config"]["jwks"]["uri"]
+            == "http://keycloak:8080/realms/llamastack/protocol/openid-connect/certs"
+        )
+    finally:
+        del os.environ["ENABLE_AUTH"]
+        del os.environ["KEYCLOAK_URL"]

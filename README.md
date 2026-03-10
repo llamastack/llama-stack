@@ -2,6 +2,7 @@
 
 [![PyPI version](https://img.shields.io/pypi/v/llama_stack.svg)](https://pypi.org/project/llama_stack/)
 [![PyPI - Downloads](https://img.shields.io/pypi/dm/llama-stack)](https://pypi.org/project/llama-stack/)
+[![Docker Hub - Pulls](https://img.shields.io/docker/pulls/llamastack/distribution-starter)](https://hub.docker.com/u/llamastack)
 [![License](https://img.shields.io/pypi/l/llama_stack.svg)](https://github.com/meta-llama/llama-stack/blob/main/LICENSE)
 [![Discord](https://img.shields.io/discord/1257833999603335178?color=6A7EC2&logo=discord&logoColor=ffffff)](https://discord.gg/llama-stack)
 [![Unit Tests](https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml/badge.svg?branch=main)](https://github.com/meta-llama/llama-stack/actions/workflows/unit-tests.yml?query=branch%3Amain)
@@ -88,8 +89,10 @@ Here are some of the distributions we support:
 |               **Distribution**                |                                                                    **Llama Stack Docker**                                                                     |                                                 Start This Distribution                                                  |
 |:---------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------:|
 |                Starter Distribution                 |           [llamastack/distribution-starter](https://hub.docker.com/repository/docker/llamastack/distribution-starter/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/starter)      |
+|                Starter Distribution GPU                 |           [llamastack/distribution-starter-cpu](https://hub.docker.com/repository/docker/llamastack/distribution-starter-cpu/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/starter)      |
 |                Meta Reference                 |           [llamastack/distribution-meta-reference-gpu](https://hub.docker.com/repository/docker/llamastack/distribution-meta-reference-gpu/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/meta-reference-gpu)      |
-|                   PostgreSQL                  |                [llamastack/distribution-postgres-demo](https://hub.docker.com/repository/docker/llamastack/distribution-postgres-demo/general)                |                  |
+|                   PostgreSQL                  |                [llamastack/distribution-postgres-demo](https://hub.docker.com/repository/docker/llamastack/distribution-postgres-demo/general)                | N/A |
+|                Dell                 |           [llamastack/distribution-dell](https://hub.docker.com/repository/docker/llamastack/distribution-dell/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/dell)      |
 
 For full documentation on the Llama Stack distributions see the [Distributions Overview](https://llamastack.github.io/docs/distributions) page.
 
@@ -119,6 +122,8 @@ Check out our client SDKs for connecting to a Llama Stack server in your preferr
 | Swift  | [llama-stack-client-swift](https://github.com/meta-llama/llama-stack-client-swift) | [![Swift Package Index](https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmeta-llama%2Fllama-stack-client-swift%2Fbadge%3Ftype%3Dswift-versions)](https://swiftpackageindex.com/meta-llama/llama-stack-client-swift)
 | Typescript   | [llama-stack-client-typescript](https://github.com/meta-llama/llama-stack-client-typescript) | [![NPM version](https://img.shields.io/npm/v/llama-stack-client.svg)](https://npmjs.org/package/llama-stack-client)
 | Kotlin | [llama-stack-client-kotlin](https://github.com/meta-llama/llama-stack-client-kotlin) | [![Maven version](https://img.shields.io/maven-central/v/com.llama.llamastack/llama-stack-client-kotlin)](https://central.sonatype.com/artifact/com.llama.llamastack/llama-stack-client-kotlin)
+
+> **Note**: We are considering a transition from Stainless to OpenAPI Generator for SDK generation ([#4609](https://github.com/llamastack/llama-stack/issues/4609)). The `client-sdks/openapi/` directory contains the new tooling for local SDK generation.
 
 You can find more example scripts with client SDKs to talk with the Llama Stack server in our [llama-stack-apps](https://github.com/meta-llama/llama-stack-apps/tree/main/examples) repo.
 

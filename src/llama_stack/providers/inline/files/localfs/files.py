@@ -23,9 +23,9 @@ from llama_stack_api import (
     ListOpenAIFileResponse,
     OpenAIFileDeleteResponse,
     OpenAIFileObject,
+    OpenAIFileObjectNotFoundError,
     OpenAIFilePurpose,
     Order,
-    ResourceNotFoundError,
     RetrieveFileContentRequest,
     RetrieveFileRequest,
     UploadFileRequest,
@@ -82,7 +82,7 @@ class LocalfsFilesImpl(Files):
 
         row = await self.sql_store.fetch_one("openai_files", where={"id": file_id}, action=action)
         if not row:
-            raise ResourceNotFoundError(file_id, "File", "client.files.list()")
+            raise OpenAIFileObjectNotFoundError(file_id)
 
         file_path = Path(row.pop("file_path"))
         return OpenAIFileObject(**row), file_path
@@ -218,7 +218,7 @@ class LocalfsFilesImpl(Files):
         if not file_path.exists():
             logger.warning(f"File '{file_id}'s underlying '{file_path}' is missing, deleting metadata.")
             await self.openai_delete_file(DeleteFileRequest(file_id=file_id))
-            raise ResourceNotFoundError(file_id, "File", "client.files.list()")
+            raise OpenAIFileObjectNotFoundError(file_id)
 
         # Return as binary response with appropriate content type
         return Response(

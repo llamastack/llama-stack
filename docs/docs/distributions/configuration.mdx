@@ -288,6 +288,36 @@ The `auth` section configures authentication for the server. When configured, al
 Authorization: Bearer <token>
 ```
 
+#### Conditional Authentication
+
+Authentication can be conditionally enabled or disabled using environment variables with the conditional syntax (`:+`). This is useful for deploying the same configuration to different environments where auth may or may not be required.
+
+Example:
+```yaml
+server:
+  auth:
+    provider_config:
+      type: ${env.AUTH_PROVIDER:+oauth2_token}
+      audience: "llama-stack"
+      jwks:
+        uri: ${env.KEYCLOAK_URL}/realms/llamastack/protocol/openid-connect/certs
+      issuer: ${env.KEYCLOAK_URL}/realms/llamastack
+```
+
+**Behavior:**
+- **If `AUTH_PROVIDER` is set** (to any value): Authentication is enabled with OAuth2
+- **If `AUTH_PROVIDER` is NOT set**: Authentication is completely disabled (no middleware added)
+
+This allows you to:
+- Run without authentication in local development (unset the env var)
+- Enable authentication in staging/production (set the env var)
+- Use the same config.yaml across all environments
+
+**Important Notes:**
+- The `type` field uses the conditional syntax to control whether the entire auth provider is enabled
+- When the env var is not set, the entire `provider_config` is set to `None` and no authentication middleware is initialized
+- Other auth config fields (like `route_policy`) can still be used independently when `provider_config` is disabled
+
 The server supports multiple authentication providers:
 
 #### OAuth 2.0/OpenID Connect Provider with Kubernetes
@@ -488,9 +518,10 @@ the rule to take effect.
 
 Valid actions are create, read, update, and delete. The resource to
 match should be specified in the form of a type qualified identifier,
-e.g.  model::my-model or vector_db::some-db, or a wildcard for all
-resources of a type, e.g. model::*. If the principal or resource are
-not specified, they will match all requests.
+e.g.  model::my-model or vector_db::some-db, a wildcard for all
+resources of a type, e.g. model::*, or a regex pattern with the
+"regex:" prefix, e.g. regex:model::(llama|mistral)-3\\.\\d+-.*. If the
+principal or resource are not specified, they will match all requests.
 
 The valid resource types are model, shield, vector_db, dataset,
 scoring_function, benchmark, tool, tool_group and session.
@@ -574,7 +605,7 @@ user with a valid token to use models, create resources other than
 models, read and delete resources they created and read resources
 created by users sharing a team with them:
 
-```
+```yaml
     access_policy:
     - permit:
         actions: [read]
@@ -594,6 +625,29 @@ created by users sharing a team with them:
       when: user in owner teams
       description: any user has read access to any resource created by a user with the same team
 ```
+
+Regex patterns can be used to match resources based on naming conventions. For example, to allow developers to access specific model families:
+
+```yaml
+    access_policy:
+    - permit:
+        actions: [read]
+        resource: regex:model::(llama|mistral)-.*
+      when: user with developer in roles
+      description: developers can read llama and mistral models
+    - permit:
+        actions: [read]
+        resource: regex:model::.*-3\\.\\d+-.*
+      when: user with user in roles
+      description: users can read version 3.x models
+```
+
+**Important**: When using regex patterns, remember to:
+- Use the `regex:` prefix to indicate a regex pattern
+- Patterns use Python's `re` module syntax (see [Python regex documentation](https://docs.python.org/3/library/re.html))
+- Escape special regex characters (e.g., `\\.` for literal dots)
+- Use anchors (`^` and `$`) when you need exact matching (default behavior uses `re.match()` which anchors at the start but not the end)
+- Invalid regex patterns will log a warning and be treated as non-matches
 
 ### Route-Level Authorization
 
@@ -635,18 +689,27 @@ server:
 
 #### Path Matching
 
-Route paths support three matching patterns:
+Route paths support four matching patterns:
 
 1. **Exact Match**: `/v1/chat/completions` - matches only this specific path
 2. **Prefix Wildcard**: `/v1/files*` - matches `/v1/files` and all paths starting with `/v1/files` (e.g., `/v1/files/upload`, `/v1/files/list`)
 3. **Full Wildcard**: `*` - matches all routes
+4. **Regex Pattern**: `regex:^/v1/(chat|inference)/.*$` - matches routes using regular expressions
 
 **Path Normalization**: Trailing slashes are automatically removed during matching (e.g., `/v1/files/` is treated as `/v1/files`).
 
 Multiple paths can be specified in a single rule using a list:
 ```yaml
-paths: ["/v1/files*", "/v1/models*"]
+paths: ["/v1/files*", "/v1/models*", "regex:^/v1/admin/.*$"]
 ```
+
+**Regex Pattern Notes**:
+- Use the `regex:` prefix to indicate a regex pattern
+- Patterns use Python's `re` module syntax (see [Python regex documentation](https://docs.python.org/3/library/re.html))
+- It's recommended to use anchors (`^` at start, `$` at end) for precise matching
+- Without anchors, `re.match()` will anchor at the start but allow trailing characters
+- Example: `regex:/v1/files` would match `/v1/filesXXX`, but `regex:^/v1/files$` would not
+- Invalid regex patterns will log a warning and be skipped (other patterns in the list will still be checked)
 
 #### Rule Evaluation
 
@@ -764,7 +827,45 @@ Result:
 - Only authenticated users with `developer` role can access `/v1/chat/completions`
 - All other routes are denied
 
-**Example 4: Integration with Resource-Level Authorization**
+**Example 4: Using Regex Patterns for Flexible Route Matching**
+
+Use regex patterns to match multiple related routes with a single rule:
+
+```yaml
+server:
+  auth:
+    provider_config:
+      type: "oauth2_token"
+      # ... provider configuration ...
+
+    route_policy:
+      - permit:
+          paths: ["/v1/health", "/v1/version"]
+        description: "Public health check routes"
+
+      - permit:
+          paths: regex:^/v1/(files|providers|models)(/.*)?$
+        when: user with user in roles
+        description: "Users can access files, providers, and models endpoints"
+
+      - permit:
+          paths: regex:^/v1/(chat|inference)/.*$
+        when: user with developer in roles
+        description: "Developers can access inference endpoints"
+
+      - forbid:
+          paths: "*"
+        description: "Deny all other routes by default"
+```
+
+Result:
+- Public health endpoints are accessible to everyone
+- Users with `user` role can access `/v1/files`, `/v1/providers`, and `/v1/models` (and subpaths)
+- Users with `developer` role can access `/v1/chat/*` and `/v1/inference/*` routes
+- All other routes return 403 Forbidden
+- The regex patterns use anchors (`^` and `$`) for precise matching
+
+**Example 5: Integration with Resource-Level Authorization**
 
 Route authorization works seamlessly with resource-level authorization:
 

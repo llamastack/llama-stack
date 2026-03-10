@@ -251,7 +251,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         if self.provider_data_api_key_field:
             provider_data = self.get_request_provider_data()
             if provider_data and getattr(provider_data, self.provider_data_api_key_field, None):
-                api_key = getattr(provider_data, self.provider_data_api_key_field)
+                value = getattr(provider_data, self.provider_data_api_key_field)
+                api_key = value.get_secret_value()
 
         return api_key
 
@@ -406,7 +407,9 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
             top_p=params.top_p,
             user=params.user,
             safety_identifier=params.safety_identifier,
+            service_tier=params.service_tier,
             reasoning_effort=params.reasoning_effort,
+            prompt_cache_key=params.prompt_cache_key,
         )
 
         if extra_body := params.model_extra:
@@ -477,6 +480,13 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     ##
 
     async def register_model(self, model: Model) -> Model:
+        # Check if we should validate model availability (defaults to False)
+        should_validate = bool(model.model_validation)
+
+        if not should_validate:
+            logger.debug(f"Skipping model availability check for {model.provider_model_id} (model_validation=false)")
+            return model
+
         if not await self.check_model_availability(model.provider_model_id):
             raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")  # type: ignore[attr-defined]
         return model

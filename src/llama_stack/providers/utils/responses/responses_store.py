@@ -10,6 +10,7 @@ from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlS
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
 from llama_stack.log import get_logger
 from llama_stack_api import (
+    InvalidParameterError,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
     OpenAIDeleteResponseObject,
@@ -18,6 +19,8 @@ from llama_stack_api import (
     OpenAIResponseObject,
     OpenAIResponseObjectWithInput,
     Order,
+    ResponseInputItemNotFoundError,
+    ResponseNotFoundError,
 )
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
@@ -49,7 +52,6 @@ class ResponsesStore:
             self.reference = ResponsesStoreReference(**reference.model_dump())
 
         self.policy = policy
-        self.sql_store = None
 
     async def initialize(self):
         """Create the necessary tables if they don't exist."""
@@ -104,8 +106,6 @@ class ResponsesStore:
         :param input: The input items for the response.
         :param messages: The chat completion messages (for conversation continuity).
         """
-        if self.sql_store is None:
-            raise ValueError("Responses store is not initialized")
 
         data = response_object.model_dump()
         data["input"] = [input_item.model_dump() for input_item in input]
@@ -129,9 +129,6 @@ class ResponsesStore:
         input: list[OpenAIResponseInput],
         messages: list[OpenAIMessageParam],
     ) -> None:
-        if self.sql_store is None:
-            raise ValueError("Responses store is not initialized")
-
         data = response_object.model_dump()
         data["input"] = [input_item.model_dump() for input_item in input]
         data["messages"] = [msg.model_dump() for msg in messages]
@@ -161,8 +158,6 @@ class ResponsesStore:
         :param model: The model to filter by.
         :param order: The order to sort the responses by.
         """
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
 
         if not order:
             order = Order.desc
@@ -191,8 +186,6 @@ class ResponsesStore:
         """
         Get a response object with automatic access control checking.
         """
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
 
         row = await self.sql_store.fetch_one(
             self.reference.table_name,
@@ -202,19 +195,58 @@ class ResponsesStore:
         if not row:
             # SecureSqlStore will return None if record doesn't exist OR access is denied
             # This provides security by not revealing whether the record exists
-            raise ValueError(f"Response with id {response_id} not found") from None
+            raise ResponseNotFoundError(response_id) from None
 
         return _OpenAIResponseObjectWithInputAndMessages(**row["response_object"])
 
     async def delete_response_object(self, response_id: str) -> OpenAIDeleteResponseObject:
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
-
         row = await self.sql_store.fetch_one(self.reference.table_name, where={"id": response_id})
         if not row:
-            raise ValueError(f"Response with id {response_id} not found")
+            raise ResponseNotFoundError(response_id)
         await self.sql_store.delete(self.reference.table_name, where={"id": response_id})
         return OpenAIDeleteResponseObject(id=response_id)
+
+    async def update_response_object(
+        self,
+        response_object: OpenAIResponseObject,
+        input: list[OpenAIResponseInput] | None = None,
+    ) -> None:
+        """Update an existing response object in storage.
+
+        :param response_object: The updated response object.
+        :param input: Optional input items (if None, existing input is preserved).
+        """
+        # Fetch existing data to preserve input/messages if not provided
+        existing_row = await self.sql_store.fetch_one(
+            self.reference.table_name,
+            where={"id": response_object.id},
+        )
+
+        if not existing_row:
+            logger.critical(f"Response with id {response_object.id} not found during update - this should never happen")
+            raise RuntimeError(f"Response with id {response_object.id} not found during update")
+
+        existing_data = existing_row["response_object"]
+
+        data = response_object.model_dump()
+        # Preserve existing input if not provided
+        if input is not None:
+            data["input"] = [input_item.model_dump() for input_item in input]
+        else:
+            data["input"] = existing_data.get("input", [])
+        # Messages are stored in the blob by store/upsert_response_object.
+        # Preserve them here so updating status doesn't clobber them.
+        data["messages"] = existing_data.get("messages", [])
+
+        await self.sql_store.update(
+            self.reference.table_name,
+            data={
+                "created_at": data["created_at"],
+                "model": data["model"],
+                "response_object": data,
+            },
+            where={"id": response_object.id},
+        )
 
     async def list_response_input_items(
         self,
@@ -238,7 +270,11 @@ class ResponsesStore:
         if include:
             raise NotImplementedError("Include is not supported yet")
         if before and after:
-            raise ValueError("Cannot specify both 'before' and 'after' parameters")
+            raise InvalidParameterError(
+                "before/after",
+                f"before={before!r}, after={after!r}",
+                "Cannot specify both 'before' and 'after' parameters",
+            )
 
         response_with_input_and_messages = await self.get_response_object(response_id)
         items = response_with_input_and_messages.input
@@ -259,9 +295,9 @@ class ResponsesStore:
                     break
 
             if after and start_index == 0:
-                raise ValueError(f"Input item with id '{after}' not found for response '{response_id}'")
+                raise ResponseInputItemNotFoundError(after, response_id)
             if before and end_index == len(items):
-                raise ValueError(f"Input item with id '{before}' not found for response '{response_id}'")
+                raise ResponseInputItemNotFoundError(before, response_id)
 
         items = items[start_index:end_index]
 
@@ -277,8 +313,6 @@ class ResponsesStore:
         :param conversation_id: The conversation identifier.
         :param messages: List of OpenAI message parameters to store.
         """
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
 
         # Serialize messages to dict format for JSON storage
         messages_data = [msg.model_dump() for msg in messages]
@@ -298,8 +332,6 @@ class ResponsesStore:
         :param conversation_id: The conversation identifier.
         :returns: List of OpenAI message parameters, or None if no messages stored.
         """
-        if not self.sql_store:
-            raise ValueError("Responses store is not initialized")
 
         record = await self.sql_store.fetch_one(
             table="conversation_messages",

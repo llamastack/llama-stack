@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import os
 import re
 from abc import abstractmethod
 from enum import StrEnum
@@ -297,16 +298,25 @@ class ServerStoresConfig(BaseModel):
     )
 
 
+def _default_backends() -> dict[str, StorageBackendConfig]:
+    base_dir = os.path.expanduser(os.environ.get("SQLITE_STORE_DIR") or str(DISTRIBS_BASE_DIR))
+    return {
+        "kv_default": SqliteKVStoreConfig(
+            db_path=os.path.join(base_dir, "kvstore.db"),
+        ),
+        "sql_default": SqliteSqlStoreConfig(
+            db_path=os.path.join(base_dir, "sql_store.db"),
+        ),
+    }
+
+
 class StorageConfig(BaseModel):
+    # default_factory resolves SQLITE_STORE_DIR at construction time via
+    # os.environ.get() instead of embedding literal ${env.SQLITE_STORE_DIR:=...}
+    # strings that would bypass replace_env_vars() and crash on read-only
+    # container filesystems.  See https://github.com/llamastack/llama-stack/issues/4896
     backends: dict[str, StorageBackendConfig] = Field(
-        default={
-            "kv_default": SqliteKVStoreConfig(
-                db_path=f"${{env.SQLITE_STORE_DIR:={DISTRIBS_BASE_DIR}}}/kvstore.db",
-            ),
-            "sql_default": SqliteSqlStoreConfig(
-                db_path=f"${{env.SQLITE_STORE_DIR:={DISTRIBS_BASE_DIR}}}/sql_store.db",
-            ),
-        },
+        default_factory=_default_backends,
         description="Named backend configurations (e.g., 'default', 'cache')",
     )
     stores: ServerStoresConfig = Field(

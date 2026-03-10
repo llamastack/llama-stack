@@ -9,6 +9,7 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
+from openai import APIStatusError
 from openai.types.chat import ChatCompletionToolParam
 from opentelemetry import trace
 
@@ -20,6 +21,7 @@ from llama_stack_api import (
     AllowedToolsFilter,
     ApprovalFilter,
     Connectors,
+    GetConnectorRequest,
     Inference,
     MCPListToolsTool,
     ModelNotFoundError,
@@ -27,6 +29,7 @@ from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
     OpenAIChatCompletionRequestWithExtraBody,
+    OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolChoice,
     OpenAIChatCompletionToolChoiceAllowedTools,
@@ -40,6 +43,7 @@ from llama_stack_api import (
     OpenAIResponseContentPartReasoningText,
     OpenAIResponseContentPartRefusal,
     OpenAIResponseError,
+    OpenAIResponseIncompleteDetails,
     OpenAIResponseInputTool,
     OpenAIResponseInputToolChoice,
     OpenAIResponseInputToolChoiceAllowedTools,
@@ -89,10 +93,12 @@ from llama_stack_api import (
     OpenAIResponseUsageOutputTokensDetails,
     OpenAIToolMessageParam,
     ResponseItemInclude,
+    ResponseTruncation,
     Safety,
     ToolDef,
     WebSearchToolTypes,
 )
+from llama_stack_api.inference import ServiceTier
 
 from .types import ChatCompletionContext, ChatCompletionResult
 from .utils import (
@@ -104,6 +110,78 @@ from .utils import (
 
 logger = get_logger(name=__name__, category="agents::meta_reference")
 tracer = trace.get_tracer(__name__)
+
+# Maps OpenAI Chat Completions error codes to Responses API error codes
+_RESPONSES_API_ERROR_CODES = {
+    "invalid_base64": "invalid_base64_image",
+}
+
+_VALID_RESPONSE_ERROR_CODES = frozenset(
+    {
+        "server_error",
+        "rate_limit_exceeded",
+        "invalid_prompt",
+        "vector_store_timeout",
+        "invalid_image",
+        "invalid_image_format",
+        "invalid_base64_image",
+        "invalid_image_url",
+        "image_too_large",
+        "image_too_small",
+        "image_parse_error",
+        "image_content_policy_violation",
+        "invalid_image_mode",
+        "image_file_too_large",
+        "unsupported_image_media_type",
+        "empty_image_file",
+        "failed_to_download_image",
+        "image_file_not_found",
+    }
+)
+
+
+def extract_openai_error(exc: Exception) -> tuple[str, str]:
+    """Extract error code and message from a provider SDK exception.
+
+    The exception should have a `body` attribute containing error details in one of two formats:
+        1. Nested: {"error": {"code": "...", "message": "...", ...}}
+        2. Direct: {"code": "...", "message": "...", ...}
+
+    Args:
+        exc: An exception with a `body` attribute containing error details
+
+    Returns:
+        Tuple of (error_code, error_message). Falls back to ("server_error", str(exc))
+        if the body doesn't contain a valid code. The message is always preserved.
+    """
+    body = getattr(exc, "body", None)
+    fallback_message = str(exc)
+
+    if not isinstance(body, dict):
+        logger.warning(f"Unexpected body type {type(body)}, expected dict: {exc}")
+        return ("server_error", fallback_message)
+
+    # Try nested format first: {"error": {"code": "...", ...}}
+    error_obj = body.get("error")
+    if isinstance(error_obj, dict):
+        raw_code = error_obj.get("code")
+        raw_message = error_obj.get("message")
+    else:
+        raw_code = body.get("code")
+        raw_message = body.get("message")
+
+    if raw_code and isinstance(raw_code, str):
+        final_code: str = _RESPONSES_API_ERROR_CODES.get(raw_code, raw_code)
+    else:
+        final_code = "server_error"
+
+    if final_code not in _VALID_RESPONSE_ERROR_CODES:
+        logger.info(f"Unmapped provider error code '{final_code}', falling back to server_error")
+        final_code = "server_error"
+
+    message: str = raw_message if isinstance(raw_message, str) else fallback_message
+
+    return final_code, message
 
 
 def convert_tooldef_to_chat_tool(tool_def):
@@ -137,14 +215,20 @@ class StreamingResponseOrchestrator:
         guardrail_ids: list[str] | None = None,
         connectors_api: Connectors | None = None,
         prompt: OpenAIResponsePrompt | None = None,
+        prompt_cache_key: str | None = None,
         parallel_tool_calls: bool | None = None,
         max_tool_calls: int | None = None,
         reasoning: OpenAIResponseReasoning | None = None,
         max_output_tokens: int | None = None,
         safety_identifier: str | None = None,
+        service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
+        truncation: ResponseTruncation | None = None,
+        top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -157,6 +241,7 @@ class StreamingResponseOrchestrator:
         self.connectors_api = connectors_api
         self.guardrail_ids = guardrail_ids or []
         self.prompt = prompt
+        self.prompt_cache_key = prompt_cache_key
         # System message that is inserted into the model's context
         self.instructions = instructions
         # Whether to allow more than one function tool call generated per turn.
@@ -167,10 +252,16 @@ class StreamingResponseOrchestrator:
         # An upper bound for the number of tokens that can be generated for a response
         self.max_output_tokens = max_output_tokens
         self.safety_identifier = safety_identifier
+        # Convert ServiceTier enum to string for internal storage
+        # This allows us to update it with the actual tier returned by the provider
+        self.service_tier = service_tier.value if service_tier is not None else None
         self.metadata = metadata
-        self.store = store
+        self.truncation = truncation
+        self.top_logprobs = top_logprobs
         self.include = include
+        self.extra_body = extra_body
         self.store = bool(store) if store is not None else True
+        self.presence_penalty = presence_penalty
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -202,18 +293,32 @@ class StreamingResponseOrchestrator:
 
         # Create a completed refusal response
         refusal_response = OpenAIResponseObject(
+            background=False,
             id=self.response_id,
             created_at=self.created_at,
+            frequency_penalty=self.ctx.frequency_penalty if self.ctx.frequency_penalty is not None else 0.0,
             model=self.ctx.model,
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
+            temperature=self.ctx.temperature if self.ctx.temperature is not None else 1.0,
+            top_p=self.ctx.top_p if self.ctx.top_p is not None else 1.0,
+            top_logprobs=self.top_logprobs if self.top_logprobs is not None else 0,
+            tools=self.ctx.available_tools(),
+            tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
+            truncation=self.truncation or "disabled",
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
+            service_tier=self.service_tier or "default",
             metadata=self.metadata,
+            presence_penalty=self.presence_penalty if self.presence_penalty is not None else 0.0,
             store=self.store,
+            prompt_cache_key=self.prompt_cache_key,
         )
 
-        return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
+        self.sequence_number += 1
+        return OpenAIResponseObjectStreamResponseCompleted(
+            response=refusal_response, sequence_number=self.sequence_number
+        )
 
     def _clone_outputs(self, outputs: list[OpenAIResponseOutput]) -> list[OpenAIResponseOutput]:
         cloned: list[OpenAIResponseOutput] = []
@@ -230,20 +335,27 @@ class StreamingResponseOrchestrator:
         outputs: list[OpenAIResponseOutput],
         *,
         error: OpenAIResponseError | None = None,
+        incomplete_details: OpenAIResponseIncompleteDetails | None = None,
     ) -> OpenAIResponseObject:
         completed_at = int(time.time()) if status == "completed" else None
         return OpenAIResponseObject(
+            background=False,
             created_at=self.created_at,
             completed_at=completed_at,
+            frequency_penalty=self.ctx.frequency_penalty if self.ctx.frequency_penalty is not None else 0.0,
             id=self.response_id,
             model=self.ctx.model,
             object="response",
             status=status,
             output=self._clone_outputs(outputs),
             text=self.text,
+            temperature=self.ctx.temperature if self.ctx.temperature is not None else 1.0,
+            top_p=self.ctx.top_p if self.ctx.top_p is not None else 1.0,
+            top_logprobs=self.top_logprobs if self.top_logprobs is not None else 0,
             tools=self.ctx.available_tools(),
-            tool_choice=self.ctx.tool_choice,
+            tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
             error=error,
+            incomplete_details=incomplete_details,
             usage=self.accumulated_usage,
             instructions=self.instructions,
             prompt=self.prompt,
@@ -252,8 +364,12 @@ class StreamingResponseOrchestrator:
             reasoning=self.reasoning,
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
+            service_tier=self.service_tier or "default",
             metadata=self.metadata,
+            truncation=self.truncation or "disabled",
+            presence_penalty=self.presence_penalty if self.presence_penalty is not None else 0.0,
             store=self.store,
+            prompt_cache_key=self.prompt_cache_key,
         )
 
     async def create_response(self) -> AsyncIterator[OpenAIResponseObjectStream]:
@@ -261,7 +377,8 @@ class StreamingResponseOrchestrator:
 
         # Emit response.created followed by response.in_progress to align with OpenAI streaming
         yield OpenAIResponseObjectStreamResponseCreated(
-            response=self._snapshot_response("in_progress", output_messages)
+            response=self._snapshot_response("in_progress", output_messages),
+            sequence_number=self.sequence_number,
         )
 
         self.sequence_number += 1
@@ -278,6 +395,22 @@ class StreamingResponseOrchestrator:
                 logger.info(f"Input guardrail violation: {input_violation_message}")
                 yield await self._create_refusal_response(input_violation_message)
                 return
+
+        # Only 'disabled' truncation is supported for now
+        # TODO: Implement actual truncation logic when 'auto' mode is supported
+        if self.truncation == ResponseTruncation.auto:
+            logger.warning("Truncation mode 'auto' is not yet supported")
+            self.sequence_number += 1
+            error = OpenAIResponseError(
+                code="server_error",
+                message="Truncation mode 'auto' is not supported. Use 'disabled' to let the inference provider reject oversized contexts.",
+            )
+            failure_response = self._snapshot_response("failed", output_messages, error=error)
+            yield OpenAIResponseObjectStreamResponseFailed(
+                response=failure_response,
+                sequence_number=self.sequence_number,
+            )
+            return
 
         async for stream_event in self._process_tools(output_messages):
             yield stream_event
@@ -313,6 +446,7 @@ class StreamingResponseOrchestrator:
         n_iter = 0
         messages = self.ctx.messages.copy()
         final_status = "completed"
+        incomplete_reason: str | None = None
         last_completion_result: ChatCompletionResult | None = None
 
         try:
@@ -326,6 +460,7 @@ class StreamingResponseOrchestrator:
                         f"{self.accumulated_builtin_output_tokens}/{self.max_output_tokens}"
                     )
                     final_status = "incomplete"
+                    incomplete_reason = "max_output_tokens"
                     break
 
                 remaining_output_tokens = (
@@ -349,7 +484,10 @@ class StreamingResponseOrchestrator:
                 logger.debug(f"calling openai_chat_completion with tools: {effective_tools}")
 
                 logprobs = (
-                    True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
+                    True
+                    if (self.include and ResponseItemInclude.message_output_text_logprobs in self.include)
+                    or self.top_logprobs
+                    else None
                 )
 
                 # In OpenAI, parallel_tool_calls is only allowed when 'tools' are specified.
@@ -365,6 +503,8 @@ class StreamingResponseOrchestrator:
                     tool_choice=chat_tool_choice,
                     stream=True,
                     temperature=self.ctx.temperature,
+                    top_p=self.ctx.top_p,
+                    frequency_penalty=self.ctx.frequency_penalty,
                     response_format=response_format,
                     stream_options={
                         "include_usage": True,
@@ -373,7 +513,12 @@ class StreamingResponseOrchestrator:
                     parallel_tool_calls=effective_parallel_tool_calls,
                     reasoning_effort=self.reasoning.effort if self.reasoning else None,
                     safety_identifier=self.safety_identifier,
+                    service_tier=self.service_tier,
                     max_completion_tokens=remaining_output_tokens,
+                    prompt_cache_key=self.prompt_cache_key,
+                    top_logprobs=self.top_logprobs,
+                    presence_penalty=self.presence_penalty,
+                    **(self.extra_body or {}),
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -392,6 +537,18 @@ class StreamingResponseOrchestrator:
                 if not completion_result_data:
                     raise ValueError("Streaming chunk processor failed to return completion data")
                 last_completion_result = completion_result_data
+
+                if completion_result_data.service_tier is None:
+                    # Since the default service_tier is "auto" and the returned service_tier is the
+                    # "mode actually used, here we are setting output value for service_tier as "default"
+                    # when service_tier is not supported.
+                    logger.warning("Service tier is None, setting to default")
+                    self.service_tier = "default"
+                else:
+                    # Update service_tier with actual value from provider response
+                    # This is especially important when "auto" was used as input
+                    self.service_tier = completion_result_data.service_tier
+
                 current_response = self._build_chat_completion(completion_result_data)
 
                 (
@@ -410,11 +567,7 @@ class StreamingResponseOrchestrator:
 
                 # Handle choices with no tool calls
                 for choice in current_response.choices:
-                    has_tool_calls = (
-                        isinstance(choice.message, OpenAIAssistantMessageParam)
-                        and choice.message.tool_calls
-                        and self.ctx.response_tools
-                    )
+                    has_tool_calls = choice.message.tool_calls and self.ctx.response_tools
                     if not has_tool_calls:
                         output_messages.append(
                             await convert_chat_choice_to_response_message(
@@ -457,17 +610,29 @@ class StreamingResponseOrchestrator:
                         f"Exiting inference loop since iteration count({n_iter}) exceeds {self.max_infer_iters=}"
                     )
                     final_status = "incomplete"
+                    incomplete_reason = "max_iterations_exceeded"
                     break
 
             if last_completion_result and last_completion_result.finish_reason == "length":
                 final_status = "incomplete"
+                incomplete_reason = "length"
 
         except ModelNotFoundError:
             raise
         except Exception as exc:  # noqa: BLE001
             self.final_messages = messages.copy()
             self.sequence_number += 1
-            error = OpenAIResponseError(code="internal_error", message=str(exc))
+
+            if isinstance(exc, APIStatusError) or (hasattr(exc, "status_code") and hasattr(exc, "body")):
+                logger.warning(f"Provider SDK error during response generation: {exc}")
+                error_code, error_message = extract_openai_error(exc)
+            else:
+                logger.exception(f"Unexpected '{type(exc).__name__}' error during response generation", exc_info=exc)
+                error_code, error_message = (
+                    "server_error",
+                    "An unexpected error occurred while generating the response.",
+                )
+            error = OpenAIResponseError(code=error_code, message=error_message)
             failure_response = self._snapshot_response("failed", output_messages, error=error)
             yield OpenAIResponseObjectStreamResponseFailed(
                 response=failure_response,
@@ -479,14 +644,22 @@ class StreamingResponseOrchestrator:
 
         if final_status == "incomplete":
             self.sequence_number += 1
-            final_response = self._snapshot_response("incomplete", output_messages)
+            incomplete_details = (
+                OpenAIResponseIncompleteDetails(reason=incomplete_reason) if incomplete_reason else None
+            )
+            final_response = self._snapshot_response(
+                "incomplete", output_messages, incomplete_details=incomplete_details
+            )
             yield OpenAIResponseObjectStreamResponseIncomplete(
                 response=final_response,
                 sequence_number=self.sequence_number,
             )
         else:
+            self.sequence_number += 1
             final_response = self._snapshot_response("completed", output_messages)
-            yield OpenAIResponseObjectStreamResponseCompleted(response=final_response)
+            yield OpenAIResponseObjectStreamResponseCompleted(
+                response=final_response, sequence_number=self.sequence_number
+            )
 
     def _separate_tool_calls(self, current_response, messages) -> tuple[list, list, list, list]:
         """Separate tool calls into function and non-function categories."""
@@ -496,7 +669,13 @@ class StreamingResponseOrchestrator:
         next_turn_messages = messages.copy()
 
         for choice in current_response.choices:
-            next_turn_messages.append(choice.message)
+            # Convert response message to input message format for multi-turn
+            next_turn_messages.append(
+                OpenAIAssistantMessageParam(
+                    content=choice.message.content,
+                    tool_calls=choice.message.tool_calls,
+                )
+            )
             logger.debug(f"Choice message content: {choice.message.content}")
             logger.debug(f"Choice message tool_calls: {choice.message.tool_calls}")
 
@@ -704,6 +883,7 @@ class StreamingResponseOrchestrator:
         chunk_model = ""
         chunk_finish_reason: OpenAIFinishReason = "stop"
         chat_response_logprobs = []
+        chunk_service_tier: str | None = None
 
         # Create a placeholder message item for delta events
         message_item_id = f"msg_{uuid.uuid4()}"
@@ -725,6 +905,9 @@ class StreamingResponseOrchestrator:
             chat_response_id = chunk.id
             chunk_created = chunk.created
             chunk_model = chunk.model
+            # Extract service_tier from chunk if available (may be in final chunk)
+            if chunk.service_tier is not None:
+                chunk_service_tier = chunk.service_tier
 
             # Accumulate usage from chunks (typically in final chunk with stream_options)
             self._accumulate_chunk_usage(chunk)
@@ -769,6 +952,7 @@ class StreamingResponseOrchestrator:
                             output_index=message_output_index,
                             part=OpenAIResponseContentPartOutputText(
                                 text="",  # Will be filled incrementally via text deltas
+                                logprobs=[],
                             ),
                             sequence_number=self.sequence_number,
                         )
@@ -778,7 +962,7 @@ class StreamingResponseOrchestrator:
                         content_index=content_index,
                         delta=chunk_choice.delta.content,
                         item_id=message_item_id,
-                        logprobs=chunk_logprobs,
+                        logprobs=chunk_logprobs if chunk_logprobs is not None else [],
                         output_index=message_output_index,
                         sequence_number=self.sequence_number,
                     )
@@ -945,6 +1129,7 @@ class StreamingResponseOrchestrator:
                 output_index=message_output_index,
                 part=OpenAIResponseContentPartOutputText(
                     text=final_text,
+                    logprobs=[],
                 ),
                 sequence_number=self.sequence_number,
             )
@@ -982,7 +1167,7 @@ class StreamingResponseOrchestrator:
                     OpenAIResponseOutputMessageContentOutputText(
                         text=final_text,
                         annotations=[],
-                        logprobs=chat_response_logprobs if chat_response_logprobs else None,
+                        logprobs=chat_response_logprobs if chat_response_logprobs else [],
                     )
                 )
 
@@ -1011,6 +1196,7 @@ class StreamingResponseOrchestrator:
             tool_call_item_ids=tool_call_item_ids,
             content_part_emitted=content_part_emitted,
             logprobs=OpenAIChoiceLogprobs(content=chat_response_logprobs) if chat_response_logprobs else None,
+            service_tier=chunk_service_tier,
         )
 
     def _build_chat_completion(self, result: ChatCompletionResult) -> OpenAIChatCompletion:
@@ -1021,7 +1207,7 @@ class StreamingResponseOrchestrator:
         else:
             tool_calls = None
 
-        assistant_message = OpenAIAssistantMessageParam(
+        assistant_message = OpenAIChatCompletionResponseMessage(
             content=result.content_text,
             tool_calls=tool_calls,
         )
@@ -1193,7 +1379,9 @@ class StreamingResponseOrchestrator:
 
         for input_tool in tools:
             if input_tool.type == "function":
-                self.ctx.chat_tools.append(ChatCompletionToolParam(type="function", function=input_tool.model_dump()))  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition
+                self.ctx.chat_tools.append(
+                    ChatCompletionToolParam(type="function", function=input_tool.model_dump(exclude_none=True))
+                )  # type: ignore[typeddict-item,arg-type]  # Dict compatible with FunctionDefinition
             elif input_tool.type in WebSearchToolTypes:
                 tool_name = "web_search"
                 # Need to access tool_groups_api from tool_executor
@@ -1547,6 +1735,6 @@ async def resolve_mcp_connector_id(
         The mcp_tool with server_url populated (may be same instance if already set)
     """
     if mcp_tool.connector_id and not mcp_tool.server_url:
-        connector = await connectors_api.get_connector(mcp_tool.connector_id)
+        connector = await connectors_api.get_connector(GetConnectorRequest(connector_id=mcp_tool.connector_id))
         return mcp_tool.model_copy(update={"server_url": connector.url})
     return mcp_tool

@@ -159,4 +159,4 @@ class ConnectorServiceImpl(Connectors):
 
     async def shutdown(self):
         """Shutdown the connector service."""
-        await self.kvstore.close()
+        await self.kvstore.shutdown()

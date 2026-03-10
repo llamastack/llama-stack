@@ -1,0 +1,91 @@
+# coding: utf-8
+
+# flake8: noqa
+
+{{>partial_header}}
+
+from {{packageName}}.exceptions import (
+    BadRequestError,
+    AuthenticationError,
+    PermissionDeniedError,
+    NotFoundError,
+    ConflictError,
+    UnprocessableEntityError,
+    RateLimitError,
+    InternalServerError)
+
+__version__ = "{{packageVersion}}"
+
+# Define package exports
+__all__ = [
+    "BadRequestError",
+    "AuthenticationError",
+    "PermissionDeniedError",
+    "NotFoundError",
+    "ConflictError",
+    "UnprocessableEntityError",
+    "RateLimitError",
+    "InternalServerError",
+    "LlamaStackClient",
+    "AsyncLlamaStackClient",
+    {{#apiInfo}}{{#apis}}"{{classname}}",
+    {{/apis}}{{/apiInfo}}"ApiResponse",
+    "APIResponse",
+    "ApiClient",
+    "Configuration",
+    "OpenApiException",
+    "ApiTypeError",
+    "ApiValueError",
+    "ApiKeyError",
+    "ApiAttributeError",
+    "ApiException",
+    {{#hasHttpSignatureMethods}}"HttpSigningConfiguration",
+    {{/hasHttpSignatureMethods}}"AsyncApiClient",
+    "AsyncApiResponse",
+    "AsyncAPIResponse",
+    "AsyncStream",
+    "Stream",
+    "NoneType",
+    "NotGiven",
+    "NOT_GIVEN",
+    "not_given",
+    "Omit",
+    "omit",
+    "RequestOptions",
+    {{#models}}{{#model}}"{{classname}}"{{^-last}},
+    {{/-last}}{{#-last}},{{/-last}}{{/model}}{{/models}}
+]
+
+try:
+    from {{packageName}}.lib import Agent, AgentEventLogger
+    __all__ += ["Agent", "AgentEventLogger"]
+except (ImportError, ModuleNotFoundError):
+    pass
+
+{{^lazyImports}}
+{{>exports_package}}
+{{/lazyImports}}
+{{#lazyImports}}if __import__("typing").TYPE_CHECKING:
+    {{>exports_package}}
+else:
+    from lazy_imports import LazyModule, as_package, load
+
+    load(
+        LazyModule(
+            *as_package(__file__),
+            ("__version__", __version__),
+            ("__all__", __all__),
+            """{{>exports_package}}""",
+            name=__name__,
+            doc=__doc__,
+        )
+    )
+{{/lazyImports}}
+{{#recursionLimit}}
+
+__import__('sys').setrecursionlimit({{{.}}})
+{{/recursionLimit}}
+
+# Backward compatibility aliases
+APIResponse = ApiResponse
+AsyncAPIResponse = AsyncApiResponse

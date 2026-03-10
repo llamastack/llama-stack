@@ -1144,6 +1144,7 @@ components:
       title: ListOpenAIChatCompletionResponse
       description: Response from listing OpenAI-compatible chat completions.
     OpenAIAssistantMessageParam:
+      additionalProperties: true
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
       properties:
         role:
@@ -1278,61 +1279,33 @@ components:
           minimum: 0.0
           title: Prompt Tokens
           description: Number of tokens in the prompt.
+          default: 0
         completion_tokens:
           type: integer
           minimum: 0.0
           title: Completion Tokens
           description: Number of tokens in the completion.
+          default: 0
         total_tokens:
           type: integer
           minimum: 0.0
           title: Total Tokens
           description: Total tokens used (prompt + completion).
+          default: 0
         prompt_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
-            title: OpenAIChatCompletionUsagePromptTokensDetails
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsagePromptTokensDetails'
           description: Detailed breakdown of input token usage.
-          title: OpenAIChatCompletionUsagePromptTokensDetails
         completion_tokens_details:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
-            title: OpenAIChatCompletionUsageCompletionTokensDetails
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
           description: Detailed breakdown of output token usage.
-          title: OpenAIChatCompletionUsageCompletionTokensDetails
       type: object
-      required:
-      - prompt_tokens
-      - completion_tokens
-      - total_tokens
       title: OpenAIChatCompletionUsage
       description: Usage information for OpenAI chat completion.
     OpenAIChoice:
       properties:
         message:
-          oneOf:
-          - $ref: '#/components/schemas/OpenAIUserMessageParam-Output'
-            title: OpenAIUserMessageParam-Output
-          - $ref: '#/components/schemas/OpenAISystemMessageParam'
-            title: OpenAISystemMessageParam
-          - $ref: '#/components/schemas/OpenAIAssistantMessageParam-Output'
-            title: OpenAIAssistantMessageParam-Output
-          - $ref: '#/components/schemas/OpenAIToolMessageParam'
-            title: OpenAIToolMessageParam
-          - $ref: '#/components/schemas/OpenAIDeveloperMessageParam'
-            title: OpenAIDeveloperMessageParam
-          title: OpenAIUserMessageParam-Output | ... (5 variants)
+          $ref: '#/components/schemas/OpenAIChatCompletionResponseMessage'
           description: The message from the model.
-          discriminator:
-            propertyName: role
-            mapping:
-              assistant: '#/components/schemas/OpenAIAssistantMessageParam-Output'
-              developer: '#/components/schemas/OpenAIDeveloperMessageParam'
-              system: '#/components/schemas/OpenAISystemMessageParam'
-              tool: '#/components/schemas/OpenAIToolMessageParam'
-              user: '#/components/schemas/OpenAIUserMessageParam-Output'
         finish_reason:
           type: string
           enum:
@@ -1874,9 +1847,10 @@ components:
         top_logprobs:
           anyOf:
           - type: integer
+            maximum: 20.0
             minimum: 0.0
           - type: 'null'
-          description: The top log probabilities to use.
+          description: The number of most likely tokens to return at each position.
         top_p:
           anyOf:
           - type: number
@@ -1895,6 +1869,13 @@ components:
             maxLength: 64
           - type: 'null'
           description: A stable identifier used for safety monitoring and abuse detection.
+        service_tier:
+          anyOf:
+          - $ref: '#/components/schemas/ServiceTier'
+            title: ServiceTier
+          - type: 'null'
+          description: The service tier to use for this request.
+          title: ServiceTier
         reasoning_effort:
           anyOf:
           - type: string
@@ -1907,6 +1888,12 @@ components:
             - xhigh
           - type: 'null'
           description: The effort level for reasoning models.
+        prompt_cache_key:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A key to use when reading from or writing to the prompt cache.
       additionalProperties: true
       type: object
       required:
@@ -1943,14 +1930,16 @@ components:
           description: The model that was used to generate the chat completion.
           title: Model
           type: string
-        usage:
+        service_tier:
           anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
+          - type: string
           - type: 'null'
+          description: The service tier that was used for this response.
+          nullable: true
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -1986,14 +1975,16 @@ components:
           description: The model that was used to generate the chat completion.
           title: Model
           type: string
-        usage:
+        service_tier:
           anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
+          - type: string
           - type: 'null'
+          description: The service tier that was used for this response.
+          nullable: true
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information (typically included in final chunk with stream_options).
           nullable: true
-          title: OpenAIChatCompletionUsage
       required:
       - id
       - choices
@@ -2101,13 +2092,14 @@ components:
           type: string
           title: Model
           description: The model that was used to generate the chat completion.
-        usage:
+        service_tier:
           anyOf:
-          - $ref: '#/components/schemas/OpenAIChatCompletionUsage'
-            title: OpenAIChatCompletionUsage
+          - type: string
           - type: 'null'
+          description: The service tier that was used for this response.
+        usage:
+          $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
-          title: OpenAIChatCompletionUsage
         input_messages:
           items:
             oneOf:
@@ -2514,8 +2506,26 @@ components:
           type: string
           title: Call Id
         output:
-          type: string
-          title: Output
+          anyOf:
+          - type: string
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
+                title: OpenAIResponseInputMessageContentText
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                title: OpenAIResponseInputMessageContentImage
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                title: OpenAIResponseInputMessageContentFile
+              discriminator:
+                propertyName: type
+                mapping:
+                  input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                  input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                  input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
+              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
+            type: array
+            title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
         type:
           type: string
           const: function_call_output
@@ -3566,6 +3576,11 @@ components:
         model_type:
           $ref: '#/components/schemas/ModelType'
           default: llm
+        model_validation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
       type: object
       required:
       - identifier
@@ -3991,6 +4006,9 @@ components:
       description: Web search tool configuration for OpenAI response inputs.
     OpenAIResponseObjectWithInput:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -4004,9 +4022,19 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
+        incomplete_details:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseIncompleteDetails'
+            title: OpenAIResponseIncompleteDetails
+          - type: 'null'
+          title: OpenAIResponseIncompleteDetails
         model:
           type: string
           title: Model
@@ -4054,6 +4082,10 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        prompt_cache_key:
+          anyOf:
+          - type: string
+          - type: 'null'
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -4075,6 +4107,10 @@ components:
         top_p:
           anyOf:
           - type: number
+          - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
           - type: 'null'
         tools:
           anyOf:
@@ -4165,11 +4201,19 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean
@@ -4450,6 +4494,9 @@ components:
       description: Model Context Protocol (MCP) tool configuration for OpenAI response inputs.
     OpenAIResponseObject:
       properties:
+        background:
+          type: boolean
+          title: Background
         created_at:
           type: integer
           title: Created At
@@ -4463,9 +4510,19 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
+        incomplete_details:
+          anyOf:
+          - $ref: '#/components/schemas/OpenAIResponseIncompleteDetails'
+            title: OpenAIResponseIncompleteDetails
+          - type: 'null'
+          title: OpenAIResponseIncompleteDetails
         model:
           type: string
           title: Model
@@ -4513,6 +4570,10 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        prompt_cache_key:
+          anyOf:
+          - type: string
+          - type: 'null'
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -4534,6 +4595,10 @@ components:
         top_p:
           anyOf:
           - type: number
+          - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
           - type: 'null'
         tools:
           anyOf:
@@ -4624,11 +4689,19 @@ components:
           anyOf:
           - type: string
           - type: 'null'
+        service_tier:
+          anyOf:
+          - type: string
+          - type: 'null'
         metadata:
           anyOf:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean
@@ -4835,6 +4908,9 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
+        sequence_number:
+          title: Sequence Number
+          type: integer
         type:
           const: response.completed
           default: response.completed
@@ -4842,6 +4918,7 @@ components:
           type: string
       required:
       - response
+      - sequence_number
       title: OpenAIResponseObjectStreamResponseCompleted
       type: object
     OpenAIResponseObjectStreamResponseContentPartAdded:
@@ -4943,6 +5020,9 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
+        sequence_number:
+          title: Sequence Number
+          type: integer
         type:
           const: response.created
           default: response.created
@@ -4950,6 +5030,7 @@ components:
           type: string
       required:
       - response
+      - sequence_number
       title: OpenAIResponseObjectStreamResponseCreated
       type: object
     OpenAIResponseObjectStreamResponseFailed:
@@ -6664,52 +6745,52 @@ components:
       title: ListToolGroupsResponse
       description: Response containing a list of tool groups.
     Chunk:
-      description: A chunk of content from file processing.
       properties:
         content:
           anyOf:
           - type: string
-          - discriminator:
-              mapping:
-                image: '#/components/schemas/ImageContentItem'
-                text: '#/components/schemas/TextContentItem'
-              propertyName: type
-            oneOf:
-            - $ref: '#/components/schemas/ImageContentItem'
-              title: ImageContentItem
+          - oneOf:
+            - $ref: '#/components/schemas/ImageContentItem-Output'
+              title: ImageContentItem-Output
             - $ref: '#/components/schemas/TextContentItem'
               title: TextContentItem
-            title: ImageContentItem | TextContentItem
+            discriminator:
+              propertyName: type
+              mapping:
+                image: '#/components/schemas/ImageContentItem-Output'
+                text: '#/components/schemas/TextContentItem'
+            title: ImageContentItem-Output | TextContentItem
           - items:
-              discriminator:
-                mapping:
-                  image: '#/components/schemas/ImageContentItem'
-                  text: '#/components/schemas/TextContentItem'
-                propertyName: type
               oneOf:
-              - $ref: '#/components/schemas/ImageContentItem'
-                title: ImageContentItem
+              - $ref: '#/components/schemas/ImageContentItem-Output'
+                title: ImageContentItem-Output
               - $ref: '#/components/schemas/TextContentItem'
                 title: TextContentItem
-              title: ImageContentItem | TextContentItem
+              discriminator:
+                propertyName: type
+                mapping:
+                  image: '#/components/schemas/ImageContentItem-Output'
+                  text: '#/components/schemas/TextContentItem'
+              title: ImageContentItem-Output | TextContentItem
             type: array
-            title: list[ImageContentItem | TextContentItem]
-          title: string | list[ImageContentItem | TextContentItem]
+            title: list[ImageContentItem-Output | TextContentItem]
+          title: string | list[ImageContentItem-Output | TextContentItem]
         chunk_id:
-          title: Chunk Id
           type: string
+          title: Chunk Id
         metadata:
           additionalProperties: true
-          title: Metadata
           type: object
+          title: Metadata
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
+      type: object
       required:
       - content
       - chunk_id
       - chunk_metadata
       title: Chunk
-      type: object
+      description: A chunk of content from file processing.
     ChunkMetadata:
       properties:
         chunk_id:
@@ -6952,6 +7033,7 @@ components:
       discriminator:
         mapping:
           auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+          contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
           static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         propertyName: type
       oneOf:
@@ -6959,7 +7041,9 @@ components:
         title: VectorStoreChunkingStrategyAuto
       - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         title: VectorStoreChunkingStrategyStatic
-      title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+      - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+        title: VectorStoreChunkingStrategyContextual
+      title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
     VectorStoreChunkingStrategyAuto:
       properties:
         type:
@@ -7023,12 +7107,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
         metadata:
@@ -7077,12 +7164,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
       additionalProperties: true
@@ -7183,11 +7273,14 @@ components:
             title: VectorStoreChunkingStrategyAuto
           - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
             title: VectorStoreChunkingStrategyStatic
-          title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+          - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+            title: VectorStoreChunkingStrategyContextual
+          title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           discriminator:
             propertyName: type
             mapping:
               auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
               static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
         created_at:
           type: integer
@@ -8473,6 +8566,11 @@ components:
           - type: 'null'
           description: The type of model to register.
           title: ModelType
+        model_validation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
       type: object
       required:
       - model_id
@@ -8819,6 +8917,32 @@ components:
       - output_tokens_details
       - total_tokens
       title: BatchUsage
+    Body_process_file_v1alpha_file_processors_process_post:
+      properties:
+        file:
+          anyOf:
+          - type: string
+            format: binary
+          - type: 'null'
+          description: The File object to be uploaded and processed. Mutually exclusive with file_id.
+        file_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID of file already uploaded to file storage. Mutually exclusive with file.
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Optional processing options. Provider-specific parameters (e.g., OCR settings, output format).
+        chunking_strategy:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Optional chunking strategy for splitting content into chunks. Must be valid JSON string.
+      type: object
+      title: Body_process_file_v1alpha_file_processors_process_post
     Body_upload_file_v1_files_post:
       properties:
         file:
@@ -8946,6 +9070,10 @@ components:
           type: string
           title: Model
           description: The underlying LLM used for completions.
+        background:
+          type: boolean
+          title: Background
+          description: Whether to run the model response in the background. When true, returns immediately with status 'queued'.
         prompt:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponsePrompt'
@@ -8969,6 +9097,12 @@ components:
           - type: string
           - type: 'null'
           description: Optional ID of a previous response to continue from.
+        prompt_cache_key:
+          anyOf:
+          - type: string
+            maxLength: 64
+          - type: 'null'
+          description: A key to use when reading from or writing to the prompt cache.
         conversation:
           anyOf:
           - type: string
@@ -8993,6 +9127,20 @@ components:
             minimum: 0.0
           - type: 'null'
           description: Sampling temperature.
+        top_p:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          description: Nucleus sampling parameter that controls response diversity (lower values increase focus).
+        frequency_penalty:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: -2.0
+          - type: 'null'
+          description: Penalizes new tokens based on their frequency in the text so far.
         text:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseText'
@@ -9109,6 +9257,13 @@ components:
             maxLength: 64
           - type: 'null'
           description: A stable identifier used for safety monitoring and abuse detection.
+        service_tier:
+          anyOf:
+          - $ref: '#/components/schemas/ServiceTier'
+            title: ServiceTier
+          - type: 'null'
+          description: The service tier to use for this request.
+          title: ServiceTier
         metadata:
           anyOf:
           - additionalProperties:
@@ -9116,7 +9271,28 @@ components:
             type: object
           - type: 'null'
           description: Dictionary of metadata key-value pairs to attach to the response.
-      additionalProperties: false
+        truncation:
+          anyOf:
+          - $ref: '#/components/schemas/ResponseTruncation'
+            title: ResponseTruncation
+          - type: 'null'
+          description: Controls how the service truncates input when it exceeds the model context window.
+          title: ResponseTruncation
+        top_logprobs:
+          anyOf:
+          - type: integer
+            maximum: 20.0
+            minimum: 0.0
+          - type: 'null'
+          description: The number of most likely tokens to return at each position, along with their log probabilities.
+        presence_penalty:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: -2.0
+          - type: 'null'
+          description: Penalizes new tokens based on whether they appear in the text so far.
+      additionalProperties: true
       type: object
       required:
       - input
@@ -9427,6 +9603,7 @@ components:
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+      additionalProperties: true
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -9460,6 +9637,7 @@ components:
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+      additionalProperties: true
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -9482,12 +9660,15 @@ components:
               title: VectorStoreChunkingStrategyAuto
             - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
               title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
             discriminator:
               propertyName: type
               mapping:
                 auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
                 static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
-            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
           - type: 'null'
           title: Chunking Strategy
           description: Strategy for chunking the file content.
@@ -9496,28 +9677,81 @@ components:
       - file_id
       title: OpenAIAttachFileRequest
       description: Request body for attaching a file to a vector store.
+    OpenAIChatCompletionResponseMessage:
+      properties:
+        role:
+          type: string
+          const: assistant
+          title: Role
+          description: The role of the message author, always 'assistant' in responses.
+          default: assistant
+        content:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The content of the message.
+        tool_calls:
+          items:
+            $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+          type: array
+          title: Tool Calls
+          description: The tool calls generated by the model.
+        refusal:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: The refusal message generated by the model.
+        function_call:
+          $ref: '#/components/schemas/OpenAIChatCompletionToolCallFunction'
+          description: 'Deprecated: the name and arguments of a function that should be called.'
+        annotations:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Annotations
+          description: Annotations for the message, when applicable.
+        audio:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Audio response data when using audio output modality.
+      type: object
+      title: OpenAIChatCompletionResponseMessage
+      description: An assistant message returned in a chat completion response.
     OpenAIChatCompletionUsageCompletionTokensDetails:
       properties:
         reasoning_tokens:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
+          type: integer
+          minimum: 0.0
+          title: Reasoning Tokens
           description: Number of tokens used for reasoning (o1/o3 models).
+          default: 0
       type: object
       title: OpenAIChatCompletionUsageCompletionTokensDetails
       description: Token details for output tokens in OpenAI chat completion usage.
     OpenAIChatCompletionUsagePromptTokensDetails:
       properties:
         cached_tokens:
-          anyOf:
-          - type: integer
-            minimum: 0.0
-          - type: 'null'
+          type: integer
+          minimum: 0.0
+          title: Cached Tokens
           description: Number of tokens retrieved from cache.
+          default: 0
       type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
+    OpenAIResponseIncompleteDetails:
+      properties:
+        reason:
+          type: string
+          title: Reason
+      type: object
+      required:
+      - reason
+      title: OpenAIResponseIncompleteDetails
+      description: Details explaining why a response was incomplete.
     OpenAIResponseInputToolChoiceAllowedTools:
       properties:
         mode:
@@ -10111,6 +10345,29 @@ components:
       required:
       - reasoning_tokens
       title: OutputTokensDetails
+    ProcessFileResponse:
+      properties:
+        chunks:
+          items:
+            $ref: '#/components/schemas/Chunk'
+          type: array
+          title: Chunks
+          description: Processed chunks from the file. Always returns at least one chunk.
+        metadata:
+          additionalProperties: true
+          type: object
+          title: Metadata
+          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
+      type: object
+      required:
+      - chunks
+      - metadata
+      title: ProcessFileResponse
+      description: |-
+        Response model for file processing operation.
+
+        Returns a list of chunks ready for storage in vector databases.
+        Each chunk contains the content and metadata.
     ResponseItemInclude:
       type: string
       enum:
@@ -10123,6 +10380,13 @@ components:
       - reasoning.encrypted_content
       title: ResponseItemInclude
       description: Specify additional output data to include in the model response.
+    ResponseTruncation:
+      type: string
+      enum:
+      - auto
+      - disabled
+      title: ResponseTruncation
+      description: Controls how the service truncates input when it exceeds the model context window.
     RunEvalBodyRequest:
       properties:
         benchmark_config:
@@ -10190,6 +10454,15 @@ components:
 
             # Score threshold filtering
             SearchRankingOptions(ranker="weighted", score_threshold=0.5)
+    ServiceTier:
+      type: string
+      enum:
+      - auto
+      - default
+      - flex
+      - priority
+      title: ServiceTier
+      description: The service tier for the request.
     SetDefaultVersionBodyRequest:
       properties:
         version:
@@ -10229,6 +10502,61 @@ components:
       - version
       title: UpdatePromptBodyRequest
       description: Request body model for updating a prompt.
+    VectorStoreChunkingStrategyContextual:
+      properties:
+        type:
+          type: string
+          const: contextual
+          title: Type
+          description: Strategy type identifier.
+          default: contextual
+        contextual:
+          $ref: '#/components/schemas/VectorStoreChunkingStrategyContextualConfig'
+          description: Configuration for contextual chunking.
+      type: object
+      required:
+      - contextual
+      title: VectorStoreChunkingStrategyContextual
+      description: Contextual chunking strategy that uses an LLM to situate chunks within the document.
+    VectorStoreChunkingStrategyContextualConfig:
+      properties:
+        model_id:
+          anyOf:
+          - type: string
+            minLength: 1
+          - type: 'null'
+          description: LLM model for generating context. Falls back to VectorStoresConfig.contextual_retrieval_params.model if not provided.
+        context_prompt:
+          type: string
+          title: Context Prompt
+          description: Prompt template for contextual retrieval. Uses WHOLE_DOCUMENT and CHUNK_CONTENT placeholders wrapped in double curly braces.
+        max_chunk_size_tokens:
+          type: integer
+          maximum: 4096.0
+          minimum: 100.0
+          title: Max Chunk Size Tokens
+          description: Maximum tokens per chunk. Suggested ~700 to allow room for prepended context.
+          default: 700
+        chunk_overlap_tokens:
+          type: integer
+          minimum: 0.0
+          title: Chunk Overlap Tokens
+          description: Tokens to overlap between adjacent chunks. Must be less than max_chunk_size_tokens.
+          default: 400
+        timeout_seconds:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Timeout per LLM call in seconds. Falls back to config default if not provided.
+        max_concurrency:
+          anyOf:
+          - type: integer
+            minimum: 1.0
+          - type: 'null'
+          description: Maximum concurrent LLM calls. Falls back to config default if not provided.
+      type: object
+      title: VectorStoreChunkingStrategyContextualConfig
     _URLOrData:
       properties:
         url:
@@ -11421,6 +11749,38 @@ components:
       - query
       title: VectorStoreSearchRequest
       type: object
+    ChunkForDeletion:
+      description: Information needed to delete a chunk from a vector store.
+      properties:
+        chunk_id:
+          title: Chunk Id
+          type: string
+        document_id:
+          title: Document Id
+          type: string
+      required:
+      - chunk_id
+      - document_id
+      title: ChunkForDeletion
+      type: object
+    DeleteChunksRequest:
+      description: Request body for deleting chunks from a vector store.
+      properties:
+        vector_store_id:
+          description: The ID of the vector store to delete chunks from.
+          title: Vector Store Id
+          type: string
+        chunks:
+          description: The list of chunks to delete.
+          items:
+            $ref: '#/components/schemas/ChunkForDeletion'
+          title: Chunks
+          type: array
+      required:
+      - vector_store_id
+      - chunks
+      title: DeleteChunksRequest
+      type: object
     ListBatchesRequest:
       description: Request model for listing batches.
       properties:
@@ -11789,28 +12149,48 @@ components:
       - job_id
       title: JobResultRequest
       type: object
-    ProcessFileResponse:
+    ProcessFileRequest:
       description: |-
-        Response model for file processing operation.
+        Request model for file processing operation.
 
-        Returns a list of chunks ready for storage in vector databases.
-        Each chunk contains the content and metadata.
+        Wraps the serializable parameters for process_file. The UploadFile parameter
+        is kept separate (not serializable), following the same pattern as
+        UploadFileRequest in the Files API.
       properties:
-        chunks:
-          description: Processed chunks from the file. Always returns at least one chunk.
-          items:
-            $ref: '#/components/schemas/Chunk'
-          title: Chunks
-          type: array
-        metadata:
-          additionalProperties: true
-          description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
-          title: Metadata
-          type: object
-      required:
-      - chunks
-      - metadata
-      title: ProcessFileResponse
+        file_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: ID of file already uploaded to file storage. Mutually exclusive with file.
+          nullable: true
+        options:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          description: Optional processing options. Provider-specific parameters (e.g., OCR settings, output format).
+          nullable: true
+        chunking_strategy:
+          anyOf:
+          - discriminator:
+              mapping:
+                auto: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+                contextual: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+                static: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              propertyName: type
+            oneOf:
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyAuto'
+              title: VectorStoreChunkingStrategyAuto
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyStatic'
+              title: VectorStoreChunkingStrategyStatic
+            - $ref: '#/components/schemas/VectorStoreChunkingStrategyContextual'
+              title: VectorStoreChunkingStrategyContextual
+            title: VectorStoreChunkingStrategyAuto | VectorStoreChunkingStrategyStatic | VectorStoreChunkingStrategyContextual
+          - type: 'null'
+          description: Optional chunking strategy for splitting content into chunks.
+          title: Chunking Strategy
+          nullable: true
+      title: ProcessFileRequest
       type: object
     ListFilesRequest:
       description: Request model for listing files.
