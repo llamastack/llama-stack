@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import json
 from dataclasses import dataclass
 from typing import cast
 
@@ -32,6 +33,14 @@ from llama_stack_api import (
     OpenAIResponseToolMCP,
     OpenAITokenLogProb,
 )
+
+
+def _json_equal(a: str, b: str) -> bool:
+    """Compare two JSON strings by value, falling back to string comparison."""
+    try:
+        return json.loads(a) == json.loads(b)
+    except (json.JSONDecodeError, TypeError):
+        return a == b
 
 
 class ToolExecutionResult(BaseModel):
@@ -210,7 +219,7 @@ class ChatCompletionContext(BaseModel):
 
     def _approval_request(self, tool_name: str, arguments: str) -> OpenAIResponseMCPApprovalRequest | None:
         for request in self.approval_requests:
-            if request.name == tool_name and request.arguments == arguments:
+            if request.name == tool_name and _json_equal(request.arguments, arguments):
                 return request
         return None
 
