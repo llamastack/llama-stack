@@ -5,14 +5,15 @@
 # the root directory of this source tree.
 
 import base64
+import ssl
 import uuid
 from abc import ABC, abstractmethod
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 
 import httpx
-from openai import AsyncOpenAI
-from pydantic import BaseModel, ConfigDict
+from openai import AsyncOpenAI, DefaultAsyncHttpxClient
+from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -70,7 +71,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     """
 
     # Allow extra fields so the routing infra can inject model_store, __provider_id__, etc.
-    model_config = ConfigDict(extra="allow")
+    # Allow arbitrary types for shared_ssl_context
+    model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
     config: RemoteInferenceProviderConfig
 
@@ -103,6 +105,11 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
 
     # Optional field name in provider data to look for API key, which takes precedence
     provider_data_api_key_field: str | None = None
+
+    # Shared SSL context for all calls to improve performance
+    # SSL context construction touches disk and is expensive
+    # Trade-off: SSL context changes require server restart
+    shared_ssl_context: ssl.SSLContext | bool = Field(default_factory=ssl.create_default_context, exclude=True)
 
     def get_api_key(self) -> str | None:
         """
@@ -230,6 +237,7 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         #   * Applies network config (TLS, proxy, timeout, headers) on top
         #   * Network config headers take precedence over provider headers (allows override)
         # - Otherwise, if network config exists, create http_client from it
+        # - Otherwise, use a cached SSL context for performance
         # This allows providers with custom auth to still use standard network settings
         if "http_client" in extra_params:
             if network_kwargs:
@@ -238,6 +246,8 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                 )
         elif network_kwargs:
             extra_params["http_client"] = httpx.AsyncClient(**network_kwargs)
+        else:
+            extra_params["http_client"] = DefaultAsyncHttpxClient(verify=self.shared_ssl_context)
 
         return AsyncOpenAI(
             api_key=api_key,
@@ -480,6 +490,13 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
     ##
 
     async def register_model(self, model: Model) -> Model:
+        # Check if we should validate model availability (defaults to False)
+        should_validate = bool(model.model_validation)
+
+        if not should_validate:
+            logger.debug(f"Skipping model availability check for {model.provider_model_id} (model_validation=false)")
+            return model
+
         if not await self.check_model_availability(model.provider_model_id):
             raise ValueError(f"Model {model.provider_model_id} is not available from provider {self.__provider_id__}")  # type: ignore[attr-defined]
         return model

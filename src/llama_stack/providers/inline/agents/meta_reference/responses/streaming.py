@@ -9,6 +9,7 @@ import uuid
 from collections.abc import AsyncIterator
 from typing import Any
 
+from openai import APIStatusError
 from openai.types.chat import ChatCompletionToolParam
 from opentelemetry import trace
 
@@ -110,6 +111,82 @@ from .utils import (
 logger = get_logger(name=__name__, category="agents::meta_reference")
 tracer = trace.get_tracer(__name__)
 
+# Built-in tool names that the server knows how to execute itself.
+# Anything else is either a registered function tool (client-side) or a hallucinated name.
+_SERVER_SIDE_BUILTIN_TOOL_NAMES = frozenset({"web_search", "knowledge_search"})
+
+# Maps OpenAI Chat Completions error codes to Responses API error codes
+_RESPONSES_API_ERROR_CODES = {
+    "invalid_base64": "invalid_base64_image",
+}
+
+_VALID_RESPONSE_ERROR_CODES = frozenset(
+    {
+        "server_error",
+        "rate_limit_exceeded",
+        "invalid_prompt",
+        "vector_store_timeout",
+        "invalid_image",
+        "invalid_image_format",
+        "invalid_base64_image",
+        "invalid_image_url",
+        "image_too_large",
+        "image_too_small",
+        "image_parse_error",
+        "image_content_policy_violation",
+        "invalid_image_mode",
+        "image_file_too_large",
+        "unsupported_image_media_type",
+        "empty_image_file",
+        "failed_to_download_image",
+        "image_file_not_found",
+    }
+)
+
+
+def extract_openai_error(exc: Exception) -> tuple[str, str]:
+    """Extract error code and message from a provider SDK exception.
+
+    The exception should have a `body` attribute containing error details in one of two formats:
+        1. Nested: {"error": {"code": "...", "message": "...", ...}}
+        2. Direct: {"code": "...", "message": "...", ...}
+
+    Args:
+        exc: An exception with a `body` attribute containing error details
+
+    Returns:
+        Tuple of (error_code, error_message). Falls back to ("server_error", str(exc))
+        if the body doesn't contain a valid code. The message is always preserved.
+    """
+    body = getattr(exc, "body", None)
+    fallback_message = str(exc)
+
+    if not isinstance(body, dict):
+        logger.warning(f"Unexpected body type {type(body)}, expected dict: {exc}")
+        return ("server_error", fallback_message)
+
+    # Try nested format first: {"error": {"code": "...", ...}}
+    error_obj = body.get("error")
+    if isinstance(error_obj, dict):
+        raw_code = error_obj.get("code")
+        raw_message = error_obj.get("message")
+    else:
+        raw_code = body.get("code")
+        raw_message = body.get("message")
+
+    if raw_code and isinstance(raw_code, str):
+        final_code: str = _RESPONSES_API_ERROR_CODES.get(raw_code, raw_code)
+    else:
+        final_code = "server_error"
+
+    if final_code not in _VALID_RESPONSE_ERROR_CODES:
+        logger.info(f"Unmapped provider error code '{final_code}', falling back to server_error")
+        final_code = "server_error"
+
+    message: str = raw_message if isinstance(raw_message, str) else fallback_message
+
+    return final_code, message
+
 
 def convert_tooldef_to_chat_tool(tool_def):
     """Convert a ToolDef to OpenAI ChatCompletionToolParam format.
@@ -153,6 +230,9 @@ class StreamingResponseOrchestrator:
         include: list[ResponseItemInclude] | None = None,
         store: bool | None = True,
         truncation: ResponseTruncation | None = None,
+        top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -181,9 +261,11 @@ class StreamingResponseOrchestrator:
         self.service_tier = service_tier.value if service_tier is not None else None
         self.metadata = metadata
         self.truncation = truncation
-        self.store = store
+        self.top_logprobs = top_logprobs
         self.include = include
+        self.extra_body = extra_body
         self.store = bool(store) if store is not None else True
+        self.presence_penalty = presence_penalty
         self.sequence_number = 0
         # Store MCP tool mapping that gets built during tool processing
         self.mcp_tool_to_server: dict[str, OpenAIResponseInputToolMCP] = (
@@ -215,21 +297,32 @@ class StreamingResponseOrchestrator:
 
         # Create a completed refusal response
         refusal_response = OpenAIResponseObject(
+            background=False,
             id=self.response_id,
             created_at=self.created_at,
+            frequency_penalty=self.ctx.frequency_penalty if self.ctx.frequency_penalty is not None else 0.0,
             model=self.ctx.model,
             status="completed",
             output=[OpenAIResponseMessage(role="assistant", content=[refusal_content], type="message")],
+            temperature=self.ctx.temperature if self.ctx.temperature is not None else 1.0,
+            top_p=self.ctx.top_p if self.ctx.top_p is not None else 1.0,
+            top_logprobs=self.top_logprobs if self.top_logprobs is not None else 0,
+            tools=self.ctx.available_tools(),
+            tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
+            truncation=self.truncation or "disabled",
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
-            service_tier=self.service_tier,
+            service_tier=self.service_tier or "default",
             metadata=self.metadata,
-            truncation=self.truncation,
+            presence_penalty=self.presence_penalty if self.presence_penalty is not None else 0.0,
             store=self.store,
             prompt_cache_key=self.prompt_cache_key,
         )
 
-        return OpenAIResponseObjectStreamResponseCompleted(response=refusal_response)
+        self.sequence_number += 1
+        return OpenAIResponseObjectStreamResponseCompleted(
+            response=refusal_response, sequence_number=self.sequence_number
+        )
 
     def _clone_outputs(self, outputs: list[OpenAIResponseOutput]) -> list[OpenAIResponseOutput]:
         cloned: list[OpenAIResponseOutput] = []
@@ -250,16 +343,21 @@ class StreamingResponseOrchestrator:
     ) -> OpenAIResponseObject:
         completed_at = int(time.time()) if status == "completed" else None
         return OpenAIResponseObject(
+            background=False,
             created_at=self.created_at,
             completed_at=completed_at,
+            frequency_penalty=self.ctx.frequency_penalty if self.ctx.frequency_penalty is not None else 0.0,
             id=self.response_id,
             model=self.ctx.model,
             object="response",
             status=status,
             output=self._clone_outputs(outputs),
             text=self.text,
+            temperature=self.ctx.temperature if self.ctx.temperature is not None else 1.0,
+            top_p=self.ctx.top_p if self.ctx.top_p is not None else 1.0,
+            top_logprobs=self.top_logprobs if self.top_logprobs is not None else 0,
             tools=self.ctx.available_tools(),
-            tool_choice=self.ctx.tool_choice,
+            tool_choice=self.ctx.tool_choice or OpenAIResponseInputToolChoiceMode.auto,
             error=error,
             incomplete_details=incomplete_details,
             usage=self.accumulated_usage,
@@ -270,9 +368,10 @@ class StreamingResponseOrchestrator:
             reasoning=self.reasoning,
             max_output_tokens=self.max_output_tokens,
             safety_identifier=self.safety_identifier,
-            service_tier=self.service_tier,
+            service_tier=self.service_tier or "default",
             metadata=self.metadata,
-            truncation=self.truncation,
+            truncation=self.truncation or "disabled",
+            presence_penalty=self.presence_penalty if self.presence_penalty is not None else 0.0,
             store=self.store,
             prompt_cache_key=self.prompt_cache_key,
         )
@@ -282,7 +381,8 @@ class StreamingResponseOrchestrator:
 
         # Emit response.created followed by response.in_progress to align with OpenAI streaming
         yield OpenAIResponseObjectStreamResponseCreated(
-            response=self._snapshot_response("in_progress", output_messages)
+            response=self._snapshot_response("in_progress", output_messages),
+            sequence_number=self.sequence_number,
         )
 
         self.sequence_number += 1
@@ -306,7 +406,7 @@ class StreamingResponseOrchestrator:
             logger.warning("Truncation mode 'auto' is not yet supported")
             self.sequence_number += 1
             error = OpenAIResponseError(
-                code="invalid_request_error",
+                code="server_error",
                 message="Truncation mode 'auto' is not supported. Use 'disabled' to let the inference provider reject oversized contexts.",
             )
             failure_response = self._snapshot_response("failed", output_messages, error=error)
@@ -388,7 +488,10 @@ class StreamingResponseOrchestrator:
                 logger.debug(f"calling openai_chat_completion with tools: {effective_tools}")
 
                 logprobs = (
-                    True if self.include and ResponseItemInclude.message_output_text_logprobs in self.include else None
+                    True
+                    if (self.include and ResponseItemInclude.message_output_text_logprobs in self.include)
+                    or self.top_logprobs
+                    else None
                 )
 
                 # In OpenAI, parallel_tool_calls is only allowed when 'tools' are specified.
@@ -404,6 +507,8 @@ class StreamingResponseOrchestrator:
                     tool_choice=chat_tool_choice,
                     stream=True,
                     temperature=self.ctx.temperature,
+                    top_p=self.ctx.top_p,
+                    frequency_penalty=self.ctx.frequency_penalty,
                     response_format=response_format,
                     stream_options={
                         "include_usage": True,
@@ -415,6 +520,9 @@ class StreamingResponseOrchestrator:
                     service_tier=self.service_tier,
                     max_completion_tokens=remaining_output_tokens,
                     prompt_cache_key=self.prompt_cache_key,
+                    top_logprobs=self.top_logprobs,
+                    presence_penalty=self.presence_penalty,
+                    **(self.extra_body or {}),
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -518,7 +626,17 @@ class StreamingResponseOrchestrator:
         except Exception as exc:  # noqa: BLE001
             self.final_messages = messages.copy()
             self.sequence_number += 1
-            error = OpenAIResponseError(code="internal_error", message=str(exc))
+
+            if isinstance(exc, APIStatusError) or (hasattr(exc, "status_code") and hasattr(exc, "body")):
+                logger.warning(f"Provider SDK error during response generation: {exc}")
+                error_code, error_message = extract_openai_error(exc)
+            else:
+                logger.exception(f"Unexpected '{type(exc).__name__}' error during response generation", exc_info=exc)
+                error_code, error_message = (
+                    "server_error",
+                    "An unexpected error occurred while generating the response.",
+                )
+            error = OpenAIResponseError(code=error_code, message=error_message)
             failure_response = self._snapshot_response("failed", output_messages, error=error)
             yield OpenAIResponseObjectStreamResponseFailed(
                 response=failure_response,
@@ -541,8 +659,11 @@ class StreamingResponseOrchestrator:
                 sequence_number=self.sequence_number,
             )
         else:
+            self.sequence_number += 1
             final_response = self._snapshot_response("completed", output_messages)
-            yield OpenAIResponseObjectStreamResponseCompleted(response=final_response)
+            yield OpenAIResponseObjectStreamResponseCompleted(
+                response=final_response, sequence_number=self.sequence_number
+            )
 
     def _separate_tool_calls(self, current_response, messages) -> tuple[list, list, list, list]:
         """Separate tool calls into function and non-function categories."""
@@ -565,6 +686,20 @@ class StreamingResponseOrchestrator:
             if choice.message.tool_calls and self.ctx.response_tools:
                 for tool_call in choice.message.tool_calls:
                     if is_function_tool_call(tool_call, self.ctx.response_tools):
+                        function_tool_calls.append(tool_call)
+                    elif (
+                        tool_call.function
+                        and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES
+                        and tool_call.function.name not in self.mcp_tool_to_server
+                    ):
+                        # The model called a tool name that is neither a registered function tool,
+                        # nor a server-side built-in, nor an MCP tool — it hallucinated a name.
+                        # Return it to the client as a function_call output item rather than
+                        # crashing the server with an unhandled ValueError.
+                        logger.warning(
+                            f"Model called unrecognized tool '{tool_call.function.name}'; "
+                            "treating as a client-side function call."
+                        )
                         function_tool_calls.append(tool_call)
                     else:
                         if self._approval_required(tool_call.function.name):
@@ -835,6 +970,7 @@ class StreamingResponseOrchestrator:
                             output_index=message_output_index,
                             part=OpenAIResponseContentPartOutputText(
                                 text="",  # Will be filled incrementally via text deltas
+                                logprobs=[],
                             ),
                             sequence_number=self.sequence_number,
                         )
@@ -844,7 +980,7 @@ class StreamingResponseOrchestrator:
                         content_index=content_index,
                         delta=chunk_choice.delta.content,
                         item_id=message_item_id,
-                        logprobs=chunk_logprobs,
+                        logprobs=chunk_logprobs if chunk_logprobs is not None else [],
                         output_index=message_output_index,
                         sequence_number=self.sequence_number,
                     )
@@ -908,7 +1044,7 @@ class StreamingResponseOrchestrator:
                             # Emit output_item.added event for the new function call
                             self.sequence_number += 1
                             is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server
-                            if not is_mcp_tool and tool_call.function.name not in ["web_search", "knowledge_search"]:
+                            if not is_mcp_tool and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES:
                                 # for MCP tools (and even other non-function tools) we emit an output message item later
                                 function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
                                     arguments="",  # Will be filled incrementally via delta events
@@ -1011,6 +1147,7 @@ class StreamingResponseOrchestrator:
                 output_index=message_output_index,
                 part=OpenAIResponseContentPartOutputText(
                     text=final_text,
+                    logprobs=[],
                 ),
                 sequence_number=self.sequence_number,
             )
@@ -1048,7 +1185,7 @@ class StreamingResponseOrchestrator:
                     OpenAIResponseOutputMessageContentOutputText(
                         text=final_text,
                         annotations=[],
-                        logprobs=chat_response_logprobs if chat_response_logprobs else None,
+                        logprobs=chat_response_logprobs if chat_response_logprobs else [],
                     )
                 )
 

@@ -31,7 +31,13 @@ from llama_stack.core.storage.datatypes import (
     StorageConfig,
 )
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack_api import OpenAIResponseInputMessageContentText, OpenAIResponseMessage
+from llama_stack_api import (
+    ConversationItemNotFoundError,
+    ConversationNotFoundError,
+    InvalidParameterError,
+    OpenAIResponseInputMessageContentText,
+    OpenAIResponseMessage,
+)
 from llama_stack_api.conversations import (
     AddItemsRequest,
     CreateConversationRequest,
@@ -102,13 +108,41 @@ async def test_conversation_items(service):
 
 
 async def test_invalid_conversation_id(service):
-    with pytest.raises(ValueError, match="Expected an ID that begins with 'conv_'"):
-        await service._get_validated_conversation("invalid_id")
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.get_conversation(GetConversationRequest(conversation_id="invalid_id"))
 
 
-async def test_empty_parameter_validation(service):
-    with pytest.raises(ValueError, match="Expected a non-empty value"):
-        await service.retrieve(RetrieveItemRequest(conversation_id="", item_id="item_123"))
+async def test_invalid_conversation_id_on_retrieve(service):
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.retrieve(RetrieveItemRequest(conversation_id="bad_id", item_id="item_123"))
+
+
+async def test_invalid_conversation_id_on_update(service):
+    from llama_stack_api.conversations import UpdateConversationRequest
+
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.update_conversation("bad_id", UpdateConversationRequest(metadata={}))
+
+
+async def test_invalid_conversation_id_on_delete(service):
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.openai_delete_conversation(DeleteConversationRequest(conversation_id="bad_id"))
+
+
+async def test_nonexistent_conversation_raises_conversation_not_found(service):
+    """Test that get_conversation raises ConversationNotFoundError for nonexistent ID."""
+    with pytest.raises(ConversationNotFoundError, match="Conversation 'conv_nonexistent' not found"):
+        await service.get_conversation(GetConversationRequest(conversation_id="conv_nonexistent"))
+
+
+async def test_retrieve_nonexistent_item_raises_conversation_item_not_found(service):
+    """Test that retrieve raises ConversationItemNotFoundError for nonexistent item."""
+    conversation = await service.create_conversation(CreateConversationRequest())
+    with pytest.raises(
+        ConversationItemNotFoundError,
+        match="Conversation item 'msg_nonexistent' not found in conversation",
+    ):
+        await service.retrieve(RetrieveItemRequest(conversation_id=conversation.id, item_id="msg_nonexistent"))
 
 
 async def test_openai_type_compatibility(service):

@@ -110,7 +110,7 @@ async def convert_chat_choice_to_response_message(
     output_content = choice.message.content or ""
 
     annotations, clean_text = _extract_citations_from_text(output_content, citation_files or {})
-    logprobs = choice.logprobs.content if choice.logprobs and choice.logprobs.content else None
+    logprobs = choice.logprobs.content if choice.logprobs and choice.logprobs.content else []
 
     return OpenAIResponseMessage(
         id=message_id or f"msg_{uuid.uuid4()}",
@@ -124,6 +124,62 @@ async def convert_chat_choice_to_response_message(
         status="completed",
         role="assistant",
     )
+
+
+async def _build_tool_result_messages(
+    input_item: OpenAIResponseInputFunctionToolCallOutput,
+    files_api: Files | None,
+) -> list[OpenAIMessageParam]:
+    """Convert a function_call_output into chat messages.
+
+    OpenAIToolMessageParam only accepts text content, so image parts are
+    placed in a follow-up user message where vision models can see them.
+    """
+    output = input_item.output
+    if not isinstance(output, list):
+        return [OpenAIToolMessageParam(content=output, tool_call_id=input_item.call_id)]
+
+    converted = await convert_response_content_to_chat_content(output, files_api=files_api)
+    if not isinstance(converted, list):
+        return [OpenAIToolMessageParam(content=converted, tool_call_id=input_item.call_id)]
+
+    text_parts: list[OpenAIChatCompletionContentPartTextParam] = []
+    image_parts: list[OpenAIChatCompletionContentPartParam] = []
+    for part in converted:
+        if isinstance(part, OpenAIFile):
+            text_parts.append(_file_part_to_text_part(part))
+        elif isinstance(part, OpenAIChatCompletionContentPartImageParam):
+            image_parts.append(part)
+        else:
+            text_parts.append(part)
+
+    messages: list[OpenAIMessageParam] = [
+        OpenAIToolMessageParam(
+            content=text_parts or [OpenAIChatCompletionContentPartTextParam(text="[image]")],
+            tool_call_id=input_item.call_id,
+        )
+    ]
+    if image_parts:
+        messages.append(OpenAIUserMessageParam(content=image_parts))
+    return messages
+
+
+def _file_part_to_text_part(part: OpenAIFile) -> OpenAIChatCompletionContentPartTextParam:
+    # OpenAIFile carries a data URL in part.file.file_data.  Decode text MIME types back
+    # to a plain string so tool message content (text-only) stays readable to the model.
+    data_url = part.file.file_data if part.file else None
+    if data_url and data_url.startswith("data:"):
+        # data:<mime>;base64,<payload>
+        header, _, payload = data_url.partition(",")
+        mime = header.split(";")[0][len("data:") :]
+        if mime.startswith("text/") and payload:
+            try:
+                return OpenAIChatCompletionContentPartTextParam(text=base64.b64decode(payload).decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                pass
+        if payload:
+            return OpenAIChatCompletionContentPartTextParam(text=data_url)
+    return OpenAIChatCompletionContentPartTextParam(text=data_url or "")
 
 
 async def convert_response_content_to_chat_content(
@@ -240,13 +296,10 @@ async def convert_response_input_to_chat_messages(
         # so their corresponding OpenAIToolMessageParam instances can
         # be added immediately following the corresponding
         # OpenAIAssistantMessageParam
-        tool_call_results = {}
+        tool_call_results: dict[str, list[OpenAIMessageParam]] = {}
         for input_item in input:
             if isinstance(input_item, OpenAIResponseInputFunctionToolCallOutput):
-                tool_call_results[input_item.call_id] = OpenAIToolMessageParam(
-                    content=input_item.output,
-                    tool_call_id=input_item.call_id,
-                )
+                tool_call_results[input_item.call_id] = await _build_tool_result_messages(input_item, files_api)
 
         for input_item in input:
             if isinstance(input_item, OpenAIResponseInputFunctionToolCallOutput):
@@ -263,7 +316,7 @@ async def convert_response_input_to_chat_messages(
                 )
                 messages.append(OpenAIAssistantMessageParam(tool_calls=[tool_call]))
                 if input_item.call_id in tool_call_results:
-                    messages.append(tool_call_results[input_item.call_id])
+                    messages.extend(tool_call_results[input_item.call_id])
                     del tool_call_results[input_item.call_id]
             elif isinstance(input_item, OpenAIResponseOutputMessageMCPCall):
                 tool_call = OpenAIChatCompletionToolCall(
@@ -326,8 +379,8 @@ async def convert_response_input_to_chat_messages(
                 for call_id in list(tool_call_results.keys()):
                     if call_id in previous_call_ids:
                         # Valid: this output references a call from previous messages
-                        # Add the tool message
-                        messages.append(tool_call_results[call_id])
+                        # Add the tool message(s) — may include a follow-up user message for images
+                        messages.extend(tool_call_results[call_id])
                         del tool_call_results[call_id]
 
             # If still have unpaired outputs, error

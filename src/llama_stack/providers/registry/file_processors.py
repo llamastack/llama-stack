@@ -16,7 +16,7 @@ def available_providers() -> list[ProviderSpec]:
         InlineProviderSpec(
             api=Api.file_processors,
             provider_type="inline::pypdf",
-            pip_packages=["pypdf"],
+            pip_packages=["pypdf>=6.7.2"],
             module="llama_stack.providers.inline.file_processor.pypdf",
             config_class="llama_stack.providers.inline.file_processor.pypdf.PyPDFFileProcessorConfig",
             api_dependencies=[Api.files],

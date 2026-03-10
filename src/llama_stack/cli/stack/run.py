@@ -16,21 +16,10 @@ import yaml
 from termcolor import cprint
 
 from llama_stack.cli.subcommand import Subcommand
-from llama_stack.core.datatypes import Api, Provider, StackConfig
-from llama_stack.core.distribution import get_provider_registry
-from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars
-from llama_stack.core.storage.datatypes import (
-    InferenceStoreReference,
-    KVStoreReference,
-    ServerStoresConfig,
-    SqliteKVStoreConfig,
-    SqliteSqlStoreConfig,
-    SqlStoreReference,
-    StorageConfig,
-)
+from llama_stack.core.datatypes import StackConfig
+from llama_stack.core.stack import cast_distro_name_to_string, replace_env_vars, run_config_from_dynamic_config_spec
 from llama_stack.core.utils.config_dirs import DISTRIBS_BASE_DIR
 from llama_stack.core.utils.config_resolution import resolve_config_or_distro
-from llama_stack.core.utils.dynamic import instantiate_class_type
 from llama_stack.log import LoggingConfig, get_logger
 
 REPO_ROOT = Path(__file__).parent.parent.parent.parent
@@ -92,50 +81,20 @@ class StackRun(Subcommand):
             except ValueError as e:
                 self.parser.error(str(e))
         elif args.providers:
-            provider_list: dict[str, list[Provider]] = dict()
-            for api_provider in args.providers.split(","):
-                if "=" not in api_provider:
-                    cprint(
-                        "Could not parse `--providers`. Please ensure the list is in the format api1=provider1,api2=provider2",
-                        color="red",
-                        file=sys.stderr,
-                    )
-                    sys.exit(1)
-                api, provider_type = api_provider.split("=")
-                providers_for_api = get_provider_registry().get(Api(api), None)
-                if providers_for_api is None:
-                    cprint(
-                        f"{api} is not a valid API.",
-                        color="red",
-                        file=sys.stderr,
-                    )
-                    sys.exit(1)
-                if provider_type in providers_for_api:
-                    config_type = instantiate_class_type(providers_for_api[provider_type].config_class)
-                    if config_type is not None and hasattr(config_type, "sample_run_config"):
-                        config = config_type.sample_run_config(__distro_dir__="~/.llama/distributions/providers-run")
-                    else:
-                        config = {}
-                    provider = Provider(
-                        provider_type=provider_type,
-                        config=config,
-                        provider_id=provider_type.split("::")[1],
-                    )
-                    provider_list.setdefault(api, []).append(provider)
-                else:
-                    cprint(
-                        f"{provider} is not a valid provider for the {api} API.",
-                        color="red",
-                        file=sys.stderr,
-                    )
-                    sys.exit(1)
-            run_config = self._generate_run_config_from_providers(providers=provider_list)
+            distro_dir = DISTRIBS_BASE_DIR / "providers-run"
+            os.makedirs(distro_dir, exist_ok=True)
+            try:
+                run_config = run_config_from_dynamic_config_spec(
+                    dynamic_config_spec=args.providers,
+                    distro_dir=distro_dir,
+                    distro_name="providers-run",
+                )
+            except ValueError as e:
+                cprint(str(e), color="red", file=sys.stderr)
+                sys.exit(1)
             config_dict = run_config.model_dump(mode="json")
 
-            # Write config to disk in providers-run directory
-            distro_dir = DISTRIBS_BASE_DIR / "providers-run"
             config_file = distro_dir / "config.yaml"
-
             logger.info(f"Writing generated config to: {config_file}")
             with open(config_file, "w") as f:
                 yaml.dump(config_dict, f, default_flow_style=False, sort_keys=False)
@@ -261,44 +220,3 @@ class StackRun(Subcommand):
             )
         except Exception as e:
             logger.error(f"Failed to start UI development server in {ui_dir}: {e}")
-
-    def _generate_run_config_from_providers(self, providers: dict[str, list[Provider]]):
-        apis = list(providers.keys())
-        distro_dir = DISTRIBS_BASE_DIR / "providers-run"
-        # need somewhere to put the storage.
-        os.makedirs(distro_dir, exist_ok=True)
-        storage = StorageConfig(
-            backends={
-                "kv_default": SqliteKVStoreConfig(
-                    db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/kvstore.db",
-                ),
-                "sql_default": SqliteSqlStoreConfig(
-                    db_path=f"${{env.SQLITE_STORE_DIR:={distro_dir}}}/sql_store.db",
-                ),
-            },
-            stores=ServerStoresConfig(
-                metadata=KVStoreReference(
-                    backend="kv_default",
-                    namespace="registry",
-                ),
-                inference=InferenceStoreReference(
-                    backend="sql_default",
-                    table_name="inference_store",
-                ),
-                conversations=SqlStoreReference(
-                    backend="sql_default",
-                    table_name="openai_conversations",
-                ),
-                prompts=KVStoreReference(
-                    backend="kv_default",
-                    namespace="prompts",
-                ),
-            ),
-        )
-
-        return StackConfig(
-            distro_name="providers-run",
-            apis=apis,
-            providers=providers,
-            storage=storage,
-        )

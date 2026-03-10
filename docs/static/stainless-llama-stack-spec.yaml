@@ -4600,6 +4600,7 @@ components:
       title: ListOpenAIChatCompletionResponse
       description: Response from listing OpenAI-compatible chat completions.
     OpenAIAssistantMessageParam:
+      additionalProperties: true
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
       properties:
         role:
@@ -5302,9 +5303,10 @@ components:
         top_logprobs:
           anyOf:
           - type: integer
+            maximum: 20.0
             minimum: 0.0
           - type: 'null'
-          description: The top log probabilities to use.
+          description: The number of most likely tokens to return at each position.
         top_p:
           anyOf:
           - type: number
@@ -5960,8 +5962,26 @@ components:
           type: string
           title: Call Id
         output:
-          type: string
-          title: Output
+          anyOf:
+          - type: string
+          - items:
+              oneOf:
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentText'
+                title: OpenAIResponseInputMessageContentText
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                title: OpenAIResponseInputMessageContentImage
+              - $ref: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                title: OpenAIResponseInputMessageContentFile
+              discriminator:
+                propertyName: type
+                mapping:
+                  input_file: '#/components/schemas/OpenAIResponseInputMessageContentFile'
+                  input_image: '#/components/schemas/OpenAIResponseInputMessageContentImage'
+                  input_text: '#/components/schemas/OpenAIResponseInputMessageContentText'
+              title: OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile
+            type: array
+            title: list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
+          title: string | list[OpenAIResponseInputMessageContentText | OpenAIResponseInputMessageContentImage | OpenAIResponseInputMessageContentFile]
         type:
           type: string
           const: function_call_output
@@ -7012,6 +7032,11 @@ components:
         model_type:
           $ref: '#/components/schemas/ModelType'
           default: llm
+        model_validation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
       type: object
       required:
       - identifier
@@ -7453,6 +7478,10 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
@@ -7534,6 +7563,10 @@ components:
         top_p:
           anyOf:
           - type: number
+          - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
           - type: 'null'
         tools:
           anyOf:
@@ -7633,6 +7666,10 @@ components:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean
@@ -7929,6 +7966,10 @@ components:
             title: OpenAIResponseError
           - type: 'null'
           title: OpenAIResponseError
+        frequency_penalty:
+          anyOf:
+          - type: number
+          - type: 'null'
         id:
           type: string
           title: Id
@@ -8010,6 +8051,10 @@ components:
         top_p:
           anyOf:
           - type: number
+          - type: 'null'
+        top_logprobs:
+          anyOf:
+          - type: integer
           - type: 'null'
         tools:
           anyOf:
@@ -8109,6 +8154,10 @@ components:
           - additionalProperties:
               type: string
             type: object
+          - type: 'null'
+        presence_penalty:
+          anyOf:
+          - type: number
           - type: 'null'
         store:
           type: boolean
@@ -8315,6 +8364,9 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
+        sequence_number:
+          title: Sequence Number
+          type: integer
         type:
           const: response.completed
           default: response.completed
@@ -8322,6 +8374,7 @@ components:
           type: string
       required:
       - response
+      - sequence_number
       title: OpenAIResponseObjectStreamResponseCompleted
       type: object
     OpenAIResponseObjectStreamResponseContentPartAdded:
@@ -8423,6 +8476,9 @@ components:
       properties:
         response:
           $ref: '#/components/schemas/OpenAIResponseObject'
+        sequence_number:
+          title: Sequence Number
+          type: integer
         type:
           const: response.created
           default: response.created
@@ -8430,6 +8486,7 @@ components:
           type: string
       required:
       - response
+      - sequence_number
       title: OpenAIResponseObjectStreamResponseCreated
       type: object
     OpenAIResponseObjectStreamResponseFailed:
@@ -11970,6 +12027,11 @@ components:
           - type: 'null'
           description: The type of model to register.
           title: ModelType
+        model_validation:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
       type: object
       required:
       - model_id
@@ -12524,6 +12586,20 @@ components:
             minimum: 0.0
           - type: 'null'
           description: Sampling temperature.
+        top_p:
+          anyOf:
+          - type: number
+            maximum: 1.0
+            minimum: 0.0
+          - type: 'null'
+          description: Nucleus sampling parameter that controls response diversity (lower values increase focus).
+        frequency_penalty:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: -2.0
+          - type: 'null'
+          description: Penalizes new tokens based on their frequency in the text so far.
         text:
           anyOf:
           - $ref: '#/components/schemas/OpenAIResponseText'
@@ -12661,7 +12737,21 @@ components:
           - type: 'null'
           description: Controls how the service truncates input when it exceeds the model context window.
           title: ResponseTruncation
-      additionalProperties: false
+        top_logprobs:
+          anyOf:
+          - type: integer
+            maximum: 20.0
+            minimum: 0.0
+          - type: 'null'
+          description: The number of most likely tokens to return at each position, along with their log probabilities.
+        presence_penalty:
+          anyOf:
+          - type: number
+            maximum: 2.0
+            minimum: -2.0
+          - type: 'null'
+          description: Penalizes new tokens based on whether they appear in the text so far.
+      additionalProperties: true
       type: object
       required:
       - input
@@ -12972,6 +13062,7 @@ components:
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+      additionalProperties: true
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
@@ -13005,6 +13096,7 @@ components:
             type: array
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
+      additionalProperties: true
       type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.

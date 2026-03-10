@@ -23,6 +23,7 @@ SECTION_ORDER = [
     "client_settings",
     "environments",
     "pagination",
+    "streaming",
     "settings",
     "openapi",
     "readme",
@@ -113,6 +114,13 @@ PAGINATION = [
         },
     },
 ]
+
+STREAMING = {
+    "on_event": [
+        {"data_starts_with": "[DONE]", "handle": "done"},
+        {"kind": "fallthrough", "handle": "yield", "error_property": "error"},
+    ]
+}
 
 SETTINGS = {
     "license": "MIT",
@@ -708,6 +716,7 @@ class StainlessConfig:
     client_settings: dict[str, Any]
     environments: dict[str, Any]
     pagination: list[dict[str, Any]]
+    streaming: dict[str, Any]
     settings: dict[str, Any]
     openapi: dict[str, Any]
     readme: dict[str, Any]
@@ -723,6 +732,7 @@ class StainlessConfig:
             client_settings=CLIENT_SETTINGS,
             environments=ENVIRONMENTS,
             pagination=PAGINATION,
+            streaming=STREAMING,
             settings=SETTINGS,
             openapi=OPENAPI,
             readme=README,

@@ -24,8 +24,10 @@ from llama_stack_api import (
     ConversationItem,
     Conversations,
     Files,
+    GetPromptRequest,
     Inference,
-    InvalidConversationIdError,
+    InternalServerError,
+    InvalidParameterError,
     ListItemsRequest,
     ListOpenAIResponseInputItem,
     ListOpenAIResponseObject,
@@ -54,6 +56,7 @@ from llama_stack_api import (
     ResponseItemInclude,
     ResponseTruncation,
     Safety,
+    ServiceNotEnabledError,
     ToolGroups,
     ToolRuntime,
     VectorIO,
@@ -289,7 +292,9 @@ class OpenAIResponsesImpl:
             return
 
         prompt_version = int(openai_response_prompt.version) if openai_response_prompt.version else None
-        cur_prompt = await self.prompts_api.get_prompt(openai_response_prompt.id, prompt_version)
+        cur_prompt = await self.prompts_api.get_prompt(
+            GetPromptRequest(prompt_id=openai_response_prompt.id, version=prompt_version)
+        )
 
         if not cur_prompt or not cur_prompt.prompt:
             return
@@ -304,7 +309,11 @@ class OpenAIResponsesImpl:
         # Validate that all provided variables exist in the prompt
         for name in openai_response_prompt.variables.keys():
             if name not in cur_prompt_variables:
-                raise ValueError(f"Variable {name} not found in prompt {openai_response_prompt.id}")
+                raise InvalidParameterError(
+                    "prompt.variables",
+                    name,
+                    f"Variable not defined in prompt '{openai_response_prompt.id}'.",
+                )
 
         # Separate text and media variables
         text_substitutions = {}
@@ -546,6 +555,8 @@ class OpenAIResponsesImpl:
         store: bool | None = True,
         stream: bool | None = False,
         temperature: float | None = None,
+        top_p: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
@@ -560,6 +571,9 @@ class OpenAIResponsesImpl:
         service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
+        top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ):
         stream = bool(stream)
         background = bool(background)
@@ -580,29 +594,31 @@ class OpenAIResponsesImpl:
                 if isinstance(tool, OpenAIResponseInputToolMCP) and tool.headers:
                     for key in tool.headers.keys():
                         if key.lower() == "authorization":
-                            raise ValueError(
-                                "Authorization header cannot be passed via 'headers'. "
-                                "Please use the 'authorization' parameter instead."
+                            raise InvalidParameterError(
+                                f"tools[server_label={tool.server_label!r}].headers",
+                                key,
+                                "Authorization credentials must be passed via the 'authorization' parameter, not 'headers'.",
                             )
 
         guardrail_ids = extract_guardrail_ids(guardrails) if guardrails else []
 
         # Validate that Safety API is available if guardrails are requested
         if guardrail_ids and self.safety_api is None:
-            raise ValueError(
-                "Cannot process guardrails: Safety API is not configured.\n\n"
-                "To use guardrails, ensure the Safety API is configured in your stack, or remove "
-                "the 'guardrails' parameter from your request."
+            raise ServiceNotEnabledError(
+                "Safety API",
+                provider_specific_message="Ensure the Safety API is enabled in your stack, otherwise remove the 'guardrails' parameter from your request.",
             )
 
         if conversation is not None:
             if previous_response_id is not None:
-                raise ValueError(
-                    "Mutually exclusive parameters: 'previous_response_id' and 'conversation'. Ensure you are only providing one of these parameters."
+                raise InvalidParameterError(
+                    "previous_response_id, conversation",
+                    "previous_response_id and conversation are both provided",
+                    "Provide only one of these parameters.",
                 )
 
             if not conversation.startswith("conv_"):
-                raise InvalidConversationIdError(conversation)
+                raise InvalidParameterError("conversation", conversation, "Expected an ID that begins with 'conv_'.")
 
         if max_tool_calls is not None and max_tool_calls < 1:
             raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
@@ -618,6 +634,7 @@ class OpenAIResponsesImpl:
                 conversation=conversation,
                 store=store,
                 temperature=temperature,
+                frequency_penalty=frequency_penalty,
                 text=text,
                 tool_choice=tool_choice,
                 tools=tools,
@@ -632,6 +649,8 @@ class OpenAIResponsesImpl:
                 service_tier=service_tier,
                 metadata=metadata,
                 truncation=truncation,
+                presence_penalty=presence_penalty,
+                extra_body=extra_body,
             )
 
         stream_gen = self._create_streaming_response(
@@ -644,6 +663,8 @@ class OpenAIResponsesImpl:
             prompt_cache_key=prompt_cache_key,
             store=store,
             temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
             text=text,
             tools=tools,
             tool_choice=tool_choice,
@@ -658,6 +679,9 @@ class OpenAIResponsesImpl:
             metadata=metadata,
             include=include,
             truncation=truncation,
+            top_logprobs=top_logprobs,
+            presence_penalty=presence_penalty,
+            extra_body=extra_body,
         )
 
         if stream:
@@ -666,32 +690,51 @@ class OpenAIResponsesImpl:
             final_response = None
             final_event_type = None
             failed_response = None
-
             async for stream_chunk in stream_gen:
                 match stream_chunk.type:
                     case "response.completed" | "response.incomplete":
                         if final_response is not None:
-                            raise ValueError(
-                                "The response stream produced multiple terminal responses! "
-                                f"Earlier response from {final_event_type}"
+                            logger.error(
+                                "The response stream produced multiple terminal events, when it should produce exactly one.",
+                                extra={
+                                    "response_id": stream_chunk.response.id,
+                                    "first_terminal_event": final_event_type,
+                                    "second_terminal_event": stream_chunk.type,
+                                    "model": model,
+                                    "conversation": conversation,
+                                    "previous_response_id": previous_response_id,
+                                },
                             )
+                            raise InternalServerError()
                         final_response = stream_chunk.response
                         final_event_type = stream_chunk.type
                     case "response.failed":
                         failed_response = stream_chunk.response
+                        error_message = (
+                            failed_response.error.message
+                            if failed_response.error
+                            else "response failed but no error message was provided"
+                        )
+                        logger.error(
+                            "response creation failed",
+                            extra={
+                                "error_message": error_message,
+                                "response_id": failed_response.id,
+                                "model": model,
+                            },
+                        )
+                        # Surface the provider message — it may be actionable (e.g. context window exceeded)
+                        # and is already visible to callers in streaming mode via the response.failed event.
+                        raise InternalServerError(error_message)
                     case _:
                         pass  # Other event types don't have .response
 
-            if failed_response is not None:
-                error_message = (
-                    failed_response.error.message
-                    if failed_response and failed_response.error
-                    else "Response stream failed without error details"
-                )
-                raise RuntimeError(f"OpenAI response failed: {error_message}")
-
             if final_response is None:
-                raise ValueError("The response stream never reached a terminal state")
+                logger.error(
+                    "The response stream never reached a terminal state",
+                    extra={"model": model, "conversation": conversation, "previous_response_id": previous_response_id},
+                )
+                raise InternalServerError()
             # Set background=False for non-background responses
             final_response.background = False
             return final_response
@@ -706,6 +749,7 @@ class OpenAIResponsesImpl:
         conversation: str | None = None,
         store: bool | None = True,
         temperature: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
@@ -720,6 +764,8 @@ class OpenAIResponsesImpl:
         service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ) -> OpenAIResponseObject:
         """Create a response that processes in the background.
 
@@ -776,6 +822,7 @@ class OpenAIResponsesImpl:
                     conversation=conversation,
                     store=store,
                     temperature=temperature,
+                    frequency_penalty=frequency_penalty,
                     text=text,
                     tool_choice=tool_choice,
                     tools=tools,
@@ -790,6 +837,8 @@ class OpenAIResponsesImpl:
                     service_tier=service_tier,
                     metadata=metadata,
                     truncation=truncation,
+                    presence_penalty=presence_penalty,
+                    extra_body=extra_body,
                 )
             )
         except asyncio.QueueFull:
@@ -810,6 +859,7 @@ class OpenAIResponsesImpl:
         conversation: str | None = None,
         store: bool | None = True,
         temperature: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
@@ -824,6 +874,8 @@ class OpenAIResponsesImpl:
         service_tier: ServiceTier | None = None,
         metadata: dict[str, str] | None = None,
         truncation: ResponseTruncation | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ) -> None:
         """Inner loop for background response processing, separated for timeout wrapping."""
         # Check if response was cancelled before starting
@@ -846,6 +898,7 @@ class OpenAIResponsesImpl:
             previous_response_id=previous_response_id,
             store=store,
             temperature=temperature,
+            frequency_penalty=frequency_penalty,
             text=text,
             tools=tools,
             tool_choice=tool_choice,
@@ -861,6 +914,8 @@ class OpenAIResponsesImpl:
             include=include,
             truncation=truncation,
             response_id=response_id,
+            presence_penalty=presence_penalty,
+            extra_body=extra_body,
         )
 
         result_response = None
@@ -903,6 +958,8 @@ class OpenAIResponsesImpl:
         prompt: OpenAIResponsePrompt | None = None,
         store: bool | None = True,
         temperature: float | None = None,
+        top_p: float | None = None,
+        frequency_penalty: float | None = None,
         text: OpenAIResponseText | None = None,
         tools: list[OpenAIResponseInputTool] | None = None,
         tool_choice: OpenAIResponseInputToolChoice | None = None,
@@ -918,6 +975,9 @@ class OpenAIResponsesImpl:
         include: list[ResponseItemInclude] | None = None,
         truncation: ResponseTruncation | None = None,
         response_id: str | None = None,
+        top_logprobs: int | None = None,
+        presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ) -> AsyncIterator[OpenAIResponseObjectStream]:
         # These should never be None when called from create_openai_response (which sets defaults)
         # but we assert here to help mypy understand the types
@@ -944,9 +1004,12 @@ class OpenAIResponsesImpl:
             response_tools=tools,
             tool_choice=tool_choice,
             temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
             response_format=response_format,
             tool_context=tool_context,
             inputs=all_input,
+            extra_body=extra_body,
         )
 
         # Create orchestrator and delegate streaming logic
@@ -989,6 +1052,9 @@ class OpenAIResponsesImpl:
                 include=include,
                 store=store,
                 truncation=truncation,
+                top_logprobs=top_logprobs,
+                presence_penalty=presence_penalty,
+                extra_body=extra_body,
             )
 
             final_response = None

@@ -24,6 +24,10 @@ on:
       - '.github/actions/run-and-record-tests/action.yml'
       - 'scripts/integration-tests.sh'
       - 'scripts/generate_ci_matrix.py'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
   schedule:
     # If changing the cron schedule, update the provider in the test-matrix job
     - cron: '0 0 * * *'  # (test latest client) Daily at 12 AM UTC
@@ -146,7 +150,7 @@ jobs:
       # called from pull_request_target workflows.
       - name: Setup test environment
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@7d9786b0a0017fa44262c40b6aa42c6a28539c26
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@ce063acfe127393537cb0a5deb29cd20063c76af
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
@@ -157,7 +161,7 @@ jobs:
 
       - name: Setup Node.js for TypeScript client tests
         if: ${{ matrix.client == 'server' }}
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{matrix.node-version}}
           cache: ${{ inputs.disable_cache && '' || 'npm' }}
@@ -167,13 +171,13 @@ jobs:
       - name: Setup TypeScript client
         if: ${{ matrix.client == 'server' }}
         id: setup-ts-client
-        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@7d9786b0a0017fa44262c40b6aa42c6a28539c26
+        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@ce063acfe127393537cb0a5deb29cd20063c76af
         with:
           client-version: ${{ matrix.client-version }}
 
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@7d9786b0a0017fa44262c40b6aa42c6a28539c26
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@ce063acfe127393537cb0a5deb29cd20063c76af
         env:
           OPENAI_API_KEY: dummy
           AWS_BEARER_TOKEN_BEDROCK: replay-mode-dummy-key
@@ -189,4 +193,4 @@ jobs:
           inference-mode: ${{ matrix.config.inference_mode || 'replay' }}
           suite: ${{ matrix.config.suite }}
           target-branch: ${{ inputs.pr_head_ref || '' }}
-          is-fork-pr: ${{ inputs.is_fork_pr && 'true' || (github.event.pull_request.head.repo.full_name != github.repository && 'true' || 'false') }}
+          is-fork-pr: ${{ inputs.is_fork_pr && 'true' || (github.event_name != 'merge_group' && github.event.pull_request.head.repo.full_name != github.repository && 'true' || 'false') }}

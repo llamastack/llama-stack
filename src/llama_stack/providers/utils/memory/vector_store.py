@@ -4,7 +4,6 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import io
-import re
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
@@ -56,26 +55,6 @@ def parse_pdf(data: bytes) -> str:
     pdf_bytes = io.BytesIO(data)
     pdf_reader = PdfReader(pdf_bytes)
     return "\n".join([page.extract_text() for page in pdf_reader.pages])
-
-
-def parse_data_url(data_url: str):
-    data_url_pattern = re.compile(
-        r"^"
-        r"data:"
-        r"(?P<mimetype>[\w/\-+.]+)"
-        r"(?P<charset>;charset=(?P<encoding>[\w-]+))?"
-        r"(?P<base64>;base64)?"
-        r",(?P<data>.*)"
-        r"$",
-        re.DOTALL,
-    )
-    match = data_url_pattern.match(data_url)
-    if not match:
-        raise ValueError("Invalid Data URL format")
-
-    parts = match.groupdict()
-    parts["is_base64"] = bool(parts["base64"])
-    return parts
 
 
 def content_from_data_and_mime_type(data: bytes | str, mime_type: str | None, encoding: str | None = None) -> str:

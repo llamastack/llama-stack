@@ -177,6 +177,105 @@ class TestConvertResponseInputToChatMessages:
         assert result[1].content == "Tool output"
         assert result[1].tool_call_id == "call_123"
 
+    async def test_convert_function_tool_call_output_with_list_content(self):
+        # The OpenAI Responses API spec uses "input_text" as the type discriminator
+        # for text content blocks in function_call_output.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_123",
+                name="search_parks",
+                arguments='{"state_code": "RI"}',
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[{"type": "input_text", "text": '{"parks": ["Park A", "Park B"]}'}],
+                call_id="call_123",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 2
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert result[1].content == [OpenAIChatCompletionContentPartTextParam(text='{"parks": ["Park A", "Park B"]}')]
+        assert result[1].tool_call_id == "call_123"
+
+    async def test_convert_function_tool_call_output_with_multi_block_list_content(self):
+        # Multiple text blocks should each become a separate content part.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_456",
+                name="search",
+                arguments="{}",
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[{"type": "input_text", "text": "first"}, {"type": "input_text", "text": "second"}],
+                call_id="call_456",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 2
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert result[1].content == [
+            OpenAIChatCompletionContentPartTextParam(text="first"),
+            OpenAIChatCompletionContentPartTextParam(text="second"),
+        ]
+
+    async def test_convert_function_tool_call_output_with_image_content(self):
+        # Image parts in function_call_output can't go in OpenAIToolMessageParam (text-only).
+        # They should be split: tool message gets placeholder text, image goes in a user message.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_789",
+                name="capture_screenshot",
+                arguments='{"url": "https://example.com"}',
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[{"type": "input_image", "image_url": "data:image/png;base64,iVBORw0KGgo="}],
+                call_id="call_789",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        # Should produce 3 messages: assistant (tool_call), tool (text placeholder), user (image)
+        assert len(result) == 3
+        assert isinstance(result[0], OpenAIAssistantMessageParam)
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert isinstance(result[2], OpenAIUserMessageParam)
+        # Tool message should have placeholder text since there were no text parts
+        assert result[1].content == [OpenAIChatCompletionContentPartTextParam(text="[image]")]
+        # User message should carry the image
+        assert isinstance(result[2].content, list)
+        assert len(result[2].content) == 1
+        assert isinstance(result[2].content[0], OpenAIChatCompletionContentPartImageParam)
+
+    async def test_convert_function_tool_call_output_with_mixed_text_and_image(self):
+        # When output has both text and image parts, text stays in tool message, image in user message.
+        input_items = [
+            OpenAIResponseOutputMessageFunctionToolCall(
+                call_id="call_mix",
+                name="analyze",
+                arguments="{}",
+            ),
+            OpenAIResponseInputFunctionToolCallOutput(
+                output=[
+                    {"type": "input_text", "text": "Screenshot captured successfully"},
+                    {"type": "input_image", "image_url": "data:image/png;base64,iVBORw0KGgo="},
+                ],
+                call_id="call_mix",
+            ),
+        ]
+
+        result = await convert_response_input_to_chat_messages(input_items)
+
+        assert len(result) == 3
+        assert isinstance(result[0], OpenAIAssistantMessageParam)
+        assert isinstance(result[1], OpenAIToolMessageParam)
+        assert result[1].content == [OpenAIChatCompletionContentPartTextParam(text="Screenshot captured successfully")]
+        assert isinstance(result[2], OpenAIUserMessageParam)
+
     async def test_convert_function_tool_call(self):
         input_items = [
             OpenAIResponseOutputMessageFunctionToolCall(
