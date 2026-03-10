@@ -20,6 +20,10 @@ on:
       - 'pyproject.toml'
       - 'requirements.txt'
       - '.github/workflows/integration-vector-io-tests.yml' # This workflow
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
   schedule:
     - cron: '0 0 * * *'  # (test on python 3.13) Daily at 12 AM UTC
 

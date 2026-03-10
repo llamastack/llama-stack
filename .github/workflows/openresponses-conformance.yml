@@ -31,6 +31,10 @@ on:
       - 'src/llama_stack/apis/agents/**'
       - 'tests/integration/openresponses/**'
       - '.github/workflows/openresponses-conformance.yml'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
   workflow_dispatch:
 
 concurrency:
@@ -102,7 +106,7 @@ jobs:
           exit 1
 
       - name: Setup Bun
-        uses: oven-sh/setup-bun@3d267786b128fe76c2f16a390aa2448b815359f3 #v2.0.0
+        uses: oven-sh/setup-bun@ecf28ddc73e819eb6fa29df6b34ef8921c743461 #v2.0.0
 
       - name: Clone OpenResponses repository
         run: |

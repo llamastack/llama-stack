@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import re
 from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
@@ -165,11 +166,12 @@ class AuthorizedSqlStore:
         action: Action = Action.READ,
     ) -> PaginatedResponse:
         """Fetch all rows with automatic access control filtering."""
-        access_where = self._build_access_control_where_clause(self.policy)
+        access_where, access_params = self._build_access_control_where_clause(self.policy)
         rows = await self.sql_store.fetch_all(
             table=table,
             where=where,
             where_sql=access_where,
+            where_sql_params=access_params,
             limit=limit,
             order_by=order_by,
             cursor=cursor,
@@ -236,9 +238,10 @@ class AuthorizedSqlStore:
         """Delete rows with automatic access control filtering."""
         await self.sql_store.delete(table, where)
 
-    def _build_access_control_where_clause(self, policy: list[AccessRule]) -> str:
+    def _build_access_control_where_clause(self, policy: list[AccessRule]) -> tuple[str, dict[str, Any]]:
         """Build SQL WHERE clause for access control filtering.
 
+        Returns a tuple of (sql_clause, bind_params) using parameterized queries.
         Only applies SQL filtering for the default policy to ensure correctness.
         For custom policies, uses conservative filtering to avoid blocking legitimate access.
         """
@@ -294,46 +297,46 @@ class AuthorizedSqlStore:
         """
         return ["owner_principal = ''"]
 
-    def _build_default_policy_where_clause(self, current_user: User | None) -> str:
+    def _build_default_policy_where_clause(self, current_user: User | None) -> tuple[str, dict[str, Any]]:
         """Build SQL WHERE clause for the default policy.
 
+        Returns a tuple of (sql_clause, bind_params) using parameterized queries.
         Default policy: permit all actions when user in owners [roles, teams, projects, namespaces]
         This means user must match ANY attribute category that exists in the resource (OR logic).
         """
         base_conditions = self._get_public_access_conditions()
+        params: dict[str, Any] = {}
 
         if current_user:
-            # Add "user is owner" condition - user's principal matches owner_principal
-            escaped_principal = current_user.principal.replace("'", "''")
-            base_conditions.append(f"owner_principal = '{escaped_principal}'")
+            params["owner_principal_match"] = current_user.principal
+            base_conditions.append("owner_principal = :owner_principal_match")
 
-            # Add "user in owners" conditions for attribute matching
             if current_user.attributes:
                 for attr_key, user_values in current_user.attributes.items():
                     if user_values:
                         value_conditions = []
-                        for value in user_values:
-                            # Check if JSON array contains the value
-                            escaped_value = value.replace("'", "''")
+                        safe_key = re.sub(r"[^a-zA-Z0-9_]", "_", attr_key)
+                        for j, value in enumerate(user_values):
+                            param_name = f"attr_{safe_key}_{j}"
                             json_text = self._json_extract_text("access_attributes", attr_key)
-                            value_conditions.append(f"({json_text} LIKE '%\"{escaped_value}\"%')")
+                            value_conditions.append(f"({json_text} LIKE :{param_name})")
+                            params[param_name] = f'%"{value}"%'
 
                         if value_conditions:
-                            # User matches this category if any of their values match
-                            user_matches_category = f"({' OR '.join(value_conditions)})"
-                            base_conditions.append(user_matches_category)
-        return f"({' OR '.join(base_conditions)})"
+                            base_conditions.append(f"({' OR '.join(value_conditions)})")
 
-    def _build_conservative_where_clause(self) -> str:
+        return f"({' OR '.join(base_conditions)})", params
+
+    def _build_conservative_where_clause(self) -> tuple[str, dict[str, Any]]:
         """Conservative SQL filtering for custom policies.
 
+        Returns a tuple of (sql_clause, bind_params) using parameterized queries.
         Only filters records we're 100% certain would be denied by any reasonable policy.
         """
         current_user = get_authenticated_user()
 
         if not current_user:
-            # Only allow public records
             base_conditions = self._get_public_access_conditions()
-            return f"({' OR '.join(base_conditions)})"
+            return f"({' OR '.join(base_conditions)})", {}
 
-        return "1=1"
+        return "1=1", {}

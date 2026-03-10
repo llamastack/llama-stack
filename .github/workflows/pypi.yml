@@ -159,13 +159,21 @@ jobs:
           elif [ "${{ github.event_name }}" == "release" ]; then
             VERSION="${GITHUB_REF#refs/tags/v}"
           else
-            # Read base version from fallback_version in pyproject.toml
-            BASE=$(python3 -c "
+            # Use git describe to get version from nearest tag (e.g., v0.5.1-dev)
+            # Falls back to fallback_version in pyproject.toml if no tags are reachable
+            RAW=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || echo "")
+            if [ -n "$RAW" ]; then
+              BASE="${RAW#v}"          # strip 'v' prefix
+              BASE="${BASE%-dev}"      # strip any -dev suffix from the tag
+            else
+              # Fallback: read from pyproject.toml (e.g., source tarballs without git history)
+              BASE=$(python3 -c "
           import tomllib, pathlib
           p = tomllib.loads(pathlib.Path('pyproject.toml').read_text())
           v = p.get('tool', {}).get('setuptools_scm', {}).get('fallback_version', '0.0.0.dev0')
           print(v.split('.dev')[0])
           ")
+            fi
             DATE=$(date -u +%Y%m%d)
             VERSION="${BASE}.dev${DATE}"
           fi
@@ -752,8 +760,6 @@ jobs:
           - distro: dell
             platforms: linux/amd64,linux/arm64
           # GPU distributions — amd64 only
-          - distro: meta-reference-gpu
-            platforms: linux/amd64
           - distro: starter-gpu
             platforms: linux/amd64
 
@@ -807,6 +813,23 @@ jobs:
             echo "version_arg=TEST_PYPI_VERSION=${VERSION}" >> $GITHUB_OUTPUT
             echo "Publishing test image: ${IMAGE}:test-${VERSION}"
           fi
+
+      - name: Wait for package on test PyPI
+        if: steps.meta.outputs.install_mode == 'test-pypi'
+        run: |
+          VERSION="${{ needs.compute-version.outputs.version }}"
+          URL="https://test.pypi.org/pypi/llama-stack/${VERSION}/json"
+          echo "Polling ${URL} ..."
+          for i in $(seq 1 20); do
+            if curl -sf "$URL" -o /dev/null; then
+              echo "llama-stack==${VERSION} is available on test PyPI"
+              exit 0
+            fi
+            echo "Attempt ${i}/20: not yet available, waiting 30s..."
+            sleep 30
+          done
+          echo "::error::llama-stack==${VERSION} did not appear on test PyPI after 10 minutes"
+          exit 1
 
       - name: Build and push Docker image
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
