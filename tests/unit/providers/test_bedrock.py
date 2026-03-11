@@ -25,11 +25,11 @@ def test_different_aws_regions():
     # just check a couple regions to verify URL construction works
     config = BedrockConfig(api_key="key", region_name="us-east-1")
     adapter = BedrockInferenceAdapter(config=config)
-    assert adapter.get_base_url() == "https://bedrock-runtime.us-east-1.amazonaws.com/openai/v1"
+    assert adapter.get_base_url() == "https://bedrock-mantle.us-east-1.api.aws/v1"
 
     config = BedrockConfig(api_key="key", region_name="eu-west-1")
     adapter = BedrockInferenceAdapter(config=config)
-    assert adapter.get_base_url() == "https://bedrock-runtime.eu-west-1.amazonaws.com/openai/v1"
+    assert adapter.get_base_url() == "https://bedrock-mantle.eu-west-1.api.aws/v1"
 
 
 async def test_basic_chat_completion():
