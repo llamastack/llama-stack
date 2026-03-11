@@ -217,8 +217,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
 base_roots = [
     str(p)
     for p in this_dir.glob("*")
-    if p.is_dir()
-    and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses", "post_training")
+    if p.is_dir() and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses")
 ]
 
 SUITE_DEFINITIONS: dict[str, Suite] = {
