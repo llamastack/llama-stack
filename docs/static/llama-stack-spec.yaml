@@ -1880,6 +1880,41 @@ paths:
           description: The identifier of the shield to get.
           title: Identifier
         description: The identifier of the shield to get.
+  /v1/tools:
+    get:
+      responses:
+        '200':
+          description: A ListToolDefsResponse.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListToolDefsResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest400'
+          description: Bad Request
+        '429':
+          $ref: '#/components/responses/TooManyRequests429'
+          description: Too Many Requests
+        '500':
+          $ref: '#/components/responses/InternalServerError500'
+          description: Internal Server Error
+        default:
+          $ref: '#/components/responses/DefaultError'
+          description: Default Response
+      tags:
+      - Tool Groups
+      summary: List Tools
+      description: List tools with optional tool group filter.
+      operationId: list_tools_v1_tools_get
+      parameters:
+      - name: toolgroup_id
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Toolgroup Id
   /v1/vector-io/insert:
     post:
       responses:
@@ -8547,17 +8582,17 @@ components:
       title: ToolDef
       description: Tool definition used in runtime contexts.
     ListToolDefsResponse:
-      description: Response containing a list of tool definitions.
       properties:
         data:
           items:
             $ref: '#/components/schemas/ToolDef'
-          title: Data
           type: array
+          title: Data
+      type: object
       required:
       - data
       title: ListToolDefsResponse
-      type: object
+      description: Response containing a list of tool definitions.
     ToolGroup:
       description: A group of related tools managed together.
       properties:
