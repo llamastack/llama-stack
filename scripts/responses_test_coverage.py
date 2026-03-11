@@ -114,13 +114,6 @@ def _extract_oneof_types(ref: str, spec: dict[str, Any]) -> list[str]:
 # Route extraction from fastapi_routes.py
 # ---------------------------------------------------------------------------
 
-# Map route path prefixes to (category, sdk_resource)
-_ROUTE_CATEGORY_MAP = {
-    "/responses": ("CRUD Operations", "responses"),
-    "/conversations": ("Conversations", "conversations"),
-}
-
-
 def _extract_routes_from_file(filepath: Path) -> list[tuple[str, str]]:
     """Parse a fastapi_routes.py and return (method, path) tuples."""
     source = filepath.read_text()
@@ -137,81 +130,35 @@ def _extract_routes_from_file(filepath: Path) -> list[tuple[str, str]]:
     return routes
 
 
-def _route_to_feature_id(method: str, path: str) -> str:
-    """Convert a (method, path) to a feature id like 'crud.create' or 'conv.retrieve'."""
-    # Determine prefix from path
-    if path.startswith("/responses"):
-        prefix = "crud"
-    elif path.startswith("/conversations"):
-        prefix = "conv"
-    else:
-        prefix = "api"
-
-    # Generate suffix from method + path structure
+def _parse_route(method: str, path: str) -> tuple[str, str, str]:
+    """Convert a (method, path) to (feature_id, sdk_method, description)."""
+    prefix = "crud" if path.startswith("/responses") else "conv"
+    base = "responses" if path.startswith("/responses") else "conversations"
     segments = [s for s in path.split("/") if s and not s.startswith("{")]
-    # Remove the resource prefix (responses/conversations)
-    sub_segments = segments[1:]  # e.g. ['input_items'] or []
+    sub_segments = segments[1:]
 
-    if method == "post" and not sub_segments:
-        return f"{prefix}.create"
-    if method == "get" and not sub_segments:
-        return f"{prefix}.list"
-    if method == "get" and "{" in path and not sub_segments:
-        return f"{prefix}.retrieve"
-    if method == "delete" and not sub_segments:
-        return f"{prefix}.delete"
-
-    # For paths with sub-resources like /responses/{id}/input_items
-    if sub_segments:
-        suffix = "_".join(sub_segments)
-        if method == "get":
-            return f"{prefix}.{suffix}"
-        if method == "post":
-            return f"{prefix}.{suffix}"
-        if method == "delete":
-            return f"{prefix}.delete_{suffix}"
-
-    # Fallback for simple id-based routes
-    if method == "get":
-        return f"{prefix}.retrieve"
-    if method == "delete":
-        return f"{prefix}.delete"
-
-    return f"{prefix}.{method}"
-
-
-def _route_to_sdk_method(method: str, path: str) -> str:
-    """Convert a (method, path) to the SDK method name like 'responses.create'."""
-    if path.startswith("/responses"):
-        base = "responses"
-    elif path.startswith("/conversations"):
-        base = "conversations"
-    else:
-        return f"unknown.{method}"
-
-    segments = [s for s in path.split("/") if s and not s.startswith("{")]
-    sub_segments = segments[1:]  # After 'responses' or 'conversations'
+    method_map = {"post": "create", "get": "list", "delete": "delete"}
+    action = method_map.get(method, method)
 
     if not sub_segments:
-        method_map = {"post": "create", "get": "list", "delete": "delete"}
-        # GET with {id} is retrieve, GET without is list
         if method == "get" and "{" in path:
-            return f"{base}.retrieve"
-        return f"{base}.{method_map.get(method, method)}"
+            action = "retrieve"
+        fid = f"{prefix}.{action}"
+        sdk = f"{base}.{action}"
+    else:
+        suffix = "_".join(sub_segments)
+        sub = ".".join(sub_segments)
+        if method == "delete":
+            fid = f"{prefix}.delete_{suffix}"
+            sdk = f"{base}.{sub}.delete"
+        elif method == "get":
+            fid = f"{prefix}.{suffix}"
+            sdk = f"{base}.{sub}.list" if "{" not in sub_segments[-1] else f"{base}.{sub}"
+        else:
+            fid = f"{prefix}.{suffix}"
+            sdk = f"{base}.{sub}"
 
-    # Sub-resources: /responses/{id}/input_items -> responses.input_items.list
-    sub = ".".join(sub_segments)
-    if method == "get":
-        return f"{base}.{sub}.list" if "{" not in sub_segments[-1] else f"{base}.{sub}"
-    if method == "post":
-        return f"{base}.{sub}"
-    if method == "delete":
-        return f"{base}.{sub}.delete"
-    return f"{base}.{sub}.{method}"
-
-
-def _route_to_description(method: str, path: str) -> str:
-    return f"{method.upper()} {path}"
+    return fid, sdk, f"{method.upper()} {path}"
 
 
 # Params to skip — always present or not meaningfully testable
@@ -303,17 +250,6 @@ def build_feature_matrix(
             )
         )
 
-    # --- Response validation (behavioral) ---
-    for fid, desc, props in [
-        ("resp.id_prefix", "response id starts with resp_", ["id"]),
-        ("resp.status_completed", "status == completed", ["status"]),
-        ("resp.output_text", "output_text content", ["output"]),
-        ("resp.usage", "usage fields present", ["usage"]),
-        ("resp.model_echo", "model echoed in response", ["model"]),
-        ("resp.error", "error field on failure", ["error"]),
-    ]:
-        features.append(Feature(id=fid, category="Response Validation", description=desc, property_names=props))
-
     # --- Streaming events from ResponseStreamEvent oneOf ---
     event_types = _extract_oneof_types("#/components/schemas/ResponseStreamEvent", spec)
     for event_type in event_types:
@@ -332,9 +268,7 @@ def build_feature_matrix(
         if not routes_path.exists():
             continue
         for method, path in _extract_routes_from_file(routes_path):
-            fid = _route_to_feature_id(method, path)
-            sdk_method = _route_to_sdk_method(method, path)
-            desc = _route_to_description(method, path)
+            fid, sdk_method, desc = _parse_route(method, path)
             category = "CRUD Operations" if path.startswith("/responses") else "Conversations"
             features.append(Feature(id=fid, category=category, description=desc, sdk_method=sdk_method))
 
@@ -346,14 +280,6 @@ def build_feature_matrix(
             description="conversation= param in responses.create",
         )
     )
-
-    # --- Error handling (behavioral) ---
-    for fid, desc in [
-        ("err.invalid_model", "invalid model raises error"),
-        ("err.invalid_params", "invalid parameters raise error"),
-        ("err.invalid_image", "invalid image input error"),
-    ]:
-        features.append(Feature(id=fid, category="Error Handling", description=desc))
 
     return features
 
@@ -396,8 +322,6 @@ class TestEvidence:
     text_formats: set[str] = field(default_factory=set)
     api_methods: set[str] = field(default_factory=set)
     stream_events: set[str] = field(default_factory=set)
-    error_types: set[str] = field(default_factory=set)
-    response_attrs: set[str] = field(default_factory=set)
     has_function_call_output: bool = False
 
 
@@ -412,10 +336,9 @@ def _analyze_test_ast(func_node: ast.AST) -> TestEvidence:
             if chain and _is_openai_call(chain):
                 method = _strip_client_prefix(chain)
                 ev.api_methods.add(method)
-                if method == "responses.create":
-                    for kw in node.keywords:
-                        if kw.arg:
-                            ev.params.add(kw.arg)
+                for kw in node.keywords:
+                    if kw.arg:
+                        ev.params.add(kw.arg)
 
         # --- Dict literals: detect tool types and text formats ---
         if isinstance(node, ast.Dict):
@@ -435,26 +358,6 @@ def _analyze_test_ast(func_node: ast.AST) -> TestEvidence:
             val = node.value
             if val.startswith("response.") and len(val) > len("response."):
                 ev.stream_events.add(val)
-            if val == "resp_":
-                ev.response_attrs.add("id_prefix")
-            if val in ("completed", "queued", "in_progress", "failed"):
-                ev.response_attrs.add("status")
-            if val in ("invalid_base64_image", "server_error", "invalid_base64"):
-                ev.error_types.add("invalid_image")
-            if val in ("validation", "invalid", "bad_request"):
-                ev.error_types.add("invalid_params")
-
-        # --- Attribute access on response objects ---
-        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-            if node.value.id in ("response", "response1", "response2", "retrieved"):
-                ev.response_attrs.add(node.attr)
-
-        # --- Exception types ---
-        if isinstance(node, ast.Name):
-            if node.id == "NotFoundError":
-                ev.error_types.add("invalid_model")
-            elif node.id == "BadRequestError":
-                ev.error_types.add("invalid_params")
 
     return ev
 
@@ -501,83 +404,49 @@ def _scan_streaming_helpers(test_dir: Path) -> set[str]:
 
 def _match_evidence(features: list[Feature], evidence_map: dict[str, TestEvidence], helper_events: set[str]) -> None:
     """Match accumulated test evidence against features."""
-    # Aggregate evidence
-    all_params: dict[str, list[str]] = {}
-    all_tool_types: dict[str, list[str]] = {}
-    all_text_formats: dict[str, list[str]] = {}
-    all_api_methods: dict[str, list[str]] = {}
-    all_stream_events: dict[str, list[str]] = {}
-    all_error_types: dict[str, list[str]] = {}
-    all_response_attrs: dict[str, list[str]] = {}
-    has_function_call_output: list[str] = []
-
+    # Aggregate all evidence into per-kind lookup dicts
+    agg: dict[str, dict[str, list[str]]] = {}
+    fn_call_output_locs: list[str] = []
     for loc, ev in evidence_map.items():
-        for p in ev.params:
-            all_params.setdefault(p, []).append(loc)
-        for t in ev.tool_types:
-            all_tool_types.setdefault(t, []).append(loc)
-        for f in ev.text_formats:
-            all_text_formats.setdefault(f, []).append(loc)
-        for m in ev.api_methods:
-            all_api_methods.setdefault(m, []).append(loc)
-        for e in ev.stream_events:
-            all_stream_events.setdefault(e, []).append(loc)
-        for e in ev.error_types:
-            all_error_types.setdefault(e, []).append(loc)
-        for a in ev.response_attrs:
-            all_response_attrs.setdefault(a, []).append(loc)
+        for kind, values in [
+            ("params", ev.params),
+            ("tool_types", ev.tool_types),
+            ("text_formats", ev.text_formats),
+            ("api_methods", ev.api_methods),
+            ("stream_events", ev.stream_events),
+        ]:
+            for v in values:
+                agg.setdefault(kind, {}).setdefault(v, []).append(loc)
         if ev.has_function_call_output:
-            has_function_call_output.append(loc)
+            fn_call_output_locs.append(loc)
 
     for e in helper_events:
-        all_stream_events.setdefault(e, []).append("streaming_assertions.py")
+        agg.setdefault("stream_events", {}).setdefault(e, []).append("streaming_assertions.py")
 
     for feat in features:
         locs: list[str] = []
 
         if feat.id.startswith("param."):
-            param_name = feat.id[len("param.") :]
-            locs = all_params.get(param_name, [])
-
-        elif feat.id.startswith("tools.") and feat.id != "tools.function_call_output":
-            tool_type = feat.id[len("tools.") :]
-            locs = all_tool_types.get(tool_type, [])
+            locs = agg.get("params", {}).get(feat.id[len("param.") :], [])
 
         elif feat.id == "tools.function_call_output":
-            locs = has_function_call_output
+            locs = fn_call_output_locs
+
+        elif feat.id.startswith("tools."):
+            locs = agg.get("tool_types", {}).get(feat.id[len("tools.") :], [])
 
         elif feat.id.startswith("text."):
-            fmt = feat.id[len("text.") :]
-            locs = all_text_formats.get(fmt, [])
-
-        elif feat.id.startswith("resp."):
-            suffix = feat.id[len("resp.") :]
-            attr_map = {
-                "id_prefix": "id_prefix",
-                "status_completed": "status",
-                "output_text": "output_text",
-                "usage": "usage",
-                "model_echo": "model",
-                "error": "error",
-            }
-            attr = attr_map.get(suffix)
-            if attr:
-                locs = all_response_attrs.get(attr, [])
+            locs = agg.get("text_formats", {}).get(feat.id[len("text.") :], [])
 
         elif feat.id.startswith("stream."):
             event_type = "response." + feat.id[len("stream.") :]
-            locs = all_stream_events.get(event_type, [])
+            locs = agg.get("stream_events", {}).get(event_type, [])
 
         elif feat.id == "conv.with_response":
-            locs = all_params.get("conversation", [])
-
-        elif feat.id.startswith("err."):
-            error_type = feat.id[len("err.") :]
-            locs = all_error_types.get(error_type, [])
+            locs = agg.get("params", {}).get("conversation", [])
 
         elif feat.sdk_method:
-            # CRUD / Conversations — match by SDK method
-            locs = all_api_methods.get(feat.sdk_method, [])
+            locs = agg.get("api_methods", {}).get(feat.sdk_method, [])
 
         if locs:
             feat.covered = True
@@ -600,7 +469,11 @@ def run_coverage(test_dir: Path = TESTS_DIR, spec_path: Path = OPENAI_SPEC) -> l
 
 
 def get_tested_property_names(features: list[Feature] | None = None) -> set[str]:
-    """Return the set of OpenAI spec property names that have integration test coverage."""
+    """Return the set of OpenAI spec property names that have integration test coverage.
+
+    Includes both request params from covered features and response attributes
+    accessed in tests (e.g. response.usage, response.error).
+    """
     if features is None:
         features = run_coverage()
 
@@ -608,6 +481,15 @@ def get_tested_property_names(features: list[Feature] | None = None) -> set[str]
     for feat in features:
         if feat.covered:
             tested.update(feat.property_names)
+
+    # Also scan for response attributes accessed in tests (for conformance annotation)
+    _response_var_names = {"response", "response1", "response2", "retrieved"}
+    for filepath in sorted(TESTS_DIR.glob("test_*.py")):
+        for _, func_node in _extract_openai_test_functions(filepath):
+            for node in ast.walk(func_node):
+                if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+                    if node.value.id in _response_var_names:
+                        tested.add(node.attr)
     return tested
 
 
@@ -619,11 +501,9 @@ CATEGORY_ORDER = [
     "Request Parameters",
     "Tools",
     "Structured Output",
-    "Response Validation",
     "Streaming Events",
     "CRUD Operations",
     "Conversations",
-    "Error Handling",
 ]
 
 
