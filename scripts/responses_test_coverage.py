@@ -194,7 +194,7 @@ def extract_test_functions(tree: ast.Module) -> list[ast.FunctionDef | ast.Async
     """Extract all test functions/methods from an AST."""
     tests = []
     for node in ast.walk(tree):
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
             if node.name.startswith("test_"):
                 tests.append(node)
     return tests
