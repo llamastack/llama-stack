@@ -12,6 +12,8 @@ Scans integration tests under tests/integration/responses/ to determine
 which OpenAI Responses API parameters and features are exercised via the
 OpenAI client (not the llama-stack client).
 
+Features are derived from the OpenAI API spec file, not hardcoded.
+
 Produces a coverage score and a gap report.
 
 Usage:
@@ -26,9 +28,168 @@ import json
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
+
+import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = ROOT / "tests" / "integration" / "responses"
+OPENAI_SPEC = ROOT / "docs" / "static" / "openai-spec-2.3.0.yml"
+LLAMA_SPEC = ROOT / "docs" / "static" / "llama-stack-spec.yaml"
+
+
+# ---------------------------------------------------------------------------
+# Spec helpers
+# ---------------------------------------------------------------------------
+
+
+def _load_spec(path: Path) -> dict[str, Any]:
+    content = path.read_text()
+    if path.suffix in (".yml", ".yaml"):
+        return yaml.safe_load(content)
+    return json.loads(content)
+
+
+def _resolve_ref(ref: str, spec: dict[str, Any]) -> dict[str, Any]:
+    parts = ref.lstrip("#/").split("/")
+    obj: Any = spec
+    for p in parts:
+        obj = obj[p]
+    return obj
+
+
+def _collect_properties(
+    schema: dict[str, Any], spec: dict[str, Any], visited: set[str] | None = None
+) -> dict[str, Any]:
+    """Recursively collect all property names from a schema, resolving $ref."""
+    if visited is None:
+        visited = set()
+    props: dict[str, Any] = {}
+    if not isinstance(schema, dict):
+        return props
+    ref = schema.get("$ref")
+    if ref:
+        if ref in visited:
+            return props
+        visited.add(ref)
+        return _collect_properties(_resolve_ref(ref, spec), spec, visited)
+    if "properties" in schema:
+        for name, val in schema["properties"].items():
+            props[name] = val
+    for key in ("allOf", "oneOf", "anyOf"):
+        if key in schema:
+            for sub in schema[key]:
+                props.update(_collect_properties(sub, spec, visited))
+    return props
+
+
+def _collect_oneof_names(ref: str, spec: dict[str, Any]) -> list[str]:
+    """Return schema names from a oneOf/anyOf union."""
+    schema = _resolve_ref(ref, spec)
+    names = []
+    for key in ("oneOf", "anyOf"):
+        for item in schema.get(key, []):
+            if "$ref" in item:
+                names.append(item["$ref"].split("/")[-1])
+    return names
+
+
+# ---------------------------------------------------------------------------
+# Keyword generators — map spec property names to test-detection keywords
+# ---------------------------------------------------------------------------
+
+# Some params need special keyword patterns (e.g. "input" is too generic)
+_PARAM_KEYWORD_OVERRIDES: dict[str, list[str]] = {
+    "input": ['input="', "input='", "input=[{", 'input=[{"role"'],
+    "stream": ["stream=True"],
+    "text": ["json_schema", "json_object", '"format"'],
+    "tools": ['"type": "function"', "'type': 'function'", "web_search", "file_search", '"type": "mcp"'],
+    "model": ["model="],
+}
+
+# Params to skip — always present or not meaningfully testable in isolation
+_SKIP_PARAMS = {
+    "prompt",  # internal/deprecated
+    "user",  # identity param, not testable
+    "stream_options",  # sub-option of stream
+    "prompt_cache_retention",  # not yet supported
+}
+
+
+def _keywords_for_param(name: str) -> list[str]:
+    """Return keyword patterns to search for in test sources for a given param."""
+    if name in _PARAM_KEYWORD_OVERRIDES:
+        return _PARAM_KEYWORD_OVERRIDES[name]
+    return [f"{name}="]
+
+
+# Tool type schema name → (feature id suffix, description, keywords)
+_TOOL_TYPE_MAP: dict[str, tuple[str, str, list[str]]] = {
+    "FunctionTool": ("function_def", "function tool definition", ['"type": "function"', "'type': 'function'"]),
+    "WebSearchTool": ("web_search", "web_search tool", ["web_search", "web-search"]),
+    "WebSearchPreviewTool": ("web_search", "web_search tool", ["web_search", "web-search"]),
+    "FileSearchTool": ("file_search", "file_search tool", ["file_search", "file-search"]),
+    "MCPTool": ("mcp", "MCP tool", ['"type": "mcp"', "'type': 'mcp'"]),
+    "CodeInterpreterTool": ("code_interpreter", "code_interpreter tool", ["code_interpreter"]),
+    "ComputerUsePreviewTool": ("computer_use", "computer_use tool", ["computer_use", "computer-use"]),
+    "ImageGenTool": ("image_gen", "image generation tool", ["image_gen", "image-gen"]),
+}
+
+# Streaming event schema name → (event dotted name, keywords)
+_STREAM_EVENT_MAP: dict[str, tuple[str, list[str]]] = {
+    "ResponseCreatedEvent": ("response.created", ["response.created"]),
+    "ResponseCompletedEvent": ("response.completed", ["response.completed"]),
+    "ResponseFailedEvent": ("response.failed", ["response.failed"]),
+    "ResponseInProgressEvent": ("response.in_progress", ["response.in_progress", "in_progress"]),
+    "ResponseIncompleteEvent": ("response.incomplete", ["response.incomplete", "incomplete"]),
+    "ResponseOutputItemAddedEvent": ("response.output_item.added", ["output_item.added", "output_item_added"]),
+    "ResponseOutputItemDoneEvent": ("response.output_item.done", ["output_item.done", "output_item_done"]),
+    "ResponseContentPartAddedEvent": ("response.content_part.added", ["content_part.added", "content_part_added"]),
+    "ResponseContentPartDoneEvent": ("response.content_part.done", ["content_part.done", "content_part_done"]),
+    "ResponseTextDeltaEvent": ("response.output_text.delta", ["output_text.delta", "output_text_delta", "TextDelta"]),
+    "ResponseTextDoneEvent": ("response.output_text.done", ["output_text.done", "output_text_done", "TextDone"]),
+    "ResponseFunctionCallArgumentsDeltaEvent": (
+        "response.function_call_arguments.delta",
+        ["function_call_arguments.delta"],
+    ),
+    "ResponseFunctionCallArgumentsDoneEvent": (
+        "response.function_call_arguments.done",
+        ["function_call_arguments.done"],
+    ),
+    "ResponseQueuedEvent": ("response.queued", ["response.queued", "queued"]),
+    "ResponseErrorEvent": ("response.error", ["response.error"]),
+}
+
+# CRUD endpoint → (feature id, description, keywords)
+_CRUD_ENDPOINTS: dict[str, dict[str, tuple[str, str, list[str]]]] = {
+    "/responses": {
+        "post": ("crud.create", "POST /responses (create)", ["responses.create"]),
+        "get": ("crud.list", "GET /responses (list)", ["responses.list"]),
+    },
+    "/responses/{response_id}": {
+        "get": ("crud.retrieve", "GET /responses/{id} (retrieve)", ["responses.retrieve"]),
+        "delete": ("crud.delete", "DELETE /responses/{id} (delete)", ["responses.delete", "responses.del"]),
+    },
+    "/responses/{response_id}/input_items": {
+        "get": ("crud.input_items", "GET /responses/{id}/input_items", ["input_items", "list_input_items"]),
+    },
+    "/responses/{response_id}/cancel": {
+        "post": ("crud.cancel", "POST /responses/{id}/cancel", ["responses.cancel"]),
+    },
+}
+
+_CONVERSATION_ENDPOINTS: dict[str, dict[str, tuple[str, str, list[str]]]] = {
+    "/conversations": {
+        "post": ("conv.create", "create conversation", ["conversations.create"]),
+    },
+    "/conversations/{conversation_id}": {
+        "get": ("conv.retrieve", "retrieve conversation", ["conversations.retrieve"]),
+        "delete": ("conv.delete", "delete conversation", ["conversations.delete", "conversations.del"]),
+    },
+    "/conversations/{conversation_id}/items": {
+        "get": ("conv.list_items", "list conversation items", ["conversations.items", "conversations.list"]),
+    },
+}
 
 
 @dataclass
@@ -39,155 +200,163 @@ class Feature:
     category: str
     description: str
     keywords: list[str]
-    # Property names from the OpenAI spec that this feature covers
-    # (used for cross-referencing with conformance report)
     property_names: list[str] = field(default_factory=list)
     covered: bool = False
     test_locations: list[str] = field(default_factory=list)
 
 
-def build_feature_matrix() -> list[Feature]:
-    """Build the full list of features we expect to be tested via openai_client."""
+# ---------------------------------------------------------------------------
+# Feature matrix builder — spec-driven
+# ---------------------------------------------------------------------------
+
+
+def build_feature_matrix(openai_spec_path: Path = OPENAI_SPEC) -> list[Feature]:
+    """Build feature list from the OpenAI API spec."""
+    spec = _load_spec(openai_spec_path)
     features: list[Feature] = []
 
-    def f(id: str, cat: str, desc: str, kw: list[str], props: list[str] | None = None) -> None:
-        features.append(Feature(id=id, category=cat, description=desc, keywords=kw, property_names=props or []))
+    # --- Request parameters ---
+    create_ref = spec["paths"]["/responses"]["post"]["requestBody"]["content"]["application/json"]["schema"]["$ref"]
+    req_props = _collect_properties({"$ref": create_ref}, spec)
 
-    # -- Request parameters (POST /responses) --
-    cat = "Request Parameters"
-    f("param.input_string", cat, "input as plain string", ['input="', "input='"], ["input"])
-    f("param.input_messages", cat, "input as message list", ["input=[{", 'input=[{"role"'], ["input"])
-    f("param.model", cat, "model parameter", ["model="], ["model"])
-    f("param.instructions", cat, "instructions (system prompt)", ["instructions="], ["instructions"])
-    f("param.temperature", cat, "temperature parameter", ["temperature="], ["temperature"])
-    f("param.top_p", cat, "top_p parameter", ["top_p="], ["top_p"])
-    f("param.frequency_penalty", cat, "frequency_penalty parameter", ["frequency_penalty="], ["frequency_penalty"])
-    f("param.presence_penalty", cat, "presence_penalty parameter", ["presence_penalty="], ["presence_penalty"])
-    f("param.max_output_tokens", cat, "max_output_tokens parameter", ["max_output_tokens="], ["max_output_tokens"])
-    f("param.stream", cat, "stream=True", ["stream=True"], ["stream"])
-    f("param.store", cat, "store parameter", ["store="], ["store"])
-    f("param.metadata", cat, "metadata parameter", ["metadata="], ["metadata"])
-    f("param.truncation", cat, "truncation parameter", ["truncation="], ["truncation"])
-    f(
-        "param.parallel_tool_calls",
-        cat,
-        "parallel_tool_calls parameter",
-        ["parallel_tool_calls="],
-        ["parallel_tool_calls"],
-    )
-    f("param.tool_choice", cat, "tool_choice parameter", ["tool_choice="], ["tool_choice"])
-    f("param.max_tool_calls", cat, "max_tool_calls parameter", ["max_tool_calls="], ["max_tool_calls"])
-    f("param.service_tier", cat, "service_tier parameter", ["service_tier="], ["service_tier"])
-    f("param.top_logprobs", cat, "top_logprobs parameter", ["top_logprobs="], ["top_logprobs"])
-    f("param.reasoning", cat, "reasoning parameter", ["reasoning="], ["reasoning"])
-    f(
-        "param.previous_response_id",
-        cat,
-        "previous_response_id for multi-turn",
-        ["previous_response_id="],
-        ["previous_response_id"],
-    )
-    f("param.background", cat, "background parameter", ["background="], ["background"])
-    f("param.prompt_cache_key", cat, "prompt_cache_key parameter", ["prompt_cache_key="], ["prompt_cache_key"])
-    f("param.safety_identifier", cat, "safety_identifier parameter", ["safety_identifier="], ["safety_identifier"])
-    f("param.include", cat, "include parameter", ["include="], ["include"])
+    for name in sorted(req_props.keys()):
+        if name in _SKIP_PARAMS:
+            continue
+        keywords = _keywords_for_param(name)
+        features.append(
+            Feature(
+                id=f"param.{name}",
+                category="Request Parameters",
+                description=f"{name} parameter",
+                keywords=keywords,
+                property_names=[name],
+            )
+        )
 
-    # -- Tools --
-    cat = "Tools"
-    f("tools.function_def", cat, "function tool definition", ['"type": "function"', "'type': 'function'"], ["tools"])
-    f("tools.web_search", cat, "web_search tool", ["web_search", "web-search"], ["tools"])
-    f("tools.file_search", cat, "file_search tool", ["file_search", "file-search"], ["tools"])
-    f("tools.mcp", cat, "MCP tool", ['"type": "mcp"', "'type': 'mcp'"], ["tools"])
-    f(
-        "tools.function_call_output",
-        cat,
-        "function_call_output in multi-turn",
-        ["function_call_output", "call_id"],
-        ["output"],
+    # --- Tool types ---
+    tool_names = _collect_oneof_names("#/components/schemas/Tool", spec)
+    seen_tool_ids: set[str] = set()
+    for schema_name in tool_names:
+        if schema_name not in _TOOL_TYPE_MAP:
+            continue
+        suffix, desc, kws = _TOOL_TYPE_MAP[schema_name]
+        fid = f"tools.{suffix}"
+        if fid in seen_tool_ids:
+            continue
+        seen_tool_ids.add(fid)
+        features.append(Feature(id=fid, category="Tools", description=desc, keywords=kws, property_names=["tools"]))
+
+    # function_call_output (multi-turn tool use) — behavioral feature
+    features.append(
+        Feature(
+            id="tools.function_call_output",
+            category="Tools",
+            description="function_call_output in multi-turn",
+            keywords=["function_call_output", "call_id"],
+            property_names=["output"],
+        )
     )
 
-    # -- Structured Output --
-    cat = "Structured Output"
-    f("text.json_schema", cat, "text format json_schema", ["json_schema"], ["text"])
-    f("text.json_object", cat, "text format json_object", ["json_object"], ["text"])
-
-    # -- Response validation --
-    cat = "Response Validation"
-    f("resp.id_prefix", cat, "response id starts with resp_", ['resp_"', "resp_'", 'startswith("resp_'], ["id"])
-    f("resp.status_completed", cat, "status == completed", [".status", "completed"], ["status"])
-    f("resp.output_text", cat, "output_text content", ["output_text"], ["output"])
-    f("resp.usage", cat, "usage fields present", [".usage", "input_tokens", "output_tokens"], ["usage"])
-    f("resp.model_echo", cat, "model echoed in response", ["response.model", ".model ==", ".model="], ["model"])
-    f("resp.error", cat, "error field on failure", [".error", "response.error"], ["error"])
-
-    # -- Streaming events --
-    cat = "Streaming Events"
-    f("stream.created", cat, "response.created event", ["response.created"])
-    f("stream.completed", cat, "response.completed event", ["response.completed"])
-    f("stream.failed", cat, "response.failed event", ["response.failed"])
-    f(
-        "stream.output_item_added",
-        cat,
-        "response.output_item.added event",
-        ["output_item.added", "output_item_added"],
+    # --- Structured output (sub-features of the "text" param) ---
+    features.append(
+        Feature(
+            id="text.json_schema",
+            category="Structured Output",
+            description="text format json_schema",
+            keywords=["json_schema"],
+            property_names=["text"],
+        )
     )
-    f(
-        "stream.output_item_done",
-        cat,
-        "response.output_item.done event",
-        ["output_item.done", "output_item_done"],
-    )
-    f(
-        "stream.content_part_added",
-        cat,
-        "response.content_part.added event",
-        ["content_part.added", "content_part_added"],
-    )
-    f(
-        "stream.content_part_done",
-        cat,
-        "response.content_part.done event",
-        ["content_part.done", "content_part_done"],
-    )
-    f(
-        "stream.output_text_delta",
-        cat,
-        "response.output_text.delta event",
-        ["output_text.delta", "output_text_delta"],
+    features.append(
+        Feature(
+            id="text.json_object",
+            category="Structured Output",
+            description="text format json_object",
+            keywords=["json_object"],
+            property_names=["text"],
+        )
     )
 
-    # -- CRUD operations --
-    cat = "CRUD Operations"
-    f("crud.create", cat, "POST /responses (create)", ["responses.create"])
-    f("crud.retrieve", cat, "GET /responses/{id} (retrieve)", ["responses.retrieve"])
-    f("crud.list", cat, "GET /responses (list)", ["responses.list"])
-    f("crud.delete", cat, "DELETE /responses/{id} (delete)", ["responses.delete", "responses.del"])
-    f("crud.input_items", cat, "GET /responses/{id}/input_items", ["input_items", "list_input_items"])
+    # --- Response validation (behavioral) ---
+    for fid, desc, kws, props in [
+        ("resp.id_prefix", "response id starts with resp_", ['resp_"', "resp_'", 'startswith("resp_'], ["id"]),
+        ("resp.status_completed", "status == completed", [".status", "completed"], ["status"]),
+        ("resp.output_text", "output_text content", ["output_text"], ["output"]),
+        ("resp.usage", "usage fields present", [".usage", "input_tokens", "output_tokens"], ["usage"]),
+        ("resp.model_echo", "model echoed in response", ["response.model", ".model ==", ".model="], ["model"]),
+        ("resp.error", "error field on failure", [".error", "response.error"], ["error"]),
+    ]:
+        features.append(
+            Feature(id=fid, category="Response Validation", description=desc, keywords=kws, property_names=props)
+        )
 
-    # -- Conversations --
-    cat = "Conversations"
-    f("conv.create", cat, "create conversation", ["conversations.create"])
-    f("conv.retrieve", cat, "retrieve conversation", ["conversations.retrieve"])
-    f("conv.list_items", cat, "list conversation items", ["conversation_id", "conversations.list"])
-    f("conv.with_response", cat, "conversation= param in responses.create", ["conversation="])
+    # --- Streaming events ---
+    event_names = _collect_oneof_names("#/components/schemas/ResponseStreamEvent", spec)
+    for schema_name in event_names:
+        if schema_name not in _STREAM_EVENT_MAP:
+            continue
+        dotted, kws = _STREAM_EVENT_MAP[schema_name]
+        features.append(
+            Feature(
+                id=f"stream.{dotted.replace('response.', '')}",
+                category="Streaming Events",
+                description=f"{dotted} event",
+                keywords=kws,
+            )
+        )
 
-    # -- Error handling --
-    cat = "Error Handling"
-    f("err.invalid_model", cat, "invalid model raises error", ["invalid", "not_found", "NotFoundError"])
-    f(
-        "err.invalid_params",
-        cat,
-        "invalid parameters raise error",
-        ["BadRequestError", "bad_request", "validation"],
+    # --- CRUD operations ---
+    for path, methods in _CRUD_ENDPOINTS.items():
+        if path.replace("{response_id}", "{id}").lstrip("/") not in str(spec.get("paths", {})):
+            pass  # still add — we track desired coverage not just implemented
+        for _method, (fid, desc, kws) in methods.items():
+            features.append(Feature(id=fid, category="CRUD Operations", description=desc, keywords=kws))
+
+    # --- Conversations ---
+    for _path, methods in _CONVERSATION_ENDPOINTS.items():
+        for _method, (fid, desc, kws) in methods.items():
+            features.append(Feature(id=fid, category="Conversations", description=desc, keywords=kws))
+    features.append(
+        Feature(
+            id="conv.with_response",
+            category="Conversations",
+            description="conversation= param in responses.create",
+            keywords=["conversation="],
+        )
     )
-    f(
-        "err.invalid_image",
-        cat,
-        "invalid image input error",
-        ["invalid_base64", "invalid_image", "image_parse_error"],
+
+    # --- Error handling (behavioral) ---
+    features.append(
+        Feature(
+            id="err.invalid_model",
+            category="Error Handling",
+            description="invalid model raises error",
+            keywords=["invalid", "not_found", "NotFoundError"],
+        )
+    )
+    features.append(
+        Feature(
+            id="err.invalid_params",
+            category="Error Handling",
+            description="invalid parameters raise error",
+            keywords=["BadRequestError", "bad_request", "validation"],
+        )
+    )
+    features.append(
+        Feature(
+            id="err.invalid_image",
+            category="Error Handling",
+            description="invalid image input error",
+            keywords=["invalid_base64", "invalid_image", "image_parse_error"],
+        )
     )
 
     return features
+
+
+# ---------------------------------------------------------------------------
+# Test scanning
+# ---------------------------------------------------------------------------
 
 
 def extract_test_functions(tree: ast.Module) -> list[ast.FunctionDef | ast.AsyncFunctionDef]:
