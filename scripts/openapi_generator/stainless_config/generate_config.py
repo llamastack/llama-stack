@@ -515,30 +515,6 @@ ALL_RESOURCES = {
     },
     "alpha": {
         "subresources": {
-            "post_training": {
-                "models": {
-                    "algorithm_config": "AlgorithmConfig",
-                    "post_training_job": "PostTrainingJob",
-                    "list_post_training_jobs_response": "ListPostTrainingJobsResponse",
-                },
-                "methods": {
-                    "preference_optimize": "post /v1alpha/post-training/preference-optimize",
-                    "supervised_fine_tune": "post /v1alpha/post-training/supervised-fine-tune",
-                },
-                "subresources": {
-                    "job": {
-                        "methods": {
-                            "artifacts": "get /v1alpha/post-training/jobs/{job_uuid}/artifacts",
-                            "cancel": "post /v1alpha/post-training/jobs/{job_uuid}/cancel",
-                            "status": "get /v1alpha/post-training/jobs/{job_uuid}/status",
-                            "list": {
-                                "paginated": False,
-                                "endpoint": "get /v1alpha/post-training/jobs",
-                            },
-                        }
-                    }
-                },
-            },
             "benchmarks": {
                 "models": {
                     "benchmark": "Benchmark",
