@@ -96,10 +96,10 @@
       ]
     },
     "conformance": {
-      "score": 84.8,
-      "issues": 275,
-      "missing_properties": 121,
-      "total_problems": 396,
+      "score": 85.2,
+      "issues": 268,
+      "missing_properties": 116,
+      "total_problems": 384,
       "total_properties": 2598
     }
   },
@@ -706,9 +706,9 @@
       ]
     },
     "Chat": {
-      "score": 92.8,
-      "issues": 23,
-      "missing_properties": 6,
+      "score": 95.8,
+      "issues": 16,
+      "missing_properties": 1,
       "total_properties": 402,
       "endpoints": [
         {
@@ -723,24 +723,8 @@
                 {
                   "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.logprobs",
                   "details": [
-                    "Union variants added: 1",
-                    "Union variants removed: 1"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call.properties.arguments",
-                  "details": [
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.data.items.properties.choices.items.properties.message.properties.function_call.properties.name",
-                  "details": [
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
                   ]
                 },
                 {
@@ -772,38 +756,17 @@
                 }
               ],
               "missing_count": 1,
-              "issues_count": 7
+              "issues_count": 5
             },
             {
               "method": "POST",
-              "missing_properties": [
-                "POST.responses.200.content.application/json.properties.system_fingerprint",
-                "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content",
-                "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal",
-                "POST.responses.200.content.text/event-stream.properties.system_fingerprint"
-              ],
+              "missing_properties": [],
               "conformance_issues": [
                 {
                   "property": "POST.responses.200.content.application/json.properties.choices.items.properties.logprobs",
                   "details": [
-                    "Union variants added: 1",
-                    "Union variants removed: 1"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.arguments",
-                  "details": [
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.name",
-                  "details": [
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
                   ]
                 },
                 {
@@ -828,16 +791,7 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.role",
-                  "details": [
-                    "Enum removed: ['developer', 'system', 'user', 'assistant', 'tool']",
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.delta.properties.tool_calls",
+                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.content.items.properties.top_logprobs",
                   "details": [
                     "Type removed: ['array']",
                     "Nullable added (OpenAI non-nullable)",
@@ -845,9 +799,10 @@
                   ]
                 },
                 {
-                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs",
+                  "property": "POST.responses.200.content.text/event-stream.properties.choices.items.properties.logprobs.properties.refusal.items.properties.top_logprobs",
                   "details": [
-                    "Type removed: ['object']",
+                    "Type removed: ['array']",
+                    "Nullable added (OpenAI non-nullable)",
                     "Union variants added: 2"
                   ]
                 },
@@ -859,8 +814,8 @@
                   ]
                 }
               ],
-              "missing_count": 4,
-              "issues_count": 10
+              "missing_count": 0,
+              "issues_count": 7
             }
           ]
         },
@@ -869,31 +824,13 @@
           "operations": [
             {
               "method": "GET",
-              "missing_properties": [
-                "GET.responses.200.content.application/json.properties.system_fingerprint"
-              ],
+              "missing_properties": [],
               "conformance_issues": [
                 {
                   "property": "GET.responses.200.content.application/json.properties.choices.items.properties.logprobs",
                   "details": [
-                    "Union variants added: 1",
-                    "Union variants removed: 1"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.arguments",
-                  "details": [
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
-                  ]
-                },
-                {
-                  "property": "GET.responses.200.content.application/json.properties.choices.items.properties.message.properties.function_call.properties.name",
-                  "details": [
-                    "Type removed: ['string']",
-                    "Nullable added (OpenAI non-nullable)",
-                    "Union variants added: 2"
+                    "Type added: ['object']",
+                    "Union variants removed: 2"
                   ]
                 },
                 {
@@ -918,8 +855,8 @@
                   ]
                 }
               ],
-              "missing_count": 1,
-              "issues_count": 6
+              "missing_count": 0,
+              "issues_count": 4
             }
           ]
         }
