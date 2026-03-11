@@ -969,7 +969,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.error` | Union variants added: 1; Union variants removed: 1 | Yes |
 | `responses.200.content.application/json.properties.frequency_penalty` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
 | `responses.200.content.application/json.properties.incomplete_details` | Union variants added: 1; Union variants removed: 1 | No |
-| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
+| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | No |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['response'] | No |
 | `responses.200.content.application/json.properties.output.items` | Union variants added: 7; Union variants removed: 4 | Yes |
 | `responses.200.content.application/json.properties.parallel_tool_calls` | Type removed: ['boolean']; Nullable added (OpenAI non-nullable); Union variants added: 2; Default changed: None -> True | Yes |
@@ -1085,8 +1085,8 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 | Property | Issues | Tested |
 |----------|--------|--------|
-| `requestBody.content.application/json.properties.metadata` | Union variants added: 1; Union variants removed: 1 | Yes |
-| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
+| `requestBody.content.application/json.properties.metadata` | Union variants added: 1; Union variants removed: 1 | No |
+| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | No |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['conversation'] | No |
 
 </details>
@@ -1112,7 +1112,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 | Property | Issues | Tested |
 |----------|--------|--------|
-| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
+| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | No |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['conversation'] | No |
 
 </details>
@@ -1124,8 +1124,8 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 
 | Property | Issues | Tested |
 |----------|--------|--------|
-| `requestBody.content.application/json.properties.metadata` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 | Yes |
-| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | Yes |
+| `requestBody.content.application/json.properties.metadata` | Type added: ['object']; Nullable removed (OpenAI nullable); Union variants removed: 2 | No |
+| `responses.200.content.application/json.properties.metadata` | Union variants added: 2 | No |
 | `responses.200.content.application/json.properties.object` | Enum removed: ['conversation'] | No |
 
 </details>

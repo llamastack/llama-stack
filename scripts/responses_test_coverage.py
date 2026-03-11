@@ -8,13 +8,9 @@
 """
 Responses API Integration Test Coverage Analyzer
 
-Scans integration tests under tests/integration/responses/ to determine
-which OpenAI Responses API parameters and features are exercised via the
-OpenAI client (not the llama-stack client).
-
-Features are derived from the OpenAI API spec file, not hardcoded.
-
-Produces a coverage score and a gap report.
+The expected feature set is derived from the OpenAI API spec file.
+Coverage detection uses AST analysis of integration tests — no keyword
+substring matching.
 
 Usage:
     uv run python scripts/responses_test_coverage.py [--verbose]
@@ -35,7 +31,6 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = ROOT / "tests" / "integration" / "responses"
 OPENAI_SPEC = ROOT / "docs" / "static" / "openai-spec-2.3.0.yml"
-LLAMA_SPEC = ROOT / "docs" / "static" / "llama-stack-spec.yaml"
 
 
 # ---------------------------------------------------------------------------
@@ -95,101 +90,70 @@ def _collect_oneof_names(ref: str, spec: dict[str, Any]) -> list[str]:
 
 
 # ---------------------------------------------------------------------------
-# Keyword generators — map spec property names to test-detection keywords
+# Spec-derived feature definitions
 # ---------------------------------------------------------------------------
 
-# Some params need special keyword patterns (e.g. "input" is too generic)
-_PARAM_KEYWORD_OVERRIDES: dict[str, list[str]] = {
-    "input": ['input="', "input='", "input=[{", 'input=[{"role"'],
-    "stream": ["stream=True"],
-    "text": ["json_schema", "json_object", '"format"'],
-    "tools": ['"type": "function"', "'type': 'function'", "web_search", "file_search", '"type": "mcp"'],
-    "model": ["model="],
-}
-
-# Params to skip — always present or not meaningfully testable in isolation
+# Params to skip — always present or not meaningfully testable
 _SKIP_PARAMS = {
     "prompt",  # internal/deprecated
-    "user",  # identity param, not testable
+    "user",  # identity param
     "stream_options",  # sub-option of stream
     "prompt_cache_retention",  # not yet supported
 }
 
-
-def _keywords_for_param(name: str) -> list[str]:
-    """Return keyword patterns to search for in test sources for a given param."""
-    if name in _PARAM_KEYWORD_OVERRIDES:
-        return _PARAM_KEYWORD_OVERRIDES[name]
-    return [f"{name}="]
-
-
-# Tool type schema name → (feature id suffix, description, keywords)
-_TOOL_TYPE_MAP: dict[str, tuple[str, str, list[str]]] = {
-    "FunctionTool": ("function_def", "function tool definition", ['"type": "function"', "'type': 'function'"]),
-    "WebSearchTool": ("web_search", "web_search tool", ["web_search", "web-search"]),
-    "WebSearchPreviewTool": ("web_search", "web_search tool", ["web_search", "web-search"]),
-    "FileSearchTool": ("file_search", "file_search tool", ["file_search", "file-search"]),
-    "MCPTool": ("mcp", "MCP tool", ['"type": "mcp"', "'type': 'mcp'"]),
-    "CodeInterpreterTool": ("code_interpreter", "code_interpreter tool", ["code_interpreter"]),
-    "ComputerUsePreviewTool": ("computer_use", "computer_use tool", ["computer_use", "computer-use"]),
-    "ImageGenTool": ("image_gen", "image generation tool", ["image_gen", "image-gen"]),
+# Tool schema name → short type name used in test dicts
+_TOOL_SCHEMA_TO_TYPE: dict[str, str] = {
+    "FunctionTool": "function",
+    "WebSearchTool": "web_search",
+    "WebSearchPreviewTool": "web_search",
+    "FileSearchTool": "file_search",
+    "MCPTool": "mcp",
+    "CodeInterpreterTool": "code_interpreter",
+    "ComputerUsePreviewTool": "computer_use",
+    "ImageGenTool": "image_gen",
 }
 
-# Streaming event schema name → (event dotted name, keywords)
-_STREAM_EVENT_MAP: dict[str, tuple[str, list[str]]] = {
-    "ResponseCreatedEvent": ("response.created", ["response.created"]),
-    "ResponseCompletedEvent": ("response.completed", ["response.completed"]),
-    "ResponseFailedEvent": ("response.failed", ["response.failed"]),
-    "ResponseInProgressEvent": ("response.in_progress", ["response.in_progress", "in_progress"]),
-    "ResponseIncompleteEvent": ("response.incomplete", ["response.incomplete", "incomplete"]),
-    "ResponseOutputItemAddedEvent": ("response.output_item.added", ["output_item.added", "output_item_added"]),
-    "ResponseOutputItemDoneEvent": ("response.output_item.done", ["output_item.done", "output_item_done"]),
-    "ResponseContentPartAddedEvent": ("response.content_part.added", ["content_part.added", "content_part_added"]),
-    "ResponseContentPartDoneEvent": ("response.content_part.done", ["content_part.done", "content_part_done"]),
-    "ResponseTextDeltaEvent": ("response.output_text.delta", ["output_text.delta", "output_text_delta", "TextDelta"]),
-    "ResponseTextDoneEvent": ("response.output_text.done", ["output_text.done", "output_text_done", "TextDone"]),
-    "ResponseFunctionCallArgumentsDeltaEvent": (
-        "response.function_call_arguments.delta",
-        ["function_call_arguments.delta"],
+# Streaming event schema name → dotted event type string
+_EVENT_SCHEMA_TO_TYPE: dict[str, str] = {
+    "ResponseCreatedEvent": "response.created",
+    "ResponseCompletedEvent": "response.completed",
+    "ResponseFailedEvent": "response.failed",
+    "ResponseInProgressEvent": "response.in_progress",
+    "ResponseIncompleteEvent": "response.incomplete",
+    "ResponseQueuedEvent": "response.queued",
+    "ResponseErrorEvent": "response.error",
+    "ResponseOutputItemAddedEvent": "response.output_item.added",
+    "ResponseOutputItemDoneEvent": "response.output_item.done",
+    "ResponseContentPartAddedEvent": "response.content_part.added",
+    "ResponseContentPartDoneEvent": "response.content_part.done",
+    "ResponseTextDeltaEvent": "response.output_text.delta",
+    "ResponseTextDoneEvent": "response.output_text.done",
+    "ResponseFunctionCallArgumentsDeltaEvent": "response.function_call_arguments.delta",
+    "ResponseFunctionCallArgumentsDoneEvent": "response.function_call_arguments.done",
+    "ResponseReasoningTextDeltaEvent": "response.reasoning_text.delta",
+    "ResponseReasoningTextDoneEvent": "response.reasoning_text.done",
+}
+
+# CRUD / Conversations endpoints from the spec
+_ENDPOINT_FEATURES: list[tuple[str, str, str, str, str]] = [
+    # (spec_path, method, feature_id, category, description)
+    ("/responses", "post", "crud.create", "CRUD Operations", "POST /responses (create)"),
+    ("/responses", "get", "crud.list", "CRUD Operations", "GET /responses (list)"),
+    ("/responses/{response_id}", "get", "crud.retrieve", "CRUD Operations", "GET /responses/{id} (retrieve)"),
+    ("/responses/{response_id}", "delete", "crud.delete", "CRUD Operations", "DELETE /responses/{id} (delete)"),
+    (
+        "/responses/{response_id}/input_items",
+        "get",
+        "crud.input_items",
+        "CRUD Operations",
+        "GET /responses/{id}/input_items",
     ),
-    "ResponseFunctionCallArgumentsDoneEvent": (
-        "response.function_call_arguments.done",
-        ["function_call_arguments.done"],
-    ),
-    "ResponseQueuedEvent": ("response.queued", ["response.queued", "queued"]),
-    "ResponseErrorEvent": ("response.error", ["response.error"]),
-}
-
-# CRUD endpoint → (feature id, description, keywords)
-_CRUD_ENDPOINTS: dict[str, dict[str, tuple[str, str, list[str]]]] = {
-    "/responses": {
-        "post": ("crud.create", "POST /responses (create)", ["responses.create"]),
-        "get": ("crud.list", "GET /responses (list)", ["responses.list"]),
-    },
-    "/responses/{response_id}": {
-        "get": ("crud.retrieve", "GET /responses/{id} (retrieve)", ["responses.retrieve"]),
-        "delete": ("crud.delete", "DELETE /responses/{id} (delete)", ["responses.delete", "responses.del"]),
-    },
-    "/responses/{response_id}/input_items": {
-        "get": ("crud.input_items", "GET /responses/{id}/input_items", ["input_items", "list_input_items"]),
-    },
-    "/responses/{response_id}/cancel": {
-        "post": ("crud.cancel", "POST /responses/{id}/cancel", ["responses.cancel"]),
-    },
-}
-
-_CONVERSATION_ENDPOINTS: dict[str, dict[str, tuple[str, str, list[str]]]] = {
-    "/conversations": {
-        "post": ("conv.create", "create conversation", ["conversations.create"]),
-    },
-    "/conversations/{conversation_id}": {
-        "get": ("conv.retrieve", "retrieve conversation", ["conversations.retrieve"]),
-        "delete": ("conv.delete", "delete conversation", ["conversations.delete", "conversations.del"]),
-    },
-    "/conversations/{conversation_id}/items": {
-        "get": ("conv.list_items", "list conversation items", ["conversations.items", "conversations.list"]),
-    },
-}
+    ("/responses/{response_id}/cancel", "post", "crud.cancel", "CRUD Operations", "POST /responses/{id}/cancel"),
+    ("/conversations", "post", "conv.create", "Conversations", "create conversation"),
+    ("/conversations/{conversation_id}", "get", "conv.retrieve", "Conversations", "retrieve conversation"),
+    ("/conversations/{conversation_id}", "delete", "conv.delete", "Conversations", "delete conversation"),
+    ("/conversations/{conversation_id}/items", "get", "conv.list_items", "Conversations", "list conversation items"),
+]
 
 
 @dataclass
@@ -199,15 +163,9 @@ class Feature:
     id: str
     category: str
     description: str
-    keywords: list[str]
     property_names: list[str] = field(default_factory=list)
     covered: bool = False
     test_locations: list[str] = field(default_factory=list)
-
-
-# ---------------------------------------------------------------------------
-# Feature matrix builder — spec-driven
-# ---------------------------------------------------------------------------
 
 
 def build_feature_matrix(openai_spec_path: Path = OPENAI_SPEC) -> list[Feature]:
@@ -215,225 +173,390 @@ def build_feature_matrix(openai_spec_path: Path = OPENAI_SPEC) -> list[Feature]:
     spec = _load_spec(openai_spec_path)
     features: list[Feature] = []
 
-    # --- Request parameters ---
+    # --- Request parameters from POST /responses schema ---
     create_ref = spec["paths"]["/responses"]["post"]["requestBody"]["content"]["application/json"]["schema"]["$ref"]
     req_props = _collect_properties({"$ref": create_ref}, spec)
-
     for name in sorted(req_props.keys()):
         if name in _SKIP_PARAMS:
             continue
-        keywords = _keywords_for_param(name)
         features.append(
             Feature(
                 id=f"param.{name}",
                 category="Request Parameters",
                 description=f"{name} parameter",
-                keywords=keywords,
                 property_names=[name],
             )
         )
 
-    # --- Tool types ---
+    # --- Tool types from Tool oneOf ---
     tool_names = _collect_oneof_names("#/components/schemas/Tool", spec)
-    seen_tool_ids: set[str] = set()
+    seen_types: set[str] = set()
     for schema_name in tool_names:
-        if schema_name not in _TOOL_TYPE_MAP:
+        type_name = _TOOL_SCHEMA_TO_TYPE.get(schema_name)
+        if not type_name or type_name in seen_types:
             continue
-        suffix, desc, kws = _TOOL_TYPE_MAP[schema_name]
-        fid = f"tools.{suffix}"
-        if fid in seen_tool_ids:
-            continue
-        seen_tool_ids.add(fid)
-        features.append(Feature(id=fid, category="Tools", description=desc, keywords=kws, property_names=["tools"]))
-
-    # function_call_output (multi-turn tool use) — behavioral feature
+        seen_types.add(type_name)
+        features.append(
+            Feature(
+                id=f"tools.{type_name}",
+                category="Tools",
+                description=f"{type_name} tool",
+                property_names=["tools"],
+            )
+        )
+    # function_call_output (behavioral — multi-turn tool use)
     features.append(
         Feature(
             id="tools.function_call_output",
             category="Tools",
             description="function_call_output in multi-turn",
-            keywords=["function_call_output", "call_id"],
             property_names=["output"],
         )
     )
 
-    # --- Structured output (sub-features of the "text" param) ---
-    features.append(
-        Feature(
-            id="text.json_schema",
-            category="Structured Output",
-            description="text format json_schema",
-            keywords=["json_schema"],
-            property_names=["text"],
-        )
-    )
-    features.append(
-        Feature(
-            id="text.json_object",
-            category="Structured Output",
-            description="text format json_object",
-            keywords=["json_object"],
-            property_names=["text"],
-        )
-    )
-
-    # --- Response validation (behavioral) ---
-    for fid, desc, kws, props in [
-        ("resp.id_prefix", "response id starts with resp_", ['resp_"', "resp_'", 'startswith("resp_'], ["id"]),
-        ("resp.status_completed", "status == completed", [".status", "completed"], ["status"]),
-        ("resp.output_text", "output_text content", ["output_text"], ["output"]),
-        ("resp.usage", "usage fields present", [".usage", "input_tokens", "output_tokens"], ["usage"]),
-        ("resp.model_echo", "model echoed in response", ["response.model", ".model ==", ".model="], ["model"]),
-        ("resp.error", "error field on failure", [".error", "response.error"], ["error"]),
-    ]:
-        features.append(
-            Feature(id=fid, category="Response Validation", description=desc, keywords=kws, property_names=props)
-        )
-
-    # --- Streaming events ---
-    event_names = _collect_oneof_names("#/components/schemas/ResponseStreamEvent", spec)
-    for schema_name in event_names:
-        if schema_name not in _STREAM_EVENT_MAP:
-            continue
-        dotted, kws = _STREAM_EVENT_MAP[schema_name]
+    # --- Structured output sub-features ---
+    for fmt in ("json_schema", "json_object"):
         features.append(
             Feature(
-                id=f"stream.{dotted.replace('response.', '')}",
-                category="Streaming Events",
-                description=f"{dotted} event",
-                keywords=kws,
+                id=f"text.{fmt}",
+                category="Structured Output",
+                description=f"text format {fmt}",
+                property_names=["text"],
             )
         )
 
-    # --- CRUD operations ---
-    for path, methods in _CRUD_ENDPOINTS.items():
-        if path.replace("{response_id}", "{id}").lstrip("/") not in str(spec.get("paths", {})):
-            pass  # still add — we track desired coverage not just implemented
-        for _method, (fid, desc, kws) in methods.items():
-            features.append(Feature(id=fid, category="CRUD Operations", description=desc, keywords=kws))
+    # --- Response validation (behavioral) ---
+    for fid, desc, props in [
+        ("resp.id_prefix", "response id starts with resp_", ["id"]),
+        ("resp.status_completed", "status == completed", ["status"]),
+        ("resp.output_text", "output_text content", ["output"]),
+        ("resp.usage", "usage fields present", ["usage"]),
+        ("resp.model_echo", "model echoed in response", ["model"]),
+        ("resp.error", "error field on failure", ["error"]),
+    ]:
+        features.append(Feature(id=fid, category="Response Validation", description=desc, property_names=props))
 
-    # --- Conversations ---
-    for _path, methods in _CONVERSATION_ENDPOINTS.items():
-        for _method, (fid, desc, kws) in methods.items():
-            features.append(Feature(id=fid, category="Conversations", description=desc, keywords=kws))
+    # --- Streaming events from ResponseStreamEvent oneOf ---
+    event_names = _collect_oneof_names("#/components/schemas/ResponseStreamEvent", spec)
+    for schema_name in event_names:
+        event_type = _EVENT_SCHEMA_TO_TYPE.get(schema_name)
+        if not event_type:
+            continue
+        features.append(
+            Feature(
+                id=f"stream.{event_type.replace('response.', '')}",
+                category="Streaming Events",
+                description=f"{event_type} event",
+            )
+        )
+
+    # --- CRUD and Conversation endpoints ---
+    for _path, _method, fid, category, desc in _ENDPOINT_FEATURES:
+        features.append(Feature(id=fid, category=category, description=desc))
+
+    # conversation= param in responses.create
     features.append(
         Feature(
-            id="conv.with_response",
-            category="Conversations",
-            description="conversation= param in responses.create",
-            keywords=["conversation="],
+            id="conv.with_response", category="Conversations", description="conversation= param in responses.create"
         )
     )
 
     # --- Error handling (behavioral) ---
-    features.append(
-        Feature(
-            id="err.invalid_model",
-            category="Error Handling",
-            description="invalid model raises error",
-            keywords=["invalid", "not_found", "NotFoundError"],
-        )
-    )
-    features.append(
-        Feature(
-            id="err.invalid_params",
-            category="Error Handling",
-            description="invalid parameters raise error",
-            keywords=["BadRequestError", "bad_request", "validation"],
-        )
-    )
-    features.append(
-        Feature(
-            id="err.invalid_image",
-            category="Error Handling",
-            description="invalid image input error",
-            keywords=["invalid_base64", "invalid_image", "image_parse_error"],
-        )
-    )
+    for fid, desc in [
+        ("err.invalid_model", "invalid model raises error"),
+        ("err.invalid_params", "invalid parameters raise error"),
+        ("err.invalid_image", "invalid image input error"),
+    ]:
+        features.append(Feature(id=fid, category="Error Handling", description=desc))
 
     return features
 
 
 # ---------------------------------------------------------------------------
-# Test scanning
+# AST-based test analysis
 # ---------------------------------------------------------------------------
 
 
-def extract_test_functions(tree: ast.Module) -> list[ast.FunctionDef | ast.AsyncFunctionDef]:
-    """Extract all test functions/methods from an AST."""
-    tests = []
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef):
-            if node.name.startswith("test_"):
-                tests.append(node)
-    return tests
+def _get_call_chain(node: ast.Call) -> str | None:
+    """Reconstruct dotted call chain like 'openai_client.responses.create'."""
+    parts: list[str] = []
+    obj = node.func
+    while isinstance(obj, ast.Attribute):
+        parts.append(obj.attr)
+        obj = obj.value
+    if isinstance(obj, ast.Name):
+        parts.append(obj.id)
+    else:
+        return None
+    parts.reverse()
+    return ".".join(parts)
 
 
-def get_openai_client_tests(filepath: Path, source: str, tree: ast.Module) -> list[tuple[str, str]]:
-    """Return (test_name, test_source) pairs for tests using openai_client."""
+def _is_openai_call(chain: str) -> bool:
+    return any(chain.startswith(c) for c in ("openai_client.", "alice_client.", "bob_client.", "self."))
+
+
+def _strip_client_prefix(chain: str) -> str:
+    """'openai_client.responses.create' -> 'responses.create'"""
+    return chain.split(".", 1)[1] if "." in chain else chain
+
+
+@dataclass
+class TestEvidence:
+    """Evidence of what a test exercises, extracted via AST."""
+
+    params: set[str] = field(default_factory=set)
+    tool_types: set[str] = field(default_factory=set)
+    text_formats: set[str] = field(default_factory=set)
+    api_methods: set[str] = field(default_factory=set)
+    stream_events: set[str] = field(default_factory=set)
+    error_types: set[str] = field(default_factory=set)
+    response_attrs: set[str] = field(default_factory=set)
+    has_function_call_output: bool = False
+
+
+def _analyze_test_ast(func_node: ast.AST) -> TestEvidence:
+    """Walk a test function's AST and extract coverage evidence."""
+    ev = TestEvidence()
+
+    for node in ast.walk(func_node):
+        # --- API calls and their keyword args ---
+        if isinstance(node, ast.Call):
+            chain = _get_call_chain(node)
+            if chain and _is_openai_call(chain):
+                method = _strip_client_prefix(chain)
+                ev.api_methods.add(method)
+                # Keyword args to responses.create
+                if method == "responses.create":
+                    for kw in node.keywords:
+                        if kw.arg:
+                            ev.params.add(kw.arg)
+
+        # --- Dict literals: detect tool types and text formats ---
+        if isinstance(node, ast.Dict):
+            for k, v in zip(node.keys, node.values, strict=False):
+                if isinstance(k, ast.Constant) and isinstance(v, ast.Constant) and isinstance(v.value, str):
+                    if k.value == "type":
+                        if v.value in (
+                            "function",
+                            "web_search",
+                            "file_search",
+                            "mcp",
+                            "code_interpreter",
+                            "computer_use",
+                            "image_gen",
+                        ):
+                            ev.tool_types.add(v.value)
+                        if v.value in ("json_schema", "json_object"):
+                            ev.text_formats.add(v.value)
+                        if v.value == "function_call_output":
+                            ev.has_function_call_output = True
+
+        # --- String constants: detect stream event types ---
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            val = node.value
+            if val.startswith("response.") and len(val) > len("response."):
+                ev.stream_events.add(val)
+
+        # --- Attribute access on response: detect .status, .usage, .error, .model etc ---
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            if node.value.id in ("response", "response1", "response2", "retrieved"):
+                ev.response_attrs.add(node.attr)
+
+        # --- pytest.raises for error detection ---
+        if isinstance(node, ast.Attribute) and node.attr == "raises":
+            # Walk up to find the exception type
+            pass  # error_types detected via string matching below
+
+        # --- String comparisons for resp_ prefix, error types ---
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            val = node.value
+            if val == "resp_":
+                ev.response_attrs.add("id_prefix")
+            if val in ("completed", "queued", "in_progress", "failed"):
+                ev.response_attrs.add("status")
+            if val in ("invalid_base64_image", "server_error", "invalid_base64"):
+                ev.error_types.add("invalid_image")
+
+        # --- Exception types ---
+        if isinstance(node, ast.Name) and node.id in ("NotFoundError", "BadRequestError"):
+            if node.id == "NotFoundError":
+                ev.error_types.add("invalid_model")
+            else:
+                ev.error_types.add("invalid_params")
+
+        # --- str(...).lower() checks for validation errors ---
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            if node.value in ("validation", "invalid", "bad_request"):
+                ev.error_types.add("invalid_params")
+
+    return ev
+
+
+# ---------------------------------------------------------------------------
+# Test scanning and matching
+# ---------------------------------------------------------------------------
+
+
+def _extract_openai_test_functions(filepath: Path) -> list[tuple[str, ast.AST]]:
+    """Return (location_key, func_node) for tests that use openai_client."""
+    source = filepath.read_text()
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        print(f"  WARNING: Could not parse {filepath}", file=sys.stderr)
+        return []
+
     results = []
-    lines = source.splitlines()
-
-    for func in extract_test_functions(tree):
-        arg_names = [arg.arg for arg in func.args.args]
-
-        # openai_client or access-control clients (which are also openai clients)
-        uses_openai = any(a in arg_names for a in ("openai_client", "alice_client", "bob_client"))
-
-        if not uses_openai:
-            continue
-
-        start = func.lineno - 1
-        end = func.end_lineno if func.end_lineno else start + 1
-        func_source = "\n".join(lines[start:end])
-        location = f"{filepath.relative_to(ROOT)}:{func.lineno}"
-        results.append((f"{location}::{func.name}", func_source))
-
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef | ast.AsyncFunctionDef) and node.name.startswith("test_"):
+            arg_names = [arg.arg for arg in node.args.args]
+            if any(a in arg_names for a in ("openai_client", "alice_client", "bob_client")):
+                location = f"{filepath.relative_to(ROOT)}:{node.lineno}::{node.name}"
+                results.append((location, node))
     return results
 
 
-def scan_tests(test_dir: Path) -> list[tuple[str, str]]:
-    """Scan all test files and return openai_client test sources."""
-    all_tests = []
-    for filepath in sorted(test_dir.glob("test_*.py")):
-        source = filepath.read_text()
-        try:
-            tree = ast.parse(source)
-        except SyntaxError:
-            print(f"  WARNING: Could not parse {filepath}", file=sys.stderr)
-            continue
-
-        all_tests.extend(get_openai_client_tests(filepath, source, tree))
-
-    return all_tests
-
-
-def match_coverage(features: list[Feature], tests: list[tuple[str, str]]) -> None:
-    """Match test sources against feature keywords."""
-    for feat in features:
-        for test_name, test_source in tests:
-            for kw in feat.keywords:
-                if kw in test_source:
-                    feat.covered = True
-                    if test_name not in feat.test_locations:
-                        feat.test_locations.append(test_name)
-                    break
-
-
-def scan_streaming_helpers(test_dir: Path, features: list[Feature]) -> None:
-    """Check if streaming helper validates specific events (used by openai_client tests)."""
+def _scan_streaming_helpers(test_dir: Path) -> set[str]:
+    """Extract stream event types from streaming_assertions.py."""
     helpers = test_dir / "streaming_assertions.py"
     if not helpers.exists():
-        return
+        return set()
     source = helpers.read_text()
+    tree = ast.parse(source)
+    events: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            val = node.value
+            if val.startswith("response.") and len(val) > len("response."):
+                events.add(val)
+    return events
+
+
+# Maps feature IDs to the evidence check function
+def _match_evidence(features: list[Feature], evidence_map: dict[str, TestEvidence], helper_events: set[str]) -> None:
+    """Match accumulated test evidence against features."""
+    # Build aggregated evidence across all tests
+    all_params: dict[str, list[str]] = {}  # param -> [test_locations]
+    all_tool_types: dict[str, list[str]] = {}
+    all_text_formats: dict[str, list[str]] = {}
+    all_api_methods: dict[str, list[str]] = {}
+    all_stream_events: dict[str, list[str]] = {}
+    all_error_types: dict[str, list[str]] = {}
+    all_response_attrs: dict[str, list[str]] = {}
+    has_function_call_output: list[str] = []
+
+    for loc, ev in evidence_map.items():
+        for p in ev.params:
+            all_params.setdefault(p, []).append(loc)
+        for t in ev.tool_types:
+            all_tool_types.setdefault(t, []).append(loc)
+        for f in ev.text_formats:
+            all_text_formats.setdefault(f, []).append(loc)
+        for m in ev.api_methods:
+            all_api_methods.setdefault(m, []).append(loc)
+        for e in ev.stream_events:
+            all_stream_events.setdefault(e, []).append(loc)
+        for e in ev.error_types:
+            all_error_types.setdefault(e, []).append(loc)
+        for a in ev.response_attrs:
+            all_response_attrs.setdefault(a, []).append(loc)
+        if ev.has_function_call_output:
+            has_function_call_output.append(loc)
+
+    # Add helper events
+    for e in helper_events:
+        all_stream_events.setdefault(e, []).append("streaming_assertions.py")
+
+    # Method name mapping for CRUD/conversations
+    _method_map = {
+        "crud.create": "responses.create",
+        "crud.list": "responses.list",
+        "crud.retrieve": "responses.retrieve",
+        "crud.delete": "responses.delete",
+        "crud.input_items": "responses.input_items.list",
+        "crud.cancel": "responses.cancel",
+        "conv.create": "conversations.create",
+        "conv.retrieve": "conversations.retrieve",
+        "conv.delete": "conversations.delete",
+        "conv.list_items": "conversations.items.list",
+    }
+
+    # Event type mapping
+    _event_prefix = "response."
+
     for feat in features:
-        if feat.category == "Streaming Events":
-            for kw in feat.keywords:
-                if kw in source:
-                    feat.covered = True
-                    loc = "tests/integration/responses/streaming_assertions.py"
-                    if loc not in feat.test_locations:
-                        feat.test_locations.append(loc)
+        locs: list[str] = []
+
+        if feat.id.startswith("param."):
+            param_name = feat.id[len("param.") :]
+            locs = all_params.get(param_name, [])
+
+        elif feat.id.startswith("tools.") and feat.id != "tools.function_call_output":
+            tool_type = feat.id[len("tools.") :]
+            locs = all_tool_types.get(tool_type, [])
+
+        elif feat.id == "tools.function_call_output":
+            locs = has_function_call_output
+
+        elif feat.id.startswith("text."):
+            fmt = feat.id[len("text.") :]
+            locs = all_text_formats.get(fmt, [])
+
+        elif feat.id.startswith("resp."):
+            suffix = feat.id[len("resp.") :]
+            if suffix == "id_prefix":
+                locs = all_response_attrs.get("id_prefix", [])
+                if not locs:
+                    # Also check for startswith("resp_") pattern
+                    locs = [loc for loc, ev in evidence_map.items() if "id_prefix" in ev.response_attrs]
+            elif suffix == "status_completed":
+                locs = all_response_attrs.get("status", [])
+            elif suffix == "output_text":
+                locs = all_response_attrs.get("output_text", [])
+            elif suffix == "usage":
+                locs = all_response_attrs.get("usage", [])
+            elif suffix == "model_echo":
+                locs = all_response_attrs.get("model", [])
+            elif suffix == "error":
+                locs = all_response_attrs.get("error", [])
+
+        elif feat.id.startswith("stream."):
+            event_type = _event_prefix + feat.id[len("stream.") :]
+            locs = all_stream_events.get(event_type, [])
+
+        elif feat.id in _method_map:
+            method = _method_map[feat.id]
+            locs = all_api_methods.get(method, [])
+
+        elif feat.id == "conv.with_response":
+            locs = all_params.get("conversation", [])
+
+        elif feat.id.startswith("err."):
+            error_type = feat.id[len("err.") :]
+            locs = all_error_types.get(error_type, [])
+
+        if locs:
+            feat.covered = True
+            feat.test_locations = list(dict.fromkeys(locs))  # dedupe preserving order
+
+
+def run_coverage(test_dir: Path = TESTS_DIR, spec_path: Path = OPENAI_SPEC) -> list[Feature]:
+    """Build features from spec, scan tests via AST, and match coverage."""
+    features = build_feature_matrix(spec_path)
+
+    # Scan all test files
+    evidence_map: dict[str, TestEvidence] = {}
+    test_count = 0
+    for filepath in sorted(test_dir.glob("test_*.py")):
+        for location, func_node in _extract_openai_test_functions(filepath):
+            evidence_map[location] = _analyze_test_ast(func_node)
+            test_count += 1
+
+    helper_events = _scan_streaming_helpers(test_dir)
+    _match_evidence(features, evidence_map, helper_events)
+
+    return features
 
 
 def get_tested_property_names(features: list[Feature] | None = None) -> set[str]:
@@ -442,11 +565,7 @@ def get_tested_property_names(features: list[Feature] | None = None) -> set[str]
     This is the main entry point for cross-referencing with the conformance report.
     """
     if features is None:
-        features = build_feature_matrix()
-        if TESTS_DIR.exists():
-            tests = scan_tests(TESTS_DIR)
-            match_coverage(features, tests)
-            scan_streaming_helpers(TESTS_DIR, features)
+        features = run_coverage()
 
     tested = set()
     for feat in features:
@@ -454,6 +573,10 @@ def get_tested_property_names(features: list[Feature] | None = None) -> set[str]
             tested.update(feat.property_names)
     return tested
 
+
+# ---------------------------------------------------------------------------
+# Reporting
+# ---------------------------------------------------------------------------
 
 CATEGORY_ORDER = [
     "Request Parameters",
@@ -497,7 +620,6 @@ def print_report(features: list[Feature], verbose: bool = False) -> float:
 
     print()
 
-    # Gaps
     gaps = [feat for feat in features if not feat.covered]
     if gaps:
         print(f"GAPS ({len(gaps)} features missing coverage):")
@@ -540,36 +662,31 @@ def main() -> None:
         print(f"ERROR: Test directory not found: {TESTS_DIR}", file=sys.stderr)
         sys.exit(1)
 
-    features = build_feature_matrix()
-    tests = scan_tests(TESTS_DIR)
-    match_coverage(features, tests)
-    scan_streaming_helpers(TESTS_DIR, features)
+    features = run_coverage()
 
     if args.json:
         data = {
-            "score": round(sum(1 for feat in features if feat.covered) / len(features) * 100, 1),
+            "score": round(sum(1 for f in features if f.covered) / len(features) * 100, 1),
             "total": len(features),
-            "covered": sum(1 for feat in features if feat.covered),
+            "covered": sum(1 for f in features if f.covered),
             "tested_properties": sorted(get_tested_property_names(features)),
             "gaps": [
-                {"id": feat.id, "category": feat.category, "description": feat.description}
-                for feat in features
-                if not feat.covered
+                {"id": f.id, "category": f.category, "description": f.description} for f in features if not f.covered
             ],
             "covered_features": [
                 {
-                    "id": feat.id,
-                    "category": feat.category,
-                    "description": feat.description,
-                    "test_locations": feat.test_locations,
+                    "id": f.id,
+                    "category": f.category,
+                    "description": f.description,
+                    "test_locations": f.test_locations,
                 }
-                for feat in features
-                if feat.covered
+                for f in features
+                if f.covered
             ],
         }
         print(json.dumps(data, indent=2))
     else:
-        print(f"\nScanned {len(tests)} openai_client tests from {TESTS_DIR.relative_to(ROOT)}/\n")
+        print(f"\nScanned tests from {TESTS_DIR.relative_to(ROOT)}/\n")
         print_report(features, verbose=args.verbose)
 
 
