@@ -22,8 +22,6 @@ from llama_stack_api.schema_utils import json_schema_type, register_schema
 class DatasetPurpose(StrEnum):
     """Purpose of the dataset. Each purpose has a required input data schema."""
 
-    post_training_messages = "post-training/messages"
-    """The dataset contains messages used for post-training."""
     eval_question_answer = "eval/question-answer"
     """The dataset contains a question column and an answer column."""
     eval_messages_answer = "eval/messages-answer"

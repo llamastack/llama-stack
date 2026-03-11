@@ -34,7 +34,7 @@ def data_url_from_file(file_path: str) -> str:
 @click.option("--dataset-id", required=True, help="Id of the dataset")
 @click.option(
     "--purpose",
-    type=click.Choice(["post-training/messages", "eval/question-answer", "eval/messages-answer"]),
+    type=click.Choice(["eval/question-answer", "eval/messages-answer"]),
     help="Purpose of the dataset",
     required=True,
 )
@@ -48,7 +48,7 @@ def data_url_from_file(file_path: str) -> str:
 def register(
     ctx,
     dataset_id: str,
-    purpose: Literal["post-training/messages", "eval/question-answer", "eval/messages-answer"],
+    purpose: Literal["eval/question-answer", "eval/messages-answer"],
     metadata: str | None,
     url: str | None,
     dataset_path: str | None,

@@ -355,7 +355,7 @@ jobs:
           The tests pass on \`main\` but fail with this PR's changes.
 
           > **Note:** This is informational only and does not block merge.
-          > Consider whether this breaking change is acceptable for users."
+          > Consider whether this breaking change is acceptable for users." || echo "Could not post PR comment (expected for fork PRs)"
             else
               echo "Comment already exists, skipping to avoid spam"
             fi
@@ -534,7 +534,7 @@ jobs:
           The tests pass on \`main\` but fail with this PR's changes.
 
           > **Note:** This is informational only and does not block merge.
-          > Consider whether this breaking change is acceptable for users."
+          > Consider whether this breaking change is acceptable for users." || echo "Could not post PR comment (expected for fork PRs)"
             else
               echo "Comment already exists, skipping to avoid spam"
             fi
