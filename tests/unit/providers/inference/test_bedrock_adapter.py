@@ -28,7 +28,7 @@ def test_client_url_construction():
     config = BedrockConfig(api_key="test-key", region_name="us-west-2")
     adapter = BedrockInferenceAdapter(config=config)
 
-    assert adapter.get_base_url() == "https://bedrock-runtime.us-west-2.amazonaws.com/openai/v1"
+    assert adapter.get_base_url() == "https://bedrock-mantle.us-west-2.api.aws/v1"
 
 
 def test_api_key_from_config():
