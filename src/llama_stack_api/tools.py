@@ -11,7 +11,8 @@ from pydantic import BaseModel
 
 from llama_stack_api.common.content_types import URL, InterleavedContent
 from llama_stack_api.resource import Resource, ResourceType
-from llama_stack_api.schema_utils import json_schema_type
+from llama_stack_api.schema_utils import json_schema_type, webmethod
+from llama_stack_api.version import LLAMA_STACK_API_V1
 
 
 @json_schema_type
@@ -106,11 +107,12 @@ class ListToolDefsResponse(BaseModel):
 
 
 class ToolGroups(Protocol):
-    """Internal protocol for managing tool groups.
+    """Protocol for tool group management and tool discovery.
 
-    Tool groups are collections of related tools registered with specific providers.
-    This protocol is used internally by agents and is not exposed as an HTTP API.
-    Use the Connectors API for managing MCP servers and tool integrations.
+    Tool groups are auto-registered from configured tool_runtime providers.
+    Management methods (register, unregister) are internal. Read-only
+    discovery endpoints (list_tools, get_tool) are exposed via HTTP so
+    clients can discover which built-in tools are available.
     """
 
     async def register_tool_group(
@@ -147,6 +149,7 @@ class ToolGroups(Protocol):
         """
         ...
 
+    @webmethod(route="/tools", method="GET", level=LLAMA_STACK_API_V1)
     async def list_tools(self, toolgroup_id: str | None = None) -> ListToolDefsResponse:
         """List tools with optional tool group filter.
 
@@ -190,7 +193,6 @@ class ToolRuntime(Protocol):
     """Internal protocol for listing and invoking tools from registered tool groups.
 
     This protocol is used internally by agents and is not exposed as an HTTP API.
-    Use the Connectors API for managing MCP servers and tool integrations.
     """
 
     tool_store: ToolStore | None = None
