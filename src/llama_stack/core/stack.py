@@ -296,7 +296,7 @@ async def auto_register_tool_groups(run_config: StackConfig, impls: dict[Api, An
         except Exception:
             pass
 
-        logger.debug(f"Auto-registering tool group '{toolgroup_id}' with provider '{provider.provider_id}'")
+        logger.info(f"Auto-registering tool group '{toolgroup_id}' with provider '{provider.provider_id}'")
         await tool_groups_impl.register_tool_group(
             toolgroup_id=toolgroup_id,
             provider_id=provider.provider_id,
