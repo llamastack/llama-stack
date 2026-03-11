@@ -130,6 +130,16 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_dimension": 1536,
         },
     ),
+    "azure": Setup(
+        name="azure",
+        description="Azure-hosted GPT models via the Azure OpenAI-compatible endpoint",
+        defaults={
+            "text_model": "azure/gpt-4o",
+            "vision_model": "azure/gpt-4o",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+            "embedding_dimension": 768,
+        },
+    ),
     "tgi": Setup(
         name="tgi",
         description="Text Generation Inference (TGI) provider with a text model",

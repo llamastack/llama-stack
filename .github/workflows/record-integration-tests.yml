@@ -62,8 +62,10 @@ jobs:
       - name: Run and record tests
         uses: ./.github/actions/run-and-record-tests
         env:
-          # Set OPENAI_API_KEY if using gpt setup
           OPENAI_API_KEY: ${{ inputs.test-setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
+          AZURE_API_KEY: ${{ inputs.test-setup == 'azure' && secrets.AZURE_API_KEY || '' }}
+          AZURE_API_BASE: ${{ inputs.test-setup == 'azure' && secrets.AZURE_API_BASE || '' }}
+          TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure"]'), inputs.test-setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
         with:
           stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
           setup: ${{ inputs.test-setup || 'ollama' }}
