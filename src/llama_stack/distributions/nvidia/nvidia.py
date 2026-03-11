@@ -22,7 +22,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         "safety": [BuildProvider(provider_type="remote::nvidia")],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
         "eval": [BuildProvider(provider_type="remote::nvidia")],
-        "post_training": [BuildProvider(provider_type="remote::nvidia")],
         "datasetio": [
             BuildProvider(provider_type="inline::localfs"),
             BuildProvider(provider_type="remote::nvidia"),
@@ -113,7 +112,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
                 "True",
                 "Whether to append the API version to the base_url",
             ),
-            ## Nemo Customizer related variables
             "NVIDIA_DATASET_NAMESPACE": (
                 "default",
                 "NVIDIA Dataset Namespace",
@@ -121,14 +119,6 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
             "NVIDIA_PROJECT_ID": (
                 "test-project",
                 "NVIDIA Project ID",
-            ),
-            "NVIDIA_CUSTOMIZER_URL": (
-                "https://customizer.api.nvidia.com",
-                "NVIDIA Customizer URL",
-            ),
-            "NVIDIA_OUTPUT_MODEL_DIR": (
-                "test-example-model@v1",
-                "NVIDIA Output Model Directory",
             ),
             "GUARDRAILS_SERVICE_URL": (
                 "http://0.0.0.0:7331",

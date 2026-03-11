@@ -44,7 +44,7 @@ if no model is specified.
 
 - `--suite`: single named suite that narrows which tests are collected.
 - Available suites:
-  - `base`: collects most tests (excludes responses and post_training)
+  - `base`: collects most tests (excludes responses)
   - `responses`: collects tests under `tests/integration/responses` (needs strong tool-calling models)
   - `vision`: collects only `tests/integration/inference/test_vision_inference.py`
 - `--setup`: global configuration that can be used with any suite. Setups prefill model/env defaults; explicit CLI flags always win.

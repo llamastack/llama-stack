@@ -100,7 +100,6 @@ class Api(Enum, metaclass=DynamicApiMeta):
     :cvar datasetio: Dataset input/output operations
     :cvar scoring: Model output evaluation and scoring
     :cvar eval: Model evaluation and benchmarking framework
-    :cvar post_training: Fine-tuning and model training
     :cvar tool_runtime: Tool execution and management
     :cvar telemetry: Observability and system monitoring
     :cvar models: Model metadata and management
@@ -125,7 +124,6 @@ class Api(Enum, metaclass=DynamicApiMeta):
     datasetio = "datasetio"
     scoring = "scoring"
     eval = "eval"
-    post_training = "post_training"
     tool_runtime = "tool_runtime"
 
     models = "models"
