@@ -35,7 +35,11 @@ jobs:
             core.info('Waiting 60s for CI workflows to get queued...');
             await new Promise(r => setTimeout(r, 60000));
 
-            const excludedChecks = new Set(['ci-status']);
+            const excludedChecks = new Set([
+              'ci-status',
+              'Run Integration Tests with Latest Release (Informational)',
+              'Check Schema Compatibility with Latest Release (Informational)',
+            ]);
             const excludedApps = new Set(['mergify']);
 
             const terminalStatuses = new Set(['completed']);
