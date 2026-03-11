@@ -1,0 +1,57 @@
+{
+  "test_id": "tests/integration/responses/test_basic_responses.py::test_response_non_streaming_multi_turn_image[openai_client-txt=vllm/Qwen/Qwen3-0.6B-llama_image_understanding]",
+  "request": {
+    "method": "POST",
+    "url": "http://127.0.0.1:8000/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "Qwen/Qwen3-0.6B",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What type of animal is in this image? Please respond with a single word that starts with the letter 'L'."
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Llamas%2C_Vernagt-Stausee%2C_Italy.jpg",
+                "detail": "auto"
+              }
+            }
+          ]
+        }
+      ],
+      "max_tokens": 4096,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "Qwen/Qwen3-0.6B"
+  },
+  "response": {
+    "body": null,
+    "is_streaming": false,
+    "is_exception": true,
+    "exception_data": {
+      "category": "provider_sdk",
+      "provider": "openai",
+      "type": "BadRequestError",
+      "message": "Error code: 400 - {'object': 'error', 'message': 'Qwen/Qwen3-0.6B is not a multimodal model None', 'type': 'BadRequestError', 'param': None, 'code': 400}",
+      "status_code": 400,
+      "body": {
+        "object": "error",
+        "message": "Qwen/Qwen3-0.6B is not a multimodal model None",
+        "type": "BadRequestError",
+        "param": null,
+        "code": 400
+      }
+    },
+    "exception_message": "Error code: 400 - {'object': 'error', 'message': 'Qwen/Qwen3-0.6B is not a multimodal model None', 'type': 'BadRequestError', 'param': None, 'code': 400}"
+  },
+  "id_normalization_mapping": {}
+}
