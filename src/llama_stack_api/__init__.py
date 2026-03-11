@@ -156,6 +156,7 @@ from .conversations import (
     UpdateConversationRequest,
 )
 from .datasetio import (
+    AppendRowsParams,
     AppendRowsRequest,
     DatasetIO,
     DatasetStore,
@@ -658,6 +659,7 @@ __all__ = [
     "DatasetNotFoundError",
     "DatasetStore",
     "DatasetType",
+    "AppendRowsParams",
     "AppendRowsRequest",
     "IterRowsRequest",
     "Datasets",
