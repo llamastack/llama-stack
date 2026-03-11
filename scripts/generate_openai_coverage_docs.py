@@ -43,28 +43,38 @@ def _extract_property_name(property_path: str) -> str | None:
     return remainder.split(".")[0]
 
 
-def _load_tested_properties() -> set[str]:
-    """Load the set of property names covered by integration tests."""
+def _load_test_coverage() -> tuple[set[str], float | None, dict[str, tuple[int, int]]]:
+    """Load test coverage data: tested properties, overall score, and per-category counts."""
     try:
-        from responses_test_coverage import get_tested_property_names
-
-        return get_tested_property_names()
-    except ImportError:
-        # Add scripts dir to path and retry
         sys.path.insert(0, str(SCRIPT_DIR))
-        try:
-            from responses_test_coverage import get_tested_property_names
+        from responses_test_coverage import get_tested_property_names, run_coverage
 
-            return get_tested_property_names()
-        except ImportError:
-            return set()
+        features = run_coverage()
+        tested = get_tested_property_names(features)
+        total = len(features)
+        covered = sum(1 for f in features if f.covered)
+        score = (covered / total * 100) if total > 0 else 0.0
+
+        cat_counts: dict[str, tuple[int, int]] = {}
+        for f in features:
+            c, t = cat_counts.get(f.category, (0, 0))
+            cat_counts[f.category] = (c + (1 if f.covered else 0), t + 1)
+
+        return tested, round(score, 1), cat_counts
+    except ImportError:
+        return set(), None, {}
     finally:
-        # Clean up sys.path
         if str(SCRIPT_DIR) in sys.path:
             sys.path.remove(str(SCRIPT_DIR))
 
 
-def generate_docs(coverage_path: Path, output_path: Path, tested_properties: set[str] | None = None) -> None:
+def generate_docs(
+    coverage_path: Path,
+    output_path: Path,
+    tested_properties: set[str] | None = None,
+    test_score: float | None = None,
+    test_cat_counts: dict[str, tuple[int, int]] | None = None,
+) -> None:
     """Generate markdown documentation from coverage JSON."""
     with open(coverage_path) as f:
         coverage = json.load(f)
@@ -105,14 +115,36 @@ def generate_docs(coverage_path: Path, output_path: Path, tested_properties: set
         f"| **Schema/Type Issues** | {summary['conformance']['issues']} |",
         f"| **Missing Properties** | {summary['conformance']['missing_properties']} |",
         f"| **Total Issues to Fix** | {summary['conformance']['total_problems']} |",
-        "",
-        "## Category Scores",
-        "",
-        "Categories are sorted by conformance score (lowest first, needing most attention).",
-        "",
-        "| Category | Score | Properties | Issues | Missing |",
-        "|----------|-------|------------|--------|---------|",
     ]
+
+    if test_score is not None:
+        lines.extend(
+            [
+                "",
+                "## Integration Test Coverage",
+                "",
+                f"**Overall Test Coverage Score: {test_score}%**",
+                "",
+                "| Category | Covered | Total | Score |",
+                "|----------|---------|-------|-------|",
+            ]
+        )
+        if test_cat_counts:
+            for cat_name, (covered, total) in sorted(test_cat_counts.items(), key=lambda x: x[0]):
+                cat_score = (covered / total * 100) if total > 0 else 0
+                lines.append(f"| {cat_name} | {covered} | {total} | {cat_score:.1f}% |")
+
+    lines.extend(
+        [
+            "",
+            "## Category Scores",
+            "",
+            "Categories are sorted by conformance score (lowest first, needing most attention).",
+            "",
+            "| Category | Score | Properties | Issues | Missing |",
+            "|----------|-------|------------|--------|---------|",
+        ]
+    )
 
     for cat_name, cat_data in sorted_categories:
         total_props = cat_data.get("total_properties", "N/A")
@@ -279,11 +311,19 @@ def main():
         print("Run 'python scripts/openai_coverage.py --update' first")
         return 1
 
-    tested_properties = _load_tested_properties()
+    tested_properties, test_score, test_cat_counts = _load_test_coverage()
     if tested_properties:
         print(f"Found {len(tested_properties)} tested properties from integration tests")
+    if test_score is not None:
+        print(f"Integration test coverage score: {test_score}%")
 
-    generate_docs(args.coverage_json, args.output, tested_properties=tested_properties)
+    generate_docs(
+        args.coverage_json,
+        args.output,
+        tested_properties=tested_properties,
+        test_score=test_score,
+        test_cat_counts=test_cat_counts,
+    )
     return 0
 
 
