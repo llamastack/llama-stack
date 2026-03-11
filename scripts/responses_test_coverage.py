@@ -114,6 +114,7 @@ def _extract_oneof_types(ref: str, spec: dict[str, Any]) -> list[str]:
 # Route extraction from fastapi_routes.py
 # ---------------------------------------------------------------------------
 
+
 def _extract_routes_from_file(filepath: Path) -> list[tuple[str, str]]:
     """Parse a fastapi_routes.py and return (method, path) tuples."""
     source = filepath.read_text()
