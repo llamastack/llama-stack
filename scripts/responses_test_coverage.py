@@ -8,9 +8,9 @@
 """
 Responses API Integration Test Coverage Analyzer
 
-The expected feature set is derived from the OpenAI API spec file.
-Coverage detection uses AST analysis of integration tests — no keyword
-substring matching.
+The expected feature set is derived from the OpenAI API spec and the
+llama-stack fastapi_routes.py files. Coverage detection uses AST analysis
+of integration tests.
 
 Usage:
     uv run python scripts/responses_test_coverage.py [--verbose]
@@ -31,6 +31,8 @@ import yaml
 ROOT = Path(__file__).resolve().parent.parent
 TESTS_DIR = ROOT / "tests" / "integration" / "responses"
 OPENAI_SPEC = ROOT / "docs" / "static" / "openai-spec-2.3.0.yml"
+AGENTS_ROUTES = ROOT / "src" / "llama_stack_api" / "agents" / "fastapi_routes.py"
+CONVERSATIONS_ROUTES = ROOT / "src" / "llama_stack_api" / "conversations" / "fastapi_routes.py"
 
 
 # ---------------------------------------------------------------------------
@@ -78,20 +80,139 @@ def _collect_properties(
     return props
 
 
-def _collect_oneof_names(ref: str, spec: dict[str, Any]) -> list[str]:
-    """Return schema names from a oneOf/anyOf union."""
+def _get_type_value(schema: dict[str, Any], spec: dict[str, Any]) -> str | None:
+    """Extract the 'type' discriminator value from a schema (e.g. 'function', 'response.created')."""
+    # Direct properties
+    tp = schema.get("properties", {}).get("type", {})
+    if tp:
+        return tp.get("enum", [None])[0] or tp.get("const")
+    # Walk allOf
+    for sub in schema.get("allOf", []):
+        if "$ref" in sub:
+            sub = _resolve_ref(sub["$ref"], spec)
+        tp = sub.get("properties", {}).get("type", {})
+        if tp:
+            return tp.get("enum", [None])[0] or tp.get("const")
+    return None
+
+
+def _extract_oneof_types(ref: str, spec: dict[str, Any]) -> list[str]:
+    """Extract all type discriminator values from a oneOf/anyOf union."""
     schema = _resolve_ref(ref, spec)
-    names = []
+    types = []
     for key in ("oneOf", "anyOf"):
         for item in schema.get(key, []):
             if "$ref" in item:
-                names.append(item["$ref"].split("/")[-1])
-    return names
+                resolved = _resolve_ref(item["$ref"], spec)
+                val = _get_type_value(resolved, spec)
+                if val:
+                    types.append(val)
+    return types
 
 
 # ---------------------------------------------------------------------------
-# Spec-derived feature definitions
+# Route extraction from fastapi_routes.py
 # ---------------------------------------------------------------------------
+
+# Map route path prefixes to (category, sdk_resource)
+_ROUTE_CATEGORY_MAP = {
+    "/responses": ("CRUD Operations", "responses"),
+    "/conversations": ("Conversations", "conversations"),
+}
+
+
+def _extract_routes_from_file(filepath: Path) -> list[tuple[str, str]]:
+    """Parse a fastapi_routes.py and return (method, path) tuples."""
+    source = filepath.read_text()
+    tree = ast.parse(source)
+    routes = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+            if isinstance(node.func.value, ast.Name) and node.func.value.id == "router":
+                method = node.func.attr
+                if method in ("get", "post", "put", "delete", "patch"):
+                    if node.args and isinstance(node.args[0], ast.Constant):
+                        path = node.args[0].value
+                        routes.append((method, path))
+    return routes
+
+
+def _route_to_feature_id(method: str, path: str) -> str:
+    """Convert a (method, path) to a feature id like 'crud.create' or 'conv.retrieve'."""
+    # Determine prefix from path
+    if path.startswith("/responses"):
+        prefix = "crud"
+    elif path.startswith("/conversations"):
+        prefix = "conv"
+    else:
+        prefix = "api"
+
+    # Generate suffix from method + path structure
+    segments = [s for s in path.split("/") if s and not s.startswith("{")]
+    # Remove the resource prefix (responses/conversations)
+    sub_segments = segments[1:]  # e.g. ['input_items'] or []
+
+    if method == "post" and not sub_segments:
+        return f"{prefix}.create"
+    if method == "get" and not sub_segments:
+        return f"{prefix}.list"
+    if method == "get" and "{" in path and not sub_segments:
+        return f"{prefix}.retrieve"
+    if method == "delete" and not sub_segments:
+        return f"{prefix}.delete"
+
+    # For paths with sub-resources like /responses/{id}/input_items
+    if sub_segments:
+        suffix = "_".join(sub_segments)
+        if method == "get":
+            return f"{prefix}.{suffix}"
+        if method == "post":
+            return f"{prefix}.{suffix}"
+        if method == "delete":
+            return f"{prefix}.delete_{suffix}"
+
+    # Fallback for simple id-based routes
+    if method == "get":
+        return f"{prefix}.retrieve"
+    if method == "delete":
+        return f"{prefix}.delete"
+
+    return f"{prefix}.{method}"
+
+
+def _route_to_sdk_method(method: str, path: str) -> str:
+    """Convert a (method, path) to the SDK method name like 'responses.create'."""
+    if path.startswith("/responses"):
+        base = "responses"
+    elif path.startswith("/conversations"):
+        base = "conversations"
+    else:
+        return f"unknown.{method}"
+
+    segments = [s for s in path.split("/") if s and not s.startswith("{")]
+    sub_segments = segments[1:]  # After 'responses' or 'conversations'
+
+    if not sub_segments:
+        method_map = {"post": "create", "get": "list", "delete": "delete"}
+        # GET with {id} is retrieve, GET without is list
+        if method == "get" and "{" in path:
+            return f"{base}.retrieve"
+        return f"{base}.{method_map.get(method, method)}"
+
+    # Sub-resources: /responses/{id}/input_items -> responses.input_items.list
+    sub = ".".join(sub_segments)
+    if method == "get":
+        return f"{base}.{sub}.list" if "{" not in sub_segments[-1] else f"{base}.{sub}"
+    if method == "post":
+        return f"{base}.{sub}"
+    if method == "delete":
+        return f"{base}.{sub}.delete"
+    return f"{base}.{sub}.{method}"
+
+
+def _route_to_description(method: str, path: str) -> str:
+    return f"{method.upper()} {path}"
+
 
 # Params to skip — always present or not meaningfully testable
 _SKIP_PARAMS = {
@@ -101,60 +222,6 @@ _SKIP_PARAMS = {
     "prompt_cache_retention",  # not yet supported
 }
 
-# Tool schema name → short type name used in test dicts
-_TOOL_SCHEMA_TO_TYPE: dict[str, str] = {
-    "FunctionTool": "function",
-    "WebSearchTool": "web_search",
-    "WebSearchPreviewTool": "web_search",
-    "FileSearchTool": "file_search",
-    "MCPTool": "mcp",
-    "CodeInterpreterTool": "code_interpreter",
-    "ComputerUsePreviewTool": "computer_use",
-    "ImageGenTool": "image_gen",
-}
-
-# Streaming event schema name → dotted event type string
-_EVENT_SCHEMA_TO_TYPE: dict[str, str] = {
-    "ResponseCreatedEvent": "response.created",
-    "ResponseCompletedEvent": "response.completed",
-    "ResponseFailedEvent": "response.failed",
-    "ResponseInProgressEvent": "response.in_progress",
-    "ResponseIncompleteEvent": "response.incomplete",
-    "ResponseQueuedEvent": "response.queued",
-    "ResponseErrorEvent": "response.error",
-    "ResponseOutputItemAddedEvent": "response.output_item.added",
-    "ResponseOutputItemDoneEvent": "response.output_item.done",
-    "ResponseContentPartAddedEvent": "response.content_part.added",
-    "ResponseContentPartDoneEvent": "response.content_part.done",
-    "ResponseTextDeltaEvent": "response.output_text.delta",
-    "ResponseTextDoneEvent": "response.output_text.done",
-    "ResponseFunctionCallArgumentsDeltaEvent": "response.function_call_arguments.delta",
-    "ResponseFunctionCallArgumentsDoneEvent": "response.function_call_arguments.done",
-    "ResponseReasoningTextDeltaEvent": "response.reasoning_text.delta",
-    "ResponseReasoningTextDoneEvent": "response.reasoning_text.done",
-}
-
-# CRUD / Conversations endpoints from the spec
-_ENDPOINT_FEATURES: list[tuple[str, str, str, str, str]] = [
-    # (spec_path, method, feature_id, category, description)
-    ("/responses", "post", "crud.create", "CRUD Operations", "POST /responses (create)"),
-    ("/responses", "get", "crud.list", "CRUD Operations", "GET /responses (list)"),
-    ("/responses/{response_id}", "get", "crud.retrieve", "CRUD Operations", "GET /responses/{id} (retrieve)"),
-    ("/responses/{response_id}", "delete", "crud.delete", "CRUD Operations", "DELETE /responses/{id} (delete)"),
-    (
-        "/responses/{response_id}/input_items",
-        "get",
-        "crud.input_items",
-        "CRUD Operations",
-        "GET /responses/{id}/input_items",
-    ),
-    ("/responses/{response_id}/cancel", "post", "crud.cancel", "CRUD Operations", "POST /responses/{id}/cancel"),
-    ("/conversations", "post", "conv.create", "Conversations", "create conversation"),
-    ("/conversations/{conversation_id}", "get", "conv.retrieve", "Conversations", "retrieve conversation"),
-    ("/conversations/{conversation_id}", "delete", "conv.delete", "Conversations", "delete conversation"),
-    ("/conversations/{conversation_id}/items", "get", "conv.list_items", "Conversations", "list conversation items"),
-]
-
 
 @dataclass
 class Feature:
@@ -163,13 +230,23 @@ class Feature:
     id: str
     category: str
     description: str
+    sdk_method: str = ""  # SDK method to match in tests (e.g. 'responses.create')
     property_names: list[str] = field(default_factory=list)
     covered: bool = False
     test_locations: list[str] = field(default_factory=list)
 
 
-def build_feature_matrix(openai_spec_path: Path = OPENAI_SPEC) -> list[Feature]:
-    """Build feature list from the OpenAI API spec."""
+# ---------------------------------------------------------------------------
+# Feature matrix builder — spec + routes driven
+# ---------------------------------------------------------------------------
+
+
+def build_feature_matrix(
+    openai_spec_path: Path = OPENAI_SPEC,
+    agents_routes_path: Path = AGENTS_ROUTES,
+    conversations_routes_path: Path = CONVERSATIONS_ROUTES,
+) -> list[Feature]:
+    """Build feature list from the OpenAI API spec and fastapi route files."""
     spec = _load_spec(openai_spec_path)
     features: list[Feature] = []
 
@@ -189,18 +266,19 @@ def build_feature_matrix(openai_spec_path: Path = OPENAI_SPEC) -> list[Feature]:
         )
 
     # --- Tool types from Tool oneOf ---
-    tool_names = _collect_oneof_names("#/components/schemas/Tool", spec)
+    tool_types = _extract_oneof_types("#/components/schemas/Tool", spec)
     seen_types: set[str] = set()
-    for schema_name in tool_names:
-        type_name = _TOOL_SCHEMA_TO_TYPE.get(schema_name)
-        if not type_name or type_name in seen_types:
+    for type_val in tool_types:
+        # Normalize versioned types like 'web_search_2025_08_26' -> 'web_search'
+        normalized = type_val.split("_20")[0] if "_20" in type_val else type_val
+        if normalized in seen_types:
             continue
-        seen_types.add(type_name)
+        seen_types.add(normalized)
         features.append(
             Feature(
-                id=f"tools.{type_name}",
+                id=f"tools.{normalized}",
                 category="Tools",
-                description=f"{type_name} tool",
+                description=f"{normalized} tool",
                 property_names=["tools"],
             )
         )
@@ -237,27 +315,35 @@ def build_feature_matrix(openai_spec_path: Path = OPENAI_SPEC) -> list[Feature]:
         features.append(Feature(id=fid, category="Response Validation", description=desc, property_names=props))
 
     # --- Streaming events from ResponseStreamEvent oneOf ---
-    event_names = _collect_oneof_names("#/components/schemas/ResponseStreamEvent", spec)
-    for schema_name in event_names:
-        event_type = _EVENT_SCHEMA_TO_TYPE.get(schema_name)
-        if not event_type:
-            continue
+    event_types = _extract_oneof_types("#/components/schemas/ResponseStreamEvent", spec)
+    for event_type in event_types:
+        # event_type is like 'response.created', 'response.output_text.delta'
+        short = event_type.replace("response.", "", 1)
         features.append(
             Feature(
-                id=f"stream.{event_type.replace('response.', '')}",
+                id=f"stream.{short}",
                 category="Streaming Events",
                 description=f"{event_type} event",
             )
         )
 
-    # --- CRUD and Conversation endpoints ---
-    for _path, _method, fid, category, desc in _ENDPOINT_FEATURES:
-        features.append(Feature(id=fid, category=category, description=desc))
+    # --- CRUD and Conversation endpoints from fastapi_routes.py ---
+    for routes_path in (agents_routes_path, conversations_routes_path):
+        if not routes_path.exists():
+            continue
+        for method, path in _extract_routes_from_file(routes_path):
+            fid = _route_to_feature_id(method, path)
+            sdk_method = _route_to_sdk_method(method, path)
+            desc = _route_to_description(method, path)
+            category = "CRUD Operations" if path.startswith("/responses") else "Conversations"
+            features.append(Feature(id=fid, category=category, description=desc, sdk_method=sdk_method))
 
     # conversation= param in responses.create
     features.append(
         Feature(
-            id="conv.with_response", category="Conversations", description="conversation= param in responses.create"
+            id="conv.with_response",
+            category="Conversations",
+            description="conversation= param in responses.create",
         )
     )
 
@@ -326,7 +412,6 @@ def _analyze_test_ast(func_node: ast.AST) -> TestEvidence:
             if chain and _is_openai_call(chain):
                 method = _strip_client_prefix(chain)
                 ev.api_methods.add(method)
-                # Keyword args to responses.create
                 if method == "responses.create":
                     for kw in node.keywords:
                         if kw.arg:
@@ -337,19 +422,12 @@ def _analyze_test_ast(func_node: ast.AST) -> TestEvidence:
             for k, v in zip(node.keys, node.values, strict=False):
                 if isinstance(k, ast.Constant) and isinstance(v, ast.Constant) and isinstance(v.value, str):
                     if k.value == "type":
-                        if v.value in (
-                            "function",
-                            "web_search",
-                            "file_search",
-                            "mcp",
-                            "code_interpreter",
-                            "computer_use",
-                            "image_gen",
-                        ):
-                            ev.tool_types.add(v.value)
-                        if v.value in ("json_schema", "json_object"):
-                            ev.text_formats.add(v.value)
-                        if v.value == "function_call_output":
+                        # Normalize versioned types
+                        val = v.value.split("_20")[0] if "_20" in v.value else v.value
+                        ev.tool_types.add(val)
+                        if val in ("json_schema", "json_object"):
+                            ev.text_formats.add(val)
+                        if val == "function_call_output":
                             ev.has_function_call_output = True
 
         # --- String constants: detect stream event types ---
@@ -357,37 +435,25 @@ def _analyze_test_ast(func_node: ast.AST) -> TestEvidence:
             val = node.value
             if val.startswith("response.") and len(val) > len("response."):
                 ev.stream_events.add(val)
-
-        # --- Attribute access on response: detect .status, .usage, .error, .model etc ---
-        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
-            if node.value.id in ("response", "response1", "response2", "retrieved"):
-                ev.response_attrs.add(node.attr)
-
-        # --- pytest.raises for error detection ---
-        if isinstance(node, ast.Attribute) and node.attr == "raises":
-            # Walk up to find the exception type
-            pass  # error_types detected via string matching below
-
-        # --- String comparisons for resp_ prefix, error types ---
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            val = node.value
             if val == "resp_":
                 ev.response_attrs.add("id_prefix")
             if val in ("completed", "queued", "in_progress", "failed"):
                 ev.response_attrs.add("status")
             if val in ("invalid_base64_image", "server_error", "invalid_base64"):
                 ev.error_types.add("invalid_image")
-
-        # --- Exception types ---
-        if isinstance(node, ast.Name) and node.id in ("NotFoundError", "BadRequestError"):
-            if node.id == "NotFoundError":
-                ev.error_types.add("invalid_model")
-            else:
+            if val in ("validation", "invalid", "bad_request"):
                 ev.error_types.add("invalid_params")
 
-        # --- str(...).lower() checks for validation errors ---
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            if node.value in ("validation", "invalid", "bad_request"):
+        # --- Attribute access on response objects ---
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+            if node.value.id in ("response", "response1", "response2", "retrieved"):
+                ev.response_attrs.add(node.attr)
+
+        # --- Exception types ---
+        if isinstance(node, ast.Name):
+            if node.id == "NotFoundError":
+                ev.error_types.add("invalid_model")
+            elif node.id == "BadRequestError":
                 ev.error_types.add("invalid_params")
 
     return ev
@@ -433,11 +499,10 @@ def _scan_streaming_helpers(test_dir: Path) -> set[str]:
     return events
 
 
-# Maps feature IDs to the evidence check function
 def _match_evidence(features: list[Feature], evidence_map: dict[str, TestEvidence], helper_events: set[str]) -> None:
     """Match accumulated test evidence against features."""
-    # Build aggregated evidence across all tests
-    all_params: dict[str, list[str]] = {}  # param -> [test_locations]
+    # Aggregate evidence
+    all_params: dict[str, list[str]] = {}
     all_tool_types: dict[str, list[str]] = {}
     all_text_formats: dict[str, list[str]] = {}
     all_api_methods: dict[str, list[str]] = {}
@@ -464,26 +529,8 @@ def _match_evidence(features: list[Feature], evidence_map: dict[str, TestEvidenc
         if ev.has_function_call_output:
             has_function_call_output.append(loc)
 
-    # Add helper events
     for e in helper_events:
         all_stream_events.setdefault(e, []).append("streaming_assertions.py")
-
-    # Method name mapping for CRUD/conversations
-    _method_map = {
-        "crud.create": "responses.create",
-        "crud.list": "responses.list",
-        "crud.retrieve": "responses.retrieve",
-        "crud.delete": "responses.delete",
-        "crud.input_items": "responses.input_items.list",
-        "crud.cancel": "responses.cancel",
-        "conv.create": "conversations.create",
-        "conv.retrieve": "conversations.retrieve",
-        "conv.delete": "conversations.delete",
-        "conv.list_items": "conversations.items.list",
-    }
-
-    # Event type mapping
-    _event_prefix = "response."
 
     for feat in features:
         locs: list[str] = []
@@ -505,29 +552,21 @@ def _match_evidence(features: list[Feature], evidence_map: dict[str, TestEvidenc
 
         elif feat.id.startswith("resp."):
             suffix = feat.id[len("resp.") :]
-            if suffix == "id_prefix":
-                locs = all_response_attrs.get("id_prefix", [])
-                if not locs:
-                    # Also check for startswith("resp_") pattern
-                    locs = [loc for loc, ev in evidence_map.items() if "id_prefix" in ev.response_attrs]
-            elif suffix == "status_completed":
-                locs = all_response_attrs.get("status", [])
-            elif suffix == "output_text":
-                locs = all_response_attrs.get("output_text", [])
-            elif suffix == "usage":
-                locs = all_response_attrs.get("usage", [])
-            elif suffix == "model_echo":
-                locs = all_response_attrs.get("model", [])
-            elif suffix == "error":
-                locs = all_response_attrs.get("error", [])
+            attr_map = {
+                "id_prefix": "id_prefix",
+                "status_completed": "status",
+                "output_text": "output_text",
+                "usage": "usage",
+                "model_echo": "model",
+                "error": "error",
+            }
+            attr = attr_map.get(suffix)
+            if attr:
+                locs = all_response_attrs.get(attr, [])
 
         elif feat.id.startswith("stream."):
-            event_type = _event_prefix + feat.id[len("stream.") :]
+            event_type = "response." + feat.id[len("stream.") :]
             locs = all_stream_events.get(event_type, [])
-
-        elif feat.id in _method_map:
-            method = _method_map[feat.id]
-            locs = all_api_methods.get(method, [])
 
         elif feat.id == "conv.with_response":
             locs = all_params.get("conversation", [])
@@ -536,22 +575,23 @@ def _match_evidence(features: list[Feature], evidence_map: dict[str, TestEvidenc
             error_type = feat.id[len("err.") :]
             locs = all_error_types.get(error_type, [])
 
+        elif feat.sdk_method:
+            # CRUD / Conversations — match by SDK method
+            locs = all_api_methods.get(feat.sdk_method, [])
+
         if locs:
             feat.covered = True
-            feat.test_locations = list(dict.fromkeys(locs))  # dedupe preserving order
+            feat.test_locations = list(dict.fromkeys(locs))
 
 
 def run_coverage(test_dir: Path = TESTS_DIR, spec_path: Path = OPENAI_SPEC) -> list[Feature]:
     """Build features from spec, scan tests via AST, and match coverage."""
     features = build_feature_matrix(spec_path)
 
-    # Scan all test files
     evidence_map: dict[str, TestEvidence] = {}
-    test_count = 0
     for filepath in sorted(test_dir.glob("test_*.py")):
         for location, func_node in _extract_openai_test_functions(filepath):
             evidence_map[location] = _analyze_test_ast(func_node)
-            test_count += 1
 
     helper_events = _scan_streaming_helpers(test_dir)
     _match_evidence(features, evidence_map, helper_events)
@@ -560,10 +600,7 @@ def run_coverage(test_dir: Path = TESTS_DIR, spec_path: Path = OPENAI_SPEC) -> l
 
 
 def get_tested_property_names(features: list[Feature] | None = None) -> set[str]:
-    """Return the set of OpenAI spec property names that have integration test coverage.
-
-    This is the main entry point for cross-referencing with the conformance report.
-    """
+    """Return the set of OpenAI spec property names that have integration test coverage."""
     if features is None:
         features = run_coverage()
 
