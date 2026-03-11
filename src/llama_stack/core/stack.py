@@ -53,7 +53,6 @@ from llama_stack_api import (
     Inference,
     Inspect,
     Models,
-    PostTraining,
     Prompts,
     Providers,
     RegisterBenchmarkRequest,
@@ -80,7 +79,6 @@ class LlamaStack(
     Batches,
     Safety,
     Datasets,
-    PostTraining,
     VectorIO,
     Eval,
     Benchmarks,
@@ -386,6 +384,35 @@ class EnvVarError(Exception):
 
 def replace_env_vars(config: Any, path: str = "") -> Any:
     if isinstance(config, dict):
+        # Special handling for auth provider_config with conditional type field
+        # This allows auth to be enabled/disabled via environment variables
+        # Example: type: ${env.AUTH_PROVIDER:+oauth2_token}
+        if "provider_config" in config and path == "server.auth":
+            provider_cfg = config.get("provider_config")
+            if isinstance(provider_cfg, dict) and "type" in provider_cfg:
+                try:
+                    # Resolve the type field first to check if auth should be enabled
+                    resolved_type = replace_env_vars(provider_cfg["type"], f"{path}.provider_config.type")
+
+                    # If type is empty/None, disable auth by setting provider_config to None
+                    # This prevents validation errors on the discriminated union
+                    if resolved_type is None or resolved_type == "":
+                        # Process rest of config normally but exclude provider_config from expansion
+                        # to avoid EnvVarError from bare env vars (e.g., ${env.KEYCLOAK_URL})
+                        result = {
+                            k: replace_env_vars(v, f"{path}.{k}" if path else k)
+                            for k, v in config.items()
+                            if k != "provider_config"
+                        }
+                        result["provider_config"] = None
+                        return result
+                except EnvVarError as e:
+                    # If we can't resolve type, continue with normal processing
+                    # and let validation catch the error
+                    logger.debug(
+                        f"Could not resolve auth provider type field: {e.var_name} - continuing with normal processing"
+                    )
+
         result = {}
         for k, v in config.items():
             try:

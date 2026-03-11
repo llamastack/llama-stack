@@ -23,6 +23,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     EmbeddingIndex,
     VectorStoreWithIndex,
 )
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import (
     WeightedInMemoryAggregator,
     sanitize_collection_name,
@@ -216,7 +217,8 @@ class OCI26aiIndex(EmbeddingIndex):
         self,
         embedding: NDArray,
         k: int,
-        score_threshold: float | None,
+        score_threshold: float,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
         Oracle vector search using COSINE similarity.
@@ -288,7 +290,9 @@ class OCI26aiIndex(EmbeddingIndex):
         finally:
             cursor.close()
 
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float | None) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         cursor = self.connection.cursor()
 
         # Build base query
@@ -356,9 +360,10 @@ class OCI26aiIndex(EmbeddingIndex):
         embedding: NDArray,
         query_string: str,
         k: int,
-        score_threshold: float | None,
+        score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword search using configurable reranking.
@@ -425,13 +430,15 @@ class OCI26aiIndex(EmbeddingIndex):
 
     async def delete_chunks(self, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         chunk_ids = [c.chunk_id for c in chunks_for_deletion]
+        if not chunk_ids:
+            return
+        placeholders = [f":id_{i}" for i in range(len(chunk_ids))]
+        params = {f"id_{i}": cid for i, cid in enumerate(chunk_ids)}
         cursor = self.connection.cursor()
         try:
             cursor.execute(
-                f"""
-                DELETE FROM {self.table_name}
-                WHERE chunk_id IN ({", ".join([f"'{chunk_id}'" for chunk_id in chunk_ids])})
-                """
+                f"DELETE FROM {self.table_name} WHERE chunk_id IN ({', '.join(placeholders)})",
+                params,
             )
         except Exception as e:
             logger.error(f"Error deleting chunks from Oracle 26AI table {self.table_name}: {e}")

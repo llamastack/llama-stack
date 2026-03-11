@@ -15,6 +15,10 @@ on:
       - 'src/llama_stack/distributions/**/config.yaml'
       - 'tests/backward_compat/**'
       - '.github/workflows/backward-compat.yml'
+  merge_group:
+    branches:
+      - main
+      - 'release-[0-9]+.[0-9]+.x'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -232,6 +236,7 @@ jobs:
 
   test-integration-release:
     name: Run Integration Tests with Latest Release (Informational)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -350,7 +355,7 @@ jobs:
           The tests pass on \`main\` but fail with this PR's changes.
 
           > **Note:** This is informational only and does not block merge.
-          > Consider whether this breaking change is acceptable for users."
+          > Consider whether this breaking change is acceptable for users." || echo "Could not post PR comment (expected for fork PRs)"
             else
               echo "Comment already exists, skipping to avoid spam"
             fi
@@ -401,6 +406,7 @@ jobs:
 
   check-schema-release-compatibility:
     name: Check Schema Compatibility with Latest Release (Informational)
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
 
     steps:
@@ -528,7 +534,7 @@ jobs:
           The tests pass on \`main\` but fail with this PR's changes.
 
           > **Note:** This is informational only and does not block merge.
-          > Consider whether this breaking change is acceptable for users."
+          > Consider whether this breaking change is acceptable for users." || echo "Could not post PR comment (expected for fork PRs)"
             else
               echo "Comment already exists, skipping to avoid spam"
             fi

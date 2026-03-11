@@ -111,6 +111,10 @@ from .utils import (
 logger = get_logger(name=__name__, category="agents::meta_reference")
 tracer = trace.get_tracer(__name__)
 
+# Built-in tool names that the server knows how to execute itself.
+# Anything else is either a registered function tool (client-side) or a hallucinated name.
+_SERVER_SIDE_BUILTIN_TOOL_NAMES = frozenset({"web_search", "knowledge_search"})
+
 # Maps OpenAI Chat Completions error codes to Responses API error codes
 _RESPONSES_API_ERROR_CODES = {
     "invalid_base64": "invalid_base64_image",
@@ -228,6 +232,7 @@ class StreamingResponseOrchestrator:
         truncation: ResponseTruncation | None = None,
         top_logprobs: int | None = None,
         presence_penalty: float | None = None,
+        extra_body: dict | None = None,
     ):
         self.inference_api = inference_api
         self.ctx = ctx
@@ -258,6 +263,7 @@ class StreamingResponseOrchestrator:
         self.truncation = truncation
         self.top_logprobs = top_logprobs
         self.include = include
+        self.extra_body = extra_body
         self.store = bool(store) if store is not None else True
         self.presence_penalty = presence_penalty
         self.sequence_number = 0
@@ -516,6 +522,7 @@ class StreamingResponseOrchestrator:
                     prompt_cache_key=self.prompt_cache_key,
                     top_logprobs=self.top_logprobs,
                     presence_penalty=self.presence_penalty,
+                    **(self.extra_body or {}),
                 )
                 completion_result = await self.inference_api.openai_chat_completion(params)
 
@@ -679,6 +686,20 @@ class StreamingResponseOrchestrator:
             if choice.message.tool_calls and self.ctx.response_tools:
                 for tool_call in choice.message.tool_calls:
                     if is_function_tool_call(tool_call, self.ctx.response_tools):
+                        function_tool_calls.append(tool_call)
+                    elif (
+                        tool_call.function
+                        and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES
+                        and tool_call.function.name not in self.mcp_tool_to_server
+                    ):
+                        # The model called a tool name that is neither a registered function tool,
+                        # nor a server-side built-in, nor an MCP tool — it hallucinated a name.
+                        # Return it to the client as a function_call output item rather than
+                        # crashing the server with an unhandled ValueError.
+                        logger.warning(
+                            f"Model called unrecognized tool '{tool_call.function.name}'; "
+                            "treating as a client-side function call."
+                        )
                         function_tool_calls.append(tool_call)
                     else:
                         if self._approval_required(tool_call.function.name):
@@ -1023,7 +1044,7 @@ class StreamingResponseOrchestrator:
                             # Emit output_item.added event for the new function call
                             self.sequence_number += 1
                             is_mcp_tool = tool_call.function.name and tool_call.function.name in self.mcp_tool_to_server
-                            if not is_mcp_tool and tool_call.function.name not in ["web_search", "knowledge_search"]:
+                            if not is_mcp_tool and tool_call.function.name not in _SERVER_SIDE_BUILTIN_TOOL_NAMES:
                                 # for MCP tools (and even other non-function tools) we emit an output message item later
                                 function_call_item = OpenAIResponseOutputMessageFunctionToolCall(
                                     arguments="",  # Will be filled incrementally via delta events

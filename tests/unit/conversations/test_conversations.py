@@ -109,12 +109,24 @@ async def test_conversation_items(service):
 
 async def test_invalid_conversation_id(service):
     with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
-        await service._get_validated_conversation("invalid_id")
+        await service.get_conversation(GetConversationRequest(conversation_id="invalid_id"))
 
 
-async def test_empty_parameter_validation(service):
-    with pytest.raises(InvalidParameterError, match="Must be a non-empty string"):
-        await service.retrieve(RetrieveItemRequest(conversation_id="", item_id="item_123"))
+async def test_invalid_conversation_id_on_retrieve(service):
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.retrieve(RetrieveItemRequest(conversation_id="bad_id", item_id="item_123"))
+
+
+async def test_invalid_conversation_id_on_update(service):
+    from llama_stack_api.conversations import UpdateConversationRequest
+
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.update_conversation("bad_id", UpdateConversationRequest(metadata={}))
+
+
+async def test_invalid_conversation_id_on_delete(service):
+    with pytest.raises(InvalidParameterError, match="Conversation ID must begin with 'conv_'"):
+        await service.openai_delete_conversation(DeleteConversationRequest(conversation_id="bad_id"))
 
 
 async def test_nonexistent_conversation_raises_conversation_not_found(service):

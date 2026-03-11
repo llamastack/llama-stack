@@ -33,6 +33,7 @@ from llama_stack.providers.utils.responses.responses_store import (
 from llama_stack_api import (
     Connectors,
     GetConnectorRequest,
+    GetPromptRequest,
     InternalServerError,
     InvalidParameterError,
     OpenAIChatCompletionContentPartImageParam,
@@ -1441,7 +1442,7 @@ async def test_create_openai_response_with_prompt(openai_responses_impl, mock_in
         prompt=openai_response_prompt,
     )
 
-    mock_prompts_api.get_prompt.assert_called_with(prompt_id, 1)
+    mock_prompts_api.get_prompt.assert_called_with(GetPromptRequest(prompt_id=prompt_id, version=1))
     mock_inference_api.openai_chat_completion.assert_called()
     call_args = mock_inference_api.openai_chat_completion.call_args
     sent_messages = call_args.args[0].messages
@@ -1490,7 +1491,7 @@ async def test_prepend_prompt_successful_without_variables(openai_responses_impl
         prompt=openai_response_prompt,
     )
 
-    mock_prompts_api.get_prompt.assert_called_with(prompt_id, 1)
+    mock_prompts_api.get_prompt.assert_called_with(GetPromptRequest(prompt_id=prompt_id, version=1))
     mock_inference_api.openai_chat_completion.assert_called()
     call_args = mock_inference_api.openai_chat_completion.call_args
     sent_messages = call_args.args[0].messages
@@ -1533,7 +1534,7 @@ async def test_prepend_prompt_invalid_variable(openai_responses_impl, mock_promp
     assert f"Variable not defined in prompt '{prompt_id}'" in str(exc_info.value)
 
     # Verify
-    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+    mock_prompts_api.get_prompt.assert_called_once_with(GetPromptRequest(prompt_id=prompt_id, version=1))
 
 
 async def test_prepend_prompt_not_found(openai_responses_impl, mock_prompts_api):
@@ -1551,7 +1552,7 @@ async def test_prepend_prompt_not_found(openai_responses_impl, mock_prompts_api)
     result = await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
 
     # Verify
-    mock_prompts_api.get_prompt.assert_called_once_with(prompt_id, 1)
+    mock_prompts_api.get_prompt.assert_called_once_with(GetPromptRequest(prompt_id=prompt_id, version=1))
 
     # Should return None when prompt not found
     assert result is None
@@ -2199,17 +2200,32 @@ async def test_create_openai_response_with_max_output_tokens_and_tools(openai_re
 @pytest.mark.parametrize("store", [False, True])
 @pytest.mark.parametrize("stream", [False, True])
 @pytest.mark.parametrize(
-    "param_name,param_value,backend_param_name,backend_expected_value,stored_expected_value",
+    "param_name,param_value,backend_param_name,backend_expected_value,response_expected_value,stored_expected_value",
     [
-        ("temperature", 1.5, "temperature", 1.5, 1.5),
-        ("safety_identifier", "user-123", "safety_identifier", "user-123", "user-123"),
-        ("max_output_tokens", 500, "max_completion_tokens", 500, 500),
-        ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001", "geography-cache-001"),
-        ("service_tier", ServiceTier.flex, "service_tier", "flex", ServiceTier.default.value),
-        ("top_p", 0.9, "top_p", 0.9, 0.9),
-        ("frequency_penalty", 0.5, "frequency_penalty", 0.5, 0.5),
-        ("presence_penalty", 0.3, "presence_penalty", 0.3, 0.3),
-        ("top_logprobs", 5, "top_logprobs", 5, 5),
+        ("temperature", 1.5, "temperature", 1.5, 1.5, 1.5),
+        ("safety_identifier", "user-123", "safety_identifier", "user-123", "user-123", "user-123"),
+        ("max_output_tokens", 500, "max_completion_tokens", 500, 500, 500),
+        (
+            "prompt_cache_key",
+            "geography-cache-001",
+            "prompt_cache_key",
+            "geography-cache-001",
+            "geography-cache-001",
+            "geography-cache-001",
+        ),
+        ("service_tier", ServiceTier.flex, "service_tier", "flex", "flex", ServiceTier.default.value),
+        ("top_p", 0.9, "top_p", 0.9, 0.9, 0.9),
+        ("frequency_penalty", 0.5, "frequency_penalty", 0.5, 0.5, 0.5),
+        ("presence_penalty", 0.3, "presence_penalty", 0.3, 0.3, 0.3),
+        ("top_logprobs", 5, "top_logprobs", 5, 5, 5),
+        (
+            "extra_body",
+            {"chat_template_kwargs": {"thinking": True}},
+            "extra_body",
+            {"chat_template_kwargs": {"thinking": True}},
+            None,
+            None,
+        ),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service(
@@ -2217,6 +2233,7 @@ async def test_params_passed_through_full_chain_to_backend_service(
     param_value,
     backend_param_name,
     backend_expected_value,
+    response_expected_value,
     stored_expected_value,
     stream,
     store,
@@ -2291,13 +2308,13 @@ async def test_params_passed_through_full_chain_to_backend_service(
             chunks = [chunk async for chunk in result]
             created_event = chunks[0]
             assert created_event.type == "response.created"
-            assert getattr(created_event.response, param_name) == backend_expected_value, (
-                f"Expected created {param_name}={backend_expected_value}, got {getattr(created_event.response, param_name)}"
+            assert getattr(created_event.response, param_name, None) == response_expected_value, (
+                f"Expected created {param_name}={response_expected_value}, got {getattr(created_event.response, param_name, None)}"
             )
             completed_event = chunks[-1]
             assert completed_event.type == "response.completed"
-            assert getattr(completed_event.response, param_name) == stored_expected_value, (
-                f"Expected completed {param_name}={stored_expected_value}, got {getattr(completed_event.response, param_name)}"
+            assert getattr(completed_event.response, param_name, None) == stored_expected_value, (
+                f"Expected completed {param_name}={stored_expected_value}, got {getattr(completed_event.response, param_name, None)}"
             )
 
         mock_chat_completions.assert_called_once()
@@ -2311,8 +2328,8 @@ async def test_params_passed_through_full_chain_to_backend_service(
         if store:
             mock_responses_store.upsert_response_object.assert_called()
             stored_response = mock_responses_store.upsert_response_object.call_args.kwargs["response_object"]
-            assert getattr(stored_response, param_name) == stored_expected_value, (
-                f"Expected stored {param_name}={stored_expected_value}, got {getattr(stored_response, param_name)}"
+            assert getattr(stored_response, param_name, None) == stored_expected_value, (
+                f"Expected stored {param_name}={stored_expected_value}, got {getattr(stored_response, param_name, None)}"
             )
         else:
             mock_responses_store.upsert_response_object.assert_not_called()
@@ -2327,6 +2344,12 @@ async def test_params_passed_through_full_chain_to_backend_service(
         ("prompt_cache_key", "geography-cache-001", "prompt_cache_key", "geography-cache-001"),
         ("service_tier", ServiceTier.flex, "service_tier", "flex"),
         ("top_p", 0.9, "top_p", 0.9),
+        (
+            "extra_body",
+            {"chat_template_kwargs": {"thinking": True}},
+            "extra_body",
+            {"chat_template_kwargs": {"thinking": True}},
+        ),
     ],
 )
 async def test_params_passed_through_full_chain_to_backend_service_litellm(
@@ -3159,3 +3182,70 @@ async def test_create_openai_response_with_presence_penalty_default(openai_respo
     call_args = mock_inference_api.openai_chat_completion.call_args
     params = call_args.args[0]
     assert params.presence_penalty is None
+
+
+async def test_hallucinated_tool_call_does_not_cause_500(openai_responses_impl, mock_inference_api):
+    """Regression test: a hallucinated tool name should not produce a 500 (InternalServerError).
+
+    When the LLM calls a tool name that is not in the registered tools list the server
+    was raising ValueError from _coordinate_tool_execution which then propagated as an
+    InternalServerError (HTTP 500). The correct behaviour is to surface the unknown call
+    as a regular function-tool-call output so the client can respond, exactly as OpenAI
+    does for any function tool call.
+    """
+    input_text = "What is the capital of Ireland?"
+    model = "meta-llama/Llama-3.1-8B-Instruct"
+
+    async def fake_stream_hallucinated_tool():
+        # The LLM calls "lookup_capital_city" which is NOT in the registered tools list.
+        yield ChatCompletionChunk(
+            id="hallucinated-123",
+            choices=[
+                Choice(
+                    index=0,
+                    delta=ChoiceDelta(
+                        tool_calls=[
+                            ChoiceDeltaToolCall(
+                                index=0,
+                                id="tc_hall_123",
+                                function=ChoiceDeltaToolCallFunction(
+                                    name="lookup_capital_city",
+                                    arguments='{"country": "Ireland"}',
+                                ),
+                                type="function",
+                            )
+                        ]
+                    ),
+                ),
+            ],
+            created=1,
+            model=model,
+            object="chat.completion.chunk",
+        )
+
+    mock_inference_api.openai_chat_completion.return_value = fake_stream_hallucinated_tool()
+
+    # The only registered tool is "get_weather".  The LLM hallucinated "lookup_capital_city".
+    # The response should complete without raising InternalServerError, and the hallucinated
+    # call should appear in the output as a function_call item so the client can handle it.
+    result = await openai_responses_impl.create_openai_response(
+        input=input_text,
+        model=model,
+        tools=[
+            OpenAIResponseInputToolFunction(
+                name="get_weather",
+                description="Get current temperature for a given location.",
+                parameters={
+                    "type": "object",
+                    "properties": {"location": {"type": "string"}},
+                    "required": ["location"],
+                },
+            )
+        ],
+    )
+
+    assert result is not None
+    assert result.status == "completed"
+    assert len(result.output) == 1
+    assert result.output[0].type == "function_call"
+    assert result.output[0].name == "lookup_capital_city"

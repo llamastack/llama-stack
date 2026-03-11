@@ -8,7 +8,6 @@ apis:
 - file_processors
 - files
 - inference
-- post_training
 - safety
 - scoring
 - tool_runtime
@@ -135,6 +134,7 @@ providers:
         type: HNSW
         m: 16
         ef_construction: 64
+        ef_search: 40
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default
@@ -192,11 +192,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  post_training:
-  - provider_id: torchtune-cpu
-    provider_type: inline::torchtune-cpu
-    config:
-      checkpoint_format: meta
   eval:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
@@ -275,13 +270,7 @@ storage:
       namespace: connectors
       backend: kv_default
 registered_resources:
-  models:
-  - metadata:
-      description: OpenAI GPT-OSS 20B on Bedrock (us-west-2)
-    model_id: openai.gpt-oss-20b-1:0
-    provider_id: bedrock
-    provider_model_id: openai.gpt-oss-20b-1:0
-    model_type: llm
+  models: []
   shields:
   - shield_id: llama-guard
     provider_id: ${env.SAFETY_MODEL:+llama-guard}
@@ -300,6 +289,15 @@ registered_resources:
     provider_id: rag-runtime
 server:
   port: 8321
+  auth:
+    provider_config:
+      type: ${env.AUTH_PROVIDER:+oauth2_token}
+      audience: ${env.AUTH_AUDIENCE:=llama-stack}
+      issuer: ${env.AUTH_ISSUER:=}
+      jwks:
+        uri: ${env.AUTH_JWKS_URI:=}
+        key_recheck_period: ${env.AUTH_JWKS_RECHECK_PERIOD:=3600}
+      verify_tls: ${env.AUTH_VERIFY_TLS:=true}
 vector_stores:
   default_provider_id: faiss
   default_embedding_model:

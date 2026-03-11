@@ -8,7 +8,6 @@ apis:
 - file_processors
 - files
 - inference
-- post_training
 - safety
 - scoring
 - tool_runtime
@@ -135,6 +134,7 @@ providers:
         type: HNSW
         m: 16
         ef_construction: 64
+        ef_search: 40
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default
@@ -192,14 +192,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  post_training:
-  - provider_id: huggingface-gpu
-    provider_type: inline::huggingface-gpu
-    config:
-      checkpoint_format: huggingface
-      distributed_backend: null
-      device: cpu
-      dpo_output_dir: ~/.llama/distributions/starter-gpu/dpo_output
   eval:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
