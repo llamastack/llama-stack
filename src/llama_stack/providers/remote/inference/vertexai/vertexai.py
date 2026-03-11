@@ -7,14 +7,11 @@
 from __future__ import annotations
 
 import base64
-import ssl
 import struct
 import time
 from collections.abc import AsyncIterator
-from pathlib import Path
 from typing import Any, cast
 
-import httpx
 from google.genai import Client
 from google.genai import types as genai_types
 from google.oauth2.credentials import Credentials
@@ -27,8 +24,7 @@ from llama_stack.providers.remote.inference.vertexai.config import (
     VertexAIConfig,
     VertexAIProviderDataValidator,
 )
-from llama_stack.providers.utils.inference.http_client import _build_proxy_mounts, _build_ssl_context
-from llama_stack.providers.utils.inference.model_registry import NetworkConfig, TimeoutConfig, TLSConfig
+from llama_stack.providers.remote.inference.vertexai.utils import build_http_options as _build_http_options
 from llama_stack.providers.utils.inference.openai_compat import get_stream_options_for_telemetry
 from llama_stack.providers.utils.inference.prompt_adapter import localize_image_content
 from llama_stack_api import (
@@ -50,109 +46,6 @@ from llama_stack_api import (
 from llama_stack_api.inference import RerankRequest
 
 logger = get_logger(__name__, category="inference")
-
-
-def _resolve_timeout_ms(timeout: TimeoutConfig | float | None) -> int | None:
-    """Resolve timeout configuration to milliseconds.
-
-    Handles both TimeoutConfig objects (with read/connect fields) and float values.
-    For TimeoutConfig, prefers read timeout, falling back to connect timeout.
-    """
-    if timeout is None:
-        return None
-
-    if isinstance(timeout, TimeoutConfig):
-        # Use read timeout — it's the bottleneck for LLM inference.
-        # Fall back to connect timeout if read is not specified.
-        seconds = timeout.read if timeout.read is not None else timeout.connect
-        if seconds is not None:
-            return int(seconds * 1000)
-        return None
-
-    return int(timeout * 1000)
-
-
-def _resolve_ssl_verify(tls: TLSConfig) -> ssl.SSLContext | Path | str | bool:
-    """Resolve TLS configuration to httpx verify parameter.
-
-    Handles three cases:
-    - False: Create explicit SSLContext with verify_mode=CERT_NONE
-    - Path: Convert to string path
-    - SSLContext: Return as-is
-    """
-    ssl_result = _build_ssl_context(tls)
-
-    if ssl_result is False:
-        # Build explicit SSLContext for verify=False so it's truthy and won't
-        # be replaced by the SDK's _ensure_httpx_ssl_ctx().
-        ctx = ssl.create_default_context()
-        ctx.check_hostname = False
-        ctx.verify_mode = ssl.CERT_NONE
-        return ctx
-
-    if isinstance(ssl_result, Path):
-        return str(ssl_result)
-
-    return ssl_result
-
-
-def _build_httpx_kwargs(network_config: NetworkConfig) -> tuple[dict[str, Any], bool]:
-    """Build httpx.AsyncClient kwargs from network config.
-
-    Returns a tuple of (httpx_kwargs dict, needs_httpx_client bool).
-    Handles TLS and proxy configuration.
-    """
-    httpx_kwargs: dict[str, Any] = {"follow_redirects": True}
-    needs_httpx_client = False
-
-    if network_config.tls:
-        httpx_kwargs["verify"] = _resolve_ssl_verify(network_config.tls)
-        needs_httpx_client = True
-
-    if network_config.proxy:
-        if network_config.proxy.no_proxy:
-            logger.warning("ProxyConfig.no_proxy is not supported by the VertexAI provider and will be ignored.")
-        mounts = _build_proxy_mounts(network_config.proxy)
-        if mounts:
-            httpx_kwargs["mounts"] = mounts
-            needs_httpx_client = True
-
-    return httpx_kwargs, needs_httpx_client
-
-
-def _build_http_options(network_config: NetworkConfig | None) -> genai_types.HttpOptions | None:
-    """Build google-genai HttpOptions from NetworkConfig.
-
-    Maps TLS, proxy, timeout, and custom headers from NetworkConfig to the
-    HttpOptions expected by the google-genai Client constructor.
-
-    Important: TLS and proxy settings are applied via ``httpx_async_client``
-    rather than ``async_client_args`` to prevent the SDK from silently
-    overriding ``verify=False`` (the SDK's ``_ensure_httpx_ssl_ctx()``
-    treats falsy values as missing and replaces them with a certifi context).
-    """
-    if network_config is None:
-        return None
-
-    kwargs: dict[str, Any] = {}
-
-    if network_config.headers:
-        kwargs["headers"] = network_config.headers
-
-    if network_config.timeout is not None:
-        timeout_ms = _resolve_timeout_ms(network_config.timeout)
-        if timeout_ms is not None:
-            kwargs["timeout"] = timeout_ms
-
-    httpx_kwargs, needs_httpx_client = _build_httpx_kwargs(network_config)
-
-    if needs_httpx_client:
-        kwargs["httpx_async_client"] = httpx.AsyncClient(**httpx_kwargs)
-
-    if not kwargs:
-        return None
-
-    return genai_types.HttpOptions(**kwargs)
 
 
 class GeminiSamplingParams(BaseModel):
