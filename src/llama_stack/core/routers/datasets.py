@@ -8,7 +8,7 @@ from typing import Any
 
 from llama_stack.log import get_logger
 from llama_stack_api import (
-    AppendRowsRequest,
+    AppendRowsParams,
     DatasetIO,
     DatasetPurpose,
     DataSource,
@@ -64,10 +64,10 @@ class DatasetIORouter(DatasetIO):
             limit=request.limit,
         )
 
-    async def append_rows(self, request: AppendRowsRequest) -> None:
-        logger.debug(f"DatasetIORouter.append_rows: {request.dataset_id}, {len(request.rows)} rows")
-        provider = await self.routing_table.get_provider_impl(request.dataset_id)
+    async def append_rows(self, params: AppendRowsParams) -> None:
+        logger.debug(f"DatasetIORouter.append_rows: {params.dataset_id}, {len(params.rows)} rows")
+        provider = await self.routing_table.get_provider_impl(params.dataset_id)
         return await provider.append_rows(
-            dataset_id=request.dataset_id,
-            rows=request.rows,
+            dataset_id=params.dataset_id,
+            rows=params.rows,
         )
