@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
@@ -23,11 +24,53 @@ REPO_ROOT = SCRIPT_DIR.parent
 DEFAULT_COVERAGE_JSON = REPO_ROOT / "docs" / "static" / "openai-coverage.json"
 DEFAULT_OUTPUT = REPO_ROOT / "docs" / "docs" / "api-openai" / "conformance.mdx"
 
+# Categories whose properties can be cross-referenced with integration tests
+_TESTABLE_CATEGORIES = {"Responses", "Conversations"}
 
-def generate_docs(coverage_path: Path, output_path: Path) -> None:
+
+def _extract_property_name(property_path: str) -> str | None:
+    """Extract the leaf property name from a conformance property path.
+
+    E.g. 'POST.requestBody.content.application/json.properties.temperature' -> 'temperature'
+         'POST.responses.200.content.application/json.properties.output.items' -> 'output'
+    """
+    marker = ".properties."
+    idx = property_path.rfind(marker)
+    if idx == -1:
+        return None
+    remainder = property_path[idx + len(marker) :]
+    # Take the first segment (before any sub-path like '.items')
+    return remainder.split(".")[0]
+
+
+def _load_tested_properties() -> set[str]:
+    """Load the set of property names covered by integration tests."""
+    try:
+        from responses_test_coverage import get_tested_property_names
+
+        return get_tested_property_names()
+    except ImportError:
+        # Add scripts dir to path and retry
+        sys.path.insert(0, str(SCRIPT_DIR))
+        try:
+            from responses_test_coverage import get_tested_property_names
+
+            return get_tested_property_names()
+        except ImportError:
+            return set()
+    finally:
+        # Clean up sys.path
+        if str(SCRIPT_DIR) in sys.path:
+            sys.path.remove(str(SCRIPT_DIR))
+
+
+def generate_docs(coverage_path: Path, output_path: Path, tested_properties: set[str] | None = None) -> None:
     """Generate markdown documentation from coverage JSON."""
     with open(coverage_path) as f:
         coverage = json.load(f)
+
+    if tested_properties is None:
+        tested_properties = set()
 
     summary = coverage["summary"]
     categories = coverage["categories"]
@@ -160,17 +203,28 @@ def generate_docs(coverage_path: Path, output_path: Path) -> None:
                     lines.append("")
 
                 if op["conformance_issues"]:
+                    show_tested = cat_name in _TESTABLE_CATEGORIES and tested_properties
                     lines.append("<details>")
                     lines.append(f"<summary>Schema Issues ({op['issues_count']})</summary>")
                     lines.append("")
-                    lines.append("| Property | Issues |")
-                    lines.append("|----------|--------|")
+                    if show_tested:
+                        lines.append("| Property | Issues | Tested |")
+                        lines.append("|----------|--------|--------|")
+                    else:
+                        lines.append("| Property | Issues |")
+                        lines.append("|----------|--------|")
                     for issue in op["conformance_issues"]:
                         clean_prop = issue["property"].replace(f"{op['method']}.", "")
                         details = "; ".join(issue["details"])
                         # Escape pipe characters in details
                         details = details.replace("|", "\\|")
-                        lines.append(f"| `{clean_prop}` | {details} |")
+                        if show_tested:
+                            prop_name = _extract_property_name(issue["property"])
+                            is_tested = prop_name in tested_properties if prop_name else False
+                            tested_indicator = "Yes" if is_tested else "No"
+                            lines.append(f"| `{clean_prop}` | {details} | {tested_indicator} |")
+                        else:
+                            lines.append(f"| `{clean_prop}` | {details} |")
                     lines.append("")
                     lines.append("</details>")
                     lines.append("")
@@ -225,7 +279,11 @@ def main():
         print("Run 'python scripts/openai_coverage.py --update' first")
         return 1
 
-    generate_docs(args.coverage_json, args.output)
+    tested_properties = _load_tested_properties()
+    if tested_properties:
+        print(f"Found {len(tested_properties)} tested properties from integration tests")
+
+    generate_docs(args.coverage_json, args.output, tested_properties=tested_properties)
     return 0
 
 
