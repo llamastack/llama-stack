@@ -106,28 +106,25 @@ description: |
       VectorStore(
           identifier="my_documents",
           embedding_model="all-MiniLM-L6-v2",
-          embedding_dimension=384
+          embedding_dimension=384,
       )
   )
 
   # Insert chunks with embeddings
-  await vector_io.insert_chunks(
-      vector_store_id="my_documents",
-      chunks=[...]
-  )
+  await vector_io.insert_chunks(vector_store_id="my_documents", chunks=[...])
 
   # Query with vector search
   results = await vector_io.query_chunks(
       vector_store_id="my_documents",
       query="What is machine learning?",
-      params={"mode": "vector", "k": 10}
+      params={"mode": "vector", "k": 10},
   )
 
   # Query with keyword search
   results = await vector_io.query_chunks(
       vector_store_id="my_documents",
       query="machine learning",
-      params={"mode": "keyword", "k": 10}
+      params={"mode": "keyword", "k": 10},
   )
 
   # Query with hybrid search
@@ -138,8 +135,8 @@ description: |
           "mode": "hybrid",
           "k": 10,
           "reranker_type": "rrf",
-          "reranker_params": {"k": 60}
-      }
+          "reranker_params": {"k": 60},
+      },
   )
   ```
 
@@ -154,7 +151,7 @@ description: |
       "mode": "hybrid",
       "k": 10,
       "reranker_type": "rrf",
-      "reranker_params": {"k": 60}  # RRF parameter
+      "reranker_params": {"k": 60},  # RRF parameter
   }
   ```
 
@@ -165,9 +162,7 @@ description: |
       "mode": "hybrid",
       "k": 10,
       "reranker_type": "weighted",
-      "reranker_params": {
-          "alpha": 0.7  # 70% vector search, 30% keyword search
-      }
+      "reranker_params": {"alpha": 0.7},  # 70% vector search, 30% keyword search
   }
   ```
 
@@ -306,28 +301,25 @@ await vector_io.register_vector_store(
     VectorStore(
         identifier="my_documents",
         embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384
+        embedding_dimension=384,
     )
 )
 
 # Insert chunks with embeddings
-await vector_io.insert_chunks(
-    vector_store_id="my_documents",
-    chunks=[...]
-)
+await vector_io.insert_chunks(vector_store_id="my_documents", chunks=[...])
 
 # Query with vector search
 results = await vector_io.query_chunks(
     vector_store_id="my_documents",
     query="What is machine learning?",
-    params={"mode": "vector", "k": 10}
+    params={"mode": "vector", "k": 10},
 )
 
 # Query with keyword search
 results = await vector_io.query_chunks(
     vector_store_id="my_documents",
     query="machine learning",
-    params={"mode": "keyword", "k": 10}
+    params={"mode": "keyword", "k": 10},
 )
 
 # Query with hybrid search
@@ -338,8 +330,8 @@ results = await vector_io.query_chunks(
         "mode": "hybrid",
         "k": 10,
         "reranker_type": "rrf",
-        "reranker_params": {"k": 60}
-    }
+        "reranker_params": {"k": 60},
+    },
 )
 ```
 
@@ -354,7 +346,7 @@ params = {
     "mode": "hybrid",
     "k": 10,
     "reranker_type": "rrf",
-    "reranker_params": {"k": 60}  # RRF parameter
+    "reranker_params": {"k": 60},  # RRF parameter
 }
 ```
 
@@ -365,9 +357,7 @@ params = {
     "mode": "hybrid",
     "k": 10,
     "reranker_type": "weighted",
-    "reranker_params": {
-        "alpha": 0.7  # 70% vector search, 30% keyword search
-    }
+    "reranker_params": {"alpha": 0.7},  # 70% vector search, 30% keyword search
 }
 ```
 
@@ -399,10 +389,10 @@ Set the `auth_mechanism` parameter to either `"digest"` or `"basic"`.
 |-------|------|----------|---------|-------------|
 | `url` | `str` | No | http://localhost:11222 | Infinispan server URL (e.g., http://localhost:11222) |
 | `username` | `str \| None` | No |  | Authentication username |
-| `password` | `str \| None` | No |  | Authentication password |
+| `password` | `SecretStr \| None` | No |  | Authentication password |
 | `use_https` | `bool` | No | False | Enable HTTPS/TLS connection |
 | `auth_mechanism` | `str` | No | digest | Authentication mechanism: 'digest' or 'basic' |
-| `verify_ssl` | `bool` | No | True | Verify SSL certificates for HTTPS connections |
+| `verify_ssl` | `bool` | No | True | Verify SSL certificates for HTTPS connections (set to False only for development/testing with self-signed certificates) |
 | `persistence` | `KVStoreReference` | No |  | Config for KV store backend |
 | `persistence.namespace` | `str` | No |  | Key prefix for KVStore backends |
 | `persistence.backend` | `str` | No |  | Name of backend from storage.backends |
@@ -412,7 +402,7 @@ Set the `auth_mechanism` parameter to either `"digest"` or `"basic"`.
 ```yaml
 url: ${env.INFINISPAN_URL:=http://localhost:11222}
 username: ${env.INFINISPAN_USERNAME:=admin}
-password: ${env.INFINISPAN_PASSWORD:=password}
+password: ${env.INFINISPAN_PASSWORD:=}
 use_https: false
 auth_mechanism: digest
 verify_ssl: true

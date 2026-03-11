@@ -15,32 +15,17 @@ from llama_stack_api import json_schema_type
 @json_schema_type
 class InfinispanVectorIOConfig(BaseModel):
     url: str = Field(
-        default="http://localhost:11222",
-        description="Infinispan server URL (e.g., http://localhost:11222)"
+        default="http://localhost:11222", description="Infinispan server URL (e.g., http://localhost:11222)"
     )
-    username: str | None = Field(
-        default=None,
-        description="Authentication username"
-    )
-    password: SecretStr | None = Field(
-        default=None,
-        description="Authentication password"
-    )
-    use_https: bool = Field(
-        default=False,
-        description="Enable HTTPS/TLS connection"
-    )
-    auth_mechanism: str = Field(
-        default="digest",
-        description="Authentication mechanism: 'digest' or 'basic'"
-    )
+    username: str | None = Field(default=None, description="Authentication username")
+    password: SecretStr | None = Field(default=None, description="Authentication password")
+    use_https: bool = Field(default=False, description="Enable HTTPS/TLS connection")
+    auth_mechanism: str = Field(default="digest", description="Authentication mechanism: 'digest' or 'basic'")
     verify_ssl: bool = Field(
         default=True,
-        description="Verify SSL certificates for HTTPS connections (set to False only for development/testing with self-signed certificates)"
+        description="Verify SSL certificates for HTTPS connections (set to False only for development/testing with self-signed certificates)",
     )
-    persistence: KVStoreReference = Field(
-        description="Config for KV store backend"
-    )
+    persistence: KVStoreReference = Field(description="Config for KV store backend")
 
     @classmethod
     def sample_run_config(cls, __distro_dir__: str, **kwargs: Any) -> dict[str, Any]:

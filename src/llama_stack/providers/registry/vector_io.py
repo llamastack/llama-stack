@@ -944,7 +944,6 @@ See the [Oracle 26ai documentation](https://docs.oracle.com/en/database/oracle/o
 for more details about Oracle 26ai in general.
 """,
         ),
-
         RemoteProviderSpec(
             api=Api.vector_io,
             adapter_type="infinispan",
@@ -1061,28 +1060,25 @@ await vector_io.register_vector_store(
     VectorStore(
         identifier="my_documents",
         embedding_model="all-MiniLM-L6-v2",
-        embedding_dimension=384
+        embedding_dimension=384,
     )
 )
 
 # Insert chunks with embeddings
-await vector_io.insert_chunks(
-    vector_store_id="my_documents",
-    chunks=[...]
-)
+await vector_io.insert_chunks(vector_store_id="my_documents", chunks=[...])
 
 # Query with vector search
 results = await vector_io.query_chunks(
     vector_store_id="my_documents",
     query="What is machine learning?",
-    params={"mode": "vector", "k": 10}
+    params={"mode": "vector", "k": 10},
 )
 
 # Query with keyword search
 results = await vector_io.query_chunks(
     vector_store_id="my_documents",
     query="machine learning",
-    params={"mode": "keyword", "k": 10}
+    params={"mode": "keyword", "k": 10},
 )
 
 # Query with hybrid search
@@ -1093,8 +1089,8 @@ results = await vector_io.query_chunks(
         "mode": "hybrid",
         "k": 10,
         "reranker_type": "rrf",
-        "reranker_params": {"k": 60}
-    }
+        "reranker_params": {"k": 60},
+    },
 )
 ```
 
@@ -1109,7 +1105,7 @@ params = {
     "mode": "hybrid",
     "k": 10,
     "reranker_type": "rrf",
-    "reranker_params": {"k": 60}  # RRF parameter
+    "reranker_params": {"k": 60},  # RRF parameter
 }
 ```
 
@@ -1120,9 +1116,7 @@ params = {
     "mode": "hybrid",
     "k": 10,
     "reranker_type": "weighted",
-    "reranker_params": {
-        "alpha": 0.7  # 70% vector search, 30% keyword search
-    }
+    "reranker_params": {"alpha": 0.7},  # 70% vector search, 30% keyword search
 }
 ```
 

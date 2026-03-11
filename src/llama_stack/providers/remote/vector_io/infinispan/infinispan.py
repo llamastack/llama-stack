@@ -1,8 +1,16 @@
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
 import heapq
 import json
 from typing import Any
 
 import httpx
+from numpy.typing import NDArray
+
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
@@ -15,7 +23,6 @@ from llama_stack_api import (
     Files,
     Inference,
     InsertChunksRequest,
-    InterleavedContent,
     QueryChunksRequest,
     QueryChunksResponse,
     VectorIO,
@@ -23,7 +30,6 @@ from llama_stack_api import (
     VectorStoresProtocolPrivate,
 )
 from llama_stack_api.internal.kvstore import KVStore
-from numpy.typing import NDArray
 
 from .config import InfinispanVectorIOConfig
 from .schemas import load_schema
@@ -100,7 +106,7 @@ class InfinispanIndex(EmbeddingIndex):
         create_response = await self.client.post(
             f"{self.base_url}/rest/v3/caches/{self.cache_name}",
             content=cache_config_xml,
-            headers={"Content-Type": "application/xml"}
+            headers={"Content-Type": "application/xml"},
         )
 
         if create_response.status_code not in [200, 204]:
@@ -122,7 +128,7 @@ class InfinispanIndex(EmbeddingIndex):
         schema_response = await self.client.put(
             f"{self.base_url}/rest/v3/caches/___protobuf_metadata/entries/{schema_name}",
             content=schema_content,
-            headers={"Content-Type": "text/plain"}
+            headers={"Content-Type": "text/plain"},
         )
 
         if schema_response.status_code not in [200, 204]:
@@ -156,7 +162,9 @@ class InfinispanIndex(EmbeddingIndex):
             vector_item = {
                 "_type": f"VectorItem{self.embedding_dimension}",
                 "id": chunk.chunk_id,
-                "floatVector": chunk.embedding.tolist() if hasattr(chunk.embedding, "tolist") else list(chunk.embedding),
+                "floatVector": chunk.embedding.tolist()
+                if hasattr(chunk.embedding, "tolist")
+                else list(chunk.embedding),
                 "text": chunk.content if hasattr(chunk, "content") else "",
                 "metadata": json.dumps(chunk.metadata) if chunk.metadata else "{}",
                 "chunkMetadata": json.dumps(chunk.chunk_metadata.model_dump()) if chunk.chunk_metadata else "{}",
@@ -252,7 +260,7 @@ class InfinispanIndex(EmbeddingIndex):
             # Extract the hit data - it may be nested under 'hit' or have a projection key
             hit = hit.get("hit", hit)
 
-            hit_data = hit['*']
+            hit_data = hit["*"]
 
             # Reconstruct EmbeddedChunk from the hit data
             # The hit contains the VectorItem fields: id, floatVector, text, metadata, chunkMetadata, embeddingModel
@@ -284,7 +292,9 @@ class InfinispanIndex(EmbeddingIndex):
             # Create EmbeddedChunk object
             chunk_dict = {
                 "chunk_id": chunk_id,
-                "document_id": chunk_metadata.get("document_id", chunk_id),  # Get from chunk_metadata or use chunk_id as fallback
+                "document_id": chunk_metadata.get(
+                    "document_id", chunk_id
+                ),  # Get from chunk_metadata or use chunk_id as fallback
                 "embedding": float_vector,
                 "content": text,
                 "metadata": metadata,
@@ -358,7 +368,7 @@ class InfinispanIndex(EmbeddingIndex):
             # Extract the hit data - it may be nested under 'hit' or have a projection key
             hit = hit.get("hit", hit)
 
-            hit_data = hit['*']
+            hit_data = hit["*"]
 
             # Reconstruct EmbeddedChunk from the hit data
             # The hit contains the VectorItem fields: id, floatVector, text, metadata, chunkMetadata, embeddingModel
@@ -401,7 +411,9 @@ class InfinispanIndex(EmbeddingIndex):
 
             try:
                 chunk = load_embedded_chunk_with_backward_compat(chunk_dict)
-                log.info(f"Hit content - ID: {chunk_id}, Text: {text[:100]}{'...' if len(text) > 100 else ''}, Vector dim: {len(float_vector)}")
+                log.info(
+                    f"Hit content - ID: {chunk_id}, Text: {text[:100]}{'...' if len(text) > 100 else ''}, Vector dim: {len(float_vector)}"
+                )
             except Exception as e:
                 log.error(f"Failed to load chunk {chunk_id}: {e}")
                 continue
@@ -453,7 +465,8 @@ class InfinispanIndex(EmbeddingIndex):
 
         # Convert responses to score dictionaries using chunk_id
         vector_scores = {
-            chunk.chunk_id: float(score) for chunk, score in zip(vector_response.chunks, vector_response.scores, strict=False)
+            chunk.chunk_id: float(score)
+            for chunk, score in zip(vector_response.chunks, vector_response.scores, strict=False)
         }
         keyword_scores = {
             chunk.chunk_id: float(score)
@@ -512,13 +525,13 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
         self,
         config: InfinispanVectorIOConfig,
         inference_api: Inference,
-        files_api: Files | None,
+        files_api: Files | None = None,
     ) -> None:
         super().__init__(inference_api=inference_api, files_api=files_api, kvstore=None)
         log.info(f"Initializing InfinispanVectorIOAdapter with config: {config}")
         self.config = config
         self.client = None
-        self.cache = {}
+        self.cache: dict[str, VectorStoreWithIndex] = {}
         self.vector_store_table = None
 
     async def initialize(self) -> None:
@@ -612,9 +625,7 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
                     # the vector store is actually used.
 
                     # Create VectorStoreWithIndex and add to cache
-                    vector_store_with_index = VectorStoreWithIndex(
-                        vector_store, index, self.inference_api
-                    )
+                    vector_store_with_index = VectorStoreWithIndex(vector_store, index, self.inference_api)
                     self.cache[vector_store.identifier] = vector_store_with_index
                     log.info(f"Loaded vector store: {vector_store.identifier}")
 
@@ -649,7 +660,6 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
         key = f"{VECTOR_DBS_PREFIX}{vector_store.identifier}"
         await self.kvstore.set(key=key, value=vector_store.model_dump_json())
 
-
         # Create Infinispan index
         index = InfinispanIndex(
             client=self.client,
@@ -663,9 +673,7 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
         await index.initialize()
 
         # Create VectorStoreWithIndex and add to cache
-        vector_store_with_index = VectorStoreWithIndex(
-            vector_store, index, self.inference_api
-        )
+        vector_store_with_index = VectorStoreWithIndex(vector_store, index, self.inference_api)
         self.cache[vector_store.identifier] = vector_store_with_index
         log.info(f"Registered vector store: {vector_store.identifier}")
 
@@ -778,7 +786,7 @@ class InfinispanVectorIOAdapter(OpenAIVectorStoreMixin, VectorIO, VectorStoresPr
         )
 
         # Create VectorStoreWithIndex and add to cache
-        vector_store_with_index = VectorStoreWithIndex(vector_store, index, self.inference_api)
+        vector_store_with_index: VectorStoreWithIndex = VectorStoreWithIndex(vector_store, index, self.inference_api)
         self.cache[vector_store_id] = vector_store_with_index
 
         return vector_store_with_index
