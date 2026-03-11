@@ -582,3 +582,172 @@ class TestOpenAIResponses:
         assert response.status == "completed"
         assert response.background is False
         assert len(response.output) > 0
+
+    def test_openai_response_with_service_tier_auto(self, openai_client, text_model_id):
+        """Test OpenAI response with service_tier='auto'.
+
+        When 'auto' is requested, the provider decides the actual tier (e.g. default, priority),
+        so we only assert the response has a non-null service_tier.
+        """
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the speed of light?"}],
+            service_tier="auto",
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.service_tier is not None
+
+    @pytest.mark.parametrize("service_tier", ["default", "priority"])
+    def test_openai_response_with_service_tier(self, openai_client, text_model_id, service_tier):
+        """Test OpenAI response with explicit service_tier values that should be preserved."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the speed of light?"}],
+            service_tier=service_tier,
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.service_tier == service_tier
+
+    def test_openai_response_with_service_tier_flex(self, openai_client, text_model_id):
+        """Test OpenAI response with service_tier='flex'.
+
+        The flex tier may not be supported by all providers (e.g. OpenAI rejects it
+        for certain models). This test verifies the request is accepted with the
+        exact tier preserved, or properly rejected.
+        """
+        try:
+            response = openai_client.responses.create(
+                model=text_model_id,
+                input=[{"role": "user", "content": "What is the speed of light?"}],
+                service_tier="flex",
+            )
+            assert response.id.startswith("resp_")
+            assert response.service_tier == "flex"
+        except Exception as e:
+            # Some providers reject 'flex' as an invalid service_tier
+            error_message = str(e).lower()
+            assert "service_tier" in error_message or "invalid" in error_message
+
+    def test_openai_response_with_service_tier_auto_streaming(self, openai_client, text_model_id):
+        """Test OpenAI response with service_tier='auto' in streaming mode."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the speed of sound?"}],
+            service_tier="auto",
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify service_tier is in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.service_tier is not None
+
+        # Verify service_tier is in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.service_tier is not None
+
+    @pytest.mark.parametrize("service_tier", ["default", "priority"])
+    def test_openai_response_with_service_tier_streaming(self, openai_client, text_model_id, service_tier):
+        """Test OpenAI response with explicit service_tier values in streaming mode."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the speed of sound?"}],
+            service_tier=service_tier,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify service_tier is preserved in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.service_tier == service_tier
+
+        # Verify service_tier is preserved in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.service_tier == service_tier
+
+    def test_openai_response_with_service_tier_flex_streaming(self, openai_client, text_model_id):
+        """Test OpenAI response with service_tier='flex' in streaming mode.
+
+        The flex tier may not be supported by all providers. This test verifies
+        the request is accepted with the exact tier preserved, or produces a proper failure event.
+        """
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the speed of sound?"}],
+            service_tier="flex",
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # The response should either complete or fail gracefully
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        failed_events = [e for e in chunks if e.type == "response.failed"]
+        assert len(completed_events) + len(failed_events) == 1
+
+        if completed_events:
+            assert completed_events[0].response.service_tier == "flex"
+
+    def test_openai_response_with_service_tier_auto_and_previous_response(self, openai_client, text_model_id):
+        """Test that service_tier='auto' works correctly with previous_response_id."""
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 8+8?"}],
+            service_tier="auto",
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.service_tier is not None
+
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 9+9?"}],
+            previous_response_id=response1.id,
+            service_tier="auto",
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.service_tier is not None
+        assert len(response2.output_text.strip()) > 0
+
+    @pytest.mark.parametrize("service_tier", ["default", "priority"])
+    def test_openai_response_with_service_tier_and_previous_response(self, openai_client, text_model_id, service_tier):
+        """Test that explicit service_tier values are preserved with previous_response_id."""
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 8+8?"}],
+            service_tier=service_tier,
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.service_tier == service_tier
+
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 9+9?"}],
+            previous_response_id=response1.id,
+            service_tier=service_tier,
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.service_tier == service_tier
+        assert len(response2.output_text.strip()) > 0
