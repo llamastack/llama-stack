@@ -218,3 +218,27 @@ async def test_connection_error_wrapped(mock_server):
     request = RunModerationRequest(input="test", model="text-moderation-latest")
     with pytest.raises(RuntimeError, match="Failed to reach downstream safety service"):
         await adapter.run_moderation(request)
+
+
+async def test_extra_blocked_headers_rejected_at_config_time(mock_server):
+    """Operator-defined extra_blocked_headers are enforced at config parse time."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError, match="blocked"):
+        await _make_adapter(
+            mock_server,
+            forward_headers={"debug_key": "X-Internal-Debug"},
+            extra_blocked_headers=["x-internal-debug"],
+        )
+
+
+async def test_proxy_headers_rejected_at_config_time(mock_server):
+    """Proxy/trust headers (x-forwarded-for etc.) are blocked at config parse time."""
+    from pydantic import ValidationError
+
+    for blocked_header in ("X-Forwarded-For", "Forwarded", "Proxy-Authorization", "X-Real-IP"):
+        with pytest.raises(ValidationError, match="blocked"):
+            await _make_adapter(
+                mock_server,
+                forward_headers={"client_ip": blocked_header},
+            )
