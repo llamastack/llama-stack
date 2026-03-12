@@ -16,6 +16,7 @@ from llama_stack.log import get_logger
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion, EmbeddingIndex, VectorStoreWithIndex
 from llama_stack.providers.utils.vector_io import load_embedded_chunk_with_backward_compat
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 from llama_stack_api import (
     DeleteChunksRequest,
@@ -213,7 +214,9 @@ class InfinispanIndex(EmbeddingIndex):
 
         log.info(f"Successfully deleted {len(chunks_for_deletion)} chunks")
 
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         """
         Perform vector similarity search using Infinispan's vector search capabilities.
 
@@ -221,10 +224,15 @@ class InfinispanIndex(EmbeddingIndex):
             embedding: Query embedding vector as NumPy array
             k: Number of results to return
             score_threshold: Minimum similarity score threshold
+            filters: Optional filters to apply to the search
 
         Returns:
             QueryChunksResponse with matching chunks and scores
         """
+        # Filters are not yet implemented for Infinispan provider
+        if filters is not None:
+            raise NotImplementedError("Infinispan provider does not yet support native filtering")
+
         log.info(f"Performing vector similarity search in cache '{self.cache_name}' with k={k}")
 
         # Convert embedding to list
@@ -325,6 +333,7 @@ class InfinispanIndex(EmbeddingIndex):
         query_string: str,
         k: int,
         score_threshold: float,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
         Perform full-text/keyword search using Infinispan Query DSL (Ickle).
@@ -333,16 +342,23 @@ class InfinispanIndex(EmbeddingIndex):
             query_string: The text query for keyword search
             k: Number of results to return
             score_threshold: Minimum similarity score threshold
+            filters: Optional filters to apply to the search
 
         Returns:
             QueryChunksResponse with matching chunks and scores
         """
+        # Infinispan provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Infinispan provider does not yet support native filtering")
+
         log.info(f"Performing keyword search in cache '{self.cache_name}' with query: {query_string}")
 
         # Build Ickle query to search the text field
         # The text field has @Keyword annotation, so it's indexed for full-text search
         entity_name = f"VectorItem{self.embedding_dimension}"
-        ickle_query = f"SELECT i, score(i) FROM {entity_name} i WHERE text : '{query_string}' ~ 2"
+        # Escape single quotes to prevent query injection (similar to SQL injection prevention)
+        escaped_query_string = query_string.replace("'", "''")
+        ickle_query = f"SELECT i, score(i) FROM {entity_name} i WHERE text : '{escaped_query_string}' ~ 2"
 
         # Execute search query
         response = await self.client.post(
@@ -438,6 +454,7 @@ class InfinispanIndex(EmbeddingIndex):
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
         Hybrid search combining vector similarity and keyword search using configurable reranking.
@@ -452,10 +469,15 @@ class InfinispanIndex(EmbeddingIndex):
             score_threshold: Minimum similarity score threshold
             reranker_type: Type of reranker to use ("rrf" or "weighted")
             reranker_params: Parameters for the reranker
+            filters: Optional filters to apply to the search
 
         Returns:
             QueryChunksResponse with combined and reranked results
         """
+        # Infinispan provider does not yet support native filtering
+        if filters is not None:
+            raise NotImplementedError("Infinispan provider does not yet support native filtering")
+
         if reranker_params is None:
             reranker_params = {}
 
