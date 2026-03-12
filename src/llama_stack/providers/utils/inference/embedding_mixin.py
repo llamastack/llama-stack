@@ -10,8 +10,6 @@ import platform
 import struct
 from typing import TYPE_CHECKING
 
-import torch
-
 from llama_stack.log import get_logger
 
 if TYPE_CHECKING:
@@ -93,6 +91,7 @@ class SentenceTransformerEmbeddingMixin:
             log.info(f"Loading sentence transformer for {model}...")
 
             def _load_model():
+                import torch
                 from sentence_transformers import SentenceTransformer
 
                 platform_name = platform.system()
