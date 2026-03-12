@@ -29,6 +29,9 @@ data:
       - provider_id: sentence-transformers
         provider_type: inline::sentence-transformers
         config: {}
+      - provider_id: transformers
+        provider_type: inline::transformers
+        config: {}
       vector_io:
       - provider_id: ${env.ENABLE_CHROMADB:+chromadb}
         provider_type: remote::chromadb
@@ -127,6 +130,10 @@ data:
       model_id: nomic-embed-text-v1.5
       provider_id: sentence-transformers
       model_type: embedding
+    - metadata: {}
+      model_id: Qwen/Qwen3-Reranker-0.6B
+      provider_id: transformers
+      model_type: rerank
     - metadata: {}
       model_id: ${env.INFERENCE_MODEL}
       provider_id: vllm-inference
