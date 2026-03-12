@@ -802,13 +802,22 @@ def _patched_aiohttp_post(original_post, session_self, url: str, **kwargs):
         raise AssertionError(f"Invalid mode: {_current_mode}")
 
 
-def _extract_provider_metadata(client: Any, client_type: str) -> dict[str, str]:
+_cached_provider_metadata: dict[str, dict[str, str]] = {}
+
+
+def _extract_provider_metadata(client: Any, client_type: str, base_url: str = "") -> dict[str, str]:
     """Extract version and configuration metadata from the inference client.
 
     This captures provider-specific version info that helps track which API
     versions were used during test recordings (e.g., Azure API version, vLLM
     server version).
+
+    Results are cached per base_url to avoid repeated HTTP calls.
     """
+    cache_key = f"{client_type}:{base_url}"
+    if cache_key in _cached_provider_metadata:
+        return _cached_provider_metadata[cache_key]
+
     metadata: dict[str, str] = {}
 
     if client_type == "openai":
@@ -824,6 +833,23 @@ def _extract_provider_metadata(client: Any, client_type: str) -> dict[str, str]:
         if azure_api_version:
             metadata["azure_api_version"] = azure_api_version
 
+        # For vLLM: query the /version endpoint to get server version
+        if base_url:
+            try:
+                import urllib.request
+
+                # Strip /v1 suffix to get the base server URL
+                server_url = base_url.rstrip("/")
+                if server_url.endswith("/v1"):
+                    server_url = server_url[:-3]
+                version_url = server_url + "/version"
+                with urllib.request.urlopen(version_url, timeout=5) as resp:
+                    version_data = json.loads(resp.read().decode())
+                    if "version" in version_data:
+                        metadata["vllm_server_version"] = version_data["version"]
+            except Exception:
+                pass
+
     elif client_type == "ollama":
         try:
             import ollama
@@ -832,6 +858,7 @@ def _extract_provider_metadata(client: Any, client_type: str) -> dict[str, str]:
         except (ImportError, AttributeError):
             pass
 
+    _cached_provider_metadata[cache_key] = metadata
     return metadata
 
 
@@ -941,7 +968,7 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             "body": body,
             "endpoint": endpoint,
             "model": body.get("model", ""),
-            "provider_metadata": _extract_provider_metadata(self, client_type),
+            "provider_metadata": _extract_provider_metadata(self, client_type, base_url),
         }
 
         try:
