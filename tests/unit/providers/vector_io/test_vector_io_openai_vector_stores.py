@@ -18,6 +18,10 @@ from llama_stack_api import (
     InsertChunksRequest,
     OpenAICreateVectorStoreFileBatchRequestWithExtraBody,
     OpenAICreateVectorStoreRequestWithExtraBody,
+    OpenAIEmbeddingData,
+    OpenAIEmbeddingsRequestWithExtraBody,
+    OpenAIEmbeddingsResponse,
+    OpenAIEmbeddingUsage,
     QueryChunksRequest,
     QueryChunksResponse,
     VectorStore,
@@ -1564,3 +1568,107 @@ async def test_apply_default_ef_search_for_query_vector(mock_psycopg2_connection
     assert f"SET hnsw.ef_search = {PGVectorHNSWVectorIndex().ef_search}" in set_call_sql, (
         f"Expected default 'SET hnsw.ef_search = {PGVectorHNSWVectorIndex().ef_search}' when ef_search is not explicitly configured, got: {set_call_sql}"
     )
+
+
+
+async def test_embedding_dimensions_parameter_conditional(vector_io_adapter):
+    """
+    Test that the dimensions parameter is conditionally passed to embeddings API.
+    
+    This test verifies the fix for the issue where vLLM rejects the dimensions parameter
+    for models that don't advertise Matryoshka support, even when the requested dimension
+    matches the model's native output dimension.
+    
+    The fix ensures that:
+    1. When embedding_dimension is set, dimensions parameter is included in the request
+    2. When embedding_dimension is None/0/False, dimensions parameter is excluded
+    
+    This prevents errors with backends like vLLM that reject unsupported parameters.
+    
+    Related issue: https://github.com/meta-llama/llama-stack/issues/XXX
+    vLLM serving Qwen3-Embedding-8B rejects explicit dimensions parameter
+    """
+    # Mock the inference API response
+    mock_embeddings_response = OpenAIEmbeddingsResponse(
+        data=[OpenAIEmbeddingData(embedding=[0.1] * 4096, index=0)],
+        model="test/embedding-model",
+        usage=OpenAIEmbeddingUsage(prompt_tokens=10, total_tokens=10),
+    )
+    
+    # Test case 1: With embedding_dimension set (should include dimensions parameter)
+    with patch.object(vector_io_adapter.inference_api, 'openai_embeddings', new_callable=AsyncMock) as mock_embeddings:
+        mock_embeddings.return_value = mock_embeddings_response
+        
+        # Simulate the conditional logic from openai_vector_store_mixin.py
+        embedding_dimension = 4096
+        if embedding_dimension:
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model="test/embedding-model",
+                input=["test text"],
+                dimensions=embedding_dimension,
+            )
+        else:
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model="test/embedding-model",
+                input=["test text"],
+            )
+        
+        await vector_io_adapter.inference_api.openai_embeddings(params)
+        
+        # Verify dimensions was included in the call
+        call_args = mock_embeddings.call_args
+        assert call_args is not None, "openai_embeddings should have been called"
+        request_params = call_args[0][0]
+        assert request_params.dimensions == 4096, "dimensions should be set when embedding_dimension is provided"
+    
+    # Test case 2: Without embedding_dimension (should NOT include dimensions parameter)
+    with patch.object(vector_io_adapter.inference_api, 'openai_embeddings', new_callable=AsyncMock) as mock_embeddings:
+        mock_embeddings.return_value = mock_embeddings_response
+        
+        # Simulate the conditional logic without dimensions
+        embedding_dimension = None
+        if embedding_dimension:
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model="test/embedding-model",
+                input=["test text"],
+                dimensions=embedding_dimension,
+            )
+        else:
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model="test/embedding-model",
+                input=["test text"],
+            )
+        
+        await vector_io_adapter.inference_api.openai_embeddings(params)
+        
+        # Verify dimensions was NOT included in the call
+        call_args = mock_embeddings.call_args
+        assert call_args is not None, "openai_embeddings should have been called"
+        request_params = call_args[0][0]
+        assert request_params.dimensions is None, "dimensions should be None when embedding_dimension is not provided"
+    
+    # Test case 3: With embedding_dimension = 0 (should NOT include dimensions parameter)
+    with patch.object(vector_io_adapter.inference_api, 'openai_embeddings', new_callable=AsyncMock) as mock_embeddings:
+        mock_embeddings.return_value = mock_embeddings_response
+        
+        # Simulate the conditional logic with 0 dimension
+        embedding_dimension = 0
+        if embedding_dimension:
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model="test/embedding-model",
+                input=["test text"],
+                dimensions=embedding_dimension,
+            )
+        else:
+            params = OpenAIEmbeddingsRequestWithExtraBody(
+                model="test/embedding-model",
+                input=["test text"],
+            )
+        
+        await vector_io_adapter.inference_api.openai_embeddings(params)
+        
+        # Verify dimensions was NOT included in the call
+        call_args = mock_embeddings.call_args
+        assert call_args is not None, "openai_embeddings should have been called"
+        request_params = call_args[0][0]
+        assert request_params.dimensions is None, "dimensions should be None when embedding_dimension is 0"

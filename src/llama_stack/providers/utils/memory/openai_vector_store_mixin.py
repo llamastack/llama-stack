@@ -1004,11 +1004,20 @@ class OpenAIVectorStoreMixin(ABC):
                 # Generate embeddings for all chunks before insertion
 
                 # Prepare embedding request for all chunks
-                params = OpenAIEmbeddingsRequestWithExtraBody(
-                    model=embedding_model,
-                    input=[interleaved_content_as_str(c.content) for c in chunks],
-                    dimensions=embedding_dimension,
-                )
+                # Only pass dimensions if it's explicitly set to avoid issues with
+                # models/APIs that don't support the dimensions parameter (e.g., vLLM
+                # rejects dimensions for models without Matryoshka support)
+                if embedding_dimension:
+                    params = OpenAIEmbeddingsRequestWithExtraBody(
+                        model=embedding_model,
+                        input=[interleaved_content_as_str(c.content) for c in chunks],
+                        dimensions=embedding_dimension,
+                    )
+                else:
+                    params = OpenAIEmbeddingsRequestWithExtraBody(
+                        model=embedding_model,
+                        input=[interleaved_content_as_str(c.content) for c in chunks],
+                    )
                 resp = await self.inference_api.openai_embeddings(params)
 
                 # Create EmbeddedChunk instances from chunks and their embeddings
