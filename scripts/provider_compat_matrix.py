@@ -85,7 +85,6 @@ class ProviderResults:
     results: dict[str, dict[str, str]] = field(default_factory=lambda: defaultdict(dict))
 
 
-
 # ---------------------------------------------------------------------------
 # Recording analysis
 # ---------------------------------------------------------------------------
