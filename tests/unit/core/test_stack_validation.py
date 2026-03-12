@@ -12,6 +12,7 @@ import pytest
 
 from llama_stack.core.datatypes import (
     QualifiedModel,
+    RerankerModel,
     RewriteQueryParams,
     SafetyConfig,
     StackConfig,
@@ -54,6 +55,10 @@ class TestVectorStoresValidation:
                     provider_id="p",
                     model_id="missing",
                 ),
+                default_reranker_model=RerankerModel(
+                    provider_id="p",
+                    model_id="missing",
+                ),
             ),
         )
         mock_models = AsyncMock()
@@ -82,6 +87,10 @@ class TestVectorStoresValidation:
                     provider_id="p",
                     model_id="valid",
                 ),
+                default_reranker_model=RerankerModel(
+                    provider_id="p1",
+                    model_id="valid1",
+                ),
             ),
         )
         mock_models = AsyncMock()
@@ -93,7 +102,13 @@ class TestVectorStoresValidation:
                     metadata={"embedding_dimension": 768},
                     provider_id="p",
                     provider_resource_id="valid",
-                )
+                ),
+                Model(
+                    identifier="p1/valid1",  # Must match provider_id/model_id format
+                    model_type=ModelType.rerank,
+                    provider_id="p1",
+                    provider_resource_id="valid1",
+                ),
             ]
         )
 

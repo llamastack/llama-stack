@@ -23,6 +23,9 @@ data:
       - provider_id: sentence-transformers
         provider_type: inline::sentence-transformers
         config: {}
+      - provider_id: transformers
+        provider_type: inline::transformers
+        config: {}
       files:
       - provider_id: meta-reference-files
         provider_type: inline::localfs
@@ -121,6 +124,10 @@ data:
       model_id: nomic-embed-text-v1.5
       provider_id: sentence-transformers
       model_type: embedding
+    - metadata: {}
+      model_id: Qwen/Qwen3-Reranker-0.6B
+      provider_id: transformers
+      model_type: rerank
     - model_id: ${env.INFERENCE_MODEL}
       provider_id: vllm-inference
       model_type: llm
