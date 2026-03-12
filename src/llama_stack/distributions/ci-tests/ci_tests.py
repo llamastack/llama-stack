@@ -6,7 +6,7 @@
 
 
 from llama_stack.distributions.template import DistributionTemplate
-from llama_stack_api import ConnectorInput
+from llama_stack_api import ConnectorInput, ModelInput, ModelType
 
 from ..starter.starter import get_distribution_template as get_starter_distribution_template
 
@@ -20,6 +20,15 @@ def get_distribution_template() -> DistributionTemplate:
     test_mcp_connector = ConnectorInput(
         connector_id="test-mcp-connector",
         url="http://localhost:5199/sse",
+    )
+
+    # Azure model must be pre-registered because the recording system cannot
+    # replay model-list discovery calls against the Azure endpoint in CI.
+    azure_model = ModelInput(
+        model_id="azure/gpt-4o",
+        provider_id="${env.AZURE_API_KEY:+azure}",
+        provider_model_id="gpt-4o",
+        model_type=ModelType.llm,
     )
 
     # Add conditional authentication config (disabled by default for CI tests)
@@ -45,6 +54,10 @@ def get_distribution_template() -> DistributionTemplate:
         if run_config.default_connectors is None:
             run_config.default_connectors = []
         run_config.default_connectors.append(test_mcp_connector)
+
+        if run_config.default_models is None:
+            run_config.default_models = []
+        run_config.default_models.append(azure_model)
 
         # Add conditional auth config
         run_config.auth_config = auth_config

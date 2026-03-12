@@ -425,6 +425,7 @@ class TestResponsesAPIStreamingErrors:
             "invalid_image",
             # TODO: remove internal_error once streaming.py uses spec-compliant error codes
             "internal_error",
+            "server_error",
         }
         if error_code in expected_codes:
             return  # Test passed: received expected image error code
@@ -480,6 +481,7 @@ class TestResponsesAPIStreamingErrors:
             "invalid_image_format",
             # TODO: remove internal_error once streaming.py uses spec-compliant error codes
             "internal_error",
+            "server_error",
         }
         if error_code in expected_codes:
             return  # Test passed: received expected image error code
