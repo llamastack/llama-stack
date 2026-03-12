@@ -217,7 +217,7 @@ class TestOpenAIFilesAPI:
     async def test_retrieve_file_not_found(self, files_provider):
         """Test retrieving a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await files_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id="file-nonexistent"))
+            await files_provider.openai_retrieve_file(request=RetrieveFileRequest(file_id="file-" + "0" * 32))
 
     async def test_retrieve_file_content_success(self, files_provider, sample_text_file):
         """Test successful file content retrieval."""
@@ -238,7 +238,7 @@ class TestOpenAIFilesAPI:
         """Test retrieving content of a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
             await files_provider.openai_retrieve_file_content(
-                request=RetrieveFileContentRequest(file_id="file-nonexistent")
+                request=RetrieveFileContentRequest(file_id="file-" + "0" * 32)
             )
 
     async def test_delete_file_success(self, files_provider, sample_text_file):
@@ -265,7 +265,7 @@ class TestOpenAIFilesAPI:
     async def test_delete_file_not_found(self, files_provider):
         """Test deleting a non-existent file."""
         with pytest.raises(ResourceNotFoundError, match="not found"):
-            await files_provider.openai_delete_file(request=DeleteFileRequest(file_id="file-nonexistent"))
+            await files_provider.openai_delete_file(request=DeleteFileRequest(file_id="file-" + "0" * 32))
 
     async def test_file_persistence_across_operations(self, files_provider, sample_text_file):
         """Test that files persist correctly across multiple operations."""
