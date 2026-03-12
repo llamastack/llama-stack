@@ -924,8 +924,10 @@ class StreamingResponseOrchestrator:
             chunk_created = chunk.created
             chunk_model = chunk.model
             # Extract service_tier from chunk if available (may be in final chunk)
-            if chunk.service_tier is not None:
-                chunk_service_tier = chunk.service_tier
+            # Use getattr since some providers (e.g. LiteLLM/WatsonX) may not include service_tier
+            chunk_st = getattr(chunk, "service_tier", None)
+            if chunk_st is not None:
+                chunk_service_tier = chunk_st
 
             # Accumulate usage from chunks (typically in final chunk with stream_options)
             self._accumulate_chunk_usage(chunk)

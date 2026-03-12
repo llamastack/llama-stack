@@ -51,6 +51,8 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         params: OpenAIChatCompletionRequestWithExtraBody | OpenAICompletionRequestWithExtraBody,
     ) -> dict[str, Any]:
         # These are watsonx-specific parameters used by LiteLLM.
+        # drop_params tells LiteLLM to silently drop parameters not supported by watsonx
+        # (e.g. parallel_tool_calls) instead of raising UnsupportedParamsError.
         return {"timeout": self.config.timeout, "project_id": self.config.project_id}
 
     async def openai_chat_completion(
@@ -64,6 +66,10 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         Note: request parameter construction (including telemetry-driven stream_options injection)
         is handled by LiteLLMOpenAIMixin via _litellm_extra_request_params().
         """
+        # WatsonX does not support parallel_tool_calls — strip it to avoid LiteLLM errors
+        if params.parallel_tool_calls is not None:
+            params = params.model_copy(update={"parallel_tool_calls": None})
+
         result = await super().openai_chat_completion(params)
 
         # If not streaming, check and inject usage if missing
@@ -198,7 +204,9 @@ class WatsonXInferenceAdapter(LiteLLMOpenAIMixin):
         """
         if not self._model_cache:
             await self.list_models()
-        return model in self._model_cache
+        # Cache keys include the provider prefix (e.g. "watsonx/meta-llama/llama-3-3-70b-instruct")
+        # but model may be passed without it, so check both forms.
+        return model in self._model_cache or f"{self.__provider_id__}/{model}" in self._model_cache
 
     async def list_models(self) -> list[Model] | None:
         self._model_cache = {}
