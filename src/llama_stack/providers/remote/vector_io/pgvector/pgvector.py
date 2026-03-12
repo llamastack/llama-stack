@@ -173,17 +173,20 @@ class PGVectorIndex(EmbeddingIndex):
                 # when created with patterns like "test-vector-db-{uuid4()}"
                 sanitized_identifier = sanitize_collection_name(self.vector_store.identifier)
                 self.table_name = f"vs_{sanitized_identifier}"
+                self._table_sql = sql.Identifier(self.table_name)
 
                 cur.execute(
-                    f"""
-                    CREATE TABLE IF NOT EXISTS {self.table_name} (
+                    sql.SQL(
+                        """
+                    CREATE TABLE IF NOT EXISTS {} (
                         id TEXT PRIMARY KEY,
                         document JSONB,
-                        embedding vector({self.dimension}),
+                        embedding vector({}),
                         content_text TEXT,
                         tokenized_content TSVECTOR
                     )
                 """
+                    ).format(self._table_sql, sql.Literal(self.dimension))
                 )
 
                 # pgvector's embedding dimensions requirement to create an index for Approximate Nearest Neighbor (ANN) search is up to 2,000 dimensions for column with type vector
@@ -232,8 +235,8 @@ class PGVectorIndex(EmbeddingIndex):
             )
 
         query = sql.SQL(
-            f"""
-        INSERT INTO {self.table_name} (id, document, embedding, content_text, tokenized_content)
+            """
+        INSERT INTO {} (id, document, embedding, content_text, tokenized_content)
         VALUES %s
         ON CONFLICT (id) DO UPDATE SET
             embedding = EXCLUDED.embedding,
@@ -241,7 +244,7 @@ class PGVectorIndex(EmbeddingIndex):
             content_text = EXCLUDED.content_text,
             tokenized_content = EXCLUDED.tokenized_content
     """
-        )
+        ).format(self._table_sql)
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             execute_values(cur, query, values, template="(%s, %s, %s::vector, %s, to_tsvector('english', %s))")
 
@@ -288,16 +291,18 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
 
-            where = f"WHERE {filter_clause}" if filter_clause else ""
+            where = sql.SQL("WHERE {}").format(sql.SQL(filter_clause)) if filter_clause else sql.SQL("")
 
             cur.execute(
-                f"""
-            SELECT document, embedding {pgvector_search_function} %s::vector AS distance
-            FROM {self.table_name}
-            {where}
+                sql.SQL(
+                    """
+            SELECT document, embedding {} %s::vector AS distance
+            FROM {}
+            {}
             ORDER BY distance
             LIMIT %s
-        """,
+        """
+                ).format(sql.SQL(pgvector_search_function), self._table_sql, where),
                 (embedding.tolist(), *filter_params, k),
             )
             results = cur.fetchall()
@@ -335,16 +340,18 @@ class PGVectorIndex(EmbeddingIndex):
 
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             # Use plainto_tsquery to handle user input safely and ts_rank for relevance scoring
-            filter_sql = f" AND ({filter_clause})" if filter_clause else ""
+            filter_sql = sql.SQL(" AND ({})").format(sql.SQL(filter_clause)) if filter_clause else sql.SQL("")
 
             cur.execute(
-                f"""
+                sql.SQL(
+                    """
             SELECT document, ts_rank(tokenized_content, plainto_tsquery('english', %s)) AS score
-            FROM {self.table_name}
-            WHERE tokenized_content @@ plainto_tsquery('english', %s){filter_sql}
+            FROM {}
+            WHERE tokenized_content @@ plainto_tsquery('english', %s){}
             ORDER BY score DESC
             LIMIT %s
-        """,
+        """
+                ).format(self._table_sql, filter_sql),
                 (query_string, query_string, *filter_params, k),
             )
             results = cur.fetchall()
@@ -502,14 +509,14 @@ class PGVectorIndex(EmbeddingIndex):
 
     async def delete(self):
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-            cur.execute(f"DROP TABLE IF EXISTS {self.table_name}")
+            cur.execute(sql.SQL("DROP TABLE IF EXISTS {}").format(self._table_sql))
 
     async def delete_chunks(self, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Remove a chunk from the PostgreSQL table."""
         chunk_ids = [c.chunk_id for c in chunks_for_deletion]
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             # Fix: Use proper tuple parameter binding with explicit array cast
-            cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s::text[])", (chunk_ids,))
+            cur.execute(sql.SQL("DELETE FROM {} WHERE id = ANY(%s::text[])").format(self._table_sql), (chunk_ids,))
 
     def get_pgvector_index_operator_class(self) -> str:
         """Get the pgvector index operator class for the current distance metric.
@@ -558,10 +565,18 @@ class PGVectorIndex(EmbeddingIndex):
             # Create HNSW (Hierarchical Navigable Small Worlds) index on embedding column to allow efficient and performant vector search in pgvector
             # HNSW finds the approximate nearest neighbors by only calculating distance metric for vectors it visits during graph traversal instead of processing all vectors
             cur.execute(
-                f"""
-                CREATE INDEX IF NOT EXISTS {self.table_name}_hnsw_idx
-                ON {self.table_name} USING hnsw(embedding {index_operator_class}) WITH (m = {self.vector_index.m}, ef_construction = {self.vector_index.ef_construction});
+                sql.SQL(
+                    """
+                CREATE INDEX IF NOT EXISTS {}
+                ON {} USING hnsw(embedding {}) WITH (m = {}, ef_construction = {});
             """
+                ).format(
+                    sql.Identifier(f"{self.table_name}_hnsw_idx"),
+                    self._table_sql,
+                    sql.SQL(index_operator_class),
+                    sql.Literal(self.vector_index.m),
+                    sql.Literal(self.vector_index.ef_construction),
+                )
             )
             log.info(
                 f"{PGVectorIndexType.HNSW} vector index was created with parameters m = {self.vector_index.m}, ef_construction = {self.vector_index.ef_construction} for vector_store: {self.vector_store.identifier}."
@@ -601,10 +616,17 @@ class PGVectorIndex(EmbeddingIndex):
             # IVFFlat index divides vectors into lists, and then searches a subset of those lists that are closest to the query vector
             # Index should be created only after the table has some data (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
             cur.execute(
-                f"""
-                CREATE INDEX IF NOT EXISTS {self.table_name}_ivfflat_idx
-                ON {self.table_name} USING ivfflat(embedding {index_operator_class}) WITH (lists = {self.vector_index.lists});
+                sql.SQL(
+                    """
+                CREATE INDEX IF NOT EXISTS {}
+                ON {} USING ivfflat(embedding {}) WITH (lists = {});
             """
+                ).format(
+                    sql.Identifier(f"{self.table_name}_ivfflat_idx"),
+                    self._table_sql,
+                    sql.SQL(index_operator_class),
+                    sql.Literal(self.vector_index.lists),
+                )
             )
             log.info(
                 f"{PGVectorIndexType.IVFFlat} vector index was created with parameter lists = {self.vector_index.lists} for vector_store: {self.vector_store.identifier}."
@@ -675,10 +697,12 @@ class PGVectorIndex(EmbeddingIndex):
         try:
             log.info(f"Fetching number of records in vector_store: {self.vector_store.identifier}...")
             cur.execute(
-                f"""
+                sql.SQL(
+                    """
                 SELECT COUNT(DISTINCT id)
-                FROM {self.table_name};
+                FROM {};
                 """
+                ).format(self._table_sql)
             )
             result = cur.fetchone()
 
@@ -704,10 +728,15 @@ class PGVectorIndex(EmbeddingIndex):
 
         try:
             cur.execute(
-                f"""
-                CREATE INDEX IF NOT EXISTS {self.table_name}_content_gin_idx
-                ON {self.table_name} USING GIN(tokenized_content)
+                sql.SQL(
+                    """
+                CREATE INDEX IF NOT EXISTS {}
+                ON {} USING GIN(tokenized_content)
             """
+                ).format(
+                    sql.Identifier(f"{self.table_name}_content_gin_idx"),
+                    self._table_sql,
+                )
             )
             log.info(f"GIN index verified for vector_store: {self.vector_store.identifier}.")
 
