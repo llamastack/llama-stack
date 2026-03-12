@@ -7,9 +7,9 @@
 """
 Tests to verify that provider modules do not eagerly load heavy dependencies.
 
-These tests ensure that importing provider modules does not trigger loading of
-heavy dependencies like pyarrow until those dependencies are actually needed.
-This is important for reducing startup memory consumption.
+Each test uses subprocess isolation to check that importing a module
+does not pull in heavy libraries (torch, numpy, etc.) until they are
+explicitly needed.
 """
 
 import subprocess
@@ -92,3 +92,33 @@ class TestBraintrustLazyImports:
             f"Heavy modules loaded unexpectedly during braintrust import: {result['loaded']}. "
             "These should be lazily loaded only when scoring is performed."
         )
+
+
+def _check_no_forbidden_imports(module_path: str, forbidden: list[str]) -> tuple[bool, str]:
+    """Import a module in a subprocess and check that forbidden modules are not loaded."""
+    code = f"""
+import sys
+import importlib
+importlib.import_module("{module_path}")
+loaded = [m for m in {forbidden!r} if m in sys.modules]
+if loaded:
+    print("FORBIDDEN:" + ",".join(loaded))
+else:
+    print("OK")
+"""
+    result = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, timeout=30)
+    output = result.stdout.strip()
+    if output.startswith("FORBIDDEN:"):
+        return False, output.split(":", 1)[1]
+    return True, ""
+
+
+class TestEmbeddingMixinLazyImports:
+    """Verify embedding_mixin.py does not eagerly import torch."""
+
+    def test_no_torch_on_import(self):
+        ok, loaded = _check_no_forbidden_imports(
+            "llama_stack.providers.utils.inference.embedding_mixin",
+            ["torch"],
+        )
+        assert ok, f"embedding_mixin.py eagerly loaded: {loaded}"
