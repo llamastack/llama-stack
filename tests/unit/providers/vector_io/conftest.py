@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import random
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
@@ -19,8 +20,11 @@ from llama_stack.providers.inline.vector_io.sqlite_vec import SQLiteVectorIOConf
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import SQLiteVecIndex, SQLiteVecVectorIOAdapter
 from llama_stack.providers.remote.vector_io.pgvector.config import PGVectorHNSWVectorIndex, PGVectorVectorIOConfig
 from llama_stack.providers.remote.vector_io.pgvector.pgvector import PGVectorIndex, PGVectorVectorIOAdapter
-from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantIndex, QdrantVectorIOAdapter
 from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorStore, VectorStoreNotFoundError
+
+# Lazy import for qdrant to avoid requiring qdrant-client for all unit tests
+if TYPE_CHECKING:
+    from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantIndex, QdrantVectorIOAdapter
 
 EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
@@ -125,6 +129,18 @@ def mock_inference_api(embedding_dimension):
     class MockInferenceAPI:
         async def embed_batch(self, texts: list[str]) -> list[list[float]]:
             return [np.random.rand(embedding_dimension).astype(np.float32).tolist() for _ in texts]
+        
+        async def openai_embeddings(self, request):
+            """Mock openai_embeddings method for testing"""
+            from llama_stack_api.inference import OpenAIEmbeddingsResponse, OpenAIEmbeddingData, OpenAIEmbeddingUsage
+            
+            # Return mock embeddings response
+            embeddings = [np.random.rand(embedding_dimension).astype(np.float32).tolist() for _ in request.input]
+            return OpenAIEmbeddingsResponse(
+                data=[OpenAIEmbeddingData(embedding=emb, index=i) for i, emb in enumerate(embeddings)],
+                model=request.model,
+                usage=OpenAIEmbeddingUsage(prompt_tokens=len(request.input) * 10, total_tokens=len(request.input) * 10),
+            )
 
     return MockInferenceAPI()
 
@@ -344,6 +360,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
 @pytest.fixture
 async def qdrant_vec_index(embedding_dimension):
     from qdrant_client import models
+    from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantIndex
 
     mock_client = AsyncMock()
     mock_client.collection_exists.return_value = False
@@ -389,6 +406,8 @@ async def qdrant_vec_index(embedding_dimension):
 
 @pytest.fixture
 async def qdrant_vec_adapter(unique_kvstore_config, mock_inference_api, embedding_dimension):
+    from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantVectorIOAdapter
+    
     config = QdrantVectorIOConfig(
         path=":memory:",
         persistence=unique_kvstore_config,
