@@ -27,13 +27,13 @@ inference provider, based on integration test results.
 
 ## Provider Details
 
-Models and endpoints used during test recordings.
+Models, endpoints, and versions used during test recordings.
 
-| Provider | Model(s) | Endpoint |
-|----------|----------|----------|
-| azure | gpt-4o | lls-test.openai.azure.com |
-| openai | gpt-4o, text-embedding-3-small | api.openai.com |
-| vllm | Qwen/Qwen3-0.6B | — |
+| Provider | Model(s) | Endpoint | Version Info |
+|----------|----------|----------|--------------|
+| azure | gpt-4o | lls-test.openai.azure.com | — |
+| openai | gpt-4o, text-embedding-3-small | api.openai.com | — |
+| vllm | Qwen/Qwen3-0.6B | — | — |
 
 ## Basic Responses
 

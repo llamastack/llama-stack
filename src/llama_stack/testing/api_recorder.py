@@ -802,6 +802,39 @@ def _patched_aiohttp_post(original_post, session_self, url: str, **kwargs):
         raise AssertionError(f"Invalid mode: {_current_mode}")
 
 
+def _extract_provider_metadata(client: Any, client_type: str) -> dict[str, str]:
+    """Extract version and configuration metadata from the inference client.
+
+    This captures provider-specific version info that helps track which API
+    versions were used during test recordings (e.g., Azure API version, vLLM
+    server version).
+    """
+    metadata: dict[str, str] = {}
+
+    if client_type == "openai":
+        try:
+            import openai
+
+            metadata["openai_sdk_version"] = openai.__version__
+        except (ImportError, AttributeError):
+            pass
+
+        # For Azure: capture api_version from env (same source as AzureConfig)
+        azure_api_version = os.environ.get("AZURE_API_VERSION")
+        if azure_api_version:
+            metadata["azure_api_version"] = azure_api_version
+
+    elif client_type == "ollama":
+        try:
+            import ollama
+
+            metadata["ollama_sdk_version"] = ollama.__version__
+        except (ImportError, AttributeError):
+            pass
+
+    return metadata
+
+
 async def _patched_inference_method(original_method, self, client_type, endpoint, *args, **kwargs):
     global _current_mode, _current_storage
 
@@ -908,6 +941,7 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
             "body": body,
             "endpoint": endpoint,
             "model": body.get("model", ""),
+            "provider_metadata": _extract_provider_metadata(self, client_type),
         }
 
         try:

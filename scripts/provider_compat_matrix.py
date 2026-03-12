@@ -88,6 +88,8 @@ class ProviderResults:
     models: set[str] = field(default_factory=set)
     # Service URL host patterns seen (e.g. "api.openai.com", "localhost:8000")
     hosts: set[str] = field(default_factory=set)
+    # Provider metadata from recordings (e.g. SDK versions, API versions)
+    metadata: dict[str, str] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -166,6 +168,13 @@ def scan_recordings(recordings_dir: Path) -> dict[str, ProviderResults]:
                 parsed = urlparse(url)
                 if parsed.hostname and parsed.hostname != "localhost":
                     provider_map[provider].hosts.add(parsed.hostname)
+
+        # Merge provider metadata (first non-empty value wins per key)
+        pm = request.get("provider_metadata", {})
+        if pm:
+            for k, v in pm.items():
+                if k not in provider_map[provider].metadata:
+                    provider_map[provider].metadata[k] = v
 
         if feature not in provider_map[provider].results[category]:
             provider_map[provider].results[category][feature] = "pass"
@@ -318,15 +327,20 @@ def generate_matrix_markdown(provider_map: dict[str, ProviderResults]) -> str:
     # Provider details section
     lines.append("## Provider Details")
     lines.append("")
-    lines.append("Models and endpoints used during test recordings.")
+    lines.append("Models, endpoints, and versions used during test recordings.")
     lines.append("")
-    lines.append("| Provider | Model(s) | Endpoint |")
-    lines.append("|----------|----------|----------|")
+    lines.append("| Provider | Model(s) | Endpoint | Version Info |")
+    lines.append("|----------|----------|----------|--------------|")
     for p in providers:
         pr = provider_map[p]
         models = ", ".join(sorted(pr.models)) if pr.models else "—"
         hosts = ", ".join(sorted(pr.hosts)) if pr.hosts else "—"
-        lines.append(f"| {_pname(p)} | {models} | {hosts} |")
+        version_parts = []
+        for k, v in sorted(pr.metadata.items()):
+            label = k.replace("_", " ").removesuffix(" version")
+            version_parts.append(f"{label}: {v}")
+        version_info = ", ".join(version_parts) if version_parts else "—"
+        lines.append(f"| {_pname(p)} | {models} | {hosts} | {version_info} |")
     lines.append("")
 
     for category, features in categories.items():
