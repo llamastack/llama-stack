@@ -180,6 +180,8 @@ jobs:
         uses: llamastack/llama-stack/.github/actions/run-and-record-tests@ce063acfe127393537cb0a5deb29cd20063c76af
         env:
           OPENAI_API_KEY: dummy
+          AZURE_API_KEY: replay-mode-dummy-key
+          AZURE_API_BASE: https://dummy.openai.azure.com/openai/v1
           AWS_BEARER_TOKEN_BEDROCK: replay-mode-dummy-key
           AWS_DEFAULT_REGION: us-west-2
           TS_CLIENT_PATH: ${{ steps.setup-ts-client.outputs.ts-client-path || '' }}

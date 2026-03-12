@@ -10,6 +10,7 @@ from typing import Any
 
 from pydantic import BaseModel, TypeAdapter
 
+from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
 from llama_stack.core.datatypes import AccessRule, StackConfig
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
@@ -182,9 +183,13 @@ class ConversationServiceImpl(Conversations):
         return ConversationDeletedResource(id=request.conversation_id)
 
     def _validate_conversation_id(self, conversation_id: str) -> None:
-        """Validate conversation ID format."""
-        if not conversation_id.startswith("conv_"):
-            raise InvalidParameterError("conversation_id", conversation_id, "Conversation ID must begin with 'conv_'.")
+        """Validate conversation ID format matches ``conv_`` + 48 hex chars."""
+        if not CONVERSATION_ID_PATTERN.fullmatch(conversation_id):
+            raise InvalidParameterError(
+                "conversation_id",
+                conversation_id,
+                "Conversation ID must match format 'conv_' followed by 48 lowercase hex characters.",
+            )
 
     def _get_or_generate_item_id(self, item: ConversationItem, item_dict: dict) -> str:
         """Get existing item ID or generate one if missing."""
