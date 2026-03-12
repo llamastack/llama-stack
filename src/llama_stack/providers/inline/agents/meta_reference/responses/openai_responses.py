@@ -12,6 +12,7 @@ from collections.abc import AsyncIterator
 
 from pydantic import BaseModel, TypeAdapter
 
+from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
@@ -617,8 +618,12 @@ class OpenAIResponsesImpl:
                     "Provide only one of these parameters.",
                 )
 
-            if not conversation.startswith("conv_"):
-                raise InvalidParameterError("conversation", conversation, "Expected an ID that begins with 'conv_'.")
+            if not CONVERSATION_ID_PATTERN.fullmatch(conversation):
+                raise InvalidParameterError(
+                    "conversation",
+                    conversation,
+                    "Must match format 'conv_' followed by 48 lowercase hex characters.",
+                )
 
         if max_tool_calls is not None and max_tool_calls < 1:
             raise ValueError(f"Invalid {max_tool_calls=}; should be >= 1")
