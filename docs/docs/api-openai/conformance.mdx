@@ -27,13 +27,13 @@ This documentation is auto-generated from the OpenAI API specification compariso
 
 ## Integration Test Coverage
 
-**Overall Test Coverage Score: 43.4%**
+**Overall Test Coverage Score: 44.3%**
 
 | Category | Covered | Total | Score |
 |----------|---------|-------|-------|
 | CRUD Operations | 4 | 5 | 80.0% |
 | Conversations | 5 | 9 | 55.6% |
-| Request Parameters | 19 | 24 | 79.2% |
+| Request Parameters | 20 | 24 | 83.3% |
 | Streaming Events | 16 | 53 | 30.2% |
 | Structured Output | 0 | 2 | 0.0% |
 | Tools | 2 | 13 | 15.4% |
@@ -993,7 +993,7 @@ Below is a detailed breakdown of conformance issues and missing properties for e
 | `responses.200.content.application/json.properties.text` | Type added: ['object'] | No |
 | `responses.200.content.application/json.properties.tool_choice` | Union variants added: 3 | Yes |
 | `responses.200.content.application/json.properties.tools` | Type removed: ['array']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
-| `responses.200.content.application/json.properties.top_logprobs` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 | No |
+| `responses.200.content.application/json.properties.top_logprobs` | Type removed: ['integer']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.top_p` | Type removed: ['number']; Nullable added (OpenAI non-nullable); Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.truncation` | Union variants added: 2 | Yes |
 | `responses.200.content.application/json.properties.usage` | Union variants added: 1; Union variants removed: 1 | Yes |

@@ -391,6 +391,66 @@ class TestOpenAIResponses:
         assert response2.top_p == 0.7
         assert len(response2.output_text.strip()) > 0
 
+    def test_openai_response_with_top_logprobs(self, openai_client, text_model_id):
+        """Test OpenAI response with top_logprobs parameter."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the largest ocean on Earth?"}],
+            top_logprobs=3,
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.top_logprobs == 3
+
+    def test_openai_response_with_top_logprobs_streaming(self, openai_client, text_model_id):
+        """Test OpenAI response with top_logprobs in streaming mode."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the smallest continent?"}],
+            top_logprobs=5,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify top_logprobs is in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.top_logprobs == 5
+
+        # Verify top_logprobs is in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.top_logprobs == 5
+
+    def test_openai_response_with_top_logprobs_and_previous_response(self, openai_client, text_model_id):
+        """Test that top_logprobs works correctly with previous_response_id."""
+        # Create first response
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 4+4?"}],
+            top_logprobs=3,
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.top_logprobs == 3
+
+        # Create second response referencing the first one with the same top_logprobs
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 6+6?"}],
+            previous_response_id=response1.id,
+            top_logprobs=3,
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.top_logprobs == 3
+        assert len(response2.output_text.strip()) > 0
+
     def _function_tools(self):
         """Return a pair of function tools for parallel tool call testing."""
         return [
