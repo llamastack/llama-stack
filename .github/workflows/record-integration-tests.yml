@@ -1,75 +1,338 @@
-# This workflow should be run manually when needing to re-record tests. This happens when you have
-#  - added a new test
-#  - or changed an existing test such that a new inference call is made
-# You should make a PR and then run this workflow on that PR branch. The workflow will re-record the
-# tests and commit the recordings to the PR branch.
+# Auto-records missing integration test recordings when PRs are opened or updated.
+# Records for multiple providers (ollama, gpt, azure, etc.) and commits all recordings back to the PR.
+# Expandable: add new providers by adding entries to the providers matrix.
+#
+# SECURITY NOTE: This workflow uses pull_request_target for fork PR support.
+# Security measures:
+# 1. Composite actions are pinned to a trusted commit SHA (not loaded from PR checkout)
+# 2. Only ollama provider runs automatically (no secrets exposed to fork PRs)
+# 3. API key providers (gpt, azure, bedrock) only run via manual workflow_dispatch by maintainers
+# 4. UV cache is disabled to prevent cache poisoning from fork PRs
 name: Integration Tests (Record)
 
-run-name: Run the integration test suite from tests/integration
+run-name: Auto-record missing test recordings for PR #${{ github.event.pull_request.number || github.run_number }}
 
 on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'tests/integration/**'
+      - 'src/llama_stack/**'
+      - '!src/llama_stack_ui/**'
   workflow_dispatch:
     inputs:
-      test-setup:
-        description: 'Test against a specific setup'
+      pr_number:
+        description: 'PR number to record for (optional, uses current branch if not provided)'
+        type: number
+        required: false
+      providers:
+        description: 'Comma-separated list of providers to record (ollama,gpt,azure,etc.)'
         type: string
+        required: false
         default: 'ollama'
       suite:
-        description: 'Test suite to use: base, responses, vision, etc.'
+        description: 'Test suite override (default: per-provider from matrix)'
         type: string
+        required: false
         default: ''
       subdirs:
         description: 'Comma-separated list of test subdirectories to run; overrides suite'
         type: string
+        required: false
         default: ''
       pattern:
         description: 'Regex pattern to pass to pytest -k'
         type: string
+        required: false
         default: ''
 
-jobs:
-  record-tests:
-    runs-on: ubuntu-latest
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_number }}
+  cancel-in-progress: true
 
+permissions: {}
+
+jobs:
+  # Compute PR information for both pull_request_target and workflow_dispatch
+  compute-pr-info:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      pr_number: ${{ steps.compute.outputs.pr_number }}
+      pr_head_ref: ${{ steps.compute.outputs.pr_head_ref }}
+      pr_head_sha: ${{ steps.compute.outputs.pr_head_sha }}
+      pr_head_repo: ${{ steps.compute.outputs.pr_head_repo }}
+      is_fork_pr: ${{ steps.compute.outputs.is_fork_pr }}
+      providers_to_run: ${{ steps.compute.outputs.providers_to_run }}
+    steps:
+      - name: Compute PR metadata
+        id: compute
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Pass attacker-controllable values via env vars to prevent code injection.
+          # Never interpolate these directly in shell with ${{ }} syntax.
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PR_NUMBER: ${{ inputs.pr_number }}
+          INPUT_PROVIDERS: ${{ inputs.providers }}
+          REPO: ${{ github.repository }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          PR_NUMBER_EVENT: ${{ github.event.pull_request.number }}
+          PR_HEAD_REF_EVENT: ${{ github.event.pull_request.head.ref }}
+          PR_HEAD_SHA_EVENT: ${{ github.event.pull_request.head.sha }}
+          PR_HEAD_REPO_EVENT: ${{ github.event.pull_request.head.repo.full_name }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -n "$INPUT_PR_NUMBER" ]; then
+              # Fetch PR info via API
+              PR_DATA=$(gh pr view "$INPUT_PR_NUMBER" --repo "$REPO" --json number,headRefName,headRefOid,headRepository)
+              PR_NUMBER="$INPUT_PR_NUMBER"
+              HEAD_REF=$(echo "$PR_DATA" | jq -r '.headRefName')
+              HEAD_SHA=$(echo "$PR_DATA" | jq -r '.headRefOid')
+              HEAD_REPO=$(echo "$PR_DATA" | jq -r '.headRepository.nameWithOwner')
+            else
+              # Use current branch
+              PR_NUMBER="manual"
+              HEAD_REF="$REF_NAME"
+              HEAD_SHA="$SHA"
+              HEAD_REPO="$REPO"
+            fi
+          else
+            # pull_request_target event
+            PR_NUMBER="$PR_NUMBER_EVENT"
+            HEAD_REF="$PR_HEAD_REF_EVENT"
+            HEAD_SHA="$PR_HEAD_SHA_EVENT"
+            HEAD_REPO="$PR_HEAD_REPO_EVENT"
+          fi
+
+          BASE_REPO="$REPO"
+          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            IS_FORK_PR="true"
+          else
+            IS_FORK_PR="false"
+          fi
+
+          # Determine which providers to run
+          # Security: For pull_request_target, only run ollama (no secrets)
+          # Manual workflow_dispatch can specify providers with secrets
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            # Manual trigger: use provided providers or default to ollama
+            if [ -n "$INPUT_PROVIDERS" ]; then
+              PROVIDERS="$INPUT_PROVIDERS"
+            else
+              PROVIDERS="ollama"
+            fi
+          else
+            # Auto-trigger on PR: only ollama (no secrets exposed to fork PRs)
+            PROVIDERS="ollama"
+          fi
+
+          echo "pr_number=${PR_NUMBER}" >> $GITHUB_OUTPUT
+          echo "pr_head_ref=${HEAD_REF}" >> $GITHUB_OUTPUT
+          echo "pr_head_sha=${HEAD_SHA}" >> $GITHUB_OUTPUT
+          echo "pr_head_repo=${HEAD_REPO}" >> $GITHUB_OUTPUT
+          echo "is_fork_pr=${IS_FORK_PR}" >> $GITHUB_OUTPUT
+          echo "providers_to_run=${PROVIDERS}" >> $GITHUB_OUTPUT
+
+          echo "Recording for PR #${PR_NUMBER}"
+          echo "  Branch: ${HEAD_REF}"
+          echo "  SHA: ${HEAD_SHA}"
+          echo "  Repo: ${HEAD_REPO}"
+          echo "  Fork PR: ${IS_FORK_PR}"
+          echo "  Providers: ${PROVIDERS}"
+
+  # Record tests for each provider
+  record-providers:
+    needs: compute-pr-info
+    runs-on: ubuntu-latest
     permissions:
       contents: write
-
+      pull-requests: read
+    # Disable uv cache to prevent cache poisoning from fork PRs (pull_request_target security)
+    env:
+      UV_NO_CACHE: ${{ github.event_name == 'pull_request_target' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Expandable provider matrix - add new providers here with their configuration
+        provider:
+          - setup: ollama
+            suite: base
+          - setup: gpt
+            suite: responses
+          - setup: azure
+            suite: responses
+          - setup: bedrock
+            suite: responses
     steps:
-      - name: Echo workflow inputs
+      - name: Check if provider should run
+        id: should_run
+        env:
+          PROVIDERS_TO_RUN: ${{ needs.compute-pr-info.outputs.providers_to_run }}
+          CURRENT_PROVIDER: ${{ matrix.provider.setup }}
         run: |
-          echo "::group::Workflow Inputs"
-          echo "branch: ${{ github.ref_name }}"
-          echo "test-setup: ${{ inputs.test-setup }}"
-          echo "suite: ${{ inputs.suite }}"
-          echo "subdirs: ${{ inputs.subdirs }}"
-          echo "pattern: ${{ inputs.pattern }}"
-          echo "::endgroup::"
+          # Trim whitespace and normalize to comma-separated list
+          PROVIDERS=$(echo "$PROVIDERS_TO_RUN" | tr -d ' ')
+          CURRENT="$CURRENT_PROVIDER"
 
-      - name: Checkout repository
+          if [[ ",$PROVIDERS," == *",$CURRENT,"* ]]; then
+            echo "run=true" >> $GITHUB_OUTPUT
+            echo "Recording for provider: $CURRENT"
+          else
+            echo "run=false" >> $GITHUB_OUTPUT
+            echo "Skipping provider: $CURRENT"
+          fi
+
+      - name: Checkout PR code
+        if: steps.should_run.outputs.run == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ needs.compute-pr-info.outputs.pr_head_sha }}
           fetch-depth: 0
 
+      # Note: Using full repo path with pinned SHA ensures actions are loaded from
+      # a trusted commit, not from PR checkout. This is critical for security when
+      # using pull_request_target, which checks out untrusted fork code.
       - name: Setup test environment
-        uses: ./.github/actions/setup-test-environment
+        if: steps.should_run.outputs.run == 'true'
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@ce063acfe127393537cb0a5deb29cd20063c76af
         with:
-          python-version: "3.12"  # Use single Python version for recording
+          python-version: "3.12"
           client-version: "latest"
-          setup: ${{ inputs.test-setup || 'ollama' }}
-          suite: ${{ inputs.suite }}
-          inference-mode: 'record'
+          setup: ${{ matrix.provider.setup }}
+          suite: ${{ inputs.suite || matrix.provider.suite }}
+          inference-mode: 'record-if-missing'
 
       - name: Run and record tests
-        uses: ./.github/actions/run-and-record-tests
+        if: steps.should_run.outputs.run == 'true'
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@ce063acfe127393537cb0a5deb29cd20063c76af
         env:
-          OPENAI_API_KEY: ${{ inputs.test-setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
-          AZURE_API_KEY: ${{ inputs.test-setup == 'azure' && secrets.AZURE_API_KEY || '' }}
-          AZURE_API_BASE: ${{ inputs.test-setup == 'azure' && secrets.AZURE_API_BASE || '' }}
-          TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure"]'), inputs.test-setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
+          # Expandable: add new provider API keys here
+          OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
+          AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
+          AZURE_API_BASE: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_BASE || '' }}
+          TAVILY_SEARCH_API_KEY: ${{ (matrix.provider.setup == 'gpt' || matrix.provider.setup == 'azure') && secrets.TAVILY_SEARCH_API_KEY || '' }}
+          AWS_BEARER_TOKEN_BEDROCK: ${{ matrix.provider.setup == 'bedrock' && secrets.AWS_BEARER_TOKEN_BEDROCK || '' }}
+          AWS_DEFAULT_REGION: ${{ matrix.provider.setup == 'bedrock' && 'us-west-2' || '' }}
         with:
-          stack-config: 'server:ci-tests'  # recording must be done with server since more tests are run
-          setup: ${{ inputs.test-setup || 'ollama' }}
-          inference-mode: 'record'
-          suite: ${{ inputs.suite }}
-          subdirs: ${{ inputs.subdirs }}
-          pattern: ${{ inputs.pattern }}
+          stack-config: 'server:ci-tests'
+          setup: ${{ matrix.provider.setup }}
+          inference-mode: 'record-if-missing'
+          suite: ${{ inputs.suite || matrix.provider.suite }}
+          subdirs: ${{ inputs.subdirs || '' }}
+          pattern: ${{ inputs.pattern || '' }}
+          target-branch: ${{ needs.compute-pr-info.outputs.pr_head_ref }}
+          is-fork-pr: ${{ needs.compute-pr-info.outputs.is_fork_pr }}
+
+      # For fork PRs, the pinned action skips push (it can't push to forks).
+      # This step handles fork push via GitHub API when maintainer-modify is enabled.
+      - name: Push recordings to fork PR
+        if: steps.should_run.outputs.run == 'true' && needs.compute-pr-info.outputs.is_fork_pr == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ needs.compute-pr-info.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          PROVIDER_SETUP: ${{ matrix.provider.setup }}
+          SUITE: ${{ inputs.suite || matrix.provider.suite }}
+        run: |
+          # Check if there are uncommitted recording changes (the pinned action skips commit for forks)
+          if [[ -z $(git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/) ]]; then
+            echo "No recording changes to push"
+            exit 0
+          fi
+
+          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "manual" ]; then
+            echo "::warning::Cannot determine PR number for fork PR push"
+            exit 0
+          fi
+
+          # Stage and commit recordings
+          git add tests/integration/recordings/ tests/integration/*/recordings/
+          git commit -m "Recordings update from CI (setup: ${PROVIDER_SETUP}, suite: ${SUITE})"
+
+          # Check if maintainer can modify (allows pushing to fork)
+          MAINTAINER_CAN_MODIFY=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json maintainerCanModify --jq '.maintainerCanModify')
+
+          if [ "$MAINTAINER_CAN_MODIFY" = "true" ]; then
+            echo "Maintainer can modify - pushing to fork PR branch"
+
+            PR_DATA=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json headRefName,headRepository)
+            FORK_REPO=$(echo "$PR_DATA" | jq -r '.headRepository.nameWithOwner')
+            FORK_BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
+
+            echo "Pushing to $FORK_REPO (branch: $FORK_BRANCH)"
+            git push "https://x-access-token:${GH_TOKEN}@github.com/${FORK_REPO}.git" "HEAD:${FORK_BRANCH}"
+            echo "Successfully pushed recordings to fork PR"
+          else
+            echo "::warning::Maintainer cannot modify this fork PR (contributor unchecked 'Allow edits from maintainers')"
+            echo "::warning::Recordings were updated but cannot be pushed automatically."
+            echo "::warning::Download the workflow artifacts and commit the recordings manually."
+          fi
+
+  # Summary comment on PR (updates a single comment instead of creating new ones)
+  comment-summary:
+    needs: [compute-pr-info, record-providers]
+    if: always() && needs.compute-pr-info.outputs.pr_number != 'manual'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Update PR comment
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        env:
+          PROVIDERS_TO_RUN: ${{ needs.compute-pr-info.outputs.providers_to_run }}
+          RECORD_STATUS: ${{ needs.record-providers.result }}
+          PR_NUM: ${{ needs.compute-pr-info.outputs.pr_number }}
+          IS_FORK_PR: ${{ needs.compute-pr-info.outputs.is_fork_pr }}
+        with:
+          script: |
+            const COMMENT_MARKER = '<!-- record-integration-tests-bot -->';
+            const providers = process.env.PROVIDERS_TO_RUN.split(',');
+            const status = process.env.RECORD_STATUS;
+            const prNumber = parseInt(process.env.PR_NUM, 10);
+            const isForkPr = process.env.IS_FORK_PR === 'true';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            if (isNaN(prNumber)) {
+              core.warning('PR number is not valid, skipping comment');
+              return;
+            }
+
+            let message = `${COMMENT_MARKER}\n**Recording workflow ${status === 'success' ? 'completed' : 'finished with status: ' + status}**\n\nProviders: ${providers.join(', ')}\n\nRecordings have been ${status === 'success' ? 'committed to this PR.' : 'attempted.'}\n\n[View workflow run](${runUrl})`;
+
+            if (isForkPr && status !== 'success') {
+              message += '\n\n**Fork PR**: If recordings could not be auto-committed, check workflow artifacts.';
+            }
+
+            try {
+              // Find existing bot comment, paginating to avoid duplicates on busy PRs
+              let existing = null;
+              for await (const response of github.paginate.iterator(github.rest.issues.listComments, {
+                issue_number: prNumber,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              })) {
+                existing = response.data.find(c => c.body.includes(COMMENT_MARKER));
+                if (existing) break;
+              }
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  comment_id: existing.id,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: message,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  issue_number: prNumber,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: message,
+                });
+              }
+            } catch (error) {
+              core.warning(`Could not post PR comment: ${error.message}`);
+            }
