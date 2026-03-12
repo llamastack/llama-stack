@@ -998,8 +998,6 @@ class OpenAIVectorStoreMixin(ABC):
                 # Validate embedding model and dimension are available
                 if not embedding_model:
                     raise RuntimeError(f"Vector store {vector_store_id} is not properly configured for file processing")
-                if not embedding_dimension:
-                    raise RuntimeError(f"Vector store {vector_store_id} is not properly configured for file processing")
 
                 # Generate embeddings for all chunks before insertion
 
