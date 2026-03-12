@@ -854,7 +854,7 @@ def _extract_provider_metadata(client: Any, client_type: str, base_url: str = ""
         try:
             import ollama
 
-            metadata["ollama_sdk_version"] = ollama.__version__
+            metadata["ollama_sdk_version"] = getattr(ollama, "__version__", "unknown")
         except (ImportError, AttributeError):
             pass
 
