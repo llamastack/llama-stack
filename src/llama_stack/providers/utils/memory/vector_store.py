@@ -4,24 +4,45 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import io
+import threading
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import chardet
-import numpy as np
 import tiktoken
-from numpy.typing import NDArray
 from pypdf import PdfReader
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
+_numpy: Any = None
+_numpy_lock = threading.Lock()
+
+
+def _get_numpy() -> Any:
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+    with _numpy_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.inference.prompt_adapter import (
     interleaved_content_as_str,
 )
+from llama_stack.providers.utils.vector_io.filters import Filter
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
 from llama_stack_api import (
     Chunk,
@@ -30,11 +51,14 @@ from llama_stack_api import (
     EmbeddedChunk,
     Inference,
     InsertChunksRequest,
+    OpenAIChatCompletionContentPartImageParam,
+    OpenAIChatCompletionContentPartTextParam,
     OpenAIEmbeddingsRequestWithExtraBody,
     QueryChunksRequest,
     QueryChunksResponse,
     VectorStore,
 )
+from llama_stack_api.inference import RerankRequest
 
 log = get_logger(name=__name__, category="providers::utils")
 
@@ -159,6 +183,7 @@ type EmbeddingSequence = Sequence[float | int | np.number] | NDArray[Any]
 
 def _validate_embedding(embedding: EmbeddingSequence, index: int, expected_dimension: int):
     """Helper method to validate embedding format and dimensions"""
+    np = _get_numpy()
     if not isinstance(embedding, (list | np.ndarray)):
         raise ValueError(f"Embedding at index {index} must be a list or numpy array, got {type(embedding)}")
 
@@ -183,22 +208,27 @@ class EmbeddingIndex(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    async def query_vector(self, embedding: NDArray, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_vector(
+        self, embedding: "NDArray", k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         raise NotImplementedError()
 
     @abstractmethod
-    async def query_keyword(self, query_string: str, k: int, score_threshold: float) -> QueryChunksResponse:
+    async def query_keyword(
+        self, query_string: str, k: int, score_threshold: float, filters: Filter | None = None
+    ) -> QueryChunksResponse:
         raise NotImplementedError()
 
     @abstractmethod
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
         reranker_type: str,
         reranker_params: dict[str, Any] | None = None,
+        filters: Filter | None = None,
     ) -> QueryChunksResponse:
         raise NotImplementedError()
 
@@ -235,14 +265,19 @@ class VectorStoreWithIndex:
         if params is None:
             params = {}
         k = params.get("max_chunks", 3)
+        desired_max_num_results = params.get("max_num_results", 2)
         mode = params.get("mode")
         score_threshold = params.get("score_threshold", 0.0)
+
+        # Extract filters from params (processed by router)
+        filters = params.get("filters")
 
         # Get reranker configuration from params (set by openai_vector_store_mixin)
         # NOTE: Breaking change - removed support for old nested "ranker" format.
         #       Now uses flattened format: reranker_type and reranker_params.
         reranker_type = params.get("reranker_type")
         reranker_params = params.get("reranker_params", {})
+        neural_reranking_enabled = False
 
         # If no ranker specified, use VectorStoresConfig default
         if reranker_type is None:
@@ -265,11 +300,8 @@ class VectorStoreWithIndex:
             if "impact_factor" not in reranker_params:
                 reranker_params["impact_factor"] = config.chunk_retrieval_params.rrf_impact_factor
         elif reranker_type == "neural":
-            # TODO: Implement neural reranking
-            log.warning(
-                "TODO: Neural reranking for vector stores is not implemented yet; "
-                "using configured reranker params without algorithm fallback."
-            )
+            # Neural reranking is being applied after initial retrieval
+            neural_reranking_enabled = True
         elif reranker_type == "normalized":
             reranker_type = RERANKER_TYPE_NORMALIZED
         else:
@@ -278,34 +310,116 @@ class VectorStoreWithIndex:
             if "impact_factor" not in reranker_params:
                 reranker_params["impact_factor"] = config.chunk_retrieval_params.rrf_impact_factor
 
-        # Store neural model and weights from params if provided (for future neural reranking in Part II)
+        # Store neural model and weights from params if provided
         if "neural_model" in params:
             reranker_params["neural_model"] = params["neural_model"]
         if "neural_weights" in params:
             reranker_params["neural_weights"] = params["neural_weights"]
 
         query_string = interleaved_content_as_str(request.query)
-        if mode == "keyword":
-            return await self.index.query_keyword(query_string, k, score_threshold)
+        log.info(f"query_chunks(): query={query_string!r}, mode={mode}, k={k}, reranker_type={reranker_type}")
 
-        if "embedding_dimensions" in params:
-            embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
-                model=self.vector_store.embedding_model,
-                input=[query_string],
-                dimensions=params.get("embedding_dimensions"),
-            )
+        if mode == "keyword":
+            response = await self.index.query_keyword(query_string, k, score_threshold, filters)
+
         else:
-            embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
-                model=self.vector_store.embedding_model, input=[query_string]
+            if "embedding_dimensions" in params:
+                embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
+                    model=self.vector_store.embedding_model,
+                    input=[query_string],
+                    dimensions=params.get("embedding_dimensions"),
+                )
+            else:
+                embeddings_request = OpenAIEmbeddingsRequestWithExtraBody(
+                    model=self.vector_store.embedding_model, input=[query_string]
+                )
+            embeddings_response = await self.inference_api.openai_embeddings(embeddings_request)
+            np = _get_numpy()
+            query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
+            if mode == "hybrid":
+                response = await self.index.query_hybrid(
+                    query_vector, query_string, k, score_threshold, reranker_type, reranker_params, filters
+                )
+            else:
+                response = await self.index.query_vector(query_vector, k, score_threshold, filters)
+
+        log.info(f"query_chunks(): retrieved {len(response.chunks)} chunks before neural reranking")
+        for i, (chunk, score) in enumerate(zip(response.chunks, response.scores, strict=False)):
+            preview = chunk.content[:120] if isinstance(chunk.content, str) else str(chunk.content)[:120]
+            log.info(
+                f"Chunk {i}: score={score:.4f} doc_id={chunk.metadata.get('document_id', 'N/A')} content={preview!r}"
             )
-        embeddings_response = await self.inference_api.openai_embeddings(embeddings_request)
-        query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
-        if mode == "hybrid":
-            return await self.index.query_hybrid(
-                query_vector, query_string, k, score_threshold, reranker_type, reranker_params
+
+        # Apply neural reranking if enabled
+        if neural_reranking_enabled and response.chunks:
+            response = await self.apply_neural_rerank(query_string, response, desired_max_num_results, reranker_params)
+
+        return response
+
+    async def apply_neural_rerank(
+        self,
+        query_string: str,
+        response: QueryChunksResponse,
+        desired_max_num_results: int,
+        reranker_params: dict[str, Any],
+    ) -> QueryChunksResponse:
+        """
+        Rerank retrieved chunks using a neural reranker model via the inference API.
+        """
+        reranker_model = reranker_params.get("model")
+
+        if not reranker_model and self.vector_stores_config and self.vector_stores_config.default_reranker_model:
+            config = self.vector_stores_config.default_reranker_model
+            reranker_model = f"{config.provider_id}/{config.model_id}"
+
+        if not reranker_model:
+            log.warning(
+                "Neural reranking requested but no reranker model configured. Returning results without reranking."
             )
-        else:
-            return await self.index.query_vector(query_vector, k, score_threshold)
+            return response
+
+        # Extract text contents from chunks for reranking
+        text_from_chunks: list[
+            str | OpenAIChatCompletionContentPartTextParam | OpenAIChatCompletionContentPartImageParam
+        ] = []
+        for chunk in response.chunks:
+            if isinstance(chunk.content, str):
+                text_from_chunks.append(chunk.content)
+            else:
+                text_from_chunks.append(interleaved_content_as_str(chunk.content))
+
+        try:
+            rerank_response = await self.inference_api.rerank(
+                RerankRequest(
+                    model=reranker_model,
+                    query=query_string,
+                    items=text_from_chunks,
+                    max_num_results=desired_max_num_results,
+                )
+            )
+
+        except Exception as e:
+            log.error(f"Neural reranking failed: {e}. Returning original results.")
+            return response
+
+        log.info(f"Rerank Response: {rerank_response.data}")
+
+        # Reorder chunks and scores based on neural rerank results
+        reranked_chunks = []
+        reranked_scores = []
+        for reranked_chunk in rerank_response.data:
+            if reranked_chunk.index < len(response.chunks):
+                reranked_chunks.append(response.chunks[reranked_chunk.index])
+                reranked_scores.append(reranked_chunk.relevance_score)
+
+        log.info(f"Neural rerank: reranked {len(reranked_chunks)} chunks using model={reranker_model}")
+        for i, (chunk, score) in enumerate(zip(reranked_chunks, reranked_scores, strict=False)):
+            preview = chunk.content[:120] if isinstance(chunk.content, str) else str(chunk.content)[:120]
+            log.info(
+                f"Chunk {i}: relevance_score={score:.4f} doc_id={chunk.metadata.get('document_id', 'N/A')} content={preview!r}"
+            )
+
+        return QueryChunksResponse(chunks=reranked_chunks, scores=reranked_scores)
 
     # Note: File processing for vector stores now happens at the
     # openai_attach_file_to_vector_store level using file_id.

@@ -12,6 +12,7 @@ from llama_stack.core.datatypes import (
     Provider,
     ProviderSpec,
     QualifiedModel,
+    RerankerModel,
     SafetyConfig,
     ShieldInput,
     ToolGroupInput,
@@ -25,6 +26,9 @@ from llama_stack.providers.inline.file_processor.pypdf.config import PyPDFFilePr
 from llama_stack.providers.inline.files.localfs.config import LocalfsFilesImplConfig
 from llama_stack.providers.inline.inference.sentence_transformers import (
     SentenceTransformersInferenceConfig,
+)
+from llama_stack.providers.inline.inference.transformers.config import (
+    TransformersInferenceConfig,
 )
 from llama_stack.providers.inline.vector_io.faiss.config import FaissVectorIOConfig
 from llama_stack.providers.inline.vector_io.milvus.config import MilvusVectorIOConfig
@@ -114,7 +118,10 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
 
     providers = {
         "inference": [BuildProvider(provider_type=p.provider_type, module=p.module) for p in remote_inference_providers]
-        + [BuildProvider(provider_type="inline::sentence-transformers")],
+        + [
+            BuildProvider(provider_type="inline::sentence-transformers"),
+            BuildProvider(provider_type="inline::transformers"),
+        ],
         "vector_io": [
             BuildProvider(provider_type="inline::faiss"),
             BuildProvider(provider_type="inline::sqlite-vec"),
@@ -132,7 +139,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::code-scanner"),
         ],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "post_training": [BuildProvider(provider_type="inline::torchtune-cpu")],
         "eval": [BuildProvider(provider_type="inline::meta-reference")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
@@ -164,6 +170,11 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         provider_type="inline::sentence-transformers",
         config=SentenceTransformersInferenceConfig.sample_run_config(),
     )
+    reranker_provider = Provider(
+        provider_id="transformers",
+        provider_type="inline::transformers",
+        config=TransformersInferenceConfig.sample_run_config(),
+    )
     default_tool_groups = [
         ToolGroupInput(
             toolgroup_id="builtin::websearch",
@@ -190,7 +201,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     postgres_sql_config = PostgresSqlStoreConfig.sample_run_config()
     postgres_kv_config = PostgresKVStoreConfig.sample_run_config()
     default_overrides = {
-        "inference": remote_inference_providers + [embedding_provider],
+        "inference": remote_inference_providers + [embedding_provider, reranker_provider],
         "vector_io": [
             Provider(
                 provider_id="faiss",
@@ -272,6 +283,10 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             default_embedding_model=QualifiedModel(
                 provider_id="sentence-transformers",
                 model_id="nomic-ai/nomic-embed-text-v1.5",
+            ),
+            default_reranker_model=RerankerModel(
+                provider_id="transformers",
+                model_id="Qwen/Qwen3-Reranker-0.6B",
             ),
         ),
         safety_config=SafetyConfig(

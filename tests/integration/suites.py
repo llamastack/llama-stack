@@ -117,7 +117,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
         name="bedrock",
         description="AWS Bedrock provider with OpenAI GPT-OSS model (us-west-2)",
         defaults={
-            "text_model": "bedrock/openai.gpt-oss-20b-1:0",
+            "text_model": "bedrock/openai.gpt-oss-20b",
         },
     ),
     "gpt": Setup(
@@ -128,6 +128,16 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "vision_model": "openai/gpt-4o",
             "embedding_model": "openai/text-embedding-3-small",
             "embedding_dimension": 1536,
+        },
+    ),
+    "azure": Setup(
+        name="azure",
+        description="Azure-hosted GPT models via the Azure OpenAI-compatible endpoint",
+        defaults={
+            "text_model": "azure/gpt-4o",
+            "vision_model": "azure/gpt-4o",
+            "embedding_model": "sentence-transformers/nomic-ai/nomic-embed-text-v1.5",
+            "embedding_dimension": 768,
         },
     ),
     "tgi": Setup(
@@ -217,8 +227,7 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
 base_roots = [
     str(p)
     for p in this_dir.glob("*")
-    if p.is_dir()
-    and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses", "post_training")
+    if p.is_dir() and p.name not in ("__pycache__", "fixtures", "test_cases", "recordings", "responses")
 ]
 
 SUITE_DEFINITIONS: dict[str, Suite] = {

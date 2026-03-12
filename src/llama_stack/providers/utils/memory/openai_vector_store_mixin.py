@@ -27,6 +27,7 @@ from llama_stack.providers.utils.memory.vector_store import (
     content_from_data_and_mime_type,
     make_overlapped_chunks,
 )
+from llama_stack.providers.utils.vector_io.filters import parse_filter
 from llama_stack_api import (
     DEFAULT_CHUNK_OVERLAP_TOKENS,
     DEFAULT_CHUNK_SIZE_TOKENS,
@@ -724,10 +725,15 @@ class OpenAIVectorStoreMixin(ABC):
                 else 0.0
             )
             params = {
+                "max_num_results": max_num_results,
                 "max_chunks": max_num_results * self.vector_stores_config.chunk_retrieval_params.chunk_multiplier,
                 "score_threshold": score_threshold,
                 "mode": request.search_mode,
             }
+
+            # Parse filters into typed objects and pass through to the query
+            if request.filters:
+                params["filters"] = parse_filter(request.filters)
 
             # Use VectorStoresConfig defaults when ranking_options values are not provided
             config = self.vector_stores_config or VectorStoresConfig()
@@ -744,15 +750,7 @@ class OpenAIVectorStoreMixin(ABC):
             # Convert response to OpenAI format
             data = []
             for embedded_chunk, score in zip(response.chunks, response.scores, strict=False):
-                # EmbeddedChunk inherits from Chunk, so use it directly
                 chunk = embedded_chunk
-
-                # Apply filters if provided
-                if request.filters:
-                    # Simple metadata filtering
-                    if not self._matches_filters(chunk.metadata, request.filters):
-                        continue
-
                 content = self._chunk_to_vector_store_content(chunk)
 
                 response_data_item = VectorStoreSearchResponse(
@@ -818,7 +816,7 @@ class OpenAIVectorStoreMixin(ABC):
             params["reranker_type"] = reranker_type
             params["reranker_params"] = reranker_params
 
-            # Store model and weights for neural reranking (TODO: implemented in Part II)
+            # Store model and weights for neural reranking
             if ranking_options.model:
                 params["neural_model"] = ranking_options.model
             if ranking_options.weights:
@@ -838,66 +836,6 @@ class OpenAIVectorStoreMixin(ABC):
                 params["reranker_params"] = reranker_params
 
         return params
-
-    def _matches_filters(self, metadata: dict[str, Any], filters: dict[str, Any]) -> bool:
-        """Check if metadata matches the provided filters."""
-        if not filters:
-            return True
-
-        filter_type = filters.get("type")
-
-        if filter_type is None:
-            if "key" not in filters and "value" not in filters and "filters" not in filters:
-                for key, value in filters.items():
-                    if key not in metadata:
-                        return False
-                    if metadata[key] != value:
-                        return False
-                return True
-            else:
-                raise ValueError("Unsupported filter structure: missing 'type' field")
-
-        if filter_type in ["eq", "ne", "gt", "gte", "lt", "lte"]:
-            # Comparison filter
-            filter_key = filters.get("key")
-            value = filters.get("value")
-
-            if filter_key is None or not isinstance(filter_key, str):
-                return False
-
-            if filter_key not in metadata:
-                return False
-
-            metadata_value = metadata[filter_key]
-
-            if filter_type == "eq":
-                return bool(metadata_value == value)
-            elif filter_type == "ne":
-                return bool(metadata_value != value)
-            elif filter_type == "gt":
-                return bool(metadata_value > value)
-            elif filter_type == "gte":
-                return bool(metadata_value >= value)
-            elif filter_type == "lt":
-                return bool(metadata_value < value)
-            elif filter_type == "lte":
-                return bool(metadata_value <= value)
-            else:
-                raise ValueError(f"Unsupported filter type: {filter_type}")
-
-        elif filter_type == "and":
-            # All filters must match
-            sub_filters = filters.get("filters", [])
-            return all(self._matches_filters(metadata, f) for f in sub_filters)
-
-        elif filter_type == "or":
-            # At least one filter must match
-            sub_filters = filters.get("filters", [])
-            return any(self._matches_filters(metadata, f) for f in sub_filters)
-
-        else:
-            # Unknown filter type, default to no match
-            raise ValueError(f"Unsupported filter type: {filter_type}")
 
     def _chunk_to_vector_store_content(
         self, chunk: EmbeddedChunk, include_embeddings: bool = False, include_metadata: bool = False
@@ -1509,6 +1447,16 @@ class OpenAIVectorStoreMixin(ABC):
         if batch_info["vector_store_id"] != vector_store_id:
             raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
 
+        # Check if batch has expired (7 days from creation)
+        import time
+
+        current_time = int(time.time())
+        created_at = batch_info.get("created_at", current_time)
+        expires_at = batch_info.get("expires_at", created_at + (7 * 24 * 60 * 60))  # 7 days default
+
+        if current_time > expires_at:
+            raise ValueError(f"File batch {batch_id} has expired after 7 days from creation")
+
         return VectorStoreFileBatchObject(**batch_info)
 
     async def openai_list_files_in_vector_store_file_batch(
@@ -1603,8 +1551,8 @@ class OpenAIVectorStoreMixin(ABC):
         if batch_info["vector_store_id"] != vector_store_id:
             raise ValueError(f"File batch {batch_id} does not belong to vector store {vector_store_id}")
 
-        if batch_info["status"] == "completed":
-            return VectorStoreFileBatchObject(**batch_info)
+        if batch_info["status"] in ["completed", "failed"]:
+            raise ValueError(f"Cannot cancel batch {batch_id} with status {batch_info['status']}")
 
         # Cancel the background task if running
         if batch_id in self._file_batch_tasks:

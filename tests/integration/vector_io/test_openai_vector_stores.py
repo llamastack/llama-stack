@@ -42,6 +42,17 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
     pytest.skip("OpenAI vector stores are not supported by any provider")
 
 
+_PROVIDERS_WITH_NATIVE_FILTERING = {"inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::milvus"}
+
+
+def skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id: str):
+    if vector_io_provider_id not in _PROVIDERS_WITH_NATIVE_FILTERING:
+        pytest.skip(
+            f"Provider '{vector_io_provider_id}' does not yet support native filtering. "
+            f"Supported providers: {_PROVIDERS_WITH_NATIVE_FILTERING}"
+        )
+
+
 def skip_if_provider_doesnt_support_openai_vector_stores_search(
     client_with_models, search_mode, vector_io_provider_id=None, embedding_dimension=None
 ):
@@ -3527,6 +3538,7 @@ def test_openai_vector_store_with_chunks(
 ):
     """Test vector store functionality with actual chunks using both OpenAI and native APIs."""
     skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id)
 
     compat_client = compat_client_with_empty_stores
     llama_client = client_with_models
@@ -4024,8 +4036,7 @@ def test_openai_vector_store_search_neural_ranker_validation(
     assert search_response_no_model is not None
     assert len(search_response_no_model.data) == 0  # Should return empty results when model is missing
 
-    # Test that neural ranker with model is accepted (even though not implemented yet)
-    # This should not raise an error, but will use fallback algorithm
+    # Test that neural ranker with model is accepted and uses neural reranking
     search_response = compat_client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="machine learning",
@@ -4037,7 +4048,7 @@ def test_openai_vector_store_search_neural_ranker_validation(
         },
     )
 
-    # Should succeed (using fallback algorithm for now)
+    # Should succeed — neural reranking is applied after initial retrieval
     assert search_response is not None
 
 
@@ -4210,6 +4221,126 @@ def test_openai_vector_store_attach_file(
     top_result = search_response.data[0]
     top_content = top_result.content[0].text
     assert "foobazbar" in top_content.lower()
+
+
+@vector_provider_wrapper
+def test_openai_vector_store_search_with_typed_filters(
+    compat_client_with_empty_stores,
+    client_with_models,
+    embedding_model_id,
+    embedding_dimension,
+    vector_io_provider_id,
+):
+    """Test OpenAI vector store search with typed attribute filters (comparison + compound).
+
+    Uploads 3 files with custom attributes (topic, priority, featured) and verifies
+    that eq/lte/compound-or filters return exactly the expected result sets and
+    exclude documents that should not match.
+
+    max_num_results=10 ensures all 3 single-chunk files are candidates before filtering.
+    """
+    skip_if_provider_doesnt_support_openai_vector_stores(client_with_models)
+    skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id)
+
+    compat_client = compat_client_with_empty_stores
+
+    # 1. Create a vector store
+    vector_store = compat_client.vector_stores.create(
+        name="typed_filter_test_store",
+        extra_body={
+            "embedding_model": embedding_model_id,
+            "provider_id": vector_io_provider_id,
+        },
+    )
+
+    # 2. Upload 3 files with distinct custom attributes via vector_stores.files.create(attributes=...)
+    files_data = [
+        (
+            "ai_doc.txt",
+            b"Artificial intelligence and machine learning transform industries.",
+            {"topic": "ai", "priority": 1, "featured": True},
+        ),
+        (
+            "prog_doc.txt",
+            b"Python programming and software development are essential skills.",
+            {"topic": "programming", "priority": 2, "featured": True},
+        ),
+        (
+            "bio_doc.txt",
+            b"Biology and genetics are studied in life sciences research.",
+            {"topic": "biology", "priority": 3, "featured": False},
+        ),
+    ]
+
+    for name, content, attributes in files_data:
+        with BytesIO(content) as buf:
+            buf.name = name
+            file_obj = compat_client.files.create(
+                file=buf,
+                purpose="assistants",
+                expires_after=ExpiresAfter(anchor="created_at", seconds=86400),
+            )
+        attach = compat_client.vector_stores.files.create(
+            vector_store_id=vector_store.id,
+            file_id=file_obj.id,
+            attributes=attributes,
+        )
+        assert attach.status == "completed"
+
+    # Helper: collect the set of topic values across all results
+    def topics(results):
+        return {r.attributes.get("topic") for r in results.data}
+
+    # 3. ComparisonFilter: eq on string — only ai_doc matches; bio and prog must be absent
+    ai_results = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="technology and innovation",
+        filters={"type": "eq", "key": "topic", "value": "ai"},
+        max_num_results=10,
+    )
+    assert topics(ai_results) == {"ai"}, f"Expected only 'ai', got {topics(ai_results)}"
+    assert all(r.attributes.get("topic") == "ai" for r in ai_results.data)
+    assert not any(r.attributes.get("topic") in ("programming", "biology") for r in ai_results.data)
+
+    # 4. ComparisonFilter: lte on numeric — ai_doc (priority=1) and prog_doc (priority=2); bio_doc (priority=3) must be absent
+    prio_results = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="technology and innovation",
+        filters={"type": "lte", "key": "priority", "value": 2},
+        max_num_results=10,
+    )
+    assert topics(prio_results) == {"ai", "programming"}, f"Expected {{'ai','programming'}}, got {topics(prio_results)}"
+    assert all(r.attributes.get("priority") <= 2 for r in prio_results.data)
+    assert not any(r.attributes.get("topic") == "biology" for r in prio_results.data)
+
+    # 5. CompoundFilter: or across two topics — ai_doc and prog_doc; bio_doc must be absent
+    or_results = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="technology and innovation",
+        filters={
+            "type": "or",
+            "filters": [
+                {"type": "eq", "key": "topic", "value": "ai"},
+                {"type": "eq", "key": "topic", "value": "programming"},
+            ],
+        },
+        max_num_results=10,
+    )
+    assert topics(or_results) == {"ai", "programming"}, f"Expected {{'ai','programming'}}, got {topics(or_results)}"
+    assert not any(r.attributes.get("topic") == "biology" for r in or_results.data)
+
+    # 6. ComparisonFilter: eq on boolean — featured == True; bio_doc (featured=False) must be absent
+    featured_results = compat_client.vector_stores.search(
+        vector_store_id=vector_store.id,
+        query="technology and innovation",
+        filters={"type": "eq", "key": "featured", "value": True},
+        max_num_results=10,
+    )
+    assert topics(featured_results) == {"ai", "programming"}, (
+        f"Expected featured docs only, got {topics(featured_results)}"
+    )
+    assert all(r.attributes.get("featured") is True for r in featured_results.data)
+    assert not any(r.attributes.get("topic") == "biology" for r in featured_results.data)
 
 
 @vector_provider_wrapper

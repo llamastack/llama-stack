@@ -150,7 +150,7 @@ jobs:
       # called from pull_request_target workflows.
       - name: Setup test environment
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: llamastack/llama-stack/.github/actions/setup-test-environment@7d9786b0a0017fa44262c40b6aa42c6a28539c26
+        uses: llamastack/llama-stack/.github/actions/setup-test-environment@ce063acfe127393537cb0a5deb29cd20063c76af
         with:
           python-version: ${{ matrix.python-version }}
           client-version: ${{ matrix.client-version }}
@@ -161,7 +161,7 @@ jobs:
 
       - name: Setup Node.js for TypeScript client tests
         if: ${{ matrix.client == 'server' }}
-        uses: actions/setup-node@6044e13b5dc448c55e2357c09f80417699197238 # v6.2.0
+        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version: ${{matrix.node-version}}
           cache: ${{ inputs.disable_cache && '' || 'npm' }}
@@ -171,15 +171,17 @@ jobs:
       - name: Setup TypeScript client
         if: ${{ matrix.client == 'server' }}
         id: setup-ts-client
-        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@7d9786b0a0017fa44262c40b6aa42c6a28539c26
+        uses: llamastack/llama-stack/.github/actions/setup-typescript-client@ce063acfe127393537cb0a5deb29cd20063c76af
         with:
           client-version: ${{ matrix.client-version }}
 
       - name: Run tests
         if: ${{ matrix.config.allowed_clients == null || contains(matrix.config.allowed_clients, matrix.client) }}
-        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@7d9786b0a0017fa44262c40b6aa42c6a28539c26
+        uses: llamastack/llama-stack/.github/actions/run-and-record-tests@ce063acfe127393537cb0a5deb29cd20063c76af
         env:
           OPENAI_API_KEY: dummy
+          AZURE_API_KEY: replay-mode-dummy-key
+          AZURE_API_BASE: https://dummy.openai.azure.com/openai/v1
           AWS_BEARER_TOKEN_BEDROCK: replay-mode-dummy-key
           AWS_DEFAULT_REGION: us-west-2
           TS_CLIENT_PATH: ${{ steps.setup-ts-client.outputs.ts-client-path || '' }}

@@ -8,7 +8,6 @@ apis:
 - file_processors
 - files
 - inference
-- post_training
 - safety
 - scoring
 - tool_runtime
@@ -94,6 +93,8 @@ providers:
       api_type: ${env.AZURE_API_TYPE:=}
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
+  - provider_id: transformers
+    provider_type: inline::transformers
   vector_io:
   - provider_id: faiss
     provider_type: inline::faiss
@@ -135,6 +136,7 @@ providers:
         type: HNSW
         m: 16
         ef_construction: 64
+        ef_search: 40
       persistence:
         namespace: vector_io::pgvector
         backend: kv_default
@@ -192,11 +194,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  post_training:
-  - provider_id: torchtune-cpu
-    provider_type: inline::torchtune-cpu
-    config:
-      checkpoint_format: meta
   eval:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
@@ -308,6 +305,9 @@ vector_stores:
   default_embedding_model:
     provider_id: sentence-transformers
     model_id: nomic-ai/nomic-embed-text-v1.5
+  default_reranker_model:
+    provider_id: transformers
+    model_id: Qwen/Qwen3-Reranker-0.6B
   file_search_params:
     header_template: 'knowledge_search tool found {num_chunks} chunks:
 

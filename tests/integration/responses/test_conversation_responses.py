@@ -94,12 +94,12 @@ class TestConversationResponses:
             )
         assert any(word in str(exc_info.value).lower() for word in ["conv", "invalid", "bad"])
 
-        # Nonexistent conversation ID
+        # Nonexistent conversation ID (must be valid format to reach the DB lookup)
         with pytest.raises(Exception) as exc_info:
             openai_client.responses.create(
                 model=text_model_id,
                 input=[{"role": "user", "content": "Hello"}],
-                conversation="conv_nonexistent123",
+                conversation="conv_" + "0" * 48,
             )
         assert any(word in str(exc_info.value).lower() for word in ["not found", "404"])
 

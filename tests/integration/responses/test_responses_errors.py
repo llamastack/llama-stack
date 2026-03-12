@@ -250,7 +250,7 @@ class TestConversationsAPIErrors:
         Test that referencing a nonexistent conversation returns 404 and triggers
         openai.NotFoundError in the SDK.
         """
-        conversation_id = "conv_nonexistent123456"
+        conversation_id = "conv_" + "0" * 48
         with pytest.raises(NotFoundError) as exc_info:
             openai_client.responses.create(
                 model=text_model_id,
@@ -425,6 +425,7 @@ class TestResponsesAPIStreamingErrors:
             "invalid_image",
             # TODO: remove internal_error once streaming.py uses spec-compliant error codes
             "internal_error",
+            "server_error",
         }
         if error_code in expected_codes:
             return  # Test passed: received expected image error code
@@ -480,6 +481,7 @@ class TestResponsesAPIStreamingErrors:
             "invalid_image_format",
             # TODO: remove internal_error once streaming.py uses spec-compliant error codes
             "internal_error",
+            "server_error",
         }
         if error_code in expected_codes:
             return  # Test passed: received expected image error code

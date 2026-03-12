@@ -149,6 +149,197 @@ async def test_faiss_query_vector_returns_infinity_when_query_and_embedding_are_
         assert response.chunks[1] == embedded_chunks[1]
 
 
+async def test_meta_index_populated_on_add_chunks(faiss_index, sample_chunks, sample_embeddings, embedding_dimension):
+    """_meta_index should reflect every (key, value) pair from added chunk metadata."""
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=embedding_dimension,
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await faiss_index.add_chunks(embedded_chunks)
+
+    # Both chunks have "document_id" key with distinct values
+    assert "document_id" in faiss_index._meta_index
+    assert "mock-doc-1" in faiss_index._meta_index["document_id"]
+    assert "mock-doc-2" in faiss_index._meta_index["document_id"]
+    assert faiss_index._meta_index["document_id"]["mock-doc-1"] == {0}
+    assert faiss_index._meta_index["document_id"]["mock-doc-2"] == {1}
+
+
+async def test_meta_index_updated_on_delete_chunks(faiss_index, sample_chunks, sample_embeddings, embedding_dimension):
+    """After deleting a chunk, its position should be removed and remaining positions shifted."""
+    from llama_stack.providers.utils.memory.vector_store import ChunkForDeletion
+
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=embedding_dimension,
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await faiss_index.add_chunks(embedded_chunks)
+
+    # Delete the first chunk (position 0); the second chunk should shift to position 0
+    await faiss_index.delete_chunks([ChunkForDeletion(chunk_id=sample_chunks[0].chunk_id, document_id="mock-doc-1")])
+
+    assert "mock-doc-1" not in faiss_index._meta_index.get("document_id", {})
+    # mock-doc-2 was at position 1, should have shifted to 0
+    assert faiss_index._meta_index["document_id"]["mock-doc-2"] == {0}
+
+
+async def test_resolve_filter_positions_eq(faiss_index, sample_chunks, sample_embeddings, embedding_dimension):
+    """eq filter should return only positions whose metadata value matches exactly."""
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=embedding_dimension,
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await faiss_index.add_chunks(embedded_chunks)
+
+    from llama_stack.providers.utils.vector_io.filters import ComparisonFilter
+
+    result = faiss_index._resolve_filter_positions(ComparisonFilter(key="document_id", value="mock-doc-1", type="eq"))
+    assert result == {0}
+
+    result = faiss_index._resolve_filter_positions(ComparisonFilter(key="document_id", value="missing-doc", type="eq"))
+    assert result == set()
+
+
+async def test_resolve_filter_positions_in_nin(faiss_index, sample_chunks, sample_embeddings, embedding_dimension):
+    """in/nin filters should include/exclude the listed values."""
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=embedding_dimension,
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await faiss_index.add_chunks(embedded_chunks)
+
+    from llama_stack.providers.utils.vector_io.filters import ComparisonFilter
+
+    result = faiss_index._resolve_filter_positions(
+        ComparisonFilter(key="document_id", value=["mock-doc-1", "mock-doc-2"], type="in")
+    )
+    assert result == {0, 1}
+
+    result = faiss_index._resolve_filter_positions(
+        ComparisonFilter(key="document_id", value=["mock-doc-1"], type="nin")
+    )
+    assert result == {1}
+
+
+async def test_resolve_filter_positions_compound(faiss_index, sample_chunks, sample_embeddings, embedding_dimension):
+    """CompoundFilter and/or should correctly combine sub-filter position sets."""
+    embedded_chunks = [
+        EmbeddedChunk(
+            content=chunk.content,
+            chunk_id=chunk.chunk_id,
+            metadata=chunk.metadata,
+            chunk_metadata=chunk.chunk_metadata,
+            embedding=embedding.tolist(),
+            embedding_model="test-embedding-model",
+            embedding_dimension=embedding_dimension,
+        )
+        for chunk, embedding in zip(sample_chunks, sample_embeddings, strict=False)
+    ]
+    await faiss_index.add_chunks(embedded_chunks)
+
+    from llama_stack.providers.utils.vector_io.filters import ComparisonFilter, CompoundFilter
+
+    # AND: only positions matching both — no chunk has both doc ids, so empty
+    result = faiss_index._resolve_filter_positions(
+        CompoundFilter(
+            type="and",
+            filters=[
+                ComparisonFilter(key="document_id", value="mock-doc-1", type="eq"),
+                ComparisonFilter(key="document_id", value="mock-doc-2", type="eq"),
+            ],
+        )
+    )
+    assert result == set()
+
+    # OR: positions matching either
+    result = faiss_index._resolve_filter_positions(
+        CompoundFilter(
+            type="or",
+            filters=[
+                ComparisonFilter(key="document_id", value="mock-doc-1", type="eq"),
+                ComparisonFilter(key="document_id", value="mock-doc-2", type="eq"),
+            ],
+        )
+    )
+    assert result == {0, 1}
+
+
+async def test_query_vector_with_filter_returns_correct_chunks(embedding_dimension):
+    """Filtered query_vector should only return chunks matching the filter."""
+    import time
+
+    from llama_stack.providers.utils.vector_io.filters import ComparisonFilter
+    from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
+
+    idx = await FaissIndex.create(dimension=embedding_dimension)
+    rng = np.random.default_rng(0)
+
+    chunks = []
+    for i, topic in enumerate(["ai", "ml", "ai", "cv"]):
+        cid = generate_chunk_id(f"doc{i}", f"content {i}")
+        chunks.append(
+            EmbeddedChunk(
+                content=f"content {i}",
+                chunk_id=cid,
+                metadata={"topic": topic},
+                chunk_metadata=ChunkMetadata(
+                    chunk_id=cid,
+                    document_id=f"doc{i}",
+                    created_timestamp=int(time.time()),
+                    updated_timestamp=int(time.time()),
+                    content_token_count=2,
+                ),
+                embedding=rng.random(embedding_dimension, dtype=np.float32).tolist(),
+                embedding_model="test-model",
+                embedding_dimension=embedding_dimension,
+            )
+        )
+    await idx.add_chunks(chunks)
+
+    f = ComparisonFilter(key="topic", value="ai", type="eq")
+    response = await idx.query_vector(
+        embedding=rng.random(embedding_dimension, dtype=np.float32),
+        k=10,
+        score_threshold=0.0,
+        filters=f,
+    )
+
+    assert len(response.chunks) == 2
+    assert all(c.metadata["topic"] == "ai" for c in response.chunks)
+
+
 async def test_health_success():
     """Test that the health check returns OK status when faiss is working correctly."""
     # Create a fresh instance of FaissVectorIOAdapter for testing
@@ -156,8 +347,10 @@ async def test_health_success():
     inference_api = MagicMock()
     files_api = MagicMock()
 
-    with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
-        mock_index_flat.return_value = MagicMock()
+    mock_faiss = MagicMock()
+    mock_faiss.IndexFlatL2.return_value = MagicMock()
+
+    with patch("llama_stack.providers.inline.vector_io.faiss.faiss._get_faiss", return_value=mock_faiss):
         adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
         # Calling the health method directly
@@ -169,7 +362,7 @@ async def test_health_success():
         assert "message" not in response
 
         # Verifying that IndexFlatL2 was called with the correct dimension
-        mock_index_flat.assert_called_once_with(128)  # VECTOR_DIMENSION is 128
+        mock_faiss.IndexFlatL2.assert_called_once_with(128)  # VECTOR_DIMENSION is 128
 
 
 async def test_health_failure():
@@ -179,9 +372,10 @@ async def test_health_failure():
     inference_api = MagicMock()
     files_api = MagicMock()
 
-    with patch("llama_stack.providers.inline.vector_io.faiss.faiss.faiss.IndexFlatL2") as mock_index_flat:
-        mock_index_flat.side_effect = Exception("Test error")
+    mock_faiss = MagicMock()
+    mock_faiss.IndexFlatL2.side_effect = Exception("Test error")
 
+    with patch("llama_stack.providers.inline.vector_io.faiss.faiss._get_faiss", return_value=mock_faiss):
         adapter = FaissVectorIOAdapter(config=config, inference_api=inference_api, files_api=files_api)
 
         # Calling the health method directly
