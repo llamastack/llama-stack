@@ -60,10 +60,7 @@ def _discover_categories() -> list[str]:
     """Discover categories from test files on disk, in sorted order."""
     if not TESTS_DIR.exists():
         return []
-    return sorted(
-        _file_to_category(f.name)
-        for f in TESTS_DIR.glob("test_*.py")
-    )
+    return sorted(_file_to_category(f.name) for f in TESTS_DIR.glob("test_*.py"))
 
 
 def _test_name_to_feature(test_name: str) -> str:
@@ -86,7 +83,6 @@ class ProviderResults:
     provider: str
     # category -> {feature -> outcome}
     results: dict[str, dict[str, str]] = field(default_factory=lambda: defaultdict(dict))
-
 
 
 # ---------------------------------------------------------------------------
@@ -226,6 +222,7 @@ def _compute_summary(provider_map: dict[str, ProviderResults]) -> dict:
 # ---------------------------------------------------------------------------
 # Markdown generation
 # ---------------------------------------------------------------------------
+
 
 def _load_provider_names() -> dict[str, str]:
     """Build display names from the inference provider registry's adapter_type values."""
