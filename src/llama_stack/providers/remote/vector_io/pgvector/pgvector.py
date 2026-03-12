@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import heapq
+import re
 from typing import Any
 
 import psycopg2
@@ -51,6 +52,18 @@ VECTOR_INDEX_PREFIX = f"vector_index:pgvector:{VERSION}::"
 OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:pgvector:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:pgvector:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_contents:pgvector:{VERSION}::"
+
+_PG_SQL_OPS: dict[str, str] = {
+    "eq": "=",
+    "ne": "!=",
+    "gt": ">",
+    "gte": ">=",
+    "lt": "<",
+    "lte": "<=",
+}
+
+# Regex for validating metadata key names to prevent SQL injection in JSONB paths
+_VALID_KEY_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]+$")
 
 
 def check_extension_version(cur):
@@ -249,14 +262,12 @@ class PGVectorIndex(EmbeddingIndex):
             embedding: The query embedding vector
             k: Number of results to return
             score_threshold: Minimum similarity score threshold
-            filters: Optional filters (not yet supported for PGVector provider)
+            filters: Optional filters for metadata-based filtering
 
         Returns:
             QueryChunksResponse with combined results
         """
-        # Filters are not yet implemented for PGVector provider
-        if filters is not None:
-            raise NotImplementedError("PGVector provider does not yet support native filtering")
+        filter_clause, filter_params = self._translate_filters(filters)
 
         pgvector_search_function = self.get_pgvector_search_function()
 
@@ -277,14 +288,17 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
 
+            where = f"WHERE {filter_clause}" if filter_clause else ""
+
             cur.execute(
                 f"""
             SELECT document, embedding {pgvector_search_function} %s::vector AS distance
             FROM {self.table_name}
+            {where}
             ORDER BY distance
             LIMIT %s
         """,
-                (embedding.tolist(), k),
+                (embedding.tolist(), *filter_params, k),
             )
             results = cur.fetchall()
 
@@ -317,21 +331,21 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
-        # PGVector provider does not yet support native filtering
-        if filters is not None:
-            raise NotImplementedError("PGVector provider does not yet support native filtering")
+        filter_clause, filter_params = self._translate_filters(filters)
 
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             # Use plainto_tsquery to handle user input safely and ts_rank for relevance scoring
+            filter_sql = f" AND ({filter_clause})" if filter_clause else ""
+
             cur.execute(
                 f"""
             SELECT document, ts_rank(tokenized_content, plainto_tsquery('english', %s)) AS score
             FROM {self.table_name}
-            WHERE tokenized_content @@ plainto_tsquery('english', %s)
+            WHERE tokenized_content @@ plainto_tsquery('english', %s){filter_sql}
             ORDER BY score DESC
             LIMIT %s
         """,
-                (query_string, query_string, k),
+                (query_string, query_string, *filter_params, k),
             )
             results = cur.fetchall()
 
@@ -369,16 +383,12 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
-        # PGVector provider does not yet support native filtering
-        if filters is not None:
-            raise NotImplementedError("PGVector provider does not yet support native filtering")
-
         if reranker_params is None:
             reranker_params = {}
 
-        # Get results from both search methods
-        vector_response = await self.query_vector(embedding, k, score_threshold)
-        keyword_response = await self.query_keyword(query_string, k, score_threshold)
+        # Get results from both search methods, passing filters through
+        vector_response = await self.query_vector(embedding, k, score_threshold, filters)
+        keyword_response = await self.query_keyword(query_string, k, score_threshold, filters)
 
         # Convert responses to score dictionaries using chunk_id
         vector_scores = {
@@ -412,6 +422,83 @@ class PGVectorIndex(EmbeddingIndex):
                 scores.append(score)
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
+
+    def _translate_filters(self, filters: ComparisonFilter | CompoundFilter | None) -> tuple[str, list[Any]]:
+        """Translate OpenAI-compatible filters to PostgreSQL WHERE clause with parameters.
+
+        Args:
+            filters: The filter to translate (ComparisonFilter or CompoundFilter)
+
+        Returns:
+            A tuple of (where_clause, parameters) where where_clause is a SQL condition string
+            and parameters is a list of values to be bound to the query.
+        """
+        if filters is None:
+            return "", []
+
+        return self._translate_single_filter(filters)
+
+    def _translate_single_filter(self, filter_obj: ComparisonFilter | CompoundFilter) -> tuple[str, list[Any]]:
+        """Translate a single filter to SQL."""
+        if isinstance(filter_obj, ComparisonFilter):
+            return self._translate_comparison_filter(filter_obj)
+        elif isinstance(filter_obj, CompoundFilter):
+            return self._translate_compound_filter(filter_obj)
+        else:
+            raise ValueError(f"Unknown filter type: {type(filter_obj)}")
+
+    def _translate_comparison_filter(self, filter_obj: ComparisonFilter) -> tuple[str, list[Any]]:
+        """Translate a comparison filter to PostgreSQL WHERE clause using JSONB operators."""
+        key, value, op_type = filter_obj.key, filter_obj.value, filter_obj.type
+
+        # Validate key to prevent SQL injection in JSONB path
+        if not _VALID_KEY_PATTERN.match(key):
+            raise ValueError(f"Invalid metadata key name: {key!r}")
+
+        # Use ->> to extract metadata value as text from the JSONB document column
+        expr = f"document->'metadata'->>'{key}'"
+
+        if op_type in _PG_SQL_OPS:
+            sql_op = _PG_SQL_OPS[op_type]
+            # Check bool before int since bool is a subclass of int in Python
+            if isinstance(value, bool):
+                return f"({expr})::boolean {sql_op} %s", [value]
+            elif isinstance(value, int | float):
+                return f"({expr})::numeric {sql_op} %s", [value]
+            else:
+                return f"{expr} {sql_op} %s", [value]
+        elif op_type == "in":
+            if not isinstance(value, list):
+                raise ValueError(f"'in' filter requires a list value, got {type(value)}")
+            placeholders = ", ".join("%s" for _ in value)
+            return f"{expr} IN ({placeholders})", [str(v) for v in value]
+        elif op_type == "nin":
+            if not isinstance(value, list):
+                raise ValueError(f"'nin' filter requires a list value, got {type(value)}")
+            placeholders = ", ".join("%s" for _ in value)
+            return f"{expr} NOT IN ({placeholders})", [str(v) for v in value]
+        else:
+            raise ValueError(f"Unknown comparison operator: {op_type}")
+
+    def _translate_compound_filter(self, filter_obj: CompoundFilter) -> tuple[str, list[Any]]:
+        """Translate a compound filter (and/or) to PostgreSQL WHERE clause."""
+        if not filter_obj.filters:
+            return "", []
+
+        clauses = []
+        params: list[Any] = []
+
+        for sub_filter in filter_obj.filters:
+            clause, sub_params = self._translate_single_filter(sub_filter)
+            if clause:
+                clauses.append(f"({clause})")
+                params.extend(sub_params)
+
+        if not clauses:
+            return "", []
+
+        operator = " AND " if filter_obj.type == "and" else " OR "
+        return operator.join(clauses), params
 
     async def delete(self):
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:

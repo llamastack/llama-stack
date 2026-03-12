@@ -42,7 +42,13 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
     pytest.skip("OpenAI vector stores are not supported by any provider")
 
 
-_PROVIDERS_WITH_NATIVE_FILTERING = {"inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::milvus"}
+_PROVIDERS_WITH_NATIVE_FILTERING = {
+    "inline::faiss",
+    "inline::sqlite-vec",
+    "inline::milvus",
+    "remote::milvus",
+    "remote::pgvector",
+}
 
 
 def skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id: str):
