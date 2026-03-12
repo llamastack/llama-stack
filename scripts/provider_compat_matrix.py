@@ -96,6 +96,9 @@ class ProviderResults:
 # Recording analysis
 # ---------------------------------------------------------------------------
 
+# Self-hosted providers where the endpoint is not meaningful (localhost / user-managed)
+_SELF_HOSTED_PROVIDERS = {"vllm", "ollama", "tgi", "llama-cpp-server"}
+
 _PROVIDER_RE = re.compile(r"txt=([a-zA-Z_-]+)/")
 _VIS_PROVIDER_RE = re.compile(r"vis=([a-zA-Z_-]+)/")
 
@@ -164,7 +167,7 @@ def scan_recordings(recordings_dir: Path) -> dict[str, ProviderResults]:
             url = request.get("url", "")
             if model:
                 provider_map[provider].models.add(model)
-            if url:
+            if url and provider not in _SELF_HOSTED_PROVIDERS:
                 parsed = urlparse(url)
                 if parsed.hostname and parsed.hostname != "localhost":
                     provider_map[provider].hosts.add(parsed.hostname)
