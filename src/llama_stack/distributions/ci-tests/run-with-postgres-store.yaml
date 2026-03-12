@@ -8,7 +8,6 @@ apis:
 - file_processors
 - files
 - inference
-- post_training
 - safety
 - scoring
 - tool_runtime
@@ -193,11 +192,6 @@ providers:
           backend: sql_default
           max_write_queue_size: 10000
           num_writers: 4
-  post_training:
-  - provider_id: torchtune-cpu
-    provider_type: inline::torchtune-cpu
-    config:
-      checkpoint_format: meta
   eval:
   - provider_id: meta-reference
     provider_type: inline::meta-reference
@@ -285,7 +279,12 @@ storage:
       namespace: connectors
       backend: kv_default
 registered_resources:
-  models: []
+  models:
+  - metadata: {}
+    model_id: azure/gpt-4o
+    provider_id: ${env.AZURE_API_KEY:+azure}
+    provider_model_id: gpt-4o
+    model_type: llm
   shields:
   - shield_id: llama-guard
     provider_id: ${env.SAFETY_MODEL:+llama-guard}
