@@ -60,6 +60,23 @@ print(json.dumps({{"loaded": loaded, "new_count": len(new_modules)}}))
     return output
 
 
+class TestPromptGuardLazyImports:
+    """Test that prompt_guard safety provider doesn't load torch or transformers at import time."""
+
+    def test_no_torch_transformers_on_import(self):
+        """Verify prompt_guard module import doesn't load torch or transformers."""
+        result = _check_module_import_isolation(
+            "from llama_stack.providers.inline.safety.prompt_guard import prompt_guard",
+            ["torch", "transformers"],
+        )
+
+        assert result.get("success"), f"Import failed: {result.get('error', 'unknown error')}"
+        assert not result["loaded"], (
+            f"Heavy modules loaded unexpectedly during prompt_guard import: {result['loaded']}. "
+            "These should be lazily loaded only when initialize() is called."
+        )
+
+
 class TestBraintrustLazyImports:
     """Test that braintrust scoring provider doesn't load autoevals/pyarrow at import time."""
 
