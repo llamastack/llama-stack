@@ -25,6 +25,16 @@ inference provider, based on integration test results.
 | openai | 103 | 103 | 0 | 99% |
 | vllm | 1 | 1 | 0 | 1% |
 
+## Provider Details
+
+Models and endpoints used during test recordings.
+
+| Provider | Model(s) | Endpoint |
+|----------|----------|----------|
+| azure | gpt-4o | lls-test.openai.azure.com |
+| openai | gpt-4o, text-embedding-3-small | api.openai.com |
+| vllm | Qwen/Qwen3-0.6B | — |
+
 ## Basic Responses
 
 | Feature | azure | openai | vllm |

@@ -34,6 +34,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 RECORDINGS_DIR = ROOT / "tests" / "integration" / "responses" / "recordings"
@@ -83,6 +84,10 @@ class ProviderResults:
     provider: str
     # category -> {feature -> outcome}
     results: dict[str, dict[str, str]] = field(default_factory=lambda: defaultdict(dict))
+    # Model names seen in recordings for this provider
+    models: set[str] = field(default_factory=set)
+    # Service URL host patterns seen (e.g. "api.openai.com", "localhost:8000")
+    hosts: set[str] = field(default_factory=set)
 
 
 # ---------------------------------------------------------------------------
@@ -148,6 +153,19 @@ def scan_recordings(recordings_dir: Path) -> dict[str, ProviderResults]:
 
         if provider not in provider_map:
             provider_map[provider] = ProviderResults(provider=provider)
+
+        # Extract model and host from request metadata (skip infrastructure endpoints)
+        request = data.get("request", {})
+        endpoint = request.get("endpoint", "")
+        if endpoint not in ("/v1/models", "/api/tags"):
+            model = request.get("model", "")
+            url = request.get("url", "")
+            if model:
+                provider_map[provider].models.add(model)
+            if url:
+                parsed = urlparse(url)
+                if parsed.hostname and parsed.hostname != "localhost":
+                    provider_map[provider].hosts.add(parsed.hostname)
 
         if feature not in provider_map[provider].results[category]:
             provider_map[provider].results[category][feature] = "pass"
@@ -295,6 +313,20 @@ def generate_matrix_markdown(provider_map: dict[str, ProviderResults]) -> str:
         s = summary["providers"][p]
         lines.append(f"| {_pname(p)} | {s['tested']} | {s['passing']} | {s['failing']} | {s['coverage_pct']:.0f}% |")
 
+    lines.append("")
+
+    # Provider details section
+    lines.append("## Provider Details")
+    lines.append("")
+    lines.append("Models and endpoints used during test recordings.")
+    lines.append("")
+    lines.append("| Provider | Model(s) | Endpoint |")
+    lines.append("|----------|----------|----------|")
+    for p in providers:
+        pr = provider_map[p]
+        models = ", ".join(sorted(pr.models)) if pr.models else "—"
+        hosts = ", ".join(sorted(pr.hosts)) if pr.hosts else "—"
+        lines.append(f"| {_pname(p)} | {models} | {hosts} |")
     lines.append("")
 
     for category, features in categories.items():
