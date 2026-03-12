@@ -84,6 +84,12 @@ providers:
     config:
       base_url: https://api.sambanova.ai/v1
       api_key: ${env.SAMBANOVA_API_KEY:=}
+  - provider_id: ${env.WATSONX_API_KEY:+watsonx}
+    provider_type: remote::watsonx
+    config:
+      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
+      api_key: ${env.WATSONX_API_KEY:=}
+      project_id: ${env.WATSONX_PROJECT_ID:=}
   - provider_id: ${env.AZURE_API_KEY:+azure}
     provider_type: remote::azure
     config:
@@ -275,6 +281,11 @@ registered_resources:
     model_id: azure/gpt-4o
     provider_id: ${env.AZURE_API_KEY:+azure}
     provider_model_id: gpt-4o
+    model_type: llm
+  - metadata: {}
+    model_id: watsonx/ibm/granite-3-8b-instruct
+    provider_id: ${env.WATSONX_API_KEY:+watsonx}
+    provider_model_id: ibm/granite-3-8b-instruct
     model_type: llm
   shields:
   - shield_id: llama-guard

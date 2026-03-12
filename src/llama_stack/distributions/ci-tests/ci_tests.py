@@ -31,6 +31,15 @@ def get_distribution_template() -> DistributionTemplate:
         model_type=ModelType.llm,
     )
 
+    # WatsonX model must be pre-registered because the recording system cannot
+    # replay model-list discovery calls against the WatsonX endpoint in CI.
+    watsonx_model = ModelInput(
+        model_id="watsonx/ibm/granite-3-8b-instruct",
+        provider_id="${env.WATSONX_API_KEY:+watsonx}",
+        provider_model_id="ibm/granite-3-8b-instruct",
+        model_type=ModelType.llm,
+    )
+
     # Add conditional authentication config (disabled by default for CI tests)
     # This tests the conditional auth provider feature and provides a template for users
     # To enable: export AUTH_PROVIDER=enabled and configure the auth env vars
@@ -58,6 +67,7 @@ def get_distribution_template() -> DistributionTemplate:
         if run_config.default_models is None:
             run_config.default_models = []
         run_config.default_models.append(azure_model)
+        run_config.default_models.append(watsonx_model)
 
         # Add conditional auth config
         run_config.auth_config = auth_config

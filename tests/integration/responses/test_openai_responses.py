@@ -583,9 +583,11 @@ class TestOpenAIResponses:
         assert response.background is False
         assert len(response.output) > 0
 
-    def _skip_service_tier_for_azure(self, text_model_id):
+    def _skip_service_tier_for_unsupported(self, text_model_id):
         if text_model_id.startswith("azure/"):
             pytest.skip("Azure OpenAI does not support the service_tier parameter")
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support the service_tier parameter")
 
     def test_openai_response_with_service_tier_auto(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto'.
@@ -593,7 +595,7 @@ class TestOpenAIResponses:
         When 'auto' is requested, the provider decides the actual tier (e.g. default, priority),
         so we only assert the response has a non-null service_tier.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response = openai_client.responses.create(
             model=text_model_id,
@@ -608,7 +610,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier(self, openai_client, text_model_id, service_tier):
         """Test OpenAI response with explicit service_tier values that should be preserved."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response = openai_client.responses.create(
             model=text_model_id,
@@ -627,7 +629,7 @@ class TestOpenAIResponses:
         for certain models). This test verifies the request is accepted with the
         exact tier preserved, or properly rejected.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         try:
             response = openai_client.responses.create(
@@ -643,7 +645,7 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_service_tier_auto_streaming(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto' in streaming mode."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -670,7 +672,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier_streaming(self, openai_client, text_model_id, service_tier):
         """Test OpenAI response with explicit service_tier values in streaming mode."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -700,7 +702,7 @@ class TestOpenAIResponses:
         The flex tier may not be supported by all providers. This test verifies
         the request is accepted with the exact tier preserved, or produces a proper failure event.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -724,7 +726,7 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_service_tier_auto_and_previous_response(self, openai_client, text_model_id):
         """Test that service_tier='auto' works correctly with previous_response_id."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response1 = openai_client.responses.create(
             model=text_model_id,
@@ -749,7 +751,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier_and_previous_response(self, openai_client, text_model_id, service_tier):
         """Test that explicit service_tier values are preserved with previous_response_id."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response1 = openai_client.responses.create(
             model=text_model_id,
