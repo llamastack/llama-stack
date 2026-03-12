@@ -459,7 +459,7 @@ class SearchRankingOptions(BaseModel):
     :param ranker: (Optional) Name of the ranking algorithm to use. Supported values:
         - "weighted": Weighted combination of vector and keyword scores
         - "rrf": Reciprocal Rank Fusion algorithm
-        - "neural": Neural reranking model (requires model parameter, Part II)
+        - "neural": Neural reranking model (requires model parameter)
         Note: For OpenAI API compatibility, any string value is accepted, but only the above values are supported.
     :param score_threshold: (Optional) Minimum relevance score threshold for results. Default: 0.0
     :param alpha: (Optional) Weight factor for weighted ranker (0-1).
@@ -474,10 +474,10 @@ class SearchRankingOptions(BaseModel):
         Falls back to VectorStoresConfig.chunk_retrieval_params.rrf_impact_factor if not provided.
     :param weights: (Optional) Dictionary of weights for combining different signal types.
         Keys can be "vector", "keyword", "neural". Values should sum to 1.0.
-        Used when combining algorithm-based reranking with neural reranking (Part II).
+        Used when combining algorithm-based reranking with neural reranking.
         Example: {"vector": 0.3, "keyword": 0.3, "neural": 0.4}
-    :param model: (Optional) Model identifier for neural reranker (e.g., "vllm/Qwen3-Reranker-0.6B").
-        Required when ranker="neural" or when weights contains "neural" (Part II).
+    :param model: (Optional) Model identifier for neural reranker (e.g., "transformers/Qwen/Qwen3-Reranker-0.6B").
+        Required when ranker="neural" or when weights contains "neural".
     """
 
     ranker: str | None = None

@@ -29,6 +29,9 @@ Meta's reference implementation of an agent system that can use tools, access ve
 | `vector_stores_config.default_embedding_model.provider_id` | `str` | No |  |  |
 | `vector_stores_config.default_embedding_model.model_id` | `str` | No |  |  |
 | `vector_stores_config.default_embedding_model.embedding_dimensions` | `int \| None` | No |  |  |
+| `vector_stores_config.default_reranker_model` | `RerankerModel \| None` | No |  | Default reranker model configuration for vector stores. |
+| `vector_stores_config.default_reranker_model.provider_id` | `str` | No |  |  |
+| `vector_stores_config.default_reranker_model.model_id` | `str` | No |  |  |
 | `vector_stores_config.rewrite_query_params` | `RewriteQueryParams \| None` | No |  | Parameters for query rewriting/expansion. None disables query rewriting. |
 | `vector_stores_config.rewrite_query_params.model` | `QualifiedModel \| None` | No |  | LLM model for query rewriting/expansion in vector search. |
 | `vector_stores_config.rewrite_query_params.prompt` | `str` | No | Expand this query with relevant synonyms and related terms. Return only the improved query, no explanations:
