@@ -1,0 +1,1747 @@
+{
+  "test_id": "tests/integration/responses/test_structured_output.py::test_json_schema_array_of_objects[client_with_models-txt=watsonx/ibm/granite-3-8b-instruct]",
+  "request": {
+    "method": "POST",
+    "url": "https://us-south.ml.cloud.ibm.com/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "watsonx/ibm/granite-3-8b-instruct",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Generate a team called Engineering with two members: Alice as lead and Bob as developer"
+        }
+      ],
+      "response_format": {
+        "type": "json_schema",
+        "json_schema": {
+          "name": "TeamMembers",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "team_name": {
+                "type": "string"
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "role"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "team_name",
+              "members"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "watsonx/ibm/granite-3-8b-instruct",
+    "provider_metadata": {
+      "watsonx_build": "1.0.139",
+      "watsonx_build_date": "2026-01-09T20:06:07-0800"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "{",
+                "role": "assistant",
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "members",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\":",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " [",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n   ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " {",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n     ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "name",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\":",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "Alice",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\",",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n     ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "role",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\":",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "Lead",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " Engineer",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n   ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " },",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n   ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " {",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n     ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "name",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\":",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "Bob",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\",",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n     ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "role",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\":",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "Software",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " Developer",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n   ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " }",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n ",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " ]",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": ",",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "team",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "_",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "name",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\":",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": " \"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "Engine",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "ering",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\"",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "\n",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": "}",
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": "stop",
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": null,
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null
+        }
+      },
+      {
+        "__type__": "litellm.types.utils.ModelResponseStream",
+        "__data__": {
+          "id": "rec-efc3a17eff4d",
+          "created": 0,
+          "model": "ibm/granite-3-8b-instruct",
+          "object": "chat.completion.chunk",
+          "system_fingerprint": null,
+          "choices": [
+            {
+              "finish_reason": null,
+              "index": 0,
+              "delta": {
+                "provider_specific_fields": null,
+                "content": null,
+                "role": null,
+                "function_call": null,
+                "tool_calls": null,
+                "audio": null
+              },
+              "logprobs": null
+            }
+          ],
+          "provider_specific_fields": null,
+          "usage": {
+            "completion_tokens": 55,
+            "prompt_tokens": 23,
+            "total_tokens": 78,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": null,
+              "audio_tokens": null,
+              "reasoning_tokens": 0,
+              "rejected_prediction_tokens": null
+            },
+            "prompt_tokens_details": null
+          }
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}

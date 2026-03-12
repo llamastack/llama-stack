@@ -862,6 +862,56 @@ def _extract_provider_metadata(client: Any, client_type: str, base_url: str = ""
     return metadata
 
 
+def _extract_litellm_provider_metadata(model: str, api_base: str = "", api_key: str = "") -> dict[str, str]:
+    """Extract version metadata for LiteLLM-based providers (e.g. WatsonX).
+
+    For WatsonX, queries the foundation_model_specs endpoint to get router_info
+    (build version and date).
+    """
+    provider = model.split("/")[0] if "/" in model else ""
+    cache_key = f"litellm:{provider}"
+    if cache_key in _cached_provider_metadata:
+        return _cached_provider_metadata[cache_key]
+
+    metadata: dict[str, str] = {}
+
+    if provider == "watsonx":
+        try:
+            import urllib.request
+
+            api_base = api_base or os.environ.get("WATSONX_BASE_URL", "")
+            api_key = api_key or os.environ.get("WATSONX_API_KEY", "")
+            if api_base and api_key:
+                # Get IAM token
+                token_url = "https://iam.cloud.ibm.com/identity/token"
+                token_data = f"grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey={api_key}"
+                token_req = urllib.request.Request(
+                    token_url,
+                    data=token_data.encode(),
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                )
+                with urllib.request.urlopen(token_req, timeout=10) as resp:
+                    token = json.loads(resp.read().decode())["access_token"]
+
+                # Query model specs for router_info
+                specs_url = f"{api_base.rstrip('/')}/ml/v1/foundation_model_specs?version=2023-10-25&limit=1"
+                specs_req = urllib.request.Request(specs_url, headers={"Authorization": f"Bearer {token}"})
+                with urllib.request.urlopen(specs_req, timeout=10) as resp:
+                    specs = json.loads(resp.read().decode())
+                    resources = specs.get("resources", [])
+                    if resources:
+                        router_info = resources[0].get("router_info", {})
+                        if router_info.get("build"):
+                            metadata["watsonx_build"] = router_info["build"]
+                        if router_info.get("build_date"):
+                            metadata["watsonx_build_date"] = router_info["build_date"]
+        except Exception:
+            pass
+
+    _cached_provider_metadata[cache_key] = metadata
+    return metadata
+
+
 async def _patched_inference_method(original_method, self, client_type, endpoint, *args, **kwargs):
     global _current_mode, _current_storage
 
@@ -1093,13 +1143,19 @@ async def _patched_litellm_method(original_func, endpoint, *args, **kwargs):
             )
 
     if mode == APIRecordingMode.RECORD or (mode == APIRecordingMode.RECORD_IF_MISSING and not recording):
+        model_name = body.get("model", "")
         request_data = {
             "method": method,
             "url": url,
             "headers": headers,
             "body": body,
             "endpoint": endpoint,
-            "model": body.get("model", ""),
+            "model": model_name,
+            "provider_metadata": _extract_litellm_provider_metadata(
+                model_name,
+                api_base=kwargs.get("api_base", ""),
+                api_key=kwargs.get("api_key", ""),
+            ),
         }
 
         try:
