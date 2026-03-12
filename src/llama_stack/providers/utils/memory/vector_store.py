@@ -4,18 +4,38 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 import io
+import threading
 import time
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import chardet
-import numpy as np
 import tiktoken
-from numpy.typing import NDArray
 from pypdf import PdfReader
+
+if TYPE_CHECKING:
+    import numpy as np
+    from numpy.typing import NDArray
+
+_numpy: Any = None
+_numpy_lock = threading.Lock()
+
+
+def _get_numpy() -> Any:
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+    with _numpy_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
 
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.log import get_logger
@@ -163,6 +183,7 @@ type EmbeddingSequence = Sequence[float | int | np.number] | NDArray[Any]
 
 def _validate_embedding(embedding: EmbeddingSequence, index: int, expected_dimension: int):
     """Helper method to validate embedding format and dimensions"""
+    np = _get_numpy()
     if not isinstance(embedding, (list | np.ndarray)):
         raise ValueError(f"Embedding at index {index} must be a list or numpy array, got {type(embedding)}")
 
@@ -188,7 +209,7 @@ class EmbeddingIndex(ABC):
 
     @abstractmethod
     async def query_vector(
-        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+        self, embedding: "NDArray", k: int, score_threshold: float, filters: Filter | None = None
     ) -> QueryChunksResponse:
         raise NotImplementedError()
 
@@ -201,7 +222,7 @@ class EmbeddingIndex(ABC):
     @abstractmethod
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
@@ -313,6 +334,7 @@ class VectorStoreWithIndex:
                     model=self.vector_store.embedding_model, input=[query_string]
                 )
             embeddings_response = await self.inference_api.openai_embeddings(embeddings_request)
+            np = _get_numpy()
             query_vector = np.array(embeddings_response.data[0].embedding, dtype=np.float32)
             if mode == "hybrid":
                 response = await self.index.query_hybrid(
