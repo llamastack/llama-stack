@@ -34,6 +34,7 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 RECORDINGS_DIR = ROOT / "tests" / "integration" / "responses" / "recordings"
@@ -83,11 +84,20 @@ class ProviderResults:
     provider: str
     # category -> {feature -> outcome}
     results: dict[str, dict[str, str]] = field(default_factory=lambda: defaultdict(dict))
+    # Model names seen in recordings for this provider
+    models: set[str] = field(default_factory=set)
+    # Service URL host patterns seen (e.g. "api.openai.com", "localhost:8000")
+    hosts: set[str] = field(default_factory=set)
+    # Provider metadata from recordings (e.g. SDK versions, API versions)
+    metadata: dict[str, str] = field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
 # Recording analysis
 # ---------------------------------------------------------------------------
+
+# Self-hosted providers where the endpoint is not meaningful (localhost / user-managed)
+_SELF_HOSTED_PROVIDERS = {"vllm", "ollama", "tgi", "llama-cpp-server"}
 
 _PROVIDER_RE = re.compile(r"txt=([a-zA-Z_-]+)/")
 _VIS_PROVIDER_RE = re.compile(r"vis=([a-zA-Z_-]+)/")
@@ -148,6 +158,26 @@ def scan_recordings(recordings_dir: Path) -> dict[str, ProviderResults]:
 
         if provider not in provider_map:
             provider_map[provider] = ProviderResults(provider=provider)
+
+        # Extract model and host from request metadata (skip infrastructure endpoints)
+        request = data.get("request", {})
+        endpoint = request.get("endpoint", "")
+        if endpoint not in ("/v1/models", "/api/tags"):
+            model = request.get("model", "")
+            url = request.get("url", "")
+            if model:
+                provider_map[provider].models.add(model)
+            if url and provider not in _SELF_HOSTED_PROVIDERS:
+                parsed = urlparse(url)
+                if parsed.hostname and parsed.hostname != "localhost":
+                    provider_map[provider].hosts.add(parsed.hostname)
+
+        # Merge provider metadata (first non-empty value wins per key)
+        pm = request.get("provider_metadata", {})
+        if pm:
+            for k, v in pm.items():
+                if k not in provider_map[provider].metadata:
+                    provider_map[provider].metadata[k] = v
 
         if feature not in provider_map[provider].results[category]:
             provider_map[provider].results[category][feature] = "pass"
@@ -295,6 +325,25 @@ def generate_matrix_markdown(provider_map: dict[str, ProviderResults]) -> str:
         s = summary["providers"][p]
         lines.append(f"| {_pname(p)} | {s['tested']} | {s['passing']} | {s['failing']} | {s['coverage_pct']:.0f}% |")
 
+    lines.append("")
+
+    # Provider details section
+    lines.append("## Provider Details")
+    lines.append("")
+    lines.append("Models, endpoints, and versions used during test recordings.")
+    lines.append("")
+    lines.append("| Provider | Model(s) | Endpoint | Version Info |")
+    lines.append("|----------|----------|----------|--------------|")
+    for p in providers:
+        pr = provider_map[p]
+        models = ", ".join(sorted(pr.models)) if pr.models else "—"
+        hosts = ", ".join(sorted(pr.hosts)) if pr.hosts else "—"
+        version_parts = []
+        for k, v in sorted(pr.metadata.items()):
+            label = k.replace("_", " ").removesuffix(" version")
+            version_parts.append(f"{label}: {v}")
+        version_info = ", ".join(version_parts) if version_parts else "—"
+        lines.append(f"| {_pname(p)} | {models} | {hosts} | {version_info} |")
     lines.append("")
 
     for category, features in categories.items():
