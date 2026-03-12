@@ -122,3 +122,36 @@ class TestEmbeddingMixinLazyImports:
             ["torch"],
         )
         assert ok, f"embedding_mixin.py eagerly loaded: {loaded}"
+
+
+class TestFaissLazyImports:
+    """Verify faiss.py does not eagerly import faiss or numpy."""
+
+    def test_no_faiss_numpy_on_import(self):
+        ok, loaded = _check_no_forbidden_imports(
+            "llama_stack.providers.inline.vector_io.faiss.faiss",
+            ["faiss", "numpy"],
+        )
+        assert ok, f"faiss.py eagerly loaded: {loaded}"
+
+
+class TestSqliteVecLazyImports:
+    """Verify sqlite_vec.py does not eagerly import numpy or sqlite_vec."""
+
+    def test_no_numpy_sqlite_vec_on_import(self):
+        ok, loaded = _check_no_forbidden_imports(
+            "llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec",
+            ["numpy", "sqlite_vec"],
+        )
+        assert ok, f"sqlite_vec.py eagerly loaded: {loaded}"
+
+
+class TestVectorStoreLazyImports:
+    """Verify vector_store.py does not eagerly import numpy."""
+
+    def test_no_numpy_on_import(self):
+        ok, loaded = _check_no_forbidden_imports(
+            "llama_stack.providers.utils.memory.vector_store",
+            ["numpy"],
+        )
+        assert ok, f"vector_store.py eagerly loaded: {loaded}"

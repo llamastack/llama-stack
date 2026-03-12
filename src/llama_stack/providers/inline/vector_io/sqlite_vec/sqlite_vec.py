@@ -9,11 +9,45 @@ import json
 import re
 import sqlite3
 import struct
-from typing import Any
+import threading
+from typing import TYPE_CHECKING, Any
 
-import numpy as np
-import sqlite_vec  # type: ignore[import-untyped]
-from numpy.typing import NDArray
+if TYPE_CHECKING:
+    from numpy.typing import NDArray
+
+_numpy: Any = None
+_numpy_lock = threading.Lock()
+
+
+def _get_numpy() -> Any:
+    global _numpy
+    if _numpy is not None:
+        return _numpy
+    with _numpy_lock:
+        if _numpy is not None:
+            return _numpy
+        import numpy
+
+        _numpy = numpy
+        return _numpy
+
+
+_sqlite_vec: Any = None
+_sqlite_vec_lock = threading.Lock()
+
+
+def _get_sqlite_vec() -> Any:
+    global _sqlite_vec
+    if _sqlite_vec is not None:
+        return _sqlite_vec
+    with _sqlite_vec_lock:
+        if _sqlite_vec is not None:
+            return _sqlite_vec
+        import sqlite_vec  # type: ignore[import-untyped]
+
+        _sqlite_vec = sqlite_vec
+        return _sqlite_vec
+
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
@@ -76,7 +110,7 @@ def _create_sqlite_connection(db_path: str):
     """Create a SQLite connection with sqlite_vec extension loaded."""
     connection = sqlite3.connect(db_path)
     connection.enable_load_extension(True)
-    sqlite_vec.load(connection)
+    _get_sqlite_vec().load(connection)
     connection.enable_load_extension(False)
     return connection
 
@@ -165,6 +199,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         Also inserts chunk content into FTS table for keyword search support.
         """
         chunks = embedded_chunks  # EmbeddedChunk now inherits from Chunk
+        np = _get_numpy()
         embeddings = np.array([ec.embedding for ec in embedded_chunks], dtype=np.float32)
         assert all(isinstance(chunk.content, str) for chunk in chunks), "SQLiteVecIndex only supports text chunks"
 
@@ -284,7 +319,7 @@ class SQLiteVecIndex(EmbeddingIndex):
         return operator.join(clauses), params
 
     async def query_vector(
-        self, embedding: NDArray, k: int, score_threshold: float, filters: Filter | None = None
+        self, embedding: "NDArray", k: int, score_threshold: float, filters: Filter | None = None
     ) -> QueryChunksResponse:
         """
         Performs vector-based search using a virtual table for vector similarity.
@@ -297,7 +332,7 @@ class SQLiteVecIndex(EmbeddingIndex):
             connection = _create_sqlite_connection(self.db_path)
             cur = connection.cursor()
             try:
-                emb_list = embedding.tolist() if isinstance(embedding, np.ndarray) else list(embedding)
+                emb_list = embedding.tolist() if isinstance(embedding, _get_numpy().ndarray) else list(embedding)
                 emb_blob = serialize_vector(emb_list)
 
                 # Build query with optional filter clause
@@ -383,7 +418,7 @@ class SQLiteVecIndex(EmbeddingIndex):
 
     async def query_hybrid(
         self,
-        embedding: NDArray,
+        embedding: "NDArray",
         query_string: str,
         k: int,
         score_threshold: float,
