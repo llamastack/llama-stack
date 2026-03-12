@@ -1596,7 +1596,7 @@ async def test_embedding_dimensions_parameter_conditional(vector_io_adapter):
     )
 
     # Test case 1: With embedding_dimension set (should include dimensions parameter)
-    with patch.object(vector_io_adapter.inference_api, 'openai_embeddings', new_callable=AsyncMock) as mock_embeddings:
+    with patch.object(vector_io_adapter.inference_api, "openai_embeddings", new_callable=AsyncMock) as mock_embeddings:
         mock_embeddings.return_value = mock_embeddings_response
 
         # Simulate the conditional logic from openai_vector_store_mixin.py
@@ -1622,7 +1622,7 @@ async def test_embedding_dimensions_parameter_conditional(vector_io_adapter):
         assert request_params.dimensions == 4096, "dimensions should be set when embedding_dimension is provided"
 
     # Test case 2: Without embedding_dimension (should NOT include dimensions parameter)
-    with patch.object(vector_io_adapter.inference_api, 'openai_embeddings', new_callable=AsyncMock) as mock_embeddings:
+    with patch.object(vector_io_adapter.inference_api, "openai_embeddings", new_callable=AsyncMock) as mock_embeddings:
         mock_embeddings.return_value = mock_embeddings_response
 
         # Simulate the conditional logic without dimensions
@@ -1648,7 +1648,7 @@ async def test_embedding_dimensions_parameter_conditional(vector_io_adapter):
         assert request_params.dimensions is None, "dimensions should be None when embedding_dimension is not provided"
 
     # Test case 3: With embedding_dimension = 0 (should NOT include dimensions parameter)
-    with patch.object(vector_io_adapter.inference_api, 'openai_embeddings', new_callable=AsyncMock) as mock_embeddings:
+    with patch.object(vector_io_adapter.inference_api, "openai_embeddings", new_callable=AsyncMock) as mock_embeddings:
         mock_embeddings.return_value = mock_embeddings_response
 
         # Simulate the conditional logic with 0 dimension
