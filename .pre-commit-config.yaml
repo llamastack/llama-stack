@@ -136,6 +136,15 @@ repos:
         pass_filenames: false
         require_serial: true
         files: ^docs/static/(llama-stack-spec\.yaml|openai-spec.*\.yml|openresponses-spec\.json|openai-coverage\.json)$|^docs/docs/api-openai/conformance\.mdx$|^scripts/(openai_coverage|generate_openai_coverage_docs)\.py$
+      - id: provider-compat-matrix
+        name: Provider Compatibility Matrix
+        additional_dependencies:
+          - *uv-dependency
+        entry: ./scripts/uv-run-with-index.sh run python scripts/provider_compat_matrix.py
+        language: python
+        pass_filenames: false
+        require_serial: true
+        files: ^tests/integration/responses/recordings/.*\.json$|^docs/docs/api-openai/provider_matrix\.md$|^scripts/provider_compat_matrix\.py$|^tests/integration/responses/test_.*\.py$
       - id: check-workflows-use-hashes
         name: Check GitHub Actions use SHA-pinned actions
         entry: ./scripts/check-workflows-use-hashes.sh
