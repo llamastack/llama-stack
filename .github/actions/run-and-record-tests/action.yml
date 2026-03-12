@@ -45,33 +45,46 @@ runs:
 
     - name: Run Integration Tests
       shell: bash
+      env:
+        INPUT_STACK_CONFIG: ${{ inputs.stack-config }}
+        INPUT_INFERENCE_MODE: ${{ inputs.inference-mode }}
+        INPUT_SETUP: ${{ inputs.setup }}
+        INPUT_SUITE: ${{ inputs.suite }}
+        INPUT_SUBDIRS: ${{ inputs.subdirs }}
+        INPUT_PATTERN: ${{ inputs.pattern }}
       run: |
-        SCRIPT_ARGS="--stack-config ${{ inputs.stack-config }} --inference-mode ${{ inputs.inference-mode }}"
+        SCRIPT_ARGS="--stack-config ${INPUT_STACK_CONFIG} --inference-mode ${INPUT_INFERENCE_MODE}"
 
         # Add optional arguments only if they are provided
-        if [ -n '${{ inputs.setup }}' ]; then
-          SCRIPT_ARGS="$SCRIPT_ARGS --setup ${{ inputs.setup }}"
+        if [ -n "${INPUT_SETUP}" ]; then
+          SCRIPT_ARGS="${SCRIPT_ARGS} --setup ${INPUT_SETUP}"
         fi
-        if [ -n '${{ inputs.suite }}' ]; then
-          SCRIPT_ARGS="$SCRIPT_ARGS --suite ${{ inputs.suite }}"
+        if [ -n "${INPUT_SUITE}" ]; then
+          SCRIPT_ARGS="${SCRIPT_ARGS} --suite ${INPUT_SUITE}"
         fi
-        if [ -n '${{ inputs.subdirs }}' ]; then
-          SCRIPT_ARGS="$SCRIPT_ARGS --subdirs ${{ inputs.subdirs }}"
+        if [ -n "${INPUT_SUBDIRS}" ]; then
+          SCRIPT_ARGS="${SCRIPT_ARGS} --subdirs ${INPUT_SUBDIRS}"
         fi
-        if [ -n '${{ inputs.pattern }}' ]; then
-          SCRIPT_ARGS="$SCRIPT_ARGS --pattern ${{ inputs.pattern }}"
+        if [ -n "${INPUT_PATTERN}" ]; then
+          SCRIPT_ARGS="${SCRIPT_ARGS} --pattern ${INPUT_PATTERN}"
         fi
 
         echo "=== Running command ==="
         echo "uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS"
         echo ""
 
-        uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS | tee pytest-${{ inputs.inference-mode }}.log
+        uv run --no-sync ./scripts/integration-tests.sh $SCRIPT_ARGS | tee "pytest-${INPUT_INFERENCE_MODE}.log"
 
 
     - name: Commit and push recordings
       if: ${{ inputs.inference-mode == 'record' ||  inputs.inference-mode == 'record-if-missing' }}
       shell: bash
+      env:
+        INPUT_TARGET_BRANCH: ${{ inputs.target-branch }}
+        INPUT_IS_FORK_PR: ${{ inputs.is-fork-pr }}
+        INPUT_SETUP: ${{ inputs.setup }}
+        INPUT_SUITE: ${{ inputs.suite }}
+        FALLBACK_REF: ${{ github.ref_name }}
       run: |
         echo "Checking for recording changes"
         git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/
@@ -80,21 +93,21 @@ runs:
           echo "New recordings detected"
 
           # Determine target branch: use target-branch input if provided, otherwise use current branch
-          TARGET_BRANCH="${{ inputs.target-branch }}"
+          TARGET_BRANCH="${INPUT_TARGET_BRANCH}"
           if [ -z "$TARGET_BRANCH" ]; then
-            TARGET_BRANCH="${{ github.ref_name }}"
+            TARGET_BRANCH="${FALLBACK_REF}"
           fi
           echo "Target branch: $TARGET_BRANCH"
 
           # Check if this is a fork PR
-          if [ "${{ inputs.is-fork-pr }}" = "true" ]; then
+          if [ "$INPUT_IS_FORK_PR" = "true" ]; then
             echo "::warning::This is a fork PR. Recordings were updated locally but cannot be pushed to the fork."
             echo "::warning::Please download the workflow artifacts and commit the recordings manually."
           else
             echo "Committing and pushing recordings to branch: $TARGET_BRANCH"
             git add tests/integration/recordings/ tests/integration/*/recordings/
 
-            git commit -m "Recordings update from CI (setup: ${{ inputs.setup }}, suite: ${{ inputs.suite }})"
+            git commit -m "Recordings update from CI (setup: ${INPUT_SETUP}, suite: ${INPUT_SUITE})"
 
             git fetch origin "$TARGET_BRANCH"
             git rebase "origin/$TARGET_BRANCH"
@@ -120,11 +133,13 @@ runs:
     - name: Write docker logs to file
       if: ${{ always() }}
       shell: bash
+      env:
+        INPUT_INFERENCE_MODE: ${{ inputs.inference-mode }}
       run: |
         # Ollama logs (if ollama container exists)
-        sudo docker logs ollama > ollama-${{ inputs.inference-mode }}.log 2>&1 || true
+        sudo docker logs ollama > "ollama-${INPUT_INFERENCE_MODE}.log" 2>&1 || true
         # vllm logs (if vllm container exists)
-        sudo docker logs vllm > vllm-${{ inputs.inference-mode }}.log 2>&1 || true
+        sudo docker logs vllm > "vllm-${INPUT_INFERENCE_MODE}.log" 2>&1 || true
         # Note: distro container logs are now dumped in integration-tests.sh before container is removed
 
     - name: Upload logs
