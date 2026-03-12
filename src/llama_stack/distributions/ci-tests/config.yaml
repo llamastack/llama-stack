@@ -270,7 +270,12 @@ storage:
       namespace: connectors
       backend: kv_default
 registered_resources:
-  models: []
+  models:
+  - metadata: {}
+    model_id: azure/gpt-4o
+    provider_id: ${env.AZURE_API_KEY:+azure}
+    provider_model_id: gpt-4o
+    model_type: llm
   shields:
   - shield_id: llama-guard
     provider_id: ${env.SAFETY_MODEL:+llama-guard}
