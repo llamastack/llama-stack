@@ -998,16 +998,17 @@ class OpenAIVectorStoreMixin(ABC):
                 # Validate embedding model and dimension are available
                 if not embedding_model:
                     raise RuntimeError(f"Vector store {vector_store_id} is not properly configured for file processing")
-                if not embedding_dimension:
-                    raise RuntimeError(f"Vector store {vector_store_id} is not properly configured for file processing")
 
                 # Generate embeddings for all chunks before insertion
 
                 # Prepare embedding request for all chunks
+                # Only pass dimensions if it's explicitly set to avoid issues with
+                # models/APIs that don't support the dimensions parameter (e.g., vLLM
+                # rejects dimensions for models without Matryoshka support)
                 params = OpenAIEmbeddingsRequestWithExtraBody(
                     model=embedding_model,
                     input=[interleaved_content_as_str(c.content) for c in chunks],
-                    dimensions=embedding_dimension,
+                    dimensions=embedding_dimension if embedding_dimension else None,
                 )
                 resp = await self.inference_api.openai_embeddings(params)
 
