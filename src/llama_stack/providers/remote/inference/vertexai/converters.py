@@ -17,7 +17,7 @@ import re
 import time
 import uuid
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
@@ -672,7 +672,7 @@ def convert_gemini_stream_chunk_to_openai(
 ) -> OpenAIChatCompletionChunk:
     """Map a Gemini streaming chunk to ``OpenAIChatCompletionChunk``."""
     created = int(time.time())
-    role = "assistant" if is_first_chunk else None
+    role: Literal["assistant"] | None = "assistant" if is_first_chunk else None
 
     choices: list[OpenAIChunkChoice] = [
         OpenAIChunkChoice(
