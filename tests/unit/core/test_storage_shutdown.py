@@ -120,16 +120,16 @@ class TestSqlStoreShutdown:
             config = SqliteSqlStoreConfig(db_path=f"{tmpdir}/test.db")
             store = SqlAlchemySqlStoreImpl(config)
 
-            # Verify session maker has an engine
-            assert store.async_session is not None
-            engine = store.async_session.kw.get("bind")
-            assert engine is not None
-
-            # Create a table and insert data
+            # Create a table and insert data (this triggers lazy engine initialization)
             from llama_stack_api.internal.sqlstore import ColumnType
 
             await store.create_table("test", {"id": ColumnType.INTEGER, "name": ColumnType.STRING})
             await store.insert("test", {"id": 1, "name": "test"})
+
+            # Verify session maker has an engine (after lazy init)
+            assert store.async_session is not None
+            engine = store.async_session.kw.get("bind")
+            assert engine is not None
 
             # Shutdown
             await store.shutdown()
