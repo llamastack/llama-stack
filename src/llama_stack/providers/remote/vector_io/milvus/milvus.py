@@ -9,14 +9,13 @@ import os
 from typing import Any
 
 from numpy.typing import NDArray
-from pymilvus import AnnSearchRequest, DataType, Function, FunctionType, MilvusClient, RRFRanker, WeightedRanker
+from pymilvus import DataType, Function, FunctionType, MilvusClient
 
 from llama_stack.core.storage.kvstore import kvstore_impl
 from llama_stack.log import get_logger
 from llama_stack.providers.inline.vector_io.milvus import MilvusVectorIOConfig as InlineMilvusVectorIOConfig
 from llama_stack.providers.utils.memory.openai_vector_store_mixin import OpenAIVectorStoreMixin
 from llama_stack.providers.utils.memory.vector_store import (
-    RERANKER_TYPE_WEIGHTED,
     ChunkForDeletion,
     EmbeddingIndex,
     VectorStoreWithIndex,
@@ -310,59 +309,66 @@ class MilvusIndex(EmbeddingIndex):
         filters: Filter | None = None,
     ) -> QueryChunksResponse:
         """
-        Hybrid search using Milvus's native hybrid search capabilities.
+        Hybrid search using in-memory aggregation of vector and keyword search results.
 
-        This implementation uses Milvus's hybrid_search method which combines
-        vector search and BM25 search with configurable reranking strategies.
+        This implementation calls the same standalone query_vector() and query_keyword()
+        methods used for single-mode searches, then combines their results using
+        configurable reranking strategies. This ensures consistency with standalone
+        searches by construction.
+
+        Args:
+            embedding: Query embedding vector
+            query_string: Text query for keyword search
+            k: Number of results to return
+            score_threshold: Minimum score threshold for filtering results
+            reranker_type: Type of reranker ("weighted", "rrf", or "normalized")
+            reranker_params: Parameters for the reranker (e.g., alpha, impact_factor)
+            filters: Optional metadata filters to apply
+
+        Returns:
+            QueryChunksResponse with combined and reranked results
         """
-        search_requests = []
+        from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 
-        # nprobe: Controls search accuracy vs performance trade-off
-        # 10 balances these trade-offs for  RAG applications
-        search_requests.append(
-            AnnSearchRequest(data=[embedding.tolist()], anns_field="vector", param={"nprobe": 10}, limit=k)
-        )
+        if reranker_params is None:
+            reranker_params = {}
 
-        # drop_ratio_search: Filters low-importance terms to improve search performance
-        # 0.2 balances noise reduction with recall
-        search_requests.append(
-            AnnSearchRequest(data=[query_string], anns_field="sparse", param={"drop_ratio_search": 0.2}, limit=k)
-        )
+        # Use the SAME standalone search methods to ensure consistency
+        vector_response = await self.query_vector(embedding, k, score_threshold, filters)
+        keyword_response = await self.query_keyword(query_string, k, score_threshold, filters)
 
-        if reranker_type == RERANKER_TYPE_WEIGHTED:
-            alpha = (reranker_params or {}).get("alpha", 0.5)
-            rerank = WeightedRanker(alpha, 1 - alpha)
-        else:
-            impact_factor = (reranker_params or {}).get("impact_factor", 60.0)
-            rerank = RRFRanker(impact_factor)
-
-        # Translate filters to Milvus expression format
-        filter_expr = self._translate_filters(filters) if filters else None
-
-        search_kwargs = {
-            "collection_name": self.collection_name,
-            "reqs": search_requests,
-            "ranker": rerank,
-            "limit": k,
-            "output_fields": ["chunk_content"],
+        # Convert responses to score dictionaries using chunk_id
+        vector_scores = {
+            chunk.chunk_id: score for chunk, score in zip(vector_response.chunks, vector_response.scores, strict=False)
+        }
+        keyword_scores = {
+            chunk.chunk_id: score
+            for chunk, score in zip(keyword_response.chunks, keyword_response.scores, strict=False)
         }
 
-        if filter_expr:
-            search_kwargs["filter"] = filter_expr
+        # Combine scores using the reranking utility
+        combined_scores = WeightedInMemoryAggregator.combine_search_results(
+            vector_scores, keyword_scores, reranker_type, reranker_params
+        )
 
-        search_res = await asyncio.to_thread(self.client.hybrid_search, **search_kwargs)
+        # Sort by combined score and get top k results
+        sorted_items = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)[:k]
 
+        # Filter by score threshold
+        filtered_items = [(doc_id, score) for doc_id, score in sorted_items if score >= score_threshold]
+
+        # Create a map of chunk_id to chunk for both responses
+        chunk_map = {chunk.chunk_id: chunk for chunk in vector_response.chunks + keyword_response.chunks}
+
+        # Use the map to look up chunks by their IDs
         chunks = []
         scores = []
-        for res in search_res[0]:
-            chunk = load_embedded_chunk_with_backward_compat(res["entity"]["chunk_content"])
-            chunks.append(chunk)
-            scores.append(res["distance"])
+        for doc_id, score in filtered_items:
+            if doc_id in chunk_map:
+                chunks.append(chunk_map[doc_id])
+                scores.append(score)
 
-        filtered_chunks = [chunk for chunk, score in zip(chunks, scores, strict=False) if score >= score_threshold]
-        filtered_scores = [score for score in scores if score >= score_threshold]
-
-        return QueryChunksResponse(chunks=filtered_chunks, scores=filtered_scores)
+        return QueryChunksResponse(chunks=chunks, scores=scores)
 
     async def delete_chunks(self, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Remove a chunk from the Milvus collection."""
