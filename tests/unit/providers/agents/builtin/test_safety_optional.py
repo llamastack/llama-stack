@@ -4,10 +4,10 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-"""Tests for making Safety API optional in meta-reference agents provider.
+"""Tests for making Safety API optional in builtin agents provider.
 
 This test suite validates the changes introduced to fix issue #4165, which
-allows running the meta-reference agents provider without the Safety API.
+allows running the builtin agents provider without the Safety API.
 Safety API is now an optional dependency, and errors are raised at request time
 when guardrails are explicitly requested without Safety API configured.
 """
@@ -18,12 +18,12 @@ import pytest
 
 from llama_stack.core.datatypes import Api
 from llama_stack.core.storage.datatypes import KVStoreReference, ResponsesStoreReference
-from llama_stack.providers.inline.agents.meta_reference import get_provider_impl
-from llama_stack.providers.inline.agents.meta_reference.config import (
+from llama_stack.providers.inline.agents.builtin import get_provider_impl
+from llama_stack.providers.inline.agents.builtin.config import (
     AgentPersistenceConfig,
-    MetaReferenceAgentsImplConfig,
+    BuiltinAgentsImplConfig,
 )
-from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
+from llama_stack.providers.inline.agents.builtin.responses.utils import (
     run_guardrails,
 )
 
@@ -73,7 +73,7 @@ class TestProviderInitialization:
 
     async def test_initialization_with_safety_api_present(self, mock_persistence_config, mock_deps):
         """Test successful initialization when Safety API is configured."""
-        config = MetaReferenceAgentsImplConfig(persistence=mock_persistence_config)
+        config = BuiltinAgentsImplConfig(persistence=mock_persistence_config)
 
         # Add safety API to deps
         safety_api = AsyncMock()
@@ -81,7 +81,7 @@ class TestProviderInitialization:
 
         # Mock the initialize method to avoid actual initialization
         with patch(
-            "llama_stack.providers.inline.agents.meta_reference.agents.MetaReferenceAgentsImpl.initialize",
+            "llama_stack.providers.inline.agents.builtin.agents.BuiltinAgentsImpl.initialize",
             new_callable=AsyncMock,
         ):
             # Should not raise any exception
@@ -90,12 +90,12 @@ class TestProviderInitialization:
 
     async def test_initialization_without_safety_api(self, mock_persistence_config, mock_deps):
         """Test successful initialization when Safety API is not configured."""
-        config = MetaReferenceAgentsImplConfig(persistence=mock_persistence_config)
+        config = BuiltinAgentsImplConfig(persistence=mock_persistence_config)
 
         # Safety API is NOT in mock_deps - provider should still start
         # Mock the initialize method to avoid actual initialization
         with patch(
-            "llama_stack.providers.inline.agents.meta_reference.agents.MetaReferenceAgentsImpl.initialize",
+            "llama_stack.providers.inline.agents.builtin.agents.BuiltinAgentsImpl.initialize",
             new_callable=AsyncMock,
         ):
             # Should not raise any exception
@@ -135,13 +135,13 @@ class TestGuardrailsFunctionality:
 
     async def test_create_response_rejects_guardrails_without_safety_api(self, mock_persistence_config, mock_deps):
         """Test that create_openai_response raises error when guardrails requested but Safety API unavailable."""
-        from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
+        from llama_stack.providers.inline.agents.builtin.responses.openai_responses import (
             OpenAIResponsesImpl,
         )
         from llama_stack_api import ResponseGuardrailSpec, ServiceNotEnabledError
 
         # Create OpenAIResponsesImpl with no safety API
-        with patch("llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.ResponsesStore"):
+        with patch("llama_stack.providers.inline.agents.builtin.responses.openai_responses.ResponsesStore"):
             impl = OpenAIResponsesImpl(
                 inference_api=mock_deps[Api.inference],
                 tool_groups_api=mock_deps[Api.tool_groups],
@@ -179,13 +179,13 @@ class TestGuardrailsFunctionality:
         self, mock_persistence_config, mock_deps
     ):
         """Test that create_openai_response works when no guardrails requested and Safety API unavailable."""
-        from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
+        from llama_stack.providers.inline.agents.builtin.responses.openai_responses import (
             OpenAIResponsesImpl,
         )
 
         # Create OpenAIResponsesImpl with no safety API
         with (
-            patch("llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.ResponsesStore"),
+            patch("llama_stack.providers.inline.agents.builtin.responses.openai_responses.ResponsesStore"),
             patch.object(OpenAIResponsesImpl, "_create_streaming_response", new_callable=AsyncMock) as mock_stream,
         ):
             # Mock the streaming response to return a simple async generator

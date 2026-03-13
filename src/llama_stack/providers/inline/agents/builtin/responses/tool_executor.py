@@ -44,7 +44,7 @@ from llama_stack_api import (
 
 from .types import ChatCompletionContext, ToolExecutionResult
 
-logger = get_logger(name=__name__, category="agents::meta_reference")
+logger = get_logger(name=__name__, category="agents::builtin")
 tracer = trace.get_tracer(__name__)
 
 

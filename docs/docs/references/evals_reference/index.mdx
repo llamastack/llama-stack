@@ -75,13 +75,13 @@ system_message = {
 
 # register the evaluation benchmark task with the dataset and scoring function
 client.benchmarks.register(
-    benchmark_id="meta-reference::mmmu",
+    benchmark_id="builtin::mmmu",
     dataset_id=f"mmmu-{subset}-{split}",
     scoring_functions=["basic::regex_parser_multiple_choice_answer"],
 )
 
 response = client.eval.evaluate_rows(
-    benchmark_id="meta-reference::mmmu",
+    benchmark_id="builtin::mmmu",
     input_rows=eval_rows,
     scoring_functions=["basic::regex_parser_multiple_choice_answer"],
     benchmark_config={
@@ -128,13 +128,13 @@ eval_rows = client.datasets.iterrows(
 
 ```python
 client.benchmarks.register(
-    benchmark_id="meta-reference::simpleqa",
+    benchmark_id="builtin::simpleqa",
     dataset_id=simpleqa_dataset_id,
     scoring_functions=["llm-as-judge::405b-simpleqa"],
 )
 
 response = client.eval.evaluate_rows(
-    benchmark_id="meta-reference::simpleqa",
+    benchmark_id="builtin::simpleqa",
     input_rows=eval_rows.data,
     scoring_functions=["llm-as-judge::405b-simpleqa"],
     benchmark_config={
@@ -181,7 +181,7 @@ agent_config = {
 }
 
 response = client.eval.evaluate_rows(
-    benchmark_id="meta-reference::simpleqa",
+    benchmark_id="builtin::simpleqa",
     input_rows=eval_rows.data,
     scoring_functions=["llm-as-judge::405b-simpleqa"],
     benchmark_config={

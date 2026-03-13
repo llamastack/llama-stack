@@ -7,16 +7,16 @@ from typing import Any
 
 from llama_stack.core.datatypes import Api
 
-from .config import MetaReferenceEvalConfig
+from .config import BuiltinEvalConfig
 
 
 async def get_provider_impl(
-    config: MetaReferenceEvalConfig,
+    config: BuiltinEvalConfig,
     deps: dict[Api, Any],
 ):
-    from .eval import MetaReferenceEvalImpl
+    from .eval import BuiltinEvalImpl
 
-    impl = MetaReferenceEvalImpl(
+    impl = BuiltinEvalImpl(
         config,
         deps[Api.datasetio],
         deps[Api.datasets],

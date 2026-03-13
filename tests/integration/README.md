@@ -26,7 +26,7 @@ Here are the most important options:
   - **`server:<config>:<port>`** - same as above but with a custom port (e.g., `server:starter:8322`)
   - a URL which points to a Llama Stack distribution server
   - a distribution name (e.g., `starter`) or a path to a `config.yaml` file
-  - a comma-separated list of api=provider pairs, e.g. `inference=ollama,safety=llama-guard,agents=meta-reference`. This is most useful for testing a single API surface.
+  - a comma-separated list of api=provider pairs, e.g. `inference=ollama,safety=llama-guard,agents=builtin`. This is most useful for testing a single API surface.
 - `--env`: set environment variables, e.g. --env KEY=value. this is a utility option to set environment variables required by various providers.
 
 Model parameters can be influenced by the following options:
@@ -108,11 +108,11 @@ You can do this by simply using `--stack-config=starter` instead of `--stack-con
 
 ### Using ad-hoc distributions
 
-Sometimes, you may want to make up a distribution on the fly. This is useful for testing a single provider or a single API or a small combination of providers. You can do so by specifying a comma-separated list of api=provider pairs to the `--stack-config` option, e.g. `inference=remote::ollama,safety=inline::llama-guard,agents=inline::meta-reference`.
+Sometimes, you may want to make up a distribution on the fly. This is useful for testing a single provider or a single API or a small combination of providers. You can do so by specifying a comma-separated list of api=provider pairs to the `--stack-config` option, e.g. `inference=remote::ollama,safety=inline::llama-guard,agents=inline::builtin`.
 
 ```bash
 pytest -s -v tests/integration/inference/ \
-   --stack-config=inference=remote::ollama,safety=inline::llama-guard,agents=inline::meta-reference \
+   --stack-config=inference=remote::ollama,safety=inline::llama-guard,agents=inline::builtin \
    --text-model=$TEXT_MODELS \
    --vision-model=$VISION_MODELS \
    --embedding-model=$EMBEDDING_MODELS

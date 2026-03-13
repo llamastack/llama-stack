@@ -66,7 +66,7 @@ Set up your preferred providers in the Llama Stack configuration:
 # stack-config.yaml
 inference:
   providers:
-    - name: "meta-reference"
+    - name: "builtin"
       type: "inline"
       model: "llama-3.1-8b"
 ```
@@ -87,7 +87,7 @@ print(response.choices[0].message.content)
 
 ## Provider-Specific Features
 
-### Meta Reference Provider
+### Builtin Provider
 - Full OpenAI API compatibility
 - Local model execution
 - Custom model support
@@ -157,7 +157,7 @@ Track your API usage with OpenAI-compatible monitoring:
 
 ### 1. Provider Selection
 Choose providers based on your requirements:
-- **Local development**: Meta Reference, Ollama
+- **Local development**: Builtin, Ollama
 - **Production**: Cloud providers (Fireworks, Together, NVIDIA)
 - **Specialized use cases**: Custom providers
 
