@@ -10,7 +10,7 @@ Integration tests for OpenAI-compatible filter functionality in vector stores.
 These tests verify that filter operations (comparison and compound) work correctly
 across different vector store providers (sqlite-vec, faiss).
 
-Note: Some providers (chroma, pgvector, qdrant, weaviate, elasticsearch, milvus) do not yet support native
+Note: Some providers (chroma, qdrant, weaviate, elasticsearch) do not yet support native
 filtering and will be skipped in these tests.
 """
 
@@ -24,8 +24,8 @@ from llama_stack_api.filters import ComparisonFilter, CompoundFilter
 from ..conftest import vector_provider_wrapper
 
 # Providers that support native filtering
-# Other providers (chroma, pgvector, qdrant, weaviate, elasticsearch, milvus) raise NotImplementedError
-PROVIDERS_WITH_NATIVE_FILTERING = {"faiss", "sqlite-vec", "milvus"}
+# Other providers (chroma, qdrant, weaviate, elasticsearch) raise NotImplementedError
+PROVIDERS_WITH_NATIVE_FILTERING = {"faiss", "sqlite-vec", "milvus", "pgvector"}
 
 
 def skip_if_provider_doesnt_support_filters(vector_io_provider_id: str):
