@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
+from llama_stack.providers.utils.headers import filter_extra_headers
 from llama_stack.providers.utils.inference.http_client import (
     _build_network_client_kwargs,
     _merge_network_config_into_client,
@@ -249,9 +250,16 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
         else:
             extra_params["http_client"] = DefaultAsyncHttpxClient(verify=self.shared_ssl_context)
 
+        # extra_headers from provider data are set as default_headers on the
+        # AsyncOpenAI client.  The SDK merges them *on top of* any headers
+        # already present on the underlying httpx client, so provider-data
+        # headers take precedence over http_client / network-config headers.
+        provider_extra_headers = self._get_extra_headers_from_provider_data()
+
         return AsyncOpenAI(
             api_key=api_key,
             base_url=self.get_base_url(),
+            default_headers=provider_extra_headers,
             **extra_params,
         )
 
@@ -265,6 +273,21 @@ class OpenAIMixin(NeedsRequestProviderData, ABC, BaseModel):
                 api_key = value.get_secret_value()
 
         return api_key
+
+    def _get_extra_headers_from_provider_data(self) -> dict[str, str] | None:
+        """Extract extra headers from provider data for forwarding to upstream endpoints.
+
+        Filters out hop-by-hop, framing, and security-sensitive headers via the
+        shared BLOCKED_HEADERS list in providers.utils.headers.
+        """
+        if not self.provider_data_api_key_field:
+            return None
+        provider_data = self.get_request_provider_data()
+        if provider_data:
+            extra_headers = getattr(provider_data, "extra_headers", None)
+            if extra_headers:
+                return filter_extra_headers(extra_headers)
+        return None
 
     def _validate_model_allowed(self, provider_model_id: str) -> None:
         """
