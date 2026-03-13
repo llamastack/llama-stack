@@ -22,7 +22,7 @@ inference provider, based on integration test results.
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
 | azure | 89 | 89 | 0 | 86% |
-| openai | 103 | 103 | 0 | 99% |
+| openai | 104 | 104 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
 
 ## Provider Details
@@ -39,7 +39,7 @@ Models, endpoints, and versions used during test recordings.
 
 | Feature | azure | openai | vllm |
 | --- | --- | --- | --- |
-| extra body guided choice | ✅ | ⏭️ | — |
+| extra body guided choice | ✅ | ✅ | — |
 | include logprobs non streaming | ✅ | ✅ | — |
 | include logprobs streaming | ✅ | ✅ | — |
 | include logprobs with function tools | ✅ | ✅ | — |
