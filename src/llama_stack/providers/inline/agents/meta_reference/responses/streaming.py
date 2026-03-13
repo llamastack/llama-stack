@@ -1034,6 +1034,9 @@ class StreamingResponseOrchestrator:
                         if is_new_tool_call:
                             tool_call_dict: dict[str, Any] = tool_call.model_dump()
                             tool_call_dict.pop("type", None)
+                            # arguments may be None when a function takes no parameters
+                            if tool_call_dict.get("function") and tool_call_dict["function"].get("arguments") is None:
+                                tool_call_dict["function"]["arguments"] = "{}"
                             response_tool_call = OpenAIChatCompletionToolCall(**tool_call_dict)
                             chat_response_tool_calls[tool_call.index] = response_tool_call
 
