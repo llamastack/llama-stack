@@ -72,6 +72,7 @@ ENABLED_INFERENCE_PROVIDERS = [
     "nvidia",
     "bedrock",
     "azure",
+    "watsonx",
 ]
 
 INFERENCE_PROVIDER_IDS = {
@@ -82,6 +83,7 @@ INFERENCE_PROVIDER_IDS = {
     "nvidia": "${env.NVIDIA_API_KEY:+nvidia}",
     "vertexai": "${env.VERTEX_AI_PROJECT:+vertexai}",
     "azure": "${env.AZURE_API_KEY:+azure}",
+    "watsonx": "${env.WATSONX_API_KEY:+watsonx}",
 }
 
 
@@ -379,6 +381,18 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             "AZURE_API_TYPE": (
                 "azure",
                 "Azure API Type",
+            ),
+            "WATSONX_API_KEY": (
+                "",
+                "WatsonX API Key",
+            ),
+            "WATSONX_BASE_URL": (
+                "https://us-south.ml.cloud.ibm.com",
+                "WatsonX Base URL",
+            ),
+            "WATSONX_PROJECT_ID": (
+                "",
+                "WatsonX Project ID",
             ),
         },
     )

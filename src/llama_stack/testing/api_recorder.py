@@ -862,6 +862,56 @@ def _extract_provider_metadata(client: Any, client_type: str, base_url: str = ""
     return metadata
 
 
+def _extract_litellm_provider_metadata(model: str, api_base: str = "", api_key: str = "") -> dict[str, str]:
+    """Extract version metadata for LiteLLM-based providers (e.g. WatsonX).
+
+    For WatsonX, queries the foundation_model_specs endpoint to get router_info
+    (build version and date).
+    """
+    provider = model.split("/")[0] if "/" in model else ""
+    cache_key = f"litellm:{provider}"
+    if cache_key in _cached_provider_metadata:
+        return _cached_provider_metadata[cache_key]
+
+    metadata: dict[str, str] = {}
+
+    if provider == "watsonx":
+        try:
+            import urllib.request
+
+            api_base = api_base or os.environ.get("WATSONX_BASE_URL", "")
+            api_key = api_key or os.environ.get("WATSONX_API_KEY", "")
+            if api_base and api_key:
+                # Get IAM token
+                token_url = "https://iam.cloud.ibm.com/identity/token"
+                token_data = f"grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey={api_key}"
+                token_req = urllib.request.Request(
+                    token_url,
+                    data=token_data.encode(),
+                    headers={"Content-Type": "application/x-www-form-urlencoded"},
+                )
+                with urllib.request.urlopen(token_req, timeout=10) as resp:
+                    token = json.loads(resp.read().decode())["access_token"]
+
+                # Query model specs for router_info
+                specs_url = f"{api_base.rstrip('/')}/ml/v1/foundation_model_specs?version=2023-10-25&limit=1"
+                specs_req = urllib.request.Request(specs_url, headers={"Authorization": f"Bearer {token}"})
+                with urllib.request.urlopen(specs_req, timeout=10) as resp:
+                    specs = json.loads(resp.read().decode())
+                    resources = specs.get("resources", [])
+                    if resources:
+                        router_info = resources[0].get("router_info", {})
+                        if router_info.get("build"):
+                            metadata["watsonx_build"] = router_info["build"]
+                        if router_info.get("build_date"):
+                            metadata["watsonx_build_date"] = router_info["build_date"]
+        except Exception:
+            pass
+
+    _cached_provider_metadata[cache_key] = metadata
+    return metadata
+
+
 async def _patched_inference_method(original_method, self, client_type, endpoint, *args, **kwargs):
     global _current_mode, _current_storage
 
@@ -1034,11 +1084,133 @@ async def _patched_inference_method(original_method, self, client_type, endpoint
         raise AssertionError(f"Invalid mode: {mode}")
 
 
+async def _patched_litellm_method(original_func, endpoint, *args, **kwargs):
+    """Patched version of litellm.acompletion/atext_completion for recording/replay.
+
+    LiteLLM functions are module-level (not instance methods), so we extract
+    base_url from kwargs['api_base'] instead of from a client instance.
+    """
+    global _current_mode, _current_storage
+
+    mode = _current_mode
+    storage = _current_storage
+
+    if mode == APIRecordingMode.LIVE or storage is None:
+        return await original_func(*args, **kwargs)
+
+    # Build URL from api_base kwarg
+    api_base = kwargs.get("api_base", "") or ""
+    url = api_base.rstrip("/") + endpoint if api_base else endpoint
+    method = "POST"
+    headers = {}
+    # Strip LiteLLM-specific kwargs that vary between record/replay
+    # and shouldn't affect the request hash
+    _litellm_meta_keys = {"api_key", "api_base", "timeout", "project_id"}
+    body = {k: v for k, v in kwargs.items() if k not in _litellm_meta_keys}
+
+    request_hash = normalize_inference_request(method, url, headers, body)
+
+    # Try to find existing recording
+    recording = None
+    if mode in (APIRecordingMode.REPLAY, APIRecordingMode.RECORD_IF_MISSING):
+        recording = storage.find_recording(request_hash)
+
+        if recording:
+            response_data = recording["response"]
+
+            if response_data.get("is_exception", False):
+                exc_data = response_data.get("exception_data")
+                if exc_data:
+                    raise deserialize_exception(exc_data)
+                raise Exception(response_data.get("exception_message", "Unknown error"))
+
+            response_body = response_data["body"]
+
+            if response_data.get("is_streaming", False):
+
+                async def replay_stream():
+                    for chunk in response_body:
+                        yield chunk
+
+                return replay_stream()
+            return response_body
+        elif mode == APIRecordingMode.REPLAY:
+            raise RuntimeError(
+                f"Recording not found for request hash: {request_hash}\n"
+                f"Model: {body.get('model', 'unknown')} | Request: {method} {url}\n"
+                f"\n"
+                f"Run './scripts/integration-tests.sh --inference-mode record-if-missing' with required API keys to generate."
+            )
+
+    if mode == APIRecordingMode.RECORD or (mode == APIRecordingMode.RECORD_IF_MISSING and not recording):
+        model_name = body.get("model", "")
+        request_data = {
+            "method": method,
+            "url": url,
+            "headers": headers,
+            "body": body,
+            "endpoint": endpoint,
+            "model": model_name,
+            "provider_metadata": _extract_litellm_provider_metadata(
+                model_name,
+                api_base=kwargs.get("api_base", ""),
+                api_key=kwargs.get("api_key", ""),
+            ),
+        }
+
+        try:
+            response = await original_func(*args, **kwargs)
+        except Exception as exc:
+            response_data = {
+                "body": None,
+                "is_streaming": False,
+                "is_exception": True,
+                "exception_data": serialize_exception(exc),
+                "exception_message": str(exc),
+            }
+            storage.store_recording(request_hash, request_data, response_data)
+            raise
+
+        is_streaming = body.get("stream", False)
+
+        if is_streaming:
+            chunks: list[Any] = []
+            try:
+                async for chunk in response:
+                    chunks.append(chunk)
+            except Exception as exc:
+                response_data = {
+                    "body": chunks,
+                    "is_streaming": True,
+                    "is_exception": True,
+                    "exception_data": serialize_exception(exc),
+                    "exception_message": str(exc),
+                }
+                storage.store_recording(request_hash, request_data, response_data)
+                raise
+
+            response_data = {"body": chunks, "is_streaming": True}
+            storage.store_recording(request_hash, request_data, response_data)
+
+            async def replay_recorded_stream():
+                for chunk in chunks:
+                    yield chunk
+
+            return replay_recorded_stream()
+        else:
+            response_data = {"body": response, "is_streaming": False}
+            storage.store_recording(request_hash, request_data, response_data)
+            return response
+    else:
+        raise AssertionError(f"Invalid mode: {mode}")
+
+
 def patch_inference_clients():
-    """Install monkey patches for OpenAI client methods, Ollama AsyncClient methods, tool runtime methods, and aiohttp for rerank."""
+    """Install monkey patches for OpenAI client methods, Ollama AsyncClient methods, LiteLLM functions, tool runtime methods, and aiohttp for rerank."""
     global _original_methods
 
     import aiohttp
+    import litellm
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
@@ -1048,7 +1220,7 @@ def patch_inference_clients():
 
     from llama_stack.providers.remote.tool_runtime.tavily_search.tavily_search import TavilySearchToolRuntimeImpl
 
-    # Store original methods for OpenAI, Ollama clients, tool runtimes, and aiohttp
+    # Store original methods for OpenAI, Ollama clients, LiteLLM, tool runtimes, and aiohttp
     _original_methods = {
         "chat_completions_create": AsyncChatCompletions.create,
         "completions_create": AsyncCompletions.create,
@@ -1061,6 +1233,8 @@ def patch_inference_clients():
         "ollama_ps": OllamaAsyncClient.ps,
         "ollama_pull": OllamaAsyncClient.pull,
         "ollama_list": OllamaAsyncClient.list,
+        "litellm_acompletion": litellm.acompletion,
+        "litellm_atext_completion": litellm.atext_completion,
         "tavily_invoke_tool": TavilySearchToolRuntimeImpl.invoke_tool,
         "aiohttp_post": aiohttp.ClientSession.post,
     }
@@ -1141,6 +1315,21 @@ def patch_inference_clients():
     OllamaAsyncClient.pull = patched_ollama_pull
     OllamaAsyncClient.list = patched_ollama_list
 
+    # Create patched functions for LiteLLM
+    async def patched_litellm_acompletion(*args, **kwargs):
+        return await _patched_litellm_method(
+            _original_methods["litellm_acompletion"], "/v1/chat/completions", *args, **kwargs
+        )
+
+    async def patched_litellm_atext_completion(*args, **kwargs):
+        return await _patched_litellm_method(
+            _original_methods["litellm_atext_completion"], "/v1/completions", *args, **kwargs
+        )
+
+    # Apply LiteLLM patches
+    litellm.acompletion = patched_litellm_acompletion
+    litellm.atext_completion = patched_litellm_atext_completion
+
     # Create patched methods for tool runtimes
     async def patched_tavily_invoke_tool(
         self, tool_name: str, kwargs: dict[str, Any], authorization: str | None = None
@@ -1161,7 +1350,7 @@ def patch_inference_clients():
 
 
 def unpatch_inference_clients():
-    """Remove monkey patches and restore original OpenAI, Ollama client, tool runtime, and aiohttp methods."""
+    """Remove monkey patches and restore original OpenAI, Ollama client, LiteLLM, tool runtime, and aiohttp methods."""
     global _original_methods
 
     if not _original_methods:
@@ -1169,6 +1358,7 @@ def unpatch_inference_clients():
 
     # Import here to avoid circular imports
     import aiohttp
+    import litellm
     from ollama import AsyncClient as OllamaAsyncClient
     from openai.resources.chat.completions import AsyncCompletions as AsyncChatCompletions
     from openai.resources.completions import AsyncCompletions
@@ -1192,6 +1382,10 @@ def unpatch_inference_clients():
     OllamaAsyncClient.ps = _original_methods["ollama_ps"]
     OllamaAsyncClient.pull = _original_methods["ollama_pull"]
     OllamaAsyncClient.list = _original_methods["ollama_list"]
+
+    # Restore LiteLLM functions
+    litellm.acompletion = _original_methods["litellm_acompletion"]
+    litellm.atext_completion = _original_methods["litellm_atext_completion"]
 
     # Restore tool runtime methods
     TavilySearchToolRuntimeImpl.invoke_tool = _original_methods["tavily_invoke_tool"]
