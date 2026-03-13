@@ -112,11 +112,9 @@ class StackApp(FastAPI):
         super().__init__(*args, **kwargs)
         self.stack: Stack = Stack(config)
 
-        # This code is called from a running event loop managed by uvicorn so we cannot simply call
-        # asyncio.run() to initialize the stack. We cannot await either since this is not an async
-        # function.
-        # As a workaround, we use a thread pool executor to run the initialize() method
-        # in a separate thread.
+        # Initialize stack in a temporary event loop to set up impls for route registration.
+        # Storage backends use lazy engine initialization, so connections are created on
+        # first use in the correct event loop, avoiding event loop mismatch issues.
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(asyncio.run, self.stack.initialize())
             future.result()

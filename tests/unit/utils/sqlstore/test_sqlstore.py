@@ -25,15 +25,16 @@ async def test_sqlstore_shutdown_disposes_engine():
         db_path = tmp_dir + "/shutdown_test.db"
         store = SqlAlchemySqlStoreImpl(SqliteSqlStoreConfig(db_path=db_path))
 
-        # Verify engine exists
-        assert store._engine is not None
-
         # Create a table and insert data to ensure connections are established
+        # (this triggers lazy engine initialization)
         await store.create_table(
             "test",
             {"id": ColumnType.INTEGER, "name": ColumnType.STRING},
         )
         await store.insert("test", {"id": 1, "name": "test"})
+
+        # Verify engine exists (after lazy init)
+        assert store._engine is not None
 
         # Shutdown should dispose the engine and close connections
         await store.shutdown()
