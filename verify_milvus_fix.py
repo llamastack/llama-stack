@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+# Copyright (c) Meta Platforms, Inc. and affiliates.
+# All rights reserved.
+#
+# This source code is licensed under the terms described in the LICENSE file in
+# the root directory of this source tree.
+
 """
 Verification script to demonstrate that the Milvus hybrid search fix works correctly.
 
@@ -12,7 +18,7 @@ This script simulates the fixed behavior and shows that:
 import os
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
 
@@ -46,9 +52,9 @@ def main():
     }
 
     keyword_scores = {
-        "chunk_C": 6.0,   # High BM25 score
-        "chunk_D": 5.0,   # Medium BM25 score
-        "chunk_E": 4.0,   # Lower BM25 score
+        "chunk_C": 6.0,  # High BM25 score
+        "chunk_D": 5.0,  # Medium BM25 score
+        "chunk_E": 4.0,  # Lower BM25 score
     }
 
     print("Standalone Search Results:")
@@ -59,10 +65,7 @@ def main():
     # Test 1: Hybrid with alpha=1.0 (should match vector-only)
     print("Test 1: Hybrid with alpha=1.0 (vector-only weight)")
     hybrid_vec = simulate_fixed_hybrid_search(
-        vector_scores, keyword_scores,
-        reranker_type="weighted",
-        reranker_params={"alpha": 1.0},
-        k=3
+        vector_scores, keyword_scores, reranker_type="weighted", reranker_params={"alpha": 1.0}, k=3
     )
 
     print(f"  Results: {[doc_id for doc_id, _ in hybrid_vec]}")
@@ -81,10 +84,7 @@ def main():
     # Test 2: Hybrid with alpha=0.0 (should match keyword-only)
     print("Test 2: Hybrid with alpha=0.0 (keyword-only weight)")
     hybrid_kw = simulate_fixed_hybrid_search(
-        vector_scores, keyword_scores,
-        reranker_type="weighted",
-        reranker_params={"alpha": 0.0},
-        k=3
+        vector_scores, keyword_scores, reranker_type="weighted", reranker_params={"alpha": 0.0}, k=3
     )
 
     print(f"  Results: {[doc_id for doc_id, _ in hybrid_kw]}")
@@ -103,24 +103,15 @@ def main():
     print("Test 3: Different ranker types produce different results")
 
     hybrid_weighted = simulate_fixed_hybrid_search(
-        vector_scores, keyword_scores,
-        reranker_type="weighted",
-        reranker_params={"alpha": 0.5},
-        k=3
+        vector_scores, keyword_scores, reranker_type="weighted", reranker_params={"alpha": 0.5}, k=3
     )
 
     hybrid_rrf = simulate_fixed_hybrid_search(
-        vector_scores, keyword_scores,
-        reranker_type="rrf",
-        reranker_params={"impact_factor": 60.0},
-        k=3
+        vector_scores, keyword_scores, reranker_type="rrf", reranker_params={"impact_factor": 60.0}, k=3
     )
 
     hybrid_normalized = simulate_fixed_hybrid_search(
-        vector_scores, keyword_scores,
-        reranker_type="normalized",
-        reranker_params={},
-        k=3
+        vector_scores, keyword_scores, reranker_type="normalized", reranker_params={}, k=3
     )
 
     print(f"  Weighted (alpha=0.5): {[doc_id for doc_id, _ in hybrid_weighted]}")
@@ -151,12 +142,8 @@ def main():
     test_vector = {"doc1": 10.0, "doc2": 5.0}
     test_keyword = {"doc2": 10.0, "doc3": 5.0}
 
-    result_normalized = WeightedInMemoryAggregator.combine_search_results(
-        test_vector, test_keyword, "normalized", {}
-    )
-    result_rrf = WeightedInMemoryAggregator.combine_search_results(
-        test_vector, test_keyword, "rrf", {}
-    )
+    result_normalized = WeightedInMemoryAggregator.combine_search_results(test_vector, test_keyword, "normalized", {})
+    result_rrf = WeightedInMemoryAggregator.combine_search_results(test_vector, test_keyword, "rrf", {})
 
     # The scores should be different (normalized uses min-max normalization, RRF uses ranks)
     scores_differ = False
