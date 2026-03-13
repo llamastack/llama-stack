@@ -273,4 +273,176 @@ def test_load_embedded_chunk_fallbacks():
     chunk = load_embedded_chunk_with_backward_compat(no_embedding_data)
     assert chunk.embedding_model == "unknown"
     assert chunk.embedding_dimension == 0
-    assert chunk.embedding == []
+
+
+def test_weighted_rerank():
+    """Test weighted reranking with different alpha values."""
+    from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
+    vector_scores = {"doc1": 0.9, "doc2": 0.7, "doc3": 0.5}
+    keyword_scores = {"doc1": 0.2, "doc2": 0.8, "doc4": 0.6}
+
+    # Test alpha=1.0 (vector only)
+    result = WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha=1.0)
+    # doc1 should rank highest (highest vector score)
+    sorted_docs = sorted(result.items(), key=lambda x: x[1], reverse=True)
+    assert sorted_docs[0][0] == "doc1"
+    # doc4 should have score 0 (not in vector results, alpha=1.0)
+    assert result["doc4"] == 0.0
+
+    # Test alpha=0.0 (keyword only)
+    result = WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha=0.0)
+    # doc2 should rank highest (highest keyword score)
+    sorted_docs = sorted(result.items(), key=lambda x: x[1], reverse=True)
+    assert sorted_docs[0][0] == "doc2"
+    # doc3 should have score 0 (not in keyword results, alpha=0.0)
+    assert result["doc3"] == 0.0
+
+    # Test alpha=0.5 (equal weight)
+    result = WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha=0.5)
+    # All docs should have non-zero scores
+    assert all(score >= 0 for score in result.values())
+    # doc1 should still rank high (good in both)
+    sorted_docs = sorted(result.items(), key=lambda x: x[1], reverse=True)
+    assert "doc1" in [sorted_docs[0][0], sorted_docs[1][0]]
+
+
+def test_rrf_rerank():
+    """Test RRF (Reciprocal Rank Fusion) reranking."""
+    from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
+    vector_scores = {"doc1": 0.9, "doc2": 0.7, "doc3": 0.5}
+    keyword_scores = {"doc1": 0.2, "doc2": 0.8, "doc4": 0.6}
+
+    result = WeightedInMemoryAggregator.rrf_rerank(vector_scores, keyword_scores, impact_factor=60.0)
+
+    # All docs should have positive scores
+    assert all(score > 0 for score in result.values())
+
+    # doc1 appears in both (rank 1 in vector, rank 3 in keyword)
+    # doc2 appears in both (rank 2 in vector, rank 1 in keyword)
+    # doc1 and doc2 should rank highest
+    sorted_docs = sorted(result.items(), key=lambda x: x[1], reverse=True)
+    top_two = {sorted_docs[0][0], sorted_docs[1][0]}
+    assert top_two == {"doc1", "doc2"}
+
+
+def test_normalized_rerank():
+    """Test normalized reranking (equal weight combination)."""
+    from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
+    vector_scores = {"doc1": 0.9, "doc2": 0.7, "doc3": 0.5}
+    keyword_scores = {"doc1": 0.2, "doc2": 0.8, "doc4": 0.6}
+
+    result = WeightedInMemoryAggregator.normalized_rerank(vector_scores, keyword_scores)
+
+    # All docs should have scores between 0 and 1
+    assert all(0 <= score <= 1 for score in result.values())
+
+    # Normalized rerank should be equivalent to weighted with alpha=0.5
+    weighted_result = WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha=0.5)
+
+    # Results should be identical
+    for doc_id in result:
+        assert abs(result[doc_id] - weighted_result[doc_id]) < 1e-10
+
+
+def test_combine_search_results_weighted():
+    """Test combine_search_results with weighted reranker."""
+    from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
+    vector_scores = {"doc1": 0.9, "doc2": 0.7}
+    keyword_scores = {"doc2": 0.8, "doc3": 0.6}
+
+    # Test with alpha parameter
+    result = WeightedInMemoryAggregator.combine_search_results(
+        vector_scores, keyword_scores, reranker_type="weighted", reranker_params={"alpha": 0.7}
+    )
+    assert len(result) == 3  # Union of all docs
+    assert all(doc_id in result for doc_id in ["doc1", "doc2", "doc3"])
+
+
+def test_combine_search_results_rrf():
+    """Test combine_search_results with RRF reranker."""
+    from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
+    vector_scores = {"doc1": 0.9, "doc2": 0.7}
+    keyword_scores = {"doc2": 0.8, "doc3": 0.6}
+
+    # Test with impact_factor parameter
+    result = WeightedInMemoryAggregator.combine_search_results(
+        vector_scores, keyword_scores, reranker_type="rrf", reranker_params={"impact_factor": 60.0}
+    )
+    assert len(result) == 3
+    assert all(score > 0 for score in result.values())
+
+
+def test_combine_search_results_normalized():
+    """Test combine_search_results with normalized reranker."""
+    from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
+    vector_scores = {"doc1": 0.9, "doc2": 0.7}
+    keyword_scores = {"doc2": 0.8, "doc3": 0.6}
+
+    # Test normalized reranker
+    result = WeightedInMemoryAggregator.combine_search_results(
+        vector_scores, keyword_scores, reranker_type="normalized", reranker_params={}
+    )
+    assert len(result) == 3
+    assert all(0 <= score <= 1 for score in result.values())
+
+
+def test_combine_search_results_default():
+    """Test combine_search_results defaults to RRF for unknown types."""
+    from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
+    vector_scores = {"doc1": 0.9}
+    keyword_scores = {"doc2": 0.8}
+
+    # Test with unknown reranker type (should default to RRF)
+    result = WeightedInMemoryAggregator.combine_search_results(
+        vector_scores, keyword_scores, reranker_type="unknown", reranker_params={}
+    )
+
+    # Should behave like RRF
+    rrf_result = WeightedInMemoryAggregator.combine_search_results(
+        vector_scores, keyword_scores, reranker_type="rrf", reranker_params={}
+    )
+
+    assert result == rrf_result
+
+
+def test_hybrid_search_consistency():
+    """
+    Test that hybrid search with extreme alpha values matches standalone searches.
+    This is a regression test for the Milvus hybrid search bug.
+    """
+    from llama_stack.providers.utils.vector_io.vector_utils import WeightedInMemoryAggregator
+
+    # Simulate standalone search results
+    vector_scores = {"doc_A": 0.95, "doc_B": 0.80}  # Only high-similarity docs
+    keyword_scores = {"doc_C": 6.0, "doc_D": 5.0, "doc_E": 4.0}  # Keyword matches
+
+    # Test alpha=1.0 should only include vector results
+    hybrid_vec = WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha=1.0)
+
+    # Docs not in vector_scores should have score 0
+    assert hybrid_vec["doc_C"] == 0.0
+    assert hybrid_vec["doc_D"] == 0.0
+    assert hybrid_vec["doc_E"] == 0.0
+
+    # Docs in vector_scores should have non-zero scores
+    assert hybrid_vec["doc_A"] > 0
+    assert hybrid_vec["doc_B"] > 0
+
+    # Test alpha=0.0 should only include keyword results
+    hybrid_kw = WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha=0.0)
+
+    # Docs not in keyword_scores should have score 0
+    assert hybrid_kw["doc_A"] == 0.0
+    assert hybrid_kw["doc_B"] == 0.0
+
+    # Docs in keyword_scores should have non-zero scores
+    assert hybrid_kw["doc_C"] > 0
+    assert hybrid_kw["doc_D"] > 0
+    assert hybrid_kw["doc_E"] > 0

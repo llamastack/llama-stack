@@ -129,6 +129,34 @@ class WeightedInMemoryAggregator:
         return rrf_scores
 
     @staticmethod
+    def normalized_rerank(
+        vector_scores: dict[str, float],
+        keyword_scores: dict[str, float],
+    ) -> dict[str, float]:
+        """
+        Rerank via normalized score combination with equal weights.
+
+        This is similar to weighted reranking with alpha=0.5, but is a distinct
+        strategy that always uses equal weights for vector and keyword scores.
+
+        Args:
+            vector_scores: scores from vector search
+            keyword_scores: scores from keyword search
+
+        Returns:
+            All unique document IDs with normalized combined scores
+        """
+        all_ids = set(vector_scores.keys()) | set(keyword_scores.keys())
+        normalized_vector_scores = WeightedInMemoryAggregator._normalize_scores(vector_scores)
+        normalized_keyword_scores = WeightedInMemoryAggregator._normalize_scores(keyword_scores)
+
+        # Equal weight combination: score = 0.5 * keyword_score + 0.5 * vector_score
+        return {
+            doc_id: 0.5 * (normalized_keyword_scores.get(doc_id, 0.0) + normalized_vector_scores.get(doc_id, 0.0))
+            for doc_id in all_ids
+        }
+
+    @staticmethod
     def combine_search_results(
         vector_scores: dict[str, float],
         keyword_scores: dict[str, float],
@@ -141,7 +169,7 @@ class WeightedInMemoryAggregator:
         Args:
             vector_scores: scores from vector search
             keyword_scores: scores from keyword search
-            reranker_type: type of reranker to use (default: RERANKER_TYPE_RRF)
+            reranker_type: type of reranker to use ("weighted", "rrf", or "normalized")
             reranker_params: parameters for the reranker
 
         Returns:
@@ -153,8 +181,10 @@ class WeightedInMemoryAggregator:
         if reranker_type == "weighted":
             alpha = reranker_params.get("alpha", 0.5)
             return WeightedInMemoryAggregator.weighted_rerank(vector_scores, keyword_scores, alpha)
+        elif reranker_type == "normalized":
+            return WeightedInMemoryAggregator.normalized_rerank(vector_scores, keyword_scores)
         else:
-            # Default to RRF for None, RRF, or any unknown types
+            # Default to RRF for "rrf", None, or any unknown types
             impact_factor = reranker_params.get("impact_factor", 60.0)
             return WeightedInMemoryAggregator.rrf_rerank(vector_scores, keyword_scores, impact_factor)
 
