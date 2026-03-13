@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from llama_stack.core.storage.datatypes import KVStoreReference
 
 
-class MetaReferenceEvalConfig(BaseModel):
+class BuiltinEvalConfig(BaseModel):
     kvstore: KVStoreReference
 
     @classmethod

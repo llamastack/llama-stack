@@ -9,7 +9,7 @@ import asyncio
 from llama_stack.log import get_logger
 from llama_stack_api import OpenAIMessageParam, RunShieldRequest, Safety, SafetyViolation, ViolationLevel
 
-log = get_logger(name=__name__, category="agents::meta_reference")
+log = get_logger(name=__name__, category="agents::builtin")
 
 
 class SafetyException(Exception):  # noqa: N818

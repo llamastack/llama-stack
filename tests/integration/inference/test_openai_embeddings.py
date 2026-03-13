@@ -132,7 +132,7 @@ def compat_client(request, client_with_models):
 def skip_if_model_doesnt_support_openai_embeddings(client, model_id):
     provider = provider_from_model(client, model_id)
     if provider.provider_type in (
-        "inline::meta-reference",
+        "inline::builtin",
         "remote::bedrock",
         "remote::cerebras",
         "remote::runpod",

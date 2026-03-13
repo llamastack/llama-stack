@@ -19,9 +19,9 @@ The starter distribution consists of the following provider configurations:
 
 | API | Provider(s)                                                                                                                                                                                                                                                                                                                                    |
 |-----|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| agents | `inline::meta-reference`                                                                                                                                                                                                                                                                                                                       |
+| agents | `inline::builtin`                                                                                                                                                                                                                                                                                                                       |
 | datasetio | `remote::huggingface`, `inline::localfs`                                                                                                                                                                                                                                                                                                       |
-| eval | `inline::meta-reference`                                                                                                                                                                                                                                                                                                                       |
+| eval | `inline::builtin`                                                                                                                                                                                                                                                                                                                       |
 | files | `inline::localfs`                                                                                                                                                                                                                                                                                                                              |
 | inference | `remote::openai`, `remote::fireworks`, `remote::together`, `remote::ollama`, `remote::anthropic`, `remote::gemini`, `remote::groq`, `remote::sambanova`, `remote::vllm`, `remote::tgi`, `remote::cerebras`, `remote::llama-openai-compat`, `remote::nvidia`, `remote::hf::serverless`, `remote::hf::endpoint`, `inline::sentence-transformers` |
 | safety | `inline::llama-guard`                                                                                                                                                                                                                                                                                                                          |
@@ -252,7 +252,7 @@ The starter distribution uses SQLite for local storage of various components:
 - **Files metadata**: `~/.llama/distributions/starter/files_metadata.db`
 - **Agents store**: `~/.llama/distributions/starter/agents_store.db`
 - **Responses store**: `~/.llama/distributions/starter/responses_store.db`
-- **Evaluation store**: `~/.llama/distributions/starter/meta_reference_eval.db`
+- **Evaluation store**: `~/.llama/distributions/starter/builtin_eval.db`
 - **Dataset I/O stores**: Various HuggingFace and local filesystem stores
 
 ## Benefits of the Starter Distribution
