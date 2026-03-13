@@ -623,6 +623,8 @@ class OpenAIChunkChoice(BaseModel):
 class OpenAIChatCompletionResponseMessage(BaseModel):
     """An assistant message returned in a chat completion response."""
 
+    model_config = ConfigDict(extra="allow")
+
     role: Literal["assistant"] = Field(
         default="assistant", description="The role of the message author, always 'assistant' in responses."
     )

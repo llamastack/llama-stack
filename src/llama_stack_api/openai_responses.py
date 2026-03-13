@@ -361,6 +361,24 @@ class OpenAIResponseMCPApprovalResponse(BaseModel):
     reason: str | None = None
 
 
+@json_schema_type
+class OpenAIResponseOutputMessageReasoningSummary(BaseModel):
+    """A summary of reasoning output from the model."""
+
+    text: str
+    type: Literal["summary_text"] = "summary_text"
+
+
+@json_schema_type
+class OpenAIResponseOutputMessageReasoningItem(BaseModel):
+    """Reasoning output from the model, representing the model's thinking process."""
+
+    id: str
+    summary: list[OpenAIResponseOutputMessageReasoningSummary]
+    type: Literal["reasoning"] = "reasoning"
+    status: str | None = None
+
+
 OpenAIResponseOutput = Annotated[
     OpenAIResponseMessage
     | OpenAIResponseOutputMessageWebSearchToolCall
@@ -368,7 +386,8 @@ OpenAIResponseOutput = Annotated[
     | OpenAIResponseOutputMessageFunctionToolCall
     | OpenAIResponseOutputMessageMCPCall
     | OpenAIResponseOutputMessageMCPListTools
-    | OpenAIResponseMCPApprovalRequest,
+    | OpenAIResponseMCPApprovalRequest
+    | OpenAIResponseOutputMessageReasoningItem,
     Field(discriminator="type"),
 ]
 register_schema(OpenAIResponseOutput, name="OpenAIResponseOutput")
