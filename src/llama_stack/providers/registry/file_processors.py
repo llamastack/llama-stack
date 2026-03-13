@@ -22,4 +22,13 @@ def available_providers() -> list[ProviderSpec]:
             api_dependencies=[Api.files],
             description="PyPDF-based file processor for extracting text content from documents.",
         ),
+        InlineProviderSpec(
+            api=Api.file_processors,
+            provider_type="inline::docling",
+            pip_packages=["docling"],
+            module="llama_stack.providers.inline.file_processor.docling",
+            config_class="llama_stack.providers.inline.file_processor.docling.DoclingFileProcessorConfig",
+            api_dependencies=[Api.files],
+            description="Docling-based file processor for layout-aware, structure-preserving document parsing.",
+        ),
     ]

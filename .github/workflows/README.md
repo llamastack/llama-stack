@@ -9,6 +9,7 @@ Llama Stack uses GitHub Actions for Continuous Integration (CI). Below is a tabl
 | CI Status | [ci-status.yml](ci-status.yml) | Aggregate CI check status |
 | CodeQL Workflow Security Scan | [codeql.yml](codeql.yml) | CodeQL Workflow Security Scan |
 | Documentation Build | [docs-build.yml](docs-build.yml) | Build and validate documentation |
+| File Processors Tests | [file-processors-tests.yml](file-processors-tests.yml) | Run file processors integration tests |
 | Installer CI | [install-script-ci.yml](install-script-ci.yml) | Test the installation script |
 | Integration Auth Tests | [integration-auth-tests.yml](integration-auth-tests.yml) | Run the integration test suite with Kubernetes authentication |
 | Integration Responses & Conversations Auth Tests | [integration-responses-conversations-auth-tests.yml](integration-responses-conversations-auth-tests.yml) | Run responses and conversations auth tests with Kubernetes authentication |
