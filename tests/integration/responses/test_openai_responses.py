@@ -31,6 +31,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_max_output_tokens(self, openai_client, text_model_id):
         """Test OpenAI response with max_output_tokens parameter."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support max_output_tokens parameter")
         response = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What are the 5 Ds of dodgeball?"}],
@@ -43,6 +45,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_small_max_output_tokens(self, openai_client, text_model_id):
         """Test response with very small max_output_tokens to trigger potential truncation."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support max_output_tokens parameter")
         response = openai_client.responses.create(
             model=text_model_id,
             input=[
@@ -101,6 +105,8 @@ class TestOpenAIResponses:
         self, openai_client, text_model_id
     ):
         """Verify invalid base64 image input becomes response.failed with a spec-compliant error code."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX text model does not support image inputs")
         if text_model_id.startswith("ollama/"):
             # In some replay environments, Ollama models may not be exposed via `models.list()`.
             available_model_ids = {m.id for m in openai_client.models.list()}
@@ -445,6 +451,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_parallel_tool_calls_disabled(self, openai_client, text_model_id):
         """Test that parallel_tool_calls=False produces only one function call."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support parallel_tool_calls parameter")
         response = openai_client.responses.create(
             model=text_model_id,
             input="What is the weather in Paris and the current time in London?",
@@ -461,6 +469,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_parallel_tool_calls_disabled_streaming(self, openai_client, text_model_id):
         """Test parallel_tool_calls disabled in streaming mode with function tools."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support parallel_tool_calls parameter")
         stream = openai_client.responses.create(
             model=text_model_id,
             input="What is the weather in Paris and the current time in London?",
@@ -524,6 +534,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_background_completes(self, openai_client, text_model_id):
         """Test that a background response eventually completes."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause background responses to fail")
         response = openai_client.responses.create(
             model=text_model_id,
             input="Say hello",
@@ -583,9 +595,11 @@ class TestOpenAIResponses:
         assert response.background is False
         assert len(response.output) > 0
 
-    def _skip_service_tier_for_azure(self, text_model_id):
+    def _skip_service_tier_for_unsupported(self, text_model_id):
         if text_model_id.startswith("azure/"):
             pytest.skip("Azure OpenAI does not support the service_tier parameter")
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support the service_tier parameter")
 
     def test_openai_response_with_service_tier_auto(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto'.
@@ -593,7 +607,7 @@ class TestOpenAIResponses:
         When 'auto' is requested, the provider decides the actual tier (e.g. default, priority),
         so we only assert the response has a non-null service_tier.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response = openai_client.responses.create(
             model=text_model_id,
@@ -608,7 +622,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier(self, openai_client, text_model_id, service_tier):
         """Test OpenAI response with explicit service_tier values that should be preserved."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response = openai_client.responses.create(
             model=text_model_id,
@@ -627,7 +641,7 @@ class TestOpenAIResponses:
         for certain models). This test verifies the request is accepted with the
         exact tier preserved, or properly rejected.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         try:
             response = openai_client.responses.create(
@@ -643,7 +657,7 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_service_tier_auto_streaming(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto' in streaming mode."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -670,7 +684,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier_streaming(self, openai_client, text_model_id, service_tier):
         """Test OpenAI response with explicit service_tier values in streaming mode."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -700,7 +714,7 @@ class TestOpenAIResponses:
         The flex tier may not be supported by all providers. This test verifies
         the request is accepted with the exact tier preserved, or produces a proper failure event.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -724,7 +738,7 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_service_tier_auto_and_previous_response(self, openai_client, text_model_id):
         """Test that service_tier='auto' works correctly with previous_response_id."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response1 = openai_client.responses.create(
             model=text_model_id,
@@ -749,7 +763,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier_and_previous_response(self, openai_client, text_model_id, service_tier):
         """Test that explicit service_tier values are preserved with previous_response_id."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response1 = openai_client.responses.create(
             model=text_model_id,
