@@ -164,7 +164,7 @@ providers:
         namespace: vector_io::elasticsearch
         backend: kv_default
   files:
-  - provider_id: meta-reference-files
+  - provider_id: builtin-files
     provider_type: inline::localfs
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/starter-gpu/files}
@@ -182,8 +182,8 @@ providers:
   - provider_id: code-scanner
     provider_type: inline::code-scanner
   agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -195,8 +195,8 @@ providers:
           max_write_queue_size: 10000
           num_writers: 4
   eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       kvstore:
         namespace: eval

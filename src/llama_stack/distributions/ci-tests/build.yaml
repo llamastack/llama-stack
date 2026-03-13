@@ -37,9 +37,9 @@ distribution_spec:
     - provider_type: inline::llama-guard
     - provider_type: inline::code-scanner
     agents:
-    - provider_type: inline::meta-reference
+    - provider_type: inline::builtin
     eval:
-    - provider_type: inline::meta-reference
+    - provider_type: inline::builtin
     datasetio:
     - provider_type: remote::huggingface
     - provider_type: inline::localfs

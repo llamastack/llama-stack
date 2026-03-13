@@ -17,7 +17,7 @@ Release 0.5 brings significant improvements to API consistency, OpenAI conforman
 | Post-Training API endpoints restructured | Update URLs: `/post-training/job/status?job_uuid=X` → `/post-training/jobs/{job_uuid}/status` | [#4606](https://github.com/meta-llama/llama-stack/pull/4606) |
 | Embeddings API rejects explicit `null` | Remove `dimensions: null` and `user: null` from requests (omit fields instead) | [#4644](https://github.com/meta-llama/llama-stack/pull/4644) |
 | Safety API provider interface changed | Update provider method signatures to accept `RunShieldRequest` object | [#4643](https://github.com/meta-llama/llama-stack/pull/4643) |
-| Meta-Reference GPU provider removed | Switch to `remote::vllm` or `remote::ollama` | [#4828](https://github.com/meta-llama/llama-stack/pull/4828) |
+| Builtin GPU provider removed | Switch to `remote::vllm` or `remote::ollama` | [#4828](https://github.com/meta-llama/llama-stack/pull/4828) |
 | Scope-based endpoint authorization removed | Migrate to new YAML-based endpoint authorization | [#4734](https://github.com/meta-llama/llama-stack/pull/4734) |
 
 **Deprecated (works with warnings, migrate before next major release):**
@@ -108,13 +108,13 @@ The `params` field has been removed from `RunShieldRequest` as it was unused.
 
 ---
 
-#### 4. Meta-Reference GPU Inference Provider Removed ([#4828](https://github.com/meta-llama/llama-stack/pull/4828))
+#### 4. Builtin GPU Inference Provider Removed ([#4828](https://github.com/meta-llama/llama-stack/pull/4828))
 
 *Contributed by Matthew Farrellee*
 
-**Impact:** Users of the `inline::meta-reference` inference provider
+**Impact:** Users of the `inline::builtin` inference provider
 
-The inline meta-reference GPU inference implementation has been removed. Use `vllm`, `ollama`, or other maintained providers instead.
+The inline builtin GPU inference implementation has been removed. Use `vllm`, `ollama`, or other maintained providers instead.
 
 **Migration:** Switch to `remote::vllm`, `remote::ollama`, or another supported inference provider.
 
@@ -436,10 +436,10 @@ Complete these steps before upgrading to 0.5:
    ```
    Remove these fields entirely instead of setting them to `null`.
 
-3. **If using `inline::meta-reference` provider**, update your config:
+3. **If using `inline::builtin` provider**, update your config:
    ```yaml
    # Before
-   provider_type: inline::meta-reference
+   provider_type: inline::builtin
 
    # After (choose one)
    provider_type: remote::vllm

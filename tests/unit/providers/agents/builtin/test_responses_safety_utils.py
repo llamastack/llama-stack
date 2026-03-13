@@ -8,10 +8,10 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
+from llama_stack.providers.inline.agents.builtin.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
-from llama_stack.providers.inline.agents.meta_reference.responses.utils import (
+from llama_stack.providers.inline.agents.builtin.responses.utils import (
     extract_guardrail_ids,
     run_guardrails,
 )

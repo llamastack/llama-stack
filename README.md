@@ -52,7 +52,7 @@ Please checkout for [full list](https://llamastack.github.io/docs/providers)
 
 |    API Provider      | Environments | Agents | Inference | VectorIO | Safety | Post Training | Eval | DatasetIO |
 |:--------------------:|:------------:|:------:|:---------:|:--------:|:------:|:-------------:|:----:|:--------:|
-|    Meta Reference    | Single Node | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|    Builtin    | Single Node | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 |      SambaNova       | Hosted | | ✅ | | ✅ | | | |
 |       Cerebras       | Hosted | | ✅ | | | | | |
 |      Fireworks       | Hosted | ✅ | ✅ | ✅ | | | | |
@@ -90,7 +90,7 @@ Here are some of the distributions we support:
 |:---------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------------------------------:|
 |                Starter Distribution                 |           [llamastack/distribution-starter](https://hub.docker.com/repository/docker/llamastack/distribution-starter/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/starter)      |
 |                Starter Distribution GPU                 |           [llamastack/distribution-starter-cpu](https://hub.docker.com/repository/docker/llamastack/distribution-starter-cpu/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/starter)      |
-|                Meta Reference                 |           [llamastack/distribution-meta-reference-gpu](https://hub.docker.com/repository/docker/llamastack/distribution-meta-reference-gpu/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/meta-reference-gpu)      |
+|                Builtin                 |           [llamastack/distribution-builtin-gpu](https://hub.docker.com/repository/docker/llamastack/distribution-builtin-gpu/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/builtin-gpu)      |
 |                   PostgreSQL                  |                [llamastack/distribution-postgres-demo](https://hub.docker.com/repository/docker/llamastack/distribution-postgres-demo/general)                | N/A |
 |                Dell                 |           [llamastack/distribution-dell](https://hub.docker.com/repository/docker/llamastack/distribution-dell/general)           |      [Guide](https://llamastack.github.io/docs/distributions/self_hosted_distro/dell)      |
 

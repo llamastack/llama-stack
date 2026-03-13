@@ -6,7 +6,7 @@
 
 from typing import Any
 
-from llama_stack.providers.inline.agents.meta_reference.responses.streaming import _VALID_RESPONSE_ERROR_CODES
+from llama_stack.providers.inline.agents.builtin.responses.streaming import _VALID_RESPONSE_ERROR_CODES
 
 
 class StreamingValidator:

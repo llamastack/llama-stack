@@ -39,7 +39,7 @@ def provider_from_model(client_with_models, model_id):
 def skip_if_model_doesnt_support_openai_completion(client_with_models, model_id):
     provider = provider_from_model(client_with_models, model_id)
     if provider.provider_type in (
-        "inline::meta-reference",
+        "inline::builtin",
         "inline::sentence-transformers",
         "remote::vllm",
         "remote::bedrock",
@@ -122,7 +122,7 @@ def skip_if_doesnt_support_n(client_with_models, model_id):
 def skip_if_model_doesnt_support_openai_chat_completion(client_with_models, model_id):
     provider = provider_from_model(client_with_models, model_id)
     if provider.provider_type in (
-        "inline::meta-reference",
+        "inline::builtin",
         "inline::sentence-transformers",
         "remote::vllm",
         "remote::databricks",

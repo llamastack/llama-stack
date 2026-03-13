@@ -237,7 +237,7 @@ def test_response_non_streaming_mcp_tool(responses_client, text_model_id, case, 
         )
         # Suppress expected auth error logs only for the failing auth attempt
         with caplog.at_level(
-            logging.CRITICAL, logger="llama_stack.providers.inline.agents.meta_reference.responses.streaming"
+            logging.CRITICAL, logger="llama_stack.providers.inline.agents.builtin.responses.streaming"
         ):
             with pytest.raises(exc_type):
                 responses_client.responses.create(

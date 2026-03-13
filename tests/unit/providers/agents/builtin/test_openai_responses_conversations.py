@@ -8,7 +8,7 @@
 import pytest
 
 # Fixtures imported from test_openai_responses via root conftest.py for pytest 8.4+ compatibility
-from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
+from llama_stack.providers.inline.agents.builtin.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
 from llama_stack_api.common.errors import (

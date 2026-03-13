@@ -17,7 +17,7 @@ def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.agents,
-            provider_type="inline::meta-reference",
+            provider_type="inline::builtin",
             pip_packages=[
                 "matplotlib",
                 "fonttools>=4.60.2",
@@ -27,8 +27,8 @@ def available_providers() -> list[ProviderSpec]:
                 "mcp>=1.23.0",
             ]
             + kvstore_dependencies(),  # TODO make this dynamic based on the kvstore config
-            module="llama_stack.providers.inline.agents.meta_reference",
-            config_class="llama_stack.providers.inline.agents.meta_reference.MetaReferenceAgentsImplConfig",
+            module="llama_stack.providers.inline.agents.builtin",
+            config_class="llama_stack.providers.inline.agents.builtin.BuiltinAgentsImplConfig",
             api_dependencies=[
                 Api.inference,
                 Api.vector_io,
