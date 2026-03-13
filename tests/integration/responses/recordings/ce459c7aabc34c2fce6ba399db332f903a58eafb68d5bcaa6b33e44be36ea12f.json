@@ -1,0 +1,58 @@
+{
+  "test_id": "tests/integration/responses/test_basic_responses.py::test_response_non_streaming_multi_turn_image[client_with_models-txt=ollama/llama3.2:3b-instruct-fp16-llama_image_understanding]",
+  "request": {
+    "method": "POST",
+    "url": "http://0.0.0.0:11434/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "llama3.2:3b-instruct-fp16",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "What type of animal is in this image? Please respond with a single word that starts with the letter 'L'."
+            },
+            {
+              "type": "image_url",
+              "image_url": {
+                "url": "data:image/plain;base64,UGxlYXNlIHNldCBhIHVzZXItYWdlbnQgYW5kIHJlc3BlY3Qgb3VyIHJvYm90IHBvbGljeSBodHRwczovL3cud2lraS80d0pTLiBTZWUgYWxzbyBodHRwczovL3BoYWJyaWNhdG9yLndpa2ltZWRpYS5vcmcvVDQwMDExOS4K",
+                "detail": "auto"
+              }
+            }
+          ]
+        }
+      ],
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      }
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "llama3.2:3b-instruct-fp16",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": null,
+    "is_streaming": false,
+    "is_exception": true,
+    "exception_data": {
+      "category": "provider_sdk",
+      "provider": "openai",
+      "type": "BadRequestError",
+      "message": "Error code: 400 - {'error': {'message': 'invalid image input', 'type': 'invalid_request_error', 'param': None, 'code': None}}",
+      "status_code": 400,
+      "body": {
+        "message": "invalid image input",
+        "type": "invalid_request_error",
+        "param": null,
+        "code": null
+      }
+    },
+    "exception_message": "Error code: 400 - {'error': {'message': 'invalid image input', 'type': 'invalid_request_error', 'param': None, 'code': None}}"
+  },
+  "id_normalization_mapping": {}
+}
