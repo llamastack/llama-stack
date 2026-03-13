@@ -1574,8 +1574,6 @@ async def test_apply_default_ef_search_for_query_vector(mock_psycopg2_connection
         f"Expected default 'SET hnsw.ef_search = {PGVectorHNSWVectorIndex().ef_search}' when ef_search is not explicitly configured, got: {set_call_sql}"
     )
 
-
-
 async def test_embedding_dimensions_parameter_conditional(vector_io_adapter):
     """
     Test that the dimensions parameter is conditionally passed to embeddings API.

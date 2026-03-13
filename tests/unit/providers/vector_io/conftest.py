@@ -25,7 +25,7 @@ from llama_stack_api import Chunk, ChunkMetadata, QueryChunksResponse, VectorSto
 
 # Lazy import for qdrant to avoid requiring qdrant-client for all unit tests
 if TYPE_CHECKING:
-    from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantIndex, QdrantVectorIOAdapter
+    pass
 
 EMBEDDING_DIMENSION = 768
 COLLECTION_PREFIX = "test_collection"
@@ -130,11 +130,11 @@ def mock_inference_api(embedding_dimension):
     class MockInferenceAPI:
         async def embed_batch(self, texts: list[str]) -> list[list[float]]:
             return [np.random.rand(embedding_dimension).astype(np.float32).tolist() for _ in texts]
-        
+
         async def openai_embeddings(self, request):
             """Mock openai_embeddings method for testing"""
-            from llama_stack_api.inference import OpenAIEmbeddingsResponse, OpenAIEmbeddingData, OpenAIEmbeddingUsage
-            
+            from llama_stack_api.inference import OpenAIEmbeddingData, OpenAIEmbeddingsResponse, OpenAIEmbeddingUsage
+
             # Return mock embeddings response
             embeddings = [np.random.rand(embedding_dimension).astype(np.float32).tolist() for _ in request.input]
             return OpenAIEmbeddingsResponse(
@@ -363,6 +363,7 @@ async def pgvector_vec_adapter(unique_kvstore_config, mock_inference_api, embedd
 @pytest.fixture
 async def qdrant_vec_index(embedding_dimension):
     from qdrant_client import models
+
     from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantIndex
 
     mock_client = AsyncMock()
@@ -410,7 +411,7 @@ async def qdrant_vec_index(embedding_dimension):
 @pytest.fixture
 async def qdrant_vec_adapter(unique_kvstore_config, mock_inference_api, embedding_dimension):
     from llama_stack.providers.remote.vector_io.qdrant.qdrant import QdrantVectorIOAdapter
-    
+
     config = QdrantVectorIOConfig(
         path=":memory:",
         persistence=unique_kvstore_config,
