@@ -32,7 +32,7 @@ Models, endpoints, and versions used during test recordings.
 | Provider | Model(s) | Endpoint | Version Info |
 |----------|----------|----------|--------------|
 | azure | gpt-4o | lls-test.openai.azure.com | — |
-| openai | gpt-4o, text-embedding-3-small | api.openai.com | — |
+| openai | gpt-4o, text-embedding-3-small | api.openai.com | openai sdk: 2.5.0 |
 | vllm | Qwen/Qwen3-0.6B | — | — |
 
 ## Basic Responses
