@@ -72,9 +72,34 @@ class SqlAlchemySqlStoreImpl(SqlStore):
     def __init__(self, config: SqlAlchemySqlStoreConfig):
         self.config = config
         self._is_sqlite_backend = "sqlite" in self.config.engine_str
-        self._engine = self.create_engine()
-        self.async_session = async_sessionmaker(self._engine)
+        self._engine: AsyncEngine | None = None  # Lazy initialization
+        self.async_session = None
         self.metadata = MetaData()
+        self._pending_columns: dict[
+            str, list[tuple[str, ColumnType, bool]]
+        ] = {}  # table -> [(col_name, col_type, nullable)]
+
+    async def _ensure_engine(self):
+        """Lazy initialization: create engine on first use in the current event loop.
+
+        This fixes event loop mismatch issues when Stack is initialized in a different
+        event loop (e.g., ThreadPoolExecutor) than request handling (uvicorn's loop).
+        """
+        if self._engine is None:
+            # Create engine in the current running event loop
+            self._engine = self.create_engine()
+            self.async_session = async_sessionmaker(self._engine)
+
+            # Create all tables that were registered during initialization
+            if self.metadata.tables:
+                async with self._engine.begin() as conn:
+                    await conn.run_sync(self.metadata.create_all, checkfirst=True)
+
+            # Add all pending columns that were queued during initialization
+            for table_name, columns in self._pending_columns.items():
+                for col_name, col_type, nullable in columns:
+                    await self._add_column_now(table_name, col_name, col_type, nullable)
+            self._pending_columns.clear()
 
     async def shutdown(self):
         """Dispose of the async engine and close all connections."""
@@ -119,6 +144,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         table: str,
         schema: Mapping[str, ColumnType | ColumnDefinition],
     ) -> None:
+        # Don't create engine yet - just store table metadata
+        # Engine will be created on first data operation
         if not schema:
             raise ValueError(f"No columns defined for table '{table}'.")
 
@@ -144,15 +171,14 @@ class SqlAlchemySqlStoreImpl(SqlStore):
                 Column(col_name, sqlalchemy_type, primary_key=is_primary_key, nullable=is_nullable)
             )
 
+        # Register table in metadata - actual creation happens in _ensure_engine()
         if table not in self.metadata.tables:
-            sqlalchemy_table = Table(table, self.metadata, *sqlalchemy_columns)
-        else:
-            sqlalchemy_table = self.metadata.tables[table]
-
-        async with self._engine.begin() as conn:
-            await conn.run_sync(self.metadata.create_all, tables=[sqlalchemy_table], checkfirst=True)
+            Table(table, self.metadata, *sqlalchemy_columns)
+        # If table already exists in metadata, we're done (no need to recreate)
 
     async def insert(self, table: str, data: Mapping[str, Any] | Sequence[Mapping[str, Any]]) -> None:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         async with self.async_session() as session:
             await session.execute(self.metadata.tables[table].insert(), data)
             await session.commit()
@@ -164,6 +190,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         conflict_columns: list[str],
         update_columns: list[str] | None = None,
     ) -> None:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         table_obj = self.metadata.tables[table]
         dialect_insert = self._get_dialect_insert(table_obj)
         insert_stmt = dialect_insert.values(**data)
@@ -190,6 +218,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         order_by: list[tuple[str, Literal["asc", "desc"]]] | None = None,
         cursor: tuple[str, str] | None = None,
     ) -> PaginatedResponse:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         async with self.async_session() as session:
             table_obj = self.metadata.tables[table]
             query = select(table_obj)
@@ -303,6 +333,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         data: Mapping[str, Any],
         where: Mapping[str, Any],
     ) -> None:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         if not where:
             raise ValueError("where is required for update")
 
@@ -314,6 +346,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
             await session.commit()
 
     async def delete(self, table: str, where: Mapping[str, Any]) -> None:
+        await self._ensure_engine()  # Lazy init in current event loop
+        assert self.async_session is not None  # _ensure_engine guarantees this
         if not where:
             raise ValueError("where is required for delete")
 
@@ -331,7 +365,25 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         column_type: ColumnType,
         nullable: bool = True,
     ) -> None:
-        """Add a column to an existing table if the column doesn't already exist."""
+        """Queue a column to be added when engine is created, or add it now if engine exists."""
+        if self._engine is None:
+            # Engine not created yet - queue this column addition for later
+            if table not in self._pending_columns:
+                self._pending_columns[table] = []
+            self._pending_columns[table].append((column_name, column_type, nullable))
+        else:
+            # Engine already exists - add column immediately
+            await self._add_column_now(table, column_name, column_type, nullable)
+
+    async def _add_column_now(
+        self,
+        table: str,
+        column_name: str,
+        column_type: ColumnType,
+        nullable: bool = True,
+    ) -> None:
+        """Actually add a column to an existing table if the column doesn't already exist."""
+        assert self._engine is not None  # Only called when engine exists
         try:
             async with self._engine.begin() as conn:
 
