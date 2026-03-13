@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import heapq
+import re
 from typing import Any
 
 import psycopg2
@@ -51,6 +52,18 @@ VECTOR_INDEX_PREFIX = f"vector_index:pgvector:{VERSION}::"
 OPENAI_VECTOR_STORES_PREFIX = f"openai_vector_stores:pgvector:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_PREFIX = f"openai_vector_stores_files:pgvector:{VERSION}::"
 OPENAI_VECTOR_STORES_FILES_CONTENTS_PREFIX = f"openai_vector_stores_files_contents:pgvector:{VERSION}::"
+
+_PG_SQL_OPS: dict[str, str] = {
+    "eq": "=",
+    "ne": "!=",
+    "gt": ">",
+    "gte": ">=",
+    "lt": "<",
+    "lte": "<=",
+}
+
+# Regex for validating metadata key names to prevent SQL injection in JSONB paths
+_VALID_KEY_PATTERN = re.compile(r"^[a-zA-Z0-9_\-]+$")
 
 
 def check_extension_version(cur):
@@ -160,17 +173,20 @@ class PGVectorIndex(EmbeddingIndex):
                 # when created with patterns like "test-vector-db-{uuid4()}"
                 sanitized_identifier = sanitize_collection_name(self.vector_store.identifier)
                 self.table_name = f"vs_{sanitized_identifier}"
+                self._table_sql = sql.Identifier(self.table_name)
 
                 cur.execute(
-                    f"""
-                    CREATE TABLE IF NOT EXISTS {self.table_name} (
+                    sql.SQL(
+                        """
+                    CREATE TABLE IF NOT EXISTS {} (
                         id TEXT PRIMARY KEY,
                         document JSONB,
-                        embedding vector({self.dimension}),
+                        embedding vector({}),
                         content_text TEXT,
                         tokenized_content TSVECTOR
                     )
                 """
+                    ).format(self._table_sql, sql.Literal(self.dimension))
                 )
 
                 # pgvector's embedding dimensions requirement to create an index for Approximate Nearest Neighbor (ANN) search is up to 2,000 dimensions for column with type vector
@@ -219,8 +235,8 @@ class PGVectorIndex(EmbeddingIndex):
             )
 
         query = sql.SQL(
-            f"""
-        INSERT INTO {self.table_name} (id, document, embedding, content_text, tokenized_content)
+            """
+        INSERT INTO {} (id, document, embedding, content_text, tokenized_content)
         VALUES %s
         ON CONFLICT (id) DO UPDATE SET
             embedding = EXCLUDED.embedding,
@@ -228,7 +244,7 @@ class PGVectorIndex(EmbeddingIndex):
             content_text = EXCLUDED.content_text,
             tokenized_content = EXCLUDED.tokenized_content
     """
-        )
+        ).format(self._table_sql)
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             execute_values(cur, query, values, template="(%s, %s, %s::vector, %s, to_tsvector('english', %s))")
 
@@ -249,14 +265,12 @@ class PGVectorIndex(EmbeddingIndex):
             embedding: The query embedding vector
             k: Number of results to return
             score_threshold: Minimum similarity score threshold
-            filters: Optional filters (not yet supported for PGVector provider)
+            filters: Optional filters for metadata-based filtering
 
         Returns:
             QueryChunksResponse with combined results
         """
-        # Filters are not yet implemented for PGVector provider
-        if filters is not None:
-            raise NotImplementedError("PGVector provider does not yet support native filtering")
+        filter_clause, filter_params = self._translate_filters(filters)
 
         pgvector_search_function = self.get_pgvector_search_function()
 
@@ -277,14 +291,19 @@ class PGVectorIndex(EmbeddingIndex):
                 """
                 )
 
+            where = sql.SQL("WHERE {}").format(sql.SQL(filter_clause)) if filter_clause else sql.SQL("")
+
             cur.execute(
-                f"""
-            SELECT document, embedding {pgvector_search_function} %s::vector AS distance
-            FROM {self.table_name}
+                sql.SQL(
+                    """
+            SELECT document, embedding {} %s::vector AS distance
+            FROM {}
+            {}
             ORDER BY distance
             LIMIT %s
-        """,
-                (embedding.tolist(), k),
+        """
+                ).format(sql.SQL(pgvector_search_function), self._table_sql, where),
+                (embedding.tolist(), *filter_params, k),
             )
             results = cur.fetchall()
 
@@ -317,21 +336,23 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
-        # PGVector provider does not yet support native filtering
-        if filters is not None:
-            raise NotImplementedError("PGVector provider does not yet support native filtering")
+        filter_clause, filter_params = self._translate_filters(filters)
 
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             # Use plainto_tsquery to handle user input safely and ts_rank for relevance scoring
+            filter_sql = sql.SQL(" AND ({})").format(sql.SQL(filter_clause)) if filter_clause else sql.SQL("")
+
             cur.execute(
-                f"""
+                sql.SQL(
+                    """
             SELECT document, ts_rank(tokenized_content, plainto_tsquery('english', %s)) AS score
-            FROM {self.table_name}
-            WHERE tokenized_content @@ plainto_tsquery('english', %s)
+            FROM {}
+            WHERE tokenized_content @@ plainto_tsquery('english', %s){}
             ORDER BY score DESC
             LIMIT %s
-        """,
-                (query_string, query_string, k),
+        """
+                ).format(self._table_sql, filter_sql),
+                (query_string, query_string, *filter_params, k),
             )
             results = cur.fetchall()
 
@@ -369,16 +390,12 @@ class PGVectorIndex(EmbeddingIndex):
         Returns:
             QueryChunksResponse with combined results
         """
-        # PGVector provider does not yet support native filtering
-        if filters is not None:
-            raise NotImplementedError("PGVector provider does not yet support native filtering")
-
         if reranker_params is None:
             reranker_params = {}
 
-        # Get results from both search methods
-        vector_response = await self.query_vector(embedding, k, score_threshold)
-        keyword_response = await self.query_keyword(query_string, k, score_threshold)
+        # Get results from both search methods, passing filters through
+        vector_response = await self.query_vector(embedding, k, score_threshold, filters)
+        keyword_response = await self.query_keyword(query_string, k, score_threshold, filters)
 
         # Convert responses to score dictionaries using chunk_id
         vector_scores = {
@@ -413,16 +430,93 @@ class PGVectorIndex(EmbeddingIndex):
 
         return QueryChunksResponse(chunks=chunks, scores=scores)
 
+    def _translate_filters(self, filters: ComparisonFilter | CompoundFilter | None) -> tuple[str, list[Any]]:
+        """Translate OpenAI-compatible filters to PostgreSQL WHERE clause with parameters.
+
+        Args:
+            filters: The filter to translate (ComparisonFilter or CompoundFilter)
+
+        Returns:
+            A tuple of (where_clause, parameters) where where_clause is a SQL condition string
+            and parameters is a list of values to be bound to the query.
+        """
+        if filters is None:
+            return "", []
+
+        return self._translate_single_filter(filters)
+
+    def _translate_single_filter(self, filter_obj: ComparisonFilter | CompoundFilter) -> tuple[str, list[Any]]:
+        """Translate a single filter to SQL."""
+        if isinstance(filter_obj, ComparisonFilter):
+            return self._translate_comparison_filter(filter_obj)
+        elif isinstance(filter_obj, CompoundFilter):
+            return self._translate_compound_filter(filter_obj)
+        else:
+            raise ValueError(f"Unknown filter type: {type(filter_obj)}")
+
+    def _translate_comparison_filter(self, filter_obj: ComparisonFilter) -> tuple[str, list[Any]]:
+        """Translate a comparison filter to PostgreSQL WHERE clause using JSONB operators."""
+        key, value, op_type = filter_obj.key, filter_obj.value, filter_obj.type
+
+        # Validate key to prevent SQL injection in JSONB path
+        if not _VALID_KEY_PATTERN.match(key):
+            raise ValueError(f"Invalid metadata key name: {key!r}")
+
+        # Use ->> to extract metadata value as text from the JSONB document column
+        expr = f"document->'metadata'->>'{key}'"
+
+        if op_type in _PG_SQL_OPS:
+            sql_op = _PG_SQL_OPS[op_type]
+            # Check bool before int since bool is a subclass of int in Python
+            if isinstance(value, bool):
+                return f"({expr})::boolean {sql_op} %s", [value]
+            elif isinstance(value, int | float):
+                return f"({expr})::numeric {sql_op} %s", [value]
+            else:
+                return f"{expr} {sql_op} %s", [value]
+        elif op_type == "in":
+            if not isinstance(value, list):
+                raise ValueError(f"'in' filter requires a list value, got {type(value)}")
+            placeholders = ", ".join("%s" for _ in value)
+            return f"{expr} IN ({placeholders})", [str(v) for v in value]
+        elif op_type == "nin":
+            if not isinstance(value, list):
+                raise ValueError(f"'nin' filter requires a list value, got {type(value)}")
+            placeholders = ", ".join("%s" for _ in value)
+            return f"{expr} NOT IN ({placeholders})", [str(v) for v in value]
+        else:
+            raise ValueError(f"Unknown comparison operator: {op_type}")
+
+    def _translate_compound_filter(self, filter_obj: CompoundFilter) -> tuple[str, list[Any]]:
+        """Translate a compound filter (and/or) to PostgreSQL WHERE clause."""
+        if not filter_obj.filters:
+            return "", []
+
+        clauses = []
+        params: list[Any] = []
+
+        for sub_filter in filter_obj.filters:
+            clause, sub_params = self._translate_single_filter(sub_filter)
+            if clause:
+                clauses.append(f"({clause})")
+                params.extend(sub_params)
+
+        if not clauses:
+            return "", []
+
+        operator = " AND " if filter_obj.type == "and" else " OR "
+        return operator.join(clauses), params
+
     async def delete(self):
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
-            cur.execute(f"DROP TABLE IF EXISTS {self.table_name}")
+            cur.execute(sql.SQL("DROP TABLE IF EXISTS {}").format(self._table_sql))
 
     async def delete_chunks(self, chunks_for_deletion: list[ChunkForDeletion]) -> None:
         """Remove a chunk from the PostgreSQL table."""
         chunk_ids = [c.chunk_id for c in chunks_for_deletion]
         with self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
             # Fix: Use proper tuple parameter binding with explicit array cast
-            cur.execute(f"DELETE FROM {self.table_name} WHERE id = ANY(%s::text[])", (chunk_ids,))
+            cur.execute(sql.SQL("DELETE FROM {} WHERE id = ANY(%s::text[])").format(self._table_sql), (chunk_ids,))
 
     def get_pgvector_index_operator_class(self) -> str:
         """Get the pgvector index operator class for the current distance metric.
@@ -471,10 +565,18 @@ class PGVectorIndex(EmbeddingIndex):
             # Create HNSW (Hierarchical Navigable Small Worlds) index on embedding column to allow efficient and performant vector search in pgvector
             # HNSW finds the approximate nearest neighbors by only calculating distance metric for vectors it visits during graph traversal instead of processing all vectors
             cur.execute(
-                f"""
-                CREATE INDEX IF NOT EXISTS {self.table_name}_hnsw_idx
-                ON {self.table_name} USING hnsw(embedding {index_operator_class}) WITH (m = {self.vector_index.m}, ef_construction = {self.vector_index.ef_construction});
+                sql.SQL(
+                    """
+                CREATE INDEX IF NOT EXISTS {}
+                ON {} USING hnsw(embedding {}) WITH (m = {}, ef_construction = {});
             """
+                ).format(
+                    sql.Identifier(f"{self.table_name}_hnsw_idx"),
+                    self._table_sql,
+                    sql.SQL(index_operator_class),
+                    sql.Literal(self.vector_index.m),
+                    sql.Literal(self.vector_index.ef_construction),
+                )
             )
             log.info(
                 f"{PGVectorIndexType.HNSW} vector index was created with parameters m = {self.vector_index.m}, ef_construction = {self.vector_index.ef_construction} for vector_store: {self.vector_store.identifier}."
@@ -514,10 +616,17 @@ class PGVectorIndex(EmbeddingIndex):
             # IVFFlat index divides vectors into lists, and then searches a subset of those lists that are closest to the query vector
             # Index should be created only after the table has some data (https://github.com/pgvector/pgvector?tab=readme-ov-file#ivfflat)
             cur.execute(
-                f"""
-                CREATE INDEX IF NOT EXISTS {self.table_name}_ivfflat_idx
-                ON {self.table_name} USING ivfflat(embedding {index_operator_class}) WITH (lists = {self.vector_index.lists});
+                sql.SQL(
+                    """
+                CREATE INDEX IF NOT EXISTS {}
+                ON {} USING ivfflat(embedding {}) WITH (lists = {});
             """
+                ).format(
+                    sql.Identifier(f"{self.table_name}_ivfflat_idx"),
+                    self._table_sql,
+                    sql.SQL(index_operator_class),
+                    sql.Literal(self.vector_index.lists),
+                )
             )
             log.info(
                 f"{PGVectorIndexType.IVFFlat} vector index was created with parameter lists = {self.vector_index.lists} for vector_store: {self.vector_store.identifier}."
@@ -588,10 +697,12 @@ class PGVectorIndex(EmbeddingIndex):
         try:
             log.info(f"Fetching number of records in vector_store: {self.vector_store.identifier}...")
             cur.execute(
-                f"""
+                sql.SQL(
+                    """
                 SELECT COUNT(DISTINCT id)
-                FROM {self.table_name};
+                FROM {};
                 """
+                ).format(self._table_sql)
             )
             result = cur.fetchone()
 
@@ -617,10 +728,15 @@ class PGVectorIndex(EmbeddingIndex):
 
         try:
             cur.execute(
-                f"""
-                CREATE INDEX IF NOT EXISTS {self.table_name}_content_gin_idx
-                ON {self.table_name} USING GIN(tokenized_content)
+                sql.SQL(
+                    """
+                CREATE INDEX IF NOT EXISTS {}
+                ON {} USING GIN(tokenized_content)
             """
+                ).format(
+                    sql.Identifier(f"{self.table_name}_content_gin_idx"),
+                    self._table_sql,
+                )
             )
             log.info(f"GIN index verified for vector_store: {self.vector_store.identifier}.")
 

@@ -10,6 +10,7 @@ from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import pytest
+from psycopg2 import sql
 
 from llama_stack.providers.inline.vector_io.sqlite_vec.sqlite_vec import VECTOR_DBS_PREFIX
 from llama_stack_api import (
@@ -1422,14 +1423,15 @@ async def test_create_gin_index_executes_correct_sql():
             vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
         )
         index.table_name = "vs_test_table"
+        index._table_sql = sql.Identifier("vs_test_table")
 
     await index.create_gin_index(cursor)
 
     cursor.execute.assert_called_once()
-    executed_sql = cursor.execute.call_args[0][0]
+    executed_sql = repr(cursor.execute.call_args[0][0])
     assert "CREATE INDEX IF NOT EXISTS" in executed_sql
     assert "vs_test_table_content_gin_idx" in executed_sql
-    assert "ON vs_test_table" in executed_sql
+    assert "vs_test_table" in executed_sql
     assert "USING GIN(tokenized_content)" in executed_sql
 
 
@@ -1464,6 +1466,7 @@ async def test_create_gin_index_raises_runtime_error_on_db_error():
             vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
         )
         index.table_name = "vs_test_table"
+        index._table_sql = sql.Identifier("vs_test_table")
 
     with pytest.raises(RuntimeError, match="Failed to create GIN index"):
         await index.create_gin_index(cursor)
@@ -1524,6 +1527,7 @@ async def test_set_ef_search_called_before_select_in_query_vector(mock_psycopg2_
         vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64, ef_search=50),
     )
     index.table_name = "test_table"
+    index._table_sql = sql.Identifier("test_table")
 
     embedding = np.random.rand(embedding_dimension).astype(np.float32)
     await index.query_vector(embedding, k=5, score_threshold=0.5)
@@ -1532,7 +1536,7 @@ async def test_set_ef_search_called_before_select_in_query_vector(mock_psycopg2_
     assert len(calls) == 2, f"Expected exactly 2 execute calls (SET + SELECT), got {len(calls)}"
 
     set_call_sql = str(calls[0])
-    select_call_sql = str(calls[1])
+    select_call_sql = repr(calls[1][0][0])
     assert f"SET hnsw.ef_search = {index.vector_index.ef_search}" in set_call_sql, (
         f"First call should be SET, got: {set_call_sql}"
     )
@@ -1559,6 +1563,7 @@ async def test_apply_default_ef_search_for_query_vector(mock_psycopg2_connection
         vector_index=PGVectorHNSWVectorIndex(m=16, ef_construction=64),
     )
     index.table_name = "test_table"
+    index._table_sql = sql.Identifier("test_table")
 
     embedding = np.random.rand(embedding_dimension).astype(np.float32)
     await index.query_vector(embedding, k=5, score_threshold=0.5)
