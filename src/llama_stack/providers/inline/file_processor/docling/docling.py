@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import os
 import tempfile
 import time
 import uuid
@@ -30,7 +31,10 @@ log = get_logger(name=__name__, category="providers::file_processors")
 
 
 class DoclingFileProcessor:
-    """Docling-based file processor for PDF documents with structure-aware chunking."""
+    """Docling-based file processor with structure-aware chunking.
+
+    Supports multiple file formats via docling's DocumentConverter (PDF, DOCX, PPTX, HTML, images, etc.).
+    """
 
     def __init__(self, config: DoclingFileProcessorConfig, files_api=None) -> None:
         self.config = config
@@ -43,7 +47,7 @@ class DoclingFileProcessor:
         options: dict[str, Any] | None = None,
         chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> ProcessFileResponse:
-        """Process a PDF file using docling and return chunks."""
+        """Process a file using docling and return chunks."""
 
         # Validate input
         if not file and not file_id:
@@ -53,14 +57,14 @@ class DoclingFileProcessor:
 
         start_time = time.time()
 
-        # Get PDF content
+        # Get file content
         if file:
             content = await file.read()
             if len(content) > self.config.max_file_size_bytes:
                 raise ValueError(
                     f"File size {len(content)} bytes exceeds maximum of {self.config.max_file_size_bytes} bytes"
                 )
-            filename = file.filename or f"{uuid.uuid4()}.pdf"
+            filename = file.filename or f"{uuid.uuid4()}.bin"
         elif file_id:
             file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
             filename = file_info.filename
@@ -70,8 +74,9 @@ class DoclingFileProcessor:
             )
             content = content_response.body
 
-        # Write to temp file since DocumentConverter expects a file path
-        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=True) as tmp:
+        # Preserve original file extension so DocumentConverter can detect the format
+        suffix = os.path.splitext(filename)[1] or ".bin"
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=True) as tmp:
             tmp.write(content)
             tmp.flush()
 
