@@ -118,7 +118,7 @@ jobs:
           echo "Pushed tag $DEV_TAG to main ($MAIN_SHA)"
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
 
       # -----------------------------------------------------------------------
       # Step B: Bump fallback_version on main and open PR
