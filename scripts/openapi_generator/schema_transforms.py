@@ -1008,6 +1008,25 @@ def _apply_legacy_sorting(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     return openapi_schema
 
 
+def _remove_type_object_from_openai_schemas(openapi_schema: dict[str, Any]) -> dict[str, Any]:
+    """Remove 'type: object' from schemas that have 'properties' defined.
+
+    The OpenAI spec does not include an explicit ``type: object`` on schemas
+    that already declare ``properties``.  Pydantic adds it automatically, so
+    we strip it here to stay conformant with the OpenAI spec.
+    """
+    schemas = openapi_schema.get("components", {}).get("schemas", {})
+    for schema_name, schema_def in schemas.items():
+        if (
+            isinstance(schema_def, dict)
+            and schema_name.startswith("OpenAI")
+            and schema_def.get("type") == "object"
+            and "properties" in schema_def
+        ):
+            del schema_def["type"]
+    return openapi_schema
+
+
 def _fix_schema_issues(openapi_schema: dict[str, Any]) -> dict[str, Any]:
     """Fix common schema issues: exclusiveMinimum, null defaults, and add titles to unions."""
     # Convert anyOf with const values to enums across the entire schema

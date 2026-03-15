@@ -96,8 +96,8 @@ def create_router(impl: Files, max_upload_size_bytes: int = DEFAULT_MAX_UPLOAD_S
         description="Retrieve file content",
         responses={
             200: {
-                "description": "The raw file content as a binary response.",
-                "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Response"}}},
+                "description": "The file content.",
+                "content": {"application/json": {"schema": {"type": "string"}}},
             },
         },
     )
