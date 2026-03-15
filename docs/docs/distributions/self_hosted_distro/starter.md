@@ -75,6 +75,35 @@ The following environment variables can be configured:
 ### Server Configuration
 - `LLAMA_STACK_PORT`: Port for the Llama Stack distribution server (default: `8321`)
 
+### Production Server Configuration (Unix/Linux/macOS only)
+
+On Unix-based systems (Linux, macOS), you can optionally enable Gunicorn with Uvicorn workers for production-grade performance. Set `LLAMA_STACK_ENABLE_GUNICORN=true` to enable. The following environment variables control Gunicorn behavior:
+
+- `LLAMA_STACK_ENABLE_GUNICORN`: Set to `true` to enable Gunicorn (default: `false`)
+- `GUNICORN_WORKERS` or `WEB_CONCURRENCY`: Number of worker processes (default: `server.workers` from config, or `(2 * CPU cores) + 1`)
+- `GUNICORN_WORKER_CONNECTIONS`: Max concurrent connections per worker (default: `1000`)
+- `GUNICORN_TIMEOUT`: Worker timeout in seconds (default: `120`)
+- `GUNICORN_KEEPALIVE`: Connection keepalive in seconds (default: `5`)
+- `GUNICORN_MAX_REQUESTS`: Restart workers after N requests to prevent memory leaks (default: `10000`)
+- `GUNICORN_MAX_REQUESTS_JITTER`: Randomize worker restart timing (default: `1000`)
+- `GUNICORN_PRELOAD`: Preload app before forking workers for memory efficiency (default: `true`)
+
+**Important Notes**:
+
+- On Windows, Gunicorn is not supported; the server uses single-process Uvicorn.
+- **Database Race Condition**: When using multiple workers without `GUNICORN_PRELOAD=true`, you may encounter database initialization race conditions. To avoid this, set `GUNICORN_PRELOAD=true`.
+- **SQLite with Multiple Workers**: SQLite only allows one writer at a time - write operations from multiple workers are serialized. **For production deployments with high traffic, we recommend using PostgreSQL**.
+- **Timeout for Long-Running Inference**: The default `GUNICORN_TIMEOUT=120` (seconds) may be insufficient for long-running LLM workloads such as document summarization, long-form generation, or streaming responses with slow time-to-first-token. Increase this value (e.g., `GUNICORN_TIMEOUT=300` or higher) to prevent workers from being killed mid-request.
+
+**Example production configuration:**
+```bash
+export LLAMA_STACK_ENABLE_GUNICORN=true # Enable Gunicorn
+export GUNICORN_WORKERS=8               # 8 worker processes
+export GUNICORN_WORKER_CONNECTIONS=1500 # 12,000 total concurrent capacity
+export GUNICORN_PRELOAD=true            # Enable for production
+llama stack run starter
+```
+
 ### API Keys for Hosted Providers
 - `OPENAI_API_KEY`: OpenAI API key
 - `FIREWORKS_API_KEY`: Fireworks API key
