@@ -4483,13 +4483,12 @@ components:
           enum:
           - function_call_output
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Id
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Status
+          default: completed
       required:
       - call_id
       - output
@@ -4694,15 +4693,12 @@ components:
           enum:
           - message
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
+          title: Id
+          type: string
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
-          nullable: true
+          default: completed
+          title: Status
+          type: string
       required:
       - content
       - role
@@ -4808,13 +4804,12 @@ components:
           enum:
           - function_call
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Id
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Status
+          default: in_progress
       required:
       - call_id
       - name
@@ -11237,13 +11232,12 @@ components:
           enum:
           - message
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Id
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Status
+          default: completed
       required:
       - content
       - role
@@ -11311,13 +11305,12 @@ components:
           enum:
           - message
         id:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Id
         status:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Status
+          default: completed
       required:
       - content
       - role
