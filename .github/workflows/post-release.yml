@@ -117,6 +117,9 @@ jobs:
           git push origin "$DEV_TAG"
           echo "Pushed tag $DEV_TAG to main ($MAIN_SHA)"
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
+
       # -----------------------------------------------------------------------
       # Step B: Bump fallback_version on main and open PR
       # -----------------------------------------------------------------------
@@ -143,6 +146,12 @@ jobs:
           # Update fallback_version in src/llama_stack_api/pyproject.toml
           sed -i "s/^fallback_version = .*/fallback_version = \"${NEXT_FALLBACK}\"/" src/llama_stack_api/pyproject.toml
 
+          # Bump llama-stack-client minimum version to match the release
+          sed -i "s/\"llama-stack-client>=.*\"/\"llama-stack-client>=${VERSION}\"/" pyproject.toml
+
+          # Regenerate lockfile to resolve the updated client version
+          uv lock
+
           # Check if there are changes
           if git diff --quiet; then
             echo "No changes to fallback_version, skipping PR"
@@ -151,7 +160,7 @@ jobs:
 
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml src/llama_stack_api/pyproject.toml
+          git add pyproject.toml src/llama_stack_api/pyproject.toml uv.lock
           git commit -s -m "chore: bump fallback_version to ${NEXT_FALLBACK} after ${VERSION} release"
           git push origin "$BRANCH"
 
@@ -201,6 +210,9 @@ jobs:
 
           git checkout -b "$BRANCH" "origin/${RELEASE_BRANCH}"
 
+          # Regenerate uv lockfile so pre-commit passes
+          uv lock
+
           # Update npm lockfile
           cd src/llama_stack_ui
           npm install "llama-stack-client@^${VERSION}"
@@ -214,7 +226,7 @@ jobs:
 
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git add src/llama_stack_ui/package.json src/llama_stack_ui/package-lock.json
+          git add uv.lock src/llama_stack_ui/package.json src/llama_stack_ui/package-lock.json
           git commit -s -m "chore: update llama-stack-client to ^${VERSION} in UI lockfile"
           git push origin "$BRANCH"
 

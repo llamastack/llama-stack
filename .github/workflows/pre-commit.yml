@@ -51,7 +51,7 @@ jobs:
           cache-dependency-path: 'src/llama_stack_ui/'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@5a095e7a2014a4212f075830d4f7277575a9d098 # v7.3.1
+        uses: astral-sh/setup-uv@e06108dd0aef18192324c70427afc47652e63a82 # v7.5.0
 
       - name: Install npm dependencies
         run: npm ci
@@ -146,13 +146,7 @@ jobs:
         uses: ./.github/actions/install-llama-stack-client
 
       - name: Sync dev + type_checking dependencies
-        env:
-          UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
         run: |
-          if [ -n "$UV_EXTRA_INDEX_URL" ]; then
-            export UV_INDEX_STRATEGY="unsafe-best-match"
-          fi
-
           uv sync --group dev --group type_checking
 
           # Install specific client version after sync if needed
@@ -162,13 +156,7 @@ jobs:
           fi
 
       - name: Run mypy (full type_checking)
-        env:
-          UV_EXTRA_INDEX_URL: ${{ steps.client-config.outputs.uv-extra-index-url }}
         run: |
-          if [ -n "$UV_EXTRA_INDEX_URL" ]; then
-            export UV_INDEX_STRATEGY="unsafe-best-match"
-          fi
-
           set +e
           uv run --group dev --group type_checking mypy
           status=$?
