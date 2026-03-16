@@ -4,8 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
-import torch
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from typing import Any
 
 from llama_stack.core.utils.model_utils import model_local_dir
 from llama_stack.log import get_logger
@@ -40,8 +39,14 @@ class PromptGuardSafetyImpl(ShieldToModerationMixin, Safety, ShieldsProtocolPriv
         self.config = config
 
     async def initialize(self) -> None:
+        # Lazy import torch and transformers to reduce startup memory (~46MB+ savings)
+        import torch
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
         model_dir = model_local_dir(PROMPT_GUARD_MODEL)
-        self.shield = PromptGuardShield(model_dir, self.config)
+        self.shield = PromptGuardShield(
+            model_dir, self.config, torch, AutoModelForSequenceClassification, AutoTokenizer
+        )
 
     async def shutdown(self) -> None:
         pass
@@ -66,6 +71,9 @@ class PromptGuardShield:
         self,
         model_dir: str,
         config: PromptGuardConfig,
+        torch_module: Any,
+        auto_model_class: Any,
+        auto_tokenizer_class: Any,
         threshold: float = 0.9,
         temperature: float = 1.0,
     ):
@@ -76,14 +84,15 @@ class PromptGuardShield:
         self.config = config
         self.temperature = temperature
         self.threshold = threshold
+        self.torch = torch_module
 
         self.device = "cpu"
-        if torch.cuda.is_available():
+        if self.torch.cuda.is_available():
             self.device = "cuda"
 
         # load model and tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(model_dir)
-        self.model = AutoModelForSequenceClassification.from_pretrained(model_dir, device_map=self.device)
+        self.tokenizer = auto_tokenizer_class.from_pretrained(model_dir)
+        self.model = auto_model_class.from_pretrained(model_dir, device_map=self.device)
 
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         message = messages[-1]
@@ -92,10 +101,10 @@ class PromptGuardShield:
         # run model on messages and return response
         inputs = self.tokenizer(text, return_tensors="pt")
         inputs = {name: tensor.to(self.model.device) for name, tensor in inputs.items()}
-        with torch.no_grad():
+        with self.torch.no_grad():
             outputs = self.model(**inputs)
         logits = outputs[0]
-        probabilities = torch.softmax(logits / self.temperature, dim=-1)
+        probabilities = self.torch.softmax(logits / self.temperature, dim=-1)
         score_embedded = probabilities[0, 1].item()
         score_malicious = probabilities[0, 2].item()
         log.info(

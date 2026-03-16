@@ -13,6 +13,7 @@ from llama_stack.core.access_control.datatypes import Action
 from llama_stack.core.datatypes import AccessRule
 from llama_stack.core.storage.sqlstore.authorized_sqlstore import AuthorizedSqlStore
 from llama_stack.core.storage.sqlstore.sqlstore import sqlstore_impl
+from llama_stack.providers.utils.files.sanitize import sanitize_content_disposition_filename
 from llama_stack_api import (
     DeleteFileRequest,
     ExpiresAfter,
@@ -142,7 +143,7 @@ class OpenAIFilesImpl(Files):
         purpose = request.purpose
         expires_after = request.expires_after
 
-        filename = getattr(file, "filename", None) or "uploaded_file"
+        filename = sanitize_content_disposition_filename(getattr(file, "filename", None) or "uploaded_file")
         content = await file.read()
         file_size = len(content)
 
@@ -249,5 +250,7 @@ class OpenAIFilesImpl(Files):
         return Response(
             content=file_content,
             media_type="application/octet-stream",
-            headers={"Content-Disposition": f'attachment; filename="{row["filename"]}"'},
+            headers={
+                "Content-Disposition": f'attachment; filename="{sanitize_content_disposition_filename(row["filename"])}"'
+            },
         )

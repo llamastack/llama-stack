@@ -4525,16 +4525,17 @@ components:
     OpenAIChatCompletionToolCallFunction:
       properties:
         name:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Name
           description: Name of the function to call.
         arguments:
-          anyOf:
-          - type: string
-          - type: 'null'
+          type: string
+          title: Arguments
           description: Arguments to pass to the function as a JSON string.
       type: object
+      required:
+      - name
+      - arguments
       title: OpenAIChatCompletionToolCallFunction
       description: Function call details for OpenAI-compatible tool calls.
     OpenAIChatCompletionUsage:
@@ -4587,12 +4588,8 @@ components:
           title: Index
           description: The index of the choice.
         logprobs:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
-            title: OpenAIChoiceLogprobs
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChoiceLogprobs'
           description: The log probabilities for the tokens in the message.
-          title: OpenAIChoiceLogprobs
       type: object
       required:
       - message
@@ -4603,18 +4600,16 @@ components:
     OpenAIChoiceLogprobs:
       properties:
         content:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/OpenAITokenLogProb'
-            type: array
-          - type: 'null'
+          items:
+            $ref: '#/components/schemas/OpenAITokenLogProb'
+          type: array
+          title: Content
           description: The log probabilities for the tokens in the message.
         refusal:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/OpenAITokenLogProb'
-            type: array
-          - type: 'null'
+          items:
+            $ref: '#/components/schemas/OpenAITokenLogProb'
+          type: array
+          title: Refusal
           description: The log probabilities for the refusal tokens.
       type: object
       title: OpenAIChoiceLogprobs
@@ -5201,6 +5196,11 @@ components:
           - type: 'null'
           description: The service tier that was used for this response.
           nullable: true
+        system_fingerprint:
+          description: System fingerprint for this completion.
+          title: System Fingerprint
+          type: string
+          nullable: true
         usage:
           $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.
@@ -5246,6 +5246,11 @@ components:
           - type: 'null'
           description: The service tier that was used for this response.
           nullable: true
+        system_fingerprint:
+          description: System fingerprint for this completion chunk.
+          title: System Fingerprint
+          type: string
+          nullable: true
         usage:
           $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information (typically included in final chunk with stream_options).
@@ -5273,18 +5278,22 @@ components:
           description: The refusal of the delta.
           nullable: true
         role:
-          anyOf:
-          - type: string
-          - type: 'null'
           description: The role of the delta.
+          enum:
+          - developer
+          - system
+          - user
+          - assistant
+          - tool
+          title: Role
+          type: string
           nullable: true
         tool_calls:
-          anyOf:
-          - items:
-              $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
-            type: array
-          - type: 'null'
           description: The tool calls of the delta.
+          items:
+            $ref: '#/components/schemas/OpenAIChatCompletionToolCall'
+          title: Tool Calls
+          type: array
           nullable: true
         reasoning_content:
           anyOf:
@@ -5317,13 +5326,9 @@ components:
           title: Index
           type: integer
         logprobs:
-          anyOf:
-          - $ref: '#/components/schemas/OpenAIChoiceLogprobs'
-            title: OpenAIChoiceLogprobs
-          - type: 'null'
+          $ref: '#/components/schemas/OpenAIChoiceLogprobs'
           description: The log probabilities for the tokens in the message.
           nullable: true
-          title: OpenAIChoiceLogprobs
       required:
       - delta
       - index
@@ -5362,6 +5367,10 @@ components:
           - type: string
           - type: 'null'
           description: The service tier that was used for this response.
+        system_fingerprint:
+          type: string
+          title: System Fingerprint
+          description: System fingerprint for this completion.
         usage:
           $ref: '#/components/schemas/OpenAIChatCompletionUsage'
           description: Token usage information for the completion.

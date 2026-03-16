@@ -2224,7 +2224,7 @@ requires-dist = [
     { name = "jinja2", specifier = ">=3.1.6" },
     { name = "jsonschema" },
     { name = "llama-stack-api", editable = "src/llama_stack_api" },
-    { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.4.0.dev0" },
+    { name = "llama-stack-client", marker = "extra == 'client'", specifier = ">=0.6.0" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "oci", specifier = ">=2.165.0" },
@@ -2236,7 +2236,7 @@ requires-dist = [
     { name = "prompt-toolkit" },
     { name = "psycopg2-binary" },
     { name = "pydantic", specifier = ">=2.11.9" },
-    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.10.0" },
+    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.12.0" },
     { name = "python-dotenv" },
     { name = "python-multipart", specifier = ">=0.0.22" },
     { name = "pyyaml", specifier = ">=6.0" },
@@ -2323,7 +2323,7 @@ type-checking = [
     { name = "datasets" },
     { name = "fairscale" },
     { name = "faiss-cpu" },
-    { name = "llama-stack-client", specifier = ">=0.3.0" },
+    { name = "llama-stack-client", specifier = ">=0.6.0" },
     { name = "lm-format-enforcer" },
     { name = "mcp", specifier = ">=1.23.0" },
     { name = "nest-asyncio" },
@@ -2391,7 +2391,7 @@ requires-dist = [
 
 [[package]]
 name = "llama-stack-client"
-version = "0.4.1"
+version = "0.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -2410,9 +2410,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ff/42/5fb9feec3aa05958904fe507323fb180b781b7293a0f8ea17072010b7860/llama_stack_client-0.4.1.tar.gz", hash = "sha256:30577d3c94edbe388e67443cb7af4c5f76b267e92aed127d36d1d968d4510aec", size = 352966, upload-time = "2026-01-13T15:12:17.352Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/e9/62dc71e7d6003d9b56a1e632445065f55687c891e62eff1636e10b5dd629/llama_stack_client-0.6.0.tar.gz", hash = "sha256:3290aac36dcafbd1bc0baaf995522e2037f57056672b5a1516af112a4210f3ea", size = 368695, upload-time = "2026-03-11T15:04:19.267Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d4/d6/67d51d546298c8f43ba2fc19cf970678697d014a762e79869c208606f075/llama_stack_client-0.4.1-py3-none-any.whl", hash = "sha256:5ba0cbf1c98d083ab99d46a1ba2b47f7114a12b35366bf733f614d3ec4ff33d6", size = 375941, upload-time = "2026-01-13T15:12:15.751Z" },
+    { url = "https://files.pythonhosted.org/packages/83/a3/33d3e066a320a993b6f9cca9c8efe8da7deb2045df61235d327d0a05b25f/llama_stack_client-0.6.0-py3-none-any.whl", hash = "sha256:7e514a6ffd92f237aceb062dadc4db44e24a3cd9c4ea35e25173d1e0739beb8e", size = 392001, upload-time = "2026-03-11T15:04:17.772Z" },
 ]
 
 [[package]]
@@ -4170,11 +4170,11 @@ wheels = [
 
 [[package]]
 name = "pyjwt"
-version = "2.10.1"
+version = "2.12.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e7/46/bd74733ff231675599650d3e47f361794b22ef3e3770998dda30d3b63726/pyjwt-2.10.1.tar.gz", hash = "sha256:3cc5772eb20009233caf06e9d8a0577824723b44e6648ee0a2aedb6cf9381953", size = 87785, upload-time = "2024-11-28T03:43:29.933Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/10/e8192be5f38f3e8e7e046716de4cae33d56fd5ae08927a823bb916be36c1/pyjwt-2.12.0.tar.gz", hash = "sha256:2f62390b667cd8257de560b850bb5a883102a388829274147f1d724453f8fb02", size = 102511, upload-time = "2026-03-12T17:15:30.831Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/61/ad/689f02752eeec26aed679477e80e632ef1b682313be70793d798c1d5fc8f/PyJWT-2.10.1-py3-none-any.whl", hash = "sha256:dcdd193e30abefd5debf142f9adfcdd2b58004e644f25406ffaebd50bd98dacb", size = 22997, upload-time = "2024-11-28T03:43:27.893Z" },
+    { url = "https://files.pythonhosted.org/packages/15/70/70f895f404d363d291dcf62c12c85fdd47619ad9674ac0f53364d035925a/pyjwt-2.12.0-py3-none-any.whl", hash = "sha256:9bb459d1bdd0387967d287f5656bf7ec2b9a26645d1961628cda1764e087fd6e", size = 29700, upload-time = "2026-03-12T17:15:29.257Z" },
 ]
 
 [package.optional-dependencies]

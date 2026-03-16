@@ -42,7 +42,13 @@ def skip_if_provider_doesnt_support_openai_vector_stores(client_with_models):
     pytest.skip("OpenAI vector stores are not supported by any provider")
 
 
-_PROVIDERS_WITH_NATIVE_FILTERING = {"inline::faiss", "inline::sqlite-vec", "inline::milvus", "remote::milvus"}
+_PROVIDERS_WITH_NATIVE_FILTERING = {
+    "inline::faiss",
+    "inline::sqlite-vec",
+    "inline::milvus",
+    "remote::milvus",
+    "remote::pgvector",
+}
 
 
 def skip_if_provider_doesnt_support_native_filtering(vector_io_provider_id: str):
@@ -4036,8 +4042,7 @@ def test_openai_vector_store_search_neural_ranker_validation(
     assert search_response_no_model is not None
     assert len(search_response_no_model.data) == 0  # Should return empty results when model is missing
 
-    # Test that neural ranker with model is accepted (even though not implemented yet)
-    # This should not raise an error, but will use fallback algorithm
+    # Test that neural ranker with model is accepted and uses neural reranking
     search_response = compat_client.vector_stores.search(
         vector_store_id=vector_store.id,
         query="machine learning",
@@ -4049,7 +4054,7 @@ def test_openai_vector_store_search_neural_ranker_validation(
         },
     )
 
-    # Should succeed (using fallback algorithm for now)
+    # Should succeed — neural reranking is applied after initial retrieval
     assert search_response is not None
 
 

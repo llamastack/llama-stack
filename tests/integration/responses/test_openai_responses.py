@@ -391,6 +391,66 @@ class TestOpenAIResponses:
         assert response2.top_p == 0.7
         assert len(response2.output_text.strip()) > 0
 
+    def test_openai_response_with_top_logprobs(self, openai_client, text_model_id):
+        """Test OpenAI response with top_logprobs parameter."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the largest ocean on Earth?"}],
+            top_logprobs=3,
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.top_logprobs == 3
+
+    def test_openai_response_with_top_logprobs_streaming(self, openai_client, text_model_id):
+        """Test OpenAI response with top_logprobs in streaming mode."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the smallest continent?"}],
+            top_logprobs=5,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify top_logprobs is in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.top_logprobs == 5
+
+        # Verify top_logprobs is in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.top_logprobs == 5
+
+    def test_openai_response_with_top_logprobs_and_previous_response(self, openai_client, text_model_id):
+        """Test that top_logprobs works correctly with previous_response_id."""
+        # Create first response
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 4+4?"}],
+            top_logprobs=3,
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.top_logprobs == 3
+
+        # Create second response referencing the first one with the same top_logprobs
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 6+6?"}],
+            previous_response_id=response1.id,
+            top_logprobs=3,
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.top_logprobs == 3
+        assert len(response2.output_text.strip()) > 0
+
     def _function_tools(self):
         """Return a pair of function tools for parallel tool call testing."""
         return [
@@ -583,12 +643,18 @@ class TestOpenAIResponses:
         assert response.background is False
         assert len(response.output) > 0
 
+    def _skip_service_tier_for_azure(self, text_model_id):
+        if text_model_id.startswith("azure/"):
+            pytest.skip("Azure OpenAI does not support the service_tier parameter")
+
     def test_openai_response_with_service_tier_auto(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto'.
 
         When 'auto' is requested, the provider decides the actual tier (e.g. default, priority),
         so we only assert the response has a non-null service_tier.
         """
+        self._skip_service_tier_for_azure(text_model_id)
+
         response = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What is the speed of light?"}],
@@ -602,6 +668,8 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier(self, openai_client, text_model_id, service_tier):
         """Test OpenAI response with explicit service_tier values that should be preserved."""
+        self._skip_service_tier_for_azure(text_model_id)
+
         response = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What is the speed of light?"}],
@@ -619,6 +687,8 @@ class TestOpenAIResponses:
         for certain models). This test verifies the request is accepted with the
         exact tier preserved, or properly rejected.
         """
+        self._skip_service_tier_for_azure(text_model_id)
+
         try:
             response = openai_client.responses.create(
                 model=text_model_id,
@@ -628,12 +698,13 @@ class TestOpenAIResponses:
             assert response.id.startswith("resp_")
             assert response.service_tier == "flex"
         except Exception as e:
-            # Some providers reject 'flex' as an invalid service_tier
             error_message = str(e).lower()
             assert "service_tier" in error_message or "invalid" in error_message
 
     def test_openai_response_with_service_tier_auto_streaming(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto' in streaming mode."""
+        self._skip_service_tier_for_azure(text_model_id)
+
         stream = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What is the speed of sound?"}],
@@ -659,6 +730,8 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier_streaming(self, openai_client, text_model_id, service_tier):
         """Test OpenAI response with explicit service_tier values in streaming mode."""
+        self._skip_service_tier_for_azure(text_model_id)
+
         stream = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What is the speed of sound?"}],
@@ -687,6 +760,8 @@ class TestOpenAIResponses:
         The flex tier may not be supported by all providers. This test verifies
         the request is accepted with the exact tier preserved, or produces a proper failure event.
         """
+        self._skip_service_tier_for_azure(text_model_id)
+
         stream = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What is the speed of sound?"}],
@@ -709,6 +784,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_service_tier_auto_and_previous_response(self, openai_client, text_model_id):
         """Test that service_tier='auto' works correctly with previous_response_id."""
+        self._skip_service_tier_for_azure(text_model_id)
+
         response1 = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What is 8+8?"}],
@@ -732,6 +809,8 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier_and_previous_response(self, openai_client, text_model_id, service_tier):
         """Test that explicit service_tier values are preserved with previous_response_id."""
+        self._skip_service_tier_for_azure(text_model_id)
+
         response1 = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What is 8+8?"}],
