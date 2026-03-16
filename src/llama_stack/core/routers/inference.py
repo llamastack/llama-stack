@@ -414,7 +414,9 @@ class InferenceRouter(Inference):
                         tool_calls=assembled_tool_calls if assembled_tool_calls else None,
                     )
                     logprobs_content = choice_data["logprobs_content_parts"]
-                    final_logprobs = OpenAIChoiceLogprobs(content=logprobs_content) if logprobs_content else None
+                    final_logprobs = (
+                        OpenAIChoiceLogprobs(content=logprobs_content, refusal=None) if logprobs_content else None
+                    )
 
                     assembled_choices.append(
                         OpenAIChoice(

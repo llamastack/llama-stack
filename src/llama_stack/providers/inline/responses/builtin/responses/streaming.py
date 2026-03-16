@@ -1222,7 +1222,9 @@ class StreamingResponseOrchestrator:
             message_item_id=message_item_id,
             tool_call_item_ids=tool_call_item_ids,
             content_part_emitted=content_part_emitted,
-            logprobs=OpenAIChoiceLogprobs(content=chat_response_logprobs) if chat_response_logprobs else None,
+            logprobs=OpenAIChoiceLogprobs(content=chat_response_logprobs, refusal=None)
+            if chat_response_logprobs
+            else None,
             service_tier=chunk_service_tier,
         )
 

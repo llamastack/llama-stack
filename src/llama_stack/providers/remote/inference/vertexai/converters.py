@@ -25,6 +25,7 @@ from llama_stack.log import get_logger
 from llama_stack_api import (
     OpenAIChatCompletion,
     OpenAIChatCompletionChunk,
+    OpenAIChatCompletionCustomToolCall,
     OpenAIChatCompletionResponseMessage,
     OpenAIChatCompletionToolCall,
     OpenAIChatCompletionToolCallFunction,
@@ -109,7 +110,7 @@ class _CandidateData:
     index: int
     text: str | None
     reasoning_content: str | None  # thinking text from part.thought
-    tool_calls: list[OpenAIChatCompletionToolCall]
+    tool_calls: list[OpenAIChatCompletionToolCall | OpenAIChatCompletionCustomToolCall]
     finish_reason_raw: Any
     logprobs: OpenAIChoiceLogprobs | None
 
@@ -411,14 +412,16 @@ def generate_completion_id() -> str:
     return f"chatcmpl-{uuid.uuid4()}"
 
 
-def _extract_candidate_parts(candidate: Any) -> tuple[list[str], list[str], list[OpenAIChatCompletionToolCall]]:
+def _extract_candidate_parts(
+    candidate: Any,
+) -> tuple[list[str], list[str], list[OpenAIChatCompletionToolCall | OpenAIChatCompletionCustomToolCall]]:
     """Extract text segments, thinking segments, and tool calls from a Gemini candidate's parts."""
     content_obj = getattr(candidate, "content", None)
     parts = getattr(content_obj, "parts", None) or []
 
     text_parts: list[str] = []
     thinking_parts: list[str] = []
-    tool_calls: list[OpenAIChatCompletionToolCall] = []
+    tool_calls: list[OpenAIChatCompletionToolCall | OpenAIChatCompletionCustomToolCall] = []
 
     for part in parts:
         # Check for thinking/reasoning content first (part.thought is a bool flag;
@@ -516,7 +519,7 @@ def _extract_logprobs(candidate: Any) -> OpenAIChoiceLogprobs | None:
 
     if not token_logprobs:
         return None
-    return OpenAIChoiceLogprobs(content=token_logprobs)
+    return OpenAIChoiceLogprobs(content=token_logprobs, refusal=None)
 
 
 def _process_candidates(response_or_chunk: Any) -> list[_CandidateData]:
@@ -668,7 +671,7 @@ def convert_gemini_stream_chunk_to_openai(
             delta=OpenAIChoiceDelta(
                 role=role,
                 content=cd.text,
-                tool_calls=cd.tool_calls or None,
+                tool_calls=cd.tool_calls or None,  # type: ignore[arg-type]
                 reasoning_content=cd.reasoning_content,
             ),
             finish_reason=_resolve_stream_finish_reason(cd.finish_reason_raw, bool(cd.tool_calls)),
