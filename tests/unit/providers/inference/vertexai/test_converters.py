@@ -187,6 +187,9 @@ class TestConvertModelName:
         [
             ("google/gemini-2.5-flash", "gemini-2.5-flash"),
             ("gemini-2.5-flash", "gemini-2.5-flash"),
+            ("models/gemini-2.5-flash", "gemini-2.5-flash"),
+            ("publishers/google/models/gemini-2.5-flash", "gemini-2.5-flash"),
+            ("publishers/meta/models/llama-3", "llama-3"),
             ("meta/llama-3", "meta/llama-3"),
             ("", ""),
             ("google/", ""),

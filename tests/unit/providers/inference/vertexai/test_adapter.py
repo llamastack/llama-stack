@@ -272,6 +272,11 @@ class TestVertexAIModelListing:
             SimpleNamespace(name="models/gemini-2.5-pro", supported_actions=[]),
             SimpleNamespace(name="models/text-embedding-004", supported_actions=["embedContent"]),
             SimpleNamespace(name="", supported_actions=["generateContent"]),
+            # Vertex AI resource path format (publishers/google/models/...)
+            SimpleNamespace(
+                name="publishers/google/models/gemini-2.0-flash",
+                supported_actions=["generateContent"],
+            ),
         ]
 
         async def fake_list(**kwargs):
@@ -286,7 +291,10 @@ class TestVertexAIModelListing:
         assert "gemini-2.5-flash" in result
         assert "gemini-2.5-pro" in result
         assert "text-embedding-004" in result
+        assert "gemini-2.0-flash" in result
         assert "" not in result
+        # Full Vertex AI resource paths must not leak through
+        assert "publishers/google/models/gemini-2.0-flash" not in result
 
     @pytest.mark.parametrize(
         "index,expected_id,expected_type,expected_metadata",

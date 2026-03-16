@@ -142,11 +142,14 @@ def convert_finish_reason(
 def convert_model_name(model: str) -> str:
     """Ensure model ID is in the bare form expected by the Gemini API.
 
-    Strips ``google/`` or ``models/`` prefixes if present so callers can
-    pass either ``"gemini-2.5-flash"`` or ``"google/gemini-2.5-flash"``.
+    Strips vendor and resource prefixes so callers can pass any of:
+    ``"gemini-2.5-flash"``, ``"google/gemini-2.5-flash"``,
+    ``"models/gemini-2.5-flash"``, or the full Vertex AI resource path
+    ``"publishers/google/models/gemini-2.5-flash"``.
     """
     model = model.removeprefix("google/")
-    model = model.removeprefix("models/")
+    # Handle both "models/..." and "publishers/.../models/..." formats.
+    model = model.rsplit("models/", 1)[-1] if "models/" in model else model
     return model
 
 
