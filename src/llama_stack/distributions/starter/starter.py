@@ -132,7 +132,6 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::code-scanner"),
         ],
         "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "post_training": [BuildProvider(provider_type="inline::torchtune-cpu")],
         "eval": [BuildProvider(provider_type="inline::meta-reference")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),

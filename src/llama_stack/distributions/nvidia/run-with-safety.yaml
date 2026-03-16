@@ -6,7 +6,6 @@ apis:
 - eval
 - files
 - inference
-- post_training
 - safety
 - scoring
 - tool_runtime
@@ -54,14 +53,6 @@ providers:
     provider_type: remote::nvidia
     config:
       evaluator_url: ${env.NVIDIA_EVALUATOR_URL:=http://localhost:7331}
-  post_training:
-  - provider_id: nvidia
-    provider_type: remote::nvidia
-    config:
-      api_key: ${env.NVIDIA_API_KEY:=}
-      dataset_namespace: ${env.NVIDIA_DATASET_NAMESPACE:=default}
-      project_id: ${env.NVIDIA_PROJECT_ID:=test-project}
-      customizer_url: ${env.NVIDIA_CUSTOMIZER_URL:=http://nemo.test}
   datasetio:
   - provider_id: localfs
     provider_type: inline::localfs
