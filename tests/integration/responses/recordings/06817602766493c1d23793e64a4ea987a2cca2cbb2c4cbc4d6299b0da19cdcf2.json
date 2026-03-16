@@ -1,0 +1,5129 @@
+{
+  "test_id": "tests/integration/responses/test_openai_responses.py::TestOpenAIResponses::test_openai_response_with_top_logprobs_streaming[txt=azure/gpt-4o]",
+  "request": {
+    "method": "POST",
+    "url": "https://llama-stack-test.openai.azure.com/openai/v1/v1/chat/completions",
+    "headers": {},
+    "body": {
+      "model": "gpt-4o",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the smallest continent?"
+        }
+      ],
+      "logprobs": true,
+      "stream": true,
+      "stream_options": {
+        "include_usage": true
+      },
+      "top_logprobs": 5
+    },
+    "endpoint": "/v1/chat/completions",
+    "model": "gpt-4o",
+    "provider_metadata": {
+      "openai_sdk_version": "2.5.0"
+    }
+  },
+  "response": {
+    "body": [
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [],
+          "created": 0,
+          "model": "",
+          "object": "",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "prompt_filter_results": [
+            {
+              "prompt_index": 0,
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "jailbreak": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ]
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": "",
+                "function_call": null,
+                "refusal": null,
+                "role": "assistant",
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "89ggJejKsclh4C"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": "The",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": "The",
+                    "bytes": [
+                      84,
+                      104,
+                      101
+                    ],
+                    "logprob": -0.00023476807109545916,
+                    "top_logprobs": [
+                      {
+                        "token": "The",
+                        "bytes": [
+                          84,
+                          104,
+                          101
+                        ],
+                        "logprob": -0.00023476807109545916
+                      },
+                      {
+                        "token": "Australia",
+                        "bytes": [
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97
+                        ],
+                        "logprob": -8.500234603881836
+                      },
+                      {
+                        "token": "**",
+                        "bytes": [
+                          42,
+                          42
+                        ],
+                        "logprob": -10.500234603881836
+                      },
+                      {
+                        "token": "\n",
+                        "bytes": [
+                          10
+                        ],
+                        "logprob": -12.625234603881836
+                      },
+                      {
+                        "token": " The",
+                        "bytes": [
+                          32,
+                          84,
+                          104,
+                          101
+                        ],
+                        "logprob": -15.625234603881836
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "JhO"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " smallest",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " smallest",
+                    "bytes": [
+                      32,
+                      115,
+                      109,
+                      97,
+                      108,
+                      108,
+                      101,
+                      115,
+                      116
+                    ],
+                    "logprob": -0.0013286912580952048,
+                    "top_logprobs": [
+                      {
+                        "token": " smallest",
+                        "bytes": [
+                          32,
+                          115,
+                          109,
+                          97,
+                          108,
+                          108,
+                          101,
+                          115,
+                          116
+                        ],
+                        "logprob": -0.0013286912580952048
+                      },
+                      {
+                        "token": " **",
+                        "bytes": [
+                          32,
+                          42,
+                          42
+                        ],
+                        "logprob": -6.626328468322754
+                      },
+                      {
+                        "token": " title",
+                        "bytes": [
+                          32,
+                          116,
+                          105,
+                          116,
+                          108,
+                          101
+                        ],
+                        "logprob": -13.876328468322754
+                      },
+                      {
+                        "token": " world's",
+                        "bytes": [
+                          32,
+                          119,
+                          111,
+                          114,
+                          108,
+                          100,
+                          39,
+                          115
+                        ],
+                        "logprob": -14.251328468322754
+                      },
+                      {
+                        "token": " *",
+                        "bytes": [
+                          32,
+                          42
+                        ],
+                        "logprob": -14.376328468322754
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "oQgcG3r"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " continent",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " continent",
+                    "bytes": [
+                      32,
+                      99,
+                      111,
+                      110,
+                      116,
+                      105,
+                      110,
+                      101,
+                      110,
+                      116
+                    ],
+                    "logprob": -1.6240566083070007e-06,
+                    "top_logprobs": [
+                      {
+                        "token": " continent",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          116,
+                          105,
+                          110,
+                          101,
+                          110,
+                          116
+                        ],
+                        "logprob": -1.6240566083070007e-06
+                      },
+                      {
+                        "token": " **",
+                        "bytes": [
+                          32,
+                          42,
+                          42
+                        ],
+                        "logprob": -13.500001907348633
+                      },
+                      {
+                        "token": " of",
+                        "bytes": [
+                          32,
+                          111,
+                          102
+                        ],
+                        "logprob": -16.500001907348633
+                      },
+                      {
+                        "token": " *",
+                        "bytes": [
+                          32,
+                          42
+                        ],
+                        "logprob": -16.625001907348633
+                      },
+                      {
+                        "token": " continental",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          116,
+                          105,
+                          110,
+                          101,
+                          110,
+                          116,
+                          97,
+                          108
+                        ],
+                        "logprob": -17.125001907348633
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "4qymesU"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " by",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " by",
+                    "bytes": [
+                      32,
+                      98,
+                      121
+                    ],
+                    "logprob": -0.04823414608836174,
+                    "top_logprobs": [
+                      {
+                        "token": " by",
+                        "bytes": [
+                          32,
+                          98,
+                          121
+                        ],
+                        "logprob": -0.04823414608836174
+                      },
+                      {
+                        "token": " is",
+                        "bytes": [
+                          32,
+                          105,
+                          115
+                        ],
+                        "logprob": -3.423234224319458
+                      },
+                      {
+                        "token": " in",
+                        "bytes": [
+                          32,
+                          105,
+                          110
+                        ],
+                        "logprob": -4.298233985900879
+                      },
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -7.548233985900879
+                      },
+                      {
+                        "token": " on",
+                        "bytes": [
+                          32,
+                          111,
+                          110
+                        ],
+                        "logprob": -8.048233985900879
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "nm0IGKNda"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " land",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " land",
+                    "bytes": [
+                      32,
+                      108,
+                      97,
+                      110,
+                      100
+                    ],
+                    "logprob": -0.01483942475169897,
+                    "top_logprobs": [
+                      {
+                        "token": " land",
+                        "bytes": [
+                          32,
+                          108,
+                          97,
+                          110,
+                          100
+                        ],
+                        "logprob": -0.01483942475169897
+                      },
+                      {
+                        "token": " both",
+                        "bytes": [
+                          32,
+                          98,
+                          111,
+                          116,
+                          104
+                        ],
+                        "logprob": -4.5148396492004395
+                      },
+                      {
+                        "token": " area",
+                        "bytes": [
+                          32,
+                          97,
+                          114,
+                          101,
+                          97
+                        ],
+                        "logprob": -6.0148396492004395
+                      },
+                      {
+                        "token": " total",
+                        "bytes": [
+                          32,
+                          116,
+                          111,
+                          116,
+                          97,
+                          108
+                        ],
+                        "logprob": -7.2648396492004395
+                      },
+                      {
+                        "token": " size",
+                        "bytes": [
+                          32,
+                          115,
+                          105,
+                          122,
+                          101
+                        ],
+                        "logprob": -7.3898396492004395
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "sraPYwF6UY3x"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " area",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " area",
+                    "bytes": [
+                      32,
+                      97,
+                      114,
+                      101,
+                      97
+                    ],
+                    "logprob": -0.0011023490224033594,
+                    "top_logprobs": [
+                      {
+                        "token": " area",
+                        "bytes": [
+                          32,
+                          97,
+                          114,
+                          101,
+                          97
+                        ],
+                        "logprob": -0.0011023490224033594
+                      },
+                      {
+                        "token": "mass",
+                        "bytes": [
+                          109,
+                          97,
+                          115,
+                          115
+                        ],
+                        "logprob": -7.001102447509766
+                      },
+                      {
+                        "token": " size",
+                        "bytes": [
+                          32,
+                          115,
+                          105,
+                          122,
+                          101
+                        ],
+                        "logprob": -8.626102447509766
+                      },
+                      {
+                        "token": " mass",
+                        "bytes": [
+                          32,
+                          109,
+                          97,
+                          115,
+                          115
+                        ],
+                        "logprob": -11.501102447509766
+                      },
+                      {
+                        "token": " surface",
+                        "bytes": [
+                          32,
+                          115,
+                          117,
+                          114,
+                          102,
+                          97,
+                          99,
+                          101
+                        ],
+                        "logprob": -14.376102447509766
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "JsawuH"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " is",
+                    "bytes": [
+                      32,
+                      105,
+                      115
+                    ],
+                    "logprob": -8.399378566537052e-05,
+                    "top_logprobs": [
+                      {
+                        "token": " is",
+                        "bytes": [
+                          32,
+                          105,
+                          115
+                        ],
+                        "logprob": -8.399378566537052e-05
+                      },
+                      {
+                        "token": " and",
+                        "bytes": [
+                          32,
+                          97,
+                          110,
+                          100
+                        ],
+                        "logprob": -9.625083923339844
+                      },
+                      {
+                        "token": " **",
+                        "bytes": [
+                          32,
+                          42,
+                          42
+                        ],
+                        "logprob": -11.750083923339844
+                      },
+                      {
+                        "token": " on",
+                        "bytes": [
+                          32,
+                          111,
+                          110
+                        ],
+                        "logprob": -11.937583923339844
+                      },
+                      {
+                        "token": " in",
+                        "bytes": [
+                          32,
+                          105,
+                          110
+                        ],
+                        "logprob": -12.687583923339844
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "G4"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " **",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " **",
+                    "bytes": [
+                      32,
+                      42,
+                      42
+                    ],
+                    "logprob": -0.00032235344406217337,
+                    "top_logprobs": [
+                      {
+                        "token": " **",
+                        "bytes": [
+                          32,
+                          42,
+                          42
+                        ],
+                        "logprob": -0.00032235344406217337
+                      },
+                      {
+                        "token": " Australia",
+                        "bytes": [
+                          32,
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97
+                        ],
+                        "logprob": -8.125322341918945
+                      },
+                      {
+                        "token": " ***",
+                        "bytes": [
+                          32,
+                          42,
+                          42,
+                          42
+                        ],
+                        "logprob": -10.625322341918945
+                      },
+                      {
+                        "token": " *",
+                        "bytes": [
+                          32,
+                          42
+                        ],
+                        "logprob": -13.500322341918945
+                      },
+                      {
+                        "token": "\u00a0",
+                        "bytes": [
+                          194,
+                          160
+                        ],
+                        "logprob": -15.625322341918945
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "g"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": "Australia",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": "Australia",
+                    "bytes": [
+                      65,
+                      117,
+                      115,
+                      116,
+                      114,
+                      97,
+                      108,
+                      105,
+                      97
+                    ],
+                    "logprob": -1.7432603272027336e-06,
+                    "top_logprobs": [
+                      {
+                        "token": "Australia",
+                        "bytes": [
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97
+                        ],
+                        "logprob": -1.7432603272027336e-06
+                      },
+                      {
+                        "token": "Austr",
+                        "bytes": [
+                          65,
+                          117,
+                          115,
+                          116,
+                          114
+                        ],
+                        "logprob": -13.375001907348633
+                      },
+                      {
+                        "token": "O",
+                        "bytes": [
+                          79
+                        ],
+                        "logprob": -16.125001907348633
+                      },
+                      {
+                        "token": "A",
+                        "bytes": [
+                          65
+                        ],
+                        "logprob": -18.000001907348633
+                      },
+                      {
+                        "token": " Australia",
+                        "bytes": [
+                          32,
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97
+                        ],
+                        "logprob": -19.250001907348633
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "2"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": "**",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": "**",
+                    "bytes": [
+                      42,
+                      42
+                    ],
+                    "logprob": -0.08067751675844193,
+                    "top_logprobs": [
+                      {
+                        "token": "**",
+                        "bytes": [
+                          42,
+                          42
+                        ],
+                        "logprob": -0.08067751675844193
+                      },
+                      {
+                        "token": "**,",
+                        "bytes": [
+                          42,
+                          42,
+                          44
+                        ],
+                        "logprob": -2.5806775093078613
+                      },
+                      {
+                        "token": ".",
+                        "bytes": [
+                          46
+                        ],
+                        "logprob": -6.330677509307861
+                      },
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -12.45567798614502
+                      },
+                      {
+                        "token": "*.",
+                        "bytes": [
+                          42,
+                          46
+                        ],
+                        "logprob": -13.83067798614502
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "X61LU"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": ".",
+                    "bytes": [
+                      46
+                    ],
+                    "logprob": -3.5954712075181305e-05,
+                    "top_logprobs": [
+                      {
+                        "token": ".",
+                        "bytes": [
+                          46
+                        ],
+                        "logprob": -3.5954712075181305e-05
+                      },
+                      {
+                        "token": ".\n\n",
+                        "bytes": [
+                          46,
+                          10,
+                          10
+                        ],
+                        "logprob": -11.000036239624023
+                      },
+                      {
+                        "token": " (",
+                        "bytes": [
+                          32,
+                          40
+                        ],
+                        "logprob": -11.687536239624023
+                      },
+                      {
+                        "token": " at",
+                        "bytes": [
+                          32,
+                          97,
+                          116
+                        ],
+                        "logprob": -12.437536239624023
+                      },
+                      {
+                        "token": " which",
+                        "bytes": [
+                          32,
+                          119,
+                          104,
+                          105,
+                          99,
+                          104
+                        ],
+                        "logprob": -13.250036239624023
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": ""
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " It",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " It",
+                    "bytes": [
+                      32,
+                      73,
+                      116
+                    ],
+                    "logprob": -0.12362145632505417,
+                    "top_logprobs": [
+                      {
+                        "token": " It",
+                        "bytes": [
+                          32,
+                          73,
+                          116
+                        ],
+                        "logprob": -0.12362145632505417
+                      },
+                      {
+                        "token": " Cover",
+                        "bytes": [
+                          32,
+                          67,
+                          111,
+                          118,
+                          101,
+                          114
+                        ],
+                        "logprob": -2.3736214637756348
+                      },
+                      {
+                        "token": " While",
+                        "bytes": [
+                          32,
+                          87,
+                          104,
+                          105,
+                          108,
+                          101
+                        ],
+                        "logprob": -5.123621463775635
+                      },
+                      {
+                        "token": " Australia",
+                        "bytes": [
+                          32,
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97
+                        ],
+                        "logprob": -5.373621463775635
+                      },
+                      {
+                        "token": " Its",
+                        "bytes": [
+                          32,
+                          73,
+                          116,
+                          115
+                        ],
+                        "logprob": -5.498621463775635
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "zb9sIj95HFRIxp"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " covers",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " covers",
+                    "bytes": [
+                      32,
+                      99,
+                      111,
+                      118,
+                      101,
+                      114,
+                      115
+                    ],
+                    "logprob": -0.2830250859260559,
+                    "top_logprobs": [
+                      {
+                        "token": " covers",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          118,
+                          101,
+                          114,
+                          115
+                        ],
+                        "logprob": -0.2830250859260559
+                      },
+                      {
+                        "token": " spans",
+                        "bytes": [
+                          32,
+                          115,
+                          112,
+                          97,
+                          110,
+                          115
+                        ],
+                        "logprob": -1.7830250263214111
+                      },
+                      {
+                        "token": " is",
+                        "bytes": [
+                          32,
+                          105,
+                          115
+                        ],
+                        "logprob": -2.783025026321411
+                      },
+                      {
+                        "token": " encompasses",
+                        "bytes": [
+                          32,
+                          101,
+                          110,
+                          99,
+                          111,
+                          109,
+                          112,
+                          97,
+                          115,
+                          115,
+                          101,
+                          115
+                        ],
+                        "logprob": -5.15802526473999
+                      },
+                      {
+                        "token": " measures",
+                        "bytes": [
+                          32,
+                          109,
+                          101,
+                          97,
+                          115,
+                          117,
+                          114,
+                          101,
+                          115
+                        ],
+                        "logprob": -5.28302526473999
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": ""
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " approximately",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " approximately",
+                    "bytes": [
+                      32,
+                      97,
+                      112,
+                      112,
+                      114,
+                      111,
+                      120,
+                      105,
+                      109,
+                      97,
+                      116,
+                      101,
+                      108,
+                      121
+                    ],
+                    "logprob": -0.3248787820339203,
+                    "top_logprobs": [
+                      {
+                        "token": " approximately",
+                        "bytes": [
+                          32,
+                          97,
+                          112,
+                          112,
+                          114,
+                          111,
+                          120,
+                          105,
+                          109,
+                          97,
+                          116,
+                          101,
+                          108,
+                          121
+                        ],
+                        "logprob": -0.3248787820339203
+                      },
+                      {
+                        "token": " about",
+                        "bytes": [
+                          32,
+                          97,
+                          98,
+                          111,
+                          117,
+                          116
+                        ],
+                        "logprob": -1.3248788118362427
+                      },
+                      {
+                        "token": " an",
+                        "bytes": [
+                          32,
+                          97,
+                          110
+                        ],
+                        "logprob": -5.324878692626953
+                      },
+                      {
+                        "token": " roughly",
+                        "bytes": [
+                          32,
+                          114,
+                          111,
+                          117,
+                          103,
+                          104,
+                          108,
+                          121
+                        ],
+                        "logprob": -5.449878692626953
+                      },
+                      {
+                        "token": " around",
+                        "bytes": [
+                          32,
+                          97,
+                          114,
+                          111,
+                          117,
+                          110,
+                          100
+                        ],
+                        "logprob": -6.074878692626953
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "m"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " ",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " ",
+                    "bytes": [
+                      32
+                    ],
+                    "logprob": -0.6328188180923462,
+                    "top_logprobs": [
+                      {
+                        "token": " ",
+                        "bytes": [
+                          32
+                        ],
+                        "logprob": -0.6328188180923462
+                      },
+                      {
+                        "token": " **",
+                        "bytes": [
+                          32,
+                          42,
+                          42
+                        ],
+                        "logprob": -0.7578188180923462
+                      },
+                      {
+                        "token": " *",
+                        "bytes": [
+                          32,
+                          42
+                        ],
+                        "logprob": -9.007819175720215
+                      },
+                      {
+                        "token": " ***",
+                        "bytes": [
+                          32,
+                          42,
+                          42,
+                          42
+                        ],
+                        "logprob": -9.632819175720215
+                      },
+                      {
+                        "token": " \\(",
+                        "bytes": [
+                          32,
+                          92,
+                          40
+                        ],
+                        "logprob": -10.882819175720215
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "v9krDZqsNr"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": "8",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": "8",
+                    "bytes": [
+                      56
+                    ],
+                    "logprob": -2.1269731521606445,
+                    "top_logprobs": [
+                      {
+                        "token": "7",
+                        "bytes": [
+                          55
+                        ],
+                        "logprob": -0.12697315216064453
+                      },
+                      {
+                        "token": "8",
+                        "bytes": [
+                          56
+                        ],
+                        "logprob": -2.1269731521606445
+                      },
+                      {
+                        "token": "2",
+                        "bytes": [
+                          50
+                        ],
+                        "logprob": -10.626973152160645
+                      },
+                      {
+                        "token": "5",
+                        "bytes": [
+                          53
+                        ],
+                        "logprob": -11.001973152160645
+                      },
+                      {
+                        "token": "3",
+                        "bytes": [
+                          51
+                        ],
+                        "logprob": -13.126973152160645
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "uXdZtBGn"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": ".",
+                    "bytes": [
+                      46
+                    ],
+                    "logprob": -0.001105683040805161,
+                    "top_logprobs": [
+                      {
+                        "token": ".",
+                        "bytes": [
+                          46
+                        ],
+                        "logprob": -0.001105683040805161
+                      },
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -7.501105785369873
+                      },
+                      {
+                        "token": " million",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          108,
+                          108,
+                          105,
+                          111,
+                          110
+                        ],
+                        "logprob": -7.501105785369873
+                      },
+                      {
+                        "token": "-",
+                        "bytes": [
+                          45
+                        ],
+                        "logprob": -17.68860626220703
+                      },
+                      {
+                        "token": "%",
+                        "bytes": [
+                          37
+                        ],
+                        "logprob": -17.93860626220703
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "TXpmca"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": "6",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": "6",
+                    "bytes": [
+                      54
+                    ],
+                    "logprob": -0.01886705867946148,
+                    "top_logprobs": [
+                      {
+                        "token": "6",
+                        "bytes": [
+                          54
+                        ],
+                        "logprob": -0.01886705867946148
+                      },
+                      {
+                        "token": "56",
+                        "bytes": [
+                          53,
+                          54
+                        ],
+                        "logprob": -4.143867015838623
+                      },
+                      {
+                        "token": "5",
+                        "bytes": [
+                          53
+                        ],
+                        "logprob": -5.893867015838623
+                      },
+                      {
+                        "token": "57",
+                        "bytes": [
+                          53,
+                          55
+                        ],
+                        "logprob": -11.268867492675781
+                      },
+                      {
+                        "token": "1",
+                        "bytes": [
+                          49
+                        ],
+                        "logprob": -11.393867492675781
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "t"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " million",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " million",
+                    "bytes": [
+                      32,
+                      109,
+                      105,
+                      108,
+                      108,
+                      105,
+                      111,
+                      110
+                    ],
+                    "logprob": -5.512236498361744e-07,
+                    "top_logprobs": [
+                      {
+                        "token": " million",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          108,
+                          108,
+                          105,
+                          111,
+                          110
+                        ],
+                        "logprob": -5.512236498361744e-07
+                      },
+                      {
+                        "token": "%",
+                        "bytes": [
+                          37
+                        ],
+                        "logprob": -14.875000953674316
+                      },
+                      {
+                        "token": " square",
+                        "bytes": [
+                          32,
+                          115,
+                          113,
+                          117,
+                          97,
+                          114,
+                          101
+                        ],
+                        "logprob": -16.375
+                      },
+                      {
+                        "token": "-million",
+                        "bytes": [
+                          45,
+                          109,
+                          105,
+                          108,
+                          108,
+                          105,
+                          111,
+                          110
+                        ],
+                        "logprob": -17.5
+                      },
+                      {
+                        "token": "\u2013",
+                        "bytes": [
+                          226,
+                          128,
+                          147
+                        ],
+                        "logprob": -18.5
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "1CJBPks"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " square",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " square",
+                    "bytes": [
+                      32,
+                      115,
+                      113,
+                      117,
+                      97,
+                      114,
+                      101
+                    ],
+                    "logprob": -1.5332478142227046e-05,
+                    "top_logprobs": [
+                      {
+                        "token": " square",
+                        "bytes": [
+                          32,
+                          115,
+                          113,
+                          117,
+                          97,
+                          114,
+                          101
+                        ],
+                        "logprob": -1.5332478142227046e-05
+                      },
+                      {
+                        "token": " km",
+                        "bytes": [
+                          32,
+                          107,
+                          109
+                        ],
+                        "logprob": -11.125015258789062
+                      },
+                      {
+                        "token": " sq",
+                        "bytes": [
+                          32,
+                          115,
+                          113
+                        ],
+                        "logprob": -14.687515258789062
+                      },
+                      {
+                        "token": " kilometers",
+                        "bytes": [
+                          32,
+                          107,
+                          105,
+                          108,
+                          111,
+                          109,
+                          101,
+                          116,
+                          101,
+                          114,
+                          115
+                        ],
+                        "logprob": -18.437515258789062
+                      },
+                      {
+                        "token": " squared",
+                        "bytes": [
+                          32,
+                          115,
+                          113,
+                          117,
+                          97,
+                          114,
+                          101,
+                          100
+                        ],
+                        "logprob": -18.625015258789062
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "JqJGFz3"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " kilometers",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " kilometers",
+                    "bytes": [
+                      32,
+                      107,
+                      105,
+                      108,
+                      111,
+                      109,
+                      101,
+                      116,
+                      101,
+                      114,
+                      115
+                    ],
+                    "logprob": -4.961759259458631e-06,
+                    "top_logprobs": [
+                      {
+                        "token": " kilometers",
+                        "bytes": [
+                          32,
+                          107,
+                          105,
+                          108,
+                          111,
+                          109,
+                          101,
+                          116,
+                          101,
+                          114,
+                          115
+                        ],
+                        "logprob": -4.961759259458631e-06
+                      },
+                      {
+                        "token": " kilometres",
+                        "bytes": [
+                          32,
+                          107,
+                          105,
+                          108,
+                          111,
+                          109,
+                          101,
+                          116,
+                          114,
+                          101,
+                          115
+                        ],
+                        "logprob": -12.375004768371582
+                      },
+                      {
+                        "token": " km",
+                        "bytes": [
+                          32,
+                          107,
+                          109
+                        ],
+                        "logprob": -14.500004768371582
+                      },
+                      {
+                        "token": " miles",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          108,
+                          101,
+                          115
+                        ],
+                        "logprob": -16.2500057220459
+                      },
+                      {
+                        "token": "-k",
+                        "bytes": [
+                          45,
+                          107
+                        ],
+                        "logprob": -19.4375057220459
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " (",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " (",
+                    "bytes": [
+                      32,
+                      40
+                    ],
+                    "logprob": -0.06543465703725815,
+                    "top_logprobs": [
+                      {
+                        "token": " (",
+                        "bytes": [
+                          32,
+                          40
+                        ],
+                        "logprob": -0.06543465703725815
+                      },
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -2.940434694290161
+                      },
+                      {
+                        "token": " and",
+                        "bytes": [
+                          32,
+                          97,
+                          110,
+                          100
+                        ],
+                        "logprob": -4.815434455871582
+                      },
+                      {
+                        "token": ".",
+                        "bytes": [
+                          46
+                        ],
+                        "logprob": -6.065434455871582
+                      },
+                      {
+                        "token": " or",
+                        "bytes": [
+                          32,
+                          111,
+                          114
+                        ],
+                        "logprob": -9.877934455871582
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "6mT1yGftrS"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": "3",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": "3",
+                    "bytes": [
+                      51
+                    ],
+                    "logprob": -0.10374820977449417,
+                    "top_logprobs": [
+                      {
+                        "token": "3",
+                        "bytes": [
+                          51
+                        ],
+                        "logprob": -0.10374820977449417
+                      },
+                      {
+                        "token": "about",
+                        "bytes": [
+                          97,
+                          98,
+                          111,
+                          117,
+                          116
+                        ],
+                        "logprob": -2.978748321533203
+                      },
+                      {
+                        "token": "around",
+                        "bytes": [
+                          97,
+                          114,
+                          111,
+                          117,
+                          110,
+                          100
+                        ],
+                        "logprob": -3.478748321533203
+                      },
+                      {
+                        "token": "or",
+                        "bytes": [
+                          111,
+                          114
+                        ],
+                        "logprob": -4.103748321533203
+                      },
+                      {
+                        "token": "rough",
+                        "bytes": [
+                          114,
+                          111,
+                          117,
+                          103,
+                          104
+                        ],
+                        "logprob": -9.041248321533203
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "uk5Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": ".",
+                    "bytes": [
+                      46
+                    ],
+                    "logprob": -4.36574100604048e-06,
+                    "top_logprobs": [
+                      {
+                        "token": ".",
+                        "bytes": [
+                          46
+                        ],
+                        "logprob": -4.36574100604048e-06
+                      },
+                      {
+                        "token": " million",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          108,
+                          108,
+                          105,
+                          111,
+                          110
+                        ],
+                        "logprob": -12.375004768371582
+                      },
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -15.750004768371582
+                      },
+                      {
+                        "token": " .",
+                        "bytes": [
+                          32,
+                          46
+                        ],
+                        "logprob": -19.812503814697266
+                      },
+                      {
+                        "token": " continents",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          116,
+                          105,
+                          110,
+                          101,
+                          110,
+                          116,
+                          115
+                        ],
+                        "logprob": -21.062503814697266
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "mNjdOZF3E9bzMdZ"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": "3",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": "3",
+                    "bytes": [
+                      51
+                    ],
+                    "logprob": -0.0004094619944225997,
+                    "top_logprobs": [
+                      {
+                        "token": "3",
+                        "bytes": [
+                          51
+                        ],
+                        "logprob": -0.0004094619944225997
+                      },
+                      {
+                        "token": "4",
+                        "bytes": [
+                          52
+                        ],
+                        "logprob": -8.125409126281738
+                      },
+                      {
+                        "token": "2",
+                        "bytes": [
+                          50
+                        ],
+                        "logprob": -10.000409126281738
+                      },
+                      {
+                        "token": "5",
+                        "bytes": [
+                          53
+                        ],
+                        "logprob": -10.000409126281738
+                      },
+                      {
+                        "token": "31",
+                        "bytes": [
+                          51,
+                          49
+                        ],
+                        "logprob": -11.500409126281738
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": ""
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " million",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " million",
+                    "bytes": [
+                      32,
+                      109,
+                      105,
+                      108,
+                      108,
+                      105,
+                      111,
+                      110
+                    ],
+                    "logprob": -1.9361264946837764e-07,
+                    "top_logprobs": [
+                      {
+                        "token": " million",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          108,
+                          108,
+                          105,
+                          111,
+                          110
+                        ],
+                        "logprob": -1.9361264946837764e-07
+                      },
+                      {
+                        "token": " square",
+                        "bytes": [
+                          32,
+                          115,
+                          113,
+                          117,
+                          97,
+                          114,
+                          101
+                        ],
+                        "logprob": -16.0
+                      },
+                      {
+                        "token": ".",
+                        "bytes": [
+                          46
+                        ],
+                        "logprob": -17.25
+                      },
+                      {
+                        "token": "+",
+                        "bytes": [
+                          43
+                        ],
+                        "logprob": -20.375
+                      },
+                      {
+                        "token": "-million",
+                        "bytes": [
+                          45,
+                          109,
+                          105,
+                          108,
+                          108,
+                          105,
+                          111,
+                          110
+                        ],
+                        "logprob": -20.9375
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "Q1dNOz5W"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " square",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " square",
+                    "bytes": [
+                      32,
+                      115,
+                      113,
+                      117,
+                      97,
+                      114,
+                      101
+                    ],
+                    "logprob": -7.896309739408025e-07,
+                    "top_logprobs": [
+                      {
+                        "token": " square",
+                        "bytes": [
+                          32,
+                          115,
+                          113,
+                          117,
+                          97,
+                          114,
+                          101
+                        ],
+                        "logprob": -7.896309739408025e-07
+                      },
+                      {
+                        "token": " sq",
+                        "bytes": [
+                          32,
+                          115,
+                          113
+                        ],
+                        "logprob": -14.125000953674316
+                      },
+                      {
+                        "token": " miles",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          108,
+                          101,
+                          115
+                        ],
+                        "logprob": -19.3125
+                      },
+                      {
+                        "token": " squared",
+                        "bytes": [
+                          32,
+                          115,
+                          113,
+                          117,
+                          97,
+                          114,
+                          101,
+                          100
+                        ],
+                        "logprob": -20.375
+                      },
+                      {
+                        "token": " mi",
+                        "bytes": [
+                          32,
+                          109,
+                          105
+                        ],
+                        "logprob": -20.6875
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "UJQ58vQ8"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " miles",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " miles",
+                    "bytes": [
+                      32,
+                      109,
+                      105,
+                      108,
+                      101,
+                      115
+                    ],
+                    "logprob": 0.0,
+                    "top_logprobs": [
+                      {
+                        "token": " miles",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          108,
+                          101,
+                          115
+                        ],
+                        "logprob": 0.0
+                      },
+                      {
+                        "token": " mi",
+                        "bytes": [
+                          32,
+                          109,
+                          105
+                        ],
+                        "logprob": -19.875
+                      },
+                      {
+                        "token": " kilometers",
+                        "bytes": [
+                          32,
+                          107,
+                          105,
+                          108,
+                          111,
+                          109,
+                          101,
+                          116,
+                          101,
+                          114,
+                          115
+                        ],
+                        "logprob": -21.3125
+                      },
+                      {
+                        "token": " mile",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          108,
+                          101
+                        ],
+                        "logprob": -22.5
+                      },
+                      {
+                        "token": " Miles",
+                        "bytes": [
+                          32,
+                          77,
+                          105,
+                          108,
+                          101,
+                          115
+                        ],
+                        "logprob": -23.5
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "hkEbGbhiwyuGr"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": ").",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": ").",
+                    "bytes": [
+                      41,
+                      46
+                    ],
+                    "logprob": -0.8359445333480835,
+                    "top_logprobs": [
+                      {
+                        "token": "),",
+                        "bytes": [
+                          41,
+                          44
+                        ],
+                        "logprob": -0.7109445333480835
+                      },
+                      {
+                        "token": ").",
+                        "bytes": [
+                          41,
+                          46
+                        ],
+                        "logprob": -0.8359445333480835
+                      },
+                      {
+                        "token": ")",
+                        "bytes": [
+                          41
+                        ],
+                        "logprob": -2.585944652557373
+                      },
+                      {
+                        "token": ").\n\n",
+                        "bytes": [
+                          41,
+                          46,
+                          10,
+                          10
+                        ],
+                        "logprob": -10.710944175720215
+                      },
+                      {
+                        "token": ")\u2014",
+                        "bytes": [
+                          41,
+                          226,
+                          128,
+                          148
+                        ],
+                        "logprob": -11.835944175720215
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "Fb"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " While",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " While",
+                    "bytes": [
+                      32,
+                      87,
+                      104,
+                      105,
+                      108,
+                      101
+                    ],
+                    "logprob": -0.9095547795295715,
+                    "top_logprobs": [
+                      {
+                        "token": " While",
+                        "bytes": [
+                          32,
+                          87,
+                          104,
+                          105,
+                          108,
+                          101
+                        ],
+                        "logprob": -0.9095547795295715
+                      },
+                      {
+                        "token": " Australia",
+                        "bytes": [
+                          32,
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97
+                        ],
+                        "logprob": -1.4095547199249268
+                      },
+                      {
+                        "token": " Although",
+                        "bytes": [
+                          32,
+                          65,
+                          108,
+                          116,
+                          104,
+                          111,
+                          117,
+                          103,
+                          104
+                        ],
+                        "logprob": -2.4095547199249268
+                      },
+                      {
+                        "token": " Despite",
+                        "bytes": [
+                          32,
+                          68,
+                          101,
+                          115,
+                          112,
+                          105,
+                          116,
+                          101
+                        ],
+                        "logprob": -2.6595547199249268
+                      },
+                      {
+                        "token": " Unlike",
+                        "bytes": [
+                          32,
+                          85,
+                          110,
+                          108,
+                          105,
+                          107,
+                          101
+                        ],
+                        "logprob": -2.9095547199249268
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "f5WL"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " it",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " it",
+                    "bytes": [
+                      32,
+                      105,
+                      116
+                    ],
+                    "logprob": -0.8457984924316406,
+                    "top_logprobs": [
+                      {
+                        "token": " it",
+                        "bytes": [
+                          32,
+                          105,
+                          116
+                        ],
+                        "logprob": -0.8457984924316406
+                      },
+                      {
+                        "token": " Australia",
+                        "bytes": [
+                          32,
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97
+                        ],
+                        "logprob": -1.0957984924316406
+                      },
+                      {
+                        "token": " often",
+                        "bytes": [
+                          32,
+                          111,
+                          102,
+                          116,
+                          101,
+                          110
+                        ],
+                        "logprob": -2.4707984924316406
+                      },
+                      {
+                        "token": " sometimes",
+                        "bytes": [
+                          32,
+                          115,
+                          111,
+                          109,
+                          101,
+                          116,
+                          105,
+                          109,
+                          101,
+                          115
+                        ],
+                        "logprob": -3.2207984924316406
+                      },
+                      {
+                        "token": " it's",
+                        "bytes": [
+                          32,
+                          105,
+                          116,
+                          39,
+                          115
+                        ],
+                        "logprob": -3.7207984924316406
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": ""
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " is",
+                    "bytes": [
+                      32,
+                      105,
+                      115
+                    ],
+                    "logprob": -0.00630783149972558,
+                    "top_logprobs": [
+                      {
+                        "token": " is",
+                        "bytes": [
+                          32,
+                          105,
+                          115
+                        ],
+                        "logprob": -0.00630783149972558
+                      },
+                      {
+                        "token": "\u2019s",
+                        "bytes": [
+                          226,
+                          128,
+                          153,
+                          115
+                        ],
+                        "logprob": -5.756307601928711
+                      },
+                      {
+                        "token": " may",
+                        "bytes": [
+                          32,
+                          109,
+                          97,
+                          121
+                        ],
+                        "logprob": -6.631307601928711
+                      },
+                      {
+                        "token": " might",
+                        "bytes": [
+                          32,
+                          109,
+                          105,
+                          103,
+                          104,
+                          116
+                        ],
+                        "logprob": -7.881307601928711
+                      },
+                      {
+                        "token": " includes",
+                        "bytes": [
+                          32,
+                          105,
+                          110,
+                          99,
+                          108,
+                          117,
+                          100,
+                          101,
+                          115
+                        ],
+                        "logprob": -7.881307601928711
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "qFw2oVEWL"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " the",
+                    "bytes": [
+                      32,
+                      116,
+                      104,
+                      101
+                    ],
+                    "logprob": -0.21126531064510345,
+                    "top_logprobs": [
+                      {
+                        "token": " the",
+                        "bytes": [
+                          32,
+                          116,
+                          104,
+                          101
+                        ],
+                        "logprob": -0.21126531064510345
+                      },
+                      {
+                        "token": " geographically",
+                        "bytes": [
+                          32,
+                          103,
+                          101,
+                          111,
+                          103,
+                          114,
+                          97,
+                          112,
+                          104,
+                          105,
+                          99,
+                          97,
+                          108,
+                          108,
+                          121
+                        ],
+                        "logprob": -2.9612653255462646
+                      },
+                      {
+                        "token": " often",
+                        "bytes": [
+                          32,
+                          111,
+                          102,
+                          116,
+                          101,
+                          110
+                        ],
+                        "logprob": -3.3362653255462646
+                      },
+                      {
+                        "token": " also",
+                        "bytes": [
+                          32,
+                          97,
+                          108,
+                          115,
+                          111
+                        ],
+                        "logprob": -4.0862650871276855
+                      },
+                      {
+                        "token": " considered",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          115,
+                          105,
+                          100,
+                          101,
+                          114,
+                          101,
+                          100
+                        ],
+                        "logprob": -4.2112650871276855
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "C6sSJN"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " smallest",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " smallest",
+                    "bytes": [
+                      32,
+                      115,
+                      109,
+                      97,
+                      108,
+                      108,
+                      101,
+                      115,
+                      116
+                    ],
+                    "logprob": -0.0025154929608106613,
+                    "top_logprobs": [
+                      {
+                        "token": " smallest",
+                        "bytes": [
+                          32,
+                          115,
+                          109,
+                          97,
+                          108,
+                          108,
+                          101,
+                          115,
+                          116
+                        ],
+                        "logprob": -0.0025154929608106613
+                      },
+                      {
+                        "token": " largest",
+                        "bytes": [
+                          32,
+                          108,
+                          97,
+                          114,
+                          103,
+                          101,
+                          115,
+                          116
+                        ],
+                        "logprob": -7.1275153160095215
+                      },
+                      {
+                        "token": " world's",
+                        "bytes": [
+                          32,
+                          119,
+                          111,
+                          114,
+                          108,
+                          100,
+                          39,
+                          115
+                        ],
+                        "logprob": -7.3775153160095215
+                      },
+                      {
+                        "token": " tini",
+                        "bytes": [
+                          32,
+                          116,
+                          105,
+                          110,
+                          105
+                        ],
+                        "logprob": -7.7525153160095215
+                      },
+                      {
+                        "token": " least",
+                        "bytes": [
+                          32,
+                          108,
+                          101,
+                          97,
+                          115,
+                          116
+                        ],
+                        "logprob": -8.00251579284668
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "hate": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                },
+                "self_harm": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "sexual": {
+                  "filtered": false,
+                  "severity": "safe"
+                },
+                "violence": {
+                  "filtered": false,
+                  "severity": "safe"
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "Pao3x9KsYtV454F"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " continent",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " continent",
+                    "bytes": [
+                      32,
+                      99,
+                      111,
+                      110,
+                      116,
+                      105,
+                      110,
+                      101,
+                      110,
+                      116
+                    ],
+                    "logprob": -0.2838832437992096,
+                    "top_logprobs": [
+                      {
+                        "token": " continent",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          116,
+                          105,
+                          110,
+                          101,
+                          110,
+                          116
+                        ],
+                        "logprob": -0.2838832437992096
+                      },
+                      {
+                        "token": " in",
+                        "bytes": [
+                          32,
+                          105,
+                          110
+                        ],
+                        "logprob": -2.0338833332061768
+                      },
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -3.0338833332061768
+                      },
+                      {
+                        "token": " of",
+                        "bytes": [
+                          32,
+                          111,
+                          102
+                        ],
+                        "logprob": -3.0338833332061768
+                      },
+                      {
+                        "token": " by",
+                        "bytes": [
+                          32,
+                          98,
+                          121
+                        ],
+                        "logprob": -5.283883094787598
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "2Kpg9jaa0KYT"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": ",",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": ",",
+                    "bytes": [
+                      44
+                    ],
+                    "logprob": -0.053859956562519073,
+                    "top_logprobs": [
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -0.053859956562519073
+                      },
+                      {
+                        "token": " geographically",
+                        "bytes": [
+                          32,
+                          103,
+                          101,
+                          111,
+                          103,
+                          114,
+                          97,
+                          112,
+                          104,
+                          105,
+                          99,
+                          97,
+                          108,
+                          108,
+                          121
+                        ],
+                        "logprob": -3.3038599491119385
+                      },
+                      {
+                        "token": " in",
+                        "bytes": [
+                          32,
+                          105,
+                          110
+                        ],
+                        "logprob": -4.303860187530518
+                      },
+                      {
+                        "token": " overall",
+                        "bytes": [
+                          32,
+                          111,
+                          118,
+                          101,
+                          114,
+                          97,
+                          108,
+                          108
+                        ],
+                        "logprob": -6.803860187530518
+                      },
+                      {
+                        "token": " on",
+                        "bytes": [
+                          32,
+                          111,
+                          110
+                        ],
+                        "logprob": -8.30385971069336
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": ""
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " it",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " it",
+                    "bytes": [
+                      32,
+                      105,
+                      116
+                    ],
+                    "logprob": -0.4441318213939667,
+                    "top_logprobs": [
+                      {
+                        "token": " it",
+                        "bytes": [
+                          32,
+                          105,
+                          116
+                        ],
+                        "logprob": -0.4441318213939667
+                      },
+                      {
+                        "token": " Australia",
+                        "bytes": [
+                          32,
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97
+                        ],
+                        "logprob": -1.069131851196289
+                      },
+                      {
+                        "token": " it's",
+                        "bytes": [
+                          32,
+                          105,
+                          116,
+                          39,
+                          115
+                        ],
+                        "logprob": -4.319131851196289
+                      },
+                      {
+                        "token": " its",
+                        "bytes": [
+                          32,
+                          105,
+                          116,
+                          115
+                        ],
+                        "logprob": -7.069131851196289
+                      },
+                      {
+                        "token": " Australia's",
+                        "bytes": [
+                          32,
+                          65,
+                          117,
+                          115,
+                          116,
+                          114,
+                          97,
+                          108,
+                          105,
+                          97,
+                          39,
+                          115
+                        ],
+                        "logprob": -7.069131851196289
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "lthmjJDM"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " is",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " is",
+                    "bytes": [
+                      32,
+                      105,
+                      115
+                    ],
+                    "logprob": -0.0035202486906200647,
+                    "top_logprobs": [
+                      {
+                        "token": " is",
+                        "bytes": [
+                          32,
+                          105,
+                          115
+                        ],
+                        "logprob": -0.0035202486906200647
+                      },
+                      {
+                        "token": " also",
+                        "bytes": [
+                          32,
+                          97,
+                          108,
+                          115,
+                          111
+                        ],
+                        "logprob": -7.2535200119018555
+                      },
+                      {
+                        "token": " stands",
+                        "bytes": [
+                          32,
+                          115,
+                          116,
+                          97,
+                          110,
+                          100,
+                          115
+                        ],
+                        "logprob": -7.2535200119018555
+                      },
+                      {
+                        "token": " includes",
+                        "bytes": [
+                          32,
+                          105,
+                          110,
+                          99,
+                          108,
+                          117,
+                          100,
+                          101,
+                          115
+                        ],
+                        "logprob": -7.3785200119018555
+                      },
+                      {
+                        "token": "\u2019s",
+                        "bytes": [
+                          226,
+                          128,
+                          153,
+                          115
+                        ],
+                        "logprob": -7.8785200119018555
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "7Uq6hKya"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " also",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " also",
+                    "bytes": [
+                      32,
+                      97,
+                      108,
+                      115,
+                      111
+                    ],
+                    "logprob": -0.41830408573150635,
+                    "top_logprobs": [
+                      {
+                        "token": " also",
+                        "bytes": [
+                          32,
+                          97,
+                          108,
+                          115,
+                          111
+                        ],
+                        "logprob": -0.41830408573150635
+                      },
+                      {
+                        "token": " unique",
+                        "bytes": [
+                          32,
+                          117,
+                          110,
+                          105,
+                          113,
+                          117,
+                          101
+                        ],
+                        "logprob": -1.9183040857315063
+                      },
+                      {
+                        "token": " the",
+                        "bytes": [
+                          32,
+                          116,
+                          104,
+                          101
+                        ],
+                        "logprob": -2.543303966522217
+                      },
+                      {
+                        "token": " still",
+                        "bytes": [
+                          32,
+                          115,
+                          116,
+                          105,
+                          108,
+                          108
+                        ],
+                        "logprob": -3.293303966522217
+                      },
+                      {
+                        "token": " often",
+                        "bytes": [
+                          32,
+                          111,
+                          102,
+                          116,
+                          101,
+                          110
+                        ],
+                        "logprob": -4.418303966522217
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "W"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " unique",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " unique",
+                    "bytes": [
+                      32,
+                      117,
+                      110,
+                      105,
+                      113,
+                      117,
+                      101
+                    ],
+                    "logprob": -0.5337467193603516,
+                    "top_logprobs": [
+                      {
+                        "token": " unique",
+                        "bytes": [
+                          32,
+                          117,
+                          110,
+                          105,
+                          113,
+                          117,
+                          101
+                        ],
+                        "logprob": -0.5337467193603516
+                      },
+                      {
+                        "token": " the",
+                        "bytes": [
+                          32,
+                          116,
+                          104,
+                          101
+                        ],
+                        "logprob": -1.1587467193603516
+                      },
+                      {
+                        "token": " a",
+                        "bytes": [
+                          32,
+                          97
+                        ],
+                        "logprob": -3.2837467193603516
+                      },
+                      {
+                        "token": " considered",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          115,
+                          105,
+                          100,
+                          101,
+                          114,
+                          101,
+                          100
+                        ],
+                        "logprob": -4.033746719360352
+                      },
+                      {
+                        "token": " one",
+                        "bytes": [
+                          32,
+                          111,
+                          110,
+                          101
+                        ],
+                        "logprob": -4.283746719360352
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "tRtMEM"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " in",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " in",
+                    "bytes": [
+                      32,
+                      105,
+                      110
+                    ],
+                    "logprob": -1.0577143430709839,
+                    "top_logprobs": [
+                      {
+                        "token": " because",
+                        "bytes": [
+                          32,
+                          98,
+                          101,
+                          99,
+                          97,
+                          117,
+                          115,
+                          101
+                        ],
+                        "logprob": -0.6827143430709839
+                      },
+                      {
+                        "token": " in",
+                        "bytes": [
+                          32,
+                          105,
+                          110
+                        ],
+                        "logprob": -1.0577143430709839
+                      },
+                      {
+                        "token": " as",
+                        "bytes": [
+                          32,
+                          97,
+                          115
+                        ],
+                        "logprob": -2.3077144622802734
+                      },
+                      {
+                        "token": " for",
+                        "bytes": [
+                          32,
+                          102,
+                          111,
+                          114
+                        ],
+                        "logprob": -3.1827144622802734
+                      },
+                      {
+                        "token": " since",
+                        "bytes": [
+                          32,
+                          115,
+                          105,
+                          110,
+                          99,
+                          101
+                        ],
+                        "logprob": -5.557714462280273
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "OWpA"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " being",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " being",
+                    "bytes": [
+                      32,
+                      98,
+                      101,
+                      105,
+                      110,
+                      103
+                    ],
+                    "logprob": -0.6332430243492126,
+                    "top_logprobs": [
+                      {
+                        "token": " being",
+                        "bytes": [
+                          32,
+                          98,
+                          101,
+                          105,
+                          110,
+                          103
+                        ],
+                        "logprob": -0.6332430243492126
+                      },
+                      {
+                        "token": " that",
+                        "bytes": [
+                          32,
+                          116,
+                          104,
+                          97,
+                          116
+                        ],
+                        "logprob": -0.7582430243492126
+                      },
+                      {
+                        "token": " its",
+                        "bytes": [
+                          32,
+                          105,
+                          116,
+                          115
+                        ],
+                        "logprob": -9.1332426071167
+                      },
+                      {
+                        "token": " comprising",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          109,
+                          112,
+                          114,
+                          105,
+                          115,
+                          105,
+                          110,
+                          103
+                        ],
+                        "logprob": -9.1332426071167
+                      },
+                      {
+                        "token": " many",
+                        "bytes": [
+                          32,
+                          109,
+                          97,
+                          110,
+                          121
+                        ],
+                        "logprob": -9.7582426071167
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "gv1HqO9"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " both",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " both",
+                    "bytes": [
+                      32,
+                      98,
+                      111,
+                      116,
+                      104
+                    ],
+                    "logprob": -0.20559124648571014,
+                    "top_logprobs": [
+                      {
+                        "token": " both",
+                        "bytes": [
+                          32,
+                          98,
+                          111,
+                          116,
+                          104
+                        ],
+                        "logprob": -0.20559124648571014
+                      },
+                      {
+                        "token": " the",
+                        "bytes": [
+                          32,
+                          116,
+                          104,
+                          101
+                        ],
+                        "logprob": -2.2055912017822266
+                      },
+                      {
+                        "token": " a",
+                        "bytes": [
+                          32,
+                          97
+                        ],
+                        "logprob": -2.7055912017822266
+                      },
+                      {
+                        "token": " considered",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          115,
+                          105,
+                          100,
+                          101,
+                          114,
+                          101,
+                          100
+                        ],
+                        "logprob": -5.580591201782227
+                      },
+                      {
+                        "token": " entirely",
+                        "bytes": [
+                          32,
+                          101,
+                          110,
+                          116,
+                          105,
+                          114,
+                          101,
+                          108,
+                          121
+                        ],
+                        "logprob": -6.830591201782227
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "uHp"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " a",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " a",
+                    "bytes": [
+                      32,
+                      97
+                    ],
+                    "logprob": -0.00022213248303160071,
+                    "top_logprobs": [
+                      {
+                        "token": " a",
+                        "bytes": [
+                          32,
+                          97
+                        ],
+                        "logprob": -0.00022213248303160071
+                      },
+                      {
+                        "token": " an",
+                        "bytes": [
+                          32,
+                          97,
+                          110
+                        ],
+                        "logprob": -9.125222206115723
+                      },
+                      {
+                        "token": " the",
+                        "bytes": [
+                          32,
+                          116,
+                          104,
+                          101
+                        ],
+                        "logprob": -9.250222206115723
+                      },
+                      {
+                        "token": " its",
+                        "bytes": [
+                          32,
+                          105,
+                          116,
+                          115
+                        ],
+                        "logprob": -11.250222206115723
+                      },
+                      {
+                        "token": " geographically",
+                        "bytes": [
+                          32,
+                          103,
+                          101,
+                          111,
+                          103,
+                          114,
+                          97,
+                          112,
+                          104,
+                          105,
+                          99,
+                          97,
+                          108,
+                          108,
+                          121
+                        ],
+                        "logprob": -13.500222206115723
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": ""
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " continent",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " continent",
+                    "bytes": [
+                      32,
+                      99,
+                      111,
+                      110,
+                      116,
+                      105,
+                      110,
+                      101,
+                      110,
+                      116
+                    ],
+                    "logprob": -0.4297357201576233,
+                    "top_logprobs": [
+                      {
+                        "token": " continent",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          116,
+                          105,
+                          110,
+                          101,
+                          110,
+                          116
+                        ],
+                        "logprob": -0.4297357201576233
+                      },
+                      {
+                        "token": " country",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          117,
+                          110,
+                          116,
+                          114,
+                          121
+                        ],
+                        "logprob": -1.0547356605529785
+                      },
+                      {
+                        "token": " single",
+                        "bytes": [
+                          32,
+                          115,
+                          105,
+                          110,
+                          103,
+                          108,
+                          101
+                        ],
+                        "logprob": -7.4297356605529785
+                      },
+                      {
+                        "token": " continental",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          110,
+                          116,
+                          105,
+                          110,
+                          101,
+                          110,
+                          116,
+                          97,
+                          108
+                        ],
+                        "logprob": -7.8047356605529785
+                      },
+                      {
+                        "token": " nation",
+                        "bytes": [
+                          32,
+                          110,
+                          97,
+                          116,
+                          105,
+                          111,
+                          110
+                        ],
+                        "logprob": -11.554736137390137
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "3Sb8D0"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " and",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " and",
+                    "bytes": [
+                      32,
+                      97,
+                      110,
+                      100
+                    ],
+                    "logprob": -0.0001576506474521011,
+                    "top_logprobs": [
+                      {
+                        "token": " and",
+                        "bytes": [
+                          32,
+                          97,
+                          110,
+                          100
+                        ],
+                        "logprob": -0.0001576506474521011
+                      },
+                      {
+                        "token": " **",
+                        "bytes": [
+                          32,
+                          42,
+                          42
+                        ],
+                        "logprob": -9.250157356262207
+                      },
+                      {
+                        "token": " *",
+                        "bytes": [
+                          32,
+                          42
+                        ],
+                        "logprob": -10.687657356262207
+                      },
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -10.812657356262207
+                      },
+                      {
+                        "token": " as",
+                        "bytes": [
+                          32,
+                          97,
+                          115
+                        ],
+                        "logprob": -11.062657356262207
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": ""
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " a",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " a",
+                    "bytes": [
+                      32,
+                      97
+                    ],
+                    "logprob": -0.0034343579318374395,
+                    "top_logprobs": [
+                      {
+                        "token": " a",
+                        "bytes": [
+                          32,
+                          97
+                        ],
+                        "logprob": -0.0034343579318374395
+                      },
+                      {
+                        "token": " the",
+                        "bytes": [
+                          32,
+                          116,
+                          104,
+                          101
+                        ],
+                        "logprob": -6.378434181213379
+                      },
+                      {
+                        "token": " an",
+                        "bytes": [
+                          32,
+                          97,
+                          110
+                        ],
+                        "logprob": -6.628434181213379
+                      },
+                      {
+                        "token": " its",
+                        "bytes": [
+                          32,
+                          105,
+                          116,
+                          115
+                        ],
+                        "logprob": -8.253434181213379
+                      },
+                      {
+                        "token": " country",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          117,
+                          110,
+                          116,
+                          114,
+                          121
+                        ],
+                        "logprob": -9.253434181213379
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "iCnjt"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": " country",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": " country",
+                    "bytes": [
+                      32,
+                      99,
+                      111,
+                      117,
+                      110,
+                      116,
+                      114,
+                      121
+                    ],
+                    "logprob": -0.05003733187913895,
+                    "top_logprobs": [
+                      {
+                        "token": " country",
+                        "bytes": [
+                          32,
+                          99,
+                          111,
+                          117,
+                          110,
+                          116,
+                          114,
+                          121
+                        ],
+                        "logprob": -0.05003733187913895
+                      },
+                      {
+                        "token": " single",
+                        "bytes": [
+                          32,
+                          115,
+                          105,
+                          110,
+                          103,
+                          108,
+                          101
+                        ],
+                        "logprob": -3.050037384033203
+                      },
+                      {
+                        "token": " standalone",
+                        "bytes": [
+                          32,
+                          115,
+                          116,
+                          97,
+                          110,
+                          100,
+                          97,
+                          108,
+                          111,
+                          110,
+                          101
+                        ],
+                        "logprob": -7.050037384033203
+                      },
+                      {
+                        "token": " sovereign",
+                        "bytes": [
+                          32,
+                          115,
+                          111,
+                          118,
+                          101,
+                          114,
+                          101,
+                          105,
+                          103,
+                          110
+                        ],
+                        "logprob": -7.800037384033203
+                      },
+                      {
+                        "token": " large",
+                        "bytes": [
+                          32,
+                          108,
+                          97,
+                          114,
+                          103,
+                          101
+                        ],
+                        "logprob": -10.112537384033203
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "9dRMojtJ5rmP"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": ".",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": {
+                "content": [
+                  {
+                    "token": ".",
+                    "bytes": [
+                      46
+                    ],
+                    "logprob": -0.24474112689495087,
+                    "top_logprobs": [
+                      {
+                        "token": ".",
+                        "bytes": [
+                          46
+                        ],
+                        "logprob": -0.24474112689495087
+                      },
+                      {
+                        "token": ",",
+                        "bytes": [
+                          44
+                        ],
+                        "logprob": -1.8697410821914673
+                      },
+                      {
+                        "token": " entirely",
+                        "bytes": [
+                          32,
+                          101,
+                          110,
+                          116,
+                          105,
+                          114,
+                          101,
+                          108,
+                          121
+                        ],
+                        "logprob": -3.869741201400757
+                      },
+                      {
+                        "token": "!",
+                        "bytes": [
+                          33
+                        ],
+                        "logprob": -3.994741201400757
+                      },
+                      {
+                        "token": " in",
+                        "bytes": [
+                          32,
+                          105,
+                          110
+                        ],
+                        "logprob": -5.369740962982178
+                      }
+                    ]
+                  }
+                ],
+                "refusal": null
+              },
+              "content_filter_results": {
+                "protected_material_code": {
+                  "detected": false,
+                  "filtered": false
+                }
+              }
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "Uw1SrWrY"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [
+            {
+              "delta": {
+                "content": null,
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": "stop",
+              "index": 0,
+              "logprobs": null,
+              "content_filter_results": {}
+            }
+          ],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": null,
+          "obfuscation": "aej"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-068176027664",
+          "choices": [],
+          "created": 0,
+          "model": "gpt-4o-2024-11-20",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": "fp_af7f7349a4",
+          "usage": {
+            "completion_tokens": 50,
+            "prompt_tokens": 13,
+            "total_tokens": 63,
+            "completion_tokens_details": {
+              "accepted_prediction_tokens": 0,
+              "audio_tokens": 0,
+              "reasoning_tokens": 0,
+              "rejected_prediction_tokens": 0
+            },
+            "prompt_tokens_details": {
+              "audio_tokens": 0,
+              "cached_tokens": 0
+            }
+          },
+          "obfuscation": "JpZqn6kD"
+        }
+      }
+    ],
+    "is_streaming": true
+  },
+  "id_normalization_mapping": {}
+}
