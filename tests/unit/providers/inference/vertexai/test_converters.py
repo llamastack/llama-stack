@@ -29,7 +29,6 @@ from llama_stack.providers.remote.inference.vertexai.converters import (
     convert_gemini_response_to_openai_completion,
     convert_gemini_stream_chunk_to_openai,
     convert_gemini_stream_chunk_to_openai_completion,
-    convert_model_name,
     convert_openai_messages_to_gemini,
     convert_openai_tools_to_gemini,
     convert_response_format,
@@ -179,22 +178,6 @@ class TestConvertFinishReason:
         # FinishReason values from SDK are uppercase but let's be defensive
         """Test that case insensitive."""
         assert convert_finish_reason(input_reason) == "stop"
-
-
-class TestConvertModelName:
-    @pytest.mark.parametrize(
-        "input_name,expected",
-        [
-            ("google/gemini-2.5-flash", "gemini-2.5-flash"),
-            ("gemini-2.5-flash", "gemini-2.5-flash"),
-            ("meta/llama-3", "meta/llama-3"),
-            ("", ""),
-            ("google/", ""),
-        ],
-    )
-    def test_model_name_conversion(self, input_name, expected):
-        """Test that model name conversion."""
-        assert convert_model_name(input_name) == expected
 
 
 class TestConvertResponseFormat:
