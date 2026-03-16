@@ -140,6 +140,13 @@ SETUP_DEFINITIONS: dict[str, Setup] = {
             "embedding_dimension": 768,
         },
     ),
+    "watsonx": Setup(
+        name="watsonx",
+        description="IBM WatsonX AI models",
+        defaults={
+            "text_model": "watsonx/meta-llama/llama-3-3-70b-instruct",
+        },
+    ),
     "tgi": Setup(
         name="tgi",
         description="Text Generation Inference (TGI) provider with a text model",
