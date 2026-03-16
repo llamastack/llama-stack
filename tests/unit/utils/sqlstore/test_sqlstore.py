@@ -4,6 +4,7 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import sys
 import time
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -13,6 +14,8 @@ import pytest
 from llama_stack.core.storage.datatypes import PoolRecycleConfig, PostgresSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
+
+_SQLSTORE_MODULE = sys.modules[SqlAlchemySqlStoreImpl.__module__]
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
 
 
@@ -531,11 +534,12 @@ async def test_sqlstore_pagination_custom_key_column():
 
 
 @pytest.mark.parametrize("pre_ping", [True, False])
-def test_pool_pre_ping_propagates_to_engine(pre_ping):
+async def test_pool_pre_ping_propagates_to_engine(pre_ping):
     """pool_pre_ping config value is forwarded to create_async_engine."""
-    with patch("llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore.create_async_engine") as mock_create:
+    with patch.object(_SQLSTORE_MODULE, "create_async_engine") as mock_create:
         config = PostgresSqlStoreConfig(user="test", password="test", pool_pre_ping=pre_ping)
-        SqlAlchemySqlStoreImpl(config)
+        store = SqlAlchemySqlStoreImpl(config)
+        await store._ensure_engine()
         mock_create.assert_called_once()
         _, kwargs = mock_create.call_args
         assert kwargs["pool_pre_ping"] is pre_ping
@@ -559,9 +563,9 @@ async def test_postgres_pool_config_defaults():
     assert cfg.pool_recycle.interval == 600
 
 
-def test_postgres_pool_kwargs_propagate_to_engine():
+async def test_postgres_pool_kwargs_propagate_to_engine():
     """Postgres pool_size, max_overflow, and pool_recycle are forwarded to create_async_engine."""
-    with patch("llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore.create_async_engine") as mock_create:
+    with patch.object(_SQLSTORE_MODULE, "create_async_engine") as mock_create:
         config = PostgresSqlStoreConfig(
             user="test",
             password="test",
@@ -569,22 +573,24 @@ def test_postgres_pool_kwargs_propagate_to_engine():
             max_overflow=25,
             pool_recycle=PoolRecycleConfig(enabled=True, interval=300),
         )
-        SqlAlchemySqlStoreImpl(config)
+        store = SqlAlchemySqlStoreImpl(config)
+        await store._ensure_engine()
         _, kwargs = mock_create.call_args
         assert kwargs["pool_size"] == 15
         assert kwargs["max_overflow"] == 25
         assert kwargs["pool_recycle"] == 300
 
 
-def test_postgres_pool_recycle_omitted_when_disabled():
+async def test_postgres_pool_recycle_omitted_when_disabled():
     """pool_recycle kwarg is not passed to create_async_engine when disabled."""
-    with patch("llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore.create_async_engine") as mock_create:
+    with patch.object(_SQLSTORE_MODULE, "create_async_engine") as mock_create:
         config = PostgresSqlStoreConfig(
             user="test",
             password="test",
             pool_recycle=PoolRecycleConfig(enabled=False),
         )
-        SqlAlchemySqlStoreImpl(config)
+        store = SqlAlchemySqlStoreImpl(config)
+        await store._ensure_engine()
         _, kwargs = mock_create.call_args
         assert "pool_recycle" not in kwargs
 
