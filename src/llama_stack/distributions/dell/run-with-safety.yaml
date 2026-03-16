@@ -37,8 +37,8 @@ providers:
     config:
       excluded_categories: []
   agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -50,8 +50,8 @@ providers:
           max_write_queue_size: 10000
           num_writers: 4
   eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       kvstore:
         namespace: eval
