@@ -138,8 +138,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
             BuildProvider(provider_type="inline::llama-guard"),
             BuildProvider(provider_type="inline::code-scanner"),
         ],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
-        "eval": [BuildProvider(provider_type="inline::meta-reference")],
+        "agents": [BuildProvider(provider_type="inline::builtin")],
+        "eval": [BuildProvider(provider_type="inline::builtin")],
         "datasetio": [
             BuildProvider(provider_type="remote::huggingface"),
             BuildProvider(provider_type="inline::localfs"),
@@ -161,7 +161,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
     }
     files_config = LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}")
     files_provider = Provider(
-        provider_id="meta-reference-files",
+        provider_id="builtin-files",
         provider_type="inline::localfs",
         config=files_config,
     )

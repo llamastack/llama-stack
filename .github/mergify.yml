@@ -3,6 +3,7 @@ pull_request_rules:
   conditions:
       - conflict
       - -closed
+      - -label~=stale
   actions:
     label:
       add:
@@ -22,9 +23,10 @@ pull_request_rules:
       remove:
         - needs-rebase
 
-- name: automatically update PRs targeting main
+- name: automatically update PRs that are 3+ commits behind main
   conditions:
       - base=main
+      - "#commits-behind>=3"
       - -conflict
       - -draft
       - -closed

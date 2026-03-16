@@ -95,6 +95,12 @@ providers:
     provider_type: inline::sentence-transformers
   - provider_id: transformers
     provider_type: inline::transformers
+  - provider_id: ${env.WATSONX_API_KEY:+watsonx}
+    provider_type: remote::watsonx
+    config:
+      base_url: ${env.WATSONX_BASE_URL:=https://us-south.ml.cloud.ibm.com}
+      api_key: ${env.WATSONX_API_KEY:=}
+      project_id: ${env.WATSONX_PROJECT_ID:=}
   vector_io:
   - provider_id: faiss
     provider_type: inline::faiss
@@ -164,7 +170,7 @@ providers:
         namespace: vector_io::elasticsearch
         backend: kv_default
   files:
-  - provider_id: meta-reference-files
+  - provider_id: builtin-files
     provider_type: inline::localfs
     config:
       storage_dir: ${env.FILES_STORAGE_DIR:=~/.llama/distributions/ci-tests/files}
@@ -182,8 +188,8 @@ providers:
   - provider_id: code-scanner
     provider_type: inline::code-scanner
   agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -195,8 +201,8 @@ providers:
           max_write_queue_size: 10000
           num_writers: 4
   eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       kvstore:
         namespace: eval
@@ -277,6 +283,11 @@ registered_resources:
     model_id: azure/gpt-4o
     provider_id: ${env.AZURE_API_KEY:+azure}
     provider_model_id: gpt-4o
+    model_type: llm
+  - metadata: {}
+    model_id: watsonx/meta-llama/llama-3-3-70b-instruct
+    provider_id: ${env.WATSONX_API_KEY:+watsonx}
+    provider_model_id: meta-llama/llama-3-3-70b-instruct
     model_type: llm
   shields:
   - shield_id: llama-guard

@@ -31,6 +31,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_max_output_tokens(self, openai_client, text_model_id):
         """Test OpenAI response with max_output_tokens parameter."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support max_output_tokens parameter")
         response = openai_client.responses.create(
             model=text_model_id,
             input=[{"role": "user", "content": "What are the 5 Ds of dodgeball?"}],
@@ -43,6 +45,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_small_max_output_tokens(self, openai_client, text_model_id):
         """Test response with very small max_output_tokens to trigger potential truncation."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support max_output_tokens parameter")
         response = openai_client.responses.create(
             model=text_model_id,
             input=[
@@ -101,6 +105,8 @@ class TestOpenAIResponses:
         self, openai_client, text_model_id
     ):
         """Verify invalid base64 image input becomes response.failed with a spec-compliant error code."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX text model does not support image inputs")
         if text_model_id.startswith("ollama/"):
             # In some replay environments, Ollama models may not be exposed via `models.list()`.
             available_model_ids = {m.id for m in openai_client.models.list()}
@@ -391,6 +397,66 @@ class TestOpenAIResponses:
         assert response2.top_p == 0.7
         assert len(response2.output_text.strip()) > 0
 
+    def test_openai_response_with_top_logprobs(self, openai_client, text_model_id):
+        """Test OpenAI response with top_logprobs parameter."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the largest ocean on Earth?"}],
+            top_logprobs=3,
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.top_logprobs == 3
+
+    def test_openai_response_with_top_logprobs_streaming(self, openai_client, text_model_id):
+        """Test OpenAI response with top_logprobs in streaming mode."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the smallest continent?"}],
+            top_logprobs=5,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        # Verify top_logprobs is in the created event
+        created_events = [e for e in chunks if e.type == "response.created"]
+        assert len(created_events) == 1
+        assert created_events[0].response.top_logprobs == 5
+
+        # Verify top_logprobs is in the completed event
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+        assert completed_events[0].response.top_logprobs == 5
+
+    def test_openai_response_with_top_logprobs_and_previous_response(self, openai_client, text_model_id):
+        """Test that top_logprobs works correctly with previous_response_id."""
+        # Create first response
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 4+4?"}],
+            top_logprobs=3,
+        )
+
+        assert response1.id.startswith("resp_")
+        assert response1.top_logprobs == 3
+
+        # Create second response referencing the first one with the same top_logprobs
+        response2 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 6+6?"}],
+            previous_response_id=response1.id,
+            top_logprobs=3,
+        )
+
+        assert response2.id.startswith("resp_")
+        assert response2.top_logprobs == 3
+        assert len(response2.output_text.strip()) > 0
+
     def _function_tools(self):
         """Return a pair of function tools for parallel tool call testing."""
         return [
@@ -445,6 +511,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_parallel_tool_calls_disabled(self, openai_client, text_model_id):
         """Test that parallel_tool_calls=False produces only one function call."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support parallel_tool_calls parameter")
         response = openai_client.responses.create(
             model=text_model_id,
             input="What is the weather in Paris and the current time in London?",
@@ -461,6 +529,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_parallel_tool_calls_disabled_streaming(self, openai_client, text_model_id):
         """Test parallel_tool_calls disabled in streaming mode with function tools."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support parallel_tool_calls parameter")
         stream = openai_client.responses.create(
             model=text_model_id,
             input="What is the weather in Paris and the current time in London?",
@@ -524,6 +594,8 @@ class TestOpenAIResponses:
 
     def test_openai_response_background_completes(self, openai_client, text_model_id):
         """Test that a background response eventually completes."""
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX rate limits cause background responses to fail")
         response = openai_client.responses.create(
             model=text_model_id,
             input="Say hello",
@@ -583,9 +655,11 @@ class TestOpenAIResponses:
         assert response.background is False
         assert len(response.output) > 0
 
-    def _skip_service_tier_for_azure(self, text_model_id):
+    def _skip_service_tier_for_unsupported(self, text_model_id):
         if text_model_id.startswith("azure/"):
             pytest.skip("Azure OpenAI does not support the service_tier parameter")
+        if text_model_id.startswith("watsonx/"):
+            pytest.skip("WatsonX does not support the service_tier parameter")
 
     def test_openai_response_with_service_tier_auto(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto'.
@@ -593,7 +667,7 @@ class TestOpenAIResponses:
         When 'auto' is requested, the provider decides the actual tier (e.g. default, priority),
         so we only assert the response has a non-null service_tier.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response = openai_client.responses.create(
             model=text_model_id,
@@ -608,7 +682,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier(self, openai_client, text_model_id, service_tier):
         """Test OpenAI response with explicit service_tier values that should be preserved."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response = openai_client.responses.create(
             model=text_model_id,
@@ -627,7 +701,7 @@ class TestOpenAIResponses:
         for certain models). This test verifies the request is accepted with the
         exact tier preserved, or properly rejected.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         try:
             response = openai_client.responses.create(
@@ -643,7 +717,7 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_service_tier_auto_streaming(self, openai_client, text_model_id):
         """Test OpenAI response with service_tier='auto' in streaming mode."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -670,7 +744,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier_streaming(self, openai_client, text_model_id, service_tier):
         """Test OpenAI response with explicit service_tier values in streaming mode."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -700,7 +774,7 @@ class TestOpenAIResponses:
         The flex tier may not be supported by all providers. This test verifies
         the request is accepted with the exact tier preserved, or produces a proper failure event.
         """
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         stream = openai_client.responses.create(
             model=text_model_id,
@@ -724,7 +798,7 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_service_tier_auto_and_previous_response(self, openai_client, text_model_id):
         """Test that service_tier='auto' works correctly with previous_response_id."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response1 = openai_client.responses.create(
             model=text_model_id,
@@ -749,7 +823,7 @@ class TestOpenAIResponses:
     @pytest.mark.parametrize("service_tier", ["default", "priority"])
     def test_openai_response_with_service_tier_and_previous_response(self, openai_client, text_model_id, service_tier):
         """Test that explicit service_tier values are preserved with previous_response_id."""
-        self._skip_service_tier_for_azure(text_model_id)
+        self._skip_service_tier_for_unsupported(text_model_id)
 
         response1 = openai_client.responses.create(
             model=text_model_id,
@@ -770,3 +844,197 @@ class TestOpenAIResponses:
         assert response2.id.startswith("resp_")
         assert response2.service_tier == service_tier
         assert len(response2.output_text.strip()) > 0
+
+    def test_openai_response_streaming_includes_usage(self, openai_client, text_model_id):
+        """Test that streaming response includes usage information.
+
+        Llama Stack always sets include_usage=True in the underlying chat completion
+        stream_options, so usage should always be present in the completed response.
+        """
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the capital of France?"}],
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+
+        response = completed_events[0].response
+        assert len(response.output_text.strip()) > 0
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
+
+    def test_openai_response_with_stream_options_includes_usage(self, openai_client, text_model_id):
+        """Test that stream_options parameter is accepted and usage is still included."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the capital of Germany?"}],
+            stream=True,
+            stream_options={"include_obfuscation": True},
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+
+        response = completed_events[0].response
+        assert len(response.output_text.strip()) > 0
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
+
+    def test_openai_response_with_stream_options_non_streaming(self, openai_client, text_model_id):
+        """Test that stream_options is accepted in non-streaming mode."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the capital of Italy?"}],
+            stream_options={"include_obfuscation": True},
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.status == "completed"
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
+
+    def test_openai_response_with_stream_options_and_previous_response(self, openai_client, text_model_id):
+        """Test that stream_options works correctly with previous_response_id in streaming mode."""
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 3+3?"}],
+        )
+
+        assert response1.id.startswith("resp_")
+
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 5+5?"}],
+            previous_response_id=response1.id,
+            stream=True,
+            stream_options={"include_obfuscation": True},
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+
+        response = completed_events[0].response
+        assert len(response.output_text.strip()) > 0
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
+
+    def test_openai_response_incomplete_details_null_when_completed(self, openai_client, text_model_id):
+        """Test that a completed response has incomplete_details as None."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 2+2?"}],
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "completed"
+        assert response.incomplete_details is None
+
+    def test_openai_response_incomplete_details_length(self, openai_client, text_model_id):
+        """Test incomplete_details.reason is 'length' when chat completion returns finish_reason='length'.
+
+        A small max_output_tokens with a long prompt causes the provider to truncate
+        the output in a single inference call, returning finish_reason='length'.
+        """
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Write a very long and detailed essay about the entire history of the Roman Empire from founding to fall.",
+                }
+            ],
+            max_output_tokens=16,
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "incomplete"
+        assert response.incomplete_details is not None
+        assert response.incomplete_details.reason == "length"
+
+    def test_openai_response_incomplete_details_length_streaming(self, openai_client, text_model_id):
+        """Test streaming incomplete_details.reason is 'length' when chat completion returns finish_reason='length'."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Write a very long and detailed essay about the entire history of the Roman Empire from founding to fall.",
+                }
+            ],
+            max_output_tokens=16,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        incomplete_events = [e for e in chunks if e.type == "response.incomplete"]
+        assert len(incomplete_events) == 1
+        assert incomplete_events[0].response.status == "incomplete"
+        assert incomplete_events[0].response.incomplete_details is not None
+        assert incomplete_events[0].response.incomplete_details.reason == "length"
+
+    def test_openai_response_incomplete_details_max_iterations_exceeded(self, openai_client, text_model_id):
+        """Test incomplete_details.reason is 'max_iterations_exceeded' when the agent loop
+        hits the max_infer_iters limit.
+
+        This uses web_search (a server-side tool) with max_infer_iters=1 so the loop
+        exits after the first tool-calling iteration.
+        Note: _function_tools cannot be used here because function (client-side) tools
+        break the loop immediately, so n_iter never increments.
+        """
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Search for the latest news about artificial intelligence.",
+            tools=[{"type": "web_search"}],
+            extra_body={"max_infer_iters": 1},
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "incomplete"
+        assert response.incomplete_details is not None
+        assert response.incomplete_details.reason == "max_iterations_exceeded"
+
+    def test_openai_response_incomplete_details_max_iterations_exceeded_streaming(self, openai_client, text_model_id):
+        """Test streaming incomplete_details.reason is 'max_iterations_exceeded' when the agent loop
+        hits the max_infer_iters limit."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input="Search for the latest news about artificial intelligence.",
+            tools=[{"type": "web_search"}],
+            extra_body={"max_infer_iters": 1},
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        incomplete_events = [e for e in chunks if e.type == "response.incomplete"]
+        assert len(incomplete_events) == 1
+        assert incomplete_events[0].response.status == "incomplete"
+        assert incomplete_events[0].response.incomplete_details is not None
+        assert incomplete_events[0].response.incomplete_details.reason == "max_iterations_exceeded"

@@ -15,7 +15,7 @@ The `llamastack/distribution-tgi` distribution consists of the following provide
 
 | **API**         	| **Inference** 	| **Agents**     	| **Memory**                                       	| **Safety**     	|
 |-----------------	|---------------	|----------------	|--------------------------------------------------	|----------------	|
-| **Provider(s)** 	| remote::tgi   	| meta-reference 	| meta-reference, remote::pgvector, remote::chroma 	| meta-reference 	|
+| **Provider(s)** 	| remote::tgi   	| builtin 	| builtin, remote::pgvector, remote::chroma 	| builtin 	|
 
 
 The only difference vs. the `tgi` distribution is that it runs the Dell-TGI server for inference.

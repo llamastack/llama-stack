@@ -5,7 +5,9 @@
 # the root directory of this source tree.
 
 
+from llama_stack.core.datatypes import Provider
 from llama_stack.distributions.template import DistributionTemplate
+from llama_stack.providers.remote.inference.watsonx.config import WatsonXConfig
 from llama_stack_api import ConnectorInput, ModelInput, ModelType
 
 from ..starter.starter import get_distribution_template as get_starter_distribution_template
@@ -31,6 +33,15 @@ def get_distribution_template() -> DistributionTemplate:
         model_type=ModelType.llm,
     )
 
+    # WatsonX model must be pre-registered because the recording system cannot
+    # replay model-list discovery calls against the WatsonX endpoint in CI.
+    watsonx_model = ModelInput(
+        model_id="watsonx/meta-llama/llama-3-3-70b-instruct",
+        provider_id="${env.WATSONX_API_KEY:+watsonx}",
+        provider_model_id="meta-llama/llama-3-3-70b-instruct",
+        model_type=ModelType.llm,
+    )
+
     # Add conditional authentication config (disabled by default for CI tests)
     # This tests the conditional auth provider feature and provides a template for users
     # To enable: export AUTH_PROVIDER=enabled and configure the auth env vars
@@ -50,6 +61,12 @@ def get_distribution_template() -> DistributionTemplate:
         }
     }
 
+    watsonx_provider = Provider(
+        provider_id="${env.WATSONX_API_KEY:+watsonx}",
+        provider_type="remote::watsonx",
+        config=WatsonXConfig.sample_run_config(),
+    )
+
     for run_config in template.run_configs.values():
         if run_config.default_connectors is None:
             run_config.default_connectors = []
@@ -58,6 +75,10 @@ def get_distribution_template() -> DistributionTemplate:
         if run_config.default_models is None:
             run_config.default_models = []
         run_config.default_models.append(azure_model)
+        run_config.default_models.append(watsonx_model)
+
+        # Add WatsonX inference provider
+        run_config.provider_overrides["inference"].append(watsonx_provider)
 
         # Add conditional auth config
         run_config.auth_config = auth_config

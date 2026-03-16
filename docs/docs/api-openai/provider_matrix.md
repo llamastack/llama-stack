@@ -21,8 +21,8 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 89 | 89 | 0 | 86% |
-| openai | 103 | 103 | 0 | 99% |
+| azure | 101 | 101 | 0 | 87% |
+| openai | 116 | 116 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
 
 ## Provider Details
@@ -31,15 +31,15 @@ Models, endpoints, and versions used during test recordings.
 
 | Provider | Model(s) | Endpoint | Version Info |
 |----------|----------|----------|--------------|
-| azure | gpt-4o | lls-test.openai.azure.com | — |
-| openai | gpt-4o, text-embedding-3-small | api.openai.com | — |
+| azure | gpt-4o | llama-stack-test.openai.azure.com, lls-test.openai.azure.com | openai sdk: 2.5.0 |
+| openai | gpt-4o, text-embedding-3-small | api.openai.com | openai sdk: 2.5.0 |
 | vllm | Qwen/Qwen3-0.6B | — | — |
 
 ## Basic Responses
 
 | Feature | azure | openai | vllm |
 | --- | --- | --- | --- |
-| extra body guided choice | ✅ | ⏭️ | — |
+| extra body guided choice | ✅ | ✅ | — |
 | include logprobs non streaming | ✅ | ✅ | — |
 | include logprobs streaming | ✅ | ✅ | — |
 | include logprobs with function tools | ✅ | ✅ | — |
@@ -86,6 +86,12 @@ Models, endpoints, and versions used during test recordings.
 | --- | --- | --- | --- |
 | background false is synchronous | ✅ | ✅ | — |
 | background returns queued | ✅ | ✅ | — |
+| incomplete details length | ✅ | ✅ | — |
+| incomplete details length streaming | ✅ | ✅ | — |
+| incomplete details max iterations exceeded | ✅ | ✅ | — |
+| incomplete details max iterations exceeded streaming | ✅ | ✅ | — |
+| incomplete details null when completed | ✅ | ✅ | — |
+| streaming includes usage | ✅ | ✅ | — |
 | streaming invalid base64 image failure code is spec compliant | ✅ | ✅ | — |
 | with max output tokens | ✅ | ✅ | — |
 | with parallel tool calls and previous response | ✅ | ✅ | — |
@@ -107,6 +113,12 @@ Models, endpoints, and versions used during test recordings.
 | with service tier flex streaming | ⏭️ | ✅ | — |
 | with service tier streaming | ⏭️ | ✅ | — |
 | with small max output tokens | ✅ | ✅ | — |
+| with stream options and previous response | ✅ | ✅ | — |
+| with stream options includes usage | ✅ | ✅ | — |
+| with stream options non streaming | ✅ | ✅ | — |
+| with top logprobs | ✅ | ✅ | — |
+| with top logprobs and previous response | ✅ | ✅ | — |
+| with top logprobs streaming | ✅ | ✅ | — |
 | with top p | ✅ | ✅ | — |
 | with top p and previous response | ✅ | ✅ | — |
 | with top p streaming | ✅ | ✅ | — |
