@@ -6,6 +6,7 @@
 
 import time
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import pytest
 
@@ -530,13 +531,14 @@ async def test_sqlstore_pagination_custom_key_column():
 
 
 @pytest.mark.parametrize("pre_ping", [True, False])
-async def test_pool_pre_ping_propagates_to_engine(pre_ping):
-    """pool_pre_ping config value is forwarded to the SQLAlchemy engine."""
-    with TemporaryDirectory() as tmp_dir:
-        config = SqliteSqlStoreConfig(db_path=f"{tmp_dir}/test.db", pool_pre_ping=pre_ping)
-        store = SqlAlchemySqlStoreImpl(config)
-        assert store._engine.pool._pre_ping is pre_ping
-        await store.shutdown()
+def test_pool_pre_ping_propagates_to_engine(pre_ping):
+    """pool_pre_ping config value is forwarded to create_async_engine."""
+    with patch("llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore.create_async_engine") as mock_create:
+        config = PostgresSqlStoreConfig(user="test", password="test", pool_pre_ping=pre_ping)
+        SqlAlchemySqlStoreImpl(config)
+        mock_create.assert_called_once()
+        _, kwargs = mock_create.call_args
+        assert kwargs["pool_pre_ping"] is pre_ping
 
 
 async def test_pool_pre_ping_defaults_to_true():
@@ -555,6 +557,36 @@ async def test_postgres_pool_config_defaults():
     assert cfg.max_overflow == 20
     assert cfg.pool_recycle.enabled is False
     assert cfg.pool_recycle.interval == 600
+
+
+def test_postgres_pool_kwargs_propagate_to_engine():
+    """Postgres pool_size, max_overflow, and pool_recycle are forwarded to create_async_engine."""
+    with patch("llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore.create_async_engine") as mock_create:
+        config = PostgresSqlStoreConfig(
+            user="test",
+            password="test",
+            pool_size=15,
+            max_overflow=25,
+            pool_recycle=PoolRecycleConfig(enabled=True, interval=300),
+        )
+        SqlAlchemySqlStoreImpl(config)
+        _, kwargs = mock_create.call_args
+        assert kwargs["pool_size"] == 15
+        assert kwargs["max_overflow"] == 25
+        assert kwargs["pool_recycle"] == 300
+
+
+def test_postgres_pool_recycle_omitted_when_disabled():
+    """pool_recycle kwarg is not passed to create_async_engine when disabled."""
+    with patch("llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore.create_async_engine") as mock_create:
+        config = PostgresSqlStoreConfig(
+            user="test",
+            password="test",
+            pool_recycle=PoolRecycleConfig(enabled=False),
+        )
+        SqlAlchemySqlStoreImpl(config)
+        _, kwargs = mock_create.call_args
+        assert "pool_recycle" not in kwargs
 
 
 async def test_pool_recycle_can_be_enabled():
