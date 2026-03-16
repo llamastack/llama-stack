@@ -12,7 +12,7 @@ from llama_stack_api import (
     RemoteProviderSpec,
 )
 
-META_REFERENCE_DEPS = [
+BUILTIN_DEPS = [
     "accelerate",
     "fairscale",
     "torch",

@@ -88,7 +88,7 @@ jobs:
             - inference
           providers:
             files:
-              - provider_id: meta-reference-files
+              - provider_id: builtin-files
                 provider_type: inline::localfs
                 config:
                   storage_dir: $run_dir/files
