@@ -3,6 +3,7 @@ pull_request_rules:
   conditions:
       - conflict
       - -closed
+      - -label~=stale
   actions:
     label:
       add:
