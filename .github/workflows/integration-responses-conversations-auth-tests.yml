@@ -107,7 +107,7 @@ jobs:
             - agents
           providers:
             files:
-              - provider_id: meta-reference-files
+              - provider_id: builtin-files
                 provider_type: inline::localfs
                 config:
                   storage_dir: $run_dir/files
@@ -131,8 +131,8 @@ jobs:
                 provider_type: inline::rag-runtime
                 config: {}
             agents:
-              - provider_id: meta-reference
-                provider_type: inline::meta-reference
+              - provider_id: builtin
+                provider_type: inline::builtin
                 config:
                   persistence:
                     agent_state:

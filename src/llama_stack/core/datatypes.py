@@ -778,7 +778,7 @@ The list of APIs to serve. If not specified, all APIs specified in the provider_
 
     providers: dict[str, list[Provider]] = Field(
         description="""
-One or more providers to use for each API. The same provider_type (e.g., meta-reference)
+One or more providers to use for each API. The same provider_type (e.g., builtin)
 can be instantiated multiple times (with different configs) if necessary.
 """,
     )

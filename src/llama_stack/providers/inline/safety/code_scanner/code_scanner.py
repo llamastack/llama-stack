@@ -37,7 +37,7 @@ ALLOWED_CODE_SCANNER_MODEL_IDS = [
 ]
 
 
-class MetaReferenceCodeScannerSafetyImpl(Safety):
+class BuiltinCodeScannerSafetyImpl(Safety):
     def __init__(self, config: CodeScannerConfig, deps) -> None:
         self.config = config
 

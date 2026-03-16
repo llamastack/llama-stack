@@ -8,9 +8,9 @@ The `llamastack/distribution-oci` distribution consists of the following provide
 
 | API | Provider(s) |
 |-----|-------------|
-| agents | `inline::meta-reference` |
+| agents | `inline::builtin` |
 | datasetio | `remote::huggingface`, `inline::localfs` |
-| eval | `inline::meta-reference` |
+| eval | `inline::builtin` |
 | files | `inline::localfs` |
 | inference | `remote::oci` |
 | safety | `inline::llama-guard` |

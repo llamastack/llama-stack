@@ -867,7 +867,6 @@ class TestOpenAIResponses:
 
         response = completed_events[0].response
         assert len(response.output_text.strip()) > 0
-        # Verify usage is populated (include_usage=True is always set internally)
         assert response.usage is not None
         assert response.usage.output_tokens > 0
         assert response.usage.total_tokens > 0
@@ -891,7 +890,6 @@ class TestOpenAIResponses:
 
         response = completed_events[0].response
         assert len(response.output_text.strip()) > 0
-        # Verify usage is still populated when stream_options is provided
         assert response.usage is not None
         assert response.usage.output_tokens > 0
         assert response.usage.total_tokens > 0
@@ -941,3 +939,102 @@ class TestOpenAIResponses:
         assert response.usage is not None
         assert response.usage.output_tokens > 0
         assert response.usage.total_tokens > 0
+
+    def test_openai_response_incomplete_details_null_when_completed(self, openai_client, text_model_id):
+        """Test that a completed response has incomplete_details as None."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 2+2?"}],
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "completed"
+        assert response.incomplete_details is None
+
+    def test_openai_response_incomplete_details_length(self, openai_client, text_model_id):
+        """Test incomplete_details.reason is 'length' when chat completion returns finish_reason='length'.
+
+        A small max_output_tokens with a long prompt causes the provider to truncate
+        the output in a single inference call, returning finish_reason='length'.
+        """
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Write a very long and detailed essay about the entire history of the Roman Empire from founding to fall.",
+                }
+            ],
+            max_output_tokens=16,
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "incomplete"
+        assert response.incomplete_details is not None
+        assert response.incomplete_details.reason == "length"
+
+    def test_openai_response_incomplete_details_length_streaming(self, openai_client, text_model_id):
+        """Test streaming incomplete_details.reason is 'length' when chat completion returns finish_reason='length'."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[
+                {
+                    "role": "user",
+                    "content": "Write a very long and detailed essay about the entire history of the Roman Empire from founding to fall.",
+                }
+            ],
+            max_output_tokens=16,
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        incomplete_events = [e for e in chunks if e.type == "response.incomplete"]
+        assert len(incomplete_events) == 1
+        assert incomplete_events[0].response.status == "incomplete"
+        assert incomplete_events[0].response.incomplete_details is not None
+        assert incomplete_events[0].response.incomplete_details.reason == "length"
+
+    def test_openai_response_incomplete_details_max_iterations_exceeded(self, openai_client, text_model_id):
+        """Test incomplete_details.reason is 'max_iterations_exceeded' when the agent loop
+        hits the max_infer_iters limit.
+
+        This uses web_search (a server-side tool) with max_infer_iters=1 so the loop
+        exits after the first tool-calling iteration.
+        Note: _function_tools cannot be used here because function (client-side) tools
+        break the loop immediately, so n_iter never increments.
+        """
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input="Search for the latest news about artificial intelligence.",
+            tools=[{"type": "web_search"}],
+            extra_body={"max_infer_iters": 1},
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "incomplete"
+        assert response.incomplete_details is not None
+        assert response.incomplete_details.reason == "max_iterations_exceeded"
+
+    def test_openai_response_incomplete_details_max_iterations_exceeded_streaming(self, openai_client, text_model_id):
+        """Test streaming incomplete_details.reason is 'max_iterations_exceeded' when the agent loop
+        hits the max_infer_iters limit."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input="Search for the latest news about artificial intelligence.",
+            tools=[{"type": "web_search"}],
+            extra_body={"max_infer_iters": 1},
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        incomplete_events = [e for e in chunks if e.type == "response.incomplete"]
+        assert len(incomplete_events) == 1
+        assert incomplete_events[0].response.status == "incomplete"
+        assert incomplete_events[0].response.incomplete_details is not None
+        assert incomplete_events[0].response.incomplete_details.reason == "max_iterations_exceeded"

@@ -42,13 +42,13 @@ When no value is provided they serialize as `null`, which the Zod schema rejects
 | `tools` | `z.array(...)`, no null | `Sequence[...] \| None = None` | Default to `[]` |
 
 Additionally, `_snapshot_response()` in
-`src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py`
+`src/llama_stack/providers/inline/agents/builtin/responses/streaming.py`
 never forwards `temperature` or `top_p` to the response object even though they
 are available on the context (`self.ctx.temperature`, `self.ctx.top_p`).
 
 **Files:**
 - `src/llama_stack_api/openai_responses.py`
-- `src/llama_stack/providers/inline/agents/meta_reference/responses/streaming.py`
+- `src/llama_stack/providers/inline/agents/builtin/responses/streaming.py`
 
 ---
 

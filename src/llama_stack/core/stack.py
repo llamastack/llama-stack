@@ -800,7 +800,7 @@ def run_config_from_dynamic_config_spec(
     Create a dynamic distribution from a list of API providers.
 
     The list should be of the form "api=provider", e.g. "inference=fireworks". If you have
-    multiple pairs, separate them with commas or semicolons, e.g. "inference=fireworks,safety=llama-guard,agents=meta-reference"
+    multiple pairs, separate them with commas or semicolons, e.g. "inference=fireworks,safety=llama-guard,agents=builtin"
     """
 
     api_providers = dynamic_config_spec.replace(";", ",").split(",")
