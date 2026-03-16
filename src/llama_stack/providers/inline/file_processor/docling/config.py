@@ -27,18 +27,6 @@ class DoclingFileProcessorConfig(BaseModel):
         description="Default chunk overlap in tokens when chunking_strategy type is 'auto'",
     )
 
-    max_file_size_bytes: int = Field(
-        default=100 * 1024 * 1024,
-        ge=1,
-        description="Maximum file size in bytes for uploaded files (default 100MB)",
-    )
-
-    max_page_count: int = Field(
-        default=100,
-        ge=1,
-        description="Maximum number of pages to process (docling safeguard for CPU cost)",
-    )
-
     @classmethod
     def sample_run_config(cls, **kwargs: Any) -> dict[str, Any]:
         return {}

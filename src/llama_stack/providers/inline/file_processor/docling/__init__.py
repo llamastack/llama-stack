@@ -13,13 +13,13 @@ from .config import DoclingFileProcessorConfig
 
 async def get_provider_impl(config: DoclingFileProcessorConfig, deps: dict[Api, Any]):
     """Get the Docling file processor implementation."""
-    from .adapter import DoclingFileProcessorAdapter
+    from .docling import DoclingFileProcessor
 
     assert isinstance(config, DoclingFileProcessorConfig), f"Unexpected config type: {type(config)}"
 
     files_api = deps.get(Api.files)
 
-    impl = DoclingFileProcessorAdapter(config, files_api)
+    impl = DoclingFileProcessor(config, files_api)
     return impl
 
 

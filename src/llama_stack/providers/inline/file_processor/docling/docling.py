@@ -17,7 +17,7 @@ from fastapi import UploadFile
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.vector_io.vector_utils import generate_chunk_id
-from llama_stack_api.file_processors import ProcessFileResponse
+from llama_stack_api.file_processors import ProcessFileRequest, ProcessFileResponse
 from llama_stack_api.files import RetrieveFileContentRequest, RetrieveFileRequest
 from llama_stack_api.vector_io import (
     Chunk,
@@ -42,12 +42,12 @@ class DoclingFileProcessor:
 
     async def process_file(
         self,
+        request: ProcessFileRequest,
         file: UploadFile | None = None,
-        file_id: str | None = None,
-        options: dict[str, Any] | None = None,
-        chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> ProcessFileResponse:
         """Process a file using docling and return chunks."""
+        file_id = request.file_id
+        chunking_strategy = request.chunking_strategy
 
         # Validate input
         if not file and not file_id:
@@ -60,10 +60,6 @@ class DoclingFileProcessor:
         # Get file content
         if file:
             content = await file.read()
-            if len(content) > self.config.max_file_size_bytes:
-                raise ValueError(
-                    f"File size {len(content)} bytes exceeds maximum of {self.config.max_file_size_bytes} bytes"
-                )
             filename = file.filename or f"{uuid.uuid4()}.bin"
         elif file_id:
             file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
@@ -85,12 +81,6 @@ class DoclingFileProcessor:
 
         doc = result.document
         page_count = doc.num_pages()
-
-        # Check max_page_count
-        if page_count > self.config.max_page_count:
-            raise ValueError(
-                f"Document has {page_count} pages, exceeding maximum of {self.config.max_page_count} pages"
-            )
 
         document_id = str(uuid.uuid4())
 
@@ -162,7 +152,7 @@ class DoclingFileProcessor:
         # max_tokens is set on the tokenizer, not on HybridChunker directly
         default_chunker = HybridChunker()
         tokenizer = HuggingFaceTokenizer(
-            tokenizer=default_chunker.tokenizer.tokenizer,
+            tokenizer=default_chunker.tokenizer.tokenizer,  # type: ignore[attr-defined]
             max_tokens=max_tokens,
         )
         chunker = HybridChunker(tokenizer=tokenizer)
@@ -205,3 +195,6 @@ class DoclingFileProcessor:
             )
 
         return chunks
+
+    async def shutdown(self) -> None:
+        pass
