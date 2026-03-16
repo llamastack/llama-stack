@@ -5,6 +5,7 @@
 # the root directory of this source tree.
 
 import asyncio
+import contextlib
 import re
 import time
 import uuid
@@ -13,6 +14,7 @@ from collections.abc import AsyncIterator
 from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
+from llama_stack.core.task import activate_otel_context, capture_otel_context, create_task_with_detached_otel_context
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.responses.responses_store import (
     ResponsesStore,
@@ -133,7 +135,7 @@ class OpenAIResponsesImpl:
     async def _ensure_workers_started(self) -> None:
         """Start background workers in the current event loop if not already running."""
         for _ in range(BACKGROUND_NUM_WORKERS - len(self._background_worker_tasks)):
-            task = asyncio.create_task(self._background_worker())
+            task = create_task_with_detached_otel_context(self._background_worker())
             self._background_worker_tasks.add(task)
             task.add_done_callback(self._background_worker_tasks.discard)
 
@@ -147,47 +149,49 @@ class OpenAIResponsesImpl:
         """Worker coroutine that pulls items from the queue and processes them."""
         while True:
             kwargs = await self._background_queue.get()
-            try:
-                await asyncio.wait_for(
-                    self._run_background_response_loop(**kwargs),
-                    timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
-                )
-            except TimeoutError:
-                response_id = kwargs["response_id"]
-                logger.exception(
-                    f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
-                )
+            ctx = kwargs.pop("_otel_context", None)
+            with activate_otel_context(ctx) if ctx else contextlib.nullcontext():
                 try:
-                    existing = await self.responses_store.get_response_object(response_id)
-                    existing.status = "failed"
-                    existing.error = OpenAIResponseError(
-                        code="processing_error",
-                        message=f"Background response timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s",
+                    await asyncio.wait_for(
+                        self._run_background_response_loop(**kwargs),
+                        timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
                     )
-                    await self.responses_store.update_response_object(existing)
-                except Exception:
+                except TimeoutError:
+                    response_id = kwargs["response_id"]
                     logger.exception(
-                        f"Failed to update response {response_id} with timeout status. "
-                        "Client polling this response will not see the failure."
+                        f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
                     )
-            except Exception as e:
-                response_id = kwargs["response_id"]
-                logger.exception(f"Error processing background response {response_id}")
-                try:
-                    existing = await self.responses_store.get_response_object(response_id)
-                    existing.status = "failed"
-                    existing.error = OpenAIResponseError(
-                        code="processing_error",
-                        message=str(e),
-                    )
-                    await self.responses_store.update_response_object(existing)
-                except Exception:
-                    logger.exception(
-                        f"Failed to update response {response_id} with error status. "
-                        "Client polling this response will not see the failure."
-                    )
-            finally:
-                self._background_queue.task_done()
+                    try:
+                        existing = await self.responses_store.get_response_object(response_id)
+                        existing.status = "failed"
+                        existing.error = OpenAIResponseError(
+                            code="processing_error",
+                            message=f"Background response timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s",
+                        )
+                        await self.responses_store.update_response_object(existing)
+                    except Exception:
+                        logger.exception(
+                            f"Failed to update response {response_id} with timeout status. "
+                            "Client polling this response will not see the failure."
+                        )
+                except Exception as e:
+                    response_id = kwargs["response_id"]
+                    logger.exception(f"Error processing background response {response_id}")
+                    try:
+                        existing = await self.responses_store.get_response_object(response_id)
+                        existing.status = "failed"
+                        existing.error = OpenAIResponseError(
+                            code="processing_error",
+                            message=str(e),
+                        )
+                        await self.responses_store.update_response_object(existing)
+                    except Exception:
+                        logger.exception(
+                            f"Failed to update response {response_id} with error status. "
+                            "Client polling this response will not see the failure."
+                        )
+                finally:
+                    self._background_queue.task_done()
 
     async def _prepend_previous_response(
         self,
@@ -847,6 +851,7 @@ class OpenAIResponsesImpl:
                     truncation=truncation,
                     presence_penalty=presence_penalty,
                     extra_body=extra_body,
+                    _otel_context=capture_otel_context(),
                 )
             )
         except asyncio.QueueFull:
