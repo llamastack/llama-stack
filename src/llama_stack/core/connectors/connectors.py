@@ -128,13 +128,8 @@ class ConnectorServiceImpl(Connectors):
 
     async def list_connectors(self) -> ListConnectorsResponse:
         """List all connectors."""
-        connectors = []
-        for key in await self.kvstore.keys_in_range(start_key=KEY_PREFIX, end_key=KEY_PREFIX + "\uffff"):
-            connector_json = await self.kvstore.get(key)
-            if not connector_json:
-                continue
-            connector = Connector.model_validate_json(connector_json)
-            connectors.append(connector)
+        values = await self.kvstore.values_in_range(start_key=KEY_PREFIX, end_key=KEY_PREFIX + "\uffff")
+        connectors = [Connector.model_validate_json(v) for v in values]
         return ListConnectorsResponse(data=connectors)
 
     async def get_connector_tool(self, request: GetConnectorToolRequest, authorization: str | None = None) -> ToolDef:
