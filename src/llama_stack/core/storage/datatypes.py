@@ -142,7 +142,14 @@ class MongoDBKVStoreConfig(CommonConfig):
         }
 
 
+class PoolRecycleConfig(BaseModel):
+    enabled: bool = False
+    interval: int = 600
+
+
 class SqlAlchemySqlStoreConfig(BaseModel):
+    pool_pre_ping: bool = True
+
     @property
     @abstractmethod
     def engine_str(self) -> str: ...
@@ -182,6 +189,9 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
     db: str = "llamastack"
     user: str
     password: str | None = None
+    pool_size: int = 10
+    max_overflow: int = 20
+    pool_recycle: PoolRecycleConfig = PoolRecycleConfig()
 
     @property
     def engine_str(self) -> str:
@@ -200,6 +210,13 @@ class PostgresSqlStoreConfig(SqlAlchemySqlStoreConfig):
             "db": "${env.POSTGRES_DB:=llamastack}",
             "user": "${env.POSTGRES_USER:=llamastack}",
             "password": "${env.POSTGRES_PASSWORD:=llamastack}",
+            "pool_size": "${env.POSTGRES_POOL_SIZE:=10}",
+            "max_overflow": "${env.POSTGRES_MAX_OVERFLOW:=20}",
+            "pool_recycle": {
+                "enabled": "${env.POSTGRES_POOL_RECYCLE_ENABLED:=false}",
+                "interval": "${env.POSTGRES_POOL_RECYCLE_INTERVAL:=600}",
+            },
+            "pool_pre_ping": "${env.POSTGRES_POOL_PRE_PING:=true}",
         }
 
 

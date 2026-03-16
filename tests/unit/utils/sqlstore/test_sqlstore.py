@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 
+from llama_stack.core.storage.datatypes import PoolRecycleConfig, PostgresSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType
@@ -526,3 +527,52 @@ async def test_sqlstore_pagination_custom_key_column():
         assert len(result2.data) == 1
         assert result2.data[0]["uuid"] == "uuid-alpha"
         assert result2.has_more is False
+
+
+@pytest.mark.parametrize("pre_ping", [True, False])
+async def test_pool_pre_ping_propagates_to_engine(pre_ping):
+    """pool_pre_ping config value is forwarded to the SQLAlchemy engine."""
+    with TemporaryDirectory() as tmp_dir:
+        config = SqliteSqlStoreConfig(db_path=f"{tmp_dir}/test.db", pool_pre_ping=pre_ping)
+        store = SqlAlchemySqlStoreImpl(config)
+        assert store._engine.pool._pre_ping is pre_ping
+        await store.shutdown()
+
+
+async def test_pool_pre_ping_defaults_to_true():
+    """Both SQLite and Postgres configs default pool_pre_ping to True."""
+    sqlite_cfg = SqliteSqlStoreConfig(db_path="/tmp/test.db")
+    assert sqlite_cfg.pool_pre_ping is True
+
+    pg_cfg = PostgresSqlStoreConfig(user="test", password="test")
+    assert pg_cfg.pool_pre_ping is True
+
+
+async def test_postgres_pool_config_defaults():
+    """PostgresSqlStoreConfig exposes pool tuning knobs with sensible defaults."""
+    cfg = PostgresSqlStoreConfig(user="test", password="test")
+    assert cfg.pool_size == 10
+    assert cfg.max_overflow == 20
+    assert cfg.pool_recycle.enabled is False
+    assert cfg.pool_recycle.interval == 600
+
+
+async def test_pool_recycle_can_be_enabled():
+    """pool_recycle can be enabled via config."""
+    cfg = PostgresSqlStoreConfig(
+        user="test",
+        password="test",
+        pool_recycle=PoolRecycleConfig(enabled=True),
+    )
+    assert cfg.pool_recycle.enabled is True
+
+
+async def test_pool_recycle_interval_is_configurable():
+    """pool_recycle interval can be customized."""
+    cfg = PostgresSqlStoreConfig(
+        user="test",
+        password="test",
+        pool_recycle=PoolRecycleConfig(enabled=True, interval=300),
+    )
+    assert cfg.pool_recycle.enabled is True
+    assert cfg.pool_recycle.interval == 300
