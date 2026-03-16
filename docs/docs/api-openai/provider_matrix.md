@@ -21,8 +21,8 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 96 | 96 | 0 | 86% |
-| openai | 111 | 111 | 0 | 100% |
+| azure | 101 | 101 | 0 | 87% |
+| openai | 116 | 116 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
 
 ## Provider Details
@@ -86,6 +86,11 @@ Models, endpoints, and versions used during test recordings.
 | --- | --- | --- | --- |
 | background false is synchronous | ✅ | ✅ | — |
 | background returns queued | ✅ | ✅ | — |
+| incomplete details length | ✅ | ✅ | — |
+| incomplete details length streaming | ✅ | ✅ | — |
+| incomplete details max iterations exceeded | ✅ | ✅ | — |
+| incomplete details max iterations exceeded streaming | ✅ | ✅ | — |
+| incomplete details null when completed | ✅ | ✅ | — |
 | streaming includes usage | ✅ | ✅ | — |
 | streaming invalid base64 image failure code is spec compliant | ✅ | ✅ | — |
 | with max output tokens | ✅ | ✅ | — |

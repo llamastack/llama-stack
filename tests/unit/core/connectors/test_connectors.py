@@ -44,6 +44,9 @@ def mock_kvstore():
         async def keys_in_range(self, start_key, end_key):
             return [k for k in storage.keys() if start_key <= k < end_key]
 
+        async def values_in_range(self, start_key, end_key):
+            return [v for k, v in storage.items() if start_key <= k < end_key]
+
         async def close(self):
             pass
 
