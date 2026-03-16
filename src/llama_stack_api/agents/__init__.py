@@ -21,6 +21,7 @@ from .models import (
     ResponseGuardrail,
     ResponseGuardrailSpec,
     ResponseItemInclude,
+    ResponseStreamOptions,
     ResponseTruncation,
     RetrieveResponseRequest,
 )
@@ -35,6 +36,7 @@ __all__ = [
     "ResponseGuardrailSpec",
     "ResponseItemInclude",
     "ResponseTruncation",
+    "ResponseStreamOptions",
     "RetrieveResponseRequest",
     "fastapi_routes",
 ]

@@ -21,8 +21,8 @@ inference provider, based on integration test results.
 
 | Provider | Tested | Passing | Failing | Coverage |
 |----------|--------|---------|---------|----------|
-| azure | 92 | 92 | 0 | 86% |
-| openai | 107 | 107 | 0 | 100% |
+| azure | 96 | 96 | 0 | 86% |
+| openai | 111 | 111 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
 
 ## Provider Details
@@ -86,6 +86,7 @@ Models, endpoints, and versions used during test recordings.
 | --- | --- | --- | --- |
 | background false is synchronous | ✅ | ✅ | — |
 | background returns queued | ✅ | ✅ | — |
+| streaming includes usage | ✅ | ✅ | — |
 | streaming invalid base64 image failure code is spec compliant | ✅ | ✅ | — |
 | with max output tokens | ✅ | ✅ | — |
 | with parallel tool calls and previous response | ✅ | ✅ | — |
@@ -107,6 +108,9 @@ Models, endpoints, and versions used during test recordings.
 | with service tier flex streaming | ⏭️ | ✅ | — |
 | with service tier streaming | ⏭️ | ✅ | — |
 | with small max output tokens | ✅ | ✅ | — |
+| with stream options and previous response | ✅ | ✅ | — |
+| with stream options includes usage | ✅ | ✅ | — |
+| with stream options non streaming | ✅ | ✅ | — |
 | with top logprobs | ✅ | ✅ | — |
 | with top logprobs and previous response | ✅ | ✅ | — |
 | with top logprobs streaming | ✅ | ✅ | — |

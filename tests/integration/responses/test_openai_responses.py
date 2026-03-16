@@ -844,3 +844,100 @@ class TestOpenAIResponses:
         assert response2.id.startswith("resp_")
         assert response2.service_tier == service_tier
         assert len(response2.output_text.strip()) > 0
+
+    def test_openai_response_streaming_includes_usage(self, openai_client, text_model_id):
+        """Test that streaming response includes usage information.
+
+        Llama Stack always sets include_usage=True in the underlying chat completion
+        stream_options, so usage should always be present in the completed response.
+        """
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the capital of France?"}],
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+
+        response = completed_events[0].response
+        assert len(response.output_text.strip()) > 0
+        # Verify usage is populated (include_usage=True is always set internally)
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
+
+    def test_openai_response_with_stream_options_includes_usage(self, openai_client, text_model_id):
+        """Test that stream_options parameter is accepted and usage is still included."""
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the capital of Germany?"}],
+            stream=True,
+            stream_options={"include_obfuscation": True},
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+
+        response = completed_events[0].response
+        assert len(response.output_text.strip()) > 0
+        # Verify usage is still populated when stream_options is provided
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
+
+    def test_openai_response_with_stream_options_non_streaming(self, openai_client, text_model_id):
+        """Test that stream_options is accepted in non-streaming mode."""
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is the capital of Italy?"}],
+            stream_options={"include_obfuscation": True},
+        )
+
+        assert response.id.startswith("resp_")
+        assert len(response.output_text.strip()) > 0
+        assert response.status == "completed"
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
+
+    def test_openai_response_with_stream_options_and_previous_response(self, openai_client, text_model_id):
+        """Test that stream_options works correctly with previous_response_id in streaming mode."""
+        response1 = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 3+3?"}],
+        )
+
+        assert response1.id.startswith("resp_")
+
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 5+5?"}],
+            previous_response_id=response1.id,
+            stream=True,
+            stream_options={"include_obfuscation": True},
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+        validator.validate_event_structure()
+
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+
+        response = completed_events[0].response
+        assert len(response.output_text.strip()) > 0
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0

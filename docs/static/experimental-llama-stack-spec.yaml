@@ -650,7 +650,7 @@ paths:
           multipart/form-data:
             schema:
               $ref: '#/components/schemas/Body_process_file_v1alpha_file_processors_process_post'
-  /v1alpha/connectors:
+  /v1beta/connectors:
     get:
       responses:
         '200':
@@ -675,8 +675,8 @@ paths:
       - Connectors
       summary: List all connectors.
       description: List all configured connectors.
-      operationId: list_connectors_v1alpha_connectors_get
-  /v1alpha/connectors/{connector_id}/tools/{tool_name}:
+      operationId: list_connectors_v1beta_connectors_get
+  /v1beta/connectors/{connector_id}/tools/{tool_name}:
     get:
       responses:
         '200':
@@ -701,7 +701,7 @@ paths:
       - Connectors
       summary: Get a tool by name from a connector.
       description: Get a tool definition by its name from a connector.
-      operationId: get_connector_tool_v1alpha_connectors__connector_id__tools__tool_name__get
+      operationId: get_connector_tool_v1beta_connectors__connector_id__tools__tool_name__get
       parameters:
       - name: connector_id
         in: path
@@ -729,7 +729,7 @@ paths:
           description: Authorization token
           title: Authorization
         description: Authorization token
-  /v1alpha/connectors/{connector_id}/tools:
+  /v1beta/connectors/{connector_id}/tools:
     get:
       responses:
         '200':
@@ -754,7 +754,7 @@ paths:
       - Connectors
       summary: List tools from a connector.
       description: List all tools available from a connector.
-      operationId: list_connector_tools_v1alpha_connectors__connector_id__tools_get
+      operationId: list_connector_tools_v1beta_connectors__connector_id__tools_get
       parameters:
       - name: connector_id
         in: path
@@ -774,7 +774,7 @@ paths:
           description: Authorization token
           title: Authorization
         description: Authorization token
-  /v1alpha/connectors/{connector_id}:
+  /v1beta/connectors/{connector_id}:
     get:
       responses:
         '200':
@@ -799,7 +799,7 @@ paths:
       - Connectors
       summary: Get a connector by its ID.
       description: Get a connector by its ID.
-      operationId: get_connector_v1alpha_connectors__connector_id__get
+      operationId: get_connector_v1beta_connectors__connector_id__get
       parameters:
       - name: connector_id
         in: path
