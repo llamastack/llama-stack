@@ -4,8 +4,8 @@
 # This source code is licensed under the terms described in the LICENSE file in
 # the root directory of this source tree.
 
+import httpx
 import litellm
-import requests
 
 from llama_stack.core.request_headers import NeedsRequestProviderData
 from llama_stack.log import get_logger
@@ -55,9 +55,10 @@ class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPri
         list_models_url = self.config.url + "/models"
         if len(self.environment_available_models) == 0:
             try:
-                response = requests.get(list_models_url)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
+                async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
+                    response = await client.get(list_models_url)
+                    response.raise_for_status()
+            except httpx.HTTPError as e:
                 raise RuntimeError(f"Request to {list_models_url} failed") from e
             self.environment_available_models = [model.get("id") for model in response.json().get("data", {})]
         if (
@@ -77,7 +78,7 @@ class SambaNovaSafetyAdapter(ShieldToModerationMixin, Safety, ShieldsProtocolPri
         shield_params = shield.params
         logger.debug(f"run_shield::{shield_params}::messages={request.messages}")
 
-        response = litellm.completion(
+        response = await litellm.acompletion(
             model=shield.provider_resource_id,
             messages=request.messages,
             api_key=self._get_api_key(),

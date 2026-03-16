@@ -6,7 +6,7 @@
 
 from typing import Any
 
-import requests
+import httpx
 
 from llama_stack.log import get_logger
 from llama_stack.providers.utils.safety import ShieldToModerationMixin
@@ -103,9 +103,10 @@ class NeMoGuardrails:
         headers = {
             "Accept": "application/json",
         }
-        response = requests.post(url=f"{self.guardrails_service_url}{path}", headers=headers, json=data)
-        response.raise_for_status()
-        return response.json()
+        async with httpx.AsyncClient(timeout=httpx.Timeout(30.0)) as client:
+            response = await client.post(url=f"{self.guardrails_service_url}{path}", headers=headers, json=data)
+            response.raise_for_status()
+            return response.json()
 
     async def run(self, messages: list[OpenAIMessageParam]) -> RunShieldResponse:
         """
