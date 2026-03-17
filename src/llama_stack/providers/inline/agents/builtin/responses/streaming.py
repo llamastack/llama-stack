@@ -109,7 +109,7 @@ from .utils import (
     run_guardrails,
 )
 
-logger = get_logger(name=__name__, category="agents::meta_reference")
+logger = get_logger(name=__name__, category="agents::builtin")
 tracer = trace.get_tracer(__name__)
 
 # Built-in tool names that the server knows how to execute itself.

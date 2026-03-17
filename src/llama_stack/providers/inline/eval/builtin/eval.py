@@ -35,18 +35,18 @@ from llama_stack_api import (
     Scoring,
 )
 
-from .config import MetaReferenceEvalConfig
+from .config import BuiltinEvalConfig
 
 EVAL_TASKS_PREFIX = "benchmarks:"
 
 
-class MetaReferenceEvalImpl(
+class BuiltinEvalImpl(
     Eval,
     BenchmarksProtocolPrivate,
 ):
     def __init__(
         self,
-        config: MetaReferenceEvalConfig,
+        config: BuiltinEvalConfig,
         datasetio_api: DatasetIO,
         datasets_api: Datasets,
         scoring_api: Scoring,

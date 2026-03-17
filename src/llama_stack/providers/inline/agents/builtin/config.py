@@ -19,7 +19,7 @@ class AgentPersistenceConfig(BaseModel):
     responses: ResponsesStoreReference
 
 
-class MetaReferenceAgentsImplConfig(BaseModel):
+class BuiltinAgentsImplConfig(BaseModel):
     persistence: AgentPersistenceConfig
     vector_stores_config: VectorStoresConfig | None = Field(
         default=None,

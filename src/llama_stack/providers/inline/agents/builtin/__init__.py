@@ -8,17 +8,17 @@ from typing import Any
 
 from llama_stack.core.datatypes import AccessRule, Api
 
-from .config import MetaReferenceAgentsImplConfig
+from .config import BuiltinAgentsImplConfig
 
 
 async def get_provider_impl(
-    config: MetaReferenceAgentsImplConfig,
+    config: BuiltinAgentsImplConfig,
     deps: dict[Api, Any],
     policy: list[AccessRule],
 ):
-    from .agents import MetaReferenceAgentsImpl
+    from .agents import BuiltinAgentsImpl
 
-    impl = MetaReferenceAgentsImpl(
+    impl = BuiltinAgentsImpl(
         config,
         deps[Api.inference],
         deps[Api.vector_io],

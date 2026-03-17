@@ -33,16 +33,16 @@ from llama_stack_api import (
     VectorIO,
 )
 
-from .config import MetaReferenceAgentsImplConfig
+from .config import BuiltinAgentsImplConfig
 from .responses.openai_responses import OpenAIResponsesImpl
 
-logger = get_logger(name=__name__, category="agents::meta_reference")
+logger = get_logger(name=__name__, category="agents::builtin")
 
 
-class MetaReferenceAgentsImpl(Agents):
+class BuiltinAgentsImpl(Agents):
     def __init__(
         self,
-        config: MetaReferenceAgentsImplConfig,
+        config: BuiltinAgentsImplConfig,
         inference_api: Inference,
         vector_io_api: VectorIO,
         safety_api: Safety | None,

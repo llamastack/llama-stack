@@ -19,10 +19,10 @@ from llama_stack.core.access_control.access_control import default_policy
 from llama_stack.core.datatypes import VectorStoresConfig
 from llama_stack.core.storage.datatypes import ResponsesStoreReference, SqliteSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlstore import register_sqlstore_backends
-from llama_stack.providers.inline.agents.meta_reference.responses.openai_responses import (
+from llama_stack.providers.inline.agents.builtin.responses.openai_responses import (
     OpenAIResponsesImpl,
 )
-from llama_stack.providers.inline.agents.meta_reference.responses.tool_executor import ToolExecutor
+from llama_stack.providers.inline.agents.builtin.responses.tool_executor import ToolExecutor
 from llama_stack.providers.remote.inference.openai.config import OpenAIConfig
 from llama_stack.providers.remote.inference.openai.openai import OpenAIInferenceAdapter
 from llama_stack.providers.utils.inference.litellm_openai_mixin import LiteLLMOpenAIMixin
@@ -84,7 +84,7 @@ from llama_stack_api.vector_io import (
     VectorStoreSearchResponse,
     VectorStoreSearchResponsePage,
 )
-from tests.unit.providers.agents.meta_reference.fixtures import load_chat_completion_fixture
+from tests.unit.providers.agents.builtin.fixtures import load_chat_completion_fixture
 
 
 @pytest.fixture
@@ -297,7 +297,7 @@ async def test_failed_stream_persists_non_system_messages(openai_responses_impl,
             yield OpenAIResponseObjectStreamResponseFailed(response=failed_response, sequence_number=0)
 
     with patch(
-        "llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.StreamingResponseOrchestrator",
+        "llama_stack.providers.inline.agents.builtin.responses.openai_responses.StreamingResponseOrchestrator",
         FakeOrchestrator,
     ):
         stream = await openai_responses_impl.create_openai_response(
@@ -365,7 +365,7 @@ async def test_failed_stream_raises_internal_server_error_in_non_streaming_mode(
             yield OpenAIResponseObjectStreamResponseFailed(response=failed_response, sequence_number=0)
 
     with patch(
-        "llama_stack.providers.inline.agents.meta_reference.responses.openai_responses.StreamingResponseOrchestrator",
+        "llama_stack.providers.inline.agents.builtin.responses.openai_responses.StreamingResponseOrchestrator",
         FakeOrchestrator,
     ):
         with pytest.raises(InternalServerError) as exc_info:
@@ -1233,7 +1233,7 @@ async def test_store_response_uses_rehydrated_input_with_previous_response(
     assert result.status == "completed"
 
 
-@patch("llama_stack.providers.inline.agents.meta_reference.responses.streaming.list_mcp_tools")
+@patch("llama_stack.providers.inline.agents.builtin.responses.streaming.list_mcp_tools")
 async def test_reuse_mcp_tool_list(
     mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api
 ):
@@ -1902,7 +1902,7 @@ async def test_prepend_prompt_image_variable_missing_required_fields(openai_resp
         await openai_responses_impl._prepend_prompt(messages, openai_response_prompt)
 
 
-@patch("llama_stack.providers.inline.agents.meta_reference.responses.streaming.list_mcp_tools")
+@patch("llama_stack.providers.inline.agents.builtin.responses.streaming.list_mcp_tools")
 async def test_mcp_tool_connector_id_resolved_to_server_url(
     mock_list_mcp_tools, openai_responses_impl, mock_responses_store, mock_inference_api, mock_connectors_api
 ):

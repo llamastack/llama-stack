@@ -10,8 +10,8 @@ from .config import CodeScannerConfig
 
 
 async def get_provider_impl(config: CodeScannerConfig, deps: dict[str, Any]):
-    from .code_scanner import MetaReferenceCodeScannerSafetyImpl
+    from .code_scanner import BuiltinCodeScannerSafetyImpl
 
-    impl = MetaReferenceCodeScannerSafetyImpl(config, deps)
+    impl = BuiltinCodeScannerSafetyImpl(config, deps)
     await impl.initialize()
     return impl
