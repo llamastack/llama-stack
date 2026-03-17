@@ -32,6 +32,10 @@ inputs:
     description: 'Whether this is a fork PR (recordings cannot be pushed to forks)'
     required: false
     default: 'false'
+  skip-commit:
+    description: 'Skip committing recordings (upload as artifacts instead)'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -77,7 +81,7 @@ runs:
 
 
     - name: Commit and push recordings
-      if: ${{ inputs.inference-mode == 'record' ||  inputs.inference-mode == 'record-if-missing' }}
+      if: ${{ inputs.skip-commit != 'true' && (inputs.inference-mode == 'record' ||  inputs.inference-mode == 'record-if-missing') }}
       shell: bash
       env:
         INPUT_TARGET_BRANCH: ${{ inputs.target-branch }}
@@ -105,6 +109,11 @@ runs:
             echo "::warning::Please download the workflow artifacts and commit the recordings manually."
           else
             echo "Committing and pushing recordings to branch: $TARGET_BRANCH"
+
+            # Configure git
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+
             git add tests/integration/recordings/ tests/integration/*/recordings/
 
             git commit -m "Recordings update from CI (setup: ${INPUT_SETUP}, suite: ${INPUT_SUITE})"
@@ -118,17 +127,6 @@ runs:
         else
           echo "No recording changes"
         fi
-
-    - name: Upload recordings (for fork PRs)
-      if: ${{ inputs.is-fork-pr == 'true' && (inputs.inference-mode == 'record' || inputs.inference-mode == 'record-if-missing') }}
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-      with:
-        name: recordings-${{ github.run_id }}-${{ github.run_attempt || '1' }}-${{ strategy.job-index || github.job }}
-        path: |
-          tests/integration/recordings/
-          tests/integration/*/recordings/
-        retention-days: 7
-        if-no-files-found: ignore
 
     - name: Write docker logs to file
       if: ${{ always() }}

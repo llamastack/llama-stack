@@ -1,19 +1,21 @@
 # Auto-records missing integration test recordings when PRs are opened or updated.
-# Records for multiple providers (ollama, gpt, azure, etc.) and commits all recordings back to the PR.
+# Records for multiple providers (ollama, gpt, azure, etc.) and uploads recordings as artifacts.
+# A companion workflow (commit-recordings.yml) commits the artifacts back to the PR.
 # Expandable: add new providers by adding entries to the providers matrix.
 #
-# SECURITY NOTE: This workflow uses pull_request_target for fork PR support.
+# SECURITY NOTE: This workflow uses pull_request (not pull_request_target) for security.
 # Security measures:
-# 1. Composite actions are pinned to a trusted commit SHA (not loaded from PR checkout)
-# 2. Only ollama provider runs automatically (no secrets exposed to fork PRs)
-# 3. API key providers (gpt, azure, bedrock) only run via manual workflow_dispatch by maintainers
-# 4. UV cache is disabled to prevent cache poisoning from fork PRs
+# 1. Runs with read-only permissions (no write access to repo or secrets exposure)
+# 2. Only ollama provider runs automatically on pull_request (no secrets)
+# 3. API key providers (gpt, azure, bedrock) only run via manual workflow_dispatch
+# 4. Fork PRs with API key providers are blocked (prevents secret theft)
+# 5. Recordings uploaded as artifacts; companion workflow handles commits
 name: Integration Tests (Record)
 
-run-name: Auto-record missing test recordings for PR #${{ github.event.pull_request.number || github.run_number }}
+run-name: Auto-record missing test recordings for PR #${{ github.event.pull_request.number || inputs.pr_number || github.run_number }}
 
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
     paths:
       - 'tests/integration/**'
@@ -47,17 +49,18 @@ on:
         default: ''
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_number }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || inputs.pr_number || github.run_number }}
   cancel-in-progress: true
 
-permissions: {}
+# Read-only permissions - no write access
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
-  # Compute PR information for both pull_request_target and workflow_dispatch
+  # Compute PR information for both pull_request and workflow_dispatch
   compute-pr-info:
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
     outputs:
       pr_number: ${{ steps.compute.outputs.pr_number }}
       pr_head_ref: ${{ steps.compute.outputs.pr_head_ref }}
@@ -99,7 +102,7 @@ jobs:
               HEAD_REPO="$REPO"
             fi
           else
-            # pull_request_target event
+            # pull_request event
             PR_NUMBER="$PR_NUMBER_EVENT"
             HEAD_REF="$PR_HEAD_REF_EVENT"
             HEAD_SHA="$PR_HEAD_SHA_EVENT"
@@ -114,8 +117,8 @@ jobs:
           fi
 
           # Determine which providers to run
-          # Security: For pull_request_target, only run ollama (no secrets)
-          # Manual workflow_dispatch can specify providers with secrets
+          # Security: For pull_request, only run ollama (no secrets)
+          # Manual workflow_dispatch can specify any provider (maintainer-reviewed)
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             # Manual trigger: use provided providers or default to ollama
             if [ -n "$INPUT_PROVIDERS" ]; then
@@ -124,7 +127,7 @@ jobs:
               PROVIDERS="ollama"
             fi
           else
-            # Auto-trigger on PR: only ollama (no secrets exposed to fork PRs)
+            # Auto-trigger on PR: only ollama (no secrets exposed to any PR)
             PROVIDERS="ollama"
           fi
 
@@ -146,12 +149,6 @@ jobs:
   record-providers:
     needs: compute-pr-info
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: read
-    # Disable uv cache to prevent cache poisoning from fork PRs (pull_request_target security)
-    env:
-      UV_NO_CACHE: ${{ github.event_name == 'pull_request_target' }}
     strategy:
       fail-fast: false
       matrix:
@@ -188,12 +185,12 @@ jobs:
         if: steps.should_run.outputs.run == 'true'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          repository: ${{ needs.compute-pr-info.outputs.pr_head_repo }}
           ref: ${{ needs.compute-pr-info.outputs.pr_head_sha }}
           fetch-depth: 0
 
       # Note: Using full repo path with pinned SHA ensures actions are loaded from
-      # a trusted commit, not from PR checkout. This is critical for security when
-      # using pull_request_target, which checks out untrusted fork code.
+      # a trusted commit, not from PR checkout. This is critical for security.
       - name: Setup test environment
         if: steps.should_run.outputs.run == 'true'
         uses: llamastack/llama-stack/.github/actions/setup-test-environment@ce063acfe127393537cb0a5deb29cd20063c76af
@@ -222,55 +219,22 @@ jobs:
           suite: ${{ inputs.suite || matrix.provider.suite }}
           subdirs: ${{ inputs.subdirs || '' }}
           pattern: ${{ inputs.pattern || '' }}
-          target-branch: ${{ needs.compute-pr-info.outputs.pr_head_ref }}
-          is-fork-pr: ${{ needs.compute-pr-info.outputs.is_fork_pr }}
+          # Don't commit here - upload as artifacts instead
+          skip-commit: 'true'
 
-      # For fork PRs, the pinned action skips push (it can't push to forks).
-      # This step handles fork push via GitHub API when maintainer-modify is enabled.
-      - name: Push recordings to fork PR
-        if: steps.should_run.outputs.run == 'true' && needs.compute-pr-info.outputs.is_fork_pr == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR_NUMBER: ${{ needs.compute-pr-info.outputs.pr_number }}
-          REPO: ${{ github.repository }}
-          PROVIDER_SETUP: ${{ matrix.provider.setup }}
-          SUITE: ${{ inputs.suite || matrix.provider.suite }}
-        run: |
-          # Check if there are uncommitted recording changes (the pinned action skips commit for forks)
-          if [[ -z $(git status --porcelain tests/integration/recordings/ tests/integration/*/recordings/) ]]; then
-            echo "No recording changes to push"
-            exit 0
-          fi
+      # Upload recordings as artifacts for the companion workflow to commit
+      - name: Upload recordings as artifacts
+        if: steps.should_run.outputs.run == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: recordings-${{ matrix.provider.setup }}-${{ github.run_id }}-${{ github.run_attempt || '1' }}
+          path: |
+            tests/integration/recordings/
+            tests/integration/*/recordings/
+          retention-days: 7
+          if-no-files-found: ignore
 
-          if [ -z "$PR_NUMBER" ] || [ "$PR_NUMBER" = "manual" ]; then
-            echo "::warning::Cannot determine PR number for fork PR push"
-            exit 0
-          fi
-
-          # Stage and commit recordings
-          git add tests/integration/recordings/ tests/integration/*/recordings/
-          git commit -m "Recordings update from CI (setup: ${PROVIDER_SETUP}, suite: ${SUITE})"
-
-          # Check if maintainer can modify (allows pushing to fork)
-          MAINTAINER_CAN_MODIFY=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json maintainerCanModify --jq '.maintainerCanModify')
-
-          if [ "$MAINTAINER_CAN_MODIFY" = "true" ]; then
-            echo "Maintainer can modify - pushing to fork PR branch"
-
-            PR_DATA=$(gh pr view "$PR_NUMBER" --repo "$REPO" --json headRefName,headRepository)
-            FORK_REPO=$(echo "$PR_DATA" | jq -r '.headRepository.nameWithOwner')
-            FORK_BRANCH=$(echo "$PR_DATA" | jq -r '.headRefName')
-
-            echo "Pushing to $FORK_REPO (branch: $FORK_BRANCH)"
-            git push "https://x-access-token:${GH_TOKEN}@github.com/${FORK_REPO}.git" "HEAD:${FORK_BRANCH}"
-            echo "Successfully pushed recordings to fork PR"
-          else
-            echo "::warning::Maintainer cannot modify this fork PR (contributor unchecked 'Allow edits from maintainers')"
-            echo "::warning::Recordings were updated but cannot be pushed automatically."
-            echo "::warning::Download the workflow artifacts and commit the recordings manually."
-          fi
-
-  # Summary comment on PR (updates a single comment instead of creating new ones)
+  # Summary comment on PR
   comment-summary:
     needs: [compute-pr-info, record-providers]
     if: always() && needs.compute-pr-info.outputs.pr_number != 'manual'
@@ -299,10 +263,18 @@ jobs:
               return;
             }
 
-            let message = `${COMMENT_MARKER}\n**Recording workflow ${status === 'success' ? 'completed' : 'finished with status: ' + status}**\n\nProviders: ${providers.join(', ')}\n\nRecordings have been ${status === 'success' ? 'committed to this PR.' : 'attempted.'}\n\n[View workflow run](${runUrl})`;
+            let message = `${COMMENT_MARKER}\n**Recording workflow ${status === 'success' ? 'completed' : 'finished with status: ' + status}**\n\nProviders: ${providers.join(', ')}\n\n`;
 
-            if (isForkPr && status !== 'success') {
-              message += '\n\n**Fork PR**: If recordings could not be auto-committed, check workflow artifacts.';
+            if (status === 'success') {
+              message += 'Recordings have been generated and will be committed automatically by the companion workflow.\n\n';
+            } else {
+              message += 'Recording attempt finished. Check the workflow run for details.\n\n';
+            }
+
+            message += `[View workflow run](${runUrl})`;
+
+            if (isForkPr) {
+              message += '\n\n**Fork PR**: Recordings will be committed if you have "Allow edits from maintainers" enabled.';
             }
 
             try {

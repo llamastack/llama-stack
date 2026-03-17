@@ -176,9 +176,14 @@ When you open a PR with new or modified tests, the recording workflow automatica
 2. Records them using ollama (no API keys needed)
 3. Commits the recordings back to your PR
 
+The workflow uses two steps for security:
+- Step 1: Runs tests with read-only permissions and uploads recordings as artifacts
+- Step 2: Commits recordings from artifacts (only runs trusted base repo code with write permissions)
+
 **For PR authors:**
 - Just open a PR with test changes - that's it!
 - Works for both same-repo and fork PRs (if "Allow edits from maintainers" is enabled)
+- Recording commits trigger tests again in replay mode to validate the recordings work
 
 **For maintainers** - recording with providers requiring API keys (gpt, azure, bedrock):
 
