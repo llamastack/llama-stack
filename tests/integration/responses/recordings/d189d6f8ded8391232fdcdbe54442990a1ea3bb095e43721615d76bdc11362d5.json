@@ -46,7 +46,7 @@
       "category": "provider_sdk",
       "provider": "openai",
       "type": "BadRequestError",
-      "message": "Error code: 400 - {'message': \"400 Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'\", 'status': 400, 'error': {'message': \"Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'\", 'type': 'invalid_request_error', 'param': None, 'code': 'model_no_support_for_function'}, 'code': 'model_no_support_for_function', 'param': None, 'type': 'invalid_request_error', 'more_info': 'https://cloud.ibm.com/apidocs/watsonx-ai#chat-completions', 'trace': 'c9a184474127ca1ba58ac0fc6c2e2746'}",
+      "message": "Error code: 400 - {'message': \"400 Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'\", 'status': 400, 'error': {'message': \"Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'\", 'type': 'invalid_request_error', 'param': None, 'code': 'model_no_support_for_function'}, 'code': 'model_no_support_for_function', 'param': None, 'type': 'invalid_request_error', 'more_info': 'https://cloud.ibm.com/apidocs/watsonx-ai#chat-completions', 'trace': 'b00d254c91b9c6b77c9cdc7a46cea90b'}",
       "status_code": 400,
       "body": {
         "message": "Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'",
@@ -55,7 +55,7 @@
         "code": "model_no_support_for_function"
       }
     },
-    "exception_message": "Error code: 400 - {'message': \"400 Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'\", 'status': 400, 'error': {'message': \"Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'\", 'type': 'invalid_request_error', 'param': None, 'code': 'model_no_support_for_function'}, 'code': 'model_no_support_for_function', 'param': None, 'type': 'invalid_request_error', 'more_info': 'https://cloud.ibm.com/apidocs/watsonx-ai#chat-completions', 'trace': 'c9a184474127ca1ba58ac0fc6c2e2746'}"
+    "exception_message": "Error code: 400 - {'message': \"400 Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'\", 'status': 400, 'error': {'message': \"Model 'meta-llama/llama-3-3-70b-instruct' does not support function 'function_image_chat'\", 'type': 'invalid_request_error', 'param': None, 'code': 'model_no_support_for_function'}, 'code': 'model_no_support_for_function', 'param': None, 'type': 'invalid_request_error', 'more_info': 'https://cloud.ibm.com/apidocs/watsonx-ai#chat-completions', 'trace': 'b00d254c91b9c6b77c9cdc7a46cea90b'}"
   },
   "id_normalization_mapping": {}
 }

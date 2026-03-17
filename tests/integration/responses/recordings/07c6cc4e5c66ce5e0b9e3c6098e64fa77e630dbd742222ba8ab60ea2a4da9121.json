@@ -1,5 +1,5 @@
 {
-  "test_id": "tests/integration/responses/test_basic_responses.py::test_response_non_streaming_basic[openai_client-txt=watsonx/meta-llama/llama-3-3-70b-instruct-saturn]",
+  "test_id": "tests/integration/responses/test_basic_responses.py::test_response_non_streaming_basic[client_with_models-txt=watsonx/meta-llama/llama-3-3-70b-instruct-saturn]",
   "request": {
     "method": "POST",
     "url": "https://us-south.ml.cloud.ibm.com/ml/v1/v1/chat/completions",
@@ -10,6 +10,14 @@
         {
           "role": "user",
           "content": "Which planet has rings around it with a name starting with letter S?"
+        },
+        {
+          "role": "assistant",
+          "content": "The planet with rings around it, whose name starts with the letter S, is Saturn."
+        },
+        {
+          "role": "user",
+          "content": "Repeat your previous response in all caps."
         }
       ],
       "stream": true,
@@ -31,7 +39,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
@@ -69,11 +77,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": "The",
+                "content": "THE",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -98,11 +106,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " planet",
+                "content": " PLAN",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -127,11 +135,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " with",
+                "content": "ET",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -156,11 +164,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " rings",
+                "content": " WITH",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -185,11 +193,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " around",
+                "content": " R",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -214,11 +222,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " it",
+                "content": "INGS",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -243,7 +251,94 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
+          "choices": [
+            {
+              "delta": {
+                "content": " A",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-07c6cc4e5c66",
+          "choices": [
+            {
+              "delta": {
+                "content": "ROUND",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-07c6cc4e5c66",
+          "choices": [
+            {
+              "delta": {
+                "content": " IT",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
@@ -272,11 +367,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " and",
+                "content": " WHO",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -301,11 +396,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " its",
+                "content": "SE",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -330,11 +425,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " name",
+                "content": " NAME",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -359,11 +454,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " starting",
+                "content": " START",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -388,11 +483,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " with",
+                "content": "S",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -417,11 +512,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " the",
+                "content": " WITH",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -446,11 +541,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " letter",
+                "content": " THE",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -475,7 +570,36 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
+          "choices": [
+            {
+              "delta": {
+                "content": " LETTER",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
@@ -504,7 +628,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
@@ -533,11 +657,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " is",
+                "content": " IS",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -562,11 +686,11 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
-                "content": " Saturn",
+                "content": " SAT",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -591,7 +715,36 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
+          "choices": [
+            {
+              "delta": {
+                "content": "URN",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
@@ -620,7 +773,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [
             {
               "delta": {
@@ -649,7 +802,7 @@
       {
         "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
         "__data__": {
-          "id": "rec-cb2335d22fe6",
+          "id": "rec-07c6cc4e5c66",
           "choices": [],
           "created": 0,
           "model": "meta-llama/llama-3-3-70b-instruct",
@@ -657,9 +810,9 @@
           "service_tier": null,
           "system_fingerprint": null,
           "usage": {
-            "completion_tokens": 20,
-            "prompt_tokens": 49,
-            "total_tokens": 69,
+            "completion_tokens": 25,
+            "prompt_tokens": 85,
+            "total_tokens": 110,
             "completion_tokens_details": null,
             "prompt_tokens_details": null
           },

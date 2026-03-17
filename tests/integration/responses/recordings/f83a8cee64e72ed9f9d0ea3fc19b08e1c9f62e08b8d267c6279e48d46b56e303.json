@@ -344,7 +344,7 @@
           "choices": [
             {
               "delta": {
-                "content": ",",
+                "content": ".",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -373,7 +373,36 @@
           "choices": [
             {
               "delta": {
-                "content": " covering",
+                "content": " It",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f83a8cee64e7",
+          "choices": [
+            {
+              "delta": {
+                "content": " covers",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -982,7 +1011,7 @@
           "choices": [
             {
               "delta": {
-                "content": " accounting",
+                "content": " accounts",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -1388,7 +1417,65 @@
           "choices": [
             {
               "delta": {
-                "content": " It",
+                "content": " The",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f83a8cee64e7",
+          "choices": [
+            {
+              "delta": {
+                "content": " Pacific",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-f83a8cee64e7",
+          "choices": [
+            {
+              "delta": {
+                "content": " Ocean",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -2171,7 +2258,7 @@
           "choices": [
             {
               "delta": {
-                "content": "000",
+                "content": "022",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -2316,7 +2403,7 @@
           "choices": [
             {
               "delta": {
-                "content": "000",
+                "content": "198",
                 "function_call": null,
                 "refusal": null,
                 "role": null,
@@ -2436,9 +2523,9 @@
           "service_tier": null,
           "system_fingerprint": null,
           "usage": {
-            "completion_tokens": 81,
+            "completion_tokens": 84,
             "prompt_tokens": 43,
-            "total_tokens": 124,
+            "total_tokens": 127,
             "completion_tokens_details": null,
             "prompt_tokens_details": null
           },

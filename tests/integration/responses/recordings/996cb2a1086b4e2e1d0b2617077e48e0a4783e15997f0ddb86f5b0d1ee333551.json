@@ -160,6 +160,64 @@
           "choices": [
             {
               "delta": {
+                "content": " the",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-996cb2a1086b",
+          "choices": [
+            {
+              "delta": {
+                "content": " planet",
+                "function_call": null,
+                "refusal": null,
+                "role": null,
+                "tool_calls": null
+              },
+              "finish_reason": null,
+              "index": 0,
+              "logprobs": null
+            }
+          ],
+          "created": 0,
+          "model": "meta-llama/llama-3-3-70b-instruct",
+          "object": "chat.completion.chunk",
+          "service_tier": null,
+          "system_fingerprint": null,
+          "usage": null,
+          "model_id": "meta-llama/llama-3-3-70b-instruct",
+          "model_version": "3.3.0",
+          "created_at": "1970-01-01T00:00:00.000000Z"
+        }
+      },
+      {
+        "__type__": "openai.types.chat.chat_completion_chunk.ChatCompletionChunk",
+        "__data__": {
+          "id": "rec-996cb2a1086b",
+          "choices": [
+            {
+              "delta": {
                 "content": " Earth",
                 "function_call": null,
                 "refusal": null,
@@ -251,9 +309,9 @@
           "service_tier": null,
           "system_fingerprint": null,
           "usage": {
-            "completion_tokens": 6,
+            "completion_tokens": 8,
             "prompt_tokens": 42,
-            "total_tokens": 48,
+            "total_tokens": 50,
             "completion_tokens_details": null,
             "prompt_tokens_details": null
           },
