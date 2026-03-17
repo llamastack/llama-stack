@@ -1038,3 +1038,59 @@ class TestOpenAIResponses:
         assert incomplete_events[0].response.status == "incomplete"
         assert incomplete_events[0].response.incomplete_details is not None
         assert incomplete_events[0].response.incomplete_details.reason == "max_iterations_exceeded"
+
+    @staticmethod
+    def _is_reasoning_model(model_id: str) -> bool:
+        """Check if the model supports reasoning_effort based on model name patterns."""
+        # Strip provider prefix (e.g., "openai/", "azure/") to get base model name
+        base_model = model_id.split("/")[-1] if "/" in model_id else model_id
+        # OpenAI reasoning models: o1, o3, o4, etc.
+        reasoning_prefixes = ("o1", "o3", "o4")
+        return base_model.startswith(reasoning_prefixes)
+
+    def _skip_reasoning_effort_for_unsupported(self, text_model_id):
+        if not self._is_reasoning_model(text_model_id):
+            pytest.skip(f"Model {text_model_id} does not support the reasoning_effort parameter")
+
+    @pytest.mark.parametrize("effort", ["low", "medium", "high"])
+    def test_openai_response_reasoning_effort(self, openai_client, text_model_id, effort):
+        """Test that reasoning.effort is accepted and reflected in the response."""
+        self._skip_reasoning_effort_for_unsupported(text_model_id)
+        response = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 2+2?"}],
+            reasoning={"effort": effort},
+        )
+
+        assert response.id.startswith("resp_")
+        assert response.status == "completed"
+        assert len(response.output_text.strip()) > 0
+        assert response.reasoning is not None
+        assert response.reasoning.effort == effort
+
+    @pytest.mark.parametrize("effort", ["low", "medium", "high"])
+    def test_openai_response_reasoning_effort_streaming(self, openai_client, text_model_id, effort):
+        """Test that reasoning.effort works correctly in streaming mode."""
+        self._skip_reasoning_effort_for_unsupported(text_model_id)
+        stream = openai_client.responses.create(
+            model=text_model_id,
+            input=[{"role": "user", "content": "What is 2+2?"}],
+            reasoning={"effort": effort},
+            stream=True,
+        )
+
+        chunks = list(stream)
+        validator = StreamingValidator(chunks)
+        validator.assert_basic_event_sequence()
+
+        completed_events = [e for e in chunks if e.type == "response.completed"]
+        assert len(completed_events) == 1
+
+        response = completed_events[0].response
+        assert response.status == "completed"
+        assert len(response.output_text.strip()) > 0
+        assert response.reasoning is not None
+        assert response.reasoning.effort == effort
+        assert response.usage is not None
+        assert response.usage.output_tokens > 0
+        assert response.usage.total_tokens > 0
