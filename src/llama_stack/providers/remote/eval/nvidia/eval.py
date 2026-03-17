@@ -5,7 +5,7 @@
 # the root directory of this source tree.
 from typing import Any
 
-import requests
+import httpx
 
 from llama_stack.providers.utils.inference.model_registry import ModelRegistryHelper
 from llama_stack_api import (
@@ -55,26 +55,36 @@ class NVIDIAEvalImpl(
         self.agents_api = agents_api
 
         ModelRegistryHelper.__init__(self)
+        self._client: httpx.AsyncClient | None = None
 
-    async def initialize(self) -> None: ...
+    @property
+    def client(self) -> httpx.AsyncClient:
+        if self._client is None:
+            raise RuntimeError("Client not initialized. Call initialize() first.")
+        return self._client
 
-    async def shutdown(self) -> None: ...
+    async def initialize(self) -> None:
+        self._client = httpx.AsyncClient(timeout=httpx.Timeout(30.0))
+
+    async def shutdown(self) -> None:
+        if self._client:
+            await self._client.aclose()
 
     async def _evaluator_get(self, path: str):
         """Helper for making GET requests to the evaluator service."""
-        response = requests.get(url=f"{self.config.evaluator_url}{path}")
+        response = await self.client.get(url=f"{self.config.evaluator_url}{path}")
         response.raise_for_status()
         return response.json()
 
     async def _evaluator_post(self, path: str, data: dict[str, Any]):
         """Helper for making POST requests to the evaluator service."""
-        response = requests.post(url=f"{self.config.evaluator_url}{path}", json=data)
+        response = await self.client.post(url=f"{self.config.evaluator_url}{path}", json=data)
         response.raise_for_status()
         return response.json()
 
     async def _evaluator_delete(self, path: str) -> None:
         """Helper for making DELETE requests to the evaluator service."""
-        response = requests.delete(url=f"{self.config.evaluator_url}{path}")
+        response = await self.client.delete(url=f"{self.config.evaluator_url}{path}")
         response.raise_for_status()
 
     async def register_benchmark(self, task_def: Benchmark) -> None:
