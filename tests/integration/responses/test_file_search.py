@@ -27,6 +27,8 @@ from .helpers import new_vector_store, upload_file
     ],
 )
 def test_response_text_format(responses_client, text_model_id, text_format):
+    if text_format.get("type") == "json_schema" and "watsonx" in text_model_id:
+        pytest.skip("WatsonX does not reliably follow json_schema output format.")
     stream = False
     response = responses_client.responses.create(
         model=text_model_id,
