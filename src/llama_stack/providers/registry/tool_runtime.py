@@ -18,7 +18,7 @@ def available_providers() -> list[ProviderSpec]:
     return [
         InlineProviderSpec(
             api=Api.tool_runtime,
-            provider_type="inline::rag-runtime",
+            provider_type="inline::file-search",
             pip_packages=DEFAULT_VECTOR_IO_DEPS
             + [
                 "tqdm",
@@ -29,11 +29,11 @@ def available_providers() -> list[ProviderSpec]:
                 "sentencepiece",
                 "transformers",
             ],
-            module="llama_stack.providers.inline.tool_runtime.rag",
-            config_class="llama_stack.providers.inline.tool_runtime.rag.config.RagToolRuntimeConfig",
+            module="llama_stack.providers.inline.tool_runtime.file_search",
+            config_class="llama_stack.providers.inline.tool_runtime.file_search.config.FileSearchToolRuntimeConfig",
             api_dependencies=[Api.vector_io, Api.inference, Api.files],
-            toolgroup_id="builtin::rag",
-            description="RAG (Retrieval-Augmented Generation) tool runtime for document ingestion, chunking, and semantic search.",
+            toolgroup_id="builtin::file_search",
+            description="File search tool runtime for document ingestion, chunking, and semantic search.",
         ),
         RemoteProviderSpec(
             api=Api.tool_runtime,

@@ -153,7 +153,7 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
         "tool_runtime": [
             BuildProvider(provider_type="remote::brave-search"),
             BuildProvider(provider_type="remote::tavily-search"),
-            BuildProvider(provider_type="inline::rag-runtime"),
+            BuildProvider(provider_type="inline::file-search"),
             BuildProvider(provider_type="remote::model-context-protocol"),
         ],
         "batches": [
@@ -273,8 +273,8 @@ def get_distribution_template(name: str = "starter") -> DistributionTemplate:
                 config=TavilySearchToolConfig.sample_run_config(f"~/.llama/distributions/{name}"),
             ),
             Provider(
-                provider_id="rag-runtime",
-                provider_type="inline::rag-runtime",
+                provider_id="file-search",
+                provider_type="inline::file-search",
             ),
             Provider(
                 provider_id="model-context-protocol",

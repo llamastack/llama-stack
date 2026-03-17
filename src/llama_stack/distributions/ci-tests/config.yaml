@@ -240,8 +240,8 @@ providers:
     config:
       api_key: ${env.TAVILY_SEARCH_API_KEY:=}
       max_results: 3
-  - provider_id: rag-runtime
-    provider_type: inline::rag-runtime
+  - provider_id: file-search
+    provider_type: inline::file-search
   - provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
   batches:
@@ -320,12 +320,12 @@ vector_stores:
     provider_id: transformers
     model_id: Qwen/Qwen3-Reranker-0.6B
   file_search_params:
-    header_template: 'knowledge_search tool found {num_chunks} chunks:
+    header_template: 'file_search tool found {num_chunks} chunks:
 
-      BEGIN of knowledge_search tool results.
+      BEGIN of file_search tool results.
 
       '
-    footer_template: 'END of knowledge_search tool results.
+    footer_template: 'END of file_search tool results.
 
       '
   context_prompt_params:

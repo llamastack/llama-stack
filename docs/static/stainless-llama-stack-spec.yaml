@@ -901,11 +901,11 @@ paths:
     get:
       responses:
         '200':
-          description: The raw file content as a binary response.
+          description: The file content.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Response'
+                type: string
         '400':
           $ref: '#/components/responses/BadRequest400'
           description: Bad Request
@@ -3949,7 +3949,6 @@ components:
       - title
       - detail
       title: Error
-      type: object
     ListBatchesResponse:
       properties:
         object:
@@ -3978,7 +3977,6 @@ components:
           title: Has More
           description: Whether there are more batches available
           default: false
-      type: object
       required:
       - data
       title: ListBatchesResponse
@@ -4010,7 +4008,6 @@ components:
           - type: string
           - type: 'null'
           description: Optional idempotency key. When provided, enables idempotent behavior.
-      type: object
       required:
       - input_file_id
       - endpoint
@@ -4119,7 +4116,6 @@ components:
           - type: 'null'
           title: BatchUsage
       additionalProperties: true
-      type: object
       required:
       - id
       - completion_window
@@ -4162,7 +4158,6 @@ components:
           title: Object
           description: Must be 'list' to identify this as a list response.
           default: list
-      type: object
       required:
       - data
       - has_more
@@ -4206,7 +4201,6 @@ components:
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
           nullable: true
       title: OpenAIAssistantMessageParam
-      type: object
     OpenAIChatCompletionContentPartImageParam:
       properties:
         type:
@@ -4218,7 +4212,6 @@ components:
         image_url:
           $ref: '#/components/schemas/OpenAIImageURL'
           description: Image URL specification and processing details.
-      type: object
       required:
       - image_url
       title: OpenAIChatCompletionContentPartImageParam
@@ -4250,7 +4243,6 @@ components:
           type: string
           title: Text
           description: The text content of the message.
-      type: object
       required:
       - text
       title: OpenAIChatCompletionContentPartTextParam
@@ -4281,7 +4273,6 @@ components:
           - type: 'null'
           description: Function call details.
           title: OpenAIChatCompletionToolCallFunction
-      type: object
       title: OpenAIChatCompletionToolCall
       description: Tool call specification for OpenAI-compatible chat completion responses.
     OpenAIChatCompletionToolCallFunction:
@@ -4294,7 +4285,6 @@ components:
           type: string
           title: Arguments
           description: Arguments to pass to the function as a JSON string.
-      type: object
       required:
       - name
       - arguments
@@ -4326,7 +4316,6 @@ components:
         completion_tokens_details:
           $ref: '#/components/schemas/OpenAIChatCompletionUsageCompletionTokensDetails'
           description: Detailed breakdown of output token usage.
-      type: object
       title: OpenAIChatCompletionUsage
       description: Usage information for OpenAI chat completion.
     OpenAIChoice:
@@ -4352,7 +4341,6 @@ components:
         logprobs:
           $ref: '#/components/schemas/OpenAIChoiceLogprobs'
           description: The log probabilities for the tokens in the message.
-      type: object
       required:
       - message
       - finish_reason
@@ -4373,7 +4361,6 @@ components:
           type: array
           title: Refusal
           description: The log probabilities for the refusal tokens.
-      type: object
       title: OpenAIChoiceLogprobs
       description: The log probabilities for the tokens in the message from an OpenAI-compatible chat completion response.
     OpenAIDeveloperMessageParam:
@@ -4398,7 +4385,6 @@ components:
           - type: string
           - type: 'null'
           description: The name of the developer message participant.
-      type: object
       required:
       - content
       title: OpenAIDeveloperMessageParam
@@ -4414,7 +4400,6 @@ components:
         file:
           $ref: '#/components/schemas/OpenAIFileFile'
           description: File specification.
-      type: object
       required:
       - file
       title: OpenAIFile
@@ -4435,7 +4420,6 @@ components:
           - type: string
           - type: 'null'
           description: Name of the file.
-      type: object
       title: OpenAIFileFile
       description: File reference for OpenAI-compatible file content.
     OpenAIImageURL:
@@ -4453,7 +4437,6 @@ components:
             - auto
           - type: 'null'
           description: Level of detail for image processing. Can be 'low', 'high', or 'auto'.
-      type: object
       required:
       - url
       title: OpenAIImageURL
@@ -4501,7 +4484,6 @@ components:
           - type: string
           - type: 'null'
           description: The name of the system message participant.
-      type: object
       required:
       - content
       title: OpenAISystemMessageParam
@@ -4530,7 +4512,6 @@ components:
             type: array
           - type: 'null'
           description: The top log probabilities for the token.
-      type: object
       required:
       - token
       - logprob
@@ -4557,7 +4538,6 @@ components:
             title: list[OpenAIChatCompletionContentPartTextParam]
           title: string | list[OpenAIChatCompletionContentPartTextParam]
           description: The response content from the tool.
-      type: object
       required:
       - tool_call_id
       - content
@@ -4580,7 +4560,6 @@ components:
           type: number
           title: Logprob
           description: The log probability of the token.
-      type: object
       required:
       - token
       - logprob
@@ -4626,7 +4605,6 @@ components:
       required:
       - content
       title: OpenAIUserMessageParam
-      type: object
     OpenAIJSONSchema:
       properties:
         name:
@@ -4645,7 +4623,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-      type: object
       title: OpenAIJSONSchema
       description: JSON schema specification for OpenAI-compatible structured response format.
     OpenAIResponseFormatJSONObject:
@@ -4656,7 +4633,6 @@ components:
           title: Type
           description: Must be 'json_object' to indicate generic JSON object response format.
           default: json_object
-      type: object
       title: OpenAIResponseFormatJSONObject
       description: JSON object response format for OpenAI-compatible chat completion requests.
     OpenAIResponseFormatJSONSchema:
@@ -4670,7 +4646,6 @@ components:
         json_schema:
           $ref: '#/components/schemas/OpenAIJSONSchema'
           description: The JSON schema specification for the response.
-      type: object
       required:
       - json_schema
       title: OpenAIResponseFormatJSONSchema
@@ -4698,7 +4673,6 @@ components:
           title: Type
           description: Must be 'text' to indicate plain text response format.
           default: text
-      type: object
       title: OpenAIResponseFormatText
       description: Text response format for OpenAI-compatible chat completion requests.
     OpenAIChatCompletionRequestWithExtraBody:
@@ -4917,7 +4891,6 @@ components:
           - type: 'null'
           description: A key to use when reading from or writing to the prompt cache.
       additionalProperties: true
-      type: object
       required:
       - model
       - messages
@@ -4973,7 +4946,6 @@ components:
       - created
       - model
       title: OpenAIChatCompletion
-      type: object
     OpenAIChatCompletionChunk:
       description: Chunk from a streaming response to an OpenAI-compatible chat completion request.
       properties:
@@ -5023,7 +4995,6 @@ components:
       - created
       - model
       title: OpenAIChatCompletionChunk
-      type: object
     OpenAIChoiceDelta:
       description: A delta from an OpenAI-compatible chat completion streaming response.
       properties:
@@ -5064,7 +5035,6 @@ components:
           description: The reasoning content from the model (for o1/o3 models).
           nullable: true
       title: OpenAIChoiceDelta
-      type: object
     OpenAIChunkChoice:
       description: A chunk choice from an OpenAI-compatible chat completion streaming response.
       properties:
@@ -5095,7 +5065,6 @@ components:
       - delta
       - index
       title: OpenAIChunkChoice
-      type: object
     OpenAICompletionWithInputMessages:
       properties:
         id:
@@ -5161,7 +5130,6 @@ components:
           type: array
           title: Input Messages
           description: The input messages used to generate this completion.
-      type: object
       required:
       - id
       - choices
@@ -5294,7 +5262,6 @@ components:
           - type: 'null'
           description: The suffix that should be appended to the completion.
       additionalProperties: true
-      type: object
       required:
       - model
       - prompt
@@ -5335,7 +5302,6 @@ components:
       - created
       - model
       title: OpenAICompletion
-      type: object
     OpenAICompletionChoice:
       description: A choice from an OpenAI-compatible completion response.
       properties:
@@ -5371,7 +5337,6 @@ components:
       - text
       - index
       title: OpenAICompletionChoice
-      type: object
     ConversationItem:
       discriminator:
         mapping:
@@ -5424,7 +5389,6 @@ components:
         url:
           type: string
           title: Url
-      type: object
       required:
       - end_index
       - start_index
@@ -5454,7 +5418,6 @@ components:
         start_index:
           type: integer
           title: Start Index
-      type: object
       required:
       - container_id
       - end_index
@@ -5478,7 +5441,6 @@ components:
         index:
           type: integer
           title: Index
-      type: object
       required:
       - file_id
       - filename
@@ -5498,7 +5460,6 @@ components:
         index:
           type: integer
           title: Index
-      type: object
       required:
       - file_id
       - index
@@ -5531,7 +5492,6 @@ components:
         refusal:
           type: string
           title: Refusal
-      type: object
       required:
       - refusal
       title: OpenAIResponseContentPartRefusal
@@ -5575,7 +5535,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - call_id
       - output
@@ -5619,7 +5578,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       title: OpenAIResponseInputMessageContentFile
       description: File content for input messages in OpenAI response format.
     OpenAIResponseInputMessageContentImage:
@@ -5645,7 +5603,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       title: OpenAIResponseInputMessageContentImage
       description: Image content for input messages in OpenAI response format.
     OpenAIResponseInputMessageContentText:
@@ -5658,7 +5615,6 @@ components:
           const: input_text
           title: Type
           default: input_text
-      type: object
       required:
       - text
       title: OpenAIResponseInputMessageContentText
@@ -5682,7 +5638,6 @@ components:
           const: mcp_approval_request
           title: Type
           default: mcp_approval_request
-      type: object
       required:
       - arguments
       - id
@@ -5711,7 +5666,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - approval_request_id
       - approve
@@ -5787,7 +5741,6 @@ components:
       - content
       - role
       title: OpenAIResponseMessage
-      type: object
     OpenAIResponseOutputMessageContent:
       discriminator:
         mapping:
@@ -5841,7 +5794,6 @@ components:
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
-      type: object
     OpenAIResponseOutputMessageFileSearchToolCall:
       properties:
         id:
@@ -5866,7 +5818,6 @@ components:
               $ref: '#/components/schemas/OpenAIResponseOutputMessageFileSearchToolCallResults'
             type: array
           - type: 'null'
-      type: object
       required:
       - id
       - queries
@@ -5897,7 +5848,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - call_id
       - name
@@ -5931,7 +5881,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - id
       - arguments
@@ -5957,7 +5906,6 @@ components:
             $ref: '#/components/schemas/MCPListToolsTool'
           type: array
           title: Tools
-      type: object
       required:
       - id
       - server_label
@@ -5977,7 +5925,6 @@ components:
           const: web_search_call
           title: Type
           default: web_search_call
-      type: object
       required:
       - id
       - status
@@ -6030,7 +5977,6 @@ components:
             type: object
           - type: 'null'
           description: Set of key-value pairs that can be attached to an object.
-      type: object
       title: CreateConversationRequest
       description: Request model for creating a conversation.
     Conversation:
@@ -6064,7 +6010,6 @@ components:
             type: array
           - type: 'null'
           description: Initial items to include in the conversation context. You may add up to 20 items at a time.
-      type: object
       required:
       - id
       - created_at
@@ -6078,7 +6023,6 @@ components:
           type: object
           title: Metadata
           description: Set of key-value pairs that can be attached to an object.
-      type: object
       required:
       - metadata
       title: UpdateConversationRequest
@@ -6099,7 +6043,6 @@ components:
           title: Deleted
           description: Whether the object was deleted
           default: true
-      type: object
       required:
       - id
       title: ConversationDeletedResource
@@ -6163,7 +6106,6 @@ components:
           title: Has More
           description: Whether there are more items available
           default: false
-      type: object
       required:
       - data
       title: ConversationItemList
@@ -6208,7 +6150,6 @@ components:
           maxItems: 20
           title: Items
           description: Items to include in the conversation context. You may add up to 20 items at a time.
-      type: object
       required:
       - items
       title: AddItemsRequest
@@ -6229,7 +6170,6 @@ components:
           title: Deleted
           description: Whether the object was deleted
           default: true
-      type: object
       required:
       - id
       title: ConversationItemDeletedResource
@@ -6285,7 +6225,6 @@ components:
           title: User
           description: A unique identifier representing your end-user.
       additionalProperties: true
-      type: object
       required:
       - model
       - input
@@ -6313,7 +6252,6 @@ components:
           minimum: 0.0
           title: Index
           description: The index of the embedding in the input list.
-      type: object
       required:
       - embedding
       - index
@@ -6329,7 +6267,6 @@ components:
           type: integer
           title: Total Tokens
           description: The total number of tokens used.
-      type: object
       required:
       - prompt_tokens
       - total_tokens
@@ -6357,7 +6294,6 @@ components:
         usage:
           $ref: '#/components/schemas/OpenAIEmbeddingUsage'
           description: Usage information.
-      type: object
       required:
       - data
       - model
@@ -6397,7 +6333,6 @@ components:
           title: Object
           description: The object type, which is always 'list'.
           default: list
-      type: object
       required:
       - data
       - has_more
@@ -6426,8 +6361,9 @@ components:
           title: Created At
           description: The Unix timestamp (in seconds) for when the file was created.
         expires_at:
-          type: integer
-          title: Expires At
+          anyOf:
+          - type: integer
+          - type: 'null'
           description: The Unix timestamp (in seconds) for when the file expires.
         filename:
           type: string
@@ -6436,12 +6372,10 @@ components:
         purpose:
           $ref: '#/components/schemas/OpenAIFilePurpose'
           description: The intended purpose of the file.
-      type: object
       required:
       - id
       - bytes
       - created_at
-      - expires_at
       - filename
       - purpose
       title: OpenAIFileObject
@@ -6459,7 +6393,6 @@ components:
           minimum: 3600.0
           title: Seconds
           description: Seconds until expiration, between 3600 (1 hour) and 2592000 (30 days).
-      type: object
       required:
       - anchor
       - seconds
@@ -6481,21 +6414,16 @@ components:
           type: boolean
           title: Deleted
           description: Whether the file was successfully deleted.
-      type: object
       required:
       - id
       - deleted
       title: OpenAIFileDeleteResponse
       description: Response for deleting a file in OpenAI Files API.
-    Response:
-      title: Response
-      type: object
     HealthInfo:
       properties:
         status:
           $ref: '#/components/schemas/HealthStatus'
           description: The health status of the service
-      type: object
       required:
       - status
       title: HealthInfo
@@ -6516,7 +6444,6 @@ components:
           type: array
           title: Provider Types
           description: List of provider types implementing this route
-      type: object
       required:
       - route
       - method
@@ -6531,7 +6458,6 @@ components:
           type: array
           title: Data
           description: List of available API routes
-      type: object
       required:
       - data
       title: ListRoutesResponse
@@ -6557,7 +6483,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-      type: object
       required:
       - id
       - created
@@ -6579,7 +6504,6 @@ components:
           type: array
           title: Data
           description: List of OpenAI model objects.
-      type: object
       required:
       - data
       title: OpenAIListModelsResponse
@@ -6617,7 +6541,6 @@ components:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
-      type: object
       required:
       - identifier
       - provider_id
@@ -6647,7 +6570,6 @@ components:
           - type: string
           - type: 'null'
           description: The content moderation model to use. If not specified, the default shield will be used.
-      type: object
       required:
       - input
       title: RunModerationRequest
@@ -6668,7 +6590,6 @@ components:
           type: array
           title: Results
           description: A list of moderation result objects
-      type: object
       required:
       - id
       - model
@@ -6714,7 +6635,6 @@ components:
           type: object
           title: Metadata
           description: Additional metadata about the moderation
-      type: object
       required:
       - flagged
       title: ModerationObjectResults
@@ -6746,7 +6666,6 @@ components:
           title: Is Default
           description: Boolean indicating whether this version is the default version
           default: false
-      type: object
       required:
       - version
       - prompt_id
@@ -6759,7 +6678,6 @@ components:
             $ref: '#/components/schemas/Prompt'
           type: array
           title: Data
-      type: object
       required:
       - data
       title: ListPromptsResponse
@@ -6777,7 +6695,6 @@ components:
             type: array
           - type: 'null'
           description: List of variable names that can be used in the prompt template.
-      type: object
       required:
       - prompt
       title: CreatePromptRequest
@@ -6815,7 +6732,6 @@ components:
       - prompt
       - version
       title: UpdatePromptRequest
-      type: object
     SetDefaultVersionRequest:
       description: Request model for setting the default version of a prompt (combines path and body parameters).
       properties:
@@ -6831,7 +6747,6 @@ components:
       - prompt_id
       - version
       title: SetDefaultVersionRequest
-      type: object
     ProviderInfo:
       properties:
         api:
@@ -6856,7 +6771,6 @@ components:
           type: object
           title: Health
           description: Current health status of the provider
-      type: object
       required:
       - api
       - provider_id
@@ -6873,7 +6787,6 @@ components:
           type: array
           title: Data
           description: List of provider information objects
-      type: object
       required:
       - data
       title: ListProvidersResponse
@@ -6899,7 +6812,6 @@ components:
           const: list
           title: Object
           default: list
-      type: object
       required:
       - data
       - has_more
@@ -6915,7 +6827,6 @@ components:
         message:
           type: string
           title: Message
-      type: object
       required:
       - code
       - message
@@ -6986,7 +6897,6 @@ components:
             title: SearchRankingOptions
           - type: 'null'
           title: SearchRankingOptions
-      type: object
       required:
       - vector_store_ids
       title: OpenAIResponseInputToolFileSearch
@@ -7014,7 +6924,6 @@ components:
           anyOf:
           - type: boolean
           - type: 'null'
-      type: object
       required:
       - name
       - parameters
@@ -7037,7 +6946,6 @@ components:
             pattern: ^low|medium|high$
           - type: 'null'
           default: medium
-      type: object
       title: OpenAIResponseInputToolWebSearch
       description: Web search tool configuration for OpenAI response inputs.
     OpenAIResponseObjectWithInput:
@@ -7292,7 +7200,6 @@ components:
             title: OpenAIResponseInputFunctionToolCallOutput | OpenAIResponseMCPApprovalResponse | OpenAIResponseMessage-Output
           type: array
           title: Input
-      type: object
       required:
       - created_at
       - id
@@ -7358,7 +7265,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - id
       title: OpenAIResponsePrompt
@@ -7371,7 +7277,6 @@ components:
             title: OpenAIResponseTextFormat
           - type: 'null'
           title: OpenAIResponseTextFormat
-      type: object
       title: OpenAIResponseText
       description: Text response configuration for OpenAI responses.
     OpenAIResponseTool:
@@ -7415,7 +7320,6 @@ components:
             title: AllowedToolsFilter
           - type: 'null'
           title: list[string] | AllowedToolsFilter
-      type: object
       required:
       - server_label
       title: OpenAIResponseToolMCP
@@ -7435,7 +7339,6 @@ components:
           $ref: '#/components/schemas/OpenAIResponseUsageInputTokensDetails'
         output_tokens_details:
           $ref: '#/components/schemas/OpenAIResponseUsageOutputTokensDetails'
-      type: object
       required:
       - input_tokens
       - output_tokens
@@ -7450,7 +7353,6 @@ components:
           type: string
           title: Type
       additionalProperties: false
-      type: object
       required:
       - type
       title: ResponseGuardrailSpec
@@ -7523,7 +7425,6 @@ components:
             title: AllowedToolsFilter
           - type: 'null'
           title: list[string] | AllowedToolsFilter
-      type: object
       required:
       - server_label
       title: OpenAIResponseInputToolMCP
@@ -7742,7 +7643,6 @@ components:
         store:
           type: boolean
           title: Store
-      type: object
       required:
       - created_at
       - id
@@ -7794,7 +7694,6 @@ components:
       required:
       - text
       title: OpenAIResponseContentPartOutputText
-      type: object
     OpenAIResponseContentPartReasoningSummary:
       description: Reasoning summary part in a streamed response.
       properties:
@@ -7809,7 +7708,6 @@ components:
       required:
       - text
       title: OpenAIResponseContentPartReasoningSummary
-      type: object
     OpenAIResponseContentPartReasoningText:
       description: Reasoning text emitted as part of a streamed response.
       properties:
@@ -7824,7 +7722,6 @@ components:
       required:
       - text
       title: OpenAIResponseContentPartReasoningText
-      type: object
     OpenAIResponseObjectStream:
       discriminator:
         mapping:
@@ -7956,7 +7853,6 @@ components:
       - response
       - sequence_number
       title: OpenAIResponseObjectStreamResponseCompleted
-      type: object
     OpenAIResponseObjectStreamResponseContentPartAdded:
       description: Streaming event for when a new content part is added to a response item.
       properties:
@@ -8003,7 +7899,6 @@ components:
       - part
       - sequence_number
       title: OpenAIResponseObjectStreamResponseContentPartAdded
-      type: object
     OpenAIResponseObjectStreamResponseContentPartDone:
       description: Streaming event for when a content part is completed.
       properties:
@@ -8050,7 +7945,6 @@ components:
       - part
       - sequence_number
       title: OpenAIResponseObjectStreamResponseContentPartDone
-      type: object
     OpenAIResponseObjectStreamResponseCreated:
       description: Streaming event indicating a new response has been created.
       properties:
@@ -8068,7 +7962,6 @@ components:
       - response
       - sequence_number
       title: OpenAIResponseObjectStreamResponseCreated
-      type: object
     OpenAIResponseObjectStreamResponseFailed:
       description: Streaming event emitted when a response fails.
       properties:
@@ -8086,7 +7979,6 @@ components:
       - response
       - sequence_number
       title: OpenAIResponseObjectStreamResponseFailed
-      type: object
     OpenAIResponseObjectStreamResponseFileSearchCallCompleted:
       description: Streaming event for completed file search calls.
       properties:
@@ -8109,7 +8001,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseFileSearchCallCompleted
-      type: object
     OpenAIResponseObjectStreamResponseFileSearchCallInProgress:
       description: Streaming event for file search calls in progress.
       properties:
@@ -8132,7 +8023,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseFileSearchCallInProgress
-      type: object
     OpenAIResponseObjectStreamResponseFileSearchCallSearching:
       description: Streaming event for file search currently searching.
       properties:
@@ -8155,7 +8045,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseFileSearchCallSearching
-      type: object
     OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta:
       description: Streaming event for incremental function call argument updates.
       properties:
@@ -8182,7 +8071,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseFunctionCallArgumentsDelta
-      type: object
     OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone:
       description: Streaming event for when function call arguments are completed.
       properties:
@@ -8209,7 +8097,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseFunctionCallArgumentsDone
-      type: object
     OpenAIResponseObjectStreamResponseInProgress:
       description: Streaming event indicating the response remains in progress.
       properties:
@@ -8227,7 +8114,6 @@ components:
       - response
       - sequence_number
       title: OpenAIResponseObjectStreamResponseInProgress
-      type: object
     OpenAIResponseObjectStreamResponseIncomplete:
       description: Streaming event emitted when a response ends in an incomplete state.
       properties:
@@ -8245,7 +8131,6 @@ components:
       - response
       - sequence_number
       title: OpenAIResponseObjectStreamResponseIncomplete
-      type: object
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta:
       properties:
         delta:
@@ -8271,7 +8156,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallArgumentsDelta
-      type: object
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDone:
       properties:
         arguments:
@@ -8297,7 +8181,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallArgumentsDone
-      type: object
     OpenAIResponseObjectStreamResponseMcpCallCompleted:
       description: Streaming event for completed MCP calls.
       properties:
@@ -8312,7 +8195,6 @@ components:
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallCompleted
-      type: object
     OpenAIResponseObjectStreamResponseMcpCallFailed:
       description: Streaming event for failed MCP calls.
       properties:
@@ -8327,7 +8209,6 @@ components:
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallFailed
-      type: object
     OpenAIResponseObjectStreamResponseMcpCallInProgress:
       description: Streaming event for MCP calls in progress.
       properties:
@@ -8350,7 +8231,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpCallInProgress
-      type: object
     OpenAIResponseObjectStreamResponseMcpListToolsCompleted:
       properties:
         sequence_number:
@@ -8364,7 +8244,6 @@ components:
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpListToolsCompleted
-      type: object
     OpenAIResponseObjectStreamResponseMcpListToolsFailed:
       properties:
         sequence_number:
@@ -8378,7 +8257,6 @@ components:
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpListToolsFailed
-      type: object
     OpenAIResponseObjectStreamResponseMcpListToolsInProgress:
       properties:
         sequence_number:
@@ -8392,7 +8270,6 @@ components:
       required:
       - sequence_number
       title: OpenAIResponseObjectStreamResponseMcpListToolsInProgress
-      type: object
     OpenAIResponseObjectStreamResponseOutputItemAdded:
       description: Streaming event for when a new output item is added to the response.
       properties:
@@ -8443,7 +8320,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseOutputItemAdded
-      type: object
     OpenAIResponseObjectStreamResponseOutputItemDone:
       description: Streaming event for when an output item is completed.
       properties:
@@ -8494,7 +8370,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseOutputItemDone
-      type: object
     OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded:
       description: Streaming event for when an annotation is added to output text.
       properties:
@@ -8544,7 +8419,6 @@ components:
       - annotation
       - sequence_number
       title: OpenAIResponseObjectStreamResponseOutputTextAnnotationAdded
-      type: object
     OpenAIResponseObjectStreamResponseOutputTextDelta:
       description: Streaming event for incremental text content updates.
       properties:
@@ -8582,7 +8456,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseOutputTextDelta
-      type: object
     OpenAIResponseObjectStreamResponseOutputTextDone:
       description: Streaming event for when text output is completed.
       properties:
@@ -8613,7 +8486,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseOutputTextDone
-      type: object
     OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded:
       description: Streaming event for when a new reasoning summary part is added.
       properties:
@@ -8643,7 +8515,6 @@ components:
       - sequence_number
       - summary_index
       title: OpenAIResponseObjectStreamResponseReasoningSummaryPartAdded
-      type: object
     OpenAIResponseObjectStreamResponseReasoningSummaryPartDone:
       description: Streaming event for when a reasoning summary part is completed.
       properties:
@@ -8673,7 +8544,6 @@ components:
       - sequence_number
       - summary_index
       title: OpenAIResponseObjectStreamResponseReasoningSummaryPartDone
-      type: object
     OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta:
       description: Streaming event for incremental reasoning summary text updates.
       properties:
@@ -8704,7 +8574,6 @@ components:
       - sequence_number
       - summary_index
       title: OpenAIResponseObjectStreamResponseReasoningSummaryTextDelta
-      type: object
     OpenAIResponseObjectStreamResponseReasoningSummaryTextDone:
       description: Streaming event for when reasoning summary text is completed.
       properties:
@@ -8735,7 +8604,6 @@ components:
       - sequence_number
       - summary_index
       title: OpenAIResponseObjectStreamResponseReasoningSummaryTextDone
-      type: object
     OpenAIResponseObjectStreamResponseReasoningTextDelta:
       description: Streaming event for incremental reasoning text updates.
       properties:
@@ -8766,7 +8634,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseReasoningTextDelta
-      type: object
     OpenAIResponseObjectStreamResponseReasoningTextDone:
       description: Streaming event for when reasoning text is completed.
       properties:
@@ -8797,7 +8664,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseReasoningTextDone
-      type: object
     OpenAIResponseObjectStreamResponseRefusalDelta:
       description: Streaming event for incremental refusal text updates.
       properties:
@@ -8828,7 +8694,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseRefusalDelta
-      type: object
     OpenAIResponseObjectStreamResponseRefusalDone:
       description: Streaming event for when refusal text is completed.
       properties:
@@ -8859,7 +8724,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseRefusalDone
-      type: object
     OpenAIResponseObjectStreamResponseWebSearchCallCompleted:
       description: Streaming event for completed web search calls.
       properties:
@@ -8882,7 +8746,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseWebSearchCallCompleted
-      type: object
     OpenAIResponseObjectStreamResponseWebSearchCallInProgress:
       description: Streaming event for web search calls in progress.
       properties:
@@ -8905,7 +8768,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseWebSearchCallInProgress
-      type: object
     OpenAIResponseObjectStreamResponseWebSearchCallSearching:
       properties:
         item_id:
@@ -8927,7 +8789,6 @@ components:
       - output_index
       - sequence_number
       title: OpenAIResponseObjectStreamResponseWebSearchCallSearching
-      type: object
     OpenAIDeleteResponseObject:
       properties:
         id:
@@ -8942,7 +8803,6 @@ components:
           type: boolean
           title: Deleted
           default: true
-      type: object
       required:
       - id
       title: OpenAIDeleteResponseObject
@@ -8992,7 +8852,6 @@ components:
           const: list
           title: Object
           default: list
-      type: object
       required:
       - data
       title: ListOpenAIResponseInputItem
@@ -9029,7 +8888,6 @@ components:
           type: array
           title: Messages
           description: The messages to run the shield on
-      type: object
       required:
       - shield_id
       - messages
@@ -9044,7 +8902,6 @@ components:
           - type: 'null'
           description: Safety violation detected by the shield, if any
           title: SafetyViolation
-      type: object
       title: RunShieldResponse
       description: Response from running a safety shield.
     SafetyViolation:
@@ -9062,7 +8919,6 @@ components:
           type: object
           title: Metadata
           description: Additional metadata including specific violation codes
-      type: object
       required:
       - violation_level
       title: SafetyViolation
@@ -9092,7 +8948,6 @@ components:
           const: array
           title: Type
           default: array
-      type: object
       title: ArrayType
       description: Parameter type for array values.
     BasicScoringFnParams:
@@ -9108,7 +8963,6 @@ components:
           type: array
           title: Aggregation Functions
           description: Aggregation functions to apply to the scores of each row
-      type: object
       title: BasicScoringFnParams
       description: Parameters for basic scoring function configuration.
     BooleanType:
@@ -9118,7 +8972,6 @@ components:
           const: boolean
           title: Type
           default: boolean
-      type: object
       title: BooleanType
       description: Parameter type for boolean values.
     ChatCompletionInputType:
@@ -9128,7 +8981,6 @@ components:
           const: chat_completion_input
           title: Type
           default: chat_completion_input
-      type: object
       title: ChatCompletionInputType
       description: Parameter type for chat completion input.
     CompletionInputType:
@@ -9138,7 +8990,6 @@ components:
           const: completion_input
           title: Type
           default: completion_input
-      type: object
       title: CompletionInputType
       description: Parameter type for completion input.
     JsonType:
@@ -9148,7 +8999,6 @@ components:
           const: json
           title: Type
           default: json
-      type: object
       title: JsonType
       description: Parameter type for JSON values.
     LLMAsJudgeScoringFnParams:
@@ -9177,7 +9027,6 @@ components:
           type: array
           title: Aggregation Functions
           description: Aggregation functions to apply to the scores of each row
-      type: object
       required:
       - judge_model
       title: LLMAsJudgeScoringFnParams
@@ -9189,7 +9038,6 @@ components:
           const: number
           title: Type
           default: number
-      type: object
       title: NumberType
       description: Parameter type for numeric values.
     ObjectType:
@@ -9199,7 +9047,6 @@ components:
           const: object
           title: Type
           default: object
-      type: object
       title: ObjectType
       description: Parameter type for object values.
     RegexParserScoringFnParams:
@@ -9221,7 +9068,6 @@ components:
           type: array
           title: Aggregation Functions
           description: Aggregation functions to apply to the scores of each row
-      type: object
       title: RegexParserScoringFnParams
       description: Parameters for regex parser scoring function configuration.
     ScoringFn:
@@ -9306,7 +9152,6 @@ components:
           - type: 'null'
           title: Params
           description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval
-      type: object
       required:
       - identifier
       - provider_id
@@ -9343,7 +9188,6 @@ components:
           const: string
           title: Type
           default: string
-      type: object
       title: StringType
       description: Parameter type for string values.
     UnionType:
@@ -9353,7 +9197,6 @@ components:
           const: union
           title: Type
           default: union
-      type: object
       title: UnionType
       description: Parameter type for union values.
     ListScoringFunctionsResponse:
@@ -9364,7 +9207,6 @@ components:
           type: array
           title: Data
           description: List of scoring function objects.
-      type: object
       required:
       - data
       title: ListScoringFunctionsResponse
@@ -9400,7 +9242,6 @@ components:
           type: object
           title: Scoring Functions
           description: The scoring functions to use for the scoring.
-      type: object
       required:
       - input_rows
       - scoring_functions
@@ -9414,7 +9255,6 @@ components:
           type: object
           title: Results
           description: A map of scoring function name to ScoringResult.
-      type: object
       required:
       - results
       title: ScoreResponse
@@ -9433,7 +9273,6 @@ components:
           type: object
           title: Aggregated Results
           description: Map of metric name to aggregated value
-      type: object
       required:
       - score_rows
       - aggregated_results
@@ -9472,7 +9311,6 @@ components:
           title: Save Results Dataset
           description: Whether to save the results to a dataset.
           default: false
-      type: object
       required:
       - dataset_id
       - scoring_functions
@@ -9491,7 +9329,6 @@ components:
           type: object
           title: Results
           description: A map of scoring function name to ScoringResult
-      type: object
       required:
       - results
       title: ScoreBatchResponse
@@ -9521,7 +9358,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-      type: object
       required:
       - identifier
       - provider_id
@@ -9535,7 +9371,6 @@ components:
           type: array
           title: Data
           description: List of shield objects
-      type: object
       required:
       - data
       title: ListShieldsResponse
@@ -9553,7 +9388,6 @@ components:
       required:
       - image
       title: ImageContentItem
-      type: object
     InterleavedContent:
       anyOf:
       - type: string
@@ -9605,7 +9439,6 @@ components:
         text:
           type: string
           title: Text
-      type: object
       required:
       - text
       title: TextContentItem
@@ -9661,13 +9494,11 @@ components:
           - type: 'null'
           nullable: true
       title: ToolInvocationResult
-      type: object
     URL:
       properties:
         uri:
           type: string
           title: Uri
-      type: object
       required:
       - uri
       title: URL
@@ -9700,7 +9531,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-      type: object
       required:
       - name
       title: ToolDef
@@ -9712,7 +9542,6 @@ components:
             $ref: '#/components/schemas/ToolDef'
           type: array
           title: Data
-      type: object
       required:
       - data
       title: ListToolDefsResponse
@@ -9756,7 +9585,6 @@ components:
       - identifier
       - provider_id
       title: ToolGroup
-      type: object
     ListToolGroupsResponse:
       description: Response containing a list of tool groups.
       properties:
@@ -9768,7 +9596,6 @@ components:
       required:
       - data
       title: ListToolGroupsResponse
-      type: object
     Chunk:
       properties:
         content:
@@ -9809,7 +9636,6 @@ components:
           title: Metadata
         chunk_metadata:
           $ref: '#/components/schemas/ChunkMetadata'
-      type: object
       required:
       - content
       - chunk_id
@@ -9854,7 +9680,6 @@ components:
           anyOf:
           - type: integer
           - type: 'null'
-      type: object
       title: ChunkMetadata
       description: |-
         `ChunkMetadata` is backend metadata for a `Chunk` that is used to store additional information about the chunk that
@@ -9878,7 +9703,6 @@ components:
           - type: integer
           - type: 'null'
           description: Time-to-live in seconds for the inserted chunks.
-      type: object
       required:
       - vector_store_id
       - chunks
@@ -9926,7 +9750,6 @@ components:
             type: object
           - type: 'null'
           description: Additional query parameters.
-      type: object
       required:
       - vector_store_id
       - query
@@ -9944,7 +9767,6 @@ components:
             type: number
           type: array
           title: Scores
-      type: object
       required:
       - chunks
       - scores
@@ -9967,7 +9789,6 @@ components:
         total:
           type: integer
           title: Total
-      type: object
       required:
       - completed
       - cancelled
@@ -9999,7 +9820,6 @@ components:
           type: boolean
           title: Has More
           default: false
-      type: object
       required:
       - data
       title: VectorStoreListResponse
@@ -10047,7 +9867,6 @@ components:
           additionalProperties: true
           type: object
           title: Metadata
-      type: object
       required:
       - id
       - created_at
@@ -10076,7 +9895,6 @@ components:
           const: auto
           title: Type
           default: auto
-      type: object
       title: VectorStoreChunkingStrategyAuto
       description: Automatic chunking strategy for vector store files.
     VectorStoreChunkingStrategyStatic:
@@ -10088,7 +9906,6 @@ components:
           default: static
         static:
           $ref: '#/components/schemas/VectorStoreChunkingStrategyStaticConfig'
-      type: object
       required:
       - static
       title: VectorStoreChunkingStrategyStatic
@@ -10105,7 +9922,6 @@ components:
           minimum: 100.0
           title: Max Chunk Size Tokens
           default: 800
-      type: object
       title: VectorStoreChunkingStrategyStaticConfig
       description: Configuration for static chunking strategy.
     OpenAICreateVectorStoreRequestWithExtraBody:
@@ -10149,7 +9965,6 @@ components:
             type: object
           - type: 'null'
       additionalProperties: true
-      type: object
       title: OpenAICreateVectorStoreRequestWithExtraBody
       description: Request to create a vector store with extra_body support.
     VectorStoreDeleteResponse:
@@ -10165,7 +9980,6 @@ components:
           type: boolean
           title: Deleted
           default: true
-      type: object
       required:
       - id
       title: VectorStoreDeleteResponse
@@ -10201,7 +10015,6 @@ components:
           - type: 'null'
           title: Chunking Strategy
       additionalProperties: true
-      type: object
       required:
       - file_ids
       title: OpenAICreateVectorStoreFileBatchRequestWithExtraBody
@@ -10232,7 +10045,6 @@ components:
           default: completed
         file_counts:
           $ref: '#/components/schemas/VectorStoreFileCounts'
-      type: object
       required:
       - id
       - created_at
@@ -10261,7 +10073,6 @@ components:
         message:
           type: string
           title: Message
-      type: object
       required:
       - code
       - message
@@ -10332,7 +10143,6 @@ components:
         vector_store_id:
           type: string
           title: Vector Store Id
-      type: object
       required:
       - id
       - chunking_strategy
@@ -10364,7 +10174,6 @@ components:
           type: boolean
           title: Has More
           default: false
-      type: object
       required:
       - data
       title: VectorStoreFilesListInBatchResponse
@@ -10392,7 +10201,6 @@ components:
           type: boolean
           title: Has More
           default: false
-      type: object
       required:
       - data
       title: VectorStoreListFilesResponse
@@ -10410,7 +10218,6 @@ components:
           type: boolean
           title: Deleted
           default: true
-      type: object
       required:
       - id
       title: VectorStoreFileDeleteResponse
@@ -10441,7 +10248,6 @@ components:
           - additionalProperties: true
             type: object
           - type: 'null'
-      type: object
       required:
       - type
       - text
@@ -10467,7 +10273,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - data
       title: VectorStoreFileContentResponse
@@ -10498,7 +10303,6 @@ components:
             $ref: '#/components/schemas/VectorStoreContent'
           type: array
           title: Content
-      type: object
       required:
       - file_id
       - filename
@@ -10530,7 +10334,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - search_query
       - data
@@ -10542,7 +10345,6 @@ components:
           type: string
           title: Version
           description: The version string of the service
-      type: object
       required:
       - version
       title: VersionInfo
@@ -10556,7 +10358,6 @@ components:
           type: array
           title: Rows
           description: The rows to append to the dataset.
-      type: object
       required:
       - rows
       title: AppendRowsRequest
@@ -10576,7 +10377,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - data
       - has_more
@@ -10624,7 +10424,6 @@ components:
           type: object
           title: Metadata
           description: Any additional metadata for this dataset
-      type: object
       required:
       - identifier
       - provider_id
@@ -10647,7 +10446,6 @@ components:
           type: array
           title: Rows
           description: 'The dataset is stored in rows. E.g. [{"messages": [{"role": "user", "content": "Hello, world!"}, {"role": "assistant", "content": "Hello, world!"}]}]'
-      type: object
       required:
       - rows
       title: RowsDataSource
@@ -10664,7 +10462,6 @@ components:
           type: string
           title: Uri
           description: The dataset can be obtained from a URI. E.g. "https://mywebsite.com/mydata.jsonl", "lsfs://mydata.jsonl", "data:csv;base64,{base64_content}"
-      type: object
       required:
       - uri
       title: URIDataSource
@@ -10677,7 +10474,6 @@ components:
           type: array
           title: Data
           description: List of datasets
-      type: object
       required:
       - data
       title: ListDatasetsResponse
@@ -10718,7 +10514,6 @@ components:
           type: object
           title: Metadata
           description: Metadata for this evaluation task.
-      type: object
       required:
       - identifier
       - provider_id
@@ -10734,7 +10529,6 @@ components:
           type: array
           title: Data
           description: List of benchmark objects.
-      type: object
       required:
       - data
       title: ListBenchmarksResponse
@@ -10769,7 +10563,6 @@ components:
             minimum: 1.0
           - type: 'null'
           description: Number of examples to evaluate (useful for testing), if not provided, all examples in the dataset will be evaluated
-      type: object
       required:
       - eval_candidate
       title: BenchmarkConfig
@@ -10782,7 +10575,6 @@ components:
           title: Type
           description: Must be 'greedy' to identify this sampling strategy.
           default: greedy
-      type: object
       title: GreedySamplingStrategy
       description: Greedy sampling strategy that selects the highest probability token at each step.
     ModelCandidate:
@@ -10807,7 +10599,6 @@ components:
           - type: 'null'
           description: The system message providing instructions or context to the model
           title: SystemMessage
-      type: object
       required:
       - model
       - sampling_params
@@ -10853,7 +10644,6 @@ components:
             maxItems: 4
           - type: 'null'
           description: Up to 4 sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.
-      type: object
       title: SamplingParams
       description: Sampling parameters for text generation.
     SystemMessage:
@@ -10894,7 +10684,6 @@ components:
             title: list[ImageContentItem-Input | TextContentItem]
           title: string | list[ImageContentItem-Input | TextContentItem]
           description: The content of the 'system prompt'. If multiple system messages are provided, they are concatenated. The underlying Llama Stack code may also add other system messages.
-      type: object
       required:
       - content
       title: SystemMessage
@@ -10912,7 +10701,6 @@ components:
           minimum: 1.0
           title: Top K
           description: Number of top tokens to consider for sampling. Must be at least 1.
-      type: object
       required:
       - top_k
       title: TopKSamplingStrategy
@@ -10938,7 +10726,6 @@ components:
           title: Top P
           description: Cumulative probability threshold for nucleus sampling.
           default: 0.95
-      type: object
       required:
       - temperature
       title: TopPSamplingStrategy
@@ -10975,7 +10762,6 @@ components:
       - scoring_functions
       - benchmark_config
       title: EvaluateRowsRequest
-      type: object
     EvaluateResponse:
       properties:
         generations:
@@ -10991,7 +10777,6 @@ components:
           type: object
           title: Scores
           description: The scores from the evaluation. Each key in the dict is a scoring function name
-      type: object
       required:
       - generations
       - scores
@@ -11012,7 +10797,6 @@ components:
       - benchmark_id
       - benchmark_config
       title: RunEvalRequest
-      type: object
     Job:
       properties:
         job_id:
@@ -11020,7 +10804,6 @@ components:
           title: Job Id
         status:
           $ref: '#/components/schemas/JobStatus'
-      type: object
       required:
       - job_id
       - status
@@ -11060,7 +10843,6 @@ components:
             minimum: 1.0
           - type: 'null'
           description: 'Maximum number of results to return. Default: returns all.'
-      type: object
       required:
       - model
       - query
@@ -11078,7 +10860,6 @@ components:
           type: number
           title: Relevance Score
           description: The relevance score from the model output. Higher scores indicate greater relevance.
-      type: object
       required:
       - index
       - relevance_score
@@ -11092,7 +10873,6 @@ components:
           type: array
           title: Data
           description: List of rerank result objects, sorted by relevance score (descending).
-      type: object
       required:
       - data
       title: RerankResponse
@@ -11131,7 +10911,6 @@ components:
           - type: boolean
           - type: 'null'
           description: Enable model availability check during registration. When false (default), validation is deferred to runtime and model is preserved during provider refresh.
-      type: object
       required:
       - model_id
       title: RegisterModelRequest
@@ -11242,7 +11021,6 @@ components:
           - type: 'null'
           title: Params
           description: The parameters for the scoring function for benchmark eval, these can be overridden for app eval.
-      type: object
       required:
       - scoring_fn_id
       - description
@@ -11271,7 +11049,6 @@ components:
             type: object
           - type: 'null'
           description: The parameters of the shield.
-      type: object
       required:
       - shield_id
       title: RegisterShieldRequest
@@ -11317,7 +11094,6 @@ components:
           - type: string
           - type: 'null'
           description: The ID of the dataset. If not provided, an ID will be generated.
-      type: object
       required:
       - purpose
       - source
@@ -11355,7 +11131,6 @@ components:
             type: object
           - type: 'null'
           description: The metadata to use for the benchmark.
-      type: object
       required:
       - benchmark_id
       - dataset_id
@@ -11370,7 +11145,6 @@ components:
               type: string
             type: array
           - type: 'null'
-      type: object
       title: AllowedToolsFilter
       description: Filter configuration for restricting which MCP tools can be used.
     ApprovalFilter:
@@ -11387,7 +11161,6 @@ components:
               type: string
             type: array
           - type: 'null'
-      type: object
       title: ApprovalFilter
       description: Filter configuration for MCP tool approval requirements.
     BatchError:
@@ -11409,7 +11182,6 @@ components:
           - type: string
           - type: 'null'
       additionalProperties: true
-      type: object
       title: BatchError
     BatchRequestCounts:
       properties:
@@ -11423,7 +11195,6 @@ components:
           type: integer
           title: Total
       additionalProperties: true
-      type: object
       required:
       - completed
       - failed
@@ -11445,7 +11216,6 @@ components:
           type: integer
           title: Total Tokens
       additionalProperties: true
-      type: object
       required:
       - input_tokens
       - input_tokens_details
@@ -11477,7 +11247,6 @@ components:
           - type: string
           - type: 'null'
           description: Optional chunking strategy for splitting content into chunks. Must be valid JSON string.
-      type: object
       title: Body_process_file_v1alpha_file_processors_process_post
     Body_upload_file_v1_files_post:
       properties:
@@ -11496,7 +11265,6 @@ components:
           - type: 'null'
           description: Optional expiration settings.
           title: ExpiresAfter
-      type: object
       required:
       - file
       - purpose
@@ -11534,7 +11302,6 @@ components:
           - type: string
           - type: 'null'
           description: Version of the server
-      type: object
       required:
       - connector_id
       - url
@@ -11834,7 +11601,6 @@ components:
           description: Options that control streamed response behavior.
           title: ResponseStreamOptions
       additionalProperties: true
-      type: object
       required:
       - input
       - model
@@ -11898,7 +11664,6 @@ components:
         embedding_dimension:
           type: integer
           title: Embedding Dimension
-      type: object
       required:
       - content
       - chunk_id
@@ -11961,7 +11726,6 @@ components:
         embedding_dimension:
           type: integer
           title: Embedding Dimension
-      type: object
       required:
       - content
       - chunk_id
@@ -11986,7 +11750,6 @@ components:
           - type: string
           - type: 'null'
       additionalProperties: true
-      type: object
       title: Errors
     EvaluateRowsBodyRequest:
       properties:
@@ -12008,7 +11771,6 @@ components:
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
           description: The configuration for the benchmark
-      type: object
       required:
       - input_rows
       - scoring_functions
@@ -12031,7 +11793,6 @@ components:
           default: image
         image:
           $ref: '#/components/schemas/_URLOrData'
-      type: object
       required:
       - image
       title: ImageContentItem
@@ -12045,7 +11806,6 @@ components:
           default: image
         image:
           $ref: '#/components/schemas/_URLOrData'
-      type: object
       required:
       - image
       title: ImageContentItem
@@ -12056,7 +11816,6 @@ components:
           type: integer
           title: Cached Tokens
       additionalProperties: true
-      type: object
       required:
       - cached_tokens
       title: InputTokensDetails
@@ -12077,7 +11836,6 @@ components:
             $ref: '#/components/schemas/Connector'
           type: array
           title: Data
-      type: object
       required:
       - data
       title: ListConnectorsResponse
@@ -12089,7 +11847,6 @@ components:
             $ref: '#/components/schemas/ToolDef'
           type: array
           title: Data
-      type: object
       required:
       - data
       title: ListToolsResponse
@@ -12107,7 +11864,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - input_schema
       - name
@@ -12144,7 +11900,6 @@ components:
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
       additionalProperties: true
-      type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
     OpenAIAssistantMessageParam-Output:
@@ -12178,7 +11933,6 @@ components:
           - type: 'null'
           description: List of tool calls. Each tool call is an OpenAIChatCompletionToolCall object.
       additionalProperties: true
-      type: object
       title: OpenAIAssistantMessageParam
       description: A message containing the model's (assistant) response in an OpenAI-compatible chat completion request.
     OpenAIAttachFileRequest:
@@ -12212,7 +11966,6 @@ components:
           - type: 'null'
           title: Chunking Strategy
           description: Strategy for chunking the file content.
-      type: object
       required:
       - file_id
       title: OpenAIAttachFileRequest
@@ -12257,7 +12010,6 @@ components:
             type: object
           - type: 'null'
           description: Audio response data when using audio output modality.
-      type: object
       title: OpenAIChatCompletionResponseMessage
       description: An assistant message returned in a chat completion response.
     OpenAIChatCompletionUsageCompletionTokensDetails:
@@ -12268,7 +12020,6 @@ components:
           title: Reasoning Tokens
           description: Number of tokens used for reasoning (o1/o3 models).
           default: 0
-      type: object
       title: OpenAIChatCompletionUsageCompletionTokensDetails
       description: Token details for output tokens in OpenAI chat completion usage.
     OpenAIChatCompletionUsagePromptTokensDetails:
@@ -12279,7 +12030,6 @@ components:
           title: Cached Tokens
           description: Number of tokens retrieved from cache.
           default: 0
-      type: object
       title: OpenAIChatCompletionUsagePromptTokensDetails
       description: Token details for prompt tokens in OpenAI chat completion usage.
     OpenAIResponseIncompleteDetails:
@@ -12287,7 +12037,6 @@ components:
         reason:
           type: string
           title: Reason
-      type: object
       required:
       - reason
       title: OpenAIResponseIncompleteDetails
@@ -12313,7 +12062,6 @@ components:
           const: allowed_tools
           title: Type
           default: allowed_tools
-      type: object
       required:
       - tools
       title: OpenAIResponseInputToolChoiceAllowedTools
@@ -12328,7 +12076,6 @@ components:
         name:
           type: string
           title: Name
-      type: object
       required:
       - name
       title: OpenAIResponseInputToolChoiceCustomTool
@@ -12340,7 +12087,6 @@ components:
           const: file_search
           title: Type
           default: file_search
-      type: object
       title: OpenAIResponseInputToolChoiceFileSearch
       description: Indicates that the model should use file search to generate a response.
     OpenAIResponseInputToolChoiceFunctionTool:
@@ -12353,7 +12099,6 @@ components:
           const: function
           title: Type
           default: function
-      type: object
       required:
       - name
       title: OpenAIResponseInputToolChoiceFunctionTool
@@ -12372,7 +12117,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - server_label
       title: OpenAIResponseInputToolChoiceMCPTool
@@ -12395,7 +12139,6 @@ components:
           - web_search_preview
           - web_search_preview_2025_03_11
           - web_search_2025_08_26
-      type: object
       title: OpenAIResponseInputToolChoiceWebSearch
       description: Indicates that the model should use web search to generate a response
     OpenAIResponseMessage-Input:
@@ -12457,7 +12200,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - content
       - role
@@ -12526,7 +12268,6 @@ components:
           anyOf:
           - type: string
           - type: 'null'
-      type: object
       required:
       - content
       - role
@@ -12573,7 +12314,6 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
-      type: object
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
@@ -12614,7 +12354,6 @@ components:
               $ref: '#/components/schemas/OpenAITokenLogProb'
             type: array
           - type: 'null'
-      type: object
       required:
       - text
       title: OpenAIResponseOutputMessageContentOutputText
@@ -12636,7 +12375,6 @@ components:
         text:
           type: string
           title: Text
-      type: object
       required:
       - attributes
       - file_id
@@ -12658,7 +12396,6 @@ components:
             - high
             - xhigh
           - type: 'null'
-      type: object
       title: OpenAIResponseReasoning
       description: |-
         Configuration for reasoning effort in OpenAI responses.
@@ -12691,7 +12428,6 @@ components:
           anyOf:
           - type: boolean
           - type: 'null'
-      type: object
       title: OpenAIResponseTextFormat
       description: Configuration for Responses API text format.
     OpenAIResponseUsageInputTokensDetails:
@@ -12699,7 +12435,6 @@ components:
         cached_tokens:
           type: integer
           title: Cached Tokens
-      type: object
       required:
       - cached_tokens
       title: OpenAIResponseUsageInputTokensDetails
@@ -12709,7 +12444,6 @@ components:
         reasoning_tokens:
           type: integer
           title: Reasoning Tokens
-      type: object
       required:
       - reasoning_tokens
       title: OpenAIResponseUsageOutputTokensDetails
@@ -12756,7 +12490,6 @@ components:
           - type: 'null'
           description: The search mode to use (e.g., 'vector', 'keyword').
           default: vector
-      type: object
       required:
       - query
       title: OpenAISearchVectorStoreRequest
@@ -12768,7 +12501,6 @@ components:
           type: object
           title: Attributes
           description: The new attributes for the file.
-      type: object
       required:
       - attributes
       title: OpenAIUpdateVectorStoreFileRequest
@@ -12792,7 +12524,6 @@ components:
             type: object
           - type: 'null'
           description: Metadata to associate with the vector store.
-      type: object
       title: OpenAIUpdateVectorStoreRequest
       description: Request body for updating a vector store.
     OpenAIUserMessageParam-Input:
@@ -12830,7 +12561,6 @@ components:
           - type: string
           - type: 'null'
           description: The name of the user message participant.
-      type: object
       required:
       - content
       title: OpenAIUserMessageParam
@@ -12870,7 +12600,6 @@ components:
           - type: string
           - type: 'null'
           description: The name of the user message participant.
-      type: object
       required:
       - content
       title: OpenAIUserMessageParam
@@ -12881,7 +12610,6 @@ components:
           type: integer
           title: Reasoning Tokens
       additionalProperties: true
-      type: object
       required:
       - reasoning_tokens
       title: OutputTokensDetails
@@ -12898,7 +12626,6 @@ components:
           type: object
           title: Metadata
           description: Processing-run metadata such as processor name/version, processing_time_ms, page_count, extraction_method (e.g. docling/pypdf/ocr), confidence scores, plus provider-specific fields.
-      type: object
       required:
       - chunks
       - metadata
@@ -12928,7 +12655,6 @@ components:
           description: Whether to obfuscate sensitive information in streamed output.
           default: true
       additionalProperties: false
-      type: object
       title: ResponseStreamOptions
       description: Options that control streamed response behavior.
     ResponseTruncation:
@@ -12943,7 +12669,6 @@ components:
         benchmark_config:
           $ref: '#/components/schemas/BenchmarkConfig'
           description: The configuration for the benchmark
-      type: object
       required:
       - benchmark_config
       title: RunEvalBodyRequest
@@ -12984,7 +12709,6 @@ components:
           - type: string
           - type: 'null'
           description: Model identifier for neural reranker
-      type: object
       title: SearchRankingOptions
       description: |-
         Options for ranking and filtering search results.
@@ -13020,7 +12744,6 @@ components:
           type: integer
           title: Version
           description: The version to set as default.
-      type: object
       required:
       - version
       title: SetDefaultVersionBodyRequest
@@ -13047,7 +12770,6 @@ components:
           title: Set As Default
           description: Set the new version as the default (default=True).
           default: true
-      type: object
       required:
       - prompt
       - version
@@ -13064,7 +12786,6 @@ components:
         contextual:
           $ref: '#/components/schemas/VectorStoreChunkingStrategyContextualConfig'
           description: Configuration for contextual chunking.
-      type: object
       required:
       - contextual
       title: VectorStoreChunkingStrategyContextual
@@ -13106,7 +12827,6 @@ components:
             minimum: 1.0
           - type: 'null'
           description: Maximum concurrent LLM calls. Falls back to config default if not provided.
-      type: object
       title: VectorStoreChunkingStrategyContextualConfig
     _URLOrData:
       properties:
@@ -13121,7 +12841,6 @@ components:
           - type: string
           - type: 'null'
           contentEncoding: base64
-      type: object
       title: _URLOrData
       description: A URL or a base64 encoded string
     SamplingStrategy:
@@ -13156,7 +12875,6 @@ components:
       required:
       - bnf
       title: GrammarResponseFormat
-      type: object
     JsonSchemaResponseFormat:
       description: Configuration for JSON schema-guided response generation.
       properties:
@@ -13174,7 +12892,6 @@ components:
       required:
       - json_schema
       title: JsonSchemaResponseFormat
-      type: object
     ResponseFormat:
       discriminator:
         mapping:
@@ -13207,7 +12924,6 @@ components:
       - tools
       - mode
       title: AllowedToolsConfig
-      type: object
     CustomToolConfig:
       description: Custom tool configuration for OpenAI-compatible chat completion requests.
       properties:
@@ -13218,7 +12934,6 @@ components:
       required:
       - name
       title: CustomToolConfig
-      type: object
     FunctionToolConfig:
       properties:
         name:
@@ -13228,7 +12943,6 @@ components:
       required:
       - name
       title: FunctionToolConfig
-      type: object
     OpenAIChatCompletionToolChoiceAllowedTools:
       description: Allowed tools response format for OpenAI-compatible chat completion requests.
       properties:
@@ -13244,7 +12958,6 @@ components:
       required:
       - allowed_tools
       title: OpenAIChatCompletionToolChoiceAllowedTools
-      type: object
     OpenAIChatCompletionToolChoiceCustomTool:
       description: Custom tool choice for OpenAI-compatible chat completion requests.
       properties:
@@ -13260,7 +12973,6 @@ components:
       required:
       - custom
       title: OpenAIChatCompletionToolChoiceCustomTool
-      type: object
     OpenAIChatCompletionToolChoiceFunctionTool:
       description: Function tool choice for OpenAI-compatible chat completion requests.
       properties:
@@ -13276,7 +12988,6 @@ components:
       required:
       - function
       title: OpenAIChatCompletionToolChoiceFunctionTool
-      type: object
     OpenAIChatCompletionToolChoice:
       discriminator:
         mapping:
@@ -13350,7 +13061,6 @@ components:
       description: Request model for listing benchmarks.
       properties: {}
       title: ListBenchmarksRequest
-      type: object
     GetBenchmarkRequest:
       description: Request model for getting a benchmark.
       properties:
@@ -13361,7 +13071,6 @@ components:
       required:
       - benchmark_id
       title: GetBenchmarkRequest
-      type: object
     UnregisterBenchmarkRequest:
       description: Request model for unregistering a benchmark.
       properties:
@@ -13372,7 +13081,6 @@ components:
       required:
       - benchmark_id
       title: UnregisterBenchmarkRequest
-      type: object
     GetDatasetRequest:
       description: Request model for getting a dataset by ID.
       properties:
@@ -13383,7 +13091,6 @@ components:
       required:
       - dataset_id
       title: GetDatasetRequest
-      type: object
     UnregisterDatasetRequest:
       description: Request model for unregistering a dataset.
       properties:
@@ -13394,7 +13101,6 @@ components:
       required:
       - dataset_id
       title: UnregisterDatasetRequest
-      type: object
     ListModelsResponse:
       description: Response containing a list of model objects.
       properties:
@@ -13407,7 +13113,6 @@ components:
       required:
       - data
       title: ListModelsResponse
-      type: object
     GetModelRequest:
       description: Request model for getting a model by ID.
       properties:
@@ -13418,7 +13123,6 @@ components:
       required:
       - model_id
       title: GetModelRequest
-      type: object
     UnregisterModelRequest:
       description: Request model for unregistering a model.
       properties:
@@ -13429,7 +13133,6 @@ components:
       required:
       - model_id
       title: UnregisterModelRequest
-      type: object
     DialogType:
       description: Parameter type for dialog data with semantic output labels.
       properties:
@@ -13439,12 +13142,10 @@ components:
           title: Type
           type: string
       title: DialogType
-      type: object
     ListScoringFunctionsRequest:
       description: Request model for listing scoring functions.
       properties: {}
       title: ListScoringFunctionsRequest
-      type: object
     GetScoringFunctionRequest:
       description: Request model for getting a scoring function.
       properties:
@@ -13455,7 +13156,6 @@ components:
       required:
       - scoring_fn_id
       title: GetScoringFunctionRequest
-      type: object
     UnregisterScoringFunctionRequest:
       description: Request model for unregistering a scoring function.
       properties:
@@ -13466,7 +13166,6 @@ components:
       required:
       - scoring_fn_id
       title: UnregisterScoringFunctionRequest
-      type: object
     GetShieldRequest:
       description: Request model for getting a shield by identifier.
       properties:
@@ -13477,7 +13176,6 @@ components:
       required:
       - identifier
       title: GetShieldRequest
-      type: object
     UnregisterShieldRequest:
       description: Request model for unregistering a shield.
       properties:
@@ -13488,7 +13186,6 @@ components:
       required:
       - identifier
       title: UnregisterShieldRequest
-      type: object
     TextDelta:
       description: A text content delta for streaming responses.
       properties:
@@ -13503,7 +13200,6 @@ components:
       required:
       - text
       title: TextDelta
-      type: object
     ImageDelta:
       description: An image content delta for streaming responses.
       properties:
@@ -13519,7 +13215,6 @@ components:
       required:
       - image
       title: ImageDelta
-      type: object
     ToolGroupInput:
       description: Input data for registering a tool group.
       properties:
@@ -13546,7 +13241,6 @@ components:
       - toolgroup_id
       - provider_id
       title: ToolGroupInput
-      type: object
     Api:
       description: Enumeration of all available APIs in the Llama Stack system.
       enum:
@@ -13655,7 +13349,6 @@ components:
       - provider_type
       - config_class
       title: ProviderSpec
-      type: object
     InlineProviderSpec:
       properties:
         api:
@@ -13752,7 +13445,6 @@ components:
       - provider_type
       - config_class
       title: InlineProviderSpec
-      type: object
     RemoteProviderSpec:
       properties:
         api:
@@ -13845,7 +13537,6 @@ components:
       - config_class
       - adapter_type
       title: RemoteProviderSpec
-      type: object
     ListRoutesRequest:
       description: Request to list API routes.
       properties:
@@ -13861,7 +13552,6 @@ components:
           description: Filter to control which routes are returned. Can be an API level ('v1', 'v1alpha', 'v1beta') to show non-deprecated routes at that level, or 'deprecated' to show deprecated routes across all levels. If not specified, returns all non-deprecated routes.
           nullable: true
       title: ListRoutesRequest
-      type: object
     InspectProviderRequest:
       description: Request to inspect a specific provider.
       properties:
@@ -13872,7 +13562,6 @@ components:
       required:
       - provider_id
       title: InspectProviderRequest
-      type: object
     MetricInResponse:
       description: A metric value included in API responses.
       properties:
@@ -13893,7 +13582,6 @@ components:
       - metric
       - value
       title: MetricInResponse
-      type: object
     Fp8QuantizationConfig:
       description: Configuration for 8-bit floating point quantization.
       properties:
@@ -13904,7 +13592,6 @@ components:
           title: Type
           type: string
       title: Fp8QuantizationConfig
-      type: object
     Bf16QuantizationConfig:
       description: Configuration for BFloat16 precision (typically no quantization).
       properties:
@@ -13915,7 +13602,6 @@ components:
           title: Type
           type: string
       title: Bf16QuantizationConfig
-      type: object
     Int4QuantizationConfig:
       description: Configuration for 4-bit integer quantization.
       properties:
@@ -13932,7 +13618,6 @@ components:
           default: int4_weight_int8_dynamic_activation
           description: Quantization scheme to use.
       title: Int4QuantizationConfig
-      type: object
     UserMessage:
       description: A message from the user in a chat conversation.
       properties:
@@ -14007,7 +13692,6 @@ components:
       required:
       - content
       title: UserMessage
-      type: object
     ToolResponseMessage:
       description: A message representing the result of a tool invocation.
       properties:
@@ -14055,7 +13739,6 @@ components:
       - call_id
       - content
       title: ToolResponseMessage
-      type: object
     TokenLogProbs:
       description: Log probabilities for generated tokens.
       properties:
@@ -14068,7 +13751,6 @@ components:
       required:
       - logprobs_by_token
       title: TokenLogProbs
-      type: object
     EmbeddingsResponse:
       description: Response containing generated embeddings.
       properties:
@@ -14083,7 +13765,6 @@ components:
       required:
       - embeddings
       title: EmbeddingsResponse
-      type: object
     OpenAICompletionLogprobs:
       description: The log probabilities for the tokens from an OpenAI-compatible completion response.
       properties:
@@ -14122,7 +13803,6 @@ components:
           description: The top log probabilities for the tokens.
           nullable: true
       title: OpenAICompletionLogprobs
-      type: object
     ListChatCompletionsRequest:
       description: Request model for listing chat completions.
       properties:
@@ -14154,7 +13834,6 @@ components:
           description: 'The order to sort the chat completions by: "asc" or "desc". Defaults to "desc".'
           title: Order
       title: ListChatCompletionsRequest
-      type: object
     GetChatCompletionRequest:
       description: Request model for getting a chat completion.
       properties:
@@ -14165,7 +13844,6 @@ components:
       required:
       - completion_id
       title: GetChatCompletionRequest
-      type: object
     EmbeddedChunk:
       description: |-
         A chunk of content with its embedding vector for vector database operations.
@@ -14228,7 +13906,6 @@ components:
       - embedding_model
       - embedding_dimension
       title: EmbeddedChunk
-      type: object
     VectorStoreCreateRequest:
       description: Request to create a vector store.
       properties:
@@ -14259,7 +13936,6 @@ components:
           title: Metadata
           type: object
       title: VectorStoreCreateRequest
-      type: object
     VectorStoreModifyRequest:
       description: Request to modify a vector store.
       properties:
@@ -14281,7 +13957,6 @@ components:
           - type: 'null'
           nullable: true
       title: VectorStoreModifyRequest
-      type: object
     VectorStoreSearchRequest:
       description: Request to search a vector store.
       properties:
@@ -14316,7 +13991,6 @@ components:
       required:
       - query
       title: VectorStoreSearchRequest
-      type: object
     ChunkForDeletion:
       description: Information needed to delete a chunk from a vector store.
       properties:
@@ -14330,7 +14004,6 @@ components:
       - chunk_id
       - document_id
       title: ChunkForDeletion
-      type: object
     DeleteChunksRequest:
       description: Request body for deleting chunks from a vector store.
       properties:
@@ -14348,7 +14021,6 @@ components:
       - vector_store_id
       - chunks
       title: DeleteChunksRequest
-      type: object
     ListBatchesRequest:
       description: Request model for listing batches.
       properties:
@@ -14364,7 +14036,6 @@ components:
           title: Limit
           type: integer
       title: ListBatchesRequest
-      type: object
     RetrieveBatchRequest:
       description: Request model for retrieving a batch.
       properties:
@@ -14375,7 +14046,6 @@ components:
       required:
       - batch_id
       title: RetrieveBatchRequest
-      type: object
     CancelBatchRequest:
       description: Request model for canceling a batch.
       properties:
@@ -14386,7 +14056,6 @@ components:
       required:
       - batch_id
       title: CancelBatchRequest
-      type: object
     ConnectorInput:
       description: Input for creating a connector
       properties:
@@ -14411,7 +14080,6 @@ components:
       - connector_id
       - url
       title: ConnectorInput
-      type: object
     GetConnectorRequest:
       description: Request model for getting a connector by ID.
       properties:
@@ -14422,7 +14090,6 @@ components:
       required:
       - connector_id
       title: GetConnectorRequest
-      type: object
     ListConnectorToolsRequest:
       description: Request model for listing tools from a connector.
       properties:
@@ -14433,7 +14100,6 @@ components:
       required:
       - connector_id
       title: ListConnectorToolsRequest
-      type: object
     GetConnectorToolRequest:
       description: Request model for getting a tool from a connector.
       properties:
@@ -14449,7 +14115,6 @@ components:
       - connector_id
       - tool_name
       title: GetConnectorToolRequest
-      type: object
     ConversationMessage:
       description: OpenAI-compatible message item for conversations.
       properties:
@@ -14488,7 +14153,6 @@ components:
       - role
       - status
       title: ConversationMessage
-      type: object
     ConversationItemCreateRequest:
       description: Request body for creating conversation items.
       properties:
@@ -14533,7 +14197,6 @@ components:
       required:
       - items
       title: ConversationItemCreateRequest
-      type: object
     GetConversationRequest:
       description: Request model for getting a conversation by ID.
       properties:
@@ -14544,7 +14207,6 @@ components:
       required:
       - conversation_id
       title: GetConversationRequest
-      type: object
     DeleteConversationRequest:
       description: Request model for deleting a conversation.
       properties:
@@ -14555,7 +14217,6 @@ components:
       required:
       - conversation_id
       title: DeleteConversationRequest
-      type: object
     RetrieveItemRequest:
       description: Request model for retrieving a conversation item.
       properties:
@@ -14571,7 +14232,6 @@ components:
       - conversation_id
       - item_id
       title: RetrieveItemRequest
-      type: object
     ListItemsRequest:
       description: Request model for listing items in a conversation.
       properties:
@@ -14611,7 +14271,6 @@ components:
       required:
       - conversation_id
       title: ListItemsRequest
-      type: object
     DeleteItemRequest:
       description: Request model for deleting a conversation item.
       properties:
@@ -14627,7 +14286,6 @@ components:
       - conversation_id
       - item_id
       title: DeleteItemRequest
-      type: object
     IterRowsRequest:
       description: Request model for iterating over rows in a dataset.
       properties:
@@ -14650,7 +14308,6 @@ components:
       required:
       - dataset_id
       title: IterRowsRequest
-      type: object
     BenchmarkIdRequest:
       description: Request model containing benchmark_id path parameter.
       properties:
@@ -14662,7 +14319,6 @@ components:
       required:
       - benchmark_id
       title: BenchmarkIdRequest
-      type: object
     JobStatusRequest:
       description: Request model for getting the status of a job.
       properties:
@@ -14680,7 +14336,6 @@ components:
       - benchmark_id
       - job_id
       title: JobStatusRequest
-      type: object
     JobCancelRequest:
       description: Request model for canceling a job.
       properties:
@@ -14698,7 +14353,6 @@ components:
       - benchmark_id
       - job_id
       title: JobCancelRequest
-      type: object
     JobResultRequest:
       description: Request model for getting the result of a job.
       properties:
@@ -14716,7 +14370,6 @@ components:
       - benchmark_id
       - job_id
       title: JobResultRequest
-      type: object
     ProcessFileRequest:
       description: |-
         Request model for file processing operation.
@@ -14759,7 +14412,6 @@ components:
           title: Chunking Strategy
           nullable: true
       title: ProcessFileRequest
-      type: object
     ComparisonFilter:
       description: A filter that compares a metadata field against a value.
       properties:
@@ -14785,7 +14437,6 @@ components:
       - key
       - value
       title: ComparisonFilter
-      type: object
     CompoundFilter:
       description: A filter that combines multiple filters with a logical operator.
       properties:
@@ -14803,7 +14454,6 @@ components:
       - type
       - filters
       title: CompoundFilter
-      type: object
     ListFilesRequest:
       description: Request model for listing files.
       properties:
@@ -14836,7 +14486,6 @@ components:
           nullable: true
           title: OpenAIFilePurpose
       title: ListFilesRequest
-      type: object
     RetrieveFileRequest:
       description: Request model for retrieving a file.
       properties:
@@ -14847,7 +14496,6 @@ components:
       required:
       - file_id
       title: RetrieveFileRequest
-      type: object
     DeleteFileRequest:
       description: Request model for deleting a file.
       properties:
@@ -14858,7 +14506,6 @@ components:
       required:
       - file_id
       title: DeleteFileRequest
-      type: object
     RetrieveFileContentRequest:
       description: Request model for retrieving file content.
       properties:
@@ -14869,7 +14516,6 @@ components:
       required:
       - file_id
       title: RetrieveFileContentRequest
-      type: object
     UploadFileRequest:
       description: Request model for uploading a file.
       properties:
@@ -14887,7 +14533,6 @@ components:
       required:
       - purpose
       title: UploadFileRequest
-      type: object
     ListPromptVersionsRequest:
       description: Request model for listing all versions of a prompt.
       properties:
@@ -14898,7 +14543,6 @@ components:
       required:
       - prompt_id
       title: ListPromptVersionsRequest
-      type: object
     GetPromptRequest:
       description: Request model for getting a prompt by ID and optional version.
       properties:
@@ -14915,7 +14559,6 @@ components:
       required:
       - prompt_id
       title: GetPromptRequest
-      type: object
     DeletePromptRequest:
       description: Request model for deleting a prompt.
       properties:
@@ -14926,7 +14569,6 @@ components:
       required:
       - prompt_id
       title: DeletePromptRequest
-      type: object
   responses:
     BadRequest400:
       description: The request was invalid or malformed

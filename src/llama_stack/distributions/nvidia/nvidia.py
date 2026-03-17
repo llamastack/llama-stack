@@ -27,7 +27,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
             BuildProvider(provider_type="remote::nvidia"),
         ],
         "scoring": [BuildProvider(provider_type="inline::basic")],
-        "tool_runtime": [BuildProvider(provider_type="inline::rag-runtime")],
+        "tool_runtime": [BuildProvider(provider_type="inline::file-search")],
         "files": [BuildProvider(provider_type="inline::localfs")],
     }
 
