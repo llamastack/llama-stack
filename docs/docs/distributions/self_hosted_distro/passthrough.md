@@ -15,9 +15,9 @@ The `llamastack/distribution-passthrough` distribution consists of the following
 
 | API | Provider(s) |
 |-----|-------------|
-| agents | `inline::meta-reference` |
+| agents | `inline::builtin` |
 | datasetio | `remote::huggingface`, `inline::localfs` |
-| eval | `inline::meta-reference` |
+| eval | `inline::builtin` |
 | inference | `remote::passthrough`, `inline::sentence-transformers` |
 | safety | `inline::llama-guard` |
 | scoring | `inline::basic`, `inline::llm-as-judge`, `inline::braintrust` |

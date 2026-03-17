@@ -33,7 +33,7 @@ Some providers may support basic vector operations but lack full file operations
 
 | Provider | Status | Notes |
 |----------|--------|-------|
-| **Meta Reference** | 🔄 Basic | Core vector operations only |
+| **Builtin** | 🔄 Basic | Core vector operations only |
 
 ## File Operations Features
 

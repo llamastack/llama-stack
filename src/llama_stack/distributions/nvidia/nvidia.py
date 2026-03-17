@@ -20,7 +20,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         "inference": [BuildProvider(provider_type="remote::nvidia")],
         "vector_io": [BuildProvider(provider_type="inline::faiss")],
         "safety": [BuildProvider(provider_type="remote::nvidia")],
-        "agents": [BuildProvider(provider_type="inline::meta-reference")],
+        "agents": [BuildProvider(provider_type="inline::builtin")],
         "eval": [BuildProvider(provider_type="remote::nvidia")],
         "datasetio": [
             BuildProvider(provider_type="inline::localfs"),
@@ -52,7 +52,7 @@ def get_distribution_template(name: str = "nvidia") -> DistributionTemplate:
         config=NVIDIAEvalConfig.sample_run_config(),
     )
     files_provider = Provider(
-        provider_id="meta-reference-files",
+        provider_id="builtin-files",
         provider_type="inline::localfs",
         config=LocalfsFilesImplConfig.sample_run_config(f"~/.llama/distributions/{name}"),
     )

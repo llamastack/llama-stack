@@ -8,7 +8,7 @@ The `llamastack/distribution-nvidia` distribution consists of the following prov
 
 | API | Provider(s) |
 |-----|-------------|
-| agents | `inline::meta-reference` |
+| agents | `inline::builtin` |
 | datasetio | `inline::localfs`, `remote::nvidia` |
 | eval | `remote::nvidia` |
 | files | `inline::localfs` |

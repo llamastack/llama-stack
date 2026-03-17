@@ -50,11 +50,11 @@ def config_with_distro_name_int():
         providers:
           inference:
             - provider_id: provider1
-              provider_type: inline::meta-reference
+              provider_type: remote::ollama
               config: {{}}
           safety:
             - provider_id: provider1
-              provider_type: inline::meta-reference
+              provider_type: inline::llama-guard
               config:
                 llama_guard_shield:
                   model: Llama-Guard-3-1B
@@ -64,7 +64,7 @@ def config_with_distro_name_int():
                 enable_prompt_guard: false
           memory:
             - provider_id: provider1
-              provider_type: inline::meta-reference
+              provider_type: inline::builtin
               config: {{}}
     """
     )
@@ -102,11 +102,11 @@ def up_to_date_config():
         providers:
           inference:
             - provider_id: provider1
-              provider_type: inline::meta-reference
+              provider_type: remote::ollama
               config: {{}}
           safety:
             - provider_id: provider1
-              provider_type: inline::meta-reference
+              provider_type: inline::llama-guard
               config:
                 llama_guard_shield:
                   model: Llama-Guard-3-1B
@@ -116,7 +116,7 @@ def up_to_date_config():
                 enable_prompt_guard: false
           memory:
             - provider_id: provider1
-              provider_type: inline::meta-reference
+              provider_type: inline::builtin
               config: {{}}
     """
     )
@@ -136,13 +136,13 @@ def old_config():
                 host: localhost
                 port: 11434
               routing_key: Llama3.2-1B-Instruct
-            - provider_type: inline::meta-reference
+            - provider_type: remote::openai
               config:
-                model: Llama3.1-8B-Instruct
+                api_key: sk-test
               routing_key: Llama3.1-8B-Instruct
           safety:
             - routing_key: ["shield1", "shield2"]
-              provider_type: inline::meta-reference
+              provider_type: inline::llama-guard
               config:
                 llama_guard_shield:
                   model: Llama-Guard-3-1B
@@ -152,7 +152,7 @@ def old_config():
                 enable_prompt_guard: false
           memory:
             - routing_key: vector
-              provider_type: inline::meta-reference
+              provider_type: inline::builtin
               config: {{}}
         api_providers:
     """
@@ -180,14 +180,14 @@ def test_parse_and_maybe_upgrade_config_old_format(old_config):
     assert result.version == LLAMA_STACK_RUN_CONFIG_VERSION
     assert all(api in result.providers for api in ["inference", "safety", "memory"])
     safety_provider = result.providers["safety"][0]
-    assert safety_provider.provider_type == "inline::meta-reference"
+    assert safety_provider.provider_type == "inline::llama-guard"
     assert "llama_guard_shield" in safety_provider.config
 
     inference_providers = result.providers["inference"]
     assert len(inference_providers) == 2
     assert {x.provider_id for x in inference_providers} == {
         "remote::ollama-00",
-        "inline::meta-reference-01",
+        "remote::openai-01",
     }
 
     ollama = inference_providers[0]
@@ -337,7 +337,7 @@ def config_with_image_name():
         providers:
           inference:
             - provider_id: provider1
-              provider_type: inline::meta-reference
+              provider_type: remote::ollama
               config: {{}}
     """
     )
@@ -403,7 +403,7 @@ def test_parse_config_with_both_names_prefers_distro_name():
         providers:
           inference:
             - provider_id: provider1
-              provider_type: inline::meta-reference
+              provider_type: remote::ollama
               config: {{}}
     """
     )

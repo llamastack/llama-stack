@@ -36,7 +36,7 @@ For running integration tests, you must provide a few things:
   - **`server:<config>:<port>`** - same as above but with a custom port (e.g., `server:starter:8322`)
   - a URL which points to a Llama Stack distribution server
   - a distribution name (e.g., `starter`) or a path to a `config.yaml` file
-  - a comma-separated list of api=provider pairs, e.g. `inference=fireworks,safety=llama-guard,agents=meta-reference`. This is most useful for testing a single API surface.
+  - a comma-separated list of api=provider pairs, e.g. `inference=fireworks,safety=llama-guard,agents=builtin`. This is most useful for testing a single API surface.
 
 - Any API keys you need to use should be set in the environment, or can be passed in with the --env option.
 

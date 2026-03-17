@@ -72,8 +72,8 @@ providers:
     config:
       excluded_categories: []
   agents:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       persistence:
         agent_state:
@@ -85,8 +85,8 @@ providers:
           max_write_queue_size: 10000
           num_writers: 4
   eval:
-  - provider_id: meta-reference
-    provider_type: inline::meta-reference
+  - provider_id: builtin
+    provider_type: inline::builtin
     config:
       kvstore:
         namespace: eval
@@ -227,32 +227,32 @@ registered_resources:
     scoring_functions:
     - llm-as-judge::405b-simpleqa
     metadata: {}
-    benchmark_id: meta-reference-simpleqa
+    benchmark_id: builtin-simpleqa
   - dataset_id: mmlu_cot
     scoring_functions:
     - basic::regex_parser_multiple_choice_answer
     metadata: {}
-    benchmark_id: meta-reference-mmlu-cot
+    benchmark_id: builtin-mmlu-cot
   - dataset_id: gpqa_cot
     scoring_functions:
     - basic::regex_parser_multiple_choice_answer
     metadata: {}
-    benchmark_id: meta-reference-gpqa-cot
+    benchmark_id: builtin-gpqa-cot
   - dataset_id: math_500
     scoring_functions:
     - basic::regex_parser_math_response
     metadata: {}
-    benchmark_id: meta-reference-math-500
+    benchmark_id: builtin-math-500
   - dataset_id: ifeval
     scoring_functions:
     - basic::ifeval
     metadata: {}
-    benchmark_id: meta-reference-ifeval
+    benchmark_id: builtin-ifeval
   - dataset_id: docvqa
     scoring_functions:
     - basic::docvqa
     metadata: {}
-    benchmark_id: meta-reference-docvqa
+    benchmark_id: builtin-docvqa
   tool_groups:
   - toolgroup_id: builtin::websearch
     provider_id: tavily-search
