@@ -86,18 +86,25 @@ class VectorIORouter(VectorIO):
         logger.debug("VectorIORouter.shutdown")
         pass
 
-    def _get_provider_id(self, vector_store_id: str) -> str | None:
-        """Get the provider ID for a vector store from the routing table's cached registry.
+    def _get_provider_id(self, vector_store_id: str) -> str:
+        """Get the provider ID for a vector store for metrics labeling (best-effort).
 
         Uses the same in-memory cache (get_cached) that the routing table's
         get_provider_impl uses when dispatching operations, so this does NOT
         cause an extra DB/async lookup on the hot path.
+
+        Returns "unknown" only as a fallback so that a metrics-label lookup
+        failure never blocks the actual operation.
         """
         try:
             obj = self.routing_table.dist_registry.get_cached("vector_store", vector_store_id)
-            return obj.provider_id if obj else None
+            if obj is None:
+                logger.warning(f"Vector store {vector_store_id} not found in registry cache")
+                return "unknown"
+            return obj.provider_id
         except Exception:
-            return None
+            logger.warning(f"Could not resolve provider for vector store {vector_store_id}", exc_info=True)
+            return "unknown"
 
     async def _rewrite_query_for_search(self, query: str) -> str:
         """Rewrite a search query using the configured LLM model for better retrieval results."""
