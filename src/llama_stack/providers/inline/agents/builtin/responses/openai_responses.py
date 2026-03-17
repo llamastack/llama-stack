@@ -5,12 +5,13 @@
 # the root directory of this source tree.
 
 import asyncio
-import contextlib
 import re
 import time
 import uuid
 from collections.abc import AsyncIterator
+from dataclasses import dataclass, field
 
+from opentelemetry import context as otel_context
 from pydantic import BaseModel, TypeAdapter
 
 from llama_stack.core.conversations.validation import CONVERSATION_ID_PATTERN
@@ -84,6 +85,14 @@ BACKGROUND_QUEUE_MAX_SIZE = 100
 BACKGROUND_NUM_WORKERS = 10
 
 
+@dataclass
+class _BackgroundWorkItem:
+    """Typed queue item for background response processing."""
+
+    otel_context: otel_context.Context
+    kwargs: dict = field(default_factory=dict)
+
+
 class OpenAIResponsePreviousResponseWithInputItems(BaseModel):
     input_items: ListOpenAIResponseInputItem
     response: OpenAIResponseObject
@@ -120,7 +129,7 @@ class OpenAIResponsesImpl:
         self.prompts_api = prompts_api
         self.files_api = files_api
         self.connectors_api = connectors_api
-        self._background_queue: asyncio.Queue = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
+        self._background_queue: asyncio.Queue[_BackgroundWorkItem] = asyncio.Queue(maxsize=BACKGROUND_QUEUE_MAX_SIZE)
         self._background_worker_tasks: set[asyncio.Task] = set()
 
     async def initialize(self) -> None:
@@ -148,16 +157,15 @@ class OpenAIResponsesImpl:
     async def _background_worker(self) -> None:
         """Worker coroutine that pulls items from the queue and processes them."""
         while True:
-            kwargs = await self._background_queue.get()
-            ctx = kwargs.pop("_otel_context", None)
-            with activate_otel_context(ctx) if ctx else contextlib.nullcontext():
+            item = await self._background_queue.get()
+            with activate_otel_context(item.otel_context):
                 try:
                     await asyncio.wait_for(
-                        self._run_background_response_loop(**kwargs),
+                        self._run_background_response_loop(**item.kwargs),
                         timeout=BACKGROUND_RESPONSE_TIMEOUT_SECONDS,
                     )
                 except TimeoutError:
-                    response_id = kwargs["response_id"]
+                    response_id = item.kwargs["response_id"]
                     logger.exception(
                         f"Background response {response_id} timed out after {BACKGROUND_RESPONSE_TIMEOUT_SECONDS}s"
                     )
@@ -175,7 +183,7 @@ class OpenAIResponsesImpl:
                             "Client polling this response will not see the failure."
                         )
                 except Exception as e:
-                    response_id = kwargs["response_id"]
+                    response_id = item.kwargs["response_id"]
                     logger.exception(f"Error processing background response {response_id}")
                     try:
                         existing = await self.responses_store.get_response_object(response_id)
@@ -824,34 +832,36 @@ class OpenAIResponsesImpl:
         # Enqueue work item for background workers. Raises QueueFull if at capacity.
         try:
             self._background_queue.put_nowait(
-                dict(
-                    response_id=response_id,
-                    input=input,
-                    model=model,
-                    prompt=prompt,
-                    instructions=instructions,
-                    previous_response_id=previous_response_id,
-                    conversation=conversation,
-                    store=store,
-                    temperature=temperature,
-                    frequency_penalty=frequency_penalty,
-                    text=text,
-                    tool_choice=tool_choice,
-                    tools=tools,
-                    include=include,
-                    max_infer_iters=max_infer_iters,
-                    guardrail_ids=guardrail_ids,
-                    parallel_tool_calls=parallel_tool_calls,
-                    max_tool_calls=max_tool_calls,
-                    reasoning=reasoning,
-                    max_output_tokens=max_output_tokens,
-                    safety_identifier=safety_identifier,
-                    service_tier=service_tier,
-                    metadata=metadata,
-                    truncation=truncation,
-                    presence_penalty=presence_penalty,
-                    extra_body=extra_body,
-                    _otel_context=capture_otel_context(),
+                _BackgroundWorkItem(
+                    otel_context=capture_otel_context(),
+                    kwargs=dict(
+                        response_id=response_id,
+                        input=input,
+                        model=model,
+                        prompt=prompt,
+                        instructions=instructions,
+                        previous_response_id=previous_response_id,
+                        conversation=conversation,
+                        store=store,
+                        temperature=temperature,
+                        frequency_penalty=frequency_penalty,
+                        text=text,
+                        tool_choice=tool_choice,
+                        tools=tools,
+                        include=include,
+                        max_infer_iters=max_infer_iters,
+                        guardrail_ids=guardrail_ids,
+                        parallel_tool_calls=parallel_tool_calls,
+                        max_tool_calls=max_tool_calls,
+                        reasoning=reasoning,
+                        max_output_tokens=max_output_tokens,
+                        safety_identifier=safety_identifier,
+                        service_tier=service_tier,
+                        metadata=metadata,
+                        truncation=truncation,
+                        presence_penalty=presence_penalty,
+                        extra_body=extra_body,
+                    ),
                 )
             )
         except asyncio.QueueFull:

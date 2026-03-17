@@ -15,7 +15,10 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor, SpanExporter, SpanExportResult
 
 from llama_stack.core.task import capture_otel_context, create_task_with_detached_otel_context
-from llama_stack.providers.inline.agents.builtin.responses.openai_responses import OpenAIResponsesImpl
+from llama_stack.providers.inline.agents.builtin.responses.openai_responses import (
+    OpenAIResponsesImpl,
+    _BackgroundWorkItem,
+)
 from llama_stack_api import OpenAIResponseError, OpenAIResponseObject
 
 
@@ -207,10 +210,14 @@ class TestResponsesOtelContextPropagation:
             worker_task = create_task_with_detached_otel_context(impl._background_worker())
 
             with tracer.start_as_current_span("request-A"):
-                impl._background_queue.put_nowait(dict(response_id="resp-A", _otel_context=capture_otel_context()))
+                impl._background_queue.put_nowait(
+                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="resp-A"))
+                )
 
             with tracer.start_as_current_span("request-B"):
-                impl._background_queue.put_nowait(dict(response_id="resp-B", _otel_context=capture_otel_context()))
+                impl._background_queue.put_nowait(
+                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="resp-B"))
+                )
 
             await impl._background_queue.join()
             worker_task.cancel()
@@ -259,10 +266,14 @@ class TestResponsesOtelContextPropagation:
             worker_task = create_task_with_detached_otel_context(impl._background_worker())
 
             with tracer.start_as_current_span("req-1"):
-                impl._background_queue.put_nowait(dict(response_id="r1", _otel_context=capture_otel_context()))
+                impl._background_queue.put_nowait(
+                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="r1"))
+                )
 
             with tracer.start_as_current_span("req-2"):
-                impl._background_queue.put_nowait(dict(response_id="r2", _otel_context=capture_otel_context()))
+                impl._background_queue.put_nowait(
+                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="r2"))
+                )
 
             await impl._background_queue.join()
             worker_task.cancel()
@@ -320,7 +331,9 @@ class TestResponsesOtelContextPropagation:
 
             with tracer.start_as_current_span("failing-request"):
                 request_trace = trace.get_current_span().get_span_context().trace_id
-                impl._background_queue.put_nowait(dict(response_id="resp-err", _otel_context=capture_otel_context()))
+                impl._background_queue.put_nowait(
+                    _BackgroundWorkItem(otel_context=capture_otel_context(), kwargs=dict(response_id="resp-err"))
+                )
 
             await impl._background_queue.join()
             worker_task.cancel()
