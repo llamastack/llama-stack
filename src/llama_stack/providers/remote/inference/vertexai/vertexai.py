@@ -145,8 +145,11 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
     _http_options: genai_types.HttpOptions | None = PrivateAttr(default=None)
     _model_cache: dict[str, Model] = PrivateAttr(default_factory=dict)
     embedding_model_metadata: dict[str, dict[str, int]] = {
-        "text-embedding-004": {"embedding_dimension": 768, "context_length": 2048},
-        "gemini-embedding-001": {"embedding_dimension": 3072, "context_length": 2048},
+        "publishers/google/models/text-embedding-004": {"embedding_dimension": 768, "context_length": 2048},
+        "publishers/google/models/gemini-embedding-001": {"embedding_dimension": 3072, "context_length": 2048},
+        # Gemini API format (vertexai=False) uses the "models/" prefix.
+        "models/text-embedding-004": {"embedding_dimension": 768, "context_length": 2048},
+        "models/gemini-embedding-001": {"embedding_dimension": 3072, "context_length": 2048},
     }
 
     async def _close_managed_httpx_client(self) -> None:
@@ -300,11 +303,14 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
         return model
 
     async def list_provider_model_ids(self) -> list[str]:
-        # NOTE: Model IDs are returned as-is from the Gemini API (e.g.
-        # "gemini-2.5-flash") without a vendor prefix.  Users migrating from
-        # the previous OpenAI-compatible VertexAI provider may have workflows
-        # that reference models with a "google/" prefix — those references
-        # will need to be updated.
+        """List model IDs available from the configured Vertex AI project.
+
+        Returns model names exactly as the ``google-genai`` SDK provides them
+        (e.g. ``publishers/google/models/gemini-2.5-flash`` for Vertex AI,
+        ``models/gemini-2.5-flash`` for the Gemini API).  No prefix stripping
+        is applied because the SDK's internal ``t_model()`` normalizer already
+        accepts all resource-name formats when making API calls.
+        """
         client = self._get_client()
         config = genai_types.ListModelsConfig(query_base=True)
         result: list[str] = []
@@ -314,10 +320,9 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
                 continue
 
             name = getattr(model, "name", "") or ""
-            model_id = name.removeprefix("models/")
-            if not model_id:
+            if not name:
                 continue
-            result.append(model_id)
+            result.append(name)
 
         return list(dict.fromkeys(result))
 
@@ -652,7 +657,6 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
     ) -> OpenAIChatCompletion | AsyncIterator[OpenAIChatCompletionChunk]:
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
-        gemini_model_id = converters.convert_model_name(provider_model_id)
         client = self._get_client()
 
         self._warn_unsupported_chat_params(params)
@@ -675,7 +679,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
         if params.stream:
             return await self._stream_chat_completion(
                 client,
-                gemini_model_id,
+                provider_model_id,
                 request_contents,
                 config,
                 params.model,
@@ -683,7 +687,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
             )
 
         response = await client.aio.models.generate_content(
-            model=gemini_model_id,
+            model=provider_model_id,
             contents=request_contents,
             config=config,
         )
@@ -737,7 +741,6 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
 
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
-        gemini_model_id = converters.convert_model_name(provider_model_id)
         client = self._get_client()
         config = self._build_completion_config(params)
 
@@ -763,7 +766,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
                     contents = converters.convert_completion_prompt_to_contents(prompt)
                     per_prompt_stream = await self._stream_completion(
                         client,
-                        gemini_model_id,
+                        provider_model_id,
                         contents,
                         config,
                         params.model,
@@ -788,7 +791,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
             contents = converters.convert_completion_prompt_to_contents(prompt)
             request_contents = cast(Any, contents)
             response = await client.aio.models.generate_content(
-                model=gemini_model_id,
+                model=provider_model_id,
                 contents=request_contents,
                 config=config,
             )
@@ -829,7 +832,6 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
 
         provider_model_id = await self._get_provider_model_id(params.model)
         self._validate_model_allowed(provider_model_id)
-        gemini_model_id = converters.convert_model_name(provider_model_id)
         client = self._get_client()
 
         config_kwargs: dict[str, Any] = {}
@@ -840,7 +842,7 @@ class VertexAIInferenceAdapter(NeedsRequestProviderData, BaseModel):
         config = genai_types.EmbedContentConfig(**config_kwargs) if config_kwargs else None
 
         response = await client.aio.models.embed_content(
-            model=gemini_model_id,
+            model=provider_model_id,
             contents=cast(Any, params.input),
             config=config,
         )

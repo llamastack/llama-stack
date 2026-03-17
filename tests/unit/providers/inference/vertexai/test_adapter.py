@@ -82,10 +82,6 @@ def patch_chat_completion_dependencies(monkeypatch):
         monkeypatch.setattr(adapter, "_get_provider_model_id", _provider_model_id)
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
 
         if capture_generation_kwargs:
 
@@ -283,19 +279,19 @@ class TestVertexAIModelListing:
 
         result = await adapter.list_provider_model_ids()
 
-        assert "gemini-2.5-flash" in result
-        assert "gemini-2.5-pro" in result
-        assert "text-embedding-004" in result
+        assert "models/gemini-2.5-flash" in result
+        assert "models/gemini-2.5-pro" in result
+        assert "models/text-embedding-004" in result
         assert "" not in result
 
     @pytest.mark.parametrize(
         "index,expected_id,expected_type,expected_metadata",
         [
-            pytest.param(0, "gemini-2.5-flash", ModelType.llm, None, id="flash_llm"),
-            pytest.param(1, "gemini-2.5-pro", ModelType.llm, None, id="pro_llm"),
+            pytest.param(0, "models/gemini-2.5-flash", ModelType.llm, None, id="flash_llm"),
+            pytest.param(1, "models/gemini-2.5-pro", ModelType.llm, None, id="pro_llm"),
             pytest.param(
                 2,
-                "gemini-embedding-001",
+                "models/gemini-embedding-001",
                 ModelType.embedding,
                 {"embedding_dimension": 3072, "context_length": 2048},
                 id="embedding",
@@ -309,7 +305,7 @@ class TestVertexAIModelListing:
         monkeypatch.setattr(
             adapter,
             "list_provider_model_ids",
-            AsyncMock(return_value=["gemini-2.5-flash", "gemini-2.5-pro", "gemini-embedding-001"]),
+            AsyncMock(return_value=["models/gemini-2.5-flash", "models/gemini-2.5-pro", "models/gemini-embedding-001"]),
         )
 
         models = await adapter.list_models()
@@ -325,18 +321,18 @@ class TestVertexAIModelListing:
 
     async def test_list_models_respects_allowed_models(self, monkeypatch, adapter: VertexAIInferenceAdapter):
         """Test that list models respects allowed models."""
-        monkeypatch.setattr(adapter.config, "allowed_models", ["gemini-2.5-flash"])
+        monkeypatch.setattr(adapter.config, "allowed_models", ["models/gemini-2.5-flash"])
         monkeypatch.setattr(
             adapter,
             "list_provider_model_ids",
-            AsyncMock(return_value=["gemini-2.5-flash", "gemini-2.5-pro"]),
+            AsyncMock(return_value=["models/gemini-2.5-flash", "models/gemini-2.5-pro"]),
         )
 
         models = await adapter.list_models()
 
         assert models is not None
         assert len(models) == 1
-        assert models[0].identifier == "gemini-2.5-flash"
+        assert models[0].identifier == "models/gemini-2.5-flash"
 
     async def test_list_models_propagates_errors(self, monkeypatch):
         """Test that list models propagates errors."""
@@ -365,8 +361,8 @@ class TestVertexAIModelAvailability:
     @pytest.mark.parametrize(
         "model,available_models,error,expected",
         [
-            ("gemini-2.5-flash", ["gemini-2.5-flash"], None, True),
-            ("nonexistent-model", ["gemini-2.5-flash"], None, False),
+            ("models/gemini-2.5-flash", ["models/gemini-2.5-flash"], None, True),
+            ("nonexistent-model", ["models/gemini-2.5-flash"], None, False),
             ("anything", None, RuntimeError("offline"), True),
         ],
     )
@@ -397,15 +393,15 @@ class TestVertexAIModelAvailability:
 
     async def test_cache_hit_avoids_api_call(self, monkeypatch, adapter: VertexAIInferenceAdapter):
         """Verify lazy load + cache reuse prevents redundant API calls."""
-        mock = AsyncMock(return_value=["gemini-2.5-flash"])
+        mock = AsyncMock(return_value=["models/gemini-2.5-flash"])
         monkeypatch.setattr(adapter, "list_provider_model_ids", mock)
 
         # First call populates cache (triggers list_models → list_provider_model_ids)
-        result1 = await adapter.check_model_availability("gemini-2.5-flash")
+        result1 = await adapter.check_model_availability("models/gemini-2.5-flash")
         assert result1 is True
 
         # Second call uses cache — list_provider_model_ids NOT called again
-        result2 = await adapter.check_model_availability("gemini-2.5-flash")
+        result2 = await adapter.check_model_availability("models/gemini-2.5-flash")
         assert result2 is True
 
         assert mock.call_count == 1  # API called exactly once
@@ -414,11 +410,11 @@ class TestVertexAIModelAvailability:
         self, monkeypatch, adapter: VertexAIInferenceAdapter
     ):
         """Once cache is populated, unknown model returns False without hitting API again."""
-        mock = AsyncMock(return_value=["gemini-2.5-flash"])
+        mock = AsyncMock(return_value=["models/gemini-2.5-flash"])
         monkeypatch.setattr(adapter, "list_provider_model_ids", mock)
 
         # Populate the cache via first check
-        await adapter.check_model_availability("gemini-2.5-flash")
+        await adapter.check_model_availability("models/gemini-2.5-flash")
 
         # Unknown model — must return False using cache, NOT re-call API
         result = await adapter.check_model_availability("nonexistent-model")
@@ -430,30 +426,30 @@ class TestVertexAIModelAvailability:
         monkeypatch.setattr(
             adapter,
             "list_provider_model_ids",
-            AsyncMock(return_value=["gemini-2.5-flash", "gemini-2.5-pro"]),
+            AsyncMock(return_value=["models/gemini-2.5-flash", "models/gemini-2.5-pro"]),
         )
 
         await adapter.list_models()
 
-        assert "gemini-2.5-flash" in adapter._model_cache
-        assert "gemini-2.5-pro" in adapter._model_cache
+        assert "models/gemini-2.5-flash" in adapter._model_cache
+        assert "models/gemini-2.5-pro" in adapter._model_cache
         assert len(adapter._model_cache) == 2
 
     async def test_list_models_clears_cache_on_refresh(self, monkeypatch, adapter: VertexAIInferenceAdapter):
         """Verify cache is cleared and repopulated on list_models() call."""
-        mock = AsyncMock(return_value=["model-a"])
+        mock = AsyncMock(return_value=["models/model-a"])
         monkeypatch.setattr(adapter, "list_provider_model_ids", mock)
 
         await adapter.list_models()
-        assert "model-a" in adapter._model_cache
+        assert "models/model-a" in adapter._model_cache
 
         # Change what the API returns
-        mock.return_value = ["model-b"]
+        mock.return_value = ["models/model-b"]
         await adapter.list_models()
 
         # Cache should now only have model-b, not model-a
-        assert "model-b" in adapter._model_cache
-        assert "model-a" not in adapter._model_cache
+        assert "models/model-b" in adapter._model_cache
+        assert "models/model-a" not in adapter._model_cache
         assert len(adapter._model_cache) == 1
 
 
@@ -461,17 +457,17 @@ class TestVertexAIAllowedModelsValidation:
     def test_validate_allowed_model_passes(self):
         """Test that validate allowed model passes."""
         adapter = VertexAIInferenceAdapter(
-            config=VertexAIConfig(project="p", location="l", allowed_models=["gemini-2.5-flash"]),
+            config=VertexAIConfig(project="p", location="l", allowed_models=["models/gemini-2.5-flash"]),
         )
-        adapter._validate_model_allowed("gemini-2.5-flash")
+        adapter._validate_model_allowed("models/gemini-2.5-flash")
 
     def test_validate_disallowed_model_raises(self):
         """Test that validate disallowed model raises."""
         adapter = VertexAIInferenceAdapter(
-            config=VertexAIConfig(project="p", location="l", allowed_models=["gemini-2.5-flash"]),
+            config=VertexAIConfig(project="p", location="l", allowed_models=["models/gemini-2.5-flash"]),
         )
         with pytest.raises(ValueError, match="not in the allowed models list"):
-            adapter._validate_model_allowed("gemini-2.5-pro")
+            adapter._validate_model_allowed("models/gemini-2.5-pro")
 
     def test_validate_no_allowed_models_passes_anything(self):
         """Test that validate no allowed models passes anything."""
@@ -1353,10 +1349,6 @@ class TestTelemetryStreamOptions:
         monkeypatch.setattr(adapter, "_get_provider_model_id", _provider_model_id)
         monkeypatch.setattr(adapter, "_validate_model_allowed", lambda _: None)
         monkeypatch.setattr(adapter, "_get_client", lambda: fake_client)
-        monkeypatch.setattr(
-            "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_model_name",
-            lambda _: "gemini-2.5-flash",
-        )
         monkeypatch.setattr(adapter, "_build_generation_config", lambda *_args, **_kwargs: object())
         monkeypatch.setattr(
             "llama_stack.providers.remote.inference.vertexai.vertexai.converters.convert_openai_messages_to_gemini",
