@@ -17,6 +17,7 @@ async def get_adapter_impl(config: OCI26aiVectorIOConfig, deps: dict[Api, Provid
     assert isinstance(config, OCI26aiVectorIOConfig), f"Unexpected config type: {type(config)}"
     inference_api = cast(Inference, deps[Api.inference])
     files_api = cast(Files | None, deps.get(Api.files))
-    impl = OCI26aiVectorIOAdapter(config, inference_api, files_api)
+    file_processors_api = deps.get(Api.file_processors)
+    impl = OCI26aiVectorIOAdapter(config, inference_api, files_api, file_processors_api)
     await impl.initialize()
     return impl

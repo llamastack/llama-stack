@@ -5,10 +5,12 @@
 # the root directory of this source tree.
 
 import io
+import mimetypes
 import time
 import uuid
 from typing import Any
 
+import chardet
 from fastapi import HTTPException, UploadFile
 from pypdf import PdfReader
 
@@ -33,7 +35,7 @@ SINGLE_CHUNK_WINDOW_TOKENS = 1_000_000
 class PyPDFFileProcessor:
     """PyPDF-based file processor for PDF documents."""
 
-    def __init__(self, config: PyPDFFileProcessorConfig, files_api=None) -> None:
+    def __init__(self, config: PyPDFFileProcessorConfig, files_api) -> None:
         self.config = config
         self.files_api = files_api
 
@@ -44,7 +46,7 @@ class PyPDFFileProcessor:
         options: dict[str, Any] | None = None,
         chunking_strategy: VectorStoreChunkingStrategy | None = None,
     ) -> ProcessFileResponse:
-        """Process a PDF file and return chunks."""
+        """Process a file and return chunks. Supports PDF and text-based files."""
 
         # Validate input
         if not file and not file_id:
@@ -54,62 +56,79 @@ class PyPDFFileProcessor:
 
         start_time = time.time()
 
-        # Get PDF content
+        # Get file content
         if file:
-            # Read from uploaded file
-            content = await file.read()
-            if len(content) > self.config.max_file_size_bytes:
-                raise ValueError(
-                    f"File size {len(content)} bytes exceeds maximum of {self.config.max_file_size_bytes} bytes"
-                )
+            content_parts = []
+            bytes_read = 0
+            while True:
+                chunk = await file.read(64 * 1024)
+                if not chunk:
+                    break
+                bytes_read += len(chunk)
+                if bytes_read > self.config.max_file_size_bytes:
+                    raise ValueError(f"File size exceeds maximum of {self.config.max_file_size_bytes} bytes")
+                content_parts.append(chunk)
+            content = b"".join(content_parts)
             filename = file.filename or f"{uuid.uuid4()}.pdf"
         elif file_id:
-            # Get file from file storage using Files API
-            if not self.files_api:
-                raise ValueError("Files API not available - cannot process file_id")
-
-            # Get file metadata
-            file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
+            try:
+                file_info = await self.files_api.openai_retrieve_file(RetrieveFileRequest(file_id=file_id))
+            except Exception as e:
+                raise ValueError(f"File with id '{file_id}' not found") from e
             filename = file_info.filename
 
-            # Get file content
             content_response = await self.files_api.openai_retrieve_file_content(
                 RetrieveFileContentRequest(file_id=file_id)
             )
             content = content_response.body
+            if len(content) > self.config.max_file_size_bytes:
+                raise ValueError(
+                    f"File size {len(content)} bytes exceeds maximum of {self.config.max_file_size_bytes} bytes"
+                )
 
+        mime_type, _ = mimetypes.guess_type(filename)
+        mime_category = mime_type.split("/")[0] if mime_type else None
+
+        if mime_type == "application/pdf":
+            return self._process_pdf(content, filename, file_id, chunking_strategy, start_time)
+        elif mime_category == "text":
+            return self._process_text(content, filename, file_id, chunking_strategy, start_time)
+        else:
+            # Attempt text decoding as a fallback for unknown types
+            log.warning(f"Unknown mime type '{mime_type}' for file '{filename}', attempting text extraction")
+            return self._process_text(content, filename, file_id, chunking_strategy, start_time)
+
+    def _process_pdf(
+        self,
+        content: bytes,
+        filename: str,
+        file_id: str | None,
+        chunking_strategy: VectorStoreChunkingStrategy | None,
+        start_time: float,
+    ) -> ProcessFileResponse:
+        """Process a PDF file."""
         pdf_bytes = io.BytesIO(content)
         reader = PdfReader(pdf_bytes)
 
         if reader.is_encrypted:
             raise HTTPException(status_code=422, detail="Password-protected PDFs are not supported")
 
-        # Extract text from PDF
         text_content, failed_pages = self._extract_pdf_text(reader)
 
-        # Clean text if configured
         if self.config.clean_text:
             text_content = self._clean_text(text_content)
 
-        # Extract metadata if configured
         pdf_metadata = {}
         if self.config.extract_metadata:
             pdf_metadata = self._extract_pdf_metadata(reader)
 
         document_id = str(uuid.uuid4())
-
-        # Prepare document metadata (include filename and file_id)
-        document_metadata = {
-            "filename": filename,
-            **pdf_metadata,
-        }
+        document_metadata: dict[str, Any] = {"filename": filename, **pdf_metadata}
         if file_id:
             document_metadata["file_id"] = file_id
 
         processing_time_ms = int((time.time() - start_time) * 1000)
-
-        # Create response metadata
-        response_metadata = {
+        response_metadata: dict[str, Any] = {
             "processor": "pypdf",
             "processing_time_ms": processing_time_ms,
             "page_count": pdf_metadata.get("page_count", 0),
@@ -120,13 +139,48 @@ class PyPDFFileProcessor:
         if failed_pages:
             response_metadata["failed_pages"] = failed_pages
 
-        # Handle empty text - return empty chunks with metadata
         if not text_content or not text_content.strip():
             return ProcessFileResponse(chunks=[], metadata=response_metadata)
 
-        # Create chunks for non-empty text
         chunks = self._create_chunks(text_content, document_id, chunking_strategy, document_metadata)
+        return ProcessFileResponse(chunks=chunks, metadata=response_metadata)
 
+    def _process_text(
+        self,
+        content: bytes,
+        filename: str,
+        file_id: str | None,
+        chunking_strategy: VectorStoreChunkingStrategy | None,
+        start_time: float,
+    ) -> ProcessFileResponse:
+        """Process a text-based file (txt, csv, md, etc.)."""
+        detected = chardet.detect(content)
+        encoding = detected["encoding"] or "utf-8"
+        try:
+            text_content = content.decode(encoding)
+        except UnicodeDecodeError:
+            text_content = content.decode("utf-8", errors="replace")
+
+        if self.config.clean_text:
+            text_content = self._clean_text(text_content)
+
+        document_id = str(uuid.uuid4())
+        document_metadata: dict[str, Any] = {"filename": filename}
+        if file_id:
+            document_metadata["file_id"] = file_id
+
+        processing_time_ms = int((time.time() - start_time) * 1000)
+        response_metadata: dict[str, Any] = {
+            "processor": "text",
+            "processing_time_ms": processing_time_ms,
+            "extraction_method": "text",
+            "file_size_bytes": len(content),
+        }
+
+        if not text_content or not text_content.strip():
+            return ProcessFileResponse(chunks=[], metadata=response_metadata)
+
+        chunks = self._create_chunks(text_content, document_id, chunking_strategy, document_metadata)
         return ProcessFileResponse(chunks=chunks, metadata=response_metadata)
 
     def _extract_pdf_text(self, reader: PdfReader) -> tuple[str, list[str]]:
@@ -140,8 +194,9 @@ class PyPDFFileProcessor:
             except Exception as e:
                 failed_pages.append(f"page {page_num + 1}: {e}")
                 continue
-            if page_text and page_text.strip():
-                text_parts.append(page_text)
+            if page_text:
+                if not self.config.clean_text or page_text.strip():
+                    text_parts.append(page_text)
 
         return "\n".join(text_parts), failed_pages
 

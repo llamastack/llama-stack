@@ -7,6 +7,7 @@
 import io
 import uuid
 from pathlib import Path
+from unittest.mock import AsyncMock
 
 import pytest
 from fastapi import UploadFile
@@ -121,7 +122,7 @@ class TestPyPDFFileProcessor:
     @pytest.fixture
     def processor(self, config: PyPDFFileProcessorConfig) -> PyPDFFileProcessor:
         """PyPDF processor instance for testing."""
-        return PyPDFFileProcessor(config, files_api=None)
+        return PyPDFFileProcessor(config, files_api=AsyncMock())
 
     @pytest.fixture
     def test_pdf_path(self) -> Path:
@@ -256,7 +257,7 @@ class TestPyPDFFileProcessor:
     async def test_text_cleaning(self):
         """Test text cleaning functionality."""
         config = PyPDFFileProcessorConfig(clean_text=True)
-        processor = PyPDFFileProcessor(config, files_api=None)
+        processor = PyPDFFileProcessor(config, files_api=AsyncMock())
 
         # Test the text cleaning method directly
         raw_text = "  This  has   multiple   spaces\n\n\nand   extra\n\n  newlines  "
@@ -269,7 +270,7 @@ class TestPyPDFFileProcessor:
         """Test processing without text cleaning."""
         upload_file.file.seek(0)  # Rewind stream before use
         config = PyPDFFileProcessorConfig(clean_text=False)
-        processor = PyPDFFileProcessor(config, files_api=None)
+        processor = PyPDFFileProcessor(config, files_api=AsyncMock())
 
         response = await processor.process_file(file=upload_file, chunking_strategy=None)
 
@@ -282,7 +283,7 @@ class TestPyPDFFileProcessor:
         """Test processing without metadata extraction."""
         upload_file.file.seek(0)  # Rewind stream before use
         config = PyPDFFileProcessorConfig(extract_metadata=False)
-        processor = PyPDFFileProcessor(config, files_api=None)
+        processor = PyPDFFileProcessor(config, files_api=AsyncMock())
 
         response = await processor.process_file(file=upload_file, chunking_strategy=None)
 
@@ -307,10 +308,16 @@ class TestPyPDFFileProcessor:
         with pytest.raises(ValueError, match="Cannot provide both file and file_id"):
             await processor.process_file(file=upload_file, file_id="test_id")
 
-    async def test_file_id_without_files_api(self, processor: PyPDFFileProcessor):
-        """Test processing file_id without files API."""
-        with pytest.raises(ValueError, match="Files API not available"):
-            await processor.process_file(file_id="test_file_id")
+    async def test_nonexistent_file_id_raises_value_error(self):
+        """Test that a non-existent file_id raises a clear ValueError."""
+        mock_files_api = AsyncMock()
+        mock_files_api.openai_retrieve_file.side_effect = ValueError("Could not find file with id 'nonexistent_id'")
+
+        config = PyPDFFileProcessorConfig()
+        processor = PyPDFFileProcessor(config, files_api=mock_files_api)
+
+        with pytest.raises(ValueError, match="not found"):
+            await processor.process_file(file_id="nonexistent_id")
 
     async def test_minimal_pdf_processing(self, processor: PyPDFFileProcessor):
         """Test processing a minimal PDF with no extractable text."""
