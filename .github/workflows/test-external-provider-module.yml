@@ -17,14 +17,7 @@ on:
 
 jobs:
   test-external-providers-from-module:
-    # This workflow is disabled. See https://github.com/meta-llama/llama-stack/pull/2975#issuecomment-3138702984 for details
-    if: false
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        image-type: [venv]
-        # We don't do container yet, it's tricky to install a package from the host into the
-        # container and point 'uv pip install' to the correct path...
     steps:
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -32,49 +25,35 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/setup-runner
 
-      - name: Install Ramalama
-        shell: bash
+      - name: Install lmeval provider
         run: |
-          uv pip install ramalama
-
-      - name: Run Ramalama
-        shell: bash
-        run: |
-          nohup ramalama serve llama3.2:3b-instruct-fp16  > ramalama_server.log 2>&1 &
-      - name: Apply image type to config file
-        run: |
-          yq -i '.image_type = "${{ matrix.image-type }}"' tests/external/ramalama-stack/config.yaml
-          cat tests/external/ramalama-stack/config.yaml
-
-      - name: Install distribution dependencies
-        run: |
-          uv run llama stack list-deps tests/external/ramalama-stack/build.yaml | xargs -L1 uv pip install
+          uv pip install llama-stack-provider-lmeval
 
       - name: Start Llama Stack server in background
-        if: ${{ matrix.image-type }} == 'venv'
         env:
-          INFERENCE_MODEL: "llama3.2:3b-instruct-fp16"
+          TRUSTYAI_LMEVAL_USE_K8S: "false"
           LLAMA_STACK_LOG_FILE: "server.log"
         run: |
-          # Use the virtual environment created by the build step (name comes from build config)
-          source ramalama-stack-test/bin/activate
-          uv pip list
-          nohup llama stack run tests/external/ramalama-stack/config.yaml > server.log 2>&1 &
+          nohup uv run llama stack run tests/external/llama-stack-provider-lmeval/config.yaml > server.log 2>&1 &
 
       - name: Wait for Llama Stack server to be ready
         run: |
           for i in {1..30}; do
-            if ! grep -q "successfully connected to Ramalama" server.log; then
-              echo "Waiting for Llama Stack server to load the provider..."
-              sleep 1
-            else
-              echo "Provider loaded"
+            if curl -s http://localhost:8321/v1/health | grep -q "OK"; then
+              echo "Server is ready"
               exit 0
             fi
+            echo "Waiting for server..."
+            sleep 1
           done
-          echo "Provider failed to load"
+          echo "Server failed to start"
           cat server.log
           exit 1
+
+      - name: Verify external provider is loaded
+        run: |
+          curl -s http://localhost:8321/v1/providers | python3 -m json.tool
+          echo "External provider loaded successfully"
 
       - name: Upload all logs to artifacts
         if: ${{ always() }}
