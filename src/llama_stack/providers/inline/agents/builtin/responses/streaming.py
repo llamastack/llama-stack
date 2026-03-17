@@ -1418,25 +1418,21 @@ class StreamingResponseOrchestrator:
                 self.ctx.chat_tools.append(make_openai_tool(tool_name, tool))
             elif input_tool.type == "file_search":
                 tool_name = "file_search"
-                self.ctx.chat_tools.append(
-                    ChatCompletionToolParam(
-                        type="function",
-                        function={
-                            "name": tool_name,
-                            "description": "Search files for relevant information",
-                            "parameters": {
-                                "type": "object",
-                                "properties": {
-                                    "query": {
-                                        "type": "string",
-                                        "description": "The search query",
-                                    },
-                                },
-                                "required": ["query"],
+                file_search_tool_def = ToolDef(
+                    name=tool_name,
+                    description="Search files for relevant information",
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "The search query",
                             },
                         },
-                    )  # type: ignore[typeddict-item]
+                        "required": ["query"],
+                    },
                 )
+                self.ctx.chat_tools.append(make_openai_tool(tool_name, file_search_tool_def))
             elif input_tool.type == "mcp":
                 async for stream_event in self._process_mcp_tool(input_tool, output_messages):
                     yield stream_event
