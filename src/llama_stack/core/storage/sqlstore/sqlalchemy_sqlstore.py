@@ -119,8 +119,8 @@ class SqlAlchemySqlStoreImpl(SqlStore):
         elif isinstance(self.config, PostgresSqlStoreConfig):
             engine_kwargs["pool_size"] = self.config.pool_size
             engine_kwargs["max_overflow"] = self.config.max_overflow
-            if self.config.pool_recycle.enabled:
-                engine_kwargs["pool_recycle"] = self.config.pool_recycle.interval
+            if self.config.pool_recycle >= 0:
+                engine_kwargs["pool_recycle"] = self.config.pool_recycle
 
         engine = create_async_engine(
             self.config.engine_str,

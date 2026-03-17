@@ -270,9 +270,7 @@ storage:
       password: ${env.POSTGRES_PASSWORD:=llamastack}
       pool_size: ${env.POSTGRES_POOL_SIZE:=10}
       max_overflow: ${env.POSTGRES_MAX_OVERFLOW:=20}
-      pool_recycle:
-        enabled: ${env.POSTGRES_POOL_RECYCLE_ENABLED:=false}
-        interval: ${env.POSTGRES_POOL_RECYCLE_INTERVAL:=600}
+      pool_recycle: ${env.POSTGRES_POOL_RECYCLE:=-1}
       pool_pre_ping: ${env.POSTGRES_POOL_PRE_PING:=true}
   stores:
     metadata:

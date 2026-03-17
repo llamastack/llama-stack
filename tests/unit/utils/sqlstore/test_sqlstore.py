@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 import pytest
 
-from llama_stack.core.storage.datatypes import PoolRecycleConfig, PostgresSqlStoreConfig
+from llama_stack.core.storage.datatypes import PostgresSqlStoreConfig
 from llama_stack.core.storage.sqlstore.sqlalchemy_sqlstore import SqlAlchemySqlStoreImpl
 from llama_stack.core.storage.sqlstore.sqlstore import SqliteSqlStoreConfig
 
@@ -559,8 +559,7 @@ async def test_postgres_pool_config_defaults():
     cfg = PostgresSqlStoreConfig(user="test", password="test")
     assert cfg.pool_size == 10
     assert cfg.max_overflow == 20
-    assert cfg.pool_recycle.enabled is False
-    assert cfg.pool_recycle.interval == 600
+    assert cfg.pool_recycle == -1
 
 
 async def test_postgres_pool_kwargs_propagate_to_engine():
@@ -571,7 +570,7 @@ async def test_postgres_pool_kwargs_propagate_to_engine():
             password="test",
             pool_size=15,
             max_overflow=25,
-            pool_recycle=PoolRecycleConfig(enabled=True, interval=300),
+            pool_recycle=300,
         )
         store = SqlAlchemySqlStoreImpl(config)
         await store._ensure_engine()
@@ -582,12 +581,12 @@ async def test_postgres_pool_kwargs_propagate_to_engine():
 
 
 async def test_postgres_pool_recycle_omitted_when_disabled():
-    """pool_recycle kwarg is not passed to create_async_engine when disabled."""
+    """pool_recycle kwarg is not passed to create_async_engine when set to -1."""
     with patch.object(_SQLSTORE_MODULE, "create_async_engine") as mock_create:
         config = PostgresSqlStoreConfig(
             user="test",
             password="test",
-            pool_recycle=PoolRecycleConfig(enabled=False),
+            pool_recycle=-1,
         )
         store = SqlAlchemySqlStoreImpl(config)
         await store._ensure_engine()
@@ -595,22 +594,11 @@ async def test_postgres_pool_recycle_omitted_when_disabled():
         assert "pool_recycle" not in kwargs
 
 
-async def test_pool_recycle_can_be_enabled():
-    """pool_recycle can be enabled via config."""
-    cfg = PostgresSqlStoreConfig(
-        user="test",
-        password="test",
-        pool_recycle=PoolRecycleConfig(enabled=True),
-    )
-    assert cfg.pool_recycle.enabled is True
-
-
-async def test_pool_recycle_interval_is_configurable():
+async def test_pool_recycle_is_configurable():
     """pool_recycle interval can be customized."""
     cfg = PostgresSqlStoreConfig(
         user="test",
         password="test",
-        pool_recycle=PoolRecycleConfig(enabled=True, interval=300),
+        pool_recycle=300,
     )
-    assert cfg.pool_recycle.enabled is True
-    assert cfg.pool_recycle.interval == 300
+    assert cfg.pool_recycle == 300
