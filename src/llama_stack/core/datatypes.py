@@ -410,11 +410,11 @@ class FileSearchParams(BaseModel):
     """Configuration for file search tool output formatting."""
 
     header_template: str = Field(
-        default="knowledge_search tool found {num_chunks} chunks:\nBEGIN of knowledge_search tool results.\n",
+        default="file_search tool found {num_chunks} chunks:\nBEGIN of file_search tool results.\n",
         description="Template for the header text shown before search results. Available placeholders: {num_chunks} number of chunks found.",
     )
     footer_template: str = Field(
-        default="END of knowledge_search tool results.\n",
+        default="END of file_search tool results.\n",
         description="Template for the footer text shown after search results.",
     )
 
@@ -425,10 +425,8 @@ class FileSearchParams(BaseModel):
             raise ValueError("header_template must not be empty")
         if "{num_chunks}" not in v:
             raise ValueError("header_template must contain {num_chunks} placeholder")
-        if "knowledge_search" not in v.lower():
-            raise ValueError(
-                "header_template must contain 'knowledge_search' keyword to ensure proper tool identification"
-            )
+        if "file_search" not in v.lower():
+            raise ValueError("header_template must contain 'file_search' keyword to ensure proper tool identification")
         return v
 
 
