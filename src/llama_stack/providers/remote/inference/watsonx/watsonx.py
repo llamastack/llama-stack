@@ -52,17 +52,21 @@ def _get_iam_token(api_key: str) -> str:
     if _iam_token and time.time() < _iam_token_expiry - 60:
         return _iam_token
 
-    resp = requests.post(
-        "https://iam.cloud.ibm.com/identity/token",
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-        data=f"grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey={api_key}",
-        timeout=30,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    _iam_token = data["access_token"]
-    _iam_token_expiry = data.get("expiration", time.time() + 3600)
-    return _iam_token
+    try:
+        resp = requests.post(
+            "https://iam.cloud.ibm.com/identity/token",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=f"grant_type=urn:ibm:params:oauth:grant-type:apikey&apikey={api_key}",
+            timeout=30,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        _iam_token = data["access_token"]
+        _iam_token_expiry = data.get("expiration", time.time() + 3600)
+        return _iam_token
+    except Exception as e:
+        logger.warning(f"IAM token exchange failed ({e}), using API key directly")
+        return api_key
 
 
 class WatsonXInferenceAdapter(OpenAIMixin):
