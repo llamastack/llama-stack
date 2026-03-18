@@ -64,7 +64,7 @@ Llama Stack also provides fine-grained control over tool access. You can restric
 
 Llama Stack exposes OpenAI-compatible endpoints at `/v1`, so you can use the official OpenAI Python client, the Llama Stack client, or any other client that speaks the OpenAI API. They all work the same way.
 
-If you have existing code built with the OpenAI client, migrating to Llama Stack means pointing your client at your Llama Stack server. That's it. This also applies to frameworks like LangChain that build on top of the OpenAI API. Switching the inference backend to Llama Stack requires changing a constructor parameter, not rewriting your agent logic.
+If you have existing code built with the OpenAI client, migrating to Llama Stack means pointing your client at your Llama Stack server. That's it. This also applies to frameworks like LangChain that build on top of OpenAI's API. Switching the inference backend to Llama Stack requires changing a constructor parameter, not rewriting your agent logic.
 
 This drop-in compatibility has practical implications beyond convenience. You can develop and test against a local Llama Stack server, deploy against a production Llama Stack distribution, or switch between Llama Stack and other OpenAI-compatible providers, all with the same application code.
 
