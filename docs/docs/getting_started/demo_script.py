@@ -71,7 +71,7 @@ except Exception as e:
 agent = Agent(
     client,
     model=model_id,
-    instructions="You are a helpful assistant. Use the knowledge_search tool to find relevant information in the ingested documents.",
+    instructions="You are a helpful assistant. Use the file_search tool to find relevant information in the ingested documents.",
     tools=[
         {
             "type": "file_search",

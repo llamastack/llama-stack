@@ -808,7 +808,6 @@ export default function ChatPlaygroundPage() {
         const containsToolCall = (content: string): boolean => {
           return (
             content.includes('"type": "function"') ||
-            content.includes('"name": "knowledge_search"') ||
             content.includes('"name": "file_search"') ||
             content.includes('"parameters":') ||
             !!content.match(/\{"type":\s*"function".*?\}/)
@@ -1055,7 +1054,7 @@ export default function ChatPlaygroundPage() {
         const { text: deltaText } = processChunk(chunk);
 
         // logging for debugging function calls
-        // if (deltaText && deltaText.includes("knowledge_search")) {
+        // if (deltaText && deltaText.includes("file_search")) {
         //   console.log("🔍 Function call detected in text output:", deltaText);
         //   console.log("🔍 Original chunk:", JSON.stringify(chunk, null, 2));
         // }
@@ -1073,11 +1072,7 @@ export default function ChatPlaygroundPage() {
           ).event;
           if (event?.payload?.event_type === "turn_complete") {
             const content = event?.payload?.turn?.output_message?.content;
-            if (
-              content &&
-              (content.includes("knowledge_search") ||
-                content.includes("file_search"))
-            ) {
+            if (content && content.includes("file_search")) {
               console.log("🔍 Function call found in turn_complete:", content);
             }
           }
