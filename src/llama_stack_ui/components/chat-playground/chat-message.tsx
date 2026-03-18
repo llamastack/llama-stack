@@ -122,11 +122,19 @@ type MessagePart =
   | FilePart
   | StepStartPart;
 
+export interface FileCitation {
+  type: "file_citation";
+  file_id: string;
+  filename: string;
+  index: number;
+}
+
 export interface Message {
   id: string;
   role: "user" | "assistant" | (string & {});
   content: string;
   createdAt?: Date;
+  annotations?: FileCitation[];
   experimental_attachments?: Attachment[];
   toolInvocations?: ToolInvocation[];
   parts?: MessagePart[];
@@ -138,6 +146,20 @@ export interface ChatMessageProps extends Message {
   actions?: React.ReactNode;
 }
 
+// Clean raw artifacts from model output
+function cleanModelOutput(text: string): string {
+  let cleaned = text;
+  // Remove raw file citation markers like <|file-...|>
+  cleaned = cleaned.replace(/<\|file-[^|]+\|>/g, "");
+  // Remove raw tool call JSON that small models sometimes emit as text
+  // Matches patterns like {"name": "knowledge_search", "parameters": {...}}
+  cleaned = cleaned.replace(
+    /\{"name":\s*"[^"]+",\s*"parameters":\s*\{[^}]*\}\}/g,
+    ""
+  );
+  return cleaned.trim();
+}
+
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   role,
   content,
@@ -145,10 +167,22 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   showTimeStamp = false,
   animation = "scale",
   actions,
+  annotations,
   experimental_attachments,
   toolInvocations,
   parts,
 }) => {
+  // Deduplicate annotations by file_id (must be before early returns)
+  const uniqueAnnotations = useMemo(() => {
+    if (!annotations || annotations.length === 0) return [];
+    const seen = new Set<string>();
+    return annotations.filter(a => {
+      if (seen.has(a.file_id)) return false;
+      seen.add(a.file_id);
+      return true;
+    });
+  }, [annotations]);
+
   const files = useMemo(() => {
     return experimental_attachments?.map(attachment => {
       const dataArray = dataUrlToUint8Array(attachment.url);
@@ -251,10 +285,32 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     return <ToolCall toolInvocations={toolInvocations} />;
   }
 
+  const displayContent = cleanModelOutput(content);
+
   return (
     <div className={cn("flex flex-col", isUser ? "items-end" : "items-start")}>
       <div className={cn(chatBubbleVariants({ isUser, animation }))}>
-        <MarkdownRenderer>{content}</MarkdownRenderer>
+        <MarkdownRenderer>{displayContent}</MarkdownRenderer>
+        {uniqueAnnotations.length > 0 && (
+          <div className="mt-2 pt-2 border-t border-foreground/10 space-y-1">
+            <p className="text-[10px] font-medium opacity-60 uppercase tracking-wider">
+              Sources
+            </p>
+            {uniqueAnnotations.map((ann, i) => (
+              <div
+                key={`${ann.file_id}-${i}`}
+                className="flex items-center gap-1.5 text-xs opacity-70"
+              >
+                <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-foreground/10 text-[10px] font-medium">
+                  {i + 1}
+                </span>
+                <span className="truncate" title={ann.file_id}>
+                  {ann.filename || ann.file_id}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
         {actions ? (
           <div className="absolute -bottom-4 right-2 flex space-x-1 rounded-lg border bg-background p-1 text-foreground opacity-0 transition-opacity group-hover/message:opacity-100">
             {actions}

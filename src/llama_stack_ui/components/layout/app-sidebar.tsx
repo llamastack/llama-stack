@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect, useCallback } from "react";
 import {
   MessageSquareText,
   MessagesSquare,
@@ -10,11 +11,21 @@ import {
   Compass,
   FileText,
   File,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import {
+  getConversationHistory,
+  type ConversationHistoryEntry,
+} from "@/lib/conversation-history";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 import {
   Sidebar,
@@ -25,16 +36,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarHeader,
 } from "@/components/ui/sidebar";
 
-const createItems = [
-  {
-    title: "Chat Playground",
-    url: "/chat-playground",
-    icon: MessageCircle,
-  },
-];
+// ConversationInfo type removed — using ConversationHistoryEntry from lib
 
 const manageItems = [
   {
@@ -69,19 +77,22 @@ const manageItems = [
   },
 ];
 
-const optimizeItems: { title: string; url: string; icon: React.ElementType }[] =
-  [
-    {
-      title: "Evaluations",
-      url: "",
-      icon: Compass,
-    },
-    {
-      title: "Fine-tuning",
-      url: "",
-      icon: Settings2,
-    },
-  ];
+const optimizeItems: {
+  title: string;
+  url: string;
+  icon: React.ElementType;
+}[] = [
+  {
+    title: "Evaluations",
+    url: "",
+    icon: Compass,
+  },
+  {
+    title: "Fine-tuning",
+    url: "",
+    icon: Settings2,
+  },
+];
 
 interface SidebarItem {
   title: string;
@@ -91,6 +102,35 @@ interface SidebarItem {
 
 export function AppSidebar() {
   const pathname = usePathname();
+  const [conversations, setConversations] = useState<
+    ConversationHistoryEntry[]
+  >([]);
+  const [isConversationsOpen, setIsConversationsOpen] = useState(false);
+
+  // Load conversations from localStorage when expanded or updated
+  const refreshConversations = useCallback(() => {
+    setConversations(getConversationHistory());
+  }, []);
+
+  useEffect(() => {
+    if (isConversationsOpen) {
+      refreshConversations();
+    }
+  }, [isConversationsOpen, refreshConversations]);
+
+  // Listen for updates from the chat playground
+  useEffect(() => {
+    const handler = () => refreshConversations();
+    window.addEventListener("conversations-updated", handler);
+    return () => window.removeEventListener("conversations-updated", handler);
+  }, [refreshConversations]);
+
+  // Refresh when navigating to chat playground
+  useEffect(() => {
+    if (pathname === "/chat-playground") {
+      refreshConversations();
+    }
+  }, [pathname, refreshConversations]);
 
   const renderSidebarItems = (items: SidebarItem[]) => {
     return items.map(item => {
@@ -120,6 +160,31 @@ export function AppSidebar() {
     });
   };
 
+  const isChatActive = pathname.startsWith("/chat-playground");
+
+  const formatConversationLabel = (conv: ConversationHistoryEntry) => {
+    const date = new Date(conv.createdAt);
+    const now = new Date();
+    const isToday = date.toDateString() === now.toDateString();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = date.toDateString() === yesterday.toDateString();
+
+    const time = date.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    if (isToday) return `Today ${time}`;
+    if (isYesterday) return `Yesterday ${time}`;
+    return (
+      date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }) + ` ${time}`
+    );
+  };
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -138,7 +203,73 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Create</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>{renderSidebarItems(createItems)}</SidebarMenu>
+            <SidebarMenu>
+              {/* Chat Playground with collapsible conversations */}
+              <Collapsible
+                open={isConversationsOpen}
+                onOpenChange={setIsConversationsOpen}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    className={cn(
+                      "justify-start",
+                      isChatActive &&
+                        "bg-gray-200 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
+                    )}
+                  >
+                    <Link href="/chat-playground">
+                      <MessageCircle
+                        className={cn(
+                          isChatActive && "text-gray-900 dark:text-gray-100",
+                          "mr-2 h-4 w-4"
+                        )}
+                      />
+                      <span className="flex-1">Chat Playground</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      className="absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted"
+                      title="Show conversations"
+                    >
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                    </button>
+                  </CollapsibleTrigger>
+                </SidebarMenuItem>
+                <CollapsibleContent>
+                  <SidebarMenuSub>
+                    {conversations.length === 0 ? (
+                      <SidebarMenuSubItem>
+                        <span className="px-2 py-1 text-xs text-muted-foreground">
+                          No conversations yet
+                        </span>
+                      </SidebarMenuSubItem>
+                    ) : (
+                      conversations.slice(0, 20).map(conv => (
+                        <SidebarMenuSubItem key={conv.id}>
+                          <SidebarMenuSubButton asChild>
+                            <Link
+                              href={`/chat-playground?conversation=${conv.id}`}
+                              title={conv.firstMessage || conv.id}
+                            >
+                              <span className="truncate text-xs">
+                                {conv.firstMessage
+                                  ? conv.firstMessage.length > 30
+                                    ? conv.firstMessage.substring(0, 30) + "..."
+                                    : conv.firstMessage
+                                  : formatConversationLabel(conv)}
+                              </span>
+                            </Link>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))
+                    )}
+                  </SidebarMenuSub>
+                </CollapsibleContent>
+              </Collapsible>
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 

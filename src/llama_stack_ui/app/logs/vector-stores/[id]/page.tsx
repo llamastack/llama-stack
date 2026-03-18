@@ -65,6 +65,15 @@ export default function VectorStoreDetailPage() {
     fetchFiles();
   }, [id, client.vectorStores.files]);
 
+  const refetchFiles = async () => {
+    try {
+      const result = await client.vectorStores.files.list(id);
+      setFiles((result as { data: VectorStoreFile[] }).data);
+    } catch (err) {
+      console.error("Failed to refresh files:", err);
+    }
+  };
+
   return (
     <VectorStoreDetailView
       store={store}
@@ -74,6 +83,7 @@ export default function VectorStoreDetailPage() {
       errorStore={errorStore}
       errorFiles={errorFiles}
       id={id}
+      onFilesChanged={refetchFiles}
     />
   );
 }

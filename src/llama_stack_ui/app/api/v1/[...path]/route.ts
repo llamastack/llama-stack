@@ -61,8 +61,31 @@ async function proxyRequest(request: NextRequest, method: string) {
       return proxyResponse;
     }
 
-    // Check content type to handle binary vs text responses appropriately
+    // Check content type to handle different response types
     const contentType = response.headers.get("content-type") || "";
+
+    // Handle SSE (Server-Sent Events) streaming responses
+    const isStreamingResponse =
+      contentType.includes("text/event-stream") ||
+      contentType.includes("application/x-ndjson");
+
+    if (isStreamingResponse && response.body) {
+      // Pass through the stream directly without buffering
+      const proxyResponse = new NextResponse(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+      });
+
+      // Copy response headers
+      response.headers.forEach((value, key) => {
+        if (!["connection", "transfer-encoding"].includes(key.toLowerCase())) {
+          proxyResponse.headers.set(key, value);
+        }
+      });
+
+      return proxyResponse;
+    }
+
     const isBinaryContent =
       contentType.includes("application/pdf") ||
       contentType.includes("application/msword") ||
