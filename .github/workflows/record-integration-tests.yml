@@ -146,15 +146,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create PR metadata artifact
+        env:
+          # Pass via env vars to prevent code injection (same pattern as compute-pr-info step)
+          PR_NUMBER: ${{ needs.compute-pr-info.outputs.pr_number }}
+          PR_HEAD_REF: ${{ needs.compute-pr-info.outputs.pr_head_ref }}
+          PR_HEAD_SHA: ${{ needs.compute-pr-info.outputs.pr_head_sha }}
+          PR_HEAD_REPO: ${{ needs.compute-pr-info.outputs.pr_head_repo }}
+          IS_FORK_PR: ${{ needs.compute-pr-info.outputs.is_fork_pr }}
         run: |
           mkdir -p pr-metadata
           cat > pr-metadata/pr-info.json <<EOF
           {
-            "pr_number": "${{ needs.compute-pr-info.outputs.pr_number }}",
-            "pr_head_ref": "${{ needs.compute-pr-info.outputs.pr_head_ref }}",
-            "pr_head_sha": "${{ needs.compute-pr-info.outputs.pr_head_sha }}",
-            "pr_head_repo": "${{ needs.compute-pr-info.outputs.pr_head_repo }}",
-            "is_fork_pr": "${{ needs.compute-pr-info.outputs.is_fork_pr }}"
+            "pr_number": "${PR_NUMBER}",
+            "pr_head_ref": "${PR_HEAD_REF}",
+            "pr_head_sha": "${PR_HEAD_SHA}",
+            "pr_head_repo": "${PR_HEAD_REPO}",
+            "is_fork_pr": "${IS_FORK_PR}"
           }
           EOF
           cat pr-metadata/pr-info.json
