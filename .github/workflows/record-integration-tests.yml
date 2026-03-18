@@ -162,6 +162,8 @@ jobs:
             suite: responses
           - setup: bedrock
             suite: responses
+          - setup: watsonx
+            suite: responses
     steps:
       - name: Check if provider should run
         id: should_run
