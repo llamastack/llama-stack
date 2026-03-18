@@ -78,13 +78,22 @@ def _normalize_numeric_literal_strings(value: str) -> str:
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
 
 
-def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False) -> Any:
+def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True) -> Any:
     """Recursively normalize a JSON-like value to improve hash stability."""
 
     if isinstance(value, dict):
-        normalized = {key: _normalize_body_for_hash(item) for key, item in value.items()}
+        normalized = {key: _normalize_body_for_hash(item, _is_root=False) for key, item in value.items()}
         if exclude_stream_options and "stream_options" in normalized:
             del normalized["stream_options"]
+        # Strip provider-config values that differ between record (real creds)
+        # and replay (dummy creds).  Only strip specific keys (project_id) rather
+        # than entire extra_body/extra_query dicts because extra_body can carry
+        # legitimate request params (e.g. guided_choice for vllm).
+        if _is_root:
+            for extra_key in ("extra_body", "extra_query"):
+                extra = normalized.get(extra_key)
+                if isinstance(extra, dict):
+                    extra.pop("project_id", None)
         return normalized
     if isinstance(value, list):
         return [_normalize_body_for_hash(item) for item in value]

@@ -205,11 +205,13 @@ jobs:
         if: steps.should_run.outputs.run == 'true'
         uses: llamastack/llama-stack/.github/actions/run-and-record-tests@ce063acfe127393537cb0a5deb29cd20063c76af
         env:
-          # Expandable: add new provider API keys here
           OPENAI_API_KEY: ${{ matrix.provider.setup == 'gpt' && secrets.OPENAI_API_KEY || '' }}
           AZURE_API_KEY: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_KEY || '' }}
           AZURE_API_BASE: ${{ matrix.provider.setup == 'azure' && secrets.AZURE_API_BASE || '' }}
-          TAVILY_SEARCH_API_KEY: ${{ (matrix.provider.setup == 'gpt' || matrix.provider.setup == 'azure') && secrets.TAVILY_SEARCH_API_KEY || '' }}
+          WATSONX_API_KEY: ${{ matrix.provider.setup == 'watsonx' && secrets.WATSONX_API_KEY || '' }}
+          WATSONX_BASE_URL: ${{ matrix.provider.setup == 'watsonx' && secrets.WATSONX_BASE_URL || '' }}
+          WATSONX_PROJECT_ID: ${{ matrix.provider.setup == 'watsonx' && secrets.WATSONX_PROJECT_ID || '' }}
+          TAVILY_SEARCH_API_KEY: ${{ contains(fromJSON('["gpt","azure"]'), matrix.provider.setup) && secrets.TAVILY_SEARCH_API_KEY || '' }}
           AWS_BEARER_TOKEN_BEDROCK: ${{ matrix.provider.setup == 'bedrock' && secrets.AWS_BEARER_TOKEN_BEDROCK || '' }}
           AWS_DEFAULT_REGION: ${{ matrix.provider.setup == 'bedrock' && 'us-west-2' || '' }}
         with:

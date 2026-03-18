@@ -123,12 +123,12 @@ class ToolExecutor:
             ),
         )
 
-    async def _execute_knowledge_search_via_vector_store(
+    async def _execute_file_search_via_vector_store(
         self,
         query: str,
         response_file_search_tool: OpenAIResponseInputToolFileSearch,
     ) -> ToolInvocationResult:
-        """Execute knowledge search using vector_stores.search API with filters support."""
+        """Execute file search using vector_stores.search API with filters support."""
         search_results = []
 
         # Create search tasks for all vector stores
@@ -353,11 +353,11 @@ class ToolExecutor:
                     else None
                 )
                 if response_file_search_tool:
-                    # Use vector_stores.search API instead of knowledge_search tool
+                    # Use vector_stores.search API instead of file_search tool
                     # to support filters and ranking_options
                     query = tool_kwargs.get("query", "")
                     with tracer.start_as_current_span(function_name):
-                        result = await self._execute_knowledge_search_via_vector_store(
+                        result = await self._execute_file_search_via_vector_store(
                             query=query,
                             response_file_search_tool=response_file_search_tool,
                         )

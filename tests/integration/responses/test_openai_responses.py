@@ -492,6 +492,9 @@ class TestOpenAIResponses:
 
     def test_openai_response_with_parallel_tool_calls_enabled(self, openai_client, text_model_id):
         """Test that parallel_tool_calls=True produces multiple function calls."""
+        if "watsonx" in text_model_id:
+            pytest.skip("WatsonX does not reliably produce parallel tool calls.")
+
         response = openai_client.responses.create(
             model=text_model_id,
             input="What is the weather in Paris and the current time in London?",
