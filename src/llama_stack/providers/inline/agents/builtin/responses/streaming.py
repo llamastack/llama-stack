@@ -929,6 +929,7 @@ class StreamingResponseOrchestrator:
             chat_response_id = chunk.id
             chunk_created = chunk.created
             chunk_model = chunk.model
+            # Extract service_tier from chunk if available (may be in final chunk)
             if chunk.service_tier is not None:
                 chunk_service_tier = chunk.service_tier
 
