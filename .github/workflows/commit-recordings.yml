@@ -59,43 +59,93 @@ jobs:
             fi
           done
 
-      - name: Get PR information
-        id: pr-info
+      - name: Download PR metadata artifact
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
-            // Get PR number from the triggering workflow
-            const runInfo = await github.rest.actions.getWorkflowRun({
+            const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
               owner: context.repo.owner,
               repo: context.repo.repo,
               run_id: ${{ github.event.workflow_run.id }},
             });
 
+            const metadataArtifact = artifacts.data.artifacts.find(a => a.name.startsWith('pr-metadata-'));
+            if (metadataArtifact) {
+              console.log(`Found PR metadata artifact: ${metadataArtifact.name}`);
+              const download = await github.rest.actions.downloadArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: metadataArtifact.id,
+                archive_format: 'zip',
+              });
+
+              const fs = require('fs');
+              fs.writeFileSync('pr-metadata.zip', Buffer.from(download.data));
+            } else {
+              console.log('No PR metadata artifact found');
+            }
+
+      - name: Extract PR metadata
+        run: |
+          if [ -f pr-metadata.zip ]; then
+            unzip -o pr-metadata.zip
+            echo "PR metadata contents:"
+            cat pr-info.json
+          else
+            echo "No PR metadata file to extract"
+          fi
+
+      - name: Get PR information
+        id: pr-info
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const fs = require('fs');
             let prNumber = null;
             let headRepo = null;
             let headRef = null;
             let headSha = null;
 
-            // Check if this was triggered by a pull_request event
-            if (runInfo.data.event === 'pull_request' && runInfo.data.pull_requests.length > 0) {
-              const pr = runInfo.data.pull_requests[0];
-              prNumber = pr.number;
+            // Try to load from metadata artifact first
+            if (fs.existsSync('pr-info.json')) {
+              try {
+                const metadata = JSON.parse(fs.readFileSync('pr-info.json', 'utf8'));
+                prNumber = parseInt(metadata.pr_number, 10);
+                headRepo = metadata.pr_head_repo;
+                headRef = metadata.pr_head_ref;
+                headSha = metadata.pr_head_sha;
+                console.log(`Loaded PR info from metadata: PR #${prNumber}`);
+              } catch (e) {
+                console.log(`Failed to parse metadata: ${e.message}`);
+              }
+            }
 
-              // Fetch full PR details
-              const prData = await github.rest.pulls.get({
+            // Fallback: check if triggered by pull_request event
+            if (!prNumber) {
+              const runInfo = await github.rest.actions.getWorkflowRun({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: prNumber,
+                run_id: ${{ github.event.workflow_run.id }},
               });
 
-              headRepo = prData.data.head.repo.full_name;
-              headRef = prData.data.head.ref;
-              headSha = prData.data.head.sha;
-            } else {
-              // workflow_dispatch - try to extract from run name or skip
-              console.log('Not a pull_request event, skipping commit');
-              core.setOutput('skip', 'true');
-              return;
+              if (runInfo.data.event === 'pull_request' && runInfo.data.pull_requests.length > 0) {
+                const pr = runInfo.data.pull_requests[0];
+                prNumber = pr.number;
+
+                const prData = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                });
+
+                headRepo = prData.data.head.repo.full_name;
+                headRef = prData.data.head.ref;
+                headSha = prData.data.head.sha;
+              } else {
+                console.log('No PR metadata and not a pull_request event, skipping commit');
+                core.setOutput('skip', 'true');
+                return;
+              }
             }
 
             core.setOutput('pr_number', prNumber);

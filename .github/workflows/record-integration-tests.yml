@@ -140,6 +140,32 @@ jobs:
           echo "  Fork PR: ${IS_FORK_PR}"
           echo "  Providers: ${PROVIDERS}"
 
+  # Upload PR metadata for companion workflow
+  upload-pr-metadata:
+    needs: compute-pr-info
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create PR metadata artifact
+        run: |
+          mkdir -p pr-metadata
+          cat > pr-metadata/pr-info.json <<EOF
+          {
+            "pr_number": "${{ needs.compute-pr-info.outputs.pr_number }}",
+            "pr_head_ref": "${{ needs.compute-pr-info.outputs.pr_head_ref }}",
+            "pr_head_sha": "${{ needs.compute-pr-info.outputs.pr_head_sha }}",
+            "pr_head_repo": "${{ needs.compute-pr-info.outputs.pr_head_repo }}",
+            "is_fork_pr": "${{ needs.compute-pr-info.outputs.is_fork_pr }}"
+          }
+          EOF
+          cat pr-metadata/pr-info.json
+
+      - name: Upload PR metadata
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pr-metadata-${{ github.run_id }}
+          path: pr-metadata/
+          retention-days: 1
+
   # Record tests for each provider
   record-providers:
     needs: compute-pr-info
