@@ -24,7 +24,7 @@ inference provider, based on integration test results.
 | azure | 101 | 101 | 0 | 86% |
 | openai | 118 | 118 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
-| watsonx | 56 | 56 | 0 | 48% |
+| watsonx | 7 | 7 | 0 | 6% |
 
 ## Provider Details
 
@@ -35,7 +35,7 @@ Models, endpoints, and versions used during test recordings.
 | azure | gpt-4o | llama-stack-test.openai.azure.com, lls-test.openai.azure.com | openai sdk: 2.5.0 |
 | openai | gpt-4o, o4-mini, text-embedding-3-small | api.openai.com | openai sdk: 2.5.0 |
 | vllm | Qwen/Qwen3-0.6B | — | — |
-| watsonx | meta-llama/llama-3-3-70b-instruct | us-south.ml.cloud.ibm.com | openai sdk: 2.5.0 |
+| watsonx | — | — | openai sdk: 2.5.0 |
 
 ## Basic Responses
 
@@ -46,34 +46,34 @@ Models, endpoints, and versions used during test recordings.
 | include logprobs streaming | ✅ | ✅ | — | ✅ |
 | include logprobs with function tools | ✅ | ✅ | — | ✅ |
 | include logprobs with web search | ✅ | ✅ | — | ✅ |
-| non streaming basic | ✅ | ✅ | — | ✅ |
+| non streaming basic | ✅ | ✅ | — | ⏭️ |
 | non streaming image | ✅ | ✅ | — | ⏭️ |
-| non streaming multi turn | ✅ | ✅ | — | ✅ |
+| non streaming multi turn | ✅ | ✅ | — | ⏭️ |
 | non streaming multi turn image | ✅ | ✅ | — | ⏭️ |
-| streaming basic | ✅ | ✅ | — | ✅ |
-| streaming incremental content | ✅ | ✅ | — | ✅ |
+| streaming basic | ✅ | ✅ | — | ⏭️ |
+| streaming incremental content | ✅ | ✅ | — | ⏭️ |
 
 ## Conversation Responses
 
 | Feature | azure | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- |
-| conversation backward compatibility | ✅ | ✅ | — | ✅ |
-| conversation basic workflow | ✅ | ✅ | — | ✅ |
-| conversation context loading | ✅ | ✅ | — | ✅ |
-| conversation error handling | ⏭️ | ✅ | — | ⏭️ |
-| conversation multi turn and streaming | ✅ | ✅ | — | ✅ |
+| conversation backward compatibility | ✅ | ✅ | — | — |
+| conversation basic workflow | ✅ | ✅ | — | — |
+| conversation context loading | ✅ | ✅ | — | — |
+| conversation error handling | ⏭️ | ✅ | — | — |
+| conversation multi turn and streaming | ✅ | ✅ | — | — |
 
 ## File Search
 
 | Feature | azure | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- |
-| file search filter by category | ✅ | ✅ | — | ⏭️ |
-| file search filter by date range | ✅ | ✅ | — | ⏭️ |
-| file search filter by region | ✅ | ✅ | — | ⏭️ |
-| file search filter compound and | ✅ | ✅ | — | ⏭️ |
-| file search filter compound or | ✅ | ✅ | — | ⏭️ |
-| file search streaming events | ✅ | ✅ | — | ⏭️ |
-| text format | ✅ | ✅ | — | ✅ |
+| file search filter by category | ✅ | ✅ | — | — |
+| file search filter by date range | ✅ | ✅ | — | — |
+| file search filter by region | ✅ | ✅ | — | — |
+| file search filter compound and | ✅ | ✅ | — | — |
+| file search filter compound or | ✅ | ✅ | — | — |
+| file search streaming events | ✅ | ✅ | — | — |
+| text format | ✅ | ✅ | — | — |
 
 ## Mcp Authentication
 
@@ -86,28 +86,28 @@ Models, endpoints, and versions used during test recordings.
 
 | Feature | azure | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- |
-| background false is synchronous | ✅ | ✅ | — | ✅ |
-| background returns queued | ✅ | ✅ | — | ✅ |
-| incomplete details length | ✅ | ✅ | — | ✅ |
-| incomplete details length streaming | ✅ | ✅ | — | ✅ |
-| incomplete details max iterations exceeded | ✅ | ✅ | — | ✅ |
+| background false is synchronous | ✅ | ✅ | — | ⏭️ |
+| background returns queued | ✅ | ✅ | — | ⏭️ |
+| incomplete details length | ✅ | ✅ | — | ⏭️ |
+| incomplete details length streaming | ✅ | ✅ | — | ⏭️ |
+| incomplete details max iterations exceeded | ✅ | ✅ | — | ⏭️ |
 | incomplete details max iterations exceeded streaming | ✅ | ✅ | — | ✅ |
-| incomplete details null when completed | ✅ | ✅ | — | ✅ |
+| incomplete details null when completed | ✅ | ✅ | — | ⏭️ |
 | reasoning effort | ⏭️ | ✅ | — | ⏭️ |
 | reasoning effort streaming | ⏭️ | ✅ | — | ⏭️ |
-| streaming includes usage | ✅ | ✅ | — | ✅ |
+| streaming includes usage | ✅ | ✅ | — | ⏭️ |
 | streaming invalid base64 image failure code is spec compliant | ✅ | ✅ | — | ⏭️ |
 | with max output tokens | ✅ | ✅ | — | ⏭️ |
-| with parallel tool calls and previous response | ✅ | ✅ | — | ✅ |
+| with parallel tool calls and previous response | ✅ | ✅ | — | ⏭️ |
 | with parallel tool calls disabled | ✅ | ✅ | — | ⏭️ |
 | with parallel tool calls disabled streaming | ✅ | ✅ | — | ⏭️ |
 | with parallel tool calls enabled | ✅ | ✅ | — | ⏭️ |
-| with prompt cache key | ✅ | ✅ | — | ✅ |
-| with prompt cache key and previous response | ✅ | ✅ | — | ✅ |
-| with prompt cache key streaming | ✅ | ✅ | — | ✅ |
-| with safety identifier | ✅ | ✅ | — | ✅ |
-| with safety identifier and previous response | ✅ | ✅ | — | ✅ |
-| with safety identifier streaming | ✅ | ✅ | — | ✅ |
+| with prompt cache key | ✅ | ✅ | — | ⏭️ |
+| with prompt cache key and previous response | ✅ | ✅ | — | ⏭️ |
+| with prompt cache key streaming | ✅ | ✅ | — | ⏭️ |
+| with safety identifier | ✅ | ✅ | — | ⏭️ |
+| with safety identifier and previous response | ✅ | ✅ | — | ⏭️ |
+| with safety identifier streaming | ✅ | ✅ | — | ⏭️ |
 | with service tier | ⏭️ | ✅ | — | ⏭️ |
 | with service tier and previous response | ⏭️ | ✅ | — | ⏭️ |
 | with service tier auto | ⏭️ | ✅ | — | ⏭️ |
@@ -117,29 +117,29 @@ Models, endpoints, and versions used during test recordings.
 | with service tier flex streaming | ⏭️ | ✅ | — | ⏭️ |
 | with service tier streaming | ⏭️ | ✅ | — | ⏭️ |
 | with small max output tokens | ✅ | ✅ | — | ⏭️ |
-| with stream options and previous response | ✅ | ✅ | — | ✅ |
-| with stream options includes usage | ✅ | ✅ | — | ✅ |
-| with stream options non streaming | ✅ | ✅ | — | ✅ |
-| with top logprobs | ✅ | ✅ | — | ✅ |
-| with top logprobs and previous response | ✅ | ✅ | — | ✅ |
-| with top logprobs streaming | ✅ | ✅ | — | ✅ |
-| with top p | ✅ | ✅ | — | ✅ |
-| with top p and previous response | ✅ | ✅ | — | ✅ |
-| with top p streaming | ✅ | ✅ | — | ✅ |
-| with truncation and previous response | ✅ | ✅ | — | ✅ |
-| with truncation disabled | ✅ | ✅ | — | ✅ |
-| with truncation disabled streaming | ✅ | ✅ | — | ✅ |
+| with stream options and previous response | ✅ | ✅ | — | ⏭️ |
+| with stream options includes usage | ✅ | ✅ | — | ⏭️ |
+| with stream options non streaming | ✅ | ✅ | — | ⏭️ |
+| with top logprobs | ✅ | ✅ | — | ⏭️ |
+| with top logprobs and previous response | ✅ | ✅ | — | ⏭️ |
+| with top logprobs streaming | ✅ | ✅ | — | ⏭️ |
+| with top p | ✅ | ✅ | — | ⏭️ |
+| with top p and previous response | ✅ | ✅ | — | ⏭️ |
+| with top p streaming | ✅ | ✅ | — | ⏭️ |
+| with truncation and previous response | ✅ | ✅ | — | ⏭️ |
+| with truncation disabled | ✅ | ✅ | — | ⏭️ |
+| with truncation disabled streaming | ✅ | ✅ | — | ⏭️ |
 
 ## Prompt Templates
 
 | Feature | azure | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- |
-| basic prompt template | ✅ | ✅ | — | ✅ |
-| multi variable prompt template | ✅ | ✅ | — | ✅ |
-| multi version prompt template | ✅ | ✅ | — | ✅ |
-| prompt template no variables | ✅ | ✅ | — | ✅ |
-| prompt template with multi turn | ✅ | ✅ | — | ✅ |
-| prompt template with streaming | ✅ | ✅ | — | ✅ |
+| basic prompt template | ✅ | ✅ | — | — |
+| multi variable prompt template | ✅ | ✅ | — | — |
+| multi version prompt template | ✅ | ✅ | — | — |
+| prompt template no variables | ✅ | ✅ | — | — |
+| prompt template with multi turn | ✅ | ✅ | — | — |
+| prompt template with streaming | ✅ | ✅ | — | — |
 
 ## Reasoning
 
@@ -162,25 +162,25 @@ Models, endpoints, and versions used during test recordings.
 
 | Feature | azure | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- |
-| completed response has no error | ✅ | ✅ | — | ✅ |
-| invalid base64 image returns image error | ✅ | ✅ | — | ⏭️ |
-| invalid image url returns image error | ✅ | ✅ | — | ⏭️ |
-| non vision model returns error for image input | ✅ | ✅ | — | ✅ |
-| non vision model with base64 image returns server error | ✅ | ✅ | — | ✅ |
+| completed response has no error | ✅ | ✅ | — | — |
+| invalid base64 image returns image error | ✅ | ✅ | — | — |
+| invalid image url returns image error | ✅ | ✅ | — | — |
+| non vision model returns error for image input | ✅ | ✅ | — | — |
+| non vision model with base64 image returns server error | ✅ | ✅ | — | — |
 
 ## Structured Output
 
 | Feature | azure | openai | vllm | watsonx |
 | --- | --- | --- | --- | --- |
-| json schema array of integers | ✅ | ✅ | — | ✅ |
-| json schema array of objects | ✅ | ✅ | — | ✅ |
-| json schema array of strings | ✅ | ✅ | — | ⏭️ |
-| json schema boolean types | ✅ | ✅ | — | ⏭️ |
-| json schema float types | ✅ | ✅ | — | ⏭️ |
-| json schema integer types | ✅ | ✅ | — | ⏭️ |
-| json schema mixed types structures | ✅ | ✅ | — | ✅ |
-| json schema nested objects | ✅ | ✅ | — | ✅ |
-| json schema string types | ✅ | ✅ | — | ✅ |
+| json schema array of integers | ✅ | ✅ | — | — |
+| json schema array of objects | ✅ | ✅ | — | — |
+| json schema array of strings | ✅ | ✅ | — | — |
+| json schema boolean types | ✅ | ✅ | — | — |
+| json schema float types | ✅ | ✅ | — | — |
+| json schema integer types | ✅ | ✅ | — | — |
+| json schema mixed types structures | ✅ | ✅ | — | — |
+| json schema nested objects | ✅ | ✅ | — | — |
+| json schema string types | ✅ | ✅ | — | — |
 
 ## Tool Responses
 
