@@ -31,7 +31,7 @@ on:
         description: 'Comma-separated list of providers to record'
         type: string
         required: false
-        default: 'gpt,azure,bedrock,watsonx'
+        default: 'gpt,azure,watsonx'
       suite:
         description: 'Test suite override (default: per-provider from matrix)'
         type: string
