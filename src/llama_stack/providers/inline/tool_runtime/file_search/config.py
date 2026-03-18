@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from llama_stack.core.datatypes import VectorStoresConfig
 
 
-class RagToolRuntimeConfig(BaseModel):
+class FileSearchToolRuntimeConfig(BaseModel):
     vector_stores_config: VectorStoresConfig = Field(
         default_factory=VectorStoresConfig,
         description="Configuration for vector store prompt templates and behavior",

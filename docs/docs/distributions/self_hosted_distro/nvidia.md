@@ -15,7 +15,7 @@ The `llamastack/distribution-nvidia` distribution consists of the following prov
 | inference | `remote::nvidia` |
 | safety | `remote::nvidia` |
 | scoring | `inline::basic` |
-| tool_runtime | `inline::rag-runtime` |
+| tool_runtime | `inline::file-search` |
 | vector_io | `inline::faiss` |
 
 
