@@ -78,13 +78,21 @@ def _normalize_numeric_literal_strings(value: str) -> str:
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
 
 
-def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False) -> Any:
+def _normalize_body_for_hash(
+    value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True
+) -> Any:
     """Recursively normalize a JSON-like value to improve hash stability."""
 
     if isinstance(value, dict):
-        normalized = {key: _normalize_body_for_hash(item) for key, item in value.items()}
+        normalized = {key: _normalize_body_for_hash(item, _is_root=False) for key, item in value.items()}
         if exclude_stream_options and "stream_options" in normalized:
             del normalized["stream_options"]
+        # Strip OpenAI SDK transport parameters from the top-level body.
+        # These carry provider-specific values (e.g. WatsonX project_id) that
+        # differ between record (real credentials) and replay (dummy credentials).
+        if _is_root:
+            for key in ("extra_body", "extra_query", "extra_headers"):
+                normalized.pop(key, None)
         return normalized
     if isinstance(value, list):
         return [_normalize_body_for_hash(item) for item in value]
@@ -162,8 +170,12 @@ def normalize_inference_request(method: str, url: str, headers: dict[str, Any], 
         "body": body_for_hash,
     }
 
-    # Include test_id for isolation, except for shared infrastructure endpoints
-    if parsed.path not in ("/api/tags", "/v1/models", "/v1/openai/v1/models"):
+    # Include test_id for isolation, except for shared infrastructure endpoints.
+    # Use endswith() because providers like WatsonX prepend a base path
+    # (e.g. /ml/v1/v1/models instead of /v1/models).
+    _model_list_suffixes = ("/api/tags", "/v1/models", "/v1/openai/v1/models")
+    is_model_list = any(parsed.path.endswith(suffix) for suffix in _model_list_suffixes)
+    if not is_model_list:
         normalized["test_id"] = test_id
 
     normalized_json = json.dumps(normalized, sort_keys=True)
