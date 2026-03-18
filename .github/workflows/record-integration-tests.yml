@@ -28,10 +28,10 @@ on:
         type: number
         required: false
       providers:
-        description: 'Comma-separated list of providers to record (ollama,gpt,azure,etc.)'
+        description: 'Comma-separated list of providers to record'
         type: string
         required: false
-        default: 'ollama'
+        default: 'gpt,azure,bedrock,watsonx'
       suite:
         description: 'Test suite override (default: per-provider from matrix)'
         type: string
@@ -118,14 +118,9 @@ jobs:
 
           # Determine which providers to run
           # Security: For pull_request, only run ollama (no secrets)
-          # Manual workflow_dispatch can specify any provider (maintainer-reviewed)
+          # Manual workflow_dispatch uses input providers (defaults to API providers)
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
-            # Manual trigger: use provided providers or default to ollama
-            if [ -n "$INPUT_PROVIDERS" ]; then
-              PROVIDERS="$INPUT_PROVIDERS"
-            else
-              PROVIDERS="ollama"
-            fi
+            PROVIDERS="$INPUT_PROVIDERS"
           else
             # Auto-trigger on PR: only ollama (no secrets exposed to any PR)
             PROVIDERS="ollama"
