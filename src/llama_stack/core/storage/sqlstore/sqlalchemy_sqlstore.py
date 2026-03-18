@@ -26,7 +26,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.sql.elements import ColumnElement
 
-from llama_stack.core.storage.datatypes import SqlAlchemySqlStoreConfig
+from llama_stack.core.storage.datatypes import PostgresSqlStoreConfig, SqlAlchemySqlStoreConfig
 from llama_stack.log import get_logger
 from llama_stack_api import PaginatedResponse
 from llama_stack_api.internal.sqlstore import ColumnDefinition, ColumnType, SqlStore
@@ -110,16 +110,22 @@ class SqlAlchemySqlStoreImpl(SqlStore):
     def create_engine(self) -> AsyncEngine:
         # Configure connection args for better concurrency support
         connect_args = {}
+        engine_kwargs: dict[str, Any] = {"pool_pre_ping": self.config.pool_pre_ping}
         if self._is_sqlite_backend:
             # SQLite-specific optimizations for concurrent access
             # With WAL mode, most locks resolve in milliseconds, but allow up to 5s for edge cases
             connect_args["timeout"] = 5.0
             connect_args["check_same_thread"] = False  # Allow usage across asyncio tasks
+        elif isinstance(self.config, PostgresSqlStoreConfig):
+            engine_kwargs["pool_size"] = self.config.pool_size
+            engine_kwargs["max_overflow"] = self.config.max_overflow
+            if self.config.pool_recycle >= 0:
+                engine_kwargs["pool_recycle"] = self.config.pool_recycle
 
         engine = create_async_engine(
             self.config.engine_str,
-            pool_pre_ping=True,
             connect_args=connect_args,
+            **engine_kwargs,
         )
 
         # Enable WAL mode for SQLite to support concurrent readers and writers
