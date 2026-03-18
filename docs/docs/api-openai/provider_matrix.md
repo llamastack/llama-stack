@@ -24,7 +24,7 @@ inference provider, based on integration test results.
 | azure | 101 | 101 | 0 | 86% |
 | openai | 118 | 118 | 0 | 100% |
 | vllm | 1 | 1 | 0 | 1% |
-| watsonx | 57 | 57 | 0 | 48% |
+| watsonx | 56 | 56 | 0 | 48% |
 
 ## Provider Details
 
@@ -101,7 +101,7 @@ Models, endpoints, and versions used during test recordings.
 | with parallel tool calls and previous response | ✅ | ✅ | — | ✅ |
 | with parallel tool calls disabled | ✅ | ✅ | — | ⏭️ |
 | with parallel tool calls disabled streaming | ✅ | ✅ | — | ⏭️ |
-| with parallel tool calls enabled | ✅ | ✅ | — | ✅ |
+| with parallel tool calls enabled | ✅ | ✅ | — | ⏭️ |
 | with prompt cache key | ✅ | ✅ | — | ✅ |
 | with prompt cache key and previous response | ✅ | ✅ | — | ✅ |
 | with prompt cache key streaming | ✅ | ✅ | — | ✅ |

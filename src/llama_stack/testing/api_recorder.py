@@ -78,9 +78,7 @@ def _normalize_numeric_literal_strings(value: str) -> str:
     return _FLOAT_IN_STRING_PATTERN.sub(_replace, value)
 
 
-def _normalize_body_for_hash(
-    value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True
-) -> Any:
+def _normalize_body_for_hash(value: Any, exclude_stream_options: bool = False, *, _is_root: bool = True) -> Any:
     """Recursively normalize a JSON-like value to improve hash stability."""
 
     if isinstance(value, dict):
